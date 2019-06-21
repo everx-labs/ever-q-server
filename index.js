@@ -1,31 +1,46 @@
-const {ApolloServer} = require('apollo-server');
+const fs = require('fs');
 
-const config = {
-	database: {
-		servers: ['http://azp005.tonlabs.io:8529'],
-		name: 'blockchain',
-	}
-};
+const express = require("express");
+const {createServer} = require("http");
+
+const {PubSub} = require('apollo-server');
+const {ApolloServer} = require('apollo-server-express');
+
+const createDb = require('./arango-db/db');
+const createListener = require('./arango-db/listener');
+const createResolvers = require('./resolvers');
+
+const config = require('./config');
+const logs = require('./logs');
 
 
-const createDbConnector = require('./arango-db-connector');
-const createExecutor = require('./graphql-executor');
-const createLog = (name) => ({
-	error(...args) {
-		console.error(`[${name}] `, ...args);
-	},
-	debug(...args) {
-		console.debug(`[${name}] `, ...args);
-	}
-});
+async function main() {
+
+	const pubsub = new PubSub();
+	const db = createDb(config, logs);
+	const listener = createListener(db, pubsub, config);
+
+	const typeDefs = fs.readFileSync('type-defs.graphql', 'utf-8');
+	const resolvers = createResolvers(db, pubsub);
+
+	const server = new ApolloServer({
+		typeDefs,
+		resolvers,
+	});
+
+	const app = express();
+	server.applyMiddleware({app, path: '/graphql'});
+
+	const httpServer = createServer(app);
+	server.installSubscriptionHandlers(httpServer);
+
+	httpServer.listen({port: config.server.port}, () => {
+		console.log(`GraphQL Server on http://localhost:${config.server.port}/${config.database.name}`);
+	});
+}
+
 
 (async () => {
-	const db = await createDbConnector(config, createLog);
-	const executor = await createExecutor(db, createLog);
-	const server = new ApolloServer(executor);
-
-	server.listen().then(({url}) => {
-		console.log(`Server ready at ${url}`);
-	});
+	await main();
 })();
 

@@ -1,0 +1,47 @@
+type Transaction {
+    id: String
+    status: String
+    now: Int
+    in_msg: String
+    out_msgs: [String]
+    aborted: Boolean
+    block_id: String
+    account_addr: String
+}
+
+type Message {
+    id: String
+    status: String
+    body: String
+    block_id: String
+}
+
+type Block {
+    id: String
+    status: String
+}
+
+type AccountBalance {
+    Grams: String
+}
+
+type Account {
+    id: String
+    balance: AccountBalance
+    last_trans_lt: Int
+}
+
+type Query {
+    transaction(id: String): Transaction
+    message(id: String): Message
+    account(id: String): Account
+    block(id: String): Block
+    transactions(filter: String): [Transaction]
+    messages(filter: String): [Message]
+    accounts(filter: String): [Account]
+    blocks(filter: String): [Block]
+}
+
+type Subscription {
+    transaction(id: String): Transaction
+}
