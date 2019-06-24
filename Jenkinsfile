@@ -76,6 +76,10 @@ pipeline {
 		}
 		
 		stage ('MakeImage') {
+            when {
+                branch 'master'
+                beforeAgent true
+            }		
 			agent {
 				node {label 'master'}
 			}			
@@ -84,7 +88,8 @@ pipeline {
 							sh '''
 							echo 'FROM node:10.11.0-stretch' > Dockerfile
 							echo 'WORKDIR /home/node'
-							echo 'ADD . .' >>Dockerfile
+							echo 'USER node'
+							echo 'ADD . /home/node' >>Dockerfile
 							echo 'EXPOSE 4000' >> Dockerfile
 							echo 'ENTRYPOINT ["node", "index.js"]' >> Dockerfile
 							'''
