@@ -63,7 +63,6 @@ pipeline {
 					steps {
 						script {
 							stash excludes: '.git, Jenkinsfile', includes: '*, arango-db/**, node_modules/**', name: 'wholedir'
-
 							}
 					}
 				} 
