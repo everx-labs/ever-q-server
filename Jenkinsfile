@@ -62,7 +62,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile', includes: 'target/release/ton-node', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile', includes: '*', name: 'wholedir'
 
 							}
 					}
