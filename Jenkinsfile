@@ -59,15 +59,14 @@ pipeline {
 				}
 
 				
-/*				stage ('Stashing') {
+				stage ('Stashing') {
 					steps {
 						script {
-							sh 'tar -cvzf nodes.tar.gz ./poa/node?/*'
-							stash includes: 'target/release/ton-node', name: 'ton-node'
-							stash includes: 'nodes.tar.gz', name: 'poa'
+							stash excludes: '.git, Jenkinsfile', includes: 'target/release/ton-node', name: 'wholedir'
+
 							}
 					}
-				} */
+				} 
 			}
 		post {
 			always {script{cleanWs notFailBuild: true}}
@@ -85,6 +84,8 @@ pipeline {
 			}			
 				steps {
 					script {
+						dir ('node') {
+							unstash 'wholedir'
 							sh '''
 							echo 'FROM node:10.11.0-stretch' > Dockerfile
 							echo 'WORKDIR /home/node' >> Dockerfile
@@ -98,6 +99,7 @@ pipeline {
 								wimage.push()
 								wimage.push('latest')
 							}
+						}
 					}
 				}
 			post {
