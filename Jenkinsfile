@@ -31,7 +31,7 @@ pipeline {
 				}
 			}
 			stages {
-			
+
 				stage('Initialize') {
 					steps {
 						script {
@@ -58,29 +58,29 @@ pipeline {
 					}
 				}
 
-				
+
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile', includes: '*, arango-db/**, node_modules/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile', includes: '*, server/**, node_modules/**', name: 'wholedir'
 							}
 					}
-				} 
+				}
 			}
 		post {
 			always {script{cleanWs notFailBuild: true}}
 		}
-		
+
 		}
-		
+
 		stage ('MakeImage') {
             when {
                 branch 'master'
                 beforeAgent true
-            }		
+            }
 			agent {
 				node {label 'master'}
-			}			
+			}
 				steps {
 					script {
 						dir ('node') {
@@ -104,7 +104,7 @@ pipeline {
 			post {
                 success {script{G_MakeImage = "success"}}
                 failure {script{G_MakeImage = "failure"}}
-				always {script{cleanWs notFailBuild: true}}										   
+				always {script{cleanWs notFailBuild: true}}
             }
 		}
     }
@@ -120,7 +120,7 @@ pipeline {
                 + "Build: **" + G_buildstatus + "**" + "\n" \
                 + "Put Image: **" + G_MakeImage + "**"
                 discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
-            }          
+            }
         }
 
     }
