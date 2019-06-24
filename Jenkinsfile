@@ -87,8 +87,8 @@ pipeline {
 					script {
 							sh '''
 							echo 'FROM node:10.11.0-stretch' > Dockerfile
-							echo 'WORKDIR /home/node'
-							echo 'USER node'
+							echo 'WORKDIR /home/node' >> Dockerfile
+							echo 'USER node' >> Dockerfile
 							echo 'ADD . /home/node' >>Dockerfile
 							echo 'EXPOSE 4000' >> Dockerfile
 							echo 'ENTRYPOINT ["node", "index.js"]' >> Dockerfile
