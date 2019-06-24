@@ -1,4 +1,5 @@
 const {Database, aqlQuery} = require('arangojs');
+const matcher = require('./matcher');
 
 
 function createDb(config, logs) {
@@ -26,14 +27,20 @@ function createDb(config, logs) {
 		return Object.assign({}, doc, {id: doc._key});
 	};
 
-	const fetchDoc = async (collection, id) => wrap(async () => {
-		return convertDoc(await collection.document(id));
-	});
-
 	const fetchDocs = async (collection, filter) => wrap(async () => {
-		// const cursor = await db.query(query);
-		// const docs = await cursor.all();
-		// return docs.map(convertDoc);
+		const match = filter.match || {};
+		const id = match.id;
+		if (id) {
+			let doc = await collection.document(id, true);
+			if (!doc) {
+				return [];
+			}
+			doc = convertDoc(doc);
+			if (Object.keys(match).length === 1) {
+				return [doc];
+			}
+			return matcher(match)(doc) ? [doc] : [];
+		}
 		return [];
 	});
 
@@ -44,8 +51,6 @@ function createDb(config, logs) {
 		databaseName,
 
 		convertDoc,
-
-		fetchDoc,
 		fetchDocs,
 
 		transactions: db.collection('transactions'),
