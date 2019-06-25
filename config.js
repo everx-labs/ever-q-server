@@ -1,6 +1,13 @@
+function getIp() {
+	const ipv4 = Object.values(require('os').networkInterfaces())
+		.flatMap(x => x)
+		.find(x => x.family === 'IPv4' && !x.internal);
+	return ipv4 && ipv4.address;
+}
+
 module.exports = {
 	server: {
-		host: 'localhost',
+		host: getIp(),
 		port: 4000,
 	},
 	database: {

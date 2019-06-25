@@ -38,8 +38,11 @@ class TONQServer {
 		const httpServer = createServer(app);
 		server.installSubscriptionHandlers(httpServer);
 
-		httpServer.listen({port: this.config.server.port}, () => {
-			const uri = `http://localhost:${this.config.server.port}/graphql`;
+		httpServer.listen({
+			host: this.config.server.host,
+			port: this.config.server.port
+		}, () => {
+			const uri = `http://${this.config.server.host}:${this.config.server.port}/graphql`;
 			this.log.debug(`Started on ${uri}`);
 		});
 	}
