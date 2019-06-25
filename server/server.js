@@ -25,7 +25,7 @@ class TONQServer {
 		startListener(db, pubsub, this.config);
 
 		const typeDefs = fs.readFileSync('server/type-defs.graphql', 'utf-8');
-		const resolvers = createResolvers(db, pubsub);
+		const resolvers = createResolvers(db, pubsub, this.logs);
 
 		const server = new ApolloServer({
 			typeDefs,

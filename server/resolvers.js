@@ -1,8 +1,9 @@
 const {withFilter} = require('apollo-server');
 const createMatcher = require('./matcher');
 
-function collectionQuery(db, collection) {
+function collectionQuery(db, collection, log) {
 	return async (parent, args) => {
+		log.debug(`Query ${collection.name}`, args);
 		return db.fetchDocs(collection, JSON.parse(args.filter));
 	}
 }
@@ -23,13 +24,14 @@ function collectionSubscription(pubsub, collectionName) {
 }
 
 
-function createResolvers(db, pubsub) {
+function createResolvers(db, pubsub, logs) {
+	const log = logs.create('Q Resolvers');
 	return {
 		Query: {
-			transactions: collectionQuery(db, db.transactions),
-			messages: collectionQuery(db, db.messages),
-			accounts: collectionQuery(db, db.accounts),
-			blocks: collectionQuery(db, db.blocks),
+			transactions: collectionQuery(db, db.transactions, log),
+			messages: collectionQuery(db, db.messages, log),
+			accounts: collectionQuery(db, db.accounts, log),
+			blocks: collectionQuery(db, db.blocks, log),
 		},
 		Subscription: {
 			transactions: collectionSubscription(pubsub, 'transactions'),
