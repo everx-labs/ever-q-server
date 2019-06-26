@@ -74,6 +74,7 @@ type Query {
     messages(filter: String): [Message]
     accounts(filter: String): [Account]
     blocks(filter: String): [Block]
+    select(query: String!, bindVarsJson: String!): String!
 }
 
 type Subscription {

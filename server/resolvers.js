@@ -8,6 +8,14 @@ function collectionQuery(db, collection, log) {
 	}
 }
 
+function selectQuery(db) {
+	return async (parent, args) => {
+        const query = args.query;
+	    const bindVars = JSON.parse(args.bindVarsJson);
+		return JSON.stringify(await db.fetchQuery(query, bindVars));
+	}
+}
+
 
 function collectionSubscription(pubsub, collectionName) {
 	return {
@@ -32,6 +40,7 @@ function createResolvers(db, pubsub, logs) {
 			messages: collectionQuery(db, db.messages, log),
 			accounts: collectionQuery(db, db.accounts, log),
 			blocks: collectionQuery(db, db.blocks, log),
+            select: selectQuery(db),
 		},
 		Subscription: {
 			transactions: collectionSubscription(pubsub, 'transactions'),
