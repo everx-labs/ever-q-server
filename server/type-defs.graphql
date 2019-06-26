@@ -1,9 +1,38 @@
-type OrdinaryDescriptionWrapper {
-    Ordinary: OrdinaryDescription
+type TrComputePhase {
+    Vm: TrComputePhaseVm
+    Skipped: TrComputePhaseSkipped
 }
 
-type OrdinaryDescription {
+enum ComputeSkipReason {
+    NoState
+    BadState
+    NoGas
+}
+
+type TrComputePhaseSkipped {
+    reason: ComputeSkipReason
+}
+
+type TrComputePhaseSkippedWrapper {
+    Skipped: TrComputePhaseSkipped
+}
+
+type TrComputePhaseVm {
+    success: Boolean
+    exit_code: Int
+}
+
+type TrComputePhaseVmWrapper {
+    Vm: TrComputePhaseVm
+}
+
+type TransactionDescr {
+    Ordinary: TransactionDescrOrdinary
+}
+
+type TransactionDescrOrdinary {
     aborted: Boolean
+    compute_ph: TrComputePhase
 }
 
 type Transaction {
@@ -15,7 +44,7 @@ type Transaction {
     aborted: Boolean
     block_id: String
     account_addr: String
-    description: OrdinaryDescriptionWrapper
+    description: TransactionDescr
 }
 
 type Message {
