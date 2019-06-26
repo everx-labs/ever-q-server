@@ -1,3 +1,11 @@
+type OrdinaryDescriptionWrapper {
+    Ordinary: OrdinaryDescription
+}
+
+type OrdinaryDescription {
+    aborted: Boolean
+}
+
 type Transaction {
     id: String
     status: String
@@ -7,6 +15,7 @@ type Transaction {
     aborted: Boolean
     block_id: String
     account_addr: String
+    description: OrdinaryDescriptionWrapper
 }
 
 type Message {
