@@ -63,10 +63,14 @@ type AccountBalance {
     Grams: String
 }
 
-type Account {
-    id: String
+type AccountStorage {
     balance: AccountBalance
     last_trans_lt: Int
+}
+
+type Account {
+    id: String
+    storage: AccountStorage
 }
 
 type Query {
