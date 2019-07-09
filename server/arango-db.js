@@ -41,6 +41,10 @@ function createDb(config, logs) {
             }
             return matcher(match)(doc) ? [doc] : [];
         }
+        throw {
+            code: 'FetchDocsWithoutId',
+            message: 'FetchDocs must include id field'
+        }
     });
 
     const fetchQuery = async (query, bindVars) => wrap(async () => {

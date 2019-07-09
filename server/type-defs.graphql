@@ -47,11 +47,32 @@ type Transaction {
     description: TransactionDescr
 }
 
+type AddrStd {
+    workchain_id: Int
+    address: String
+}
+
+type Addr {
+    AddrStd: AddrStd
+}
+
+type ExtOutMsgInfo {
+    dst: Addr
+    src: Addr
+    created_at: Int
+    created_lt: Int
+}
+
+type MessageHeader {
+    ExtOutMsgInfo: ExtOutMsgInfo
+}
+
 type Message {
     id: String
-    status: String
+    header: MessageHeader
     body: String
     block_id: String
+    status: String
 }
 
 type Block {
