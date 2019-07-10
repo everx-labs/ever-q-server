@@ -1,10 +1,11 @@
 const fs = require('fs');
 
 const express = require("express");
-const {createServer} = require("http");
+const http = require("http");
+const https = require("https");
 
-const {PubSub} = require('apollo-server');
-const {ApolloServer} = require('apollo-server-express');
+const { PubSub } = require('apollo-server');
+const { ApolloServer } = require('apollo-server-express');
 
 const createDb = require('./arango-db');
 const startListener = require('./arango-listener');
@@ -12,40 +13,54 @@ const startListener = require('./arango-listener');
 const createResolvers = require('./resolvers');
 
 class TONQServer {
-	constructor(options) {
-		this.config = options.config || {};
-		this.logs = options.logs;
-		this.log = this.logs.create('Q Server');
-	}
+    constructor(options) {
+        this.config = options.config || {};
+        this.logs = options.logs;
+        this.log = this.logs.create('Q Server');
+    }
 
 
-	async start() {
-		const pubsub = new PubSub();
-		const db = createDb(this.config, this.logs);
-		startListener(db, pubsub, this.config);
+    async start() {
+        const config = this.config.server;
+        const ssl = config.ssl;
 
-		const typeDefs = fs.readFileSync('server/type-defs.graphql', 'utf-8');
-		const resolvers = createResolvers(db, pubsub, this.logs);
+        const pubsub = new PubSub();
+        const db = createDb(this.config, this.logs);
+        startListener(db, pubsub, this.config);
 
-		const server = new ApolloServer({
-			typeDefs,
-			resolvers,
-		});
+        const typeDefs = fs.readFileSync('server/type-defs.graphql', 'utf-8');
+        const resolvers = createResolvers(db, pubsub, this.logs);
 
-		const app = express();
-		server.applyMiddleware({app, path: '/graphql'});
+        const apollo = new ApolloServer({
+            typeDefs,
+            resolvers,
+        });
 
-		const httpServer = createServer(app);
-		server.installSubscriptionHandlers(httpServer);
+        const app = express();
+        apollo.applyMiddleware({ app, path: '/graphql' });
 
-		httpServer.listen({
-			host: this.config.server.host,
-			port: this.config.server.port
-		}, () => {
-			const uri = `http://${this.config.server.host}:${this.config.server.port}/graphql`;
-			this.log.debug(`Started on ${uri}`);
-		});
-	}
+        let server;
+        if (ssl) {
+            server = https.createServer(
+                {
+                    key: fs.readFileSync(ssl.key),
+                    cert: fs.readFileSync(ssl.cert)
+                },
+                app
+            )
+        } else {
+            server = http.createServer(app)
+        }
+        apollo.installSubscriptionHandlers(server);
+
+        server.listen({
+            host: config.host,
+            port: ssl ? ssl.port : config.port
+        }, () => {
+            const uri = `http${ssl ? 's' : ''}://${config.host}:${ssl ? ssl.port : config.port}/graphql`;
+            this.log.debug(`Started on ${uri}`);
+        });
+    }
 }
 
 

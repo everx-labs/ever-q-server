@@ -1,10 +1,19 @@
 const TONQServer = require('./server/server');
+const config = require('./config');
+const logs = require('./logs');
+
 const server = new TONQServer({
-	config: require('./config'),
-	logs: require('./logs'),
+	config,
+	logs,
 });
+
 (async () => {
-    await server.start();
+    try {
+        await server.start();
+    } catch (error) {
+        logs.create('Q-Server').error('Start failed:', error);
+        process.exit(1);
+    }
 })();
 
 

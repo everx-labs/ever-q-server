@@ -17,7 +17,7 @@ function startListener(db, pubsub, config) {
 	db.log.debug('Listen database', listenerUrl);
 	listener.on('error', (err, httpStatus, headers, body) => {
 		db.log.error('Listener failed: ', {err, httpStatus, headers, body});
-		setTimeout(() => listener.start(), config.arango.restartTimeout);
+		setTimeout(() => listener.start(), config.listener.restartTimeout);
 	});
 }
 

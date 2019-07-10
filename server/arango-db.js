@@ -1,10 +1,10 @@
-const {Database, aqlQuery} = require('arangojs');
+const {Database} = require('arangojs');
 const matcher = require('./matcher');
 
 
 function createDb(config, logs) {
     const log = logs.create('Arango DB');
-    const serverAddress = config.database.servers[0];
+    const serverAddress = config.database.server;
     const databaseName = config.database.name;
 
     const db = new Database(`http://${serverAddress}`);
