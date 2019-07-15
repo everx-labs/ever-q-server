@@ -41,10 +41,13 @@ function createDb(config, logs) {
             }
             return matcher(match)(doc) ? [doc] : [];
         }
-        throw {
-            code: 'FetchDocsWithoutId',
-            message: 'FetchDocs must include id field'
-        }
+        const query = `
+            FOR doc IN ${collection.name}
+            FILTER ${matcher.generateCondition(match, 'doc')}
+            LIMIT 50
+            RETURN doc`;
+        const cursor = await db.query({query, bindVars: {}});
+        return (await cursor.all()).map(convertDoc);
     });
 
     const fetchQuery = async (query, bindVars) => wrap(async () => {
