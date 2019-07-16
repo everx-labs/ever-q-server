@@ -11,7 +11,7 @@ function valueMatched(key, match, value) {
     if (key === '>=') {
         return value >= match;
     }
-    const field = value[key];
+    const field = (key === '' ? value : value[key]);
     if (match === null) {
         return field === null || field === undefined;
     }
