@@ -8,16 +8,16 @@ Node.js
 # Install
 
 Clone this repository and run
-`sh
+```bash
 npm install
-`
+```
 
 # Setup
  
  If you want to run q-server in development mode you can set EVN:
- `sh
- EXPORT Q_MODE=development
- `
+ ```bash
+ EXPORT Q_MODE="development"
+ ```
  
  When Q-server run in development mode it connects to Arango DB using 'services.tonlabs.io:8529'.
  
@@ -25,6 +25,6 @@ npm install
  
 # Run
 
-`sh
+```bash
 node index.js
-`
+```
