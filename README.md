@@ -30,3 +30,9 @@ npm install
 ```bash
 node index.js
 ```
+
+# Connectivity
+
+You can access Q-Server using GraphQL HTTP/WebSocket protocol on port "4000" and path "/graphql".
+
+There is the only valid way to communicate with Q-Server – TON-Client Libray.
