@@ -1,5 +1,7 @@
 # ton-q-server
-TON Database GraphQL Server
+TON Database GraphQL Server.
+
+This component is a part of TON-Server and must not be accessed directly but through TON-Client.
 
 # Prerequisites
 
