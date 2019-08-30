@@ -1,5 +1,5 @@
 const {Database} = require('arangojs');
-const matcher = require('./matcher');
+const {qlFilter, testFilter} = require('./filters');
 
 
 function createDb(config, logs) {
@@ -23,31 +23,22 @@ function createDb(config, logs) {
         }
     };
 
-    const convertDoc = (doc) => {
-        return Object.assign({}, doc, {id: doc._key});
-    };
+    const fetchDocs = async (collection, args, filterType) => wrap(async () => {
+        const filter = args.filter || {};
+        const filterSection = Object.keys(filter).length > 0
+            ? `FILTER ${qlFilter('doc', filter, filterType)}`
+            : '';
+        const sortSection = '';
+        const limitSection = 'LIMIT 50';
 
-    const fetchDocs = async (collection, filter) => wrap(async () => {
-        const match = filter.match || {};
-        const id = match.id;
-        if (id) {
-            let doc = await collection.document(id, true);
-            if (!doc) {
-                return [];
-            }
-            doc = convertDoc(doc);
-            if (Object.keys(match).length === 1) {
-                return [doc];
-            }
-            return matcher(match)(doc) ? [doc] : [];
-        }
         const query = `
             FOR doc IN ${collection.name}
-            FILTER ${matcher.generateCondition(match, 'doc')}
-            LIMIT 50
+            ${filterSection}
+            ${sortSection}
+            ${limitSection}
             RETURN doc`;
         const cursor = await db.query({query, bindVars: {}});
-        return (await cursor.all()).map(convertDoc);
+        return await cursor.all();
     });
 
     const fetchQuery = async (query, bindVars) => wrap(async () => {
@@ -61,7 +52,6 @@ function createDb(config, logs) {
         serverAddress,
         databaseName,
 
-        convertDoc,
         fetchDocs,
         fetchQuery,
 

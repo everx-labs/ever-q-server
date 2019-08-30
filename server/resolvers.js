@@ -1,10 +1,11 @@
 const {withFilter} = require('apollo-server');
-const createMatcher = require('./matcher');
+const {testFilter} = require('./filters');
+const {Transaction, Account, Block, Message} = require('./arango-filters');
 
-function collectionQuery(db, collection, log) {
+function collectionQuery(db, collection, filter, log) {
 	return async (parent, args) => {
 		log.debug(`Query ${collection.name}`, args);
-		return db.fetchDocs(collection, JSON.parse(args.filter));
+		return db.fetchDocs(collection, args, filter);
 	}
 }
 
@@ -17,15 +18,14 @@ function selectQuery(db) {
 }
 
 
-function collectionSubscription(pubsub, collectionName) {
+function collectionSubscription(pubsub, collectionName, filterType) {
 	return {
 		subscribe: withFilter(
 			() => {
 				return pubsub.asyncIterator(collectionName);
 			},
 			(data, args) => {
-				const matcher = createMatcher(JSON.parse(args.match));
-				return matcher(data[collectionName]);
+				return testFilter(data[collectionName], args.filter, filterType);
 			}
 		),
 	}
@@ -36,17 +36,17 @@ function createResolvers(db, pubsub, logs) {
 	const log = logs.create('Q Resolvers');
 	return {
 		Query: {
-			transactions: collectionQuery(db, db.transactions, log),
-			messages: collectionQuery(db, db.messages, log),
-			accounts: collectionQuery(db, db.accounts, log),
-			blocks: collectionQuery(db, db.blocks, log),
+			transactions: collectionQuery(db, db.transactions, Transaction, log),
+			messages: collectionQuery(db, db.messages, Message, log),
+			accounts: collectionQuery(db, db.accounts, Account, log),
+			blocks: collectionQuery(db, db.blocks, Block, log),
             select: selectQuery(db),
 		},
 		Subscription: {
-			transactions: collectionSubscription(pubsub, 'transactions'),
-			messages: collectionSubscription(pubsub, 'messages'),
-			accounts: collectionSubscription(pubsub, 'accounts'),
-			blocks: collectionSubscription(pubsub, 'blocks'),
+			transactions: collectionSubscription(pubsub, 'transactions', Transaction),
+			messages: collectionSubscription(pubsub, 'messages', Message),
+			accounts: collectionSubscription(pubsub, 'accounts', Account),
+			blocks: collectionSubscription(pubsub, 'blocks', Block),
 		}
 	}
 }

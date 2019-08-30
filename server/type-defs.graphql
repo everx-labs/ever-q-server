@@ -1,110 +1,1148 @@
-type TrComputePhase {
-    Vm: TrComputePhaseVm
-    Skipped: TrComputePhaseSkipped
+input StringFilter {
+    eq: String
+    ne: String
+    gt: String
+    lt: String
+    ge: String
+    le: String
+    in: [String]
+    notIn: [String]
 }
 
-enum ComputeSkipReason {
-    NoState
-    BadState
-    NoGas
+input BooleanFilter {
+    eq: Boolean
+    ne: Boolean
+    gt: Boolean
+    lt: Boolean
+    ge: Boolean
+    le: Boolean
+    in: [Boolean]
+    notIn: [Boolean]
 }
 
-type TrComputePhaseSkipped {
-    reason: ComputeSkipReason
+input IntFilter {
+    eq: Int
+    ne: Int
+    gt: Int
+    lt: Int
+    ge: Int
+    le: Int
+    in: [Int]
+    notIn: [Int]
 }
 
-type TrComputePhaseSkippedWrapper {
-    Skipped: TrComputePhaseSkipped
+input FloatFilter {
+    eq: Float
+    ne: Float
+    gt: Float
+    lt: Float
+    ge: Float
+    le: Float
+    in: [Float]
+    notIn: [Float]
 }
 
-type TrComputePhaseVm {
-    success: Boolean
-    exit_code: Int
+type None {
+    dummy: String
 }
 
-type TrComputePhaseVmWrapper {
-    Vm: TrComputePhaseVm
+type CurrencyCollection {
+    Grams: Float
 }
 
-type TransactionDescr {
-    Ordinary: TransactionDescrOrdinary
+type IntermediateAddressRegular {
+    use_src_bits: Int
 }
 
-type TransactionDescrOrdinary {
-    aborted: Boolean
-    compute_ph: TrComputePhase
+type IntermediateAddressSimple {
+    workchain_id: Int
+    addr_pfx: String
 }
 
-type Transaction {
-    id: String
-    status: String
-    now: Int
-    in_msg: String
-    out_msgs: [String]
-    aborted: Boolean
-    block_id: String
-    account_addr: String
-    description: TransactionDescr
+type IntermediateAddressExt {
+    workchain_id: Int
+    addr_pfx: String
 }
 
-type AddrStd {
+type IntermediateAddress {
+    Regular: IntermediateAddressRegular
+    Simple: IntermediateAddressSimple
+    Ext: IntermediateAddressExt
+}
+
+type ExtBlkRef {
+    end_lt: Int
+    seq_no: Int
+    root_hash: String
+    file_hash: String
+}
+
+type GenericId {
+    ready: Boolean
+    data: String
+}
+
+type MsgAddressIntAddrStdAnycast {
+    rewrite_pfx: String
+}
+
+type MsgAddressIntAddrStd {
+    anycast: MsgAddressIntAddrStdAnycast
     workchain_id: Int
     address: String
 }
 
-type Addr {
-    AddrStd: AddrStd
+type MsgAddressIntAddrVarAnycast {
+    rewrite_pfx: String
 }
 
-type ExtOutMsgInfo {
-    dst: Addr
-    src: Addr
-    created_at: Int
+type MsgAddressIntAddrVar {
+    anycast: MsgAddressIntAddrVarAnycast
+    workchain_id: Int
+    address: String
+}
+
+type MsgAddressInt {
+    AddrNone: None
+    AddrStd: MsgAddressIntAddrStd
+    AddrVar: MsgAddressIntAddrVar
+}
+
+type TickTock {
+    tick: Boolean
+    tock: Boolean
+}
+
+type StateInit {
+    split_depth: Int
+    special: TickTock
+    code: String
+    data: String
+    library: String
+}
+
+type StorageUsedShort {
+    cells: Int
+    bits: Int
+}
+
+type SplitMergeInfo {
+    cur_shard_pfx_len: Int
+    acc_split_depth: Int
+    this_addr: String
+    sibling_addr: String
+}
+
+type CommonMsgInfIntMsgInfo {
+    ihr_disabled: Boolean
+    bounce: Boolean
+    bounced: Boolean
+    src: MsgAddressInt
+    dst: MsgAddressInt
+    value: CurrencyCollection
+    ihr_fee: Int
+    fwd_fee: Int
     created_lt: Int
+    created_at: Int
 }
 
-type MessageHeader {
-    ExtOutMsgInfo: ExtOutMsgInfo
+type MsgAddressExtAddrExtern {
+    AddrExtern: String
+}
+
+type MsgAddressExt {
+    AddrNone: None
+    AddrExtern: MsgAddressExtAddrExtern
+}
+
+type CommonMsgInfExtInMsgInfo {
+    src: MsgAddressExt
+    dst: MsgAddressInt
+    import_fee: Int
+}
+
+type CommonMsgInfExtOutMsgInfo {
+    src: MsgAddressInt
+    dst: MsgAddressExt
+    created_lt: Int
+    created_at: Int
+}
+
+type CommonMsgInf {
+    IntMsgInfo: CommonMsgInfIntMsgInfo
+    ExtInMsgInfo: CommonMsgInfExtInMsgInfo
+    ExtOutMsgInfo: CommonMsgInfExtOutMsgInfo
 }
 
 type Message {
-    id: String
-    header: MessageHeader
+    _key: String
+    id: GenericId
+    transaction_id: GenericId
+    block_id: GenericId
+    header: CommonMsgInf
+    init: StateInit
     body: String
-    block_id: String
     status: String
+}
+
+type MsgEnvelope {
+    msg: String
+    next_addr: IntermediateAddress
+    cur_addr: IntermediateAddress
+    fwd_fee_remaining: CurrencyCollection
+}
+
+type InMsgExternal {
+    msg: String
+    transaction: String
+}
+
+type InMsgIHR {
+    msg: String
+    transaction: String
+    ihr_fee: Int
+    proof_created: String
+}
+
+type InMsgImmediately {
+    in_msg: MsgEnvelope
+    fwd_fee: Int
+    transaction: String
+}
+
+type InMsgFinal {
+    in_msg: MsgEnvelope
+    fwd_fee: Int
+    transaction: String
+}
+
+type InMsgTransit {
+    in_msg: MsgEnvelope
+    out_msg: MsgEnvelope
+    transit_fee: Int
+}
+
+type InMsgDiscardedFinal {
+    in_msg: MsgEnvelope
+    transaction_id: Int
+    fwd_fee: Int
+}
+
+type InMsgDiscardedTransit {
+    in_msg: MsgEnvelope
+    transaction_id: Int
+    fwd_fee: Int
+    proof_delivered: String
+}
+
+type InMsg {
+    External: InMsgExternal
+    IHR: InMsgIHR
+    Immediately: InMsgImmediately
+    Final: InMsgFinal
+    Transit: InMsgTransit
+    DiscardedFinal: InMsgDiscardedFinal
+    DiscardedTransit: InMsgDiscardedTransit
+}
+
+type OutMsgExternal {
+    msg: String
+    transaction: String
+}
+
+type OutMsgImmediately {
+    out_msg: MsgEnvelope
+    transaction: String
+    reimport: InMsg
+}
+
+type OutMsgOutMsgNew {
+    out_msg: MsgEnvelope
+    transaction: String
+}
+
+type OutMsgTransit {
+    out_msg: MsgEnvelope
+    imported: InMsg
+}
+
+type OutMsgDequeue {
+    out_msg: MsgEnvelope
+    import_block_lt: Int
+}
+
+type OutMsgTransitRequired {
+    out_msg: MsgEnvelope
+    imported: InMsg
+}
+
+type OutMsg {
+    None: None
+    External: OutMsgExternal
+    Immediately: OutMsgImmediately
+    OutMsgNew: OutMsgOutMsgNew
+    Transit: OutMsgTransit
+    Dequeue: OutMsgDequeue
+    TransitRequired: OutMsgTransitRequired
+}
+
+type BlockInfoPrevRefPrev {
+    seq_no: Int
+    file_hash: String
+    root_hash: String
+    end_lt: Int
+}
+
+type BlockInfoPrevRef {
+    prev: BlockInfoPrevRefPrev
+}
+
+type BlockInfoShard {
+    shard_pfx_bits: Int
+    workchain_id: Int
+    shard_prefix: Int
+}
+
+type BlockInfoMasterRef {
+    master: ExtBlkRef
+}
+
+type BlockInfoPrevVertRef {
+    prev: ExtBlkRef
+    prev_alt: ExtBlkRef
+}
+
+type BlockInfo {
+    want_split: Boolean
+    seq_no: Int
+    after_merge: Boolean
+    gen_utime: Int
+    gen_catchain_seqno: Int
+    flags: Int
+    prev_ref: BlockInfoPrevRef
+    version: Int
+    gen_validator_list_hash_short: Int
+    before_split: Boolean
+    after_split: Boolean
+    want_merge: Boolean
+    vert_seq_no: Int
+    start_lt: Int
+    end_lt: Int
+    shard: BlockInfoShard
+    min_ref_mc_seqno: Int
+    master_ref: BlockInfoMasterRef
+    prev_vert_ref: BlockInfoPrevVertRef
+}
+
+type BlockValueFlow {
+    to_next_blk: CurrencyCollection
+    exported: CurrencyCollection
+    fees_collected: CurrencyCollection
+    created: CurrencyCollection
+    imported: CurrencyCollection
+    from_prev_blk: CurrencyCollection
+    minted: CurrencyCollection
+    fees_imported: CurrencyCollection
+}
+
+type BlockExtraAccountBlocksStateUpdate {
+    old_hash: String
+    new_hash: String
+}
+
+type BlockExtraAccountBlocks {
+    account_addr: String
+    transactions: [String]
+    state_update: BlockExtraAccountBlocksStateUpdate
+    tr_count: Int
+}
+
+type BlockExtra {
+    in_msg_descr: [InMsg]
+    rand_seed: String
+    out_msg_descr: [OutMsg]
+    account_blocks: [BlockExtraAccountBlocks]
+}
+
+type BlockStateUpdate {
+    new: String
+    new_hash: String
+    new_depth: Int
+    old: String
+    old_hash: String
+    old_depth: Int
 }
 
 type Block {
-    id: String
+    _key: String
+    id: GenericId
     status: String
+    global_id: Int
+    info: BlockInfo
+    value_flow: BlockValueFlow
+    extra: BlockExtra
+    state_update: BlockStateUpdate
 }
 
-type AccountBalance {
-    Grams: String
+type AccountStorageStat {
+    last_paid: Int
+    due_payment: Int
+}
+
+type AccountStorageStateAccountActive {
+    split_depth: Int
+    special: TickTock
+    code: String
+    data: String
+    library: String
+}
+
+type AccountStorageState {
+    AccountUninit: None
+    AccountActive: AccountStorageStateAccountActive
+    AccountFrozen: String
 }
 
 type AccountStorage {
-    balance: AccountBalance
     last_trans_lt: Int
+    balance: CurrencyCollection
+    state: AccountStorageState
 }
 
 type Account {
-    id: String
+    _key: String
+    storage_stat: AccountStorageStat
     storage: AccountStorage
+    addr: MsgAddressInt
+}
+
+type TransactionStateUpdate {
+    old_hash: String
+    new_hash: String
+}
+
+type TrStoragePhase {
+    storage_fees_collected: Int
+    storage_fees_due: Int
+    status_change: String
+}
+
+type TrCreditPhase {
+    due_fees_collected: Int
+    credit: CurrencyCollection
+}
+
+type TrComputePhaseSkipped {
+    reason: String
+}
+
+type TrComputePhaseVm {
+    success: Boolean
+    msg_state_used: Boolean
+    account_activated: Boolean
+    gas_fees: Int
+    gas_used: Int
+    gas_limit: Int
+    gas_credit: Int
+    mode: Int
+    exit_code: Int
+    exit_arg: Int
+    vm_steps: Int
+    vm_init_state_hash: String
+    vm_final_state_hash: String
+}
+
+type TrComputePhase {
+    Skipped: TrComputePhaseSkipped
+    Vm: TrComputePhaseVm
+}
+
+type TrActionPhase {
+    success: Boolean
+    valid: Boolean
+    no_funds: Boolean
+    status_change: String
+    total_fwd_fees: Int
+    total_action_fees: Int
+    result_code: Int
+    result_arg: Int
+    tot_actions: Int
+    spec_actions: Int
+    skipped_actions: Int
+    msgs_created: Int
+    action_list_hash: String
+    tot_msg_size: StorageUsedShort
+}
+
+type TrBouncePhaseNofunds {
+    msg_size: StorageUsedShort
+    req_fwd_fees: Int
+}
+
+type TrBouncePhaseOk {
+    msg_size: StorageUsedShort
+    msg_fees: Int
+    fwd_fees: Int
+}
+
+type TrBouncePhase {
+    Negfunds: None
+    Nofunds: TrBouncePhaseNofunds
+    Ok: TrBouncePhaseOk
+}
+
+type TransactionDescrOrdinary {
+    credit_first: Boolean
+    storage_ph: TrStoragePhase
+    credit_ph: TrCreditPhase
+    compute_ph: TrComputePhase
+    action: TrActionPhase
+    aborted: Boolean
+    bounce: TrBouncePhase
+    destroyed: Boolean
+}
+
+type TransactionDescrTickTock {
+    tt: String
+    storage: TrStoragePhase
+    compute_ph: TrComputePhase
+    action: TrActionPhase
+    aborted: Boolean
+    destroyed: Boolean
+}
+
+type TransactionDescrSplitPrepare {
+    split_info: SplitMergeInfo
+    compute_ph: TrComputePhase
+    action: TrActionPhase
+    aborted: Boolean
+    destroyed: Boolean
+}
+
+type TransactionDescrSplitInstall {
+    split_info: SplitMergeInfo
+    prepare_transaction: String
+    installed: Boolean
+}
+
+type TransactionDescrMergePrepare {
+    split_info: SplitMergeInfo
+    storage_ph: TrStoragePhase
+    aborted: Boolean
+}
+
+type TransactionDescrMergeInstall {
+    split_info: SplitMergeInfo
+    prepare_transaction: String
+    credit_ph: TrCreditPhase
+    compute_ph: TrComputePhase
+    action: TrActionPhase
+    aborted: Boolean
+    destroyed: Boolean
+}
+
+type TransactionDescr {
+    Ordinary: TransactionDescrOrdinary
+    Storage: TrStoragePhase
+    TickTock: TransactionDescrTickTock
+    SplitPrepare: TransactionDescrSplitPrepare
+    SplitInstall: TransactionDescrSplitInstall
+    MergePrepare: TransactionDescrMergePrepare
+    MergeInstall: TransactionDescrMergeInstall
+}
+
+type Transaction {
+    _key: String
+    id: GenericId
+    block_id: GenericId
+    status: String
+    account_addr: String
+    last_trans_lt: Int
+    prev_trans_hash: String
+    prev_trans_lt: Int
+    now: Int
+    outmsg_cnt: Int
+    orig_status: String
+    end_status: String
+    in_msg: String
+    out_msgs: [String]
+    total_fees: Int
+    state_update: TransactionStateUpdate
+    description: TransactionDescr
+    root_cell: String
+}
+
+input NoneFilter {
+    dummy: StringFilter
+}
+
+input CurrencyCollectionFilter {
+    Grams: FloatFilter
+}
+
+input IntermediateAddressRegularFilter {
+    use_src_bits: IntFilter
+}
+
+input IntermediateAddressSimpleFilter {
+    workchain_id: IntFilter
+    addr_pfx: StringFilter
+}
+
+input IntermediateAddressExtFilter {
+    workchain_id: IntFilter
+    addr_pfx: StringFilter
+}
+
+input IntermediateAddressFilter {
+    Regular: IntermediateAddressRegularFilter
+    Simple: IntermediateAddressSimpleFilter
+    Ext: IntermediateAddressExtFilter
+}
+
+input ExtBlkRefFilter {
+    end_lt: IntFilter
+    seq_no: IntFilter
+    root_hash: StringFilter
+    file_hash: StringFilter
+}
+
+input GenericIdFilter {
+    ready: BooleanFilter
+    data: StringFilter
+}
+
+input MsgAddressIntAddrStdAnycastFilter {
+    rewrite_pfx: StringFilter
+}
+
+input MsgAddressIntAddrStdFilter {
+    anycast: MsgAddressIntAddrStdAnycastFilter
+    workchain_id: IntFilter
+    address: StringFilter
+}
+
+input MsgAddressIntAddrVarAnycastFilter {
+    rewrite_pfx: StringFilter
+}
+
+input MsgAddressIntAddrVarFilter {
+    anycast: MsgAddressIntAddrVarAnycastFilter
+    workchain_id: IntFilter
+    address: StringFilter
+}
+
+input MsgAddressIntFilter {
+    AddrNone: NoneFilter
+    AddrStd: MsgAddressIntAddrStdFilter
+    AddrVar: MsgAddressIntAddrVarFilter
+}
+
+input TickTockFilter {
+    tick: BooleanFilter
+    tock: BooleanFilter
+}
+
+input StateInitFilter {
+    split_depth: IntFilter
+    special: TickTockFilter
+    code: StringFilter
+    data: StringFilter
+    library: StringFilter
+}
+
+input StorageUsedShortFilter {
+    cells: IntFilter
+    bits: IntFilter
+}
+
+input SplitMergeInfoFilter {
+    cur_shard_pfx_len: IntFilter
+    acc_split_depth: IntFilter
+    this_addr: StringFilter
+    sibling_addr: StringFilter
+}
+
+input CommonMsgInfIntMsgInfoFilter {
+    ihr_disabled: BooleanFilter
+    bounce: BooleanFilter
+    bounced: BooleanFilter
+    src: MsgAddressIntFilter
+    dst: MsgAddressIntFilter
+    value: CurrencyCollectionFilter
+    ihr_fee: IntFilter
+    fwd_fee: IntFilter
+    created_lt: IntFilter
+    created_at: IntFilter
+}
+
+input MsgAddressExtAddrExternFilter {
+    AddrExtern: StringFilter
+}
+
+input MsgAddressExtFilter {
+    AddrNone: NoneFilter
+    AddrExtern: MsgAddressExtAddrExternFilter
+}
+
+input CommonMsgInfExtInMsgInfoFilter {
+    src: MsgAddressExtFilter
+    dst: MsgAddressIntFilter
+    import_fee: IntFilter
+}
+
+input CommonMsgInfExtOutMsgInfoFilter {
+    src: MsgAddressIntFilter
+    dst: MsgAddressExtFilter
+    created_lt: IntFilter
+    created_at: IntFilter
+}
+
+input CommonMsgInfFilter {
+    IntMsgInfo: CommonMsgInfIntMsgInfoFilter
+    ExtInMsgInfo: CommonMsgInfExtInMsgInfoFilter
+    ExtOutMsgInfo: CommonMsgInfExtOutMsgInfoFilter
+}
+
+input MessageFilter {
+    _key: StringFilter
+    id: GenericIdFilter
+    transaction_id: GenericIdFilter
+    block_id: GenericIdFilter
+    header: CommonMsgInfFilter
+    init: StateInitFilter
+    body: StringFilter
+    status: StringFilter
+}
+
+input MsgEnvelopeFilter {
+    msg: StringFilter
+    next_addr: IntermediateAddressFilter
+    cur_addr: IntermediateAddressFilter
+    fwd_fee_remaining: CurrencyCollectionFilter
+}
+
+input InMsgExternalFilter {
+    msg: StringFilter
+    transaction: StringFilter
+}
+
+input InMsgIHRFilter {
+    msg: StringFilter
+    transaction: StringFilter
+    ihr_fee: IntFilter
+    proof_created: StringFilter
+}
+
+input InMsgImmediatelyFilter {
+    in_msg: MsgEnvelopeFilter
+    fwd_fee: IntFilter
+    transaction: StringFilter
+}
+
+input InMsgFinalFilter {
+    in_msg: MsgEnvelopeFilter
+    fwd_fee: IntFilter
+    transaction: StringFilter
+}
+
+input InMsgTransitFilter {
+    in_msg: MsgEnvelopeFilter
+    out_msg: MsgEnvelopeFilter
+    transit_fee: IntFilter
+}
+
+input InMsgDiscardedFinalFilter {
+    in_msg: MsgEnvelopeFilter
+    transaction_id: IntFilter
+    fwd_fee: IntFilter
+}
+
+input InMsgDiscardedTransitFilter {
+    in_msg: MsgEnvelopeFilter
+    transaction_id: IntFilter
+    fwd_fee: IntFilter
+    proof_delivered: StringFilter
+}
+
+input InMsgFilter {
+    External: InMsgExternalFilter
+    IHR: InMsgIHRFilter
+    Immediately: InMsgImmediatelyFilter
+    Final: InMsgFinalFilter
+    Transit: InMsgTransitFilter
+    DiscardedFinal: InMsgDiscardedFinalFilter
+    DiscardedTransit: InMsgDiscardedTransitFilter
+}
+
+input OutMsgExternalFilter {
+    msg: StringFilter
+    transaction: StringFilter
+}
+
+input OutMsgImmediatelyFilter {
+    out_msg: MsgEnvelopeFilter
+    transaction: StringFilter
+    reimport: InMsgFilter
+}
+
+input OutMsgOutMsgNewFilter {
+    out_msg: MsgEnvelopeFilter
+    transaction: StringFilter
+}
+
+input OutMsgTransitFilter {
+    out_msg: MsgEnvelopeFilter
+    imported: InMsgFilter
+}
+
+input OutMsgDequeueFilter {
+    out_msg: MsgEnvelopeFilter
+    import_block_lt: IntFilter
+}
+
+input OutMsgTransitRequiredFilter {
+    out_msg: MsgEnvelopeFilter
+    imported: InMsgFilter
+}
+
+input OutMsgFilter {
+    None: NoneFilter
+    External: OutMsgExternalFilter
+    Immediately: OutMsgImmediatelyFilter
+    OutMsgNew: OutMsgOutMsgNewFilter
+    Transit: OutMsgTransitFilter
+    Dequeue: OutMsgDequeueFilter
+    TransitRequired: OutMsgTransitRequiredFilter
+}
+
+input BlockInfoPrevRefPrevFilter {
+    seq_no: IntFilter
+    file_hash: StringFilter
+    root_hash: StringFilter
+    end_lt: IntFilter
+}
+
+input BlockInfoPrevRefFilter {
+    prev: BlockInfoPrevRefPrevFilter
+}
+
+input BlockInfoShardFilter {
+    shard_pfx_bits: IntFilter
+    workchain_id: IntFilter
+    shard_prefix: IntFilter
+}
+
+input BlockInfoMasterRefFilter {
+    master: ExtBlkRefFilter
+}
+
+input BlockInfoPrevVertRefFilter {
+    prev: ExtBlkRefFilter
+    prev_alt: ExtBlkRefFilter
+}
+
+input BlockInfoFilter {
+    want_split: BooleanFilter
+    seq_no: IntFilter
+    after_merge: BooleanFilter
+    gen_utime: IntFilter
+    gen_catchain_seqno: IntFilter
+    flags: IntFilter
+    prev_ref: BlockInfoPrevRefFilter
+    version: IntFilter
+    gen_validator_list_hash_short: IntFilter
+    before_split: BooleanFilter
+    after_split: BooleanFilter
+    want_merge: BooleanFilter
+    vert_seq_no: IntFilter
+    start_lt: IntFilter
+    end_lt: IntFilter
+    shard: BlockInfoShardFilter
+    min_ref_mc_seqno: IntFilter
+    master_ref: BlockInfoMasterRefFilter
+    prev_vert_ref: BlockInfoPrevVertRefFilter
+}
+
+input BlockValueFlowFilter {
+    to_next_blk: CurrencyCollectionFilter
+    exported: CurrencyCollectionFilter
+    fees_collected: CurrencyCollectionFilter
+    created: CurrencyCollectionFilter
+    imported: CurrencyCollectionFilter
+    from_prev_blk: CurrencyCollectionFilter
+    minted: CurrencyCollectionFilter
+    fees_imported: CurrencyCollectionFilter
+}
+
+input BlockExtraAccountBlocksStateUpdateFilter {
+    old_hash: StringFilter
+    new_hash: StringFilter
+}
+
+input StringArrayFilter {
+    any: StringFilter
+    all: StringFilter
+}
+
+input BlockExtraAccountBlocksFilter {
+    account_addr: StringFilter
+    transactions: StringArrayFilter
+    state_update: BlockExtraAccountBlocksStateUpdateFilter
+    tr_count: IntFilter
+}
+
+input InMsgArrayFilter {
+    any: InMsgFilter
+    all: InMsgFilter
+}
+
+input OutMsgArrayFilter {
+    any: OutMsgFilter
+    all: OutMsgFilter
+}
+
+input BlockExtraAccountBlocksArrayFilter {
+    any: BlockExtraAccountBlocksFilter
+    all: BlockExtraAccountBlocksFilter
+}
+
+input BlockExtraFilter {
+    in_msg_descr: InMsgArrayFilter
+    rand_seed: StringFilter
+    out_msg_descr: OutMsgArrayFilter
+    account_blocks: BlockExtraAccountBlocksArrayFilter
+}
+
+input BlockStateUpdateFilter {
+    new: StringFilter
+    new_hash: StringFilter
+    new_depth: IntFilter
+    old: StringFilter
+    old_hash: StringFilter
+    old_depth: IntFilter
+}
+
+input BlockFilter {
+    _key: StringFilter
+    id: GenericIdFilter
+    status: StringFilter
+    global_id: IntFilter
+    info: BlockInfoFilter
+    value_flow: BlockValueFlowFilter
+    extra: BlockExtraFilter
+    state_update: BlockStateUpdateFilter
+}
+
+input AccountStorageStatFilter {
+    last_paid: IntFilter
+    due_payment: IntFilter
+}
+
+input AccountStorageStateAccountActiveFilter {
+    split_depth: IntFilter
+    special: TickTockFilter
+    code: StringFilter
+    data: StringFilter
+    library: StringFilter
+}
+
+input AccountStorageStateFilter {
+    AccountUninit: NoneFilter
+    AccountActive: AccountStorageStateAccountActiveFilter
+    AccountFrozen: StringFilter
+}
+
+input AccountStorageFilter {
+    last_trans_lt: IntFilter
+    balance: CurrencyCollectionFilter
+    state: AccountStorageStateFilter
+}
+
+input AccountFilter {
+    _key: StringFilter
+    storage_stat: AccountStorageStatFilter
+    storage: AccountStorageFilter
+    addr: MsgAddressIntFilter
+}
+
+input TransactionStateUpdateFilter {
+    old_hash: StringFilter
+    new_hash: StringFilter
+}
+
+input TrStoragePhaseFilter {
+    storage_fees_collected: IntFilter
+    storage_fees_due: IntFilter
+    status_change: StringFilter
+}
+
+input TrCreditPhaseFilter {
+    due_fees_collected: IntFilter
+    credit: CurrencyCollectionFilter
+}
+
+input TrComputePhaseSkippedFilter {
+    reason: StringFilter
+}
+
+input TrComputePhaseVmFilter {
+    success: BooleanFilter
+    msg_state_used: BooleanFilter
+    account_activated: BooleanFilter
+    gas_fees: IntFilter
+    gas_used: IntFilter
+    gas_limit: IntFilter
+    gas_credit: IntFilter
+    mode: IntFilter
+    exit_code: IntFilter
+    exit_arg: IntFilter
+    vm_steps: IntFilter
+    vm_init_state_hash: StringFilter
+    vm_final_state_hash: StringFilter
+}
+
+input TrComputePhaseFilter {
+    Skipped: TrComputePhaseSkippedFilter
+    Vm: TrComputePhaseVmFilter
+}
+
+input TrActionPhaseFilter {
+    success: BooleanFilter
+    valid: BooleanFilter
+    no_funds: BooleanFilter
+    status_change: StringFilter
+    total_fwd_fees: IntFilter
+    total_action_fees: IntFilter
+    result_code: IntFilter
+    result_arg: IntFilter
+    tot_actions: IntFilter
+    spec_actions: IntFilter
+    skipped_actions: IntFilter
+    msgs_created: IntFilter
+    action_list_hash: StringFilter
+    tot_msg_size: StorageUsedShortFilter
+}
+
+input TrBouncePhaseNofundsFilter {
+    msg_size: StorageUsedShortFilter
+    req_fwd_fees: IntFilter
+}
+
+input TrBouncePhaseOkFilter {
+    msg_size: StorageUsedShortFilter
+    msg_fees: IntFilter
+    fwd_fees: IntFilter
+}
+
+input TrBouncePhaseFilter {
+    Negfunds: NoneFilter
+    Nofunds: TrBouncePhaseNofundsFilter
+    Ok: TrBouncePhaseOkFilter
+}
+
+input TransactionDescrOrdinaryFilter {
+    credit_first: BooleanFilter
+    storage_ph: TrStoragePhaseFilter
+    credit_ph: TrCreditPhaseFilter
+    compute_ph: TrComputePhaseFilter
+    action: TrActionPhaseFilter
+    aborted: BooleanFilter
+    bounce: TrBouncePhaseFilter
+    destroyed: BooleanFilter
+}
+
+input TransactionDescrTickTockFilter {
+    tt: StringFilter
+    storage: TrStoragePhaseFilter
+    compute_ph: TrComputePhaseFilter
+    action: TrActionPhaseFilter
+    aborted: BooleanFilter
+    destroyed: BooleanFilter
+}
+
+input TransactionDescrSplitPrepareFilter {
+    split_info: SplitMergeInfoFilter
+    compute_ph: TrComputePhaseFilter
+    action: TrActionPhaseFilter
+    aborted: BooleanFilter
+    destroyed: BooleanFilter
+}
+
+input TransactionDescrSplitInstallFilter {
+    split_info: SplitMergeInfoFilter
+    prepare_transaction: StringFilter
+    installed: BooleanFilter
+}
+
+input TransactionDescrMergePrepareFilter {
+    split_info: SplitMergeInfoFilter
+    storage_ph: TrStoragePhaseFilter
+    aborted: BooleanFilter
+}
+
+input TransactionDescrMergeInstallFilter {
+    split_info: SplitMergeInfoFilter
+    prepare_transaction: StringFilter
+    credit_ph: TrCreditPhaseFilter
+    compute_ph: TrComputePhaseFilter
+    action: TrActionPhaseFilter
+    aborted: BooleanFilter
+    destroyed: BooleanFilter
+}
+
+input TransactionDescrFilter {
+    Ordinary: TransactionDescrOrdinaryFilter
+    Storage: TrStoragePhaseFilter
+    TickTock: TransactionDescrTickTockFilter
+    SplitPrepare: TransactionDescrSplitPrepareFilter
+    SplitInstall: TransactionDescrSplitInstallFilter
+    MergePrepare: TransactionDescrMergePrepareFilter
+    MergeInstall: TransactionDescrMergeInstallFilter
+}
+
+input TransactionFilter {
+    _key: StringFilter
+    id: GenericIdFilter
+    block_id: GenericIdFilter
+    status: StringFilter
+    account_addr: StringFilter
+    last_trans_lt: IntFilter
+    prev_trans_hash: StringFilter
+    prev_trans_lt: IntFilter
+    now: IntFilter
+    outmsg_cnt: IntFilter
+    orig_status: StringFilter
+    end_status: StringFilter
+    in_msg: StringFilter
+    out_msgs: StringArrayFilter
+    total_fees: IntFilter
+    state_update: TransactionStateUpdateFilter
+    description: TransactionDescrFilter
+    root_cell: StringFilter
+}
+
+enum QueryOrderBySort {
+    ASC
+    DESC
+}
+
+input QueryOrderBy {
+    path: [String]
+    sort: QueryOrderBySort
 }
 
 type Query {
-    transactions(filter: String): [Transaction]
-    messages(filter: String): [Message]
-    accounts(filter: String): [Account]
-    blocks(filter: String): [Block]
+    messages(filter: MessageFilter, orderBy: QueryOrderBy, limit: Int): [Message]
+    blocks(filter: BlockFilter, orderBy: QueryOrderBy, limit: Int): [Block]
+    accounts(filter: AccountFilter, orderBy: QueryOrderBy, limit: Int): [Account]
+    transactions(filter: TransactionFilter, orderBy: QueryOrderBy, limit: Int): [Transaction]
     select(query: String!, bindVarsJson: String!): String!
 }
 
 type Subscription {
-    transactions(match: String): Transaction
-    messages(match: String): Message
-    accounts(match: String): Account
-    blocks(match: String): Block
+    messages(filter: MessageFilter): Message
+    blocks(filter: BlockFilter): Block
+    accounts(filter: AccountFilter): Account
+    transactions(filter: TransactionFilter): Transaction
 }

@@ -8,7 +8,7 @@ function startListener(db, pubsub, config) {
 		listener.subscribe({collection: collectionName});
 		listener.on(collectionName, (docJson, type) => {
 			if (type === 'insert/update') {
-				const doc = db.convertDoc(JSON.parse(docJson));
+				const doc = JSON.parse(docJson);
 				pubsub.publish(collectionName, {[collectionName]: doc});
 			}
 		});
