@@ -96,7 +96,7 @@ pipeline {
 							docker.withRegistry('', 'dockerhubLanin') {
 								def wimage = docker.build(
                                     "${G_gqlimage}:${env.BUILD_ID}",
-                                    "--label 'git-commit=${GIT_COMMIT}'"
+                                    "--label 'git-commit=${GIT_COMMIT}' ."
                                 )
 								wimage.push()
 								wimage.push('latest')
