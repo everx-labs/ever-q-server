@@ -7,13 +7,13 @@ const server = new TONQServer({
 	logs: new QLogs(),
 });
 
-(async () => {
-    try {
-        await server.start();
-    } catch (error) {
-        server.log.error('Start failed:', error);
-        process.exit(1);
-    }
-})();
-
-
+export function main() {
+    (async () => {
+        try {
+            await server.start();
+        } catch (error) {
+            server.log.error('Start failed:', error);
+            process.exit(1);
+        }
+    })();
+}
