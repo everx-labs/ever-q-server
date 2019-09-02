@@ -160,7 +160,8 @@ type ArrayOp = {
 
 const arrayAll: ArrayOp = {
     ql(path, filter, itemType) {
-        return 'true';
+        const itemQl = qlFilter('CURRENT', filter, itemType);
+        return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
     },
     test(value, filter, itemType) {
         const failedIndex = value.findIndex(x => !testFilter(x, filter, itemType));
@@ -170,7 +171,8 @@ const arrayAll: ArrayOp = {
 
 const arrayAny: ArrayOp = {
     ql(path, filter, itemType) {
-        return 'true';
+        const itemQl = qlFilter('CURRENT', filter, itemType);
+        return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
     },
     test(value, filter, itemType) {
         const succeededIndex = value.findIndex(x => testFilter(x, filter, itemType));
