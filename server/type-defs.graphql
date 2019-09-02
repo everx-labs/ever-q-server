@@ -64,11 +64,23 @@ type IntermediateAddressExt {
     addr_pfx: String
 }
 
-type IntermediateAddress {
+type IntermediateAddressRegularVariant {
     Regular: IntermediateAddressRegular
+}
+
+type IntermediateAddressSimpleVariant {
     Simple: IntermediateAddressSimple
+}
+
+type IntermediateAddressExtVariant {
     Ext: IntermediateAddressExt
 }
+
+union IntermediateAddress =
+    | IntermediateAddressRegularVariant
+    | IntermediateAddressSimpleVariant
+    | IntermediateAddressExtVariant
+
 
 type ExtBlkRef {
     end_lt: Int
@@ -102,11 +114,23 @@ type MsgAddressIntAddrVar {
     address: String
 }
 
-type MsgAddressInt {
+type MsgAddressIntAddrNoneVariant {
     AddrNone: None
+}
+
+type MsgAddressIntAddrStdVariant {
     AddrStd: MsgAddressIntAddrStd
+}
+
+type MsgAddressIntAddrVarVariant {
     AddrVar: MsgAddressIntAddrVar
 }
+
+union MsgAddressInt =
+    | MsgAddressIntAddrNoneVariant
+    | MsgAddressIntAddrStdVariant
+    | MsgAddressIntAddrVarVariant
+
 
 type TickTock {
     tick: Boolean
@@ -150,10 +174,18 @@ type MsgAddressExtAddrExtern {
     AddrExtern: String
 }
 
-type MsgAddressExt {
+type MsgAddressExtAddrNoneVariant {
     AddrNone: None
+}
+
+type MsgAddressExtAddrExternVariant {
     AddrExtern: MsgAddressExtAddrExtern
 }
+
+union MsgAddressExt =
+    | MsgAddressExtAddrNoneVariant
+    | MsgAddressExtAddrExternVariant
+
 
 type CommonMsgInfExtInMsgInfo {
     src: MsgAddressExt
@@ -168,11 +200,23 @@ type CommonMsgInfExtOutMsgInfo {
     created_at: Int
 }
 
-type CommonMsgInf {
+type CommonMsgInfIntMsgInfoVariant {
     IntMsgInfo: CommonMsgInfIntMsgInfo
+}
+
+type CommonMsgInfExtInMsgInfoVariant {
     ExtInMsgInfo: CommonMsgInfExtInMsgInfo
+}
+
+type CommonMsgInfExtOutMsgInfoVariant {
     ExtOutMsgInfo: CommonMsgInfExtOutMsgInfo
 }
+
+union CommonMsgInf =
+    | CommonMsgInfIntMsgInfoVariant
+    | CommonMsgInfExtInMsgInfoVariant
+    | CommonMsgInfExtOutMsgInfoVariant
+
 
 type Message {
     _key: String
@@ -204,7 +248,7 @@ type InMsgIHR {
     proof_created: String
 }
 
-type InMsgImmediately {
+type InMsgImmediatelly {
     in_msg: MsgEnvelope
     fwd_fee: Int
     transaction: String
@@ -235,15 +279,43 @@ type InMsgDiscardedTransit {
     proof_delivered: String
 }
 
-type InMsg {
+type InMsgExternalVariant {
     External: InMsgExternal
+}
+
+type InMsgIHRVariant {
     IHR: InMsgIHR
-    Immediately: InMsgImmediately
+}
+
+type InMsgImmediatellyVariant {
+    Immediatelly: InMsgImmediatelly
+}
+
+type InMsgFinalVariant {
     Final: InMsgFinal
+}
+
+type InMsgTransitVariant {
     Transit: InMsgTransit
+}
+
+type InMsgDiscardedFinalVariant {
     DiscardedFinal: InMsgDiscardedFinal
+}
+
+type InMsgDiscardedTransitVariant {
     DiscardedTransit: InMsgDiscardedTransit
 }
+
+union InMsg =
+    | InMsgExternalVariant
+    | InMsgIHRVariant
+    | InMsgImmediatellyVariant
+    | InMsgFinalVariant
+    | InMsgTransitVariant
+    | InMsgDiscardedFinalVariant
+    | InMsgDiscardedTransitVariant
+
 
 type OutMsgExternal {
     msg: String
@@ -276,15 +348,43 @@ type OutMsgTransitRequired {
     imported: InMsg
 }
 
-type OutMsg {
+type OutMsgNoneVariant {
     None: None
+}
+
+type OutMsgExternalVariant {
     External: OutMsgExternal
+}
+
+type OutMsgImmediatelyVariant {
     Immediately: OutMsgImmediately
+}
+
+type OutMsgOutMsgNewVariant {
     OutMsgNew: OutMsgOutMsgNew
+}
+
+type OutMsgTransitVariant {
     Transit: OutMsgTransit
+}
+
+type OutMsgDequeueVariant {
     Dequeue: OutMsgDequeue
+}
+
+type OutMsgTransitRequiredVariant {
     TransitRequired: OutMsgTransitRequired
 }
+
+union OutMsg =
+    | OutMsgNoneVariant
+    | OutMsgExternalVariant
+    | OutMsgImmediatelyVariant
+    | OutMsgOutMsgNewVariant
+    | OutMsgTransitVariant
+    | OutMsgDequeueVariant
+    | OutMsgTransitRequiredVariant
+
 
 type BlockInfoPrevRefPrev {
     seq_no: Int
@@ -397,11 +497,27 @@ type AccountStorageStateAccountActive {
     library: String
 }
 
-type AccountStorageState {
-    AccountUninit: None
-    AccountActive: AccountStorageStateAccountActive
-    AccountFrozen: String
+type AccountStorageStateAccountFrozen {
+    dummy: String
 }
+
+type AccountStorageStateAccountUninitVariant {
+    AccountUninit: None
+}
+
+type AccountStorageStateAccountActiveVariant {
+    AccountActive: AccountStorageStateAccountActive
+}
+
+type AccountStorageStateAccountFrozenVariant {
+    AccountFrozen: AccountStorageStateAccountFrozen
+}
+
+union AccountStorageState =
+    | AccountStorageStateAccountUninitVariant
+    | AccountStorageStateAccountActiveVariant
+    | AccountStorageStateAccountFrozenVariant
+
 
 type AccountStorage {
     last_trans_lt: Int
@@ -452,10 +568,18 @@ type TrComputePhaseVm {
     vm_final_state_hash: String
 }
 
-type TrComputePhase {
+type TrComputePhaseSkippedVariant {
     Skipped: TrComputePhaseSkipped
+}
+
+type TrComputePhaseVmVariant {
     Vm: TrComputePhaseVm
 }
+
+union TrComputePhase =
+    | TrComputePhaseSkippedVariant
+    | TrComputePhaseVmVariant
+
 
 type TrActionPhase {
     success: Boolean
@@ -485,11 +609,23 @@ type TrBouncePhaseOk {
     fwd_fees: Int
 }
 
-type TrBouncePhase {
+type TrBouncePhaseNegfundsVariant {
     Negfunds: None
+}
+
+type TrBouncePhaseNofundsVariant {
     Nofunds: TrBouncePhaseNofunds
+}
+
+type TrBouncePhaseOkVariant {
     Ok: TrBouncePhaseOk
 }
+
+union TrBouncePhase =
+    | TrBouncePhaseNegfundsVariant
+    | TrBouncePhaseNofundsVariant
+    | TrBouncePhaseOkVariant
+
 
 type TransactionDescrOrdinary {
     credit_first: Boolean
@@ -541,15 +677,43 @@ type TransactionDescrMergeInstall {
     destroyed: Boolean
 }
 
-type TransactionDescr {
+type TransactionDescrOrdinaryVariant {
     Ordinary: TransactionDescrOrdinary
+}
+
+type TransactionDescrStorageVariant {
     Storage: TrStoragePhase
+}
+
+type TransactionDescrTickTockVariant {
     TickTock: TransactionDescrTickTock
+}
+
+type TransactionDescrSplitPrepareVariant {
     SplitPrepare: TransactionDescrSplitPrepare
+}
+
+type TransactionDescrSplitInstallVariant {
     SplitInstall: TransactionDescrSplitInstall
+}
+
+type TransactionDescrMergePrepareVariant {
     MergePrepare: TransactionDescrMergePrepare
+}
+
+type TransactionDescrMergeInstallVariant {
     MergeInstall: TransactionDescrMergeInstall
 }
+
+union TransactionDescr =
+    | TransactionDescrOrdinaryVariant
+    | TransactionDescrStorageVariant
+    | TransactionDescrTickTockVariant
+    | TransactionDescrSplitPrepareVariant
+    | TransactionDescrSplitInstallVariant
+    | TransactionDescrMergePrepareVariant
+    | TransactionDescrMergeInstallVariant
+
 
 type Transaction {
     _key: String
@@ -734,7 +898,7 @@ input InMsgIHRFilter {
     proof_created: StringFilter
 }
 
-input InMsgImmediatelyFilter {
+input InMsgImmediatellyFilter {
     in_msg: MsgEnvelopeFilter
     fwd_fee: IntFilter
     transaction: StringFilter
@@ -768,7 +932,7 @@ input InMsgDiscardedTransitFilter {
 input InMsgFilter {
     External: InMsgExternalFilter
     IHR: InMsgIHRFilter
-    Immediately: InMsgImmediatelyFilter
+    Immediatelly: InMsgImmediatellyFilter
     Final: InMsgFinalFilter
     Transit: InMsgTransitFilter
     DiscardedFinal: InMsgDiscardedFinalFilter
@@ -947,10 +1111,14 @@ input AccountStorageStateAccountActiveFilter {
     library: StringFilter
 }
 
+input AccountStorageStateAccountFrozenFilter {
+    dummy: StringFilter
+}
+
 input AccountStorageStateFilter {
     AccountUninit: NoneFilter
     AccountActive: AccountStorageStateAccountActiveFilter
-    AccountFrozen: StringFilter
+    AccountFrozen: AccountStorageStateAccountFrozenFilter
 }
 
 input AccountStorageFilter {
