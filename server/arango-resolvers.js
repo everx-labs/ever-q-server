@@ -27,6 +27,21 @@ const IntermediateAddress = struct({
     Ext: IntermediateAddressExt,
 });
 
+const IntermediateAddressResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.Regular) {
+            return 'IntermediateAddressRegularVariant';
+        }
+        if (obj.Simple) {
+            return 'IntermediateAddressSimpleVariant';
+        }
+        if (obj.Ext) {
+            return 'IntermediateAddressExtVariant';
+        }
+        return null;
+    }
+};
+
 const ExtBlkRef = struct({
     end_lt: scalar,
     seq_no: scalar,
@@ -64,6 +79,21 @@ const MsgAddressInt = struct({
     AddrStd: MsgAddressIntAddrStd,
     AddrVar: MsgAddressIntAddrVar,
 });
+
+const MsgAddressIntResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.AddrNone) {
+            return 'MsgAddressIntAddrNoneVariant';
+        }
+        if (obj.AddrStd) {
+            return 'MsgAddressIntAddrStdVariant';
+        }
+        if (obj.AddrVar) {
+            return 'MsgAddressIntAddrVarVariant';
+        }
+        return null;
+    }
+};
 
 const TickTock = struct({
     tick: scalar,
@@ -112,6 +142,18 @@ const MsgAddressExt = struct({
     AddrExtern: MsgAddressExtAddrExtern,
 });
 
+const MsgAddressExtResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.AddrNone) {
+            return 'MsgAddressExtAddrNoneVariant';
+        }
+        if (obj.AddrExtern) {
+            return 'MsgAddressExtAddrExternVariant';
+        }
+        return null;
+    }
+};
+
 const CommonMsgInfExtInMsgInfo = struct({
     src: MsgAddressExt,
     dst: MsgAddressInt,
@@ -130,6 +172,21 @@ const CommonMsgInf = struct({
     ExtInMsgInfo: CommonMsgInfExtInMsgInfo,
     ExtOutMsgInfo: CommonMsgInfExtOutMsgInfo,
 });
+
+const CommonMsgInfResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.IntMsgInfo) {
+            return 'CommonMsgInfIntMsgInfoVariant';
+        }
+        if (obj.ExtInMsgInfo) {
+            return 'CommonMsgInfExtInMsgInfoVariant';
+        }
+        if (obj.ExtOutMsgInfo) {
+            return 'CommonMsgInfExtOutMsgInfoVariant';
+        }
+        return null;
+    }
+};
 
 const Message = struct({
     _key: scalar,
@@ -161,7 +218,7 @@ const InMsgIHR = struct({
     proof_created: scalar,
 });
 
-const InMsgImmediately = struct({
+const InMsgImmediatelly = struct({
     in_msg: MsgEnvelope,
     fwd_fee: scalar,
     transaction: scalar,
@@ -195,12 +252,39 @@ const InMsgDiscardedTransit = struct({
 const InMsg = struct({
     External: InMsgExternal,
     IHR: InMsgIHR,
-    Immediately: InMsgImmediately,
+    Immediatelly: InMsgImmediatelly,
     Final: InMsgFinal,
     Transit: InMsgTransit,
     DiscardedFinal: InMsgDiscardedFinal,
     DiscardedTransit: InMsgDiscardedTransit,
 });
+
+const InMsgResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.External) {
+            return 'InMsgExternalVariant';
+        }
+        if (obj.IHR) {
+            return 'InMsgIHRVariant';
+        }
+        if (obj.Immediatelly) {
+            return 'InMsgImmediatellyVariant';
+        }
+        if (obj.Final) {
+            return 'InMsgFinalVariant';
+        }
+        if (obj.Transit) {
+            return 'InMsgTransitVariant';
+        }
+        if (obj.DiscardedFinal) {
+            return 'InMsgDiscardedFinalVariant';
+        }
+        if (obj.DiscardedTransit) {
+            return 'InMsgDiscardedTransitVariant';
+        }
+        return null;
+    }
+};
 
 const OutMsgExternal = struct({
     msg: scalar,
@@ -242,6 +326,33 @@ const OutMsg = struct({
     Dequeue: OutMsgDequeue,
     TransitRequired: OutMsgTransitRequired,
 });
+
+const OutMsgResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.None) {
+            return 'OutMsgNoneVariant';
+        }
+        if (obj.External) {
+            return 'OutMsgExternalVariant';
+        }
+        if (obj.Immediately) {
+            return 'OutMsgImmediatelyVariant';
+        }
+        if (obj.OutMsgNew) {
+            return 'OutMsgOutMsgNewVariant';
+        }
+        if (obj.Transit) {
+            return 'OutMsgTransitVariant';
+        }
+        if (obj.Dequeue) {
+            return 'OutMsgDequeueVariant';
+        }
+        if (obj.TransitRequired) {
+            return 'OutMsgTransitRequiredVariant';
+        }
+        return null;
+    }
+};
 
 const BlockInfoPrevRefPrev = struct({
     seq_no: scalar,
@@ -308,7 +419,6 @@ const BlockExtraAccountBlocksStateUpdate = struct({
 });
 
 const StringArray = array(String);
-
 const BlockExtraAccountBlocks = struct({
     account_addr: scalar,
     transactions: StringArray,
@@ -317,11 +427,8 @@ const BlockExtraAccountBlocks = struct({
 });
 
 const InMsgArray = array(InMsg);
-
 const OutMsgArray = array(OutMsg);
-
 const BlockExtraAccountBlocksArray = array(BlockExtraAccountBlocks);
-
 const BlockExtra = struct({
     in_msg_descr: InMsgArray,
     rand_seed: scalar,
@@ -362,11 +469,30 @@ const AccountStorageStateAccountActive = struct({
     library: scalar,
 });
 
+const AccountStorageStateAccountFrozen = struct({
+    dummy: scalar,
+});
+
 const AccountStorageState = struct({
     AccountUninit: None,
     AccountActive: AccountStorageStateAccountActive,
-    AccountFrozen: scalar,
+    AccountFrozen: AccountStorageStateAccountFrozen,
 });
+
+const AccountStorageStateResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.AccountUninit) {
+            return 'AccountStorageStateAccountUninitVariant';
+        }
+        if (obj.AccountActive) {
+            return 'AccountStorageStateAccountActiveVariant';
+        }
+        if (obj.AccountFrozen) {
+            return 'AccountStorageStateAccountFrozenVariant';
+        }
+        return null;
+    }
+};
 
 const AccountStorage = struct({
     last_trans_lt: scalar,
@@ -422,6 +548,18 @@ const TrComputePhase = struct({
     Vm: TrComputePhaseVm,
 });
 
+const TrComputePhaseResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.Skipped) {
+            return 'TrComputePhaseSkippedVariant';
+        }
+        if (obj.Vm) {
+            return 'TrComputePhaseVmVariant';
+        }
+        return null;
+    }
+};
+
 const TrActionPhase = struct({
     success: scalar,
     valid: scalar,
@@ -455,6 +593,21 @@ const TrBouncePhase = struct({
     Nofunds: TrBouncePhaseNofunds,
     Ok: TrBouncePhaseOk,
 });
+
+const TrBouncePhaseResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.Negfunds) {
+            return 'TrBouncePhaseNegfundsVariant';
+        }
+        if (obj.Nofunds) {
+            return 'TrBouncePhaseNofundsVariant';
+        }
+        if (obj.Ok) {
+            return 'TrBouncePhaseOkVariant';
+        }
+        return null;
+    }
+};
 
 const TransactionDescrOrdinary = struct({
     credit_first: scalar,
@@ -516,6 +669,33 @@ const TransactionDescr = struct({
     MergeInstall: TransactionDescrMergeInstall,
 });
 
+const TransactionDescrResolver = {
+    __resolveType(obj, context, info) {
+        if (obj.Ordinary) {
+            return 'TransactionDescrOrdinaryVariant';
+        }
+        if (obj.Storage) {
+            return 'TransactionDescrStorageVariant';
+        }
+        if (obj.TickTock) {
+            return 'TransactionDescrTickTockVariant';
+        }
+        if (obj.SplitPrepare) {
+            return 'TransactionDescrSplitPrepareVariant';
+        }
+        if (obj.SplitInstall) {
+            return 'TransactionDescrSplitInstallVariant';
+        }
+        if (obj.MergePrepare) {
+            return 'TransactionDescrMergePrepareVariant';
+        }
+        if (obj.MergeInstall) {
+            return 'TransactionDescrMergeInstallVariant';
+        }
+        return null;
+    }
+};
+
 const Transaction = struct({
     _key: scalar,
     id: GenericId,
@@ -539,6 +719,16 @@ const Transaction = struct({
 
 function createResolvers(db) {
     return {
+        IntermediateAddress: IntermediateAddressResolver,
+        MsgAddressInt: MsgAddressIntResolver,
+        MsgAddressExt: MsgAddressExtResolver,
+        CommonMsgInf: CommonMsgInfResolver,
+        InMsg: InMsgResolver,
+        OutMsg: OutMsgResolver,
+        AccountStorageState: AccountStorageStateResolver,
+        TrComputePhase: TrComputePhaseResolver,
+        TrBouncePhase: TrBouncePhaseResolver,
+        TransactionDescr: TransactionDescrResolver,
         Query: {
             messages: db.collectionQuery(db.messages, Message),
             blocks: db.collectionQuery(db.blocks, Block),
