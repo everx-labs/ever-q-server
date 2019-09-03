@@ -137,14 +137,6 @@ type TickTock {
     tock: Boolean
 }
 
-type StateInit {
-    split_depth: Int
-    special: TickTock
-    code: String
-    data: String
-    library: String
-}
-
 type StorageUsedShort {
     cells: Int
     bits: Int
@@ -155,19 +147,6 @@ type SplitMergeInfo {
     acc_split_depth: Int
     this_addr: String
     sibling_addr: String
-}
-
-type CommonMsgInfIntMsgInfo {
-    ihr_disabled: Boolean
-    bounce: Boolean
-    bounced: Boolean
-    src: MsgAddressInt
-    dst: MsgAddressInt
-    value: CurrencyCollection
-    ihr_fee: Int
-    fwd_fee: Int
-    created_lt: Int
-    created_at: Int
 }
 
 type MsgAddressExtAddrExtern {
@@ -187,44 +166,65 @@ union MsgAddressExt =
     | MsgAddressExtAddrExternVariant
 
 
-type CommonMsgInfExtInMsgInfo {
+type MessageHeaderIntMsgInfo {
+    ihr_disabled: Boolean
+    bounce: Boolean
+    bounced: Boolean
+    src: MsgAddressInt
+    dst: MsgAddressInt
+    value: CurrencyCollection
+    ihr_fee: Int
+    fwd_fee: Int
+    created_lt: Int
+    created_at: Int
+}
+
+type MessageHeaderExtInMsgInfo {
     src: MsgAddressExt
     dst: MsgAddressInt
     import_fee: Int
 }
 
-type CommonMsgInfExtOutMsgInfo {
+type MessageHeaderExtOutMsgInfo {
     src: MsgAddressInt
     dst: MsgAddressExt
     created_lt: Int
     created_at: Int
 }
 
-type CommonMsgInfIntMsgInfoVariant {
-    IntMsgInfo: CommonMsgInfIntMsgInfo
+type MessageHeaderIntMsgInfoVariant {
+    IntMsgInfo: MessageHeaderIntMsgInfo
 }
 
-type CommonMsgInfExtInMsgInfoVariant {
-    ExtInMsgInfo: CommonMsgInfExtInMsgInfo
+type MessageHeaderExtInMsgInfoVariant {
+    ExtInMsgInfo: MessageHeaderExtInMsgInfo
 }
 
-type CommonMsgInfExtOutMsgInfoVariant {
-    ExtOutMsgInfo: CommonMsgInfExtOutMsgInfo
+type MessageHeaderExtOutMsgInfoVariant {
+    ExtOutMsgInfo: MessageHeaderExtOutMsgInfo
 }
 
-union CommonMsgInf =
-    | CommonMsgInfIntMsgInfoVariant
-    | CommonMsgInfExtInMsgInfoVariant
-    | CommonMsgInfExtOutMsgInfoVariant
+union MessageHeader =
+    | MessageHeaderIntMsgInfoVariant
+    | MessageHeaderExtInMsgInfoVariant
+    | MessageHeaderExtOutMsgInfoVariant
 
+
+type MessageInit {
+    split_depth: Int
+    special: TickTock
+    code: String
+    data: String
+    library: String
+}
 
 type Message {
     _key: String
     id: GenericId
     transaction_id: GenericId
     block_id: GenericId
-    header: CommonMsgInf
-    init: StateInit
+    header: MessageHeader
+    init: MessageInit
     body: String
     status: String
 }
@@ -627,7 +627,7 @@ union TrBouncePhase =
     | TrBouncePhaseOkVariant
 
 
-type TransactionDescrOrdinary {
+type TransactionDescriptionOrdinary {
     credit_first: Boolean
     storage_ph: TrStoragePhase
     credit_ph: TrCreditPhase
@@ -638,7 +638,7 @@ type TransactionDescrOrdinary {
     destroyed: Boolean
 }
 
-type TransactionDescrTickTock {
+type TransactionDescriptionTickTock {
     tt: String
     storage: TrStoragePhase
     compute_ph: TrComputePhase
@@ -647,7 +647,7 @@ type TransactionDescrTickTock {
     destroyed: Boolean
 }
 
-type TransactionDescrSplitPrepare {
+type TransactionDescriptionSplitPrepare {
     split_info: SplitMergeInfo
     compute_ph: TrComputePhase
     action: TrActionPhase
@@ -655,19 +655,19 @@ type TransactionDescrSplitPrepare {
     destroyed: Boolean
 }
 
-type TransactionDescrSplitInstall {
+type TransactionDescriptionSplitInstall {
     split_info: SplitMergeInfo
     prepare_transaction: String
     installed: Boolean
 }
 
-type TransactionDescrMergePrepare {
+type TransactionDescriptionMergePrepare {
     split_info: SplitMergeInfo
     storage_ph: TrStoragePhase
     aborted: Boolean
 }
 
-type TransactionDescrMergeInstall {
+type TransactionDescriptionMergeInstall {
     split_info: SplitMergeInfo
     prepare_transaction: String
     credit_ph: TrCreditPhase
@@ -677,42 +677,42 @@ type TransactionDescrMergeInstall {
     destroyed: Boolean
 }
 
-type TransactionDescrOrdinaryVariant {
-    Ordinary: TransactionDescrOrdinary
+type TransactionDescriptionOrdinaryVariant {
+    Ordinary: TransactionDescriptionOrdinary
 }
 
-type TransactionDescrStorageVariant {
+type TransactionDescriptionStorageVariant {
     Storage: TrStoragePhase
 }
 
-type TransactionDescrTickTockVariant {
-    TickTock: TransactionDescrTickTock
+type TransactionDescriptionTickTockVariant {
+    TickTock: TransactionDescriptionTickTock
 }
 
-type TransactionDescrSplitPrepareVariant {
-    SplitPrepare: TransactionDescrSplitPrepare
+type TransactionDescriptionSplitPrepareVariant {
+    SplitPrepare: TransactionDescriptionSplitPrepare
 }
 
-type TransactionDescrSplitInstallVariant {
-    SplitInstall: TransactionDescrSplitInstall
+type TransactionDescriptionSplitInstallVariant {
+    SplitInstall: TransactionDescriptionSplitInstall
 }
 
-type TransactionDescrMergePrepareVariant {
-    MergePrepare: TransactionDescrMergePrepare
+type TransactionDescriptionMergePrepareVariant {
+    MergePrepare: TransactionDescriptionMergePrepare
 }
 
-type TransactionDescrMergeInstallVariant {
-    MergeInstall: TransactionDescrMergeInstall
+type TransactionDescriptionMergeInstallVariant {
+    MergeInstall: TransactionDescriptionMergeInstall
 }
 
-union TransactionDescr =
-    | TransactionDescrOrdinaryVariant
-    | TransactionDescrStorageVariant
-    | TransactionDescrTickTockVariant
-    | TransactionDescrSplitPrepareVariant
-    | TransactionDescrSplitInstallVariant
-    | TransactionDescrMergePrepareVariant
-    | TransactionDescrMergeInstallVariant
+union TransactionDescription =
+    | TransactionDescriptionOrdinaryVariant
+    | TransactionDescriptionStorageVariant
+    | TransactionDescriptionTickTockVariant
+    | TransactionDescriptionSplitPrepareVariant
+    | TransactionDescriptionSplitInstallVariant
+    | TransactionDescriptionMergePrepareVariant
+    | TransactionDescriptionMergeInstallVariant
 
 
 type Transaction {
@@ -729,10 +729,12 @@ type Transaction {
     orig_status: String
     end_status: String
     in_msg: String
+    in_message: Message
     out_msgs: [String]
+    out_messages: [Message]
     total_fees: Int
     state_update: TransactionStateUpdate
-    description: TransactionDescr
+    description: TransactionDescription
     root_cell: String
 }
 
@@ -807,14 +809,6 @@ input TickTockFilter {
     tock: BooleanFilter
 }
 
-input StateInitFilter {
-    split_depth: IntFilter
-    special: TickTockFilter
-    code: StringFilter
-    data: StringFilter
-    library: StringFilter
-}
-
 input StorageUsedShortFilter {
     cells: IntFilter
     bits: IntFilter
@@ -827,7 +821,16 @@ input SplitMergeInfoFilter {
     sibling_addr: StringFilter
 }
 
-input CommonMsgInfIntMsgInfoFilter {
+input MsgAddressExtAddrExternFilter {
+    AddrExtern: StringFilter
+}
+
+input MsgAddressExtFilter {
+    AddrNone: NoneFilter
+    AddrExtern: MsgAddressExtAddrExternFilter
+}
+
+input MessageHeaderIntMsgInfoFilter {
     ihr_disabled: BooleanFilter
     bounce: BooleanFilter
     bounced: BooleanFilter
@@ -840,32 +843,31 @@ input CommonMsgInfIntMsgInfoFilter {
     created_at: IntFilter
 }
 
-input MsgAddressExtAddrExternFilter {
-    AddrExtern: StringFilter
-}
-
-input MsgAddressExtFilter {
-    AddrNone: NoneFilter
-    AddrExtern: MsgAddressExtAddrExternFilter
-}
-
-input CommonMsgInfExtInMsgInfoFilter {
+input MessageHeaderExtInMsgInfoFilter {
     src: MsgAddressExtFilter
     dst: MsgAddressIntFilter
     import_fee: IntFilter
 }
 
-input CommonMsgInfExtOutMsgInfoFilter {
+input MessageHeaderExtOutMsgInfoFilter {
     src: MsgAddressIntFilter
     dst: MsgAddressExtFilter
     created_lt: IntFilter
     created_at: IntFilter
 }
 
-input CommonMsgInfFilter {
-    IntMsgInfo: CommonMsgInfIntMsgInfoFilter
-    ExtInMsgInfo: CommonMsgInfExtInMsgInfoFilter
-    ExtOutMsgInfo: CommonMsgInfExtOutMsgInfoFilter
+input MessageHeaderFilter {
+    IntMsgInfo: MessageHeaderIntMsgInfoFilter
+    ExtInMsgInfo: MessageHeaderExtInMsgInfoFilter
+    ExtOutMsgInfo: MessageHeaderExtOutMsgInfoFilter
+}
+
+input MessageInitFilter {
+    split_depth: IntFilter
+    special: TickTockFilter
+    code: StringFilter
+    data: StringFilter
+    library: StringFilter
 }
 
 input MessageFilter {
@@ -873,8 +875,8 @@ input MessageFilter {
     id: GenericIdFilter
     transaction_id: GenericIdFilter
     block_id: GenericIdFilter
-    header: CommonMsgInfFilter
-    init: StateInitFilter
+    header: MessageHeaderFilter
+    init: MessageInitFilter
     body: StringFilter
     status: StringFilter
 }
@@ -1209,7 +1211,7 @@ input TrBouncePhaseFilter {
     Ok: TrBouncePhaseOkFilter
 }
 
-input TransactionDescrOrdinaryFilter {
+input TransactionDescriptionOrdinaryFilter {
     credit_first: BooleanFilter
     storage_ph: TrStoragePhaseFilter
     credit_ph: TrCreditPhaseFilter
@@ -1220,7 +1222,7 @@ input TransactionDescrOrdinaryFilter {
     destroyed: BooleanFilter
 }
 
-input TransactionDescrTickTockFilter {
+input TransactionDescriptionTickTockFilter {
     tt: StringFilter
     storage: TrStoragePhaseFilter
     compute_ph: TrComputePhaseFilter
@@ -1229,7 +1231,7 @@ input TransactionDescrTickTockFilter {
     destroyed: BooleanFilter
 }
 
-input TransactionDescrSplitPrepareFilter {
+input TransactionDescriptionSplitPrepareFilter {
     split_info: SplitMergeInfoFilter
     compute_ph: TrComputePhaseFilter
     action: TrActionPhaseFilter
@@ -1237,19 +1239,19 @@ input TransactionDescrSplitPrepareFilter {
     destroyed: BooleanFilter
 }
 
-input TransactionDescrSplitInstallFilter {
+input TransactionDescriptionSplitInstallFilter {
     split_info: SplitMergeInfoFilter
     prepare_transaction: StringFilter
     installed: BooleanFilter
 }
 
-input TransactionDescrMergePrepareFilter {
+input TransactionDescriptionMergePrepareFilter {
     split_info: SplitMergeInfoFilter
     storage_ph: TrStoragePhaseFilter
     aborted: BooleanFilter
 }
 
-input TransactionDescrMergeInstallFilter {
+input TransactionDescriptionMergeInstallFilter {
     split_info: SplitMergeInfoFilter
     prepare_transaction: StringFilter
     credit_ph: TrCreditPhaseFilter
@@ -1259,14 +1261,19 @@ input TransactionDescrMergeInstallFilter {
     destroyed: BooleanFilter
 }
 
-input TransactionDescrFilter {
-    Ordinary: TransactionDescrOrdinaryFilter
+input TransactionDescriptionFilter {
+    Ordinary: TransactionDescriptionOrdinaryFilter
     Storage: TrStoragePhaseFilter
-    TickTock: TransactionDescrTickTockFilter
-    SplitPrepare: TransactionDescrSplitPrepareFilter
-    SplitInstall: TransactionDescrSplitInstallFilter
-    MergePrepare: TransactionDescrMergePrepareFilter
-    MergeInstall: TransactionDescrMergeInstallFilter
+    TickTock: TransactionDescriptionTickTockFilter
+    SplitPrepare: TransactionDescriptionSplitPrepareFilter
+    SplitInstall: TransactionDescriptionSplitInstallFilter
+    MergePrepare: TransactionDescriptionMergePrepareFilter
+    MergeInstall: TransactionDescriptionMergeInstallFilter
+}
+
+input MessageArrayFilter {
+    any: MessageFilter
+    all: MessageFilter
 }
 
 input TransactionFilter {
@@ -1283,10 +1290,12 @@ input TransactionFilter {
     orig_status: StringFilter
     end_status: StringFilter
     in_msg: StringFilter
+    in_message: MessageFilter
     out_msgs: StringArrayFilter
+    out_messages: MessageArrayFilter
     total_fees: IntFilter
     state_update: TransactionStateUpdateFilter
-    description: TransactionDescrFilter
+    description: TransactionDescriptionFilter
     root_cell: StringFilter
 }
 

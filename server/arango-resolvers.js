@@ -100,14 +100,6 @@ const TickTock = struct({
     tock: scalar,
 });
 
-const StateInit = struct({
-    split_depth: scalar,
-    special: TickTock,
-    code: scalar,
-    data: scalar,
-    library: scalar,
-});
-
 const StorageUsedShort = struct({
     cells: scalar,
     bits: scalar,
@@ -118,19 +110,6 @@ const SplitMergeInfo = struct({
     acc_split_depth: scalar,
     this_addr: scalar,
     sibling_addr: scalar,
-});
-
-const CommonMsgInfIntMsgInfo = struct({
-    ihr_disabled: scalar,
-    bounce: scalar,
-    bounced: scalar,
-    src: MsgAddressInt,
-    dst: MsgAddressInt,
-    value: CurrencyCollection,
-    ihr_fee: scalar,
-    fwd_fee: scalar,
-    created_lt: scalar,
-    created_at: scalar,
 });
 
 const MsgAddressExtAddrExtern = struct({
@@ -154,47 +133,68 @@ const MsgAddressExtResolver = {
     }
 };
 
-const CommonMsgInfExtInMsgInfo = struct({
+const MessageHeaderIntMsgInfo = struct({
+    ihr_disabled: scalar,
+    bounce: scalar,
+    bounced: scalar,
+    src: MsgAddressInt,
+    dst: MsgAddressInt,
+    value: CurrencyCollection,
+    ihr_fee: scalar,
+    fwd_fee: scalar,
+    created_lt: scalar,
+    created_at: scalar,
+});
+
+const MessageHeaderExtInMsgInfo = struct({
     src: MsgAddressExt,
     dst: MsgAddressInt,
     import_fee: scalar,
 });
 
-const CommonMsgInfExtOutMsgInfo = struct({
+const MessageHeaderExtOutMsgInfo = struct({
     src: MsgAddressInt,
     dst: MsgAddressExt,
     created_lt: scalar,
     created_at: scalar,
 });
 
-const CommonMsgInf = struct({
-    IntMsgInfo: CommonMsgInfIntMsgInfo,
-    ExtInMsgInfo: CommonMsgInfExtInMsgInfo,
-    ExtOutMsgInfo: CommonMsgInfExtOutMsgInfo,
+const MessageHeader = struct({
+    IntMsgInfo: MessageHeaderIntMsgInfo,
+    ExtInMsgInfo: MessageHeaderExtInMsgInfo,
+    ExtOutMsgInfo: MessageHeaderExtOutMsgInfo,
 });
 
-const CommonMsgInfResolver = {
+const MessageHeaderResolver = {
     __resolveType(obj, context, info) {
         if (obj.IntMsgInfo) {
-            return 'CommonMsgInfIntMsgInfoVariant';
+            return 'MessageHeaderIntMsgInfoVariant';
         }
         if (obj.ExtInMsgInfo) {
-            return 'CommonMsgInfExtInMsgInfoVariant';
+            return 'MessageHeaderExtInMsgInfoVariant';
         }
         if (obj.ExtOutMsgInfo) {
-            return 'CommonMsgInfExtOutMsgInfoVariant';
+            return 'MessageHeaderExtOutMsgInfoVariant';
         }
         return null;
     }
 };
+
+const MessageInit = struct({
+    split_depth: scalar,
+    special: TickTock,
+    code: scalar,
+    data: scalar,
+    library: scalar,
+});
 
 const Message = struct({
     _key: scalar,
     id: GenericId,
     transaction_id: GenericId,
     block_id: GenericId,
-    header: CommonMsgInf,
-    init: StateInit,
+    header: MessageHeader,
+    init: MessageInit,
     body: scalar,
     status: scalar,
 });
@@ -609,7 +609,7 @@ const TrBouncePhaseResolver = {
     }
 };
 
-const TransactionDescrOrdinary = struct({
+const TransactionDescriptionOrdinary = struct({
     credit_first: scalar,
     storage_ph: TrStoragePhase,
     credit_ph: TrCreditPhase,
@@ -620,7 +620,7 @@ const TransactionDescrOrdinary = struct({
     destroyed: scalar,
 });
 
-const TransactionDescrTickTock = struct({
+const TransactionDescriptionTickTock = struct({
     tt: scalar,
     storage: TrStoragePhase,
     compute_ph: TrComputePhase,
@@ -629,7 +629,7 @@ const TransactionDescrTickTock = struct({
     destroyed: scalar,
 });
 
-const TransactionDescrSplitPrepare = struct({
+const TransactionDescriptionSplitPrepare = struct({
     split_info: SplitMergeInfo,
     compute_ph: TrComputePhase,
     action: TrActionPhase,
@@ -637,19 +637,19 @@ const TransactionDescrSplitPrepare = struct({
     destroyed: scalar,
 });
 
-const TransactionDescrSplitInstall = struct({
+const TransactionDescriptionSplitInstall = struct({
     split_info: SplitMergeInfo,
     prepare_transaction: scalar,
     installed: scalar,
 });
 
-const TransactionDescrMergePrepare = struct({
+const TransactionDescriptionMergePrepare = struct({
     split_info: SplitMergeInfo,
     storage_ph: TrStoragePhase,
     aborted: scalar,
 });
 
-const TransactionDescrMergeInstall = struct({
+const TransactionDescriptionMergeInstall = struct({
     split_info: SplitMergeInfo,
     prepare_transaction: scalar,
     credit_ph: TrCreditPhase,
@@ -659,43 +659,44 @@ const TransactionDescrMergeInstall = struct({
     destroyed: scalar,
 });
 
-const TransactionDescr = struct({
-    Ordinary: TransactionDescrOrdinary,
+const TransactionDescription = struct({
+    Ordinary: TransactionDescriptionOrdinary,
     Storage: TrStoragePhase,
-    TickTock: TransactionDescrTickTock,
-    SplitPrepare: TransactionDescrSplitPrepare,
-    SplitInstall: TransactionDescrSplitInstall,
-    MergePrepare: TransactionDescrMergePrepare,
-    MergeInstall: TransactionDescrMergeInstall,
+    TickTock: TransactionDescriptionTickTock,
+    SplitPrepare: TransactionDescriptionSplitPrepare,
+    SplitInstall: TransactionDescriptionSplitInstall,
+    MergePrepare: TransactionDescriptionMergePrepare,
+    MergeInstall: TransactionDescriptionMergeInstall,
 });
 
-const TransactionDescrResolver = {
+const TransactionDescriptionResolver = {
     __resolveType(obj, context, info) {
         if (obj.Ordinary) {
-            return 'TransactionDescrOrdinaryVariant';
+            return 'TransactionDescriptionOrdinaryVariant';
         }
         if (obj.Storage) {
-            return 'TransactionDescrStorageVariant';
+            return 'TransactionDescriptionStorageVariant';
         }
         if (obj.TickTock) {
-            return 'TransactionDescrTickTockVariant';
+            return 'TransactionDescriptionTickTockVariant';
         }
         if (obj.SplitPrepare) {
-            return 'TransactionDescrSplitPrepareVariant';
+            return 'TransactionDescriptionSplitPrepareVariant';
         }
         if (obj.SplitInstall) {
-            return 'TransactionDescrSplitInstallVariant';
+            return 'TransactionDescriptionSplitInstallVariant';
         }
         if (obj.MergePrepare) {
-            return 'TransactionDescrMergePrepareVariant';
+            return 'TransactionDescriptionMergePrepareVariant';
         }
         if (obj.MergeInstall) {
-            return 'TransactionDescrMergeInstallVariant';
+            return 'TransactionDescriptionMergeInstallVariant';
         }
         return null;
     }
 };
 
+const MessageArray = array(Message);
 const Transaction = struct({
     _key: scalar,
     id: GenericId,
@@ -710,10 +711,12 @@ const Transaction = struct({
     orig_status: scalar,
     end_status: scalar,
     in_msg: scalar,
+    in_message: Message,
     out_msgs: StringArray,
+    out_messages: MessageArray,
     total_fees: scalar,
     state_update: TransactionStateUpdate,
-    description: TransactionDescr,
+    description: TransactionDescription,
     root_cell: scalar,
 });
 
@@ -722,13 +725,21 @@ function createResolvers(db) {
         IntermediateAddress: IntermediateAddressResolver,
         MsgAddressInt: MsgAddressIntResolver,
         MsgAddressExt: MsgAddressExtResolver,
-        CommonMsgInf: CommonMsgInfResolver,
+        MessageHeader: MessageHeaderResolver,
         InMsg: InMsgResolver,
         OutMsg: OutMsgResolver,
         AccountStorageState: AccountStorageStateResolver,
         TrComputePhase: TrComputePhaseResolver,
         TrBouncePhase: TrBouncePhaseResolver,
-        TransactionDescr: TransactionDescrResolver,
+        TransactionDescription: TransactionDescriptionResolver,
+        Transaction: {
+            in_message(parent) {
+                return db.fetchDocByKey(db.messages, parent.in_msg);
+            },
+            out_messages(parent) {
+                return db.fetchDocsByKeys(db.messages, parent.out_msgs);
+            },
+        },
         Query: {
             messages: db.collectionQuery(db.messages, Message),
             blocks: db.collectionQuery(db.blocks, Block),
