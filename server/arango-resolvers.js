@@ -1,4 +1,4 @@
-const { scalar, struct, array } = require('./arango.js');
+const { scalar, struct, array, join, joinArray } = require('./arango-types.js');
 const None = struct({
     dummy: scalar,
 });
@@ -711,9 +711,9 @@ const Transaction = struct({
     orig_status: scalar,
     end_status: scalar,
     in_msg: scalar,
-    in_message: Message,
+    in_message: join('in_msg', 'messages', Message),
     out_msgs: StringArray,
-    out_messages: MessageArray,
+    out_messages: joinArray('out_msgs', 'messages', Message),
     total_fees: scalar,
     state_update: TransactionStateUpdate,
     description: TransactionDescription,

@@ -2,219 +2,11 @@
 import { Database, DocumentCollection } from 'arangojs';
 import arangochair from 'arangochair';
 import { PubSub, withFilter } from 'apollo-server';
+import type { QType } from "./arango-types";
 import type { QConfig } from './config'
 import type { QLog } from "./logs";
 import QLogs from './logs'
 
-type FilterDispatcher = {
-    ql: (path: string, filterKey: string, filterValue: any, field: any) => string,
-    test: (value: any, filterKey: string, filterValue: any, field: any) => boolean,
-}
-
-type FilterType = {
-    dispatcher: FilterDispatcher,
-    fields: { [string]: any }
-}
-
-function combine(path: string, key: string): string {
-    return key !== '' ? `${path}.${key}` : path;
-}
-
-function qlOp(path: string, op: string, filter: any): string {
-    return `${path} ${op} ${JSON.stringify(filter)}`;
-}
-
-function qlCombine(conditions: string[], op: string, defaultConditions: string): string {
-    if (conditions.length === 0) {
-        return defaultConditions;
-    }
-    if (conditions.length === 1) {
-        return conditions[0];
-    }
-    return '(' + conditions.join(`) ${op} (`) + ')';
-}
-
-function qlIn(path: string, filter: any): string {
-    const conditions = filter.map(value => qlOp(path, '==', value));
-    return qlCombine(conditions, 'OR', 'false');
-}
-
-type ScalarOp = {
-    ql(path: string, filter: any): string,
-    test(value: any, filter: any): boolean,
-}
-
-const scalarEq: ScalarOp = {
-    ql(path, filter) {
-        return qlOp(path, '==', filter);
-    },
-    test(value, filter) {
-        return value === filter;
-    },
-};
-
-const scalarNe: ScalarOp = {
-    ql(path, filter) {
-        return qlOp(path, '!=', filter);
-    },
-    test(value, filter) {
-        return value !== filter;
-    },
-};
-
-const scalarLt: ScalarOp = {
-    ql(path, filter) {
-        return qlOp(path, '<', filter);
-    },
-    test(value, filter) {
-        return value < filter;
-    },
-};
-
-const scalarLe: ScalarOp = {
-    ql(path, filter) {
-        return qlOp(path, '<=', filter);
-    },
-    test(value, filter) {
-        return value <= filter;
-    },
-};
-
-const scalarGt: ScalarOp = {
-    ql(path, filter) {
-        return qlOp(path, '>', filter);
-    },
-    test(value, filter) {
-        return value > filter;
-    },
-};
-
-const scalarGe: ScalarOp = {
-    ql(path, filter) {
-        return qlOp(path, '>=', filter);
-    },
-    test(value, filter) {
-        return value >= filter;
-    },
-};
-
-const scalarIn: ScalarOp = {
-    ql(path, filter) {
-        return qlIn(path, filter);
-    },
-    test(value, filter) {
-        return filter.includes(value);
-    },
-};
-
-const scalarNotIn: ScalarOp = {
-    ql(path, filter) {
-        return `NOT (${qlIn(path, filter)})`;
-    },
-    test(value, filter) {
-        return !filter.includes(value);
-    }
-};
-
-export const scalar: FilterType = {
-    dispatcher: {
-        ql(path, filterKey, filterValue, op) {
-            return op.ql(path, filterValue);
-        },
-        test(value, filterKey, filterValue, op) {
-            return op.test(value, filterValue);
-        }
-    },
-    fields: {
-        eq: scalarEq,
-        ne: scalarNe,
-        lt: scalarLt,
-        le: scalarLe,
-        gt: scalarGt,
-        ge: scalarGe,
-        in: scalarIn,
-        notIn: scalarNotIn,
-    }
-};
-
-const structDispatcher: FilterDispatcher = {
-    ql(path, filterKey, filterValue, field) {
-        return qlFilter(combine(path, filterKey), filterValue, field);
-    },
-    test(value, filterKey, filterValue, field) {
-        return testFilter(value[filterKey], filterValue, field);
-    }
-};
-
-export function struct(fields: { [string]: FilterType }): FilterType {
-    return {
-        dispatcher: structDispatcher,
-        fields,
-    };
-}
-
-type ArrayOp = {
-    ql(path: string, filter: any, itemType: FilterType): string,
-    test(value: any, filter: any, itemType: FilterType): boolean,
-}
-
-const arrayAll: ArrayOp = {
-    ql(path, filter, itemType) {
-        const itemQl = qlFilter('CURRENT', filter, itemType);
-        return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
-    },
-    test(value, filter, itemType) {
-        const failedIndex = value.findIndex(x => !testFilter(x, filter, itemType));
-        return failedIndex < 0;
-    }
-};
-
-const arrayAny: ArrayOp = {
-    ql(path, filter, itemType) {
-        const itemQl = qlFilter('CURRENT', filter, itemType);
-        return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
-    },
-    test(value, filter, itemType) {
-        const succeededIndex = value.findIndex(x => testFilter(x, filter, itemType));
-        return succeededIndex >= 0;
-    }
-};
-
-export function array(itemType: FilterType): FilterType {
-    return {
-        dispatcher: {
-            ql(path, filterKey, filterValue, op: ArrayOp) {
-                return op.ql(path, filterValue, itemType);
-            },
-            test(value, filterKey, filterValue, op: ArrayOp) {
-                return op.test(value, filterValue, itemType);
-            }
-        },
-        fields: {
-            all: arrayAll,
-            any: arrayAny,
-        }
-    }
-}
-
-export function qlFilter(path: string, filter: any, type: FilterType): string {
-    const conditions: string[] = [];
-    Object.entries(filter).forEach(([filterKey, filterValue]) => {
-        const field = type.fields[filterKey];
-        if (field) {
-            conditions.push(type.dispatcher.ql(path, filterKey, filterValue, field))
-        }
-    });
-    return qlCombine(conditions, 'AND', 'false');
-}
-
-export function testFilter(value: any, filter: any, type: FilterType): boolean {
-    const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
-        const field = type.fields[filterKey];
-        return !!(field && type.dispatcher.test(value, filterKey, filterValue, field));
-    });
-    return !failed;
-}
 
 export default class Arango {
     config: QConfig;
@@ -290,14 +82,14 @@ export default class Arango {
     }
 
 
-    collectionSubscription(collection: DocumentCollection, filterType: FilterType) {
+    collectionSubscription(collection: DocumentCollection, docType: QType) {
         return {
             subscribe: withFilter(
                 () => {
                     return this.pubsub.asyncIterator(collection.name);
                 },
                 (data, args) => {
-                    return testFilter(data[collection.name], args.filter, filterType);
+                    return docType.test(data[collection.name], args.filter);
                 }
             ),
         }
@@ -316,11 +108,11 @@ export default class Arango {
         }
     }
 
-    async fetchDocs(collection: DocumentCollection, args: any, filterType: FilterType) {
+    async fetchDocs(collection: DocumentCollection, args: any, docType: QType) {
         return this.wrap(async () => {
             const filter = args.filter || {};
             const filterSection = Object.keys(filter).length > 0
-                ? `FILTER ${qlFilter('doc', filter, filterType)}`
+                ? `FILTER ${docType.ql('doc', filter)}`
                 : '';
             const sortSection = '';
             const limitSection = 'LIMIT 50';
