@@ -336,6 +336,22 @@ export default class Arango {
         });
     }
 
+    async fetchDocByKey(collection: DocumentCollection, key: string): Promise<any> {
+        if (!key) {
+            return Promise.resolve(null);
+        }
+        return this.wrap(async () => {
+            return collection.document(key, true);
+        });
+    }
+
+    async fetchDocsByKeys(collection: DocumentCollection, keys: string[]): Promise<any[]> {
+        if (!keys || keys.length === 0) {
+            return Promise.resolve([]);
+        }
+        return Promise.all(keys.map(key => this.fetchDocByKey(collection, key)));
+    }
+
     async fetchQuery(query: any, bindVars: any) {
         return this.wrap(async () => {
             const cursor = await this.db.query({ query, bindVars });
