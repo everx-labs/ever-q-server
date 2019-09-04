@@ -50,7 +50,9 @@ pipeline {
 
 				stage('Build') {
 					steps {
-						sh 'npm install'
+                        sshagent (credentials: [G_gitcred]) {
+						    sh 'npm install'
+						}
 					}
 					post {
 						success {script{G_buildstatus = "success"}}
