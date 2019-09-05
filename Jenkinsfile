@@ -53,7 +53,7 @@ pipeline {
                         sshagent (credentials: [G_gitcred]) {
                             sh '''
                                 mkdir -p ~/.ssh;
-                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts'
+                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
                             '''
 						    sh 'npm install'
 						}
