@@ -8,7 +8,8 @@
 		"gen-ql": "node dist/server/gen-schema.js",
 		"flow": "flow",
 		"test": "jest",
-		"server": "node dist/server/index.js"
+		"server": "node dist/server/index.js",
+		"install": "npm install"
 	},
 	"keywords": [],
 	"author": "",

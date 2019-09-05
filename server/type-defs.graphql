@@ -76,7 +76,7 @@ type IntermediateAddressExtVariant {
     Ext: IntermediateAddressExt
 }
 
-union IntermediateAddress = 
+union IntermediateAddress =
 	| IntermediateAddressRegularVariant
 	| IntermediateAddressSimpleVariant
 	| IntermediateAddressExtVariant
@@ -126,7 +126,7 @@ type MsgAddressIntAddrVarVariant {
     AddrVar: MsgAddressIntAddrVar
 }
 
-union MsgAddressInt = 
+union MsgAddressInt =
 	| MsgAddressIntAddrNoneVariant
 	| MsgAddressIntAddrStdVariant
 	| MsgAddressIntAddrVarVariant
@@ -161,7 +161,7 @@ type MsgAddressExtAddrExternVariant {
     AddrExtern: MsgAddressExtAddrExtern
 }
 
-union MsgAddressExt = 
+union MsgAddressExt =
 	| MsgAddressExtAddrNoneVariant
 	| MsgAddressExtAddrExternVariant
 
@@ -204,7 +204,7 @@ type MessageHeaderExtOutMsgInfoVariant {
     ExtOutMsgInfo: MessageHeaderExtOutMsgInfo
 }
 
-union MessageHeader = 
+union MessageHeader =
 	| MessageHeaderIntMsgInfoVariant
 	| MessageHeaderExtInMsgInfoVariant
 	| MessageHeaderExtOutMsgInfoVariant
@@ -307,7 +307,7 @@ type InMsgDiscardedTransitVariant {
     DiscardedTransit: InMsgDiscardedTransit
 }
 
-union InMsg = 
+union InMsg =
 	| InMsgExternalVariant
 	| InMsgIHRVariant
 	| InMsgImmediatellyVariant
@@ -376,7 +376,7 @@ type OutMsgTransitRequiredVariant {
     TransitRequired: OutMsgTransitRequired
 }
 
-union OutMsg = 
+union OutMsg =
 	| OutMsgNoneVariant
 	| OutMsgExternalVariant
 	| OutMsgImmediatelyVariant
@@ -513,7 +513,7 @@ type AccountStorageStateAccountFrozenVariant {
     AccountFrozen: AccountStorageStateAccountFrozen
 }
 
-union AccountStorageState = 
+union AccountStorageState =
 	| AccountStorageStateAccountUninitVariant
 	| AccountStorageStateAccountActiveVariant
 	| AccountStorageStateAccountFrozenVariant
@@ -576,7 +576,7 @@ type TrComputePhaseVmVariant {
     Vm: TrComputePhaseVm
 }
 
-union TrComputePhase = 
+union TrComputePhase =
 	| TrComputePhaseSkippedVariant
 	| TrComputePhaseVmVariant
 
@@ -621,7 +621,7 @@ type TrBouncePhaseOkVariant {
     Ok: TrBouncePhaseOk
 }
 
-union TrBouncePhase = 
+union TrBouncePhase =
 	| TrBouncePhaseNegfundsVariant
 	| TrBouncePhaseNofundsVariant
 	| TrBouncePhaseOkVariant
@@ -705,7 +705,7 @@ type TransactionDescriptionMergeInstallVariant {
     MergeInstall: TransactionDescriptionMergeInstall
 }
 
-union TransactionDescription = 
+union TransactionDescription =
 	| TransactionDescriptionOrdinaryVariant
 	| TransactionDescriptionStorageVariant
 	| TransactionDescriptionTickTockVariant
@@ -1305,15 +1305,15 @@ enum QueryOrderBySort {
 }
 
 input QueryOrderBy {
-    path: [String]
+    path: String
     sort: QueryOrderBySort
 }
 
 type Query {
-	messages(filter: MessageFilter, orderBy: QueryOrderBy, limit: Int): [Message]
-	blocks(filter: BlockFilter, orderBy: QueryOrderBy, limit: Int): [Block]
-	accounts(filter: AccountFilter, orderBy: QueryOrderBy, limit: Int): [Account]
-	transactions(filter: TransactionFilter, orderBy: QueryOrderBy, limit: Int): [Transaction]
+	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int): [Message]
+	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int): [Block]
+	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int): [Account]
+	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int): [Transaction]
     select(query: String!, bindVarsJson: String!): String!
 }
 
