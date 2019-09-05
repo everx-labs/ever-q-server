@@ -5,9 +5,11 @@
 	"main": "server/index.js",
 	"scripts": {
 		"babel": "babel server --out-dir dist/server --source-maps inline",
+		"gen-ql": "node dist/server/gen-schema.js",
 		"flow": "flow",
 		"test": "jest",
-			"server": "node dist/server/index.js"
+		"server": "node dist/server/index.js",
+		"npm_install": "npm install"
 	},
 	"keywords": [],
 	"author": "",
@@ -21,6 +23,7 @@
 		"express": "^4.17.1"
 	},
 	"devDependencies": {
+		"ton-labs-dev-ops": "git@github.com:tonlabs/ton-labs-dev-ops.git",
 		"@babel/cli": "^7.4.4",
 		"@babel/core": "^7.4.4",
 		"@babel/plugin-proposal-class-properties": "^7.4.4",

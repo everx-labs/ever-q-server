@@ -50,7 +50,13 @@ pipeline {
 
 				stage('Build') {
 					steps {
-						sh 'npm install'
+                        sshagent (credentials: [G_gitcred]) {
+                            sh '''
+                                mkdir -p ~/.ssh;
+                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+                            '''
+						    sh 'npm install'
+						}
 					}
 					post {
 						success {script{G_buildstatus = "success"}}
