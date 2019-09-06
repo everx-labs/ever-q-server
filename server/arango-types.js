@@ -243,12 +243,13 @@ function joinArray(onField: string, refCollection: string, refType: QType): QTyp
             const alias = `${on_path.replace('.', '_')}`;
             const refQl = refType.ql(alias, refFilter);
             return `
-                LENGTH(
+                (LENGTH(${on_path}) > 0)
+                AND (LENGTH(
                     FOR ${alias} IN ${refCollection} 
                     FILTER (${alias}._key IN ${on_path}) AND (${refQl})
-                    LIMIT 1
+                    ${!all ? 'LIMIT 1' : ''}
                     RETURN 1
-                ) ${all ? `== LENGTH(${alias})` : '> 0'}`;
+                ) ${all ? `== LENGTH(${on_path})` : '> 0'})`;
         },
         test: refType.test,
     };
