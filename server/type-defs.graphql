@@ -714,6 +714,7 @@ type Transaction {
 	block_id: String
 	status: String
 	account_addr: String
+	lt: Int
 	last_trans_lt: Int
 	prev_trans_hash: String
 	prev_trans_lt: Int
@@ -1268,6 +1269,7 @@ input TransactionFilter {
 	block_id: StringFilter
 	status: StringFilter
 	account_addr: StringFilter
+	lt: IntFilter
 	last_trans_lt: IntFilter
 	prev_trans_hash: StringFilter
 	prev_trans_lt: IntFilter

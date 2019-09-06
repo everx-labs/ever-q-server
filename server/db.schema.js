@@ -386,6 +386,7 @@ const Transaction: TypeDef = {
     block_id: string(),
     status: string(),
     account_addr: string(),
+    lt: u64(),
     last_trans_lt: u64(),
     prev_trans_hash: string(),
     prev_trans_lt: u64(),

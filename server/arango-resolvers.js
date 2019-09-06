@@ -696,6 +696,7 @@ const Transaction = struct({
     block_id: scalar,
     status: scalar,
     account_addr: scalar,
+    lt: scalar,
     last_trans_lt: scalar,
     prev_trans_hash: scalar,
     prev_trans_lt: scalar,
