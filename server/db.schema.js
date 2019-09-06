@@ -46,11 +46,6 @@ const ExtBlkRef: TypeDef = {
     file_hash: string()
 };
 
-const GenericId: TypeDef = {
-    ready: bool(),
-    data: string()
-};
-
 const MsgAddressInt: TypeDef = unionOf({
     AddrNone: ref({ None }),
     AddrStd: {
@@ -99,10 +94,8 @@ const Message: TypeDef = {
     _doc: 'This is message',
     _: { collection: 'messages' },
 
-    _key: string(),
-    id: ref({ GenericId }),
-    transaction_id: ref({ GenericId }),
-    block_id: ref({ GenericId }),
+    transaction_id: string(),
+    block_id: string(),
     header: unionOf({
         IntMsgInfo: {
             ihr_disabled: bool(),
@@ -220,8 +213,6 @@ const OutMsg: TypeDef = unionOf({
 const Block: TypeDef = {
     _doc: 'This is Block',
     _: { collection: 'blocks' },
-    _key: string(),
-    id: ref({ GenericId }),
     status: string(),
     global_id: u32(),
     info: {
@@ -392,9 +383,7 @@ const TrBouncePhase: TypeDef = unionOf({
 const Transaction: TypeDef = {
     _doc: 'This is transaction',
     _: { collection: 'transactions' },
-    _key: string(),
-    id: ref({ GenericId }),
-    block_id: ref({ GenericId }),
+    block_id: string(),
     status: string(),
     account_addr: string(),
     last_trans_lt: u64(),
@@ -473,7 +462,6 @@ const schema: TypeDef = {
             CurrencyCollection,
             IntermediateAddress,
             ExtBlkRef,
-            GenericId,
             MsgAddressInt,
             TickTock,
             StorageUsedShort,

@@ -49,11 +49,6 @@ const ExtBlkRef = struct({
     file_hash: scalar,
 });
 
-const GenericId = struct({
-    ready: scalar,
-    data: scalar,
-});
-
 const MsgAddressIntAddrStdAnycast = struct({
     rewrite_pfx: scalar,
 });
@@ -189,15 +184,14 @@ const MessageInit = struct({
 });
 
 const Message = struct({
-    _key: scalar,
-    id: GenericId,
-    transaction_id: GenericId,
-    block_id: GenericId,
+    id: scalar,
+    transaction_id: scalar,
+    block_id: scalar,
     header: MessageHeader,
     init: MessageInit,
     body: scalar,
     status: scalar,
-});
+}, true);
 
 const MsgEnvelope = struct({
     msg: scalar,
@@ -446,15 +440,14 @@ const BlockStateUpdate = struct({
 });
 
 const Block = struct({
-    _key: scalar,
-    id: GenericId,
+    id: scalar,
     status: scalar,
     global_id: scalar,
     info: BlockInfo,
     value_flow: BlockValueFlow,
     extra: BlockExtra,
     state_update: BlockStateUpdate,
-});
+}, true);
 
 const AccountStorageStat = struct({
     last_paid: scalar,
@@ -501,11 +494,12 @@ const AccountStorage = struct({
 });
 
 const Account = struct({
+    id: scalar,
     _key: scalar,
     storage_stat: AccountStorageStat,
     storage: AccountStorage,
     addr: MsgAddressInt,
-});
+}, true);
 
 const TransactionStateUpdate = struct({
     old_hash: scalar,
@@ -698,9 +692,8 @@ const TransactionDescriptionResolver = {
 
 const MessageArray = array(Message);
 const Transaction = struct({
-    _key: scalar,
-    id: GenericId,
-    block_id: GenericId,
+    id: scalar,
+    block_id: scalar,
     status: scalar,
     account_addr: scalar,
     last_trans_lt: scalar,
@@ -718,7 +711,7 @@ const Transaction = struct({
     state_update: TransactionStateUpdate,
     description: TransactionDescription,
     root_cell: scalar,
-});
+}, true);
 
 function createResolvers(db) {
     return {
@@ -726,13 +719,31 @@ function createResolvers(db) {
         MsgAddressInt: MsgAddressIntResolver,
         MsgAddressExt: MsgAddressExtResolver,
         MessageHeader: MessageHeaderResolver,
+        Message: {
+            id(parent) {
+                return parent._key;
+            },
+        },
         InMsg: InMsgResolver,
         OutMsg: OutMsgResolver,
+        Block: {
+            id(parent) {
+                return parent._key;
+            },
+        },
         AccountStorageState: AccountStorageStateResolver,
+        Account: {
+            id(parent) {
+                return parent._key;
+            },
+        },
         TrComputePhase: TrComputePhaseResolver,
         TrBouncePhase: TrBouncePhaseResolver,
         TransactionDescription: TransactionDescriptionResolver,
         Transaction: {
+            id(parent) {
+                return parent._key;
+            },
             in_message(parent) {
                 return db.fetchDocByKey(db.messages, parent.in_msg);
             },

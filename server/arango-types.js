@@ -159,11 +159,12 @@ const scalar: QType = createScalar();
 
 // Structs
 
-function struct(fields: { [string]: QType }): QType {
+function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
     return {
         ql(path, filter) {
             return qlFields(path, filter, fields, (fieldType, path, filterKey, filterValue) => {
-                return fieldType.ql(combine(path, filterKey), filterValue);
+                const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
+                return fieldType.ql(combine(path, fieldName), filterValue);
             });
         },
         test(value, filter) {

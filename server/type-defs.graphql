@@ -76,7 +76,7 @@ type IntermediateAddressExtVariant {
     Ext: IntermediateAddressExt
 }
 
-union IntermediateAddress =
+union IntermediateAddress = 
 	| IntermediateAddressRegularVariant
 	| IntermediateAddressSimpleVariant
 	| IntermediateAddressExtVariant
@@ -87,11 +87,6 @@ type ExtBlkRef {
 	seq_no: Int
 	root_hash: String
 	file_hash: String
-}
-
-type GenericId {
-	ready: Boolean
-	data: String
 }
 
 type MsgAddressIntAddrStdAnycast {
@@ -126,7 +121,7 @@ type MsgAddressIntAddrVarVariant {
     AddrVar: MsgAddressIntAddrVar
 }
 
-union MsgAddressInt =
+union MsgAddressInt = 
 	| MsgAddressIntAddrNoneVariant
 	| MsgAddressIntAddrStdVariant
 	| MsgAddressIntAddrVarVariant
@@ -161,7 +156,7 @@ type MsgAddressExtAddrExternVariant {
     AddrExtern: MsgAddressExtAddrExtern
 }
 
-union MsgAddressExt =
+union MsgAddressExt = 
 	| MsgAddressExtAddrNoneVariant
 	| MsgAddressExtAddrExternVariant
 
@@ -204,7 +199,7 @@ type MessageHeaderExtOutMsgInfoVariant {
     ExtOutMsgInfo: MessageHeaderExtOutMsgInfo
 }
 
-union MessageHeader =
+union MessageHeader = 
 	| MessageHeaderIntMsgInfoVariant
 	| MessageHeaderExtInMsgInfoVariant
 	| MessageHeaderExtOutMsgInfoVariant
@@ -219,10 +214,9 @@ type MessageInit {
 }
 
 type Message {
-	_key: String
-	id: GenericId
-	transaction_id: GenericId
-	block_id: GenericId
+	id: String
+	transaction_id: String
+	block_id: String
 	header: MessageHeader
 	init: MessageInit
 	body: String
@@ -307,7 +301,7 @@ type InMsgDiscardedTransitVariant {
     DiscardedTransit: InMsgDiscardedTransit
 }
 
-union InMsg =
+union InMsg = 
 	| InMsgExternalVariant
 	| InMsgIHRVariant
 	| InMsgImmediatellyVariant
@@ -376,7 +370,7 @@ type OutMsgTransitRequiredVariant {
     TransitRequired: OutMsgTransitRequired
 }
 
-union OutMsg =
+union OutMsg = 
 	| OutMsgNoneVariant
 	| OutMsgExternalVariant
 	| OutMsgImmediatelyVariant
@@ -474,8 +468,7 @@ type BlockStateUpdate {
 }
 
 type Block {
-	_key: String
-	id: GenericId
+	id: String
 	status: String
 	global_id: Int
 	info: BlockInfo
@@ -513,7 +506,7 @@ type AccountStorageStateAccountFrozenVariant {
     AccountFrozen: AccountStorageStateAccountFrozen
 }
 
-union AccountStorageState =
+union AccountStorageState = 
 	| AccountStorageStateAccountUninitVariant
 	| AccountStorageStateAccountActiveVariant
 	| AccountStorageStateAccountFrozenVariant
@@ -526,6 +519,7 @@ type AccountStorage {
 }
 
 type Account {
+	id: String
 	_key: String
 	storage_stat: AccountStorageStat
 	storage: AccountStorage
@@ -576,7 +570,7 @@ type TrComputePhaseVmVariant {
     Vm: TrComputePhaseVm
 }
 
-union TrComputePhase =
+union TrComputePhase = 
 	| TrComputePhaseSkippedVariant
 	| TrComputePhaseVmVariant
 
@@ -621,7 +615,7 @@ type TrBouncePhaseOkVariant {
     Ok: TrBouncePhaseOk
 }
 
-union TrBouncePhase =
+union TrBouncePhase = 
 	| TrBouncePhaseNegfundsVariant
 	| TrBouncePhaseNofundsVariant
 	| TrBouncePhaseOkVariant
@@ -705,7 +699,7 @@ type TransactionDescriptionMergeInstallVariant {
     MergeInstall: TransactionDescriptionMergeInstall
 }
 
-union TransactionDescription =
+union TransactionDescription = 
 	| TransactionDescriptionOrdinaryVariant
 	| TransactionDescriptionStorageVariant
 	| TransactionDescriptionTickTockVariant
@@ -716,9 +710,8 @@ union TransactionDescription =
 
 
 type Transaction {
-	_key: String
-	id: GenericId
-	block_id: GenericId
+	id: String
+	block_id: String
 	status: String
 	account_addr: String
 	last_trans_lt: Int
@@ -771,11 +764,6 @@ input ExtBlkRefFilter {
 	seq_no: IntFilter
 	root_hash: StringFilter
 	file_hash: StringFilter
-}
-
-input GenericIdFilter {
-	ready: BooleanFilter
-	data: StringFilter
 }
 
 input MsgAddressIntAddrStdAnycastFilter {
@@ -871,10 +859,9 @@ input MessageInitFilter {
 }
 
 input MessageFilter {
-	_key: StringFilter
-	id: GenericIdFilter
-	transaction_id: GenericIdFilter
-	block_id: GenericIdFilter
+	id: StringFilter
+	transaction_id: StringFilter
+	block_id: StringFilter
 	header: MessageHeaderFilter
 	init: MessageInitFilter
 	body: StringFilter
@@ -1090,8 +1077,7 @@ input BlockStateUpdateFilter {
 }
 
 input BlockFilter {
-	_key: StringFilter
-	id: GenericIdFilter
+	id: StringFilter
 	status: StringFilter
 	global_id: IntFilter
 	info: BlockInfoFilter
@@ -1130,6 +1116,7 @@ input AccountStorageFilter {
 }
 
 input AccountFilter {
+	id: StringFilter
 	_key: StringFilter
 	storage_stat: AccountStorageStatFilter
 	storage: AccountStorageFilter
@@ -1277,9 +1264,8 @@ input MessageArrayFilter {
 }
 
 input TransactionFilter {
-	_key: StringFilter
-	id: GenericIdFilter
-	block_id: GenericIdFilter
+	id: StringFilter
+	block_id: StringFilter
 	status: StringFilter
 	account_addr: StringFilter
 	last_trans_lt: IntFilter
