@@ -1,3 +1,5 @@
+G_promoted_version = "master"
+G_promoted_branch = "origin/${G_promoted_version}"
 G_giturl = "https://github.com/tonlabs/ton-q-server.git"
 G_gitcred = "LaninSSHgit"
 G_container = "alanin/container:latest"
@@ -81,7 +83,7 @@ pipeline {
 
 		stage ('MakeImage') {
             when {
-                branch '0.11.0'
+                branch "${G_promoted_version}"
                 beforeAgent true
             }
 			agent {
@@ -105,7 +107,7 @@ pipeline {
                                     "--label 'git-commit=${GIT_COMMIT}' ."
                                 )
 								wimage.push()
-								wimage.push('0.11.0')
+								wimage.push("latest")
 							}
 						}
 					}
