@@ -102,7 +102,7 @@ pipeline {
 							docker.withRegistry('', 'dockerhubLanin') {
 								def wimage = docker.build("${G_gqlimage}:${env.BUILD_ID}")
 								wimage.push()
-								wimage.push('latest')
+								wimage.push('0.11.0')
 							}
 						}
 					}
