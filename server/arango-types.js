@@ -185,7 +185,8 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
         },
         test(value, filter) {
             return testFields(value, filter, fields, (fieldType, value, filterKey, filterValue) => {
-                return fieldType.test(value[filterKey], filterValue);
+                const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
+                return fieldType.test(value[fieldName], filterValue);
             });
         }
     }
