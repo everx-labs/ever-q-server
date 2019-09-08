@@ -81,7 +81,7 @@ pipeline {
 
 		stage ('MakeImage') {
             when {
-                branch 'master'
+                branch '0.11.0'
                 beforeAgent true
             }
 			agent {
