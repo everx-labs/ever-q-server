@@ -130,8 +130,18 @@ export default class Arango {
             const filterSection = Object.keys(filter).length > 0
                 ? `FILTER ${docType.ql('doc', filter)}`
                 : '';
-            const sortSection = '';
-            const limitSection = 'LIMIT 50';
+            const orderBy = (args.orderBy || [])
+                .map((field) => {
+                    const direction = (field.direction && field.direction.toLowerCase() === 'desc')
+                        ? ' DESC'
+                        : '';
+                    return `doc.${field.path}${direction}`;
+                })
+                .join(', ');
+
+            const sortSection = orderBy !== '' ? `SORT ${orderBy}` : '';
+            const limit = Math.min(args.limit || 50, 50);
+            const limitSection = `LIMIT ${limit}`;
 
             const query = `
             FOR doc IN ${collection.name}

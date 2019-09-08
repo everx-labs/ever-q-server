@@ -1287,14 +1287,14 @@ input TransactionFilter {
 	root_cell: StringFilter
 }
 
-enum QueryOrderBySort {
+enum QueryOrderByDirection {
     ASC
     DESC
 }
 
 input QueryOrderBy {
     path: String
-    sort: QueryOrderBySort
+    direction: QueryOrderByDirection
 }
 
 type Query {
