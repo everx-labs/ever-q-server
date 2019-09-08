@@ -1,7 +1,7 @@
 {
 	"name": "ton-q-server",
-	"version": "0.9.0",
-	"description": "TON Q Server – realtime queries over TON blockchain and TVM pipeline.",
+	"version": "0.11.0",
+	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "server/index.js",
 	"scripts": {
 		"babel": "babel server --out-dir dist/server --source-maps inline",
@@ -9,7 +9,7 @@
 		"flow": "flow",
 		"test": "jest",
 		"server": "node dist/server/index.js",
-		"npm_install": "npm install"
+		"npm install": "npm install"
 	},
 	"keywords": [],
 	"author": "",
