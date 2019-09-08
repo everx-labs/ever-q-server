@@ -1,20 +1,32 @@
-const fs = require('fs');
+// @flow
+import fs from 'fs';
 
-const express = require("express");
-const http = require("http");
-const https = require("https");
+import express from 'express';
+import http from 'http';
+import https from 'https';
 
-const { PubSub } = require('apollo-server');
-const { ApolloServer } = require('apollo-server-express');
+import { ApolloServer } from 'apollo-server-express';
 
-const createDb = require('./arango-db');
-const startListener = require('./arango-listener');
+import Arango from './arango';
 
-const createResolvers = require('./resolvers');
+import { createResolvers } from './arango-resolvers';
+import type { QConfig } from "./config";
+import QLogs from "./logs";
+import type { QLog } from "./logs";
 
-class TONQServer {
-    constructor(options) {
-        this.config = options.config || {};
+type QOptions = {
+    config: QConfig,
+    logs: QLogs,
+}
+
+export default class TONQServer {
+    config: QConfig;
+    logs: QLogs;
+    log: QLog;
+    db: Arango;
+
+    constructor(options: QOptions) {
+        this.config = options.config;
         this.logs = options.logs;
         this.log = this.logs.create('Q Server');
     }
@@ -24,12 +36,10 @@ class TONQServer {
         const config = this.config.server;
         const ssl = config.ssl;
 
-        const pubsub = new PubSub();
-        const db = createDb(this.config, this.logs);
-        startListener(db, pubsub, this.config);
-
+        this.db = new Arango(this.config, this.logs);
         const typeDefs = fs.readFileSync('server/type-defs.graphql', 'utf-8');
-        const resolvers = createResolvers(db, pubsub, this.logs);
+        const resolvers = createResolvers(this.db);
+        await this.db.start();
 
         const apollo = new ApolloServer({
             typeDefs,
@@ -63,5 +73,3 @@ class TONQServer {
     }
 }
 
-
-module.exports = TONQServer;

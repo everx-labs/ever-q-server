@@ -50,7 +50,13 @@ pipeline {
 
 				stage('Build') {
 					steps {
-						sh 'npm install'
+                        sshagent (credentials: [G_gitcred]) {
+                            sh '''
+                                mkdir -p ~/.ssh;
+                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+                            '''
+						    sh 'npm install'
+						}
 					}
 					post {
 						success {script{G_buildstatus = "success"}}
@@ -75,7 +81,7 @@ pipeline {
 
 		stage ('MakeImage') {
             when {
-                branch 'master'
+                branch '0.11.0'
                 beforeAgent true
             }
 			agent {
@@ -99,7 +105,7 @@ pipeline {
                                     "--label 'git-commit=${GIT_COMMIT}' ."
                                 )
 								wimage.push()
-								wimage.push('latest')
+								wimage.push('0.11.0')
 							}
 						}
 					}
