@@ -1,7 +1,7 @@
 # ton-q-server
-TON Database GraphQL Server.
+TON GraphQL Server.
 
-This component is a part of TON-Server and must not be accessed directly but through TON-Client.
+This component is a part of TON-Server and must not be accessed directly but through TON Labs Client Libraries.
 
 # Prerequisites
 
@@ -20,10 +20,13 @@ npm install
  ```bash
  EXPORT Q_MODE="development"
  ```
- 
- When Q-server run in development mode it connects to Arango DB using 'services.tonlabs.io:8529'.
- 
- In production mode Q-Server connects to Arango DB using 'arangodb:8529'.
+ You can set options with env variables:
+ ```bash
+EXPORT Q_DATABASE_SERVER="arangodb:8529"
+EXPORT Q_DATABASE_NAME="blockchain"
+EXPORT Q_SERVER_HOST="<local IP address used by default>"
+EXPORT Q_SERVER_PORT=4000
+```
  
 # Run
 
@@ -35,4 +38,4 @@ node index.js
 
 Q-Server is accessible with GraphQL HTTP/WebSocket protocol on port "4000" and path "/graphql".
 
-There is the only valid way to communicate with Q-Server – TON-Client Libray.
+There is the only valid way to communicate with Q-Server – TON Labs Client Libraries.

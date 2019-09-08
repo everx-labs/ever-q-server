@@ -47,7 +47,7 @@ type None {
 }
 
 type CurrencyCollection {
-	Grams: Float
+	Grams: String
 }
 
 type IntermediateAddressRegular {
@@ -737,7 +737,7 @@ input NoneFilter {
 }
 
 input CurrencyCollectionFilter {
-	Grams: FloatFilter
+	Grams: StringFilter
 }
 
 input IntermediateAddressRegularFilter {
