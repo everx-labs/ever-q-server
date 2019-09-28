@@ -135,7 +135,7 @@ export default class Arango {
                     const direction = (field.direction && field.direction.toLowerCase() === 'desc')
                         ? ' DESC'
                         : '';
-                    return `doc.${field.path}${direction}`;
+                    return `doc.${field.path.replace(/\bid\b/gi, '_key')}${direction}`;
                 })
                 .join(', ');
 

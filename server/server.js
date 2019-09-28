@@ -27,6 +27,7 @@ import Arango from './arango';
 
 import { createResolvers } from './arango-resolvers';
 import type { QConfig } from "./config";
+import { attachCustomResolvers } from "./custom-resolvers";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
 
@@ -54,7 +55,7 @@ export default class TONQServer {
 
         this.db = new Arango(this.config, this.logs);
         const typeDefs = fs.readFileSync('type-defs.graphql', 'utf-8');
-        const resolvers = createResolvers(this.db);
+        const resolvers = attachCustomResolvers(createResolvers(this.db));
         await this.db.start();
 
         const apollo = new ApolloServer({

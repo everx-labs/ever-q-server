@@ -32,14 +32,14 @@ const u16 = (doc?: '') => uint(16, doc);
 const u32 = (doc?: '') => uint(32, doc);
 const u64 = (doc?: '') => uint(64, doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
-    return { ...ref(refDef), _: { join: { on }}}
+    return { ...ref(refDef), _: { join: { on } } }
 };
 
 const CurrencyCollection: TypeDef = {
     Grams: string(),
 };
 
-const None: TypeDef = { dummy: string() };
+const None: TypeDef = { None: string() };
 
 const IntermediateAddress: TypeDef = unionOf({
     Regular: {
@@ -324,9 +324,7 @@ const Account: TypeDef = {
                 data: string(),
                 library: string()
             },
-            AccountFrozen: {
-                dummy: string()
-            }
+            AccountFrozen: ref({ None })
         }),
     },
     addr: ref({ MsgAddressInt })
@@ -411,9 +409,9 @@ const Transaction: TypeDef = {
     orig_status: string(),
     end_status: string(),
     in_msg: string(),
-    in_message: join({Message}, 'in_msg'),
+    in_message: join({ Message }, 'in_msg'),
     out_msgs: arrayOf(string()),
-    out_messages: arrayOf(join({Message}, 'out_msgs')),
+    out_messages: arrayOf(join({ Message }, 'out_msgs')),
     total_fees: int(),
     state_update: {
         old_hash: string(),
