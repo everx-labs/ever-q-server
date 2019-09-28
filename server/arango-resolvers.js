@@ -29,13 +29,13 @@ const IntermediateAddress = struct({
 
 const IntermediateAddressResolver = {
     __resolveType(obj, context, info) {
-        if (obj.Regular) {
+        if ('Regular' in obj) {
             return 'IntermediateAddressRegularVariant';
         }
-        if (obj.Simple) {
+        if ('Simple' in obj) {
             return 'IntermediateAddressSimpleVariant';
         }
-        if (obj.Ext) {
+        if ('Ext' in obj) {
             return 'IntermediateAddressExtVariant';
         }
         return null;
@@ -77,13 +77,13 @@ const MsgAddressInt = struct({
 
 const MsgAddressIntResolver = {
     __resolveType(obj, context, info) {
-        if (obj.AddrNone) {
+        if ('AddrNone' in obj) {
             return 'MsgAddressIntAddrNoneVariant';
         }
-        if (obj.AddrStd) {
+        if ('AddrStd' in obj) {
             return 'MsgAddressIntAddrStdVariant';
         }
-        if (obj.AddrVar) {
+        if ('AddrVar' in obj) {
             return 'MsgAddressIntAddrVarVariant';
         }
         return null;
@@ -118,10 +118,10 @@ const MsgAddressExt = struct({
 
 const MsgAddressExtResolver = {
     __resolveType(obj, context, info) {
-        if (obj.AddrNone) {
+        if ('AddrNone' in obj) {
             return 'MsgAddressExtAddrNoneVariant';
         }
-        if (obj.AddrExtern) {
+        if ('AddrExtern' in obj) {
             return 'MsgAddressExtAddrExternVariant';
         }
         return null;
@@ -162,13 +162,13 @@ const MessageHeader = struct({
 
 const MessageHeaderResolver = {
     __resolveType(obj, context, info) {
-        if (obj.IntMsgInfo) {
+        if ('IntMsgInfo' in obj) {
             return 'MessageHeaderIntMsgInfoVariant';
         }
-        if (obj.ExtInMsgInfo) {
+        if ('ExtInMsgInfo' in obj) {
             return 'MessageHeaderExtInMsgInfoVariant';
         }
-        if (obj.ExtOutMsgInfo) {
+        if ('ExtOutMsgInfo' in obj) {
             return 'MessageHeaderExtOutMsgInfoVariant';
         }
         return null;
@@ -255,25 +255,25 @@ const InMsg = struct({
 
 const InMsgResolver = {
     __resolveType(obj, context, info) {
-        if (obj.External) {
+        if ('External' in obj) {
             return 'InMsgExternalVariant';
         }
-        if (obj.IHR) {
+        if ('IHR' in obj) {
             return 'InMsgIHRVariant';
         }
-        if (obj.Immediatelly) {
+        if ('Immediatelly' in obj) {
             return 'InMsgImmediatellyVariant';
         }
-        if (obj.Final) {
+        if ('Final' in obj) {
             return 'InMsgFinalVariant';
         }
-        if (obj.Transit) {
+        if ('Transit' in obj) {
             return 'InMsgTransitVariant';
         }
-        if (obj.DiscardedFinal) {
+        if ('DiscardedFinal' in obj) {
             return 'InMsgDiscardedFinalVariant';
         }
-        if (obj.DiscardedTransit) {
+        if ('DiscardedTransit' in obj) {
             return 'InMsgDiscardedTransitVariant';
         }
         return null;
@@ -323,25 +323,25 @@ const OutMsg = struct({
 
 const OutMsgResolver = {
     __resolveType(obj, context, info) {
-        if (obj.None) {
+        if ('None' in obj) {
             return 'OutMsgNoneVariant';
         }
-        if (obj.External) {
+        if ('External' in obj) {
             return 'OutMsgExternalVariant';
         }
-        if (obj.Immediately) {
+        if ('Immediately' in obj) {
             return 'OutMsgImmediatelyVariant';
         }
-        if (obj.OutMsgNew) {
+        if ('OutMsgNew' in obj) {
             return 'OutMsgOutMsgNewVariant';
         }
-        if (obj.Transit) {
+        if ('Transit' in obj) {
             return 'OutMsgTransitVariant';
         }
-        if (obj.Dequeue) {
+        if ('Dequeue' in obj) {
             return 'OutMsgDequeueVariant';
         }
-        if (obj.TransitRequired) {
+        if ('TransitRequired' in obj) {
             return 'OutMsgTransitRequiredVariant';
         }
         return null;
@@ -474,13 +474,13 @@ const AccountStorageState = struct({
 
 const AccountStorageStateResolver = {
     __resolveType(obj, context, info) {
-        if (obj.AccountUninit) {
+        if ('AccountUninit' in obj) {
             return 'AccountStorageStateAccountUninitVariant';
         }
-        if (obj.AccountActive) {
+        if ('AccountActive' in obj) {
             return 'AccountStorageStateAccountActiveVariant';
         }
-        if (obj.AccountFrozen) {
+        if ('AccountFrozen' in obj) {
             return 'AccountStorageStateAccountFrozenVariant';
         }
         return null;
@@ -544,10 +544,10 @@ const TrComputePhase = struct({
 
 const TrComputePhaseResolver = {
     __resolveType(obj, context, info) {
-        if (obj.Skipped) {
+        if ('Skipped' in obj) {
             return 'TrComputePhaseSkippedVariant';
         }
-        if (obj.Vm) {
+        if ('Vm' in obj) {
             return 'TrComputePhaseVmVariant';
         }
         return null;
@@ -590,13 +590,13 @@ const TrBouncePhase = struct({
 
 const TrBouncePhaseResolver = {
     __resolveType(obj, context, info) {
-        if (obj.Negfunds) {
+        if ('Negfunds' in obj) {
             return 'TrBouncePhaseNegfundsVariant';
         }
-        if (obj.Nofunds) {
+        if ('Nofunds' in obj) {
             return 'TrBouncePhaseNofundsVariant';
         }
-        if (obj.Ok) {
+        if ('Ok' in obj) {
             return 'TrBouncePhaseOkVariant';
         }
         return null;
@@ -665,25 +665,25 @@ const TransactionDescription = struct({
 
 const TransactionDescriptionResolver = {
     __resolveType(obj, context, info) {
-        if (obj.Ordinary) {
+        if ('Ordinary' in obj) {
             return 'TransactionDescriptionOrdinaryVariant';
         }
-        if (obj.Storage) {
+        if ('Storage' in obj) {
             return 'TransactionDescriptionStorageVariant';
         }
-        if (obj.TickTock) {
+        if ('TickTock' in obj) {
             return 'TransactionDescriptionTickTockVariant';
         }
-        if (obj.SplitPrepare) {
+        if ('SplitPrepare' in obj) {
             return 'TransactionDescriptionSplitPrepareVariant';
         }
-        if (obj.SplitInstall) {
+        if ('SplitInstall' in obj) {
             return 'TransactionDescriptionSplitInstallVariant';
         }
-        if (obj.MergePrepare) {
+        if ('MergePrepare' in obj) {
             return 'TransactionDescriptionMergePrepareVariant';
         }
-        if (obj.MergeInstall) {
+        if ('MergeInstall' in obj) {
             return 'TransactionDescriptionMergeInstallVariant';
         }
         return null;
