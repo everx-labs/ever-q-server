@@ -39,3 +39,20 @@ node index.js
 Q-Server is accessible with GraphQL HTTP/WebSocket protocol on port "4000" and path "/graphql".
 
 There is the only valid way to communicate with Q-Server – TON Labs Client Libraries.
+
+# For Developers
+
+IMPORTANT!!!
+
+**FIRST**. If you have modified source code you need to compile it with babel:
+```bash
+npm run babel
+```
+This will regenerate file in `dist` folder.
+
+**SECOND**. If you want to modify scheme of database, you must do it only in one place `db.scheme.js`.
+After that you need to generate source code for a graphql type definitions and for resolvers JavaScript code.
+You can do it with:
+```bash
+npm run gen-ql
+``` 
