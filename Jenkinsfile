@@ -7,6 +7,8 @@ G_container = "alanin/container:latest"
 G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
 G_MakeImage = "NotSet"
+G_TestImage = "NotSet"
+G_PushImage = "NotSet"
 G_PushImageLatest = "NotSet"
 C_PROJECT = "NotSet"
 C_COMMITER = "NotSet"
@@ -72,7 +74,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**, __tests__/**', name: 'wholedir'
 							}
 					}
 				}
@@ -83,7 +85,7 @@ pipeline {
 
 		}
 
-		stage ('MakeImage') {
+		stage ('Make Image') {
 			agent {
 				node {label 'master'}
 			}
@@ -103,7 +105,6 @@ pipeline {
 								"${G_gqlimage}",
 								"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
 							)
-							wimage.push()
 						}
 					}
 				}
@@ -111,6 +112,41 @@ pipeline {
 			post {
                 success {script{G_MakeImage = "success"}}
                 failure {script{G_MakeImage = "failure"}}
+            }
+		}
+
+		stage ('Test Image') {
+			agent {
+				node {label 'master'}
+			}
+			steps {
+				script {
+					wimage.inside {
+						sh 'npm run test'
+					}
+				}
+			}
+			post {
+                success {script{G_TestImage = "success"}}
+                failure {script{G_TestImage = "failure"}}
+				always {script{cleanWs notFailBuild: true}}
+            }
+		}
+
+		stage ('Push Image') {
+			agent {
+				node {label 'master'}
+			}
+			steps {
+				script {
+					docker.withRegistry('', "${G_dockerCred}") {
+						wimage.push()
+					}
+				}
+			}
+			post {
+                success {script{G_PushImage = "success"}}
+                failure {script{G_PushImage = "failure"}}
 				always {script{cleanWs notFailBuild: true}}
             }
 		}
@@ -133,9 +169,7 @@ pipeline {
 			post {
                 success {script{G_PushImageLatest = "success"}}
                 failure {script{G_PushImageLatest = "failure"}}
-				always {script{cleanWs notFailBuild: true}}
             }
-
 		}
     }
 
@@ -148,7 +182,9 @@ pipeline {
                 DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
                 + "Build number ${BUILD_NUMBER}" + "\n" \
                 + "Build: **" + G_buildstatus + "**" + "\n" \
-                + "Put Image: **" + G_MakeImage + "**" + "\n" \
+                + "Build Image: **" + G_MakeImage + "**" + "\n" \
+                + "Test Image: **" + G_TestImage + "**" + "\n" \
+                + "Push Image: **" + G_PushImage + "**" + "\n" \
                 + "Tag Image As Latest: **" + G_PushImageLatest + "**"
                 discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
             }
