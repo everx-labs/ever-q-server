@@ -89,87 +89,94 @@ pipeline {
 			agent {
 				node {label 'master'}
 			}
-			steps {
-				script {
-					/* Compile string for docker tag */
-					BRANCH_NAME_STRIPPED = "${BRANCH_NAME}".replaceAll("[^a-zA-Z0-9_.-]+","__")
-					DOCKER_TAG = "${BRANCH_NAME_STRIPPED}-b${BUILD_ID}.${GIT_COMMIT}"
-					sh "echo DOCKER_TAG: ${DOCKER_TAG}"
+			stages {
+				stage ('Build Image') {
+					// agent {
+					// 	node {label 'master'}
+					// }
+					steps {
+						script {
+							/* Compile string for docker tag */
+							BRANCH_NAME_STRIPPED = "${BRANCH_NAME}".replaceAll("[^a-zA-Z0-9_.-]+","__")
+							DOCKER_TAG = "${BRANCH_NAME_STRIPPED}-b${BUILD_ID}.${GIT_COMMIT}"
+							sh "echo DOCKER_TAG: ${DOCKER_TAG}"
 
-					G_gqlimage = "${G_gqlimage_base}:${DOCKER_TAG}"
+							G_gqlimage = "${G_gqlimage_base}:${DOCKER_TAG}"
 
-					dir ('node') {
-						unstash 'wholedir'
-						docker.withRegistry('', "${G_dockerCred}") {
-							def wimage = docker.build(
-								"${G_gqlimage}",
-								"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
-							)
+							dir ('node') {
+								unstash 'wholedir'
+								docker.withRegistry('', "${G_dockerCred}") {
+									def wimage = docker.build(
+										"${G_gqlimage}",
+										"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
+									)
+								}
+							}
 						}
 					}
+					post {
+						success {script{G_MakeImage = "success"}}
+						failure {script{G_MakeImage = "failure"}}
+					}
 				}
-			}
-			post {
-                success {script{G_MakeImage = "success"}}
-                failure {script{G_MakeImage = "failure"}}
-            }
-		}
 
-		stage ('Test Image') {
-			agent {
-				node {label 'master'}
-			}
-			steps {
-				script {
-					wimage.inside {
-						sh 'npm run test'
+				stage ('Test Image') {
+					// agent {
+					// 	node {label 'master'}
+					// }
+					steps {
+						script {
+							wimage.inside() {
+								sh 'npm run test'
+							}
+						}
+					}
+					post {
+						success {script{G_TestImage = "success"}}
+						failure {script{G_TestImage = "failure"}}
+						always {script{cleanWs notFailBuild: true}}
+					}
+				}
+
+				stage ('Push Image') {
+					// agent {
+					// 	node {label 'master'}
+					// }
+					steps {
+						script {
+							docker.withRegistry('', "${G_dockerCred}") {
+								wimage.push()
+							}
+						}
+					}
+					post {
+						success {script{G_PushImage = "success"}}
+						failure {script{G_PushImage = "failure"}}
+						always {script{cleanWs notFailBuild: true}}
+					}
+				}
+
+				stage ('Tag as latest') {
+					when {
+						branch "${G_promoted_version}"
+						beforeAgent true
+					}
+					// agent {
+					// 	node {label 'master'}
+					// }
+					steps {
+						script {
+							docker.withRegistry('', "${G_dockerCred}") {
+								wimage.push("latest")
+							}
+						}
+					}
+					post {
+						success {script{G_PushImageLatest = "success"}}
+						failure {script{G_PushImageLatest = "failure"}}
 					}
 				}
 			}
-			post {
-                success {script{G_TestImage = "success"}}
-                failure {script{G_TestImage = "failure"}}
-				always {script{cleanWs notFailBuild: true}}
-            }
-		}
-
-		stage ('Push Image') {
-			agent {
-				node {label 'master'}
-			}
-			steps {
-				script {
-					docker.withRegistry('', "${G_dockerCred}") {
-						wimage.push()
-					}
-				}
-			}
-			post {
-                success {script{G_PushImage = "success"}}
-                failure {script{G_PushImage = "failure"}}
-				always {script{cleanWs notFailBuild: true}}
-            }
-		}
-
-		stage ('Tag as latest') {
-            when {
-                branch "${G_promoted_version}"
-                beforeAgent true
-            }
-			agent {
-				node {label 'master'}
-			}
-			steps {
-				script {
-					docker.withRegistry('', "${G_dockerCred}") {
-						wimage.push("latest")
-					}
-				}
-			}
-			post {
-                success {script{G_PushImageLatest = "success"}}
-                failure {script{G_PushImageLatest = "failure"}}
-            }
 		}
     }
 
