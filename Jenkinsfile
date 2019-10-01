@@ -126,7 +126,7 @@ pipeline {
 					// }
 					steps {
 						script {
-							docker.image("${G_gqlimage}").inside {
+							docker.image("${G_gqlimage}").inside('--entrypoint ""') {
 								sh 'npm run test'
 							}
 						}
