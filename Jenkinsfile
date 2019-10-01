@@ -106,7 +106,8 @@ pipeline {
 							dir ('node') {
 								unstash 'wholedir'
 								docker.withRegistry('', "${G_dockerCred}") {
-									def wimage = docker.build(
+									// def wimage = docker.build(
+									wimage = docker.build(
 										"${G_gqlimage}",
 										"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
 									)
