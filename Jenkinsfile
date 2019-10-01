@@ -2,10 +2,12 @@ G_promoted_version = "master"
 G_promoted_branch = "origin/${G_promoted_version}"
 G_giturl = "https://github.com/tonlabs/ton-q-server.git"
 G_gitcred = "LaninSSHgit"
+G_dockerCred = 'dockerhubLanin'
 G_container = "alanin/container:latest"
-G_gqlimage = "tonlabs/q-server"
+G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
 G_MakeImage = "NotSet"
+G_PushImageLatest = "NotSet"
 C_PROJECT = "NotSet"
 C_COMMITER = "NotSet"
 C_HASH = "NotSet"
@@ -70,7 +72,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile', includes: '*, dist/**, server/**, node_modules/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**', name: 'wholedir'
 							}
 					}
 				}
@@ -82,6 +84,38 @@ pipeline {
 		}
 
 		stage ('MakeImage') {
+			agent {
+				node {label 'master'}
+			}
+			steps {
+				script {
+					/* Compile string for docker tag */
+					BRANCH_NAME_STRIPPED = "${BRANCH_NAME}".replaceAll("[^a-zA-Z0-9_.-]+","__")
+					DOCKER_TAG = "${BRANCH_NAME_STRIPPED}-b${BUILD_ID}.${GIT_COMMIT}"
+					sh "echo DOCKER_TAG: ${DOCKER_TAG}"
+
+					G_gqlimage = "${G_gqlimage_base}:${DOCKER_TAG}"
+
+					dir ('node') {
+						unstash 'wholedir'
+						docker.withRegistry('', "${G_dockerCred}") {
+							def wimage = docker.build(
+								"${G_gqlimage}",
+								"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
+							)
+							wimage.push()
+						}
+					}
+				}
+			}
+			post {
+                success {script{G_MakeImage = "success"}}
+                failure {script{G_MakeImage = "failure"}}
+				always {script{cleanWs notFailBuild: true}}
+            }
+		}
+
+		stage ('Tag as latest') {
             when {
                 branch "${G_promoted_version}"
                 beforeAgent true
@@ -89,34 +123,19 @@ pipeline {
 			agent {
 				node {label 'master'}
 			}
-				steps {
-					script {
-						dir ('node') {
-							unstash 'wholedir'
-							sh '''
-							echo 'FROM node:10.11.0-stretch' > Dockerfile
-							echo 'WORKDIR /home/node' >> Dockerfile
-							echo 'USER node' >> Dockerfile
-							echo 'ADD . /home/node' >>Dockerfile
-							echo 'EXPOSE 4000' >> Dockerfile
-							echo 'ENTRYPOINT ["node", "index.js"]' >> Dockerfile
-							'''
-							docker.withRegistry('', 'dockerhubLanin') {
-								def wimage = docker.build(
-                                    "${G_gqlimage}:${env.BUILD_ID}",
-                                    "--label 'git-commit=${GIT_COMMIT}' ."
-                                )
-								wimage.push()
-								wimage.push("latest")
-							}
-						}
+			steps {
+				script {
+					docker.withRegistry('', "${G_dockerCred}") {
+						wimage.push("latest")
 					}
 				}
+			}
 			post {
-                success {script{G_MakeImage = "success"}}
-                failure {script{G_MakeImage = "failure"}}
+                success {script{G_PushImageLatest = "success"}}
+                failure {script{G_PushImageLatest = "failure"}}
 				always {script{cleanWs notFailBuild: true}}
             }
+
 		}
     }
 
@@ -129,7 +148,8 @@ pipeline {
                 DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
                 + "Build number ${BUILD_NUMBER}" + "\n" \
                 + "Build: **" + G_buildstatus + "**" + "\n" \
-                + "Put Image: **" + G_MakeImage + "**"
+                + "Put Image: **" + G_MakeImage + "**" + "\n" \
+                + "Tag Image As Latest: **" + G_PushImageLatest + "**"
                 discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
             }
         }
