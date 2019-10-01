@@ -91,9 +91,6 @@ pipeline {
 			}
 			stages {
 				stage ('Build Image') {
-					// agent {
-					// 	node {label 'master'}
-					// }
 					steps {
 						script {
 							/* Compile string for docker tag */
@@ -106,8 +103,7 @@ pipeline {
 							dir ('node') {
 								unstash 'wholedir'
 								docker.withRegistry('', "${G_dockerCred}") {
-									// def wimage = docker.build(
-									wimage = docker.build(
+									builtImage = docker.build(
 										"${G_gqlimage}",
 										"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
 									)
@@ -122,32 +118,25 @@ pipeline {
 				}
 
 				stage ('Test Image') {
-					// agent {
-					// 	node {label 'master'}
-					// }
 					steps {
 						script {
-							docker.image("${G_gqlimage}").inside('--entrypoint ""') {
-								// sh 'npm run test'
-								sh 'echo OK'
+							builtImage.inside('--entrypoint "" -u root') {
+								sh 'npm install jest'
+								sh 'npm run test'
 							}
 						}
 					}
 					post {
 						success {script{G_TestImage = "success"}}
 						failure {script{G_TestImage = "failure"}}
-						// always {script{cleanWs notFailBuild: true}}
 					}
 				}
 
 				stage ('Push Image') {
-					// agent {
-					// 	node {label 'master'}
-					// }
 					steps {
 						script {
 							docker.withRegistry('', "${G_dockerCred}") {
-								wimage.push()
+								builtImage.push()
 							}
 						}
 					}
@@ -163,13 +152,10 @@ pipeline {
 						branch "${G_promoted_version}"
 						beforeAgent true
 					}
-					// agent {
-					// 	node {label 'master'}
-					// }
 					steps {
 						script {
 							docker.withRegistry('', "${G_dockerCred}") {
-								wimage.push("latest")
+								builtImage.push("latest")
 							}
 						}
 					}
