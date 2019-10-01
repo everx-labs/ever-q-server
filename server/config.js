@@ -16,6 +16,7 @@
 
 // @flow
 import os from 'os';
+const program = require('commander');
 
 function getIp(): string {
     const ipv4 = (Object.values(os.networkInterfaces()): any)
@@ -29,18 +30,35 @@ const MODE = {
     development: 'development',
 };
 
+type ProgramOptions = {
+    dbServer: string,
+    dbName: string,
+    host: string,
+    port: string,
+}
+
+program
+    .option('-h, --host <host>', 'listening address',
+        process.env.Q_SERVER_HOST || getIp())
+    .option('-p, --port <port>', 'listening port',
+        process.env.Q_SERVER_PORT || '4000')
+    .option('-d, --db-server <address>', 'database server:port',
+        process.env.Q_DATABASE_SERVER || 'arangodb:8529')
+    .option('-n, --db-name <name>', 'database name',
+        process.env.Q_DATABASE_NAME || 'blockchain')
+    .parse(process.argv);
+
+const options: ProgramOptions = program;
+
 const env = {
-    mode: process.env.Q_MODE || MODE.production,
     ssl: (process.env.Q_SSL || '') === 'true',
-    database_server: process.env.Q_DATABASE_SERVER || 'arangodb:8529',
-    database_name: process.env.Q_DATABASE_NAME || 'blockchain',
-    server_host: process.env.Q_SERVER_HOST || getIp(),
-    server_port: Number(process.env.Q_SERVER_PORT || 4000),
+    database_server: options.dbServer,
+    database_name: options.dbName,
+    server_host: options.host,
+    server_port: options.port,
 };
 
 export type QConfig = {
-    MODE: { production: string, development: string },
-    mode: string,
     server: {
         host: string,
         port: number,
@@ -60,11 +78,9 @@ export type QConfig = {
 }
 
 const config: QConfig = {
-    MODE,
-    mode: env.mode,
     server: {
         host: env.server_host,
-        port: env.server_port,
+        port: Number.parseInt(env.server_port),
         ssl: env.ssl
             ? {
                 port: 4001,
@@ -74,12 +90,13 @@ const config: QConfig = {
             : null,
     },
     database: {
-        server: env.mode === MODE.production ? env.database_server : 'services.tonlabs.io:8529',
-        name: env.database_name
+        server: env.database_server,
+        name: env.database_name,
     },
     listener: {
         restartTimeout: 1000
     }
 };
 
+console.log('Using config:', config);
 export default config;
