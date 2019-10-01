@@ -126,7 +126,7 @@ pipeline {
 					// }
 					steps {
 						script {
-							wimage.inside() {
+							docker.image("${G_gqlimage}").inside {
 								sh 'npm run test'
 							}
 						}
@@ -134,7 +134,7 @@ pipeline {
 					post {
 						success {script{G_TestImage = "success"}}
 						failure {script{G_TestImage = "failure"}}
-						always {script{cleanWs notFailBuild: true}}
+						// always {script{cleanWs notFailBuild: true}}
 					}
 				}
 
