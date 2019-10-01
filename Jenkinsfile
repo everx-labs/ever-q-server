@@ -101,7 +101,7 @@ pipeline {
 						docker.withRegistry('', "${G_dockerCred}") {
 							def wimage = docker.build(
 								"${G_gqlimage}",
-								"--label 'git-commit=${GIT_COMMIT}' ."
+								"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
 							)
 							wimage.push()
 						}
