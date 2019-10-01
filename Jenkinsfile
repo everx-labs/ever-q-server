@@ -120,12 +120,7 @@ pipeline {
 				stage ('Test Image') {
 					steps {
 						script {
-							// builtImage.inside('--entrypoint "" -u root') {
-							// // builtImage.inside('--entrypoint ""') {
-							// 	sh 'npm install jest'
-							// 	sh 'npm run test'
-							// }
-							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test_'"
+							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
 						}
 					}
 					post {
