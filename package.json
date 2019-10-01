@@ -22,6 +22,7 @@
 		"apollo-server-express": "^2.6.4",
 		"express": "^4.17.1",
 		"commander": "^3.0.2",
+		"jest": "^24.8.0",
 		"@babel/runtime": "^7.4.4"
 	},
 	"devDependencies": {

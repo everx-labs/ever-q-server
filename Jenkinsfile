@@ -120,8 +120,9 @@ pipeline {
 				stage ('Test Image') {
 					steps {
 						script {
-							builtImage.inside('--entrypoint "" -u root') {
-								sh 'npm install jest'
+							// builtImage.inside('--entrypoint "" -u root') {
+							builtImage.inside('--entrypoint ""') {
+								// sh 'npm install jest'
 								sh 'npm run test'
 							}
 						}
