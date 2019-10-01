@@ -148,7 +148,7 @@ pipeline {
                 DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
                 + "Build number ${BUILD_NUMBER}" + "\n" \
                 + "Build: **" + G_buildstatus + "**" + "\n" \
-                + "Put Image: **" + G_MakeImage + "**"
+                + "Put Image: **" + G_MakeImage + "**" + "\n" \
                 + "Tag Image As Latest: **" + G_PushImageLatest + "**"
                 discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
             }
