@@ -27,11 +27,21 @@ EXPORT Q_DATABASE_NAME="blockchain"
 EXPORT Q_SERVER_HOST="<local IP address used by default>"
 EXPORT Q_SERVER_PORT=4000
 ```
- 
+
 # Run
 
 ```bash
 node index.js
+```
+Command line parameters:
+
+```
+Options:
+  -h, --host <host>          listening address (default: "192.168.1.11")
+  -p, --port <port>          listening port (default: "4000")
+  -d, --db-server <address>  database server:port (default: "arangodb:8529")
+  -n, --db-name <name>       database name (default: "blockchain")
+
 ```
 
 # Connectivity
