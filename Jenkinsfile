@@ -7,6 +7,8 @@ G_container = "alanin/container:latest"
 G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
 G_MakeImage = "NotSet"
+G_TestImage = "NotSet"
+G_PushImage = "NotSet"
 G_PushImageLatest = "NotSet"
 C_PROJECT = "NotSet"
 C_COMMITER = "NotSet"
@@ -72,7 +74,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**, __tests__/**', name: 'wholedir'
 							}
 					}
 				}
@@ -83,59 +85,83 @@ pipeline {
 
 		}
 
-		stage ('MakeImage') {
+		stage ('Make Image') {
 			agent {
 				node {label 'master'}
 			}
-			steps {
-				script {
-					/* Compile string for docker tag */
-					BRANCH_NAME_STRIPPED = "${BRANCH_NAME}".replaceAll("[^a-zA-Z0-9_.-]+","__")
-					DOCKER_TAG = "${BRANCH_NAME_STRIPPED}-b${BUILD_ID}.${GIT_COMMIT}"
-					sh "echo DOCKER_TAG: ${DOCKER_TAG}"
+			stages {
+				stage ('Build Image') {
+					steps {
+						script {
+							/* Compile string for docker tag */
+							BRANCH_NAME_STRIPPED = "${BRANCH_NAME}".replaceAll("[^a-zA-Z0-9_.-]+","__")
+							DOCKER_TAG = "${BRANCH_NAME_STRIPPED}-b${BUILD_ID}.${GIT_COMMIT}"
+							sh "echo DOCKER_TAG: ${DOCKER_TAG}"
 
-					G_gqlimage = "${G_gqlimage_base}:${DOCKER_TAG}"
+							G_gqlimage = "${G_gqlimage_base}:${DOCKER_TAG}"
 
-					dir ('node') {
-						unstash 'wholedir'
-						docker.withRegistry('', "${G_dockerCred}") {
-							def wimage = docker.build(
-								"${G_gqlimage}",
-								"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
-							)
-							wimage.push()
+							dir ('node') {
+								unstash 'wholedir'
+								docker.withRegistry('', "${G_dockerCred}") {
+									builtImage = docker.build(
+										"${G_gqlimage}",
+										"--label 'git-commit=${GIT_COMMIT}' -f ../Dockerfile ."
+									)
+								}
+							}
 						}
 					}
+					post {
+						success {script{G_MakeImage = "success"}}
+						failure {script{G_MakeImage = "failure"}}
+					}
 				}
-			}
-			post {
-                success {script{G_MakeImage = "success"}}
-                failure {script{G_MakeImage = "failure"}}
-				always {script{cleanWs notFailBuild: true}}
-            }
-		}
 
-		stage ('Tag as latest') {
-            when {
-                branch "${G_promoted_version}"
-                beforeAgent true
-            }
-			agent {
-				node {label 'master'}
-			}
-			steps {
-				script {
-					docker.withRegistry('', "${G_dockerCred}") {
-						wimage.push("latest")
+				stage ('Test Image') {
+					steps {
+						script {
+							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+						}
+					}
+					post {
+						success {script{G_TestImage = "success"}}
+						failure {script{G_TestImage = "failure"}}
+					}
+				}
+
+				stage ('Push Image') {
+					steps {
+						script {
+							docker.withRegistry('', "${G_dockerCred}") {
+								builtImage.push()
+							}
+						}
+					}
+					post {
+						success {script{G_PushImage = "success"}}
+						failure {script{G_PushImage = "failure"}}
+						always {script{cleanWs notFailBuild: true}}
+					}
+				}
+
+				stage ('Tag as latest') {
+					when {
+						branch "${G_promoted_version}"
+						beforeAgent true
+					}
+					steps {
+						script {
+							docker.withRegistry('', "${G_dockerCred}") {
+								builtImage.push("latest")
+							}
+						}
+					}
+					post {
+						success {script{G_PushImageLatest = "success"}}
+						failure {script{G_PushImageLatest = "failure"}}
 					}
 				}
 			}
-			post {
-                success {script{G_PushImageLatest = "success"}}
-                failure {script{G_PushImageLatest = "failure"}}
-				always {script{cleanWs notFailBuild: true}}
-            }
-
 		}
     }
 
@@ -148,7 +174,9 @@ pipeline {
                 DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
                 + "Build number ${BUILD_NUMBER}" + "\n" \
                 + "Build: **" + G_buildstatus + "**" + "\n" \
-                + "Put Image: **" + G_MakeImage + "**" + "\n" \
+                + "Build Image: **" + G_MakeImage + "**" + "\n" \
+                + "Test Image: **" + G_TestImage + "**" + "\n" \
+                + "Push Image: **" + G_PushImage + "**" + "\n" \
                 + "Tag Image As Latest: **" + G_PushImageLatest + "**"
                 discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
             }
