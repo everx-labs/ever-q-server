@@ -184,6 +184,9 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
             });
         },
         test(value, filter) {
+            if (!value) {
+                return false;
+            }
             return testFields(value, filter, fields, (fieldType, value, filterKey, filterValue) => {
                 const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
                 return fieldType.test(value[fieldName], filterValue);
@@ -220,12 +223,15 @@ function array(itemType: QType): QType {
     return {
         ql(path, filter) {
             return qlFields(path, filter, ops, (op, path, filterKey, filterValue) => {
-                return op.ql(combine(path, filterKey), filterValue);
+                return op.ql(path, filterValue);
             });
         },
         test(value, filter) {
+            if (!value) {
+                return false;
+            }
             return testFields(value, filter, ops, (op, value, filterKey, filterValue) => {
-                return op.test(value[filterKey], filterValue);
+                return op.test(value, filterValue);
             });
         }
     }

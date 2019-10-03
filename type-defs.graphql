@@ -43,7 +43,7 @@ input FloatFilter {
 }
 
 type None {
-	dummy: String
+	None: String
 }
 
 type CurrencyCollection {
@@ -490,10 +490,6 @@ type AccountStorageStateAccountActive {
 	library: String
 }
 
-type AccountStorageStateAccountFrozen {
-	dummy: String
-}
-
 type AccountStorageStateAccountUninitVariant {
     AccountUninit: None
 }
@@ -503,7 +499,7 @@ type AccountStorageStateAccountActiveVariant {
 }
 
 type AccountStorageStateAccountFrozenVariant {
-    AccountFrozen: AccountStorageStateAccountFrozen
+    AccountFrozen: None
 }
 
 union AccountStorageState = 
@@ -733,7 +729,7 @@ type Transaction {
 }
 
 input NoneFilter {
-	dummy: StringFilter
+	None: StringFilter
 }
 
 input CurrencyCollectionFilter {
@@ -1100,14 +1096,10 @@ input AccountStorageStateAccountActiveFilter {
 	library: StringFilter
 }
 
-input AccountStorageStateAccountFrozenFilter {
-	dummy: StringFilter
-}
-
 input AccountStorageStateFilter {
 	AccountUninit: NoneFilter
 	AccountActive: AccountStorageStateAccountActiveFilter
-	AccountFrozen: AccountStorageStateAccountFrozenFilter
+	AccountFrozen: NoneFilter
 }
 
 input AccountStorageFilter {
