@@ -30,7 +30,7 @@ function uint(size: number, doc?: '') {
 const u8 = (doc?: '') => uint(8, doc);
 const u16 = (doc?: '') => uint(16, doc);
 const u32 = (doc?: '') => uint(32, doc);
-const u64 = (doc?: '') => uint(64, doc);
+const u64 = (doc?: '') => float(doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
     return { ...ref(refDef), _: { join: { on } } }
 };

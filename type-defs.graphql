@@ -83,7 +83,7 @@ union IntermediateAddress =
 
 
 type ExtBlkRef {
-	end_lt: Int
+	end_lt: Float
 	seq_no: Int
 	root_hash: String
 	file_hash: String
@@ -170,7 +170,7 @@ type MessageHeaderIntMsgInfo {
 	value: CurrencyCollection
 	ihr_fee: Int
 	fwd_fee: Int
-	created_lt: Int
+	created_lt: Float
 	created_at: Int
 }
 
@@ -183,7 +183,7 @@ type MessageHeaderExtInMsgInfo {
 type MessageHeaderExtOutMsgInfo {
 	src: MsgAddressInt
 	dst: MsgAddressExt
-	created_lt: Int
+	created_lt: Float
 	created_at: Int
 }
 
@@ -262,13 +262,13 @@ type InMsgTransit {
 
 type InMsgDiscardedFinal {
 	in_msg: MsgEnvelope
-	transaction_id: Int
+	transaction_id: Float
 	fwd_fee: Int
 }
 
 type InMsgDiscardedTransit {
 	in_msg: MsgEnvelope
-	transaction_id: Int
+	transaction_id: Float
 	fwd_fee: Int
 	proof_delivered: String
 }
@@ -334,7 +334,7 @@ type OutMsgTransit {
 
 type OutMsgDequeue {
 	out_msg: MsgEnvelope
-	import_block_lt: Int
+	import_block_lt: Float
 }
 
 type OutMsgTransitRequired {
@@ -394,7 +394,7 @@ type BlockInfoPrevRef {
 type BlockInfoShard {
 	shard_pfx_bits: Int
 	workchain_id: Int
-	shard_prefix: Int
+	shard_prefix: Float
 }
 
 type BlockInfoMasterRef {
@@ -420,8 +420,8 @@ type BlockInfo {
 	after_split: Boolean
 	want_merge: Boolean
 	vert_seq_no: Int
-	start_lt: Int
-	end_lt: Int
+	start_lt: Float
+	end_lt: Float
 	shard: BlockInfoShard
 	min_ref_mc_seqno: Int
 	master_ref: BlockInfoMasterRef
@@ -710,10 +710,10 @@ type Transaction {
 	block_id: String
 	status: String
 	account_addr: String
-	lt: Int
-	last_trans_lt: Int
+	lt: Float
+	last_trans_lt: Float
 	prev_trans_hash: String
-	prev_trans_lt: Int
+	prev_trans_lt: Float
 	now: Int
 	outmsg_cnt: Int
 	orig_status: String
@@ -757,7 +757,7 @@ input IntermediateAddressFilter {
 }
 
 input ExtBlkRefFilter {
-	end_lt: IntFilter
+	end_lt: FloatFilter
 	seq_no: IntFilter
 	root_hash: StringFilter
 	file_hash: StringFilter
@@ -824,7 +824,7 @@ input MessageHeaderIntMsgInfoFilter {
 	value: CurrencyCollectionFilter
 	ihr_fee: IntFilter
 	fwd_fee: IntFilter
-	created_lt: IntFilter
+	created_lt: FloatFilter
 	created_at: IntFilter
 }
 
@@ -837,7 +837,7 @@ input MessageHeaderExtInMsgInfoFilter {
 input MessageHeaderExtOutMsgInfoFilter {
 	src: MsgAddressIntFilter
 	dst: MsgAddressExtFilter
-	created_lt: IntFilter
+	created_lt: FloatFilter
 	created_at: IntFilter
 }
 
@@ -904,13 +904,13 @@ input InMsgTransitFilter {
 
 input InMsgDiscardedFinalFilter {
 	in_msg: MsgEnvelopeFilter
-	transaction_id: IntFilter
+	transaction_id: FloatFilter
 	fwd_fee: IntFilter
 }
 
 input InMsgDiscardedTransitFilter {
 	in_msg: MsgEnvelopeFilter
-	transaction_id: IntFilter
+	transaction_id: FloatFilter
 	fwd_fee: IntFilter
 	proof_delivered: StringFilter
 }
@@ -948,7 +948,7 @@ input OutMsgTransitFilter {
 
 input OutMsgDequeueFilter {
 	out_msg: MsgEnvelopeFilter
-	import_block_lt: IntFilter
+	import_block_lt: FloatFilter
 }
 
 input OutMsgTransitRequiredFilter {
@@ -980,7 +980,7 @@ input BlockInfoPrevRefFilter {
 input BlockInfoShardFilter {
 	shard_pfx_bits: IntFilter
 	workchain_id: IntFilter
-	shard_prefix: IntFilter
+	shard_prefix: FloatFilter
 }
 
 input BlockInfoMasterRefFilter {
@@ -1006,8 +1006,8 @@ input BlockInfoFilter {
 	after_split: BooleanFilter
 	want_merge: BooleanFilter
 	vert_seq_no: IntFilter
-	start_lt: IntFilter
-	end_lt: IntFilter
+	start_lt: FloatFilter
+	end_lt: FloatFilter
 	shard: BlockInfoShardFilter
 	min_ref_mc_seqno: IntFilter
 	master_ref: BlockInfoMasterRefFilter
@@ -1261,10 +1261,10 @@ input TransactionFilter {
 	block_id: StringFilter
 	status: StringFilter
 	account_addr: StringFilter
-	lt: IntFilter
-	last_trans_lt: IntFilter
+	lt: FloatFilter
+	last_trans_lt: FloatFilter
 	prev_trans_hash: StringFilter
-	prev_trans_lt: IntFilter
+	prev_trans_lt: FloatFilter
 	now: IntFilter
 	outmsg_cnt: IntFilter
 	orig_status: StringFilter
