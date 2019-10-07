@@ -105,7 +105,12 @@ export default class Arango {
                     return this.pubsub.asyncIterator(collection.name);
                 },
                 (data, args) => {
-                    return docType.test(data[collection.name], args.filter);
+                    try {
+                        return docType.test(data[collection.name], args.filter || {});
+                    } catch(error) {
+                        console.error('[Subscription] doc test failed', data, error);
+                        throw error;
+                    }
                 }
             ),
         }
