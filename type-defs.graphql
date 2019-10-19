@@ -394,7 +394,7 @@ type BlockInfoPrevRef {
 type BlockInfoShard {
 	shard_pfx_bits: Int
 	workchain_id: Int
-	shard_prefix: Float
+	shard_prefix: String
 }
 
 type BlockInfoMasterRef {
@@ -980,7 +980,7 @@ input BlockInfoPrevRefFilter {
 input BlockInfoShardFilter {
 	shard_pfx_bits: IntFilter
 	workchain_id: IntFilter
-	shard_prefix: FloatFilter
+	shard_prefix: StringFilter
 }
 
 input BlockInfoMasterRefFilter {

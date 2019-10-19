@@ -257,7 +257,7 @@ const Block: TypeDef = {
         shard: {
             shard_pfx_bits: u8(),
             workchain_id: int(),
-            shard_prefix: u64(),
+            shard_prefix: string(),
         },
         min_ref_mc_seqno: u32(),
         master_ref: {
