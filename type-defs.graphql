@@ -509,7 +509,7 @@ union AccountStorageState =
 
 
 type AccountStorage {
-	last_trans_lt: Int
+	last_trans_lt: Float
 	balance: CurrencyCollection
 	state: AccountStorageState
 }
@@ -1103,7 +1103,7 @@ input AccountStorageStateFilter {
 }
 
 input AccountStorageFilter {
-	last_trans_lt: IntFilter
+	last_trans_lt: FloatFilter
 	balance: CurrencyCollectionFilter
 	state: AccountStorageStateFilter
 }

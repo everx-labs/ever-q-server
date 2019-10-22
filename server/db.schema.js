@@ -313,7 +313,7 @@ const Account: TypeDef = {
         due_payment: int()
     },
     storage: {
-        last_trans_lt: u32(),
+        last_trans_lt: u64(),
         balance: ref({ CurrencyCollection }),
         state: unionOf({
             AccountUninit: ref({ None }),
