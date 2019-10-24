@@ -2,7 +2,6 @@ const customResolvers = {
     MessageHeaderIntMsgInfo: ['src', 'dst'],
     MessageHeaderExtInMsgInfo: ['src','dst'],
     MessageHeaderExtOutMsgInfo: ['src', 'dst'],
-    Account: ['addr'],
     AccountStorage: ['state'],
     BlockExtra: ['out_msg_descr'],
     TransactionDescriptionOrdinary: ['bounce']

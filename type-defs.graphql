@@ -89,44 +89,6 @@ type ExtBlkRef {
 	file_hash: String
 }
 
-type MsgAddressIntAddrStdAnycast {
-	rewrite_pfx: String
-}
-
-type MsgAddressIntAddrStd {
-	anycast: MsgAddressIntAddrStdAnycast
-	workchain_id: Int
-	address: String
-}
-
-type MsgAddressIntAddrVarAnycast {
-	rewrite_pfx: String
-}
-
-type MsgAddressIntAddrVar {
-	anycast: MsgAddressIntAddrVarAnycast
-	workchain_id: Int
-	address: String
-}
-
-type MsgAddressIntAddrNoneVariant {
-    AddrNone: None
-}
-
-type MsgAddressIntAddrStdVariant {
-    AddrStd: MsgAddressIntAddrStd
-}
-
-type MsgAddressIntAddrVarVariant {
-    AddrVar: MsgAddressIntAddrVar
-}
-
-union MsgAddressInt = 
-	| MsgAddressIntAddrNoneVariant
-	| MsgAddressIntAddrStdVariant
-	| MsgAddressIntAddrVarVariant
-
-
 type TickTock {
 	tick: Boolean
 	tock: Boolean
@@ -144,29 +106,12 @@ type SplitMergeInfo {
 	sibling_addr: String
 }
 
-type MsgAddressExtAddrExtern {
-	AddrExtern: String
-}
-
-type MsgAddressExtAddrNoneVariant {
-    AddrNone: None
-}
-
-type MsgAddressExtAddrExternVariant {
-    AddrExtern: MsgAddressExtAddrExtern
-}
-
-union MsgAddressExt = 
-	| MsgAddressExtAddrNoneVariant
-	| MsgAddressExtAddrExternVariant
-
-
 type MessageHeaderIntMsgInfo {
 	ihr_disabled: Boolean
 	bounce: Boolean
 	bounced: Boolean
-	src: MsgAddressInt
-	dst: MsgAddressInt
+	src: String
+	dst: String
 	value: CurrencyCollection
 	ihr_fee: Int
 	fwd_fee: Int
@@ -175,14 +120,14 @@ type MessageHeaderIntMsgInfo {
 }
 
 type MessageHeaderExtInMsgInfo {
-	src: MsgAddressExt
-	dst: MsgAddressInt
+	src: String
+	dst: String
 	import_fee: Int
 }
 
 type MessageHeaderExtOutMsgInfo {
-	src: MsgAddressInt
-	dst: MsgAddressExt
+	src: String
+	dst: String
 	created_lt: Float
 	created_at: Int
 }
@@ -519,7 +464,7 @@ type Account {
 	_key: String
 	storage_stat: AccountStorageStat
 	storage: AccountStorage
-	addr: MsgAddressInt
+	addr: String
 }
 
 type TransactionStateUpdate {
@@ -763,32 +708,6 @@ input ExtBlkRefFilter {
 	file_hash: StringFilter
 }
 
-input MsgAddressIntAddrStdAnycastFilter {
-	rewrite_pfx: StringFilter
-}
-
-input MsgAddressIntAddrStdFilter {
-	anycast: MsgAddressIntAddrStdAnycastFilter
-	workchain_id: IntFilter
-	address: StringFilter
-}
-
-input MsgAddressIntAddrVarAnycastFilter {
-	rewrite_pfx: StringFilter
-}
-
-input MsgAddressIntAddrVarFilter {
-	anycast: MsgAddressIntAddrVarAnycastFilter
-	workchain_id: IntFilter
-	address: StringFilter
-}
-
-input MsgAddressIntFilter {
-	AddrNone: NoneFilter
-	AddrStd: MsgAddressIntAddrStdFilter
-	AddrVar: MsgAddressIntAddrVarFilter
-}
-
 input TickTockFilter {
 	tick: BooleanFilter
 	tock: BooleanFilter
@@ -806,21 +725,12 @@ input SplitMergeInfoFilter {
 	sibling_addr: StringFilter
 }
 
-input MsgAddressExtAddrExternFilter {
-	AddrExtern: StringFilter
-}
-
-input MsgAddressExtFilter {
-	AddrNone: NoneFilter
-	AddrExtern: MsgAddressExtAddrExternFilter
-}
-
 input MessageHeaderIntMsgInfoFilter {
 	ihr_disabled: BooleanFilter
 	bounce: BooleanFilter
 	bounced: BooleanFilter
-	src: MsgAddressIntFilter
-	dst: MsgAddressIntFilter
+	src: StringFilter
+	dst: StringFilter
 	value: CurrencyCollectionFilter
 	ihr_fee: IntFilter
 	fwd_fee: IntFilter
@@ -829,14 +739,14 @@ input MessageHeaderIntMsgInfoFilter {
 }
 
 input MessageHeaderExtInMsgInfoFilter {
-	src: MsgAddressExtFilter
-	dst: MsgAddressIntFilter
+	src: StringFilter
+	dst: StringFilter
 	import_fee: IntFilter
 }
 
 input MessageHeaderExtOutMsgInfoFilter {
-	src: MsgAddressIntFilter
-	dst: MsgAddressExtFilter
+	src: StringFilter
+	dst: StringFilter
 	created_lt: FloatFilter
 	created_at: IntFilter
 }
@@ -1113,7 +1023,7 @@ input AccountFilter {
 	_key: StringFilter
 	storage_stat: AccountStorageStatFilter
 	storage: AccountStorageFilter
-	addr: MsgAddressIntFilter
+	addr: StringFilter
 }
 
 input TransactionStateUpdateFilter {

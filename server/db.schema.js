@@ -62,31 +62,6 @@ const ExtBlkRef: TypeDef = {
     file_hash: string()
 };
 
-const MsgAddressInt: TypeDef = unionOf({
-    AddrNone: ref({ None }),
-    AddrStd: {
-        anycast: {
-            rewrite_pfx: string()
-        },
-        workchain_id: u8(),
-        address: string()
-    },
-    AddrVar: {
-        anycast: {
-            rewrite_pfx: string()
-        },
-        workchain_id: int(),
-        address: string()
-    },
-});
-
-const MsgAddressExt: TypeDef = unionOf({
-    AddrNone: ref({ None }),
-    AddrExtern: {
-        AddrExtern: string()
-    }
-});
-
 const TickTock: TypeDef = {
     tick: bool(),
     tock: bool()
@@ -117,8 +92,8 @@ const Message: TypeDef = {
             ihr_disabled: bool(),
             bounce: bool(),
             bounced: bool(),
-            src: ref({ MsgAddressInt }),
-            dst: ref({ MsgAddressInt }),
+            src: string(),
+            dst: string(),
             value: ref({ CurrencyCollection }),
             ihr_fee: int(),
             fwd_fee: int(),
@@ -126,13 +101,13 @@ const Message: TypeDef = {
             created_at: int()
         },
         ExtInMsgInfo: {
-            src: ref({ MsgAddressExt }),
-            dst: ref({ MsgAddressInt }),
+            src: string(),
+            dst: string(),
             import_fee: int()
         },
         ExtOutMsgInfo: {
-            src: ref({ MsgAddressInt }),
-            dst: ref({ MsgAddressExt }),
+            src: string(),
+            dst: string(),
             created_lt: u64(),
             created_at: int()
         }
@@ -327,7 +302,7 @@ const Account: TypeDef = {
             AccountFrozen: ref({ None })
         }),
     },
-    addr: ref({ MsgAddressInt })
+    addr: string(),
 };
 
 //Transaction scheme begin
@@ -477,11 +452,9 @@ const schema: TypeDef = {
             CurrencyCollection,
             IntermediateAddress,
             ExtBlkRef,
-            MsgAddressInt,
             TickTock,
             StorageUsedShort,
             SplitMergeInfo,
-            MsgAddressExt,
             Message,
             MsgEnvelope,
             InMsg,
