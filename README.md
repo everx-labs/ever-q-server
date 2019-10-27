@@ -62,7 +62,10 @@ This will regenerate file in `dist` folder.
 
 **SECOND**. If you want to modify scheme of database, you must do it only in one place `db.scheme.js`.
 After that you need to generate source code for a graphql type definitions and for resolvers JavaScript code.
-You can do it with:
+You must do it with:
 ```bash
+npm run babel
 npm run gen-ql
+npm run babel
 ``` 
+Yes, you need too run babel twice :(. 
