@@ -14,11 +14,40 @@
  * limitations under the License.
  */
 
+/**
+ * Abstract interface for objects that acts as a helpers to perform queries over documents
+ * using query filters.
+ */
 type QType = {
+    /**
+     * Generates an Arango QL condition for specified field based on specified filter.
+     * The condition must be a string expression that evaluates to boolean.
+     *
+     * @param {string} path Path from document root to concrete field
+     * @param {any} filter Filter that will be applied to this field
+     * @return {string} Arango QL condition text
+     */
     ql: (path: string, filter: any) => string,
+    /**
+     * Tests value in document from Arango DB against specified filter.
+     *
+     * @param {any} value Value that must be tested against filter
+     * @param {any} filter Filter used to test a value
+     * @return true if value matches filter
+     */
     test: (value: any, filter: any) => boolean,
 }
 
+
+/**
+ * Generates AQL condition for complex filter.
+ *
+ * @param {string} path Path to document field.
+ * @param {object} filter A filter object specified by user.
+ * @param {object} fieldTypes A map of available values for filter fields to helpers.
+ * @param {function} qlField Function that generates condition for a concrete field.
+ * @return {string} AQL condition
+ */
 function qlFields(
     path: string,
     filter: any,
@@ -35,6 +64,15 @@ function qlFields(
     return qlCombine(conditions, 'AND', 'false');
 }
 
+/**
+ * Test document value against complex filter.
+ *
+ * @param {any} value Value of the field in document.
+ * @param {object} filter A filter object specified by user.
+ * @param {object} fieldTypes A map of available values for filter fields to helpers.
+ * @param {function} testField Function that performs test value against a selected field.
+ * @return {string} AQL condition
+ */
 function testFields(
     value: any,
     filter: any,
@@ -167,11 +205,65 @@ function createScalar(): QType {
             return testFields(value, filter, fields, (op, value, filterKey, filterValue) => {
                 return op.test(value, filterValue);
             });
-        }
+        },
+    };
+}
+
+function resolveBigUInt(prefixLength: number, value: any): string {
+    if (value === null || value === undefined) {
+        return value;
+    }
+    if (typeof value === 'number') {
+        return `0x${value.toString(16)}`;
+    }
+    return `0x${value.toString().substr(prefixLength)}`;
+}
+
+function convertBigUInt(prefixLength: number, value: any): string {
+    if (value === null || value === undefined) {
+        return value;
+    }
+    let hex;
+    if (typeof value === 'number') {
+        hex = value.toString(16);
+    } else {
+        const s = value.toString();
+        hex = (s.startsWith('0x') || s.startsWith('0X')) ? s.substr(2) : s.substr(1);
+    }
+    const len = hex.length.toString(16);
+    const missingZeros = prefixLength - len.length;
+    const prefix = missingZeros > 0 ? `${'0'.repeat(missingZeros)}${len}` : len;
+    return `${prefix}${hex}`;
+}
+
+function createBigUInt(prefixLength: number): QType {
+    const fields = {
+        eq: scalarEq,
+        ne: scalarNe,
+        lt: scalarLt,
+        le: scalarLe,
+        gt: scalarGt,
+        ge: scalarGe,
+        in: scalarIn,
+        notIn: scalarNotIn,
+    };
+    return {
+        ql(path, filter) {
+            return qlFields(path, filter, fields, (op, path, filterKey, filterValue) => {
+                return op.ql(path, convertBigUInt(prefixLength, filterValue));
+            });
+        },
+        test(value, filter) {
+            return testFields(value, filter, fields, (op, value, filterKey, filterValue) => {
+                return op.test(value, convertBigUInt(prefixLength, filterValue));
+            });
+        },
     };
 }
 
 const scalar: QType = createScalar();
+const bigUInt1: QType = createBigUInt(1);
+const bigUInt2: QType = createBigUInt(2);
 
 // Structs
 
@@ -247,7 +339,7 @@ function join(onField: string, refCollection: string, refType: QType): QType {
             const refQl = refType.ql(alias, filter);
             return `
                 LENGTH(
-                    FOR ${alias} IN ${refCollection} 
+                    FOR ${alias} IN ${refCollection}
                     FILTER (${alias}._key == ${on_path}) AND (${refQl})
                     LIMIT 1
                     RETURN 1
@@ -268,7 +360,7 @@ function joinArray(onField: string, refCollection: string, refType: QType): QTyp
             return `
                 (LENGTH(${on_path}) > 0)
                 AND (LENGTH(
-                    FOR ${alias} IN ${refCollection} 
+                    FOR ${alias} IN ${refCollection}
                     FILTER (${alias}._key IN ${on_path}) AND (${refQl})
                     ${!all ? 'LIMIT 1' : ''}
                     RETURN 1
@@ -280,6 +372,10 @@ function joinArray(onField: string, refCollection: string, refType: QType): QTyp
 
 export {
     scalar,
+    bigUInt1,
+    bigUInt2,
+    resolveBigUInt,
+    convertBigUInt,
     struct,
     array,
     join,

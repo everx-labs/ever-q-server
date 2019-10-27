@@ -15,7 +15,7 @@
  */
 
 import schemaDef from './db.schema.js';
-import gen from 'ton-labs-dev-ops/dist/src/ton-server/gen-ql-js';
+import gen from './gen-ql-js.js';
 
 const { ql, js } = gen(schemaDef);
 

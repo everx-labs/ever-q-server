@@ -83,7 +83,7 @@ union IntermediateAddress =
 
 
 type ExtBlkRef {
-	end_lt: Float
+	end_lt: String
 	seq_no: Int
 	root_hash: String
 	file_hash: String
@@ -170,7 +170,7 @@ type MessageHeaderIntMsgInfo {
 	value: CurrencyCollection
 	ihr_fee: Int
 	fwd_fee: Int
-	created_lt: Float
+	created_lt: String
 	created_at: Int
 }
 
@@ -183,7 +183,7 @@ type MessageHeaderExtInMsgInfo {
 type MessageHeaderExtOutMsgInfo {
 	src: MsgAddressInt
 	dst: MsgAddressExt
-	created_lt: Float
+	created_lt: String
 	created_at: Int
 }
 
@@ -262,13 +262,13 @@ type InMsgTransit {
 
 type InMsgDiscardedFinal {
 	in_msg: MsgEnvelope
-	transaction_id: Float
+	transaction_id: String
 	fwd_fee: Int
 }
 
 type InMsgDiscardedTransit {
 	in_msg: MsgEnvelope
-	transaction_id: Float
+	transaction_id: String
 	fwd_fee: Int
 	proof_delivered: String
 }
@@ -334,7 +334,7 @@ type OutMsgTransit {
 
 type OutMsgDequeue {
 	out_msg: MsgEnvelope
-	import_block_lt: Float
+	import_block_lt: String
 }
 
 type OutMsgTransitRequired {
@@ -420,8 +420,8 @@ type BlockInfo {
 	after_split: Boolean
 	want_merge: Boolean
 	vert_seq_no: Int
-	start_lt: Float
-	end_lt: Float
+	start_lt: String
+	end_lt: String
 	shard: BlockInfoShard
 	min_ref_mc_seqno: Int
 	master_ref: BlockInfoMasterRef
@@ -509,7 +509,7 @@ union AccountStorageState =
 
 
 type AccountStorage {
-	last_trans_lt: Float
+	last_trans_lt: String
 	balance: CurrencyCollection
 	state: AccountStorageState
 }
@@ -710,10 +710,10 @@ type Transaction {
 	block_id: String
 	status: String
 	account_addr: String
-	lt: Float
-	last_trans_lt: Float
+	lt: String
+	last_trans_lt: String
 	prev_trans_hash: String
-	prev_trans_lt: Float
+	prev_trans_lt: String
 	now: Int
 	outmsg_cnt: Int
 	orig_status: String
@@ -757,7 +757,7 @@ input IntermediateAddressFilter {
 }
 
 input ExtBlkRefFilter {
-	end_lt: FloatFilter
+	end_lt: StringFilter
 	seq_no: IntFilter
 	root_hash: StringFilter
 	file_hash: StringFilter
@@ -824,7 +824,7 @@ input MessageHeaderIntMsgInfoFilter {
 	value: CurrencyCollectionFilter
 	ihr_fee: IntFilter
 	fwd_fee: IntFilter
-	created_lt: FloatFilter
+	created_lt: StringFilter
 	created_at: IntFilter
 }
 
@@ -837,7 +837,7 @@ input MessageHeaderExtInMsgInfoFilter {
 input MessageHeaderExtOutMsgInfoFilter {
 	src: MsgAddressIntFilter
 	dst: MsgAddressExtFilter
-	created_lt: FloatFilter
+	created_lt: StringFilter
 	created_at: IntFilter
 }
 
@@ -904,13 +904,13 @@ input InMsgTransitFilter {
 
 input InMsgDiscardedFinalFilter {
 	in_msg: MsgEnvelopeFilter
-	transaction_id: FloatFilter
+	transaction_id: StringFilter
 	fwd_fee: IntFilter
 }
 
 input InMsgDiscardedTransitFilter {
 	in_msg: MsgEnvelopeFilter
-	transaction_id: FloatFilter
+	transaction_id: StringFilter
 	fwd_fee: IntFilter
 	proof_delivered: StringFilter
 }
@@ -948,7 +948,7 @@ input OutMsgTransitFilter {
 
 input OutMsgDequeueFilter {
 	out_msg: MsgEnvelopeFilter
-	import_block_lt: FloatFilter
+	import_block_lt: StringFilter
 }
 
 input OutMsgTransitRequiredFilter {
@@ -1006,8 +1006,8 @@ input BlockInfoFilter {
 	after_split: BooleanFilter
 	want_merge: BooleanFilter
 	vert_seq_no: IntFilter
-	start_lt: FloatFilter
-	end_lt: FloatFilter
+	start_lt: StringFilter
+	end_lt: StringFilter
 	shard: BlockInfoShardFilter
 	min_ref_mc_seqno: IntFilter
 	master_ref: BlockInfoMasterRefFilter
@@ -1103,7 +1103,7 @@ input AccountStorageStateFilter {
 }
 
 input AccountStorageFilter {
-	last_trans_lt: FloatFilter
+	last_trans_lt: StringFilter
 	balance: CurrencyCollectionFilter
 	state: AccountStorageStateFilter
 }
@@ -1261,10 +1261,10 @@ input TransactionFilter {
 	block_id: StringFilter
 	status: StringFilter
 	account_addr: StringFilter
-	lt: FloatFilter
-	last_trans_lt: FloatFilter
+	lt: StringFilter
+	last_trans_lt: StringFilter
 	prev_trans_hash: StringFilter
-	prev_trans_lt: FloatFilter
+	prev_trans_lt: StringFilter
 	now: IntFilter
 	outmsg_cnt: IntFilter
 	orig_status: StringFilter

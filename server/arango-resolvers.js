@@ -1,10 +1,10 @@
-const { scalar, struct, array, join, joinArray } = require('./arango-types.js');
+const { scalar, bigUInt1, bigUInt2, resolveBigUInt, struct, array, join, joinArray } = require('./arango-types.js');
 const None = struct({
     None: scalar,
 });
 
 const CurrencyCollection = struct({
-    Grams: scalar,
+    Grams: bigUInt2,
 });
 
 const IntermediateAddressRegular = struct({
@@ -43,7 +43,7 @@ const IntermediateAddressResolver = {
 };
 
 const ExtBlkRef = struct({
-    end_lt: scalar,
+    end_lt: bigUInt1,
     seq_no: scalar,
     root_hash: scalar,
     file_hash: scalar,
@@ -137,7 +137,7 @@ const MessageHeaderIntMsgInfo = struct({
     value: CurrencyCollection,
     ihr_fee: scalar,
     fwd_fee: scalar,
-    created_lt: scalar,
+    created_lt: bigUInt1,
     created_at: scalar,
 });
 
@@ -150,7 +150,7 @@ const MessageHeaderExtInMsgInfo = struct({
 const MessageHeaderExtOutMsgInfo = struct({
     src: MsgAddressInt,
     dst: MsgAddressExt,
-    created_lt: scalar,
+    created_lt: bigUInt1,
     created_at: scalar,
 });
 
@@ -232,13 +232,13 @@ const InMsgTransit = struct({
 
 const InMsgDiscardedFinal = struct({
     in_msg: MsgEnvelope,
-    transaction_id: scalar,
+    transaction_id: bigUInt1,
     fwd_fee: scalar,
 });
 
 const InMsgDiscardedTransit = struct({
     in_msg: MsgEnvelope,
-    transaction_id: scalar,
+    transaction_id: bigUInt1,
     fwd_fee: scalar,
     proof_delivered: scalar,
 });
@@ -303,7 +303,7 @@ const OutMsgTransit = struct({
 
 const OutMsgDequeue = struct({
     out_msg: MsgEnvelope,
-    import_block_lt: scalar,
+    import_block_lt: bigUInt1,
 });
 
 const OutMsgTransitRequired = struct({
@@ -388,8 +388,8 @@ const BlockInfo = struct({
     after_split: scalar,
     want_merge: scalar,
     vert_seq_no: scalar,
-    start_lt: scalar,
-    end_lt: scalar,
+    start_lt: bigUInt1,
+    end_lt: bigUInt1,
     shard: BlockInfoShard,
     min_ref_mc_seqno: scalar,
     master_ref: BlockInfoMasterRef,
@@ -484,7 +484,7 @@ const AccountStorageStateResolver = {
 };
 
 const AccountStorage = struct({
-    last_trans_lt: scalar,
+    last_trans_lt: bigUInt1,
     balance: CurrencyCollection,
     state: AccountStorageState,
 });
@@ -692,10 +692,10 @@ const Transaction = struct({
     block_id: scalar,
     status: scalar,
     account_addr: scalar,
-    lt: scalar,
-    last_trans_lt: scalar,
+    lt: bigUInt1,
+    last_trans_lt: bigUInt1,
     prev_trans_hash: scalar,
-    prev_trans_lt: scalar,
+    prev_trans_lt: bigUInt1,
     now: scalar,
     outmsg_cnt: scalar,
     orig_status: scalar,
@@ -712,23 +712,71 @@ const Transaction = struct({
 
 function createResolvers(db) {
     return {
+        CurrencyCollection: {
+            Grams(parent) {
+                return resolveBigUInt(2, parent.Grams);
+            },
+        },
         IntermediateAddress: IntermediateAddressResolver,
+        ExtBlkRef: {
+            end_lt(parent) {
+                return resolveBigUInt(1, parent.end_lt);
+            },
+        },
         MsgAddressInt: MsgAddressIntResolver,
         MsgAddressExt: MsgAddressExtResolver,
+        MessageHeaderIntMsgInfo: {
+            created_lt(parent) {
+                return resolveBigUInt(1, parent.created_lt);
+            },
+        },
+        MessageHeaderExtOutMsgInfo: {
+            created_lt(parent) {
+                return resolveBigUInt(1, parent.created_lt);
+            },
+        },
         MessageHeader: MessageHeaderResolver,
         Message: {
             id(parent) {
                 return parent._key;
             },
         },
+        InMsgDiscardedFinal: {
+            transaction_id(parent) {
+                return resolveBigUInt(1, parent.transaction_id);
+            },
+        },
+        InMsgDiscardedTransit: {
+            transaction_id(parent) {
+                return resolveBigUInt(1, parent.transaction_id);
+            },
+        },
         InMsg: InMsgResolver,
+        OutMsgDequeue: {
+            import_block_lt(parent) {
+                return resolveBigUInt(1, parent.import_block_lt);
+            },
+        },
         OutMsg: OutMsgResolver,
+        BlockInfo: {
+            start_lt(parent) {
+                return resolveBigUInt(1, parent.start_lt);
+            },
+            end_lt(parent) {
+                return resolveBigUInt(1, parent.end_lt);
+            },
+        },
         Block: {
             id(parent) {
                 return parent._key;
             },
         },
         AccountStorageState: AccountStorageStateResolver,
+        AccountStorage: {
+            last_trans_lt(parent) {
+                return resolveBigUInt(1, parent.last_trans_lt);
+            },
+        },
         Account: {
             id(parent) {
                 return parent._key;
@@ -746,6 +794,15 @@ function createResolvers(db) {
             },
             out_messages(parent) {
                 return db.fetchDocsByKeys(db.messages, parent.out_msgs);
+            },
+            lt(parent) {
+                return resolveBigUInt(1, parent.lt);
+            },
+            last_trans_lt(parent) {
+                return resolveBigUInt(1, parent.last_trans_lt);
+            },
+            prev_trans_lt(parent) {
+                return resolveBigUInt(1, parent.prev_trans_lt);
             },
         },
         Query: {

@@ -19,24 +19,25 @@
 import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
-const { string, int, bool, float, ref, arrayOf, unionOf } = Def;
+const { string, int, bool, ref, arrayOf, unionOf } = Def;
 
 // Types scheme begin
 
 function uint(size: number, doc?: '') {
-    return { _int: { unsigned: true, size }, ...(doc ? { _doc: doc } : {}) }
+    return { _int: { unsigned: size }, ...(doc ? { _doc: doc } : {}) }
 }
 
 const u8 = (doc?: '') => uint(8, doc);
 const u16 = (doc?: '') => uint(16, doc);
 const u32 = (doc?: '') => uint(32, doc);
-const u64 = (doc?: '') => float(doc);
+const u64 = (doc?: '') => uint(64, doc);
+const u128 = (doc?: '') => uint(128, doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
     return { ...ref(refDef), _: { join: { on } } }
 };
 
 const CurrencyCollection: TypeDef = {
-    Grams: string(),
+    Grams: u128(),
 };
 
 const None: TypeDef = { None: string() };
