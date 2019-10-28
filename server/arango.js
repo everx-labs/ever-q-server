@@ -70,7 +70,7 @@ export default class Arango {
             this.listener.on(name, (docJson, type) => {
                 if (type === 'insert/update') {
                     const doc = JSON.parse(docJson);
-                    this.pubsub.publish(name, { [name]: doc });
+                    // this.pubsub.publish(name, { [name]: doc });
                 }
             });
         });
