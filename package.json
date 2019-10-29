@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.13.1",
+	"version": "0.13.2",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "server/index.js",
 	"scripts": {
