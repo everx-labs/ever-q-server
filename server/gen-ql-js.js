@@ -58,6 +58,26 @@ function unresolvedType(name: string): DbType {
 function main(schemaDef: TypeDef) {
 
     let dbTypes: DbType[] = [];
+    let lastReportedType: string = '';
+
+    function reportType(name: string, field: string, type: string) {
+        if (name !== lastReportedType) {
+            console.log(name);
+            lastReportedType = name;
+        }
+        console.log(`    ${field}: ${type}`);
+
+    }
+
+    function getIntType(t: SchemaType): string {
+        if (t.int && t.int.unsigned) {
+            return `u${(t.int.unsigned: any)}`;
+        } else if (t.int && t.int.signed) {
+            return `i${(t.int.signed: any)}`;
+        } else {
+            return 'i32';
+        }
+    }
 
     function parseDbField(
         typeName: string,
@@ -84,15 +104,32 @@ function main(schemaDef: TypeDef) {
         } else if (schemaType.bool) {
             field.type = scalarTypes.boolean;
         } else if (schemaType.int) {
-            const uintSize: number = (schemaType.int: any).unsigned || 0;
-            if (uintSize >= 128) {
-                field.type = scalarTypes.uint1024;
-            } else if (uintSize >= 64) {
-                field.type = scalarTypes.uint64;
+            const uintSize: number = (schemaType.int: any).unsigned;
+            if (uintSize) {
+                if (uintSize >= 128) {
+                    reportType(typeName, field.name, 'u1024');
+                    field.type = scalarTypes.uint1024;
+                } else if (uintSize >= 64) {
+                    reportType(typeName, field.name, 'u64');
+                    field.type = scalarTypes.uint64;
+                } else if (uintSize >= 32) {
+                    reportType(typeName, field.name, 'u32');
+                    field.type = scalarTypes.float;
+                } else {
+                    reportType(typeName, field.name, `u${uintSize}`);
+                    field.type = scalarTypes.int;
+                }
             } else {
-                field.type = scalarTypes.int;
+                const intSize: number = (schemaType.int: any).signed;
+                if (intSize && intSize > 32) {
+                    throw new Error(`Integer type with size ${intSize} bit does not supported`);
+                } else {
+                    reportType(typeName, field.name, 'i32');
+                    field.type = scalarTypes.int;
+                }
             }
         } else if (schemaType.float) {
+            reportType(typeName, field.name, 'float');
             field.type = scalarTypes.float;
         } else if (schemaType.string) {
             field.type = scalarTypes.string;

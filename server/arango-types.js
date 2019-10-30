@@ -213,23 +213,16 @@ function resolveBigUInt(prefixLength: number, value: any): string {
     if (value === null || value === undefined) {
         return value;
     }
-    if (typeof value === 'number') {
-        return `0x${value.toString(16)}`;
-    }
-    return `0x${value.toString().substr(prefixLength)}`;
+    return (typeof value === 'number')
+        ? `0x${value.toString(16)}`
+        : `0x${value.toString().substr(prefixLength)}`;
 }
 
 function convertBigUInt(prefixLength: number, value: any): string {
     if (value === null || value === undefined) {
         return value;
     }
-    let hex;
-    if (typeof value === 'number') {
-        hex = value.toString(16);
-    } else {
-        const s = value.toString();
-        hex = (s.startsWith('0x') || s.startsWith('0X')) ? s.substr(2) : s.substr(1);
-    }
+    const hex = BigInt(value).toString(16);
     const len = hex.length.toString(16);
     const missingZeros = prefixLength - len.length;
     const prefix = missingZeros > 0 ? `${'0'.repeat(missingZeros)}${len}` : len;

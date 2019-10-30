@@ -232,13 +232,13 @@ const InMsgTransit = struct({
 
 const InMsgDiscardedFinal = struct({
     in_msg: MsgEnvelope,
-    transaction_id: bigUInt1,
+    transaction_id: scalar,
     fwd_fee: scalar,
 });
 
 const InMsgDiscardedTransit = struct({
     in_msg: MsgEnvelope,
-    transaction_id: bigUInt1,
+    transaction_id: scalar,
     fwd_fee: scalar,
     proof_delivered: scalar,
 });
@@ -693,7 +693,6 @@ const Transaction = struct({
     status: scalar,
     account_addr: scalar,
     lt: bigUInt1,
-    last_trans_lt: bigUInt1,
     prev_trans_hash: scalar,
     prev_trans_lt: bigUInt1,
     now: scalar,
@@ -739,16 +738,6 @@ function createResolvers(db) {
         Message: {
             id(parent) {
                 return parent._key;
-            },
-        },
-        InMsgDiscardedFinal: {
-            transaction_id(parent) {
-                return resolveBigUInt(1, parent.transaction_id);
-            },
-        },
-        InMsgDiscardedTransit: {
-            transaction_id(parent) {
-                return resolveBigUInt(1, parent.transaction_id);
             },
         },
         InMsg: InMsgResolver,
@@ -797,9 +786,6 @@ function createResolvers(db) {
             },
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);
-            },
-            last_trans_lt(parent) {
-                return resolveBigUInt(1, parent.last_trans_lt);
             },
             prev_trans_lt(parent) {
                 return resolveBigUInt(1, parent.prev_trans_lt);

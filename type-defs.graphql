@@ -84,7 +84,7 @@ union IntermediateAddress =
 
 type ExtBlkRef {
 	end_lt: String
-	seq_no: Int
+	seq_no: Float
 	root_hash: String
 	file_hash: String
 }
@@ -408,14 +408,14 @@ type BlockInfoPrevVertRef {
 
 type BlockInfo {
 	want_split: Boolean
-	seq_no: Int
+	seq_no: Float
 	after_merge: Boolean
 	gen_utime: Int
-	gen_catchain_seqno: Int
+	gen_catchain_seqno: Float
 	flags: Int
 	prev_ref: BlockInfoPrevRef
-	version: Int
-	gen_validator_list_hash_short: Int
+	version: Float
+	gen_validator_list_hash_short: Float
 	before_split: Boolean
 	after_split: Boolean
 	want_merge: Boolean
@@ -423,7 +423,7 @@ type BlockInfo {
 	start_lt: String
 	end_lt: String
 	shard: BlockInfoShard
-	min_ref_mc_seqno: Int
+	min_ref_mc_seqno: Float
 	master_ref: BlockInfoMasterRef
 	prev_vert_ref: BlockInfoPrevVertRef
 }
@@ -470,7 +470,7 @@ type BlockStateUpdate {
 type Block {
 	id: String
 	status: String
-	global_id: Int
+	global_id: Float
 	info: BlockInfo
 	value_flow: BlockValueFlow
 	extra: BlockExtra
@@ -478,7 +478,7 @@ type Block {
 }
 
 type AccountStorageStat {
-	last_paid: Int
+	last_paid: Float
 	due_payment: Int
 }
 
@@ -553,7 +553,7 @@ type TrComputePhaseVm {
 	mode: Int
 	exit_code: Int
 	exit_arg: Int
-	vm_steps: Int
+	vm_steps: Float
 	vm_init_state_hash: String
 	vm_final_state_hash: String
 }
@@ -711,10 +711,9 @@ type Transaction {
 	status: String
 	account_addr: String
 	lt: String
-	last_trans_lt: String
 	prev_trans_hash: String
 	prev_trans_lt: String
-	now: Int
+	now: Float
 	outmsg_cnt: Int
 	orig_status: String
 	end_status: String
@@ -758,7 +757,7 @@ input IntermediateAddressFilter {
 
 input ExtBlkRefFilter {
 	end_lt: StringFilter
-	seq_no: IntFilter
+	seq_no: FloatFilter
 	root_hash: StringFilter
 	file_hash: StringFilter
 }
@@ -994,14 +993,14 @@ input BlockInfoPrevVertRefFilter {
 
 input BlockInfoFilter {
 	want_split: BooleanFilter
-	seq_no: IntFilter
+	seq_no: FloatFilter
 	after_merge: BooleanFilter
 	gen_utime: IntFilter
-	gen_catchain_seqno: IntFilter
+	gen_catchain_seqno: FloatFilter
 	flags: IntFilter
 	prev_ref: BlockInfoPrevRefFilter
-	version: IntFilter
-	gen_validator_list_hash_short: IntFilter
+	version: FloatFilter
+	gen_validator_list_hash_short: FloatFilter
 	before_split: BooleanFilter
 	after_split: BooleanFilter
 	want_merge: BooleanFilter
@@ -1009,7 +1008,7 @@ input BlockInfoFilter {
 	start_lt: StringFilter
 	end_lt: StringFilter
 	shard: BlockInfoShardFilter
-	min_ref_mc_seqno: IntFilter
+	min_ref_mc_seqno: FloatFilter
 	master_ref: BlockInfoMasterRefFilter
 	prev_vert_ref: BlockInfoPrevVertRefFilter
 }
@@ -1076,7 +1075,7 @@ input BlockStateUpdateFilter {
 input BlockFilter {
 	id: StringFilter
 	status: StringFilter
-	global_id: IntFilter
+	global_id: FloatFilter
 	info: BlockInfoFilter
 	value_flow: BlockValueFlowFilter
 	extra: BlockExtraFilter
@@ -1084,7 +1083,7 @@ input BlockFilter {
 }
 
 input AccountStorageStatFilter {
-	last_paid: IntFilter
+	last_paid: FloatFilter
 	due_payment: IntFilter
 }
 
@@ -1147,7 +1146,7 @@ input TrComputePhaseVmFilter {
 	mode: IntFilter
 	exit_code: IntFilter
 	exit_arg: IntFilter
-	vm_steps: IntFilter
+	vm_steps: FloatFilter
 	vm_init_state_hash: StringFilter
 	vm_final_state_hash: StringFilter
 }
@@ -1262,10 +1261,9 @@ input TransactionFilter {
 	status: StringFilter
 	account_addr: StringFilter
 	lt: StringFilter
-	last_trans_lt: StringFilter
 	prev_trans_hash: StringFilter
 	prev_trans_lt: StringFilter
-	now: IntFilter
+	now: FloatFilter
 	outmsg_cnt: IntFilter
 	orig_status: StringFilter
 	end_status: StringFilter
