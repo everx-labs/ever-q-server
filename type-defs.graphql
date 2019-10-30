@@ -477,7 +477,14 @@ type Block {
 	state_update: BlockStateUpdate
 }
 
+type AccountStorageStatUsed {
+	cells: Int
+	bits: Int
+	public_cells: Int
+}
+
 type AccountStorageStat {
+	used: AccountStorageStatUsed
 	last_paid: Int
 	due_payment: Int
 }
@@ -1083,7 +1090,14 @@ input BlockFilter {
 	state_update: BlockStateUpdateFilter
 }
 
+input AccountStorageStatUsedFilter {
+	cells: IntFilter
+	bits: IntFilter
+	public_cells: IntFilter
+}
+
 input AccountStorageStatFilter {
+	used: AccountStorageStatUsedFilter
 	last_paid: IntFilter
 	due_payment: IntFilter
 }

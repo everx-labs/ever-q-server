@@ -449,7 +449,14 @@ const Block = struct({
     state_update: BlockStateUpdate,
 }, true);
 
+const AccountStorageStatUsed = struct({
+    cells: scalar,
+    bits: scalar,
+    public_cells: scalar,
+});
+
 const AccountStorageStat = struct({
+    used: AccountStorageStatUsed,
     last_paid: scalar,
     due_payment: scalar,
 });

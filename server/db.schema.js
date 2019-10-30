@@ -309,6 +309,11 @@ const Account: TypeDef = {
     _: { collection: 'accounts' },
     _key: string(),
     storage_stat: {
+        used: {
+            cells: int(),
+            bits: int(),
+            public_cells: int()
+        },
         last_paid: u32(),
         due_payment: int()
     },
