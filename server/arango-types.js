@@ -43,7 +43,7 @@ function testFields(
 ): boolean {
     const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
-        return !!(fieldType && testField(fieldType, value, filterKey, filterValue));
+        return !(fieldType && testField(fieldType, value, filterKey, filterValue));
     });
     return !failed;
 }
