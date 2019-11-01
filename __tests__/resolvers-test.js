@@ -29,3 +29,38 @@ test("BigUInt", () => {
     expect(resolveBigUInt(2, '043100')).toEqual('0x3100');
     expect(resolveBigUInt(2, '1110000000000000000')).toEqual('0x10000000000000000');
 });
+
+const resolvers = require('../server/arango-resolvers');
+
+test("Filter test", () => {
+    const filter = {
+        "id": { "eq": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2" },
+        "storage": {
+            "state": {
+                "AccountActive": {
+                    "code": { "gt": "" },
+                    "data": { "gt": "" }
+                }
+            }
+        }
+    };
+    const doc = {
+        "id": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
+        "_key": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
+        "storage": {
+            "state": {
+                "AccountActive": {
+                    "code": "1",
+                    "data": "1",
+                },
+                "AccountUninit": {
+                    "None": null,
+                    "__typename": "None"
+                },
+                "__typename": "AccountStorageStateAccountUninitVariant"
+            }, "__typename": "AccountStorage"
+        }, "__typename": "Account"
+    };
+
+    console.log('>>>', resolvers.Account.test(doc, filter));
+});

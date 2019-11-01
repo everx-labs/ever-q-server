@@ -542,7 +542,10 @@ function main(schemaDef: TypeDef) {
 
         js.writeBlockLn(`
         module.exports = {
-            createResolvers
+            createResolvers,
+        `);
+        types.forEach(type => js.writeLn(`    ${type.name},`));
+        js.writeBlockLn(`
         };
         `);
     }
