@@ -30,7 +30,7 @@ test("BigUInt", () => {
     expect(resolveBigUInt(2, '1110000000000000000')).toEqual('0x10000000000000000');
 });
 
-const resolvers = require('../server/arango-resolvers');
+const resolvers = require('../server/arango-resolvers.v1');
 
 test("Filter test", () => {
     const filter = {

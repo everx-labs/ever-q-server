@@ -33,6 +33,7 @@ const MODE = {
 type ProgramOptions = {
     dbServer: string,
     dbName: string,
+    dbVersion: string,
     host: string,
     port: string,
 }
@@ -46,6 +47,8 @@ program
         process.env.Q_DATABASE_SERVER || 'arangodb:8529')
     .option('-n, --db-name <name>', 'database name',
         process.env.Q_DATABASE_NAME || 'blockchain')
+    .option('-n, --db-version <version>', 'database schema version',
+        process.env.Q_DATABASE_VERSION || '2')
     .parse(process.argv);
 
 const options: ProgramOptions = program;
@@ -54,6 +57,7 @@ const env = {
     ssl: (process.env.Q_SSL || '') === 'true',
     database_server: options.dbServer,
     database_name: options.dbName,
+    database_version: options.dbVersion,
     server_host: options.host,
     server_port: options.port,
 };
@@ -70,7 +74,8 @@ export type QConfig = {
     },
     database: {
         server: string,
-        name: string
+        name: string,
+        version: string,
     },
     listener: {
         restartTimeout: number
@@ -92,6 +97,7 @@ const config: QConfig = {
     database: {
         server: env.database_server,
         name: env.database_name,
+        version: env.database_version,
     },
     listener: {
         restartTimeout: 1000

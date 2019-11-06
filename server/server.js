@@ -25,9 +25,12 @@ import { ApolloServer } from 'apollo-server-express';
 
 import Arango from './arango';
 
-import { createResolvers } from './arango-resolvers';
+import { createResolvers as createResolversV1 } from './arango-resolvers.v1';
+import { createResolvers as createResolversV2 } from './arango-resolvers.v2';
+import { attachCustomResolvers as attachCustomResolversV1 } from "./custom-resolvers.v1";
+import { attachCustomResolvers as attachCustomResolversV2 } from "./custom-resolvers.v2";
+
 import type { QConfig } from "./config";
-import { attachCustomResolvers } from "./custom-resolvers";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
 
@@ -54,7 +57,9 @@ export default class TONQServer {
         const ssl = config.ssl;
 
         this.db = new Arango(this.config, this.logs);
-        const typeDefs = fs.readFileSync('type-defs.graphql', 'utf-8');
+        const typeDefs = fs.readFileSync(`type-defs.v${this.config.database.version}.graphql`, 'utf-8');
+        const createResolvers = this.config.database.version === '1' ? createResolversV1 : createResolversV2;
+        const attachCustomResolvers = this.config.database.version === '1' ? attachCustomResolversV1 : attachCustomResolversV2;
         const resolvers = attachCustomResolvers(createResolvers(this.db));
         await this.db.start();
 
