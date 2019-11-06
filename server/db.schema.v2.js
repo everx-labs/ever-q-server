@@ -19,7 +19,7 @@
 import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
-const { string, int, bool, ref, arrayOf, unionOf } = Def;
+const { string, bool, ref, arrayOf } = Def;
 
 // Types scheme begin
 
@@ -43,6 +43,17 @@ const u128 = (doc?: '') => uint(128, doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
     return { ...ref(refDef), _: { join: { on } } }
 };
+const grams = u128;
+
+function currencyCollection(): TypeDef {
+    return {
+        grams: grams(),
+        other: arrayOf({
+            currency: i32(),
+            value: u128(),
+        }),
+    };
+}
 
 const Account: TypeDef = {
     _doc: 'TON Account',
@@ -50,10 +61,10 @@ const Account: TypeDef = {
     acc_type: u8(),
     addr: string(),
     last_paid: u32(),
-    due_payment: u32(),
-    last_trans_lt: u32(),
-    balance_grams: string(),
-    split_depth: u32(),
+    due_payment: grams(),
+    last_trans_lt: u64(),
+    balance: currencyCollection(),
+    split_depth: u8(),
     tick: bool(),
     tock: bool(),
     code: string(),
@@ -77,15 +88,15 @@ const Message: TypeDef = {
     library: string(),
     src: string(),
     dst: string(),
-    created_lt: u32(),
+    created_lt: u64(),
     created_at: u32(),
     ihr_disabled: bool(),
-    ihr_fee: u32(),
-    fwd_fee: u32(),
-    import_fee: u32(),
+    ihr_fee: grams(),
+    fwd_fee: grams(),
+    import_fee: grams(),
     bounce: bool(),
     bounced: bool(),
-    value_grams: string(),
+    value: currencyCollection(),
 };
 
 
@@ -96,41 +107,40 @@ const Transaction: TypeDef = {
     status: u8(),
     account_addr: string(),
     lt: u64(),
-    last_trans_lt: u64(),
     prev_trans_hash: string(),
     prev_trans_lt: u64(),
     now: u32(),
-    outmsg_cnt: u32(),
+    outmsg_cnt: i32(),
     orig_status: u8(),
     end_status: u8(),
     in_msg: string(),
     out_msgs: arrayOf(string()),
-    total_fees: u64(),
+    total_fees: currencyCollection(),
     old_hash: string(),
     new_hash: string(),
     credit_first: bool(),
     storage: {
-        storage_fees_collected: u32(),
-        storage_fees_due: u32(),
+        storage_fees_collected: grams(),
+        storage_fees_due: grams(),
         status_change: u8(),
     },
     credit: {
-        due_fees_collected: u32(),
-        credit_grams: u64(),
+        due_fees_collected: grams(),
+        credit: currencyCollection(),
     },
     compute: {
         type: u8(), // 0: skipped, 1: VM
-        skipped_reason: u8(),
+        skip_reason: u8(),
         success: bool(),
         msg_state_used: bool(),
         account_activated: bool(),
-        gas_fees: u64(),
+        gas_fees: grams(),
         gas_used: u64(),
         gas_limit: u64(),
-        gas_credit: u64(),
-        mode: u8(),
-        exit_code: u32(),
-        exit_arg: u32(),
+        gas_credit: i32(),
+        mode: i8(),
+        exit_code: i32(),
+        exit_arg: i32(),
         vm_steps: u32(),
         vm_init_state_hash: string(),
         vm_final_state_hash: string(),
@@ -140,14 +150,14 @@ const Transaction: TypeDef = {
         valid: bool(),
         no_funds: bool(),
         status_change: u8(),
-        total_fwd_fees: u64(),
-        total_action_fees: u64(),
-        result_code: u32(),
-        result_arg: u32(),
-        tot_actions: u32(),
-        spec_actions: u32(),
-        skipped_actions: u32(),
-        msgs_created: u32(),
+        total_fwd_fees: grams(),
+        total_action_fees: grams(),
+        result_code: i32(),
+        result_arg: i32(),
+        tot_actions: i32(),
+        spec_actions: i32(),
+        skipped_actions: i32(),
+        msgs_created: i32(),
         action_list_hash: string(),
         total_msg_size_cells: u32(),
         total_msg_size_bits: u32(),
@@ -156,9 +166,9 @@ const Transaction: TypeDef = {
         type: u8(), // 0: Negfunds, 1: Nofunds, 2: Ok
         msg_size_cells: u32(),
         msg_size_bits: u32(),
-        req_fwd_fees: u64(),
-        msg_fees: u64(),
-        fwd_fees: u64(),
+        req_fwd_fees: grams(),
+        msg_fees: grams(),
+        fwd_fees: grams(),
     },
     aborted: bool(),
     destroyed: bool(),
@@ -186,20 +196,20 @@ const MsgEnvelope: TypeDef = {
     msg: string(),
     next_addr: string(),
     cur_addr: string(),
-    fwd_fee_remaining_grams: u128(),
+    fwd_fee_remaining: grams(),
 };
 
 const InMsg: TypeDef = {
     msg_type: u8(), // External: 0, IHR: 1, Immediatelly: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6
     msg: string(),
     transaction: string(),
-    ihr_fee: i32(),
+    ihr_fee: grams(),
     proof_created: string(),
     in_msg: ref({ MsgEnvelope }),
-    fwd_fee: i32(),
+    fwd_fee: grams(),
     out_msg: ref({ MsgEnvelope }),
-    transit_fee: i32(),
-    transaction_id: string(),
+    transit_fee: grams(),
+    transaction_id: u64(),
     proof_delivered: string()
 };
 
@@ -227,10 +237,10 @@ const Block: TypeDef = {
         flags: u16(),
         prev_ref: {
             prev: {
-                seq_no: i32(),
+                seq_no: u32(),
                 file_hash: string(),
                 root_hash: string(),
-                end_lt: i32()
+                end_lt: u64()
             }
         },
         version: u32(),
@@ -238,13 +248,13 @@ const Block: TypeDef = {
         before_split: bool(),
         after_split: bool(),
         want_merge: bool(),
-        vert_seq_no: i32(),
+        vert_seq_no: u32(),
         start_lt: u64(),
         end_lt: u64(),
         shard: {
             shard_pfx_bits: u8(),
             workchain_id: i32(),
-            shard_prefix: string(),
+            shard_prefix: u64(),
         },
         min_ref_mc_seqno: u32(),
         master_ref: {
@@ -256,14 +266,14 @@ const Block: TypeDef = {
         }
     },
     value_flow: {
-        to_next_blk_grams: u128(),
-        exported_grams: u128(),
-        fees_collected_grams: u128(),
-        created_grams: u128(),
-        imported_grams: u128(),
-        from_prev_blk_grams: u128(),
-        minted_grams: u128(),
-        fees_imported_grams: u128(),
+        to_next_blk: currencyCollection(),
+        exported: currencyCollection(),
+        fees_collected: currencyCollection(),
+        created: currencyCollection(),
+        imported: currencyCollection(),
+        from_prev_blk: currencyCollection(),
+        minted: currencyCollection(),
+        fees_imported: currencyCollection(),
     },
     extra: {
         in_msg_descr: arrayOf(ref({ InMsg })),
@@ -282,10 +292,10 @@ const Block: TypeDef = {
     state_update: {
         new: string(),
         new_hash: string(),
-        new_depth: i32(),
+        new_depth: u16(),
         old: string(),
         old_hash: string(),
-        old_depth: i32()
+        old_depth: u16()
     }
 };
 

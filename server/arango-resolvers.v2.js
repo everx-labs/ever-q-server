@@ -10,20 +10,20 @@ const MsgEnvelope = struct({
     msg: scalar,
     next_addr: scalar,
     cur_addr: scalar,
-    fwd_fee_remaining_grams: bigUInt2,
+    fwd_fee_remaining: bigUInt2,
 });
 
 const InMsg = struct({
     msg_type: scalar,
     msg: scalar,
     transaction: scalar,
-    ihr_fee: scalar,
+    ihr_fee: bigUInt2,
     proof_created: scalar,
     in_msg: MsgEnvelope,
-    fwd_fee: scalar,
+    fwd_fee: bigUInt2,
     out_msg: MsgEnvelope,
-    transit_fee: scalar,
-    transaction_id: scalar,
+    transit_fee: bigUInt2,
+    transaction_id: bigUInt1,
     proof_delivered: scalar,
 });
 
@@ -35,6 +35,17 @@ const OutMsg = struct({
     reimport: InMsg,
     imported: InMsg,
     import_block_lt: bigUInt1,
+});
+
+const MessageValueOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const MessageValueOtherArray = array(MessageValueOther);
+const MessageValue = struct({
+    grams: bigUInt2,
+    other: MessageValueOtherArray,
 });
 
 const Message = struct({
@@ -52,22 +63,22 @@ const Message = struct({
     library: scalar,
     src: scalar,
     dst: scalar,
-    created_lt: scalar,
+    created_lt: bigUInt1,
     created_at: scalar,
     ihr_disabled: scalar,
-    ihr_fee: scalar,
-    fwd_fee: scalar,
-    import_fee: scalar,
+    ihr_fee: bigUInt2,
+    fwd_fee: bigUInt2,
+    import_fee: bigUInt2,
     bounce: scalar,
     bounced: scalar,
-    value_grams: scalar,
+    value: MessageValue,
 }, true);
 
 const BlockInfoPrevRefPrev = struct({
     seq_no: scalar,
     file_hash: scalar,
     root_hash: scalar,
-    end_lt: scalar,
+    end_lt: bigUInt1,
 });
 
 const BlockInfoPrevRef = struct({
@@ -77,7 +88,7 @@ const BlockInfoPrevRef = struct({
 const BlockInfoShard = struct({
     shard_pfx_bits: scalar,
     workchain_id: scalar,
-    shard_prefix: scalar,
+    shard_prefix: bigUInt1,
 });
 
 const BlockInfoMasterRef = struct({
@@ -111,15 +122,103 @@ const BlockInfo = struct({
     prev_vert_ref: BlockInfoPrevVertRef,
 });
 
+const BlockValueFlowToNextBlkOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowToNextBlkOtherArray = array(BlockValueFlowToNextBlkOther);
+const BlockValueFlowToNextBlk = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowToNextBlkOtherArray,
+});
+
+const BlockValueFlowExportedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowExportedOtherArray = array(BlockValueFlowExportedOther);
+const BlockValueFlowExported = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowExportedOtherArray,
+});
+
+const BlockValueFlowFeesCollectedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowFeesCollectedOtherArray = array(BlockValueFlowFeesCollectedOther);
+const BlockValueFlowFeesCollected = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowFeesCollectedOtherArray,
+});
+
+const BlockValueFlowCreatedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowCreatedOtherArray = array(BlockValueFlowCreatedOther);
+const BlockValueFlowCreated = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowCreatedOtherArray,
+});
+
+const BlockValueFlowImportedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowImportedOtherArray = array(BlockValueFlowImportedOther);
+const BlockValueFlowImported = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowImportedOtherArray,
+});
+
+const BlockValueFlowFromPrevBlkOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowFromPrevBlkOtherArray = array(BlockValueFlowFromPrevBlkOther);
+const BlockValueFlowFromPrevBlk = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowFromPrevBlkOtherArray,
+});
+
+const BlockValueFlowMintedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowMintedOtherArray = array(BlockValueFlowMintedOther);
+const BlockValueFlowMinted = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowMintedOtherArray,
+});
+
+const BlockValueFlowFeesImportedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockValueFlowFeesImportedOtherArray = array(BlockValueFlowFeesImportedOther);
+const BlockValueFlowFeesImported = struct({
+    grams: bigUInt2,
+    other: BlockValueFlowFeesImportedOtherArray,
+});
+
 const BlockValueFlow = struct({
-    to_next_blk_grams: bigUInt2,
-    exported_grams: bigUInt2,
-    fees_collected_grams: bigUInt2,
-    created_grams: bigUInt2,
-    imported_grams: bigUInt2,
-    from_prev_blk_grams: bigUInt2,
-    minted_grams: bigUInt2,
-    fees_imported_grams: bigUInt2,
+    to_next_blk: BlockValueFlowToNextBlk,
+    exported: BlockValueFlowExported,
+    fees_collected: BlockValueFlowFeesCollected,
+    created: BlockValueFlowCreated,
+    imported: BlockValueFlowImported,
+    from_prev_blk: BlockValueFlowFromPrevBlk,
+    minted: BlockValueFlowMinted,
+    fees_imported: BlockValueFlowFeesImported,
 });
 
 const BlockExtraAccountBlocksStateUpdate = struct({
@@ -164,14 +263,25 @@ const Block = struct({
     state_update: BlockStateUpdate,
 }, true);
 
+const AccountBalanceOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const AccountBalanceOtherArray = array(AccountBalanceOther);
+const AccountBalance = struct({
+    grams: bigUInt2,
+    other: AccountBalanceOtherArray,
+});
+
 const Account = struct({
     id: scalar,
     acc_type: scalar,
     addr: scalar,
     last_paid: scalar,
-    due_payment: scalar,
-    last_trans_lt: scalar,
-    balance_grams: scalar,
+    due_payment: bigUInt2,
+    last_trans_lt: bigUInt1,
+    balance: AccountBalance,
     split_depth: scalar,
     tick: scalar,
     tock: scalar,
@@ -180,27 +290,49 @@ const Account = struct({
     library: scalar,
 }, true);
 
+const TransactionTotalFeesOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const TransactionTotalFeesOtherArray = array(TransactionTotalFeesOther);
+const TransactionTotalFees = struct({
+    grams: bigUInt2,
+    other: TransactionTotalFeesOtherArray,
+});
+
 const TransactionStorage = struct({
-    storage_fees_collected: scalar,
-    storage_fees_due: scalar,
+    storage_fees_collected: bigUInt2,
+    storage_fees_due: bigUInt2,
     status_change: scalar,
 });
 
+const TransactionCreditCreditOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const TransactionCreditCreditOtherArray = array(TransactionCreditCreditOther);
+const TransactionCreditCredit = struct({
+    grams: bigUInt2,
+    other: TransactionCreditCreditOtherArray,
+});
+
 const TransactionCredit = struct({
-    due_fees_collected: scalar,
-    credit_grams: bigUInt1,
+    due_fees_collected: bigUInt2,
+    credit: TransactionCreditCredit,
 });
 
 const TransactionCompute = struct({
     type: scalar,
-    skipped_reason: scalar,
+    skip_reason: scalar,
     success: scalar,
     msg_state_used: scalar,
     account_activated: scalar,
-    gas_fees: bigUInt1,
+    gas_fees: bigUInt2,
     gas_used: bigUInt1,
     gas_limit: bigUInt1,
-    gas_credit: bigUInt1,
+    gas_credit: scalar,
     mode: scalar,
     exit_code: scalar,
     exit_arg: scalar,
@@ -214,8 +346,8 @@ const TransactionAction = struct({
     valid: scalar,
     no_funds: scalar,
     status_change: scalar,
-    total_fwd_fees: bigUInt1,
-    total_action_fees: bigUInt1,
+    total_fwd_fees: bigUInt2,
+    total_action_fees: bigUInt2,
     result_code: scalar,
     result_arg: scalar,
     tot_actions: scalar,
@@ -231,9 +363,9 @@ const TransactionBounce = struct({
     type: scalar,
     msg_size_cells: scalar,
     msg_size_bits: scalar,
-    req_fwd_fees: bigUInt1,
-    msg_fees: bigUInt1,
-    fwd_fees: bigUInt1,
+    req_fwd_fees: bigUInt2,
+    msg_fees: bigUInt2,
+    fwd_fees: bigUInt2,
 });
 
 const TransactionSplitInfo = struct({
@@ -249,7 +381,6 @@ const Transaction = struct({
     status: scalar,
     account_addr: scalar,
     lt: bigUInt1,
-    last_trans_lt: bigUInt1,
     prev_trans_hash: scalar,
     prev_trans_lt: bigUInt1,
     now: scalar,
@@ -258,7 +389,7 @@ const Transaction = struct({
     end_status: scalar,
     in_msg: scalar,
     out_msgs: StringArray,
-    total_fees: bigUInt1,
+    total_fees: TransactionTotalFees,
     old_hash: scalar,
     new_hash: scalar,
     credit_first: scalar,
@@ -283,8 +414,22 @@ function createResolvers(db) {
             },
         },
         MsgEnvelope: {
-            fwd_fee_remaining_grams(parent) {
-                return resolveBigUInt(2, parent.fwd_fee_remaining_grams);
+            fwd_fee_remaining(parent) {
+                return resolveBigUInt(2, parent.fwd_fee_remaining);
+            },
+        },
+        InMsg: {
+            ihr_fee(parent) {
+                return resolveBigUInt(2, parent.ihr_fee);
+            },
+            fwd_fee(parent) {
+                return resolveBigUInt(2, parent.fwd_fee);
+            },
+            transit_fee(parent) {
+                return resolveBigUInt(2, parent.transit_fee);
+            },
+            transaction_id(parent) {
+                return resolveBigUInt(1, parent.transaction_id);
             },
         },
         OutMsg: {
@@ -292,9 +437,41 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.import_block_lt);
             },
         },
+        MessageValueOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        MessageValue: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
         Message: {
             id(parent) {
                 return parent._key;
+            },
+            created_lt(parent) {
+                return resolveBigUInt(1, parent.created_lt);
+            },
+            ihr_fee(parent) {
+                return resolveBigUInt(2, parent.ihr_fee);
+            },
+            fwd_fee(parent) {
+                return resolveBigUInt(2, parent.fwd_fee);
+            },
+            import_fee(parent) {
+                return resolveBigUInt(2, parent.import_fee);
+            },
+        },
+        BlockInfoPrevRefPrev: {
+            end_lt(parent) {
+                return resolveBigUInt(1, parent.end_lt);
+            },
+        },
+        BlockInfoShard: {
+            shard_prefix(parent) {
+                return resolveBigUInt(1, parent.shard_prefix);
             },
         },
         BlockInfo: {
@@ -305,30 +482,84 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.end_lt);
             },
         },
-        BlockValueFlow: {
-            to_next_blk_grams(parent) {
-                return resolveBigUInt(2, parent.to_next_blk_grams);
+        BlockValueFlowToNextBlkOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
             },
-            exported_grams(parent) {
-                return resolveBigUInt(2, parent.exported_grams);
+        },
+        BlockValueFlowToNextBlk: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
             },
-            fees_collected_grams(parent) {
-                return resolveBigUInt(2, parent.fees_collected_grams);
+        },
+        BlockValueFlowExportedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
             },
-            created_grams(parent) {
-                return resolveBigUInt(2, parent.created_grams);
+        },
+        BlockValueFlowExported: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
             },
-            imported_grams(parent) {
-                return resolveBigUInt(2, parent.imported_grams);
+        },
+        BlockValueFlowFeesCollectedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
             },
-            from_prev_blk_grams(parent) {
-                return resolveBigUInt(2, parent.from_prev_blk_grams);
+        },
+        BlockValueFlowFeesCollected: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
             },
-            minted_grams(parent) {
-                return resolveBigUInt(2, parent.minted_grams);
+        },
+        BlockValueFlowCreatedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
             },
-            fees_imported_grams(parent) {
-                return resolveBigUInt(2, parent.fees_imported_grams);
+        },
+        BlockValueFlowCreated: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
+        BlockValueFlowImportedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        BlockValueFlowImported: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
+        BlockValueFlowFromPrevBlkOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        BlockValueFlowFromPrevBlk: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
+        BlockValueFlowMintedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        BlockValueFlowMinted: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
+        BlockValueFlowFeesImportedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        BlockValueFlowFeesImported: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
             },
         },
         Block: {
@@ -336,19 +567,63 @@ function createResolvers(db) {
                 return parent._key;
             },
         },
+        AccountBalanceOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        AccountBalance: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
         Account: {
             id(parent) {
                 return parent._key;
             },
+            due_payment(parent) {
+                return resolveBigUInt(2, parent.due_payment);
+            },
+            last_trans_lt(parent) {
+                return resolveBigUInt(1, parent.last_trans_lt);
+            },
+        },
+        TransactionTotalFeesOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        TransactionTotalFees: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
+        },
+        TransactionStorage: {
+            storage_fees_collected(parent) {
+                return resolveBigUInt(2, parent.storage_fees_collected);
+            },
+            storage_fees_due(parent) {
+                return resolveBigUInt(2, parent.storage_fees_due);
+            },
+        },
+        TransactionCreditCreditOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        TransactionCreditCredit: {
+            grams(parent) {
+                return resolveBigUInt(2, parent.grams);
+            },
         },
         TransactionCredit: {
-            credit_grams(parent) {
-                return resolveBigUInt(1, parent.credit_grams);
+            due_fees_collected(parent) {
+                return resolveBigUInt(2, parent.due_fees_collected);
             },
         },
         TransactionCompute: {
             gas_fees(parent) {
-                return resolveBigUInt(1, parent.gas_fees);
+                return resolveBigUInt(2, parent.gas_fees);
             },
             gas_used(parent) {
                 return resolveBigUInt(1, parent.gas_used);
@@ -356,27 +631,24 @@ function createResolvers(db) {
             gas_limit(parent) {
                 return resolveBigUInt(1, parent.gas_limit);
             },
-            gas_credit(parent) {
-                return resolveBigUInt(1, parent.gas_credit);
-            },
         },
         TransactionAction: {
             total_fwd_fees(parent) {
-                return resolveBigUInt(1, parent.total_fwd_fees);
+                return resolveBigUInt(2, parent.total_fwd_fees);
             },
             total_action_fees(parent) {
-                return resolveBigUInt(1, parent.total_action_fees);
+                return resolveBigUInt(2, parent.total_action_fees);
             },
         },
         TransactionBounce: {
             req_fwd_fees(parent) {
-                return resolveBigUInt(1, parent.req_fwd_fees);
+                return resolveBigUInt(2, parent.req_fwd_fees);
             },
             msg_fees(parent) {
-                return resolveBigUInt(1, parent.msg_fees);
+                return resolveBigUInt(2, parent.msg_fees);
             },
             fwd_fees(parent) {
-                return resolveBigUInt(1, parent.fwd_fees);
+                return resolveBigUInt(2, parent.fwd_fees);
             },
         },
         Transaction: {
@@ -386,14 +658,8 @@ function createResolvers(db) {
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);
             },
-            last_trans_lt(parent) {
-                return resolveBigUInt(1, parent.last_trans_lt);
-            },
             prev_trans_lt(parent) {
                 return resolveBigUInt(1, parent.prev_trans_lt);
-            },
-            total_fees(parent) {
-                return resolveBigUInt(1, parent.total_fees);
             },
         },
         Query: {
@@ -417,6 +683,8 @@ module.exports = {
     MsgEnvelope,
     InMsg,
     OutMsg,
+    MessageValueOther,
+    MessageValue,
     Message,
     BlockInfoPrevRefPrev,
     BlockInfoPrevRef,
@@ -424,14 +692,36 @@ module.exports = {
     BlockInfoMasterRef,
     BlockInfoPrevVertRef,
     BlockInfo,
+    BlockValueFlowToNextBlkOther,
+    BlockValueFlowToNextBlk,
+    BlockValueFlowExportedOther,
+    BlockValueFlowExported,
+    BlockValueFlowFeesCollectedOther,
+    BlockValueFlowFeesCollected,
+    BlockValueFlowCreatedOther,
+    BlockValueFlowCreated,
+    BlockValueFlowImportedOther,
+    BlockValueFlowImported,
+    BlockValueFlowFromPrevBlkOther,
+    BlockValueFlowFromPrevBlk,
+    BlockValueFlowMintedOther,
+    BlockValueFlowMinted,
+    BlockValueFlowFeesImportedOther,
+    BlockValueFlowFeesImported,
     BlockValueFlow,
     BlockExtraAccountBlocksStateUpdate,
     BlockExtraAccountBlocks,
     BlockExtra,
     BlockStateUpdate,
     Block,
+    AccountBalanceOther,
+    AccountBalance,
     Account,
+    TransactionTotalFeesOther,
+    TransactionTotalFees,
     TransactionStorage,
+    TransactionCreditCreditOther,
+    TransactionCreditCredit,
     TransactionCredit,
     TransactionCompute,
     TransactionAction,
