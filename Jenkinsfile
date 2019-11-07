@@ -1,4 +1,4 @@
-G_promoted_version = "0.16.0-rc-fix-CI"
+G_promoted_version = "0.16.0-rc"
 G_promoted_branch = "origin/${G_promoted_version}"
 
 if (G_promoted_version == "master") {
