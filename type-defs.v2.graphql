@@ -116,30 +116,10 @@ type Message {
 	value: MessageValue
 }
 
-type BlockPrevRefPrev {
-	seq_no: Float
-	file_hash: String
-	root_hash: String
-	end_lt: String
-}
-
-type BlockPrevRef {
-	prev: BlockPrevRefPrev
-}
-
 type BlockShard {
 	shard_pfx_bits: Int
 	workchain_id: Int
 	shard_prefix: String
-}
-
-type BlockMasterRef {
-	master: ExtBlkRef
-}
-
-type BlockPrevVertRef {
-	prev: ExtBlkRef
-	prev_alt: ExtBlkRef
 }
 
 type BlockValueFlowToNextBlkOther {
@@ -264,7 +244,11 @@ type Block {
 	gen_utime: Int
 	gen_catchain_seqno: Float
 	flags: Int
-	prev_ref: BlockPrevRef
+	master_ref: ExtBlkRef
+	prev_ref: ExtBlkRef
+	prev_alt_ref: ExtBlkRef
+	prev_vert_ref: ExtBlkRef
+	prev_vert_alt_ref: ExtBlkRef
 	version: Float
 	gen_validator_list_hash_short: Float
 	before_split: Boolean
@@ -275,8 +259,6 @@ type Block {
 	end_lt: String
 	shard: BlockShard
 	min_ref_mc_seqno: Float
-	master_ref: BlockMasterRef
-	prev_vert_ref: BlockPrevVertRef
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
 	rand_seed: String
@@ -505,30 +487,10 @@ input MessageFilter {
 	value: MessageValueFilter
 }
 
-input BlockPrevRefPrevFilter {
-	seq_no: FloatFilter
-	file_hash: StringFilter
-	root_hash: StringFilter
-	end_lt: StringFilter
-}
-
-input BlockPrevRefFilter {
-	prev: BlockPrevRefPrevFilter
-}
-
 input BlockShardFilter {
 	shard_pfx_bits: IntFilter
 	workchain_id: IntFilter
 	shard_prefix: StringFilter
-}
-
-input BlockMasterRefFilter {
-	master: ExtBlkRefFilter
-}
-
-input BlockPrevVertRefFilter {
-	prev: ExtBlkRefFilter
-	prev_alt: ExtBlkRefFilter
 }
 
 input BlockValueFlowToNextBlkOtherFilter {
@@ -713,7 +675,11 @@ input BlockFilter {
 	gen_utime: IntFilter
 	gen_catchain_seqno: FloatFilter
 	flags: IntFilter
-	prev_ref: BlockPrevRefFilter
+	master_ref: ExtBlkRefFilter
+	prev_ref: ExtBlkRefFilter
+	prev_alt_ref: ExtBlkRefFilter
+	prev_vert_ref: ExtBlkRefFilter
+	prev_vert_alt_ref: ExtBlkRefFilter
 	version: FloatFilter
 	gen_validator_list_hash_short: FloatFilter
 	before_split: BooleanFilter
@@ -724,8 +690,6 @@ input BlockFilter {
 	end_lt: StringFilter
 	shard: BlockShardFilter
 	min_ref_mc_seqno: FloatFilter
-	master_ref: BlockMasterRefFilter
-	prev_vert_ref: BlockPrevVertRefFilter
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter
 	rand_seed: StringFilter

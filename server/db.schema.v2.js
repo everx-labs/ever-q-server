@@ -193,6 +193,8 @@ const ExtBlkRef: TypeDef = {
     file_hash: string()
 };
 
+const extBlkRef = () => ref({ ExtBlkRef });
+
 const MsgEnvelope: TypeDef = {
     msg: string(),
     next_addr: string(),
@@ -200,29 +202,35 @@ const MsgEnvelope: TypeDef = {
     fwd_fee_remaining: grams(),
 };
 
+const msgEnvelope = () => ref({ MsgEnvelope });
+
 const InMsg: TypeDef = {
     msg_type: u8(), // External: 0, IHR: 1, Immediatelly: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6
     msg: string(),
     transaction: string(),
     ihr_fee: grams(),
     proof_created: string(),
-    in_msg: ref({ MsgEnvelope }),
+    in_msg: msgEnvelope(),
     fwd_fee: grams(),
-    out_msg: ref({ MsgEnvelope }),
+    out_msg: msgEnvelope(),
     transit_fee: grams(),
     transaction_id: u64(),
     proof_delivered: string()
 };
 
+const inMsg = () => ref({ InMsg });
+
 const OutMsg: TypeDef = {
     msg_type: u8(), // None: 0, External: 1, Immediately: 2, OutMsgNew: 3, Transit: 4, Dequeue: 5, TransitRequired: 6
     msg: string(),
     transaction: string(),
-    out_msg: ref({ MsgEnvelope }),
-    reimport: ref({ InMsg }),
-    imported: ref({ InMsg }),
+    out_msg: msgEnvelope(),
+    reimport: inMsg(),
+    imported: inMsg(),
     import_block_lt: u64(),
 };
+
+const outMsg = () => ref({ OutMsg });
 
 const Block: TypeDef = {
     _doc: 'This is Block',
@@ -235,14 +243,11 @@ const Block: TypeDef = {
     gen_utime: i32(),
     gen_catchain_seqno: u32(),
     flags: u16(),
-    prev_ref: {
-        prev: {
-            seq_no: u32(),
-            file_hash: string(),
-            root_hash: string(),
-            end_lt: u64()
-        }
-    },
+    master_ref: extBlkRef(),
+    prev_ref: extBlkRef(),
+    prev_alt_ref: extBlkRef(),
+    prev_vert_ref: extBlkRef(),
+    prev_vert_alt_ref: extBlkRef(),
     version: u32(),
     gen_validator_list_hash_short: u32(),
     before_split: bool(),
@@ -257,13 +262,6 @@ const Block: TypeDef = {
         shard_prefix: u64(),
     },
     min_ref_mc_seqno: u32(),
-    master_ref: {
-        master: ref({ ExtBlkRef })
-    },
-    prev_vert_ref: {
-        prev: ref({ ExtBlkRef }),
-        prev_alt: ref({ ExtBlkRef })
-    },
     value_flow: {
         to_next_blk: currencyCollection(),
         exported: currencyCollection(),
@@ -274,9 +272,9 @@ const Block: TypeDef = {
         minted: currencyCollection(),
         fees_imported: currencyCollection(),
     },
-    in_msg_descr: arrayOf(ref({ InMsg })),
+    in_msg_descr: arrayOf(inMsg()),
     rand_seed: string(),
-    out_msg_descr: arrayOf(ref({ OutMsg })),
+    out_msg_descr: arrayOf(outMsg()),
     account_blocks: arrayOf({
         account_addr: string(),
         transactions: arrayOf(string()),

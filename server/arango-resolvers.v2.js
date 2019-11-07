@@ -74,30 +74,10 @@ const Message = struct({
     value: MessageValue,
 }, true);
 
-const BlockPrevRefPrev = struct({
-    seq_no: scalar,
-    file_hash: scalar,
-    root_hash: scalar,
-    end_lt: bigUInt1,
-});
-
-const BlockPrevRef = struct({
-    prev: BlockPrevRefPrev,
-});
-
 const BlockShard = struct({
     shard_pfx_bits: scalar,
     workchain_id: scalar,
     shard_prefix: bigUInt1,
-});
-
-const BlockMasterRef = struct({
-    master: ExtBlkRef,
-});
-
-const BlockPrevVertRef = struct({
-    prev: ExtBlkRef,
-    prev_alt: ExtBlkRef,
 });
 
 const BlockValueFlowToNextBlkOther = struct({
@@ -234,7 +214,11 @@ const Block = struct({
     gen_utime: scalar,
     gen_catchain_seqno: scalar,
     flags: scalar,
-    prev_ref: BlockPrevRef,
+    master_ref: ExtBlkRef,
+    prev_ref: ExtBlkRef,
+    prev_alt_ref: ExtBlkRef,
+    prev_vert_ref: ExtBlkRef,
+    prev_vert_alt_ref: ExtBlkRef,
     version: scalar,
     gen_validator_list_hash_short: scalar,
     before_split: scalar,
@@ -245,8 +229,6 @@ const Block = struct({
     end_lt: bigUInt1,
     shard: BlockShard,
     min_ref_mc_seqno: scalar,
-    master_ref: BlockMasterRef,
-    prev_vert_ref: BlockPrevVertRef,
     value_flow: BlockValueFlow,
     in_msg_descr: InMsgArray,
     rand_seed: scalar,
@@ -455,11 +437,6 @@ function createResolvers(db) {
             },
             import_fee(parent) {
                 return resolveBigUInt(2, parent.import_fee);
-            },
-        },
-        BlockPrevRefPrev: {
-            end_lt(parent) {
-                return resolveBigUInt(1, parent.end_lt);
             },
         },
         BlockShard: {
@@ -677,11 +654,7 @@ module.exports = {
     MessageValueOther,
     MessageValue,
     Message,
-    BlockPrevRefPrev,
-    BlockPrevRef,
     BlockShard,
-    BlockMasterRef,
-    BlockPrevVertRef,
     BlockValueFlowToNextBlkOther,
     BlockValueFlowToNextBlk,
     BlockValueFlowExportedOther,
