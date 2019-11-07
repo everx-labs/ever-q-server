@@ -58,7 +58,7 @@ function currencyCollection(): TypeDef {
 const Account: TypeDef = {
     _doc: 'TON Account',
     _: { collection: 'accounts' },
-    acc_type: u8(),
+    acc_type: u8(), // uninit: 0, Active: 1, frozen: 2
     addr: string(),
     last_paid: u32(),
     due_payment: grams(),
@@ -75,7 +75,7 @@ const Account: TypeDef = {
 const Message: TypeDef = {
     _doc: 'This is message',
     _: { collection: 'messages' },
-    msg_type: u8(),
+    msg_type: u8(), // internal: 0, extIn: 1, extOut: 2
     transaction_id: string(),
     block_id: string(),
     body: string(),
@@ -103,8 +103,9 @@ const Message: TypeDef = {
 const Transaction: TypeDef = {
     _doc: 'This is transaction',
     _: { collection: 'transactions' },
-    tr_type: u8(),
+    tr_type: u8(), // ordinary: 0, storage: 1, tick: 2, tock: 3, splitPrepare: 4, splitInstall: 5, mergePrepare: 6, mergeInstall: 7
     status: u8(),
+    block_id: string(),
     account_addr: string(),
     lt: u64(),
     prev_trans_hash: string(),
@@ -228,42 +229,40 @@ const Block: TypeDef = {
     _: { collection: 'blocks' },
     status: string(),
     global_id: u32(),
-    info: {
-        want_split: bool(),
-        seq_no: u32(),
-        after_merge: bool(),
-        gen_utime: i32(),
-        gen_catchain_seqno: u32(),
-        flags: u16(),
-        prev_ref: {
-            prev: {
-                seq_no: u32(),
-                file_hash: string(),
-                root_hash: string(),
-                end_lt: u64()
-            }
-        },
-        version: u32(),
-        gen_validator_list_hash_short: u32(),
-        before_split: bool(),
-        after_split: bool(),
-        want_merge: bool(),
-        vert_seq_no: u32(),
-        start_lt: u64(),
-        end_lt: u64(),
-        shard: {
-            shard_pfx_bits: u8(),
-            workchain_id: i32(),
-            shard_prefix: u64(),
-        },
-        min_ref_mc_seqno: u32(),
-        master_ref: {
-            master: ref({ ExtBlkRef })
-        },
-        prev_vert_ref: {
-            prev: ref({ ExtBlkRef }),
-            prev_alt: ref({ ExtBlkRef })
+    want_split: bool(),
+    seq_no: u32(),
+    after_merge: bool(),
+    gen_utime: i32(),
+    gen_catchain_seqno: u32(),
+    flags: u16(),
+    prev_ref: {
+        prev: {
+            seq_no: u32(),
+            file_hash: string(),
+            root_hash: string(),
+            end_lt: u64()
         }
+    },
+    version: u32(),
+    gen_validator_list_hash_short: u32(),
+    before_split: bool(),
+    after_split: bool(),
+    want_merge: bool(),
+    vert_seq_no: u32(),
+    start_lt: u64(),
+    end_lt: u64(),
+    shard: {
+        shard_pfx_bits: u8(),
+        workchain_id: i32(),
+        shard_prefix: u64(),
+    },
+    min_ref_mc_seqno: u32(),
+    master_ref: {
+        master: ref({ ExtBlkRef })
+    },
+    prev_vert_ref: {
+        prev: ref({ ExtBlkRef }),
+        prev_alt: ref({ ExtBlkRef })
     },
     value_flow: {
         to_next_blk: currencyCollection(),
@@ -275,20 +274,18 @@ const Block: TypeDef = {
         minted: currencyCollection(),
         fees_imported: currencyCollection(),
     },
-    extra: {
-        in_msg_descr: arrayOf(ref({ InMsg })),
-        rand_seed: string(),
-        out_msg_descr: arrayOf(ref({ OutMsg })),
-        account_blocks: arrayOf({
-            account_addr: string(),
-            transactions: arrayOf(string()),
-            state_update: {
-                old_hash: string(),
-                new_hash: string()
-            },
-            tr_count: i32()
-        })
-    },
+    in_msg_descr: arrayOf(ref({ InMsg })),
+    rand_seed: string(),
+    out_msg_descr: arrayOf(ref({ OutMsg })),
+    account_blocks: arrayOf({
+        account_addr: string(),
+        transactions: arrayOf(string()),
+        state_update: {
+            old_hash: string(),
+            new_hash: string()
+        },
+        tr_count: i32()
+    }),
     state_update: {
         new: string(),
         new_hash: string(),

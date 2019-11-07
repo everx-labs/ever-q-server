@@ -74,52 +74,30 @@ const Message = struct({
     value: MessageValue,
 }, true);
 
-const BlockInfoPrevRefPrev = struct({
+const BlockPrevRefPrev = struct({
     seq_no: scalar,
     file_hash: scalar,
     root_hash: scalar,
     end_lt: bigUInt1,
 });
 
-const BlockInfoPrevRef = struct({
-    prev: BlockInfoPrevRefPrev,
+const BlockPrevRef = struct({
+    prev: BlockPrevRefPrev,
 });
 
-const BlockInfoShard = struct({
+const BlockShard = struct({
     shard_pfx_bits: scalar,
     workchain_id: scalar,
     shard_prefix: bigUInt1,
 });
 
-const BlockInfoMasterRef = struct({
+const BlockMasterRef = struct({
     master: ExtBlkRef,
 });
 
-const BlockInfoPrevVertRef = struct({
+const BlockPrevVertRef = struct({
     prev: ExtBlkRef,
     prev_alt: ExtBlkRef,
-});
-
-const BlockInfo = struct({
-    want_split: scalar,
-    seq_no: scalar,
-    after_merge: scalar,
-    gen_utime: scalar,
-    gen_catchain_seqno: scalar,
-    flags: scalar,
-    prev_ref: BlockInfoPrevRef,
-    version: scalar,
-    gen_validator_list_hash_short: scalar,
-    before_split: scalar,
-    after_split: scalar,
-    want_merge: scalar,
-    vert_seq_no: scalar,
-    start_lt: bigUInt1,
-    end_lt: bigUInt1,
-    shard: BlockInfoShard,
-    min_ref_mc_seqno: scalar,
-    master_ref: BlockInfoMasterRef,
-    prev_vert_ref: BlockInfoPrevVertRef,
 });
 
 const BlockValueFlowToNextBlkOther = struct({
@@ -221,27 +199,17 @@ const BlockValueFlow = struct({
     fees_imported: BlockValueFlowFeesImported,
 });
 
-const BlockExtraAccountBlocksStateUpdate = struct({
+const BlockAccountBlocksStateUpdate = struct({
     old_hash: scalar,
     new_hash: scalar,
 });
 
 const StringArray = array(String);
-const BlockExtraAccountBlocks = struct({
+const BlockAccountBlocks = struct({
     account_addr: scalar,
     transactions: StringArray,
-    state_update: BlockExtraAccountBlocksStateUpdate,
+    state_update: BlockAccountBlocksStateUpdate,
     tr_count: scalar,
-});
-
-const InMsgArray = array(InMsg);
-const OutMsgArray = array(OutMsg);
-const BlockExtraAccountBlocksArray = array(BlockExtraAccountBlocks);
-const BlockExtra = struct({
-    in_msg_descr: InMsgArray,
-    rand_seed: scalar,
-    out_msg_descr: OutMsgArray,
-    account_blocks: BlockExtraAccountBlocksArray,
 });
 
 const BlockStateUpdate = struct({
@@ -253,13 +221,37 @@ const BlockStateUpdate = struct({
     old_depth: scalar,
 });
 
+const InMsgArray = array(InMsg);
+const OutMsgArray = array(OutMsg);
+const BlockAccountBlocksArray = array(BlockAccountBlocks);
 const Block = struct({
     id: scalar,
     status: scalar,
     global_id: scalar,
-    info: BlockInfo,
+    want_split: scalar,
+    seq_no: scalar,
+    after_merge: scalar,
+    gen_utime: scalar,
+    gen_catchain_seqno: scalar,
+    flags: scalar,
+    prev_ref: BlockPrevRef,
+    version: scalar,
+    gen_validator_list_hash_short: scalar,
+    before_split: scalar,
+    after_split: scalar,
+    want_merge: scalar,
+    vert_seq_no: scalar,
+    start_lt: bigUInt1,
+    end_lt: bigUInt1,
+    shard: BlockShard,
+    min_ref_mc_seqno: scalar,
+    master_ref: BlockMasterRef,
+    prev_vert_ref: BlockPrevVertRef,
     value_flow: BlockValueFlow,
-    extra: BlockExtra,
+    in_msg_descr: InMsgArray,
+    rand_seed: scalar,
+    out_msg_descr: OutMsgArray,
+    account_blocks: BlockAccountBlocksArray,
     state_update: BlockStateUpdate,
 }, true);
 
@@ -379,6 +371,7 @@ const Transaction = struct({
     id: scalar,
     tr_type: scalar,
     status: scalar,
+    block_id: scalar,
     account_addr: scalar,
     lt: bigUInt1,
     prev_trans_hash: scalar,
@@ -464,22 +457,14 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.import_fee);
             },
         },
-        BlockInfoPrevRefPrev: {
+        BlockPrevRefPrev: {
             end_lt(parent) {
                 return resolveBigUInt(1, parent.end_lt);
             },
         },
-        BlockInfoShard: {
+        BlockShard: {
             shard_prefix(parent) {
                 return resolveBigUInt(1, parent.shard_prefix);
-            },
-        },
-        BlockInfo: {
-            start_lt(parent) {
-                return resolveBigUInt(1, parent.start_lt);
-            },
-            end_lt(parent) {
-                return resolveBigUInt(1, parent.end_lt);
             },
         },
         BlockValueFlowToNextBlkOther: {
@@ -565,6 +550,12 @@ function createResolvers(db) {
         Block: {
             id(parent) {
                 return parent._key;
+            },
+            start_lt(parent) {
+                return resolveBigUInt(1, parent.start_lt);
+            },
+            end_lt(parent) {
+                return resolveBigUInt(1, parent.end_lt);
             },
         },
         AccountBalanceOther: {
@@ -686,12 +677,11 @@ module.exports = {
     MessageValueOther,
     MessageValue,
     Message,
-    BlockInfoPrevRefPrev,
-    BlockInfoPrevRef,
-    BlockInfoShard,
-    BlockInfoMasterRef,
-    BlockInfoPrevVertRef,
-    BlockInfo,
+    BlockPrevRefPrev,
+    BlockPrevRef,
+    BlockShard,
+    BlockMasterRef,
+    BlockPrevVertRef,
     BlockValueFlowToNextBlkOther,
     BlockValueFlowToNextBlk,
     BlockValueFlowExportedOther,
@@ -709,9 +699,8 @@ module.exports = {
     BlockValueFlowFeesImportedOther,
     BlockValueFlowFeesImported,
     BlockValueFlow,
-    BlockExtraAccountBlocksStateUpdate,
-    BlockExtraAccountBlocks,
-    BlockExtra,
+    BlockAccountBlocksStateUpdate,
+    BlockAccountBlocks,
     BlockStateUpdate,
     Block,
     AccountBalanceOther,

@@ -116,52 +116,30 @@ type Message {
 	value: MessageValue
 }
 
-type BlockInfoPrevRefPrev {
+type BlockPrevRefPrev {
 	seq_no: Float
 	file_hash: String
 	root_hash: String
 	end_lt: String
 }
 
-type BlockInfoPrevRef {
-	prev: BlockInfoPrevRefPrev
+type BlockPrevRef {
+	prev: BlockPrevRefPrev
 }
 
-type BlockInfoShard {
+type BlockShard {
 	shard_pfx_bits: Int
 	workchain_id: Int
 	shard_prefix: String
 }
 
-type BlockInfoMasterRef {
+type BlockMasterRef {
 	master: ExtBlkRef
 }
 
-type BlockInfoPrevVertRef {
+type BlockPrevVertRef {
 	prev: ExtBlkRef
 	prev_alt: ExtBlkRef
-}
-
-type BlockInfo {
-	want_split: Boolean
-	seq_no: Float
-	after_merge: Boolean
-	gen_utime: Int
-	gen_catchain_seqno: Float
-	flags: Int
-	prev_ref: BlockInfoPrevRef
-	version: Float
-	gen_validator_list_hash_short: Float
-	before_split: Boolean
-	after_split: Boolean
-	want_merge: Boolean
-	vert_seq_no: Float
-	start_lt: String
-	end_lt: String
-	shard: BlockInfoShard
-	min_ref_mc_seqno: Float
-	master_ref: BlockInfoMasterRef
-	prev_vert_ref: BlockInfoPrevVertRef
 }
 
 type BlockValueFlowToNextBlkOther {
@@ -255,23 +233,16 @@ type BlockValueFlow {
 	fees_imported: BlockValueFlowFeesImported
 }
 
-type BlockExtraAccountBlocksStateUpdate {
+type BlockAccountBlocksStateUpdate {
 	old_hash: String
 	new_hash: String
 }
 
-type BlockExtraAccountBlocks {
+type BlockAccountBlocks {
 	account_addr: String
 	transactions: [String]
-	state_update: BlockExtraAccountBlocksStateUpdate
+	state_update: BlockAccountBlocksStateUpdate
 	tr_count: Int
-}
-
-type BlockExtra {
-	in_msg_descr: [InMsg]
-	rand_seed: String
-	out_msg_descr: [OutMsg]
-	account_blocks: [BlockExtraAccountBlocks]
 }
 
 type BlockStateUpdate {
@@ -287,9 +258,30 @@ type Block {
 	id: String
 	status: String
 	global_id: Float
-	info: BlockInfo
+	want_split: Boolean
+	seq_no: Float
+	after_merge: Boolean
+	gen_utime: Int
+	gen_catchain_seqno: Float
+	flags: Int
+	prev_ref: BlockPrevRef
+	version: Float
+	gen_validator_list_hash_short: Float
+	before_split: Boolean
+	after_split: Boolean
+	want_merge: Boolean
+	vert_seq_no: Float
+	start_lt: String
+	end_lt: String
+	shard: BlockShard
+	min_ref_mc_seqno: Float
+	master_ref: BlockMasterRef
+	prev_vert_ref: BlockPrevVertRef
 	value_flow: BlockValueFlow
-	extra: BlockExtra
+	in_msg_descr: [InMsg]
+	rand_seed: String
+	out_msg_descr: [OutMsg]
+	account_blocks: [BlockAccountBlocks]
 	state_update: BlockStateUpdate
 }
 
@@ -406,6 +398,7 @@ type Transaction {
 	id: String
 	tr_type: Int
 	status: Int
+	block_id: String
 	account_addr: String
 	lt: String
 	prev_trans_hash: String
@@ -512,52 +505,30 @@ input MessageFilter {
 	value: MessageValueFilter
 }
 
-input BlockInfoPrevRefPrevFilter {
+input BlockPrevRefPrevFilter {
 	seq_no: FloatFilter
 	file_hash: StringFilter
 	root_hash: StringFilter
 	end_lt: StringFilter
 }
 
-input BlockInfoPrevRefFilter {
-	prev: BlockInfoPrevRefPrevFilter
+input BlockPrevRefFilter {
+	prev: BlockPrevRefPrevFilter
 }
 
-input BlockInfoShardFilter {
+input BlockShardFilter {
 	shard_pfx_bits: IntFilter
 	workchain_id: IntFilter
 	shard_prefix: StringFilter
 }
 
-input BlockInfoMasterRefFilter {
+input BlockMasterRefFilter {
 	master: ExtBlkRefFilter
 }
 
-input BlockInfoPrevVertRefFilter {
+input BlockPrevVertRefFilter {
 	prev: ExtBlkRefFilter
 	prev_alt: ExtBlkRefFilter
-}
-
-input BlockInfoFilter {
-	want_split: BooleanFilter
-	seq_no: FloatFilter
-	after_merge: BooleanFilter
-	gen_utime: IntFilter
-	gen_catchain_seqno: FloatFilter
-	flags: IntFilter
-	prev_ref: BlockInfoPrevRefFilter
-	version: FloatFilter
-	gen_validator_list_hash_short: FloatFilter
-	before_split: BooleanFilter
-	after_split: BooleanFilter
-	want_merge: BooleanFilter
-	vert_seq_no: FloatFilter
-	start_lt: StringFilter
-	end_lt: StringFilter
-	shard: BlockInfoShardFilter
-	min_ref_mc_seqno: FloatFilter
-	master_ref: BlockInfoMasterRefFilter
-	prev_vert_ref: BlockInfoPrevVertRefFilter
 }
 
 input BlockValueFlowToNextBlkOtherFilter {
@@ -691,7 +662,7 @@ input BlockValueFlowFilter {
 	fees_imported: BlockValueFlowFeesImportedFilter
 }
 
-input BlockExtraAccountBlocksStateUpdateFilter {
+input BlockAccountBlocksStateUpdateFilter {
 	old_hash: StringFilter
 	new_hash: StringFilter
 }
@@ -701,11 +672,20 @@ input StringArrayFilter {
 	all: StringFilter
 }
 
-input BlockExtraAccountBlocksFilter {
+input BlockAccountBlocksFilter {
 	account_addr: StringFilter
 	transactions: StringArrayFilter
-	state_update: BlockExtraAccountBlocksStateUpdateFilter
+	state_update: BlockAccountBlocksStateUpdateFilter
 	tr_count: IntFilter
+}
+
+input BlockStateUpdateFilter {
+	new: StringFilter
+	new_hash: StringFilter
+	new_depth: IntFilter
+	old: StringFilter
+	old_hash: StringFilter
+	old_depth: IntFilter
 }
 
 input InMsgArrayFilter {
@@ -718,34 +698,39 @@ input OutMsgArrayFilter {
 	all: OutMsgFilter
 }
 
-input BlockExtraAccountBlocksArrayFilter {
-	any: BlockExtraAccountBlocksFilter
-	all: BlockExtraAccountBlocksFilter
-}
-
-input BlockExtraFilter {
-	in_msg_descr: InMsgArrayFilter
-	rand_seed: StringFilter
-	out_msg_descr: OutMsgArrayFilter
-	account_blocks: BlockExtraAccountBlocksArrayFilter
-}
-
-input BlockStateUpdateFilter {
-	new: StringFilter
-	new_hash: StringFilter
-	new_depth: IntFilter
-	old: StringFilter
-	old_hash: StringFilter
-	old_depth: IntFilter
+input BlockAccountBlocksArrayFilter {
+	any: BlockAccountBlocksFilter
+	all: BlockAccountBlocksFilter
 }
 
 input BlockFilter {
 	id: StringFilter
 	status: StringFilter
 	global_id: FloatFilter
-	info: BlockInfoFilter
+	want_split: BooleanFilter
+	seq_no: FloatFilter
+	after_merge: BooleanFilter
+	gen_utime: IntFilter
+	gen_catchain_seqno: FloatFilter
+	flags: IntFilter
+	prev_ref: BlockPrevRefFilter
+	version: FloatFilter
+	gen_validator_list_hash_short: FloatFilter
+	before_split: BooleanFilter
+	after_split: BooleanFilter
+	want_merge: BooleanFilter
+	vert_seq_no: FloatFilter
+	start_lt: StringFilter
+	end_lt: StringFilter
+	shard: BlockShardFilter
+	min_ref_mc_seqno: FloatFilter
+	master_ref: BlockMasterRefFilter
+	prev_vert_ref: BlockPrevVertRefFilter
 	value_flow: BlockValueFlowFilter
-	extra: BlockExtraFilter
+	in_msg_descr: InMsgArrayFilter
+	rand_seed: StringFilter
+	out_msg_descr: OutMsgArrayFilter
+	account_blocks: BlockAccountBlocksArrayFilter
 	state_update: BlockStateUpdateFilter
 }
 
@@ -877,6 +862,7 @@ input TransactionFilter {
 	id: StringFilter
 	tr_type: IntFilter
 	status: IntFilter
+	block_id: StringFilter
 	account_addr: StringFilter
 	lt: StringFilter
 	prev_trans_hash: StringFilter
