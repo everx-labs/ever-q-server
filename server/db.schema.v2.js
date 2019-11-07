@@ -130,7 +130,7 @@ const Transaction: TypeDef = {
     },
     compute: {
         type: u8(), // 0: skipped, 1: VM
-        skip_reason: u8(),
+        skipped_reason: u8(),
         success: bool(),
         msg_state_used: bool(),
         account_activated: bool(),

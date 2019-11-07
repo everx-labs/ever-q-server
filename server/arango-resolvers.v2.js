@@ -325,7 +325,7 @@ const TransactionCredit = struct({
 
 const TransactionCompute = struct({
     type: scalar,
-    skip_reason: scalar,
+    skipped_reason: scalar,
     success: scalar,
     msg_state_used: scalar,
     account_activated: scalar,

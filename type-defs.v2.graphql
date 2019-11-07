@@ -352,7 +352,7 @@ type TransactionCredit {
 
 type TransactionCompute {
 	type: Int
-	skip_reason: Int
+	skipped_reason: Int
 	success: Boolean
 	msg_state_used: Boolean
 	account_activated: Boolean
@@ -823,7 +823,7 @@ input TransactionCreditFilter {
 
 input TransactionComputeFilter {
 	type: IntFilter
-	skip_reason: IntFilter
+	skipped_reason: IntFilter
 	success: BooleanFilter
 	msg_state_used: BooleanFilter
 	account_activated: BooleanFilter
