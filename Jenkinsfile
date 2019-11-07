@@ -1,7 +1,7 @@
 G_promoted_version = "0.16.0-rc-fix-CI"
 G_promoted_branch = "origin/${G_promoted_version}"
 
-if (G_promoted_version = "master") {
+if (G_promoted_version == "master") {
 	G_promoted_tag = "latest"
 } else {
 	G_promoted_tag = "${G_promoted-version}_latest"
