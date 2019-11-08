@@ -24,9 +24,10 @@ const withDoc = (def: TypeDef, doc?: string) => ({
     ...def,
     ...(doc ? { _doc: doc } : {})
 });
-
-const uint = (size: number, doc?: string) => withDoc({ _int: { unsigned: size } }, doc);
-const int = (size: number, doc?: string) => withDoc({ _int: { signed: size } }, doc);
+const required = (def: TypeDef) => def;
+type IntSize = 8 | 16 | 32 | 64;
+const uint = (size: IntSize, doc?: string) => withDoc({ _int: { unsigned: true, size } }, doc);
+const int = (size: IntSize, doc?: string) => withDoc({ _int: { unsigned: false, size } }, doc);
 
 const i8 = (doc?: string) => int(8, doc);
 const u8 = (doc?: string) => uint(8, doc);
@@ -34,7 +35,7 @@ const u16 = (doc?: string) => uint(16, doc);
 const u32 = (doc?: string) => uint(32, doc);
 const i32 = (doc?: string) => int(32, doc);
 const u64 = (doc?: string) => uint(64, doc);
-const u128 = (doc?: string) => uint(128, doc);
+const u128 = (doc?: string) => uint((128: any), doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
     return { ...ref(refDef), _: { join: { on } } }
 };
@@ -55,14 +56,107 @@ const currencyCollection = (doc?: string): TypeDef => withDoc({
     }),
 }, doc);
 
+const accountStatus = (doc?: string): TypeDef => u8enum({
+    uninit: 0,
+    frozen: 1,
+    active: 2,
+    nonExist: 3,
+}, doc);
+
+const accountStatusChange = (doc?: string): TypeDef => u8enum({
+    unchanged: 0,
+    frozen: 1,
+    deleted: 2,
+}, doc);
+
+const skipReason = (doc?: string): TypeDef => u8enum({
+    noState: 0,
+    badState: 1,
+    noGas: 2,
+}, doc);
+
+
+const accountType = (doc?: string): TypeDef => u8enum({
+    uninit: 0,
+    active: 1,
+    frozen: 2,
+}, doc);
+
+const messageType = (doc?: string): TypeDef => u8enum({
+    internal: 0,
+    extIn: 1,
+    extOut: 2,
+}, doc);
+
+
+const messageProcessingStatus = (doc?: string): TypeDef => u8enum({
+    unknown: 0,
+    queued: 1,
+    processing: 2,
+    preliminary: 3,
+    proposed: 4,
+    finalized: 5,
+    refused: 6,
+    transiting: 7,
+}, doc);
+
+const transactionType = (doc?: string): TypeDef => u8enum({
+    ordinary: 0,
+    storage: 1,
+    tick: 2,
+    tock: 3,
+    splitPrepare: 4,
+    splitInstall: 5,
+    mergePrepare: 6,
+    mergeInstall: 7,
+}, doc);
+
+const transactionProcessingStatus = (doc?: string): TypeDef => u8enum({
+    unknown: 0,
+    preliminary: 1,
+    proposed: 2,
+    finalized: 3,
+    refused: 4,
+}, doc);
+
+
+const computeType = (doc?: string): TypeDef => u8enum({
+    skipped: 0,
+    vm: 1,
+}, doc);
+
+
+const bounceType = (doc?: string): TypeDef => u8enum({
+    negFunds: 0,
+    noFunds: 1,
+    ok: 2,
+}, doc);
+
+const inMsgType = (doc?: string): TypeDef => u8enum({
+    external: 0,
+    ihr: 1,
+    immediatelly: 2,
+    final: 3,
+    transit: 4,
+    discardedFinal: 5,
+    discardedTransit: 6,
+}, doc);
+
+const outMsgType = (doc?: string): TypeDef => u8enum({
+    none: 0,
+    external: 1,
+    immediately: 2,
+    outMsgNew: 3,
+    transit: 4,
+    dequeue: 5,
+    transitRequired: 6,
+}, doc);
+
+
 const Account: TypeDef = {
     _doc: 'TON Account',
     _: { collection: 'accounts' },
-    acc_type: u8enum({
-        uninit: 0,
-        active: 1,
-        frozen: 2,
-    }),
+    acc_type: accountType(),
     last_paid: u32(),
     due_payment: grams(),
     last_trans_lt: u64(),
@@ -78,15 +172,11 @@ const Account: TypeDef = {
 const Message: TypeDef = {
     _doc: 'TON Message',
     _: { collection: 'messages' },
-    msg_type: u8enum({
-        internal: 0,
-        extIn: 1,
-        extOut: 2,
-    }),
-    transaction_id: string(),
-    block_id: string(),
+    msg_type: required(messageType()),
+    status: required(messageProcessingStatus()),
+    transaction_id: required(string()),
+    block_id: required(string()),
     body: string(),
-    status: u8(),
     split_depth: u8(),
     tick: bool(),
     tock: bool(),
@@ -110,17 +200,8 @@ const Message: TypeDef = {
 const Transaction: TypeDef = {
     _doc: 'TON Transaction',
     _: { collection: 'transactions' },
-    tr_type: u8enum({
-        ordinary: 0,
-        storage: 1,
-        tick: 2,
-        tock: 3,
-        splitPrepare: 4,
-        splitInstall: 5,
-        mergePrepare: 6,
-        mergeInstall: 7,
-    }),
-    status: u8(),
+    tr_type: required(transactionType()),
+    status: required(transactionProcessingStatus()),
     block_id: string(),
     account_addr: string(),
     lt: u64(),
@@ -128,8 +209,8 @@ const Transaction: TypeDef = {
     prev_trans_lt: u64(),
     now: u32(),
     outmsg_cnt: i32(),
-    orig_status: u8(),
-    end_status: u8(),
+    orig_status: accountStatus(),
+    end_status: accountStatus(),
     in_msg: string(),
     out_msgs: arrayOf(string()),
     total_fees: currencyCollection(),
@@ -139,18 +220,15 @@ const Transaction: TypeDef = {
     storage: {
         storage_fees_collected: grams(),
         storage_fees_due: grams(),
-        status_change: u8(),
+        status_change: accountStatusChange(),
     },
     credit: {
         due_fees_collected: grams(),
         credit: currencyCollection(),
     },
     compute: {
-        compute_type: u8enum({
-            skipped: 0,
-            vm: 1,
-        }),
-        skipped_reason: u8(),
+        compute_type: required(computeType()),
+        skipped_reason: skipReason(),
         success: bool(),
         msg_state_used: bool(),
         account_activated: bool(),
@@ -169,7 +247,7 @@ const Transaction: TypeDef = {
         success: bool(),
         valid: bool(),
         no_funds: bool(),
-        status_change: u8(),
+        status_change: accountStatusChange(),
         total_fwd_fees: grams(),
         total_action_fees: grams(),
         result_code: i32(),
@@ -183,11 +261,7 @@ const Transaction: TypeDef = {
         total_msg_size_bits: u32(),
     },
     bounce: {
-        bounce_type: u8enum({
-            negFunds: 0,
-            noFunds: 1,
-            ok: 2,
-        }),
+        bounce_type: required(bounceType()),
         msg_size_cells: u32(),
         msg_size_bits: u32(),
         req_fwd_fees: grams(),
@@ -228,15 +302,7 @@ const MsgEnvelope: TypeDef = {
 const msgEnvelope = () => ref({ MsgEnvelope });
 
 const InMsg: TypeDef = {
-    msg_type: u8enum({
-        external: 0,
-        ihr: 1,
-        immediatelly: 2,
-        final: 3,
-        transit: 4,
-        discardedFinal: 5,
-        discardedTransit: 6,
-    }),
+    msg_type: required(inMsgType()),
     msg: string(),
     transaction: string(),
     ihr_fee: grams(),
@@ -252,15 +318,7 @@ const InMsg: TypeDef = {
 const inMsg = () => ref({ InMsg });
 
 const OutMsg: TypeDef = {
-    msg_type: u8enum({
-        none: 0,
-        external: 1,
-        immediately: 2,
-        outMsgNew: 3,
-        transit: 4,
-        dequeue: 5,
-        transitRequired: 6,
-    }),
+    msg_type: required(outMsgType()),
     msg: string(),
     transaction: string(),
     out_msg: msgEnvelope(),
