@@ -48,18 +48,15 @@ function u8enum(values: { [string]: number }, doc?: string) {
     return uint(8, `${doc ? `${doc}\n` : ''}${valuesDoc}`);
 }
 
-const currencyCollection = (doc?: string): TypeDef => withDoc({
-    grams: grams(),
-    other: arrayOf({
-        currency: i32(),
-        value: u128(),
-    }),
+const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf({
+    currency: i32(),
+    value: grams(),
 }, doc);
 
 const accountStatus = (doc?: string): TypeDef => u8enum({
     uninit: 0,
-    frozen: 1,
-    active: 2,
+    active: 1,
+    frozen: 2,
     nonExist: 3,
 }, doc);
 
@@ -84,8 +81,8 @@ const accountType = (doc?: string): TypeDef => u8enum({
 
 const messageType = (doc?: string): TypeDef => u8enum({
     internal: 0,
-    extIn: 1,
-    extOut: 2,
+    extIn: 2,
+    extOut: 3,
 }, doc);
 
 
@@ -119,12 +116,10 @@ const transactionProcessingStatus = (doc?: string): TypeDef => u8enum({
     refused: 4,
 }, doc);
 
-
 const computeType = (doc?: string): TypeDef => u8enum({
     skipped: 0,
     vm: 1,
 }, doc);
-
 
 const bounceType = (doc?: string): TypeDef => u8enum({
     negFunds: 0,
@@ -132,10 +127,18 @@ const bounceType = (doc?: string): TypeDef => u8enum({
     ok: 2,
 }, doc);
 
+const blockProcessingStatus = (doc?: string): TypeDef => u8enum({
+    unknown: 0,
+    proposed: 1,
+    finalized: 2,
+    refused: 3,
+}, doc);
+
+
 const inMsgType = (doc?: string): TypeDef => u8enum({
     external: 0,
     ihr: 1,
-    immediatelly: 2,
+    immediately: 2,
     final: 3,
     transit: 4,
     discardedFinal: 5,
@@ -143,13 +146,14 @@ const inMsgType = (doc?: string): TypeDef => u8enum({
 }, doc);
 
 const outMsgType = (doc?: string): TypeDef => u8enum({
-    none: 0,
-    external: 1,
-    immediately: 2,
-    outMsgNew: 3,
-    transit: 4,
+    external: 0,
+    immediately: 1,
+    outMsgNew: 2,
+    transit: 3,
+    dequeueImmediately: 4,
     dequeue: 5,
     transitRequired: 6,
+    none: -1,
 }, doc);
 
 
@@ -160,7 +164,8 @@ const Account: TypeDef = {
     last_paid: u32(),
     due_payment: grams(),
     last_trans_lt: u64(),
-    balance: currencyCollection(),
+    balance: grams(),
+    balance_other: otherCurrencyCollection(),
     split_depth: u8(),
     tick: bool(),
     tock: bool(),
@@ -193,7 +198,8 @@ const Message: TypeDef = {
     import_fee: grams(),
     bounce: bool(),
     bounced: bool(),
-    value: currencyCollection(),
+    value: grams(),
+    value_other: otherCurrencyCollection(),
 };
 
 
@@ -213,7 +219,8 @@ const Transaction: TypeDef = {
     end_status: accountStatus(),
     in_msg: string(),
     out_msgs: arrayOf(string()),
-    total_fees: currencyCollection(),
+    total_fees: grams(),
+    total_fees_other: otherCurrencyCollection(),
     old_hash: string(),
     new_hash: string(),
     credit_first: bool(),
@@ -224,7 +231,8 @@ const Transaction: TypeDef = {
     },
     credit: {
         due_fees_collected: grams(),
-        credit: currencyCollection(),
+        credit: grams(),
+        credit_other: otherCurrencyCollection(),
     },
     compute: {
         compute_type: required(computeType()),
@@ -332,7 +340,7 @@ const outMsg = () => ref({ OutMsg });
 const Block: TypeDef = {
     _doc: 'This is Block',
     _: { collection: 'blocks' },
-    status: string(),
+    status: blockProcessingStatus(),
     global_id: u32(),
     want_split: bool(),
     seq_no: u32(),
@@ -360,14 +368,22 @@ const Block: TypeDef = {
     },
     min_ref_mc_seqno: u32(),
     value_flow: {
-        to_next_blk: currencyCollection(),
-        exported: currencyCollection(),
-        fees_collected: currencyCollection(),
-        created: currencyCollection(),
-        imported: currencyCollection(),
-        from_prev_blk: currencyCollection(),
-        minted: currencyCollection(),
-        fees_imported: currencyCollection(),
+        to_next_blk: grams(),
+        to_next_blk_other: otherCurrencyCollection(),
+        exported: grams(),
+        exported_other: otherCurrencyCollection(),
+        fees_collected: grams(),
+        fees_collected_other: otherCurrencyCollection(),
+        created: grams(),
+        created_other: otherCurrencyCollection(),
+        imported: grams(),
+        imported_other: otherCurrencyCollection(),
+        from_prev_blk: grams(),
+        from_prev_blk_other: otherCurrencyCollection(),
+        minted: grams(),
+        minted_other: otherCurrencyCollection(),
+        fees_imported: grams(),
+        fees_imported_other: otherCurrencyCollection(),
     },
     in_msg_descr: arrayOf(inMsg()),
     rand_seed: string(),

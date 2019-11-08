@@ -43,8 +43,8 @@ input FloatFilter {
 }
 
 type ExtBlkRef {
-	end_lt: Int
-	seq_no: Int
+	end_lt: String
+	seq_no: Float
 	root_hash: String
 	file_hash: String
 }
@@ -53,20 +53,20 @@ type MsgEnvelope {
 	msg: String
 	next_addr: String
 	cur_addr: String
-	fwd_fee_remaining: Int
+	fwd_fee_remaining: String
 }
 
 type InMsg {
 	msg_type: Int
 	msg: String
 	transaction: String
-	ihr_fee: Int
+	ihr_fee: String
 	proof_created: String
 	in_msg: MsgEnvelope
-	fwd_fee: Int
+	fwd_fee: String
 	out_msg: MsgEnvelope
-	transit_fee: Int
-	transaction_id: Int
+	transit_fee: String
+	transaction_id: String
 	proof_delivered: String
 }
 
@@ -77,17 +77,12 @@ type OutMsg {
 	out_msg: MsgEnvelope
 	reimport: InMsg
 	imported: InMsg
-	import_block_lt: Int
+	import_block_lt: String
 }
 
 type MessageValueOther {
 	currency: Int
-	value: Int
-}
-
-type MessageValue {
-	grams: Int
-	other: [MessageValueOther]
+	value: String
 }
 
 type Message {
@@ -105,112 +100,81 @@ type Message {
 	library: String
 	src: String
 	dst: String
-	created_lt: Int
-	created_at: Int
+	created_lt: String
+	created_at: Float
 	ihr_disabled: Boolean
-	ihr_fee: Int
-	fwd_fee: Int
-	import_fee: Int
+	ihr_fee: String
+	fwd_fee: String
+	import_fee: String
 	bounce: Boolean
 	bounced: Boolean
-	value: MessageValue
+	value: String
+	value_other: [MessageValueOther]
 }
 
 type BlockShard {
 	shard_pfx_bits: Int
 	workchain_id: Int
-	shard_prefix: Int
+	shard_prefix: String
 }
 
 type BlockValueFlowToNextBlkOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowToNextBlk {
-	grams: Int
-	other: [BlockValueFlowToNextBlkOther]
+	value: String
 }
 
 type BlockValueFlowExportedOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowExported {
-	grams: Int
-	other: [BlockValueFlowExportedOther]
+	value: String
 }
 
 type BlockValueFlowFeesCollectedOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowFeesCollected {
-	grams: Int
-	other: [BlockValueFlowFeesCollectedOther]
+	value: String
 }
 
 type BlockValueFlowCreatedOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowCreated {
-	grams: Int
-	other: [BlockValueFlowCreatedOther]
+	value: String
 }
 
 type BlockValueFlowImportedOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowImported {
-	grams: Int
-	other: [BlockValueFlowImportedOther]
+	value: String
 }
 
 type BlockValueFlowFromPrevBlkOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowFromPrevBlk {
-	grams: Int
-	other: [BlockValueFlowFromPrevBlkOther]
+	value: String
 }
 
 type BlockValueFlowMintedOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowMinted {
-	grams: Int
-	other: [BlockValueFlowMintedOther]
+	value: String
 }
 
 type BlockValueFlowFeesImportedOther {
 	currency: Int
-	value: Int
-}
-
-type BlockValueFlowFeesImported {
-	grams: Int
-	other: [BlockValueFlowFeesImportedOther]
+	value: String
 }
 
 type BlockValueFlow {
-	to_next_blk: BlockValueFlowToNextBlk
-	exported: BlockValueFlowExported
-	fees_collected: BlockValueFlowFeesCollected
-	created: BlockValueFlowCreated
-	imported: BlockValueFlowImported
-	from_prev_blk: BlockValueFlowFromPrevBlk
-	minted: BlockValueFlowMinted
-	fees_imported: BlockValueFlowFeesImported
+	to_next_blk: String
+	to_next_blk_other: [BlockValueFlowToNextBlkOther]
+	exported: String
+	exported_other: [BlockValueFlowExportedOther]
+	fees_collected: String
+	fees_collected_other: [BlockValueFlowFeesCollectedOther]
+	created: String
+	created_other: [BlockValueFlowCreatedOther]
+	imported: String
+	imported_other: [BlockValueFlowImportedOther]
+	from_prev_blk: String
+	from_prev_blk_other: [BlockValueFlowFromPrevBlkOther]
+	minted: String
+	minted_other: [BlockValueFlowMintedOther]
+	fees_imported: String
+	fees_imported_other: [BlockValueFlowFeesImportedOther]
 }
 
 type BlockAccountBlocksStateUpdate {
@@ -236,29 +200,29 @@ type BlockStateUpdate {
 
 type Block {
 	id: String
-	status: String
-	global_id: Int
+	status: Int
+	global_id: Float
 	want_split: Boolean
-	seq_no: Int
+	seq_no: Float
 	after_merge: Boolean
 	gen_utime: Int
-	gen_catchain_seqno: Int
+	gen_catchain_seqno: Float
 	flags: Int
 	master_ref: ExtBlkRef
 	prev_ref: ExtBlkRef
 	prev_alt_ref: ExtBlkRef
 	prev_vert_ref: ExtBlkRef
 	prev_vert_alt_ref: ExtBlkRef
-	version: Int
-	gen_validator_list_hash_short: Int
+	version: Float
+	gen_validator_list_hash_short: Float
 	before_split: Boolean
 	after_split: Boolean
 	want_merge: Boolean
-	vert_seq_no: Int
-	start_lt: Int
-	end_lt: Int
+	vert_seq_no: Float
+	start_lt: String
+	end_lt: String
 	shard: BlockShard
-	min_ref_mc_seqno: Int
+	min_ref_mc_seqno: Float
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
 	rand_seed: String
@@ -269,21 +233,17 @@ type Block {
 
 type AccountBalanceOther {
 	currency: Int
-	value: Int
-}
-
-type AccountBalance {
-	grams: Int
-	other: [AccountBalanceOther]
+	value: String
 }
 
 type Account {
 	id: String
 	acc_type: Int
-	last_paid: Int
-	due_payment: Int
-	last_trans_lt: Int
-	balance: AccountBalance
+	last_paid: Float
+	due_payment: String
+	last_trans_lt: String
+	balance: String
+	balance_other: [AccountBalanceOther]
 	split_depth: Int
 	tick: Boolean
 	tock: Boolean
@@ -294,33 +254,24 @@ type Account {
 
 type TransactionTotalFeesOther {
 	currency: Int
-	value: Int
-}
-
-type TransactionTotalFees {
-	grams: Int
-	other: [TransactionTotalFeesOther]
+	value: String
 }
 
 type TransactionStorage {
-	storage_fees_collected: Int
-	storage_fees_due: Int
+	storage_fees_collected: String
+	storage_fees_due: String
 	status_change: Int
 }
 
 type TransactionCreditCreditOther {
 	currency: Int
-	value: Int
-}
-
-type TransactionCreditCredit {
-	grams: Int
-	other: [TransactionCreditCreditOther]
+	value: String
 }
 
 type TransactionCredit {
-	due_fees_collected: Int
-	credit: TransactionCreditCredit
+	due_fees_collected: String
+	credit: String
+	credit_other: [TransactionCreditCreditOther]
 }
 
 type TransactionCompute {
@@ -329,14 +280,14 @@ type TransactionCompute {
 	success: Boolean
 	msg_state_used: Boolean
 	account_activated: Boolean
-	gas_fees: Int
-	gas_used: Int
-	gas_limit: Int
+	gas_fees: String
+	gas_used: String
+	gas_limit: String
 	gas_credit: Int
 	mode: Int
 	exit_code: Int
 	exit_arg: Int
-	vm_steps: Int
+	vm_steps: Float
 	vm_init_state_hash: String
 	vm_final_state_hash: String
 }
@@ -346,8 +297,8 @@ type TransactionAction {
 	valid: Boolean
 	no_funds: Boolean
 	status_change: Int
-	total_fwd_fees: Int
-	total_action_fees: Int
+	total_fwd_fees: String
+	total_action_fees: String
 	result_code: Int
 	result_arg: Int
 	tot_actions: Int
@@ -355,17 +306,17 @@ type TransactionAction {
 	skipped_actions: Int
 	msgs_created: Int
 	action_list_hash: String
-	total_msg_size_cells: Int
-	total_msg_size_bits: Int
+	total_msg_size_cells: Float
+	total_msg_size_bits: Float
 }
 
 type TransactionBounce {
 	bounce_type: Int
-	msg_size_cells: Int
-	msg_size_bits: Int
-	req_fwd_fees: Int
-	msg_fees: Int
-	fwd_fees: Int
+	msg_size_cells: Float
+	msg_size_bits: Float
+	req_fwd_fees: String
+	msg_fees: String
+	fwd_fees: String
 }
 
 type TransactionSplitInfo {
@@ -381,16 +332,17 @@ type Transaction {
 	status: Int
 	block_id: String
 	account_addr: String
-	lt: Int
+	lt: String
 	prev_trans_hash: String
-	prev_trans_lt: Int
-	now: Int
+	prev_trans_lt: String
+	now: Float
 	outmsg_cnt: Int
 	orig_status: Int
 	end_status: Int
 	in_msg: String
 	out_msgs: [String]
-	total_fees: TransactionTotalFees
+	total_fees: String
+	total_fees_other: [TransactionTotalFeesOther]
 	old_hash: String
 	new_hash: String
 	credit_first: Boolean
@@ -408,8 +360,8 @@ type Transaction {
 }
 
 input ExtBlkRefFilter {
-	end_lt: IntFilter
-	seq_no: IntFilter
+	end_lt: StringFilter
+	seq_no: FloatFilter
 	root_hash: StringFilter
 	file_hash: StringFilter
 }
@@ -418,20 +370,20 @@ input MsgEnvelopeFilter {
 	msg: StringFilter
 	next_addr: StringFilter
 	cur_addr: StringFilter
-	fwd_fee_remaining: IntFilter
+	fwd_fee_remaining: StringFilter
 }
 
 input InMsgFilter {
 	msg_type: IntFilter
 	msg: StringFilter
 	transaction: StringFilter
-	ihr_fee: IntFilter
+	ihr_fee: StringFilter
 	proof_created: StringFilter
 	in_msg: MsgEnvelopeFilter
-	fwd_fee: IntFilter
+	fwd_fee: StringFilter
 	out_msg: MsgEnvelopeFilter
-	transit_fee: IntFilter
-	transaction_id: IntFilter
+	transit_fee: StringFilter
+	transaction_id: StringFilter
 	proof_delivered: StringFilter
 }
 
@@ -442,22 +394,17 @@ input OutMsgFilter {
 	out_msg: MsgEnvelopeFilter
 	reimport: InMsgFilter
 	imported: InMsgFilter
-	import_block_lt: IntFilter
+	import_block_lt: StringFilter
 }
 
 input MessageValueOtherFilter {
 	currency: IntFilter
-	value: IntFilter
+	value: StringFilter
 }
 
 input MessageValueOtherArrayFilter {
 	any: MessageValueOtherFilter
 	all: MessageValueOtherFilter
-}
-
-input MessageValueFilter {
-	grams: IntFilter
-	other: MessageValueOtherArrayFilter
 }
 
 input MessageFilter {
@@ -475,26 +422,62 @@ input MessageFilter {
 	library: StringFilter
 	src: StringFilter
 	dst: StringFilter
-	created_lt: IntFilter
-	created_at: IntFilter
+	created_lt: StringFilter
+	created_at: FloatFilter
 	ihr_disabled: BooleanFilter
-	ihr_fee: IntFilter
-	fwd_fee: IntFilter
-	import_fee: IntFilter
+	ihr_fee: StringFilter
+	fwd_fee: StringFilter
+	import_fee: StringFilter
 	bounce: BooleanFilter
 	bounced: BooleanFilter
-	value: MessageValueFilter
+	value: StringFilter
+	value_other: MessageValueOtherArrayFilter
 }
 
 input BlockShardFilter {
 	shard_pfx_bits: IntFilter
 	workchain_id: IntFilter
-	shard_prefix: IntFilter
+	shard_prefix: StringFilter
 }
 
 input BlockValueFlowToNextBlkOtherFilter {
 	currency: IntFilter
-	value: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowExportedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowFeesCollectedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowCreatedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowImportedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowFromPrevBlkOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowMintedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockValueFlowFeesImportedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
 }
 
 input BlockValueFlowToNextBlkOtherArrayFilter {
@@ -502,29 +485,9 @@ input BlockValueFlowToNextBlkOtherArrayFilter {
 	all: BlockValueFlowToNextBlkOtherFilter
 }
 
-input BlockValueFlowToNextBlkFilter {
-	grams: IntFilter
-	other: BlockValueFlowToNextBlkOtherArrayFilter
-}
-
-input BlockValueFlowExportedOtherFilter {
-	currency: IntFilter
-	value: IntFilter
-}
-
 input BlockValueFlowExportedOtherArrayFilter {
 	any: BlockValueFlowExportedOtherFilter
 	all: BlockValueFlowExportedOtherFilter
-}
-
-input BlockValueFlowExportedFilter {
-	grams: IntFilter
-	other: BlockValueFlowExportedOtherArrayFilter
-}
-
-input BlockValueFlowFeesCollectedOtherFilter {
-	currency: IntFilter
-	value: IntFilter
 }
 
 input BlockValueFlowFeesCollectedOtherArrayFilter {
@@ -532,29 +495,9 @@ input BlockValueFlowFeesCollectedOtherArrayFilter {
 	all: BlockValueFlowFeesCollectedOtherFilter
 }
 
-input BlockValueFlowFeesCollectedFilter {
-	grams: IntFilter
-	other: BlockValueFlowFeesCollectedOtherArrayFilter
-}
-
-input BlockValueFlowCreatedOtherFilter {
-	currency: IntFilter
-	value: IntFilter
-}
-
 input BlockValueFlowCreatedOtherArrayFilter {
 	any: BlockValueFlowCreatedOtherFilter
 	all: BlockValueFlowCreatedOtherFilter
-}
-
-input BlockValueFlowCreatedFilter {
-	grams: IntFilter
-	other: BlockValueFlowCreatedOtherArrayFilter
-}
-
-input BlockValueFlowImportedOtherFilter {
-	currency: IntFilter
-	value: IntFilter
 }
 
 input BlockValueFlowImportedOtherArrayFilter {
@@ -562,29 +505,9 @@ input BlockValueFlowImportedOtherArrayFilter {
 	all: BlockValueFlowImportedOtherFilter
 }
 
-input BlockValueFlowImportedFilter {
-	grams: IntFilter
-	other: BlockValueFlowImportedOtherArrayFilter
-}
-
-input BlockValueFlowFromPrevBlkOtherFilter {
-	currency: IntFilter
-	value: IntFilter
-}
-
 input BlockValueFlowFromPrevBlkOtherArrayFilter {
 	any: BlockValueFlowFromPrevBlkOtherFilter
 	all: BlockValueFlowFromPrevBlkOtherFilter
-}
-
-input BlockValueFlowFromPrevBlkFilter {
-	grams: IntFilter
-	other: BlockValueFlowFromPrevBlkOtherArrayFilter
-}
-
-input BlockValueFlowMintedOtherFilter {
-	currency: IntFilter
-	value: IntFilter
 }
 
 input BlockValueFlowMintedOtherArrayFilter {
@@ -592,35 +515,28 @@ input BlockValueFlowMintedOtherArrayFilter {
 	all: BlockValueFlowMintedOtherFilter
 }
 
-input BlockValueFlowMintedFilter {
-	grams: IntFilter
-	other: BlockValueFlowMintedOtherArrayFilter
-}
-
-input BlockValueFlowFeesImportedOtherFilter {
-	currency: IntFilter
-	value: IntFilter
-}
-
 input BlockValueFlowFeesImportedOtherArrayFilter {
 	any: BlockValueFlowFeesImportedOtherFilter
 	all: BlockValueFlowFeesImportedOtherFilter
 }
 
-input BlockValueFlowFeesImportedFilter {
-	grams: IntFilter
-	other: BlockValueFlowFeesImportedOtherArrayFilter
-}
-
 input BlockValueFlowFilter {
-	to_next_blk: BlockValueFlowToNextBlkFilter
-	exported: BlockValueFlowExportedFilter
-	fees_collected: BlockValueFlowFeesCollectedFilter
-	created: BlockValueFlowCreatedFilter
-	imported: BlockValueFlowImportedFilter
-	from_prev_blk: BlockValueFlowFromPrevBlkFilter
-	minted: BlockValueFlowMintedFilter
-	fees_imported: BlockValueFlowFeesImportedFilter
+	to_next_blk: StringFilter
+	to_next_blk_other: BlockValueFlowToNextBlkOtherArrayFilter
+	exported: StringFilter
+	exported_other: BlockValueFlowExportedOtherArrayFilter
+	fees_collected: StringFilter
+	fees_collected_other: BlockValueFlowFeesCollectedOtherArrayFilter
+	created: StringFilter
+	created_other: BlockValueFlowCreatedOtherArrayFilter
+	imported: StringFilter
+	imported_other: BlockValueFlowImportedOtherArrayFilter
+	from_prev_blk: StringFilter
+	from_prev_blk_other: BlockValueFlowFromPrevBlkOtherArrayFilter
+	minted: StringFilter
+	minted_other: BlockValueFlowMintedOtherArrayFilter
+	fees_imported: StringFilter
+	fees_imported_other: BlockValueFlowFeesImportedOtherArrayFilter
 }
 
 input BlockAccountBlocksStateUpdateFilter {
@@ -666,29 +582,29 @@ input BlockAccountBlocksArrayFilter {
 
 input BlockFilter {
 	id: StringFilter
-	status: StringFilter
-	global_id: IntFilter
+	status: IntFilter
+	global_id: FloatFilter
 	want_split: BooleanFilter
-	seq_no: IntFilter
+	seq_no: FloatFilter
 	after_merge: BooleanFilter
 	gen_utime: IntFilter
-	gen_catchain_seqno: IntFilter
+	gen_catchain_seqno: FloatFilter
 	flags: IntFilter
 	master_ref: ExtBlkRefFilter
 	prev_ref: ExtBlkRefFilter
 	prev_alt_ref: ExtBlkRefFilter
 	prev_vert_ref: ExtBlkRefFilter
 	prev_vert_alt_ref: ExtBlkRefFilter
-	version: IntFilter
-	gen_validator_list_hash_short: IntFilter
+	version: FloatFilter
+	gen_validator_list_hash_short: FloatFilter
 	before_split: BooleanFilter
 	after_split: BooleanFilter
 	want_merge: BooleanFilter
-	vert_seq_no: IntFilter
-	start_lt: IntFilter
-	end_lt: IntFilter
+	vert_seq_no: FloatFilter
+	start_lt: StringFilter
+	end_lt: StringFilter
 	shard: BlockShardFilter
-	min_ref_mc_seqno: IntFilter
+	min_ref_mc_seqno: FloatFilter
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter
 	rand_seed: StringFilter
@@ -699,7 +615,7 @@ input BlockFilter {
 
 input AccountBalanceOtherFilter {
 	currency: IntFilter
-	value: IntFilter
+	value: StringFilter
 }
 
 input AccountBalanceOtherArrayFilter {
@@ -707,18 +623,14 @@ input AccountBalanceOtherArrayFilter {
 	all: AccountBalanceOtherFilter
 }
 
-input AccountBalanceFilter {
-	grams: IntFilter
-	other: AccountBalanceOtherArrayFilter
-}
-
 input AccountFilter {
 	id: StringFilter
 	acc_type: IntFilter
-	last_paid: IntFilter
-	due_payment: IntFilter
-	last_trans_lt: IntFilter
-	balance: AccountBalanceFilter
+	last_paid: FloatFilter
+	due_payment: StringFilter
+	last_trans_lt: StringFilter
+	balance: StringFilter
+	balance_other: AccountBalanceOtherArrayFilter
 	split_depth: IntFilter
 	tick: BooleanFilter
 	tock: BooleanFilter
@@ -729,28 +641,18 @@ input AccountFilter {
 
 input TransactionTotalFeesOtherFilter {
 	currency: IntFilter
-	value: IntFilter
-}
-
-input TransactionTotalFeesOtherArrayFilter {
-	any: TransactionTotalFeesOtherFilter
-	all: TransactionTotalFeesOtherFilter
-}
-
-input TransactionTotalFeesFilter {
-	grams: IntFilter
-	other: TransactionTotalFeesOtherArrayFilter
+	value: StringFilter
 }
 
 input TransactionStorageFilter {
-	storage_fees_collected: IntFilter
-	storage_fees_due: IntFilter
+	storage_fees_collected: StringFilter
+	storage_fees_due: StringFilter
 	status_change: IntFilter
 }
 
 input TransactionCreditCreditOtherFilter {
 	currency: IntFilter
-	value: IntFilter
+	value: StringFilter
 }
 
 input TransactionCreditCreditOtherArrayFilter {
@@ -758,14 +660,10 @@ input TransactionCreditCreditOtherArrayFilter {
 	all: TransactionCreditCreditOtherFilter
 }
 
-input TransactionCreditCreditFilter {
-	grams: IntFilter
-	other: TransactionCreditCreditOtherArrayFilter
-}
-
 input TransactionCreditFilter {
-	due_fees_collected: IntFilter
-	credit: TransactionCreditCreditFilter
+	due_fees_collected: StringFilter
+	credit: StringFilter
+	credit_other: TransactionCreditCreditOtherArrayFilter
 }
 
 input TransactionComputeFilter {
@@ -774,14 +672,14 @@ input TransactionComputeFilter {
 	success: BooleanFilter
 	msg_state_used: BooleanFilter
 	account_activated: BooleanFilter
-	gas_fees: IntFilter
-	gas_used: IntFilter
-	gas_limit: IntFilter
+	gas_fees: StringFilter
+	gas_used: StringFilter
+	gas_limit: StringFilter
 	gas_credit: IntFilter
 	mode: IntFilter
 	exit_code: IntFilter
 	exit_arg: IntFilter
-	vm_steps: IntFilter
+	vm_steps: FloatFilter
 	vm_init_state_hash: StringFilter
 	vm_final_state_hash: StringFilter
 }
@@ -791,8 +689,8 @@ input TransactionActionFilter {
 	valid: BooleanFilter
 	no_funds: BooleanFilter
 	status_change: IntFilter
-	total_fwd_fees: IntFilter
-	total_action_fees: IntFilter
+	total_fwd_fees: StringFilter
+	total_action_fees: StringFilter
 	result_code: IntFilter
 	result_arg: IntFilter
 	tot_actions: IntFilter
@@ -800,17 +698,17 @@ input TransactionActionFilter {
 	skipped_actions: IntFilter
 	msgs_created: IntFilter
 	action_list_hash: StringFilter
-	total_msg_size_cells: IntFilter
-	total_msg_size_bits: IntFilter
+	total_msg_size_cells: FloatFilter
+	total_msg_size_bits: FloatFilter
 }
 
 input TransactionBounceFilter {
 	bounce_type: IntFilter
-	msg_size_cells: IntFilter
-	msg_size_bits: IntFilter
-	req_fwd_fees: IntFilter
-	msg_fees: IntFilter
-	fwd_fees: IntFilter
+	msg_size_cells: FloatFilter
+	msg_size_bits: FloatFilter
+	req_fwd_fees: StringFilter
+	msg_fees: StringFilter
+	fwd_fees: StringFilter
 }
 
 input TransactionSplitInfoFilter {
@@ -820,22 +718,28 @@ input TransactionSplitInfoFilter {
 	sibling_addr: StringFilter
 }
 
+input TransactionTotalFeesOtherArrayFilter {
+	any: TransactionTotalFeesOtherFilter
+	all: TransactionTotalFeesOtherFilter
+}
+
 input TransactionFilter {
 	id: StringFilter
 	tr_type: IntFilter
 	status: IntFilter
 	block_id: StringFilter
 	account_addr: StringFilter
-	lt: IntFilter
+	lt: StringFilter
 	prev_trans_hash: StringFilter
-	prev_trans_lt: IntFilter
-	now: IntFilter
+	prev_trans_lt: StringFilter
+	now: FloatFilter
 	outmsg_cnt: IntFilter
 	orig_status: IntFilter
 	end_status: IntFilter
 	in_msg: StringFilter
 	out_msgs: StringArrayFilter
-	total_fees: TransactionTotalFeesFilter
+	total_fees: StringFilter
+	total_fees_other: TransactionTotalFeesOtherArrayFilter
 	old_hash: StringFilter
 	new_hash: StringFilter
 	credit_first: BooleanFilter
