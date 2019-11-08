@@ -298,7 +298,7 @@ const TransactionCredit = struct({
 });
 
 const TransactionCompute = struct({
-    type: scalar,
+    compute_type: scalar,
     skipped_reason: scalar,
     success: scalar,
     msg_state_used: scalar,
@@ -334,7 +334,7 @@ const TransactionAction = struct({
 });
 
 const TransactionBounce = struct({
-    type: scalar,
+    bounce_type: scalar,
     msg_size_cells: scalar,
     msg_size_bits: scalar,
     req_fwd_fees: bigUInt2,

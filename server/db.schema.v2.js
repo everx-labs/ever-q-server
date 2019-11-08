@@ -130,7 +130,7 @@ const Transaction: TypeDef = {
         credit: currencyCollection(),
     },
     compute: {
-        type: u8(), // 0: skipped, 1: VM
+        compute_type: u8(), // 0: skipped, 1: VM
         skipped_reason: u8(),
         success: bool(),
         msg_state_used: bool(),
@@ -164,7 +164,7 @@ const Transaction: TypeDef = {
         total_msg_size_bits: u32(),
     },
     bounce: {
-        type: u8(), // 0: Negfunds, 1: Nofunds, 2: Ok
+        bounce_type: u8(), // 0: Negfunds, 1: Nofunds, 2: Ok
         msg_size_cells: u32(),
         msg_size_bits: u32(),
         req_fwd_fees: grams(),

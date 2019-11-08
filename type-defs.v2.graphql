@@ -325,7 +325,7 @@ type TransactionCredit {
 }
 
 type TransactionCompute {
-	type: Int
+	compute_type: Int
 	skipped_reason: Int
 	success: Boolean
 	msg_state_used: Boolean
@@ -361,7 +361,7 @@ type TransactionAction {
 }
 
 type TransactionBounce {
-	type: Int
+	bounce_type: Int
 	msg_size_cells: Float
 	msg_size_bits: Float
 	req_fwd_fees: String
@@ -771,7 +771,7 @@ input TransactionCreditFilter {
 }
 
 input TransactionComputeFilter {
-	type: IntFilter
+	compute_type: IntFilter
 	skipped_reason: IntFilter
 	success: BooleanFilter
 	msg_state_used: BooleanFilter
@@ -807,7 +807,7 @@ input TransactionActionFilter {
 }
 
 input TransactionBounceFilter {
-	type: IntFilter
+	bounce_type: IntFilter
 	msg_size_cells: FloatFilter
 	msg_size_bits: FloatFilter
 	req_fwd_fees: StringFilter
