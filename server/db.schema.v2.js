@@ -20,46 +20,49 @@ import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
 const { string, bool, ref, arrayOf } = Def;
+const withDoc = (def: TypeDef, doc?: string) => ({
+    ...def,
+    ...(doc ? { _doc: doc } : {})
+});
 
-// Types scheme begin
+const uint = (size: number, doc?: string) => withDoc({ _int: { unsigned: size } }, doc);
+const int = (size: number, doc?: string) => withDoc({ _int: { signed: size } }, doc);
 
-function uint(size: number, doc?: '') {
-    return { _int: { unsigned: size }, ...(doc ? { _doc: doc } : {}) }
-}
-
-function i8(doc?: '') {
-    return { _int: { signed: 8 }, ...(doc ? { _doc: doc } : {}) }
-}
-
-function i32(doc?: '') {
-    return { _int: { signed: 32 }, ...(doc ? { _doc: doc } : {}) }
-}
-
-const u8 = (doc?: '') => uint(8, doc);
-const u16 = (doc?: '') => uint(16, doc);
-const u32 = (doc?: '') => uint(32, doc);
-const u64 = (doc?: '') => uint(64, doc);
-const u128 = (doc?: '') => uint(128, doc);
+const i8 = (doc?: string) => int(8, doc);
+const u8 = (doc?: string) => uint(8, doc);
+const u16 = (doc?: string) => uint(16, doc);
+const u32 = (doc?: string) => uint(32, doc);
+const i32 = (doc?: string) => int(32, doc);
+const u64 = (doc?: string) => uint(64, doc);
+const u128 = (doc?: string) => uint(128, doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
     return { ...ref(refDef), _: { join: { on } } }
 };
 const grams = u128;
 
-function currencyCollection(): TypeDef {
-    return {
-        grams: grams(),
-        other: arrayOf({
-            currency: i32(),
-            value: u128(),
-        }),
-    };
+function u8enum(values: { [string]: number }, doc?: string) {
+    const valuesDoc = Object.entries(values).map(([name, value]) => {
+        return `${(value: any)} – ${name}`;
+    }).join('\n');
+    return uint(8, `${doc ? `${doc}\n` : ''}${valuesDoc}`);
 }
+
+const currencyCollection = (doc?: string): TypeDef => withDoc({
+    grams: grams(),
+    other: arrayOf({
+        currency: i32(),
+        value: u128(),
+    }),
+}, doc);
 
 const Account: TypeDef = {
     _doc: 'TON Account',
     _: { collection: 'accounts' },
-    acc_type: u8(), // uninit: 0, Active: 1, frozen: 2
-    addr: string(),
+    acc_type: u8enum({
+        uninit: 0,
+        active: 1,
+        frozen: 2,
+    }),
     last_paid: u32(),
     due_payment: grams(),
     last_trans_lt: u64(),
@@ -73,9 +76,13 @@ const Account: TypeDef = {
 };
 
 const Message: TypeDef = {
-    _doc: 'This is message',
+    _doc: 'TON Message',
     _: { collection: 'messages' },
-    msg_type: u8(), // internal: 0, extIn: 1, extOut: 2
+    msg_type: u8enum({
+        internal: 0,
+        extIn: 1,
+        extOut: 2,
+    }),
     transaction_id: string(),
     block_id: string(),
     body: string(),
@@ -101,9 +108,18 @@ const Message: TypeDef = {
 
 
 const Transaction: TypeDef = {
-    _doc: 'This is transaction',
+    _doc: 'TON Transaction',
     _: { collection: 'transactions' },
-    tr_type: u8(), // ordinary: 0, storage: 1, tick: 2, tock: 3, splitPrepare: 4, splitInstall: 5, mergePrepare: 6, mergeInstall: 7
+    tr_type: u8enum({
+        ordinary: 0,
+        storage: 1,
+        tick: 2,
+        tock: 3,
+        splitPrepare: 4,
+        splitInstall: 5,
+        mergePrepare: 6,
+        mergeInstall: 7,
+    }),
     status: u8(),
     block_id: string(),
     account_addr: string(),
@@ -130,7 +146,10 @@ const Transaction: TypeDef = {
         credit: currencyCollection(),
     },
     compute: {
-        compute_type: u8(), // 0: skipped, 1: VM
+        compute_type: u8enum({
+            skipped: 0,
+            vm: 1,
+        }),
         skipped_reason: u8(),
         success: bool(),
         msg_state_used: bool(),
@@ -164,7 +183,11 @@ const Transaction: TypeDef = {
         total_msg_size_bits: u32(),
     },
     bounce: {
-        bounce_type: u8(), // 0: Negfunds, 1: Nofunds, 2: Ok
+        bounce_type: u8enum({
+            negFunds: 0,
+            noFunds: 1,
+            ok: 2,
+        }),
         msg_size_cells: u32(),
         msg_size_bits: u32(),
         req_fwd_fees: grams(),
@@ -205,7 +228,15 @@ const MsgEnvelope: TypeDef = {
 const msgEnvelope = () => ref({ MsgEnvelope });
 
 const InMsg: TypeDef = {
-    msg_type: u8(), // External: 0, IHR: 1, Immediatelly: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6
+    msg_type: u8enum({
+        external: 0,
+        ihr: 1,
+        immediatelly: 2,
+        final: 3,
+        transit: 4,
+        discardedFinal: 5,
+        discardedTransit: 6,
+    }),
     msg: string(),
     transaction: string(),
     ihr_fee: grams(),
@@ -221,7 +252,15 @@ const InMsg: TypeDef = {
 const inMsg = () => ref({ InMsg });
 
 const OutMsg: TypeDef = {
-    msg_type: u8(), // None: 0, External: 1, Immediately: 2, OutMsgNew: 3, Transit: 4, Dequeue: 5, TransitRequired: 6
+    msg_type: u8enum({
+        none: 0,
+        external: 1,
+        immediately: 2,
+        outMsgNew: 3,
+        transit: 4,
+        dequeue: 5,
+        transitRequired: 6,
+    }),
     msg: string(),
     transaction: string(),
     out_msg: msgEnvelope(),

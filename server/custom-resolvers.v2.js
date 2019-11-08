@@ -1,5 +1,4 @@
 const customResolvers = {
-    BlockExtra: ['out_msg_descr'],
 };
 
 

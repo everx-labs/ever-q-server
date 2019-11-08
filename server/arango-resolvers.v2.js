@@ -251,7 +251,6 @@ const AccountBalance = struct({
 const Account = struct({
     id: scalar,
     acc_type: scalar,
-    addr: scalar,
     last_paid: scalar,
     due_payment: bigUInt2,
     last_trans_lt: bigUInt1,
