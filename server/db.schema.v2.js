@@ -81,8 +81,8 @@ const accountType = (doc?: string): TypeDef => u8enum({
 
 const messageType = (doc?: string): TypeDef => u8enum({
     internal: 0,
-    extIn: 2,
-    extOut: 3,
+    extIn: 1,
+    extOut: 2,
 }, doc);
 
 
