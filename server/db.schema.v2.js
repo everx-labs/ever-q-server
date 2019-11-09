@@ -16,7 +16,7 @@
 
 //@flow
 
-import type {IntSizeType, TypeDef} from 'ton-labs-dev-ops/src/schema';
+import type { IntSizeType, TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
 const { string, bool, ref, arrayOf } = Def;
@@ -35,16 +35,25 @@ const u32 = (doc?: string) => uint(32, doc);
 const i32 = (doc?: string) => int(32, doc);
 const u64 = (doc?: string) => uint(64, doc);
 const u128 = (doc?: string) => uint((128: any), doc);
-const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
-    return { ...ref(refDef), _: { join: { on } } }
-};
 const grams = u128;
 
-function u8enum(values: { [string]: number }, doc?: string) {
+function u8enum(name: string, values: { [string]: number }, doc?: string) {
     const valuesDoc = Object.entries(values).map(([name, value]) => {
         return `${(value: any)} – ${name}`;
     }).join('\n');
-    return uint(8, `${doc ? `${doc}\n` : ''}${valuesDoc}`);
+    const effectiveDoc = `${doc ? `${doc}\n` : ''}${valuesDoc}`;
+    return withDoc({
+        _int: {
+            unsigned: true,
+            size: 8,
+        },
+        _: {
+            enum: {
+                name,
+                values
+            }
+        }
+    }, effectiveDoc);
 }
 
 const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf({
@@ -52,40 +61,40 @@ const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf({
     value: grams(),
 }, doc);
 
-const accountStatus = (doc?: string): TypeDef => u8enum({
+const accountStatus = (doc?: string): TypeDef => u8enum('AccountStatus', {
     uninit: 0,
     active: 1,
     frozen: 2,
     nonExist: 3,
 }, doc);
 
-const accountStatusChange = (doc?: string): TypeDef => u8enum({
+const accountStatusChange = (doc?: string): TypeDef => u8enum('AccountStatusChange', {
     unchanged: 0,
     frozen: 1,
     deleted: 2,
 }, doc);
 
-const skipReason = (doc?: string): TypeDef => u8enum({
+const skipReason = (doc?: string): TypeDef => u8enum('SkipReason', {
     noState: 0,
     badState: 1,
     noGas: 2,
 }, doc);
 
 
-const accountType = (doc?: string): TypeDef => u8enum({
+const accountType = (doc?: string): TypeDef => u8enum('AccountType', {
     uninit: 0,
     active: 1,
     frozen: 2,
 }, doc);
 
-const messageType = (doc?: string): TypeDef => u8enum({
+const messageType = (doc?: string): TypeDef => u8enum('MessageType', {
     internal: 0,
     extIn: 1,
     extOut: 2,
 }, doc);
 
 
-const messageProcessingStatus = (doc?: string): TypeDef => u8enum({
+const messageProcessingStatus = (doc?: string): TypeDef => u8enum('MessageProcessingStatus', {
     unknown: 0,
     queued: 1,
     processing: 2,
@@ -96,7 +105,7 @@ const messageProcessingStatus = (doc?: string): TypeDef => u8enum({
     transiting: 7,
 }, doc);
 
-const transactionType = (doc?: string): TypeDef => u8enum({
+const transactionType = (doc?: string): TypeDef => u8enum('TransactionType', {
     ordinary: 0,
     storage: 1,
     tick: 2,
@@ -107,7 +116,7 @@ const transactionType = (doc?: string): TypeDef => u8enum({
     mergeInstall: 7,
 }, doc);
 
-const transactionProcessingStatus = (doc?: string): TypeDef => u8enum({
+const transactionProcessingStatus = (doc?: string): TypeDef => u8enum('TransactionProcessingStatus', {
     unknown: 0,
     preliminary: 1,
     proposed: 2,
@@ -115,18 +124,18 @@ const transactionProcessingStatus = (doc?: string): TypeDef => u8enum({
     refused: 4,
 }, doc);
 
-const computeType = (doc?: string): TypeDef => u8enum({
+const computeType = (doc?: string): TypeDef => u8enum('ComputeType', {
     skipped: 0,
     vm: 1,
 }, doc);
 
-const bounceType = (doc?: string): TypeDef => u8enum({
+const bounceType = (doc?: string): TypeDef => u8enum('BounceType', {
     negFunds: 0,
     noFunds: 1,
     ok: 2,
 }, doc);
 
-const blockProcessingStatus = (doc?: string): TypeDef => u8enum({
+const blockProcessingStatus = (doc?: string): TypeDef => u8enum('BlockProcessingStatus', {
     unknown: 0,
     proposed: 1,
     finalized: 2,
@@ -134,7 +143,7 @@ const blockProcessingStatus = (doc?: string): TypeDef => u8enum({
 }, doc);
 
 
-const inMsgType = (doc?: string): TypeDef => u8enum({
+const inMsgType = (doc?: string): TypeDef => u8enum('InMsgType', {
     external: 0,
     ihr: 1,
     immediately: 2,
@@ -144,7 +153,7 @@ const inMsgType = (doc?: string): TypeDef => u8enum({
     discardedTransit: 6,
 }, doc);
 
-const outMsgType = (doc?: string): TypeDef => u8enum({
+const outMsgType = (doc?: string): TypeDef => u8enum('OutMsgType', {
     external: 0,
     immediately: 1,
     outMsgNew: 2,
@@ -155,6 +164,11 @@ const outMsgType = (doc?: string): TypeDef => u8enum({
     none: -1,
 }, doc);
 
+const splitType = (doc?: string): TypeDef => u8enum('SplitType', {
+    none: 0,
+    split: 2,
+    merge: 3,
+}, doc);
 
 const Account: TypeDef = {
     _doc: 'TON Account',
@@ -171,6 +185,8 @@ const Account: TypeDef = {
     code: string(),
     data: string(),
     library: string(),
+    proof: string(),
+    boc: string(),
 };
 
 const Message: TypeDef = {
@@ -199,6 +215,8 @@ const Message: TypeDef = {
     bounced: bool(),
     value: grams(),
     value_other: otherCurrencyCollection(),
+    proof: string(),
+    boc: string(),
 };
 
 
@@ -286,6 +304,8 @@ const Transaction: TypeDef = {
     },
     prepare_transaction: string(),
     installed: bool(),
+    proof: string(),
+    boc: string(),
 };
 
 // BLOCK
@@ -342,7 +362,7 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
     start_lt: u64(),
     end_lt: u64(),
     root_hash: string(),
-    file_hash: string (),
+    file_hash: string(),
     before_split: bool(),
     before_merge: bool(),
     want_split: bool(),
@@ -353,17 +373,13 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
     next_validator_shard: u64(),
     min_ref_mc_seqno: u32(),
     gen_utime: u32(),
-    split_type: u8enum({
-        none: 0,
-        split: 2,
-        merge: 3,
-    }),
+    split_type: splitType(),
     split: u32(),
     fees_collected: grams(),
     fees_collected_other: otherCurrencyCollection(),
     funds_created: grams(),
     funds_created_other: otherCurrencyCollection(),
-});
+}, doc);
 
 const Block: TypeDef = {
     _doc: 'This is Block',
@@ -435,8 +451,8 @@ const Block: TypeDef = {
     },
     master: {
         shard_hashes: arrayOf({
-           hash: u32(),
-           descr: shardDescr(),
+            hash: u32(),
+            descr: shardDescr(),
         }),
     }
 };

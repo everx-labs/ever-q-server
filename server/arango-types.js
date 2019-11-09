@@ -13,6 +13,10 @@
  * See the License for the specific TON DEV software governing permissions and
  * limitations under the License.
  */
+// @flow
+
+
+declare function BigInt(a: any): any;
 
 /**
  * Abstract interface for objects that acts as a helpers to perform queries over documents

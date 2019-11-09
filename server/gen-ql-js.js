@@ -55,10 +55,24 @@ function unresolvedType(name: string): DbType {
     }
 }
 
+type IntEnumDef = {
+    name: string,
+    values: { [string]: number },
+}
+
 function main(schemaDef: TypeDef) {
 
     let dbTypes: DbType[] = [];
     let lastReportedType: string = '';
+    let enumTypes: Map<string, IntEnumDef> = new Map();
+
+    function reportEnumType(schemaType: SchemaType) {
+        if (!(schemaType._ && schemaType._.enum)) {
+            return;
+        }
+        const enumDef: IntEnumDef = schemaType._.enum;
+        enumTypes.set(enumDef.name, enumDef);
+    }
 
     function reportType(name: string, field: string, type: string) {
         if (name !== lastReportedType) {
@@ -74,6 +88,7 @@ function main(schemaDef: TypeDef) {
         schemaField: SchemaMember<SchemaType>,
     ): DbField {
         let schemaType = schemaField;
+        reportEnumType(schemaType);
         const field: DbField = {
             name: schemaField.name,
             arrayDepth: 0,
@@ -545,6 +560,14 @@ function main(schemaDef: TypeDef) {
     if (schema.class) {
         parseDbTypes(schema.class.types);
         generate(dbTypes);
+    }
+
+    for (const e: IntEnumDef of enumTypes.values()) {
+        console.log(`export const Q${e.name} = {`);
+        console.log(Object.entries(e.values).map(([name, value]) => {
+            return `    ${name}: ${(value: any)},`;
+        }).join('\n'));
+        console.log(`};\n`);
     }
 
     return {

@@ -110,6 +110,8 @@ type Message {
 	bounced: Boolean
 	value: String
 	value_other: [MessageValueOther]
+	proof: String
+	boc: String
 }
 
 type BlockShard {
@@ -295,6 +297,8 @@ type Account {
 	code: String
 	data: String
 	library: String
+	proof: String
+	boc: String
 }
 
 type TransactionTotalFeesOther {
@@ -402,6 +406,8 @@ type Transaction {
 	split_info: TransactionSplitInfo
 	prepare_transaction: String
 	installed: Boolean
+	proof: String
+	boc: String
 }
 
 input ExtBlkRefFilter {
@@ -477,6 +483,8 @@ input MessageFilter {
 	bounced: BooleanFilter
 	value: StringFilter
 	value_other: MessageValueOtherArrayFilter
+	proof: StringFilter
+	boc: StringFilter
 }
 
 input BlockShardFilter {
@@ -742,6 +750,8 @@ input AccountFilter {
 	code: StringFilter
 	data: StringFilter
 	library: StringFilter
+	proof: StringFilter
+	boc: StringFilter
 }
 
 input TransactionTotalFeesOtherFilter {
@@ -859,6 +869,8 @@ input TransactionFilter {
 	split_info: TransactionSplitInfoFilter
 	prepare_transaction: StringFilter
 	installed: BooleanFilter
+	proof: StringFilter
+	boc: StringFilter
 }
 
 enum QueryOrderByDirection {

@@ -68,6 +68,8 @@ const Message = struct({
     bounced: scalar,
     value: bigUInt2,
     value_other: MessageValueOtherArray,
+    proof: scalar,
+    boc: scalar,
 }, true);
 
 const BlockShard = struct({
@@ -269,6 +271,8 @@ const Account = struct({
     code: scalar,
     data: scalar,
     library: scalar,
+    proof: scalar,
+    boc: scalar,
 }, true);
 
 const TransactionTotalFeesOther = struct({
@@ -378,6 +382,8 @@ const Transaction = struct({
     split_info: TransactionSplitInfo,
     prepare_transaction: scalar,
     installed: scalar,
+    proof: scalar,
+    boc: scalar,
 }, true);
 
 function createResolvers(db) {
