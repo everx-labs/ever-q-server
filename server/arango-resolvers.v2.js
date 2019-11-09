@@ -165,6 +165,53 @@ const BlockStateUpdate = struct({
     old_depth: scalar,
 });
 
+const BlockMasterShardHashesDescrFeesCollectedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockMasterShardHashesDescrFundsCreatedOther = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
+const BlockMasterShardHashesDescrFeesCollectedOtherArray = array(BlockMasterShardHashesDescrFeesCollectedOther);
+const BlockMasterShardHashesDescrFundsCreatedOtherArray = array(BlockMasterShardHashesDescrFundsCreatedOther);
+const BlockMasterShardHashesDescr = struct({
+    seq_no: scalar,
+    reg_mc_seqno: scalar,
+    start_lt: bigUInt1,
+    end_lt: bigUInt1,
+    root_hash: scalar,
+    file_hash: scalar,
+    before_split: scalar,
+    before_merge: scalar,
+    want_split: scalar,
+    want_merge: scalar,
+    nx_cc_updated: scalar,
+    flags: scalar,
+    next_catchain_seqno: scalar,
+    next_validator_shard: bigUInt1,
+    min_ref_mc_seqno: scalar,
+    gen_utime: scalar,
+    split_type: scalar,
+    split: scalar,
+    fees_collected: bigUInt2,
+    fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArray,
+    funds_created: bigUInt2,
+    funds_created_other: BlockMasterShardHashesDescrFundsCreatedOtherArray,
+});
+
+const BlockMasterShardHashes = struct({
+    hash: scalar,
+    descr: BlockMasterShardHashesDescr,
+});
+
+const BlockMasterShardHashesArray = array(BlockMasterShardHashes);
+const BlockMaster = struct({
+    shard_hashes: BlockMasterShardHashesArray,
+});
+
 const InMsgArray = array(InMsg);
 const OutMsgArray = array(OutMsg);
 const BlockAccountBlocksArray = array(BlockAccountBlocks);
@@ -199,6 +246,7 @@ const Block = struct({
     out_msg_descr: OutMsgArray,
     account_blocks: BlockAccountBlocksArray,
     state_update: BlockStateUpdate,
+    master: BlockMaster,
 }, true);
 
 const AccountBalanceOther = struct({
@@ -459,6 +507,33 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.fees_imported);
             },
         },
+        BlockMasterShardHashesDescrFeesCollectedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        BlockMasterShardHashesDescrFundsCreatedOther: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
+        BlockMasterShardHashesDescr: {
+            start_lt(parent) {
+                return resolveBigUInt(1, parent.start_lt);
+            },
+            end_lt(parent) {
+                return resolveBigUInt(1, parent.end_lt);
+            },
+            next_validator_shard(parent) {
+                return resolveBigUInt(1, parent.next_validator_shard);
+            },
+            fees_collected(parent) {
+                return resolveBigUInt(2, parent.fees_collected);
+            },
+            funds_created(parent) {
+                return resolveBigUInt(2, parent.funds_created);
+            },
+        },
         Block: {
             id(parent) {
                 return parent._key;
@@ -595,6 +670,11 @@ module.exports = {
     BlockAccountBlocksStateUpdate,
     BlockAccountBlocks,
     BlockStateUpdate,
+    BlockMasterShardHashesDescrFeesCollectedOther,
+    BlockMasterShardHashesDescrFundsCreatedOther,
+    BlockMasterShardHashesDescr,
+    BlockMasterShardHashes,
+    BlockMaster,
     Block,
     AccountBalanceOther,
     Account,

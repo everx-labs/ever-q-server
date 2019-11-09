@@ -198,6 +198,50 @@ type BlockStateUpdate {
 	old_depth: Int
 }
 
+type BlockMasterShardHashesDescrFeesCollectedOther {
+	currency: Int
+	value: String
+}
+
+type BlockMasterShardHashesDescrFundsCreatedOther {
+	currency: Int
+	value: String
+}
+
+type BlockMasterShardHashesDescr {
+	seq_no: Float
+	reg_mc_seqno: Float
+	start_lt: String
+	end_lt: String
+	root_hash: String
+	file_hash: String
+	before_split: Boolean
+	before_merge: Boolean
+	want_split: Boolean
+	want_merge: Boolean
+	nx_cc_updated: Boolean
+	flags: Int
+	next_catchain_seqno: Float
+	next_validator_shard: String
+	min_ref_mc_seqno: Float
+	gen_utime: Float
+	split_type: Int
+	split: Float
+	fees_collected: String
+	fees_collected_other: [BlockMasterShardHashesDescrFeesCollectedOther]
+	funds_created: String
+	funds_created_other: [BlockMasterShardHashesDescrFundsCreatedOther]
+}
+
+type BlockMasterShardHashes {
+	hash: Float
+	descr: BlockMasterShardHashesDescr
+}
+
+type BlockMaster {
+	shard_hashes: [BlockMasterShardHashes]
+}
+
 type Block {
 	id: String
 	status: Int
@@ -229,6 +273,7 @@ type Block {
 	out_msg_descr: [OutMsg]
 	account_blocks: [BlockAccountBlocks]
 	state_update: BlockStateUpdate
+	master: BlockMaster
 }
 
 type AccountBalanceOther {
@@ -565,6 +610,65 @@ input BlockStateUpdateFilter {
 	old_depth: IntFilter
 }
 
+input BlockMasterShardHashesDescrFeesCollectedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockMasterShardHashesDescrFundsCreatedOtherFilter {
+	currency: IntFilter
+	value: StringFilter
+}
+
+input BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter {
+	any: BlockMasterShardHashesDescrFeesCollectedOtherFilter
+	all: BlockMasterShardHashesDescrFeesCollectedOtherFilter
+}
+
+input BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter {
+	any: BlockMasterShardHashesDescrFundsCreatedOtherFilter
+	all: BlockMasterShardHashesDescrFundsCreatedOtherFilter
+}
+
+input BlockMasterShardHashesDescrFilter {
+	seq_no: FloatFilter
+	reg_mc_seqno: FloatFilter
+	start_lt: StringFilter
+	end_lt: StringFilter
+	root_hash: StringFilter
+	file_hash: StringFilter
+	before_split: BooleanFilter
+	before_merge: BooleanFilter
+	want_split: BooleanFilter
+	want_merge: BooleanFilter
+	nx_cc_updated: BooleanFilter
+	flags: IntFilter
+	next_catchain_seqno: FloatFilter
+	next_validator_shard: StringFilter
+	min_ref_mc_seqno: FloatFilter
+	gen_utime: FloatFilter
+	split_type: IntFilter
+	split: FloatFilter
+	fees_collected: StringFilter
+	fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter
+	funds_created: StringFilter
+	funds_created_other: BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter
+}
+
+input BlockMasterShardHashesFilter {
+	hash: FloatFilter
+	descr: BlockMasterShardHashesDescrFilter
+}
+
+input BlockMasterShardHashesArrayFilter {
+	any: BlockMasterShardHashesFilter
+	all: BlockMasterShardHashesFilter
+}
+
+input BlockMasterFilter {
+	shard_hashes: BlockMasterShardHashesArrayFilter
+}
+
 input InMsgArrayFilter {
 	any: InMsgFilter
 	all: InMsgFilter
@@ -611,6 +715,7 @@ input BlockFilter {
 	out_msg_descr: OutMsgArrayFilter
 	account_blocks: BlockAccountBlocksArrayFilter
 	state_update: BlockStateUpdateFilter
+	master: BlockMasterFilter
 }
 
 input AccountBalanceOtherFilter {

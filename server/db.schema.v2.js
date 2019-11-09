@@ -16,7 +16,7 @@
 
 //@flow
 
-import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
+import type {IntSizeType, TypeDef} from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
 const { string, bool, ref, arrayOf } = Def;
@@ -25,9 +25,8 @@ const withDoc = (def: TypeDef, doc?: string) => ({
     ...(doc ? { _doc: doc } : {})
 });
 const required = (def: TypeDef) => def;
-type IntSize = 8 | 16 | 32 | 64;
-const uint = (size: IntSize, doc?: string) => withDoc({ _int: { unsigned: true, size } }, doc);
-const int = (size: IntSize, doc?: string) => withDoc({ _int: { unsigned: false, size } }, doc);
+const uint = (size: IntSizeType, doc?: string) => withDoc({ _int: { unsigned: true, size } }, doc);
+const int = (size: IntSizeType, doc?: string) => withDoc({ _int: { unsigned: false, size } }, doc);
 
 const i8 = (doc?: string) => int(8, doc);
 const u8 = (doc?: string) => uint(8, doc);
@@ -337,6 +336,35 @@ const OutMsg: TypeDef = {
 
 const outMsg = () => ref({ OutMsg });
 
+const shardDescr = (doc?: string): TypeDef => withDoc({
+    seq_no: u32(),
+    reg_mc_seqno: u32(),
+    start_lt: u64(),
+    end_lt: u64(),
+    root_hash: string(),
+    file_hash: string (),
+    before_split: bool(),
+    before_merge: bool(),
+    want_split: bool(),
+    want_merge: bool(),
+    nx_cc_updated: bool(),
+    flags: u8(),
+    next_catchain_seqno: u32(),
+    next_validator_shard: u64(),
+    min_ref_mc_seqno: u32(),
+    gen_utime: u32(),
+    split_type: u8enum({
+        none: 0,
+        split: 2,
+        merge: 3,
+    }),
+    split: u32(),
+    fees_collected: grams(),
+    fees_collected_other: otherCurrencyCollection(),
+    funds_created: grams(),
+    funds_created_other: otherCurrencyCollection(),
+});
+
 const Block: TypeDef = {
     _doc: 'This is Block',
     _: { collection: 'blocks' },
@@ -404,6 +432,12 @@ const Block: TypeDef = {
         old: string(),
         old_hash: string(),
         old_depth: u16()
+    },
+    master: {
+        shard_hashes: arrayOf({
+           hash: u32(),
+           descr: shardDescr(),
+        }),
     }
 };
 
