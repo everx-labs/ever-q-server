@@ -25,76 +25,91 @@ const withDoc = (def: TypeDef, doc?: string) => ({
     ...(doc ? { _doc: doc } : {})
 });
 const required = (def: TypeDef) => def;
-const uint = (size: IntSizeType, doc?: string) => withDoc({ _int: { unsigned: true, size } }, doc);
-const int = (size: IntSizeType, doc?: string) => withDoc({ _int: { unsigned: false, size } }, doc);
+
+const uint = (size: IntSizeType, doc?: string) => withDoc({
+    _int: { unsigned: true, size }
+}, doc);
+
+const int = (size: IntSizeType, doc?: string) => withDoc({
+    _int: { unsigned: false, size }
+}, doc);
 
 const i8 = (doc?: string) => int(8, doc);
+const i32 = (doc?: string) => int(32, doc);
+
 const u8 = (doc?: string) => uint(8, doc);
 const u16 = (doc?: string) => uint(16, doc);
 const u32 = (doc?: string) => uint(32, doc);
-const i32 = (doc?: string) => int(32, doc);
 const u64 = (doc?: string) => uint(64, doc);
-const u128 = (doc?: string) => uint((128: any), doc);
+const u128 = (doc?: string) => uint(128, doc);
+const u256 = (doc?: string) => uint(256, doc);
+
 const grams = u128;
 
-function u8enum(name: string, values: { [string]: number }, doc?: string) {
-    const valuesDoc = Object.entries(values).map(([name, value]) => {
-        return `${(value: any)} – ${name}`;
-    }).join('\n');
-    const effectiveDoc = `${doc ? `${doc}\n` : ''}${valuesDoc}`;
-    return withDoc({
-        _int: {
-            unsigned: true,
-            size: 8,
-        },
-        _: {
-            enum: {
-                name,
-                values
+type IntEnumValues = {
+    [string]: number
+};
+
+function u8enum(name: string, values: IntEnumValues) {
+    return (doc?: string): TypeDef => {
+        const valuesDoc = Object.entries(values).map(([name, value]) => {
+            return `${(value: any)} – ${name}`;
+        }).join('\n');
+        const effectiveDoc = `${doc ? `${doc}\n` : ''}${valuesDoc}`;
+        return withDoc({
+            _int: {
+                unsigned: true,
+                size: 8,
+            },
+            _: {
+                enum: {
+                    name,
+                    values
+                }
             }
-        }
-    }, effectiveDoc);
+        }, effectiveDoc);
+    }
 }
 
 const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf({
-    currency: i32(),
-    value: grams(),
+    currency: u32(),
+    value: u256(),
 }, doc);
 
-const accountStatus = (doc?: string): TypeDef => u8enum('AccountStatus', {
+const accountStatus = u8enum('AccountStatus', {
     uninit: 0,
     active: 1,
     frozen: 2,
     nonExist: 3,
-}, doc);
+});
 
-const accountStatusChange = (doc?: string): TypeDef => u8enum('AccountStatusChange', {
+const accountStatusChange = u8enum('AccountStatusChange', {
     unchanged: 0,
     frozen: 1,
     deleted: 2,
-}, doc);
+});
 
-const skipReason = (doc?: string): TypeDef => u8enum('SkipReason', {
+const skipReason = u8enum('SkipReason', {
     noState: 0,
     badState: 1,
     noGas: 2,
-}, doc);
+});
 
 
-const accountType = (doc?: string): TypeDef => u8enum('AccountType', {
+const accountType = u8enum('AccountType', {
     uninit: 0,
     active: 1,
     frozen: 2,
-}, doc);
+});
 
-const messageType = (doc?: string): TypeDef => u8enum('MessageType', {
+const messageType = u8enum('MessageType', {
     internal: 0,
     extIn: 1,
     extOut: 2,
-}, doc);
+});
 
 
-const messageProcessingStatus = (doc?: string): TypeDef => u8enum('MessageProcessingStatus', {
+const messageProcessingStatus = u8enum('MessageProcessingStatus', {
     unknown: 0,
     queued: 1,
     processing: 2,
@@ -103,9 +118,9 @@ const messageProcessingStatus = (doc?: string): TypeDef => u8enum('MessageProces
     finalized: 5,
     refused: 6,
     transiting: 7,
-}, doc);
+});
 
-const transactionType = (doc?: string): TypeDef => u8enum('TransactionType', {
+const transactionType = u8enum('TransactionType', {
     ordinary: 0,
     storage: 1,
     tick: 2,
@@ -114,36 +129,36 @@ const transactionType = (doc?: string): TypeDef => u8enum('TransactionType', {
     splitInstall: 5,
     mergePrepare: 6,
     mergeInstall: 7,
-}, doc);
+});
 
-const transactionProcessingStatus = (doc?: string): TypeDef => u8enum('TransactionProcessingStatus', {
+const transactionProcessingStatus = u8enum('TransactionProcessingStatus', {
     unknown: 0,
     preliminary: 1,
     proposed: 2,
     finalized: 3,
     refused: 4,
-}, doc);
+});
 
-const computeType = (doc?: string): TypeDef => u8enum('ComputeType', {
+const computeType = u8enum('ComputeType', {
     skipped: 0,
     vm: 1,
-}, doc);
+});
 
-const bounceType = (doc?: string): TypeDef => u8enum('BounceType', {
+const bounceType = u8enum('BounceType', {
     negFunds: 0,
     noFunds: 1,
     ok: 2,
-}, doc);
+});
 
-const blockProcessingStatus = (doc?: string): TypeDef => u8enum('BlockProcessingStatus', {
+const blockProcessingStatus = u8enum('BlockProcessingStatus', {
     unknown: 0,
     proposed: 1,
     finalized: 2,
     refused: 3,
-}, doc);
+});
 
 
-const inMsgType = (doc?: string): TypeDef => u8enum('InMsgType', {
+const inMsgType = u8enum('InMsgType', {
     external: 0,
     ihr: 1,
     immediately: 2,
@@ -151,9 +166,9 @@ const inMsgType = (doc?: string): TypeDef => u8enum('InMsgType', {
     transit: 4,
     discardedFinal: 5,
     discardedTransit: 6,
-}, doc);
+});
 
-const outMsgType = (doc?: string): TypeDef => u8enum('OutMsgType', {
+const outMsgType = u8enum('OutMsgType', {
     external: 0,
     immediately: 1,
     outMsgNew: 2,
@@ -162,13 +177,13 @@ const outMsgType = (doc?: string): TypeDef => u8enum('OutMsgType', {
     dequeue: 5,
     transitRequired: 6,
     none: -1,
-}, doc);
+});
 
-const splitType = (doc?: string): TypeDef => u8enum('SplitType', {
+const splitType = u8enum('SplitType', {
     none: 0,
     split: 2,
     merge: 3,
-}, doc);
+});
 
 const Account: TypeDef = {
     _doc: 'TON Account',

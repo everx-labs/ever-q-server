@@ -81,7 +81,7 @@ type OutMsg {
 }
 
 type MessageValueOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
@@ -121,42 +121,42 @@ type BlockShard {
 }
 
 type BlockValueFlowToNextBlkOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowExportedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowFeesCollectedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowCreatedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowImportedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowFromPrevBlkOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowMintedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockValueFlowFeesImportedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
@@ -201,12 +201,12 @@ type BlockStateUpdate {
 }
 
 type BlockMasterShardHashesDescrFeesCollectedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
 type BlockMasterShardHashesDescrFundsCreatedOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
@@ -279,7 +279,7 @@ type Block {
 }
 
 type AccountBalanceOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
@@ -302,7 +302,7 @@ type Account {
 }
 
 type TransactionTotalFeesOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
@@ -313,7 +313,7 @@ type TransactionStorage {
 }
 
 type TransactionCreditCreditOther {
-	currency: Int
+	currency: Float
 	value: String
 }
 
@@ -449,7 +449,7 @@ input OutMsgFilter {
 }
 
 input MessageValueOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
@@ -494,42 +494,42 @@ input BlockShardFilter {
 }
 
 input BlockValueFlowToNextBlkOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowExportedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowFeesCollectedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowCreatedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowImportedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowFromPrevBlkOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowMintedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockValueFlowFeesImportedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
@@ -619,12 +619,12 @@ input BlockStateUpdateFilter {
 }
 
 input BlockMasterShardHashesDescrFeesCollectedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
 input BlockMasterShardHashesDescrFundsCreatedOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
@@ -727,7 +727,7 @@ input BlockFilter {
 }
 
 input AccountBalanceOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
@@ -755,7 +755,7 @@ input AccountFilter {
 }
 
 input TransactionTotalFeesOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
@@ -766,7 +766,7 @@ input TransactionStorageFilter {
 }
 
 input TransactionCreditCreditOtherFilter {
-	currency: IntFilter
+	currency: FloatFilter
 	value: StringFilter
 }
 
