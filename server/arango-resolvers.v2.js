@@ -167,19 +167,19 @@ const BlockStateUpdate = struct({
     old_depth: scalar,
 });
 
-const BlockMasterShardHashesDescrFeesCollectedOther = struct({
+const BlockShardHashesDescrFeesCollectedOther = struct({
     currency: scalar,
     value: bigUInt2,
 });
 
-const BlockMasterShardHashesDescrFundsCreatedOther = struct({
+const BlockShardHashesDescrFundsCreatedOther = struct({
     currency: scalar,
     value: bigUInt2,
 });
 
-const BlockMasterShardHashesDescrFeesCollectedOtherArray = array(BlockMasterShardHashesDescrFeesCollectedOther);
-const BlockMasterShardHashesDescrFundsCreatedOtherArray = array(BlockMasterShardHashesDescrFundsCreatedOther);
-const BlockMasterShardHashesDescr = struct({
+const BlockShardHashesDescrFeesCollectedOtherArray = array(BlockShardHashesDescrFeesCollectedOther);
+const BlockShardHashesDescrFundsCreatedOtherArray = array(BlockShardHashesDescrFundsCreatedOther);
+const BlockShardHashesDescr = struct({
     seq_no: scalar,
     reg_mc_seqno: scalar,
     start_lt: bigUInt1,
@@ -199,24 +199,20 @@ const BlockMasterShardHashesDescr = struct({
     split_type: scalar,
     split: scalar,
     fees_collected: bigUInt2,
-    fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArray,
+    fees_collected_other: BlockShardHashesDescrFeesCollectedOtherArray,
     funds_created: bigUInt2,
-    funds_created_other: BlockMasterShardHashesDescrFundsCreatedOtherArray,
+    funds_created_other: BlockShardHashesDescrFundsCreatedOtherArray,
 });
 
-const BlockMasterShardHashes = struct({
+const BlockShardHashes = struct({
     hash: scalar,
-    descr: BlockMasterShardHashesDescr,
-});
-
-const BlockMasterShardHashesArray = array(BlockMasterShardHashes);
-const BlockMaster = struct({
-    shard_hashes: BlockMasterShardHashesArray,
+    descr: BlockShardHashesDescr,
 });
 
 const InMsgArray = array(InMsg);
 const OutMsgArray = array(OutMsg);
 const BlockAccountBlocksArray = array(BlockAccountBlocks);
+const BlockShardHashesArray = array(BlockShardHashes);
 const Block = struct({
     id: scalar,
     status: scalar,
@@ -248,7 +244,7 @@ const Block = struct({
     out_msg_descr: OutMsgArray,
     account_blocks: BlockAccountBlocksArray,
     state_update: BlockStateUpdate,
-    master: BlockMaster,
+    shard_hashes: BlockShardHashesArray,
 }, true);
 
 const AccountBalanceOther = struct({
@@ -513,17 +509,17 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.fees_imported);
             },
         },
-        BlockMasterShardHashesDescrFeesCollectedOther: {
+        BlockShardHashesDescrFeesCollectedOther: {
             value(parent) {
                 return resolveBigUInt(2, parent.value);
             },
         },
-        BlockMasterShardHashesDescrFundsCreatedOther: {
+        BlockShardHashesDescrFundsCreatedOther: {
             value(parent) {
                 return resolveBigUInt(2, parent.value);
             },
         },
-        BlockMasterShardHashesDescr: {
+        BlockShardHashesDescr: {
             start_lt(parent) {
                 return resolveBigUInt(1, parent.start_lt);
             },
@@ -676,11 +672,10 @@ module.exports = {
     BlockAccountBlocksStateUpdate,
     BlockAccountBlocks,
     BlockStateUpdate,
-    BlockMasterShardHashesDescrFeesCollectedOther,
-    BlockMasterShardHashesDescrFundsCreatedOther,
-    BlockMasterShardHashesDescr,
-    BlockMasterShardHashes,
-    BlockMaster,
+    BlockShardHashesDescrFeesCollectedOther,
+    BlockShardHashesDescrFundsCreatedOther,
+    BlockShardHashesDescr,
+    BlockShardHashes,
     Block,
     AccountBalanceOther,
     Account,

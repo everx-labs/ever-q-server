@@ -464,12 +464,10 @@ const Block: TypeDef = {
         old_hash: string(),
         old_depth: u16()
     },
-    master: {
-        shard_hashes: arrayOf({
-            hash: u32(),
-            descr: shardDescr(),
-        }),
-    }
+    shard_hashes: arrayOf({
+        hash: u32(),
+        descr: shardDescr(),
+    }),
 };
 
 
