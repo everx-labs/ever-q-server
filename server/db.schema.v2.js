@@ -385,7 +385,7 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
     nx_cc_updated: bool(),
     flags: u8(),
     next_catchain_seqno: u32(),
-    next_validator_shard: u64(),
+    next_validator_shard: string(),
     min_ref_mc_seqno: u32(),
     gen_utime: u32(),
     split_type: splitType(),
@@ -421,9 +421,8 @@ const Block: TypeDef = {
     start_lt: u64(),
     end_lt: u64(),
     shard: {
-        shard_pfx_bits: u8(),
         workchain_id: i32(),
-        shard_prefix: u64(),
+        shard: string(),
     },
     min_ref_mc_seqno: u32(),
     value_flow: {
@@ -465,7 +464,8 @@ const Block: TypeDef = {
         old_depth: u16()
     },
     shard_hashes: arrayOf({
-        hash: u32(),
+        workchain_id: i32(),
+        shard: string(),
         descr: shardDescr(),
     }),
 };

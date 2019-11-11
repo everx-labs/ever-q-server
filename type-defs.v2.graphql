@@ -115,9 +115,8 @@ type Message {
 }
 
 type BlockShard {
-	shard_pfx_bits: Int
 	workchain_id: Int
-	shard_prefix: String
+	shard: String
 }
 
 type BlockValueFlowToNextBlkOther {
@@ -236,7 +235,8 @@ type BlockShardHashesDescr {
 }
 
 type BlockShardHashes {
-	hash: Float
+	workchain_id: Int
+	shard: String
 	descr: BlockShardHashesDescr
 }
 
@@ -484,9 +484,8 @@ input MessageFilter {
 }
 
 input BlockShardFilter {
-	shard_pfx_bits: IntFilter
 	workchain_id: IntFilter
-	shard_prefix: StringFilter
+	shard: StringFilter
 }
 
 input BlockValueFlowToNextBlkOtherFilter {
@@ -660,7 +659,8 @@ input BlockShardHashesDescrFilter {
 }
 
 input BlockShardHashesFilter {
-	hash: FloatFilter
+	workchain_id: IntFilter
+	shard: StringFilter
 	descr: BlockShardHashesDescrFilter
 }
 

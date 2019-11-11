@@ -73,9 +73,8 @@ const Message = struct({
 }, true);
 
 const BlockShard = struct({
-    shard_pfx_bits: scalar,
     workchain_id: scalar,
-    shard_prefix: bigUInt1,
+    shard: scalar,
 });
 
 const BlockValueFlowToNextBlkOther = struct({
@@ -193,7 +192,7 @@ const BlockShardHashesDescr = struct({
     nx_cc_updated: scalar,
     flags: scalar,
     next_catchain_seqno: scalar,
-    next_validator_shard: bigUInt1,
+    next_validator_shard: scalar,
     min_ref_mc_seqno: scalar,
     gen_utime: scalar,
     split_type: scalar,
@@ -205,7 +204,8 @@ const BlockShardHashesDescr = struct({
 });
 
 const BlockShardHashes = struct({
-    hash: scalar,
+    workchain_id: scalar,
+    shard: scalar,
     descr: BlockShardHashesDescr,
 });
 
@@ -438,11 +438,6 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.value);
             },
         },
-        BlockShard: {
-            shard_prefix(parent) {
-                return resolveBigUInt(1, parent.shard_prefix);
-            },
-        },
         BlockValueFlowToNextBlkOther: {
             value(parent) {
                 return resolveBigUInt(2, parent.value);
@@ -525,9 +520,6 @@ function createResolvers(db) {
             },
             end_lt(parent) {
                 return resolveBigUInt(1, parent.end_lt);
-            },
-            next_validator_shard(parent) {
-                return resolveBigUInt(1, parent.next_validator_shard);
             },
             fees_collected(parent) {
                 return resolveBigUInt(2, parent.fees_collected);
