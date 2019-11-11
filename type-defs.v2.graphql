@@ -114,11 +114,6 @@ type Message {
 	boc: String
 }
 
-type BlockShard {
-	workchain_id: Int
-	shard: String
-}
-
 type BlockValueFlowToNextBlkOther {
 	currency: Float
 	value: String
@@ -263,7 +258,8 @@ type Block {
 	vert_seq_no: Float
 	start_lt: String
 	end_lt: String
-	shard: BlockShard
+	workchain_id: Int
+	shard: String
 	min_ref_mc_seqno: Float
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
@@ -481,11 +477,6 @@ input MessageFilter {
 	value_other: MessageValueOtherArrayFilter
 	proof: StringFilter
 	boc: StringFilter
-}
-
-input BlockShardFilter {
-	workchain_id: IntFilter
-	shard: StringFilter
 }
 
 input BlockValueFlowToNextBlkOtherFilter {
@@ -707,7 +698,8 @@ input BlockFilter {
 	vert_seq_no: FloatFilter
 	start_lt: StringFilter
 	end_lt: StringFilter
-	shard: BlockShardFilter
+	workchain_id: IntFilter
+	shard: StringFilter
 	min_ref_mc_seqno: FloatFilter
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter

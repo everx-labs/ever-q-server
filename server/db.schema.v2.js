@@ -420,10 +420,8 @@ const Block: TypeDef = {
     vert_seq_no: u32(),
     start_lt: u64(),
     end_lt: u64(),
-    shard: {
-        workchain_id: i32(),
-        shard: string(),
-    },
+    workchain_id: i32(),
+    shard: string(),
     min_ref_mc_seqno: u32(),
     value_flow: {
         to_next_blk: grams(),

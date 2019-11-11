@@ -72,11 +72,6 @@ const Message = struct({
     boc: scalar,
 }, true);
 
-const BlockShard = struct({
-    workchain_id: scalar,
-    shard: scalar,
-});
-
 const BlockValueFlowToNextBlkOther = struct({
     currency: scalar,
     value: bigUInt2,
@@ -236,7 +231,8 @@ const Block = struct({
     vert_seq_no: scalar,
     start_lt: bigUInt1,
     end_lt: bigUInt1,
-    shard: BlockShard,
+    workchain_id: scalar,
+    shard: scalar,
     min_ref_mc_seqno: scalar,
     value_flow: BlockValueFlow,
     in_msg_descr: InMsgArray,
@@ -651,7 +647,6 @@ module.exports = {
     OutMsg,
     MessageValueOther,
     Message,
-    BlockShard,
     BlockValueFlowToNextBlkOther,
     BlockValueFlowExportedOther,
     BlockValueFlowFeesCollectedOther,
