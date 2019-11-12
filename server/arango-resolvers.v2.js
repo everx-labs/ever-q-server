@@ -638,7 +638,6 @@ function createResolvers(db) {
             blocks: db.collectionQuery(db.blocks, Block),
             accounts: db.collectionQuery(db.accounts, Account),
             transactions: db.collectionQuery(db.transactions, Transaction),
-            select: db.selectQuery(),
         },
         Subscription: {
             messages: db.collectionSubscription(db.messages, Message),

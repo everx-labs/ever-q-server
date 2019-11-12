@@ -345,7 +345,6 @@ function main(schemaDef: TypeDef) {
         });
 
         ql.writeBlockLn(`
-            select(query: String!, bindVarsJson: String!): String!
         }
 
         `);
@@ -540,7 +539,6 @@ function main(schemaDef: TypeDef) {
         collections.forEach((type) => {
             js.writeLn(`            ${type.collection || ''}: db.collectionQuery(db.${type.collection || ''}, ${type.name}),`)
         });
-        js.writeLn('            select: db.selectQuery(),');
         js.writeLn('        },');
         js.writeLn('        Subscription: {');
         collections.forEach((type) => {

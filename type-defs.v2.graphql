@@ -881,7 +881,6 @@ type Query {
 	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int): [Block]
 	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int): [Account]
 	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int): [Transaction]
-    select(query: String!, bindVarsJson: String!): String!
 }
 
 type Subscription {
