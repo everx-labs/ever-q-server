@@ -360,14 +360,27 @@ function main(schemaDef: TypeDef) {
     }
 
 
+    function getScalarResolverName(type: DbType): string {
+        if (type === scalarTypes.uint64) {
+            return 'bigUInt1';
+        }
+        if (type === scalarTypes.uint1024) {
+            return 'bigUInt2';
+        }
+        return 'scalar';
+    }
+
     function genJSFiltersForArrayFields(type: DbType, jsNames: Set<string>) {
         type.fields.forEach((field) => {
             let itemTypeName = field.type.name;
             for (let i = 0; i < field.arrayDepth; i += 1) {
                 const filterName = `${itemTypeName}Array`;
                 preventTwice(filterName, jsNames, () => {
+                    const itemResolverName = (i === 0 && field.type.category === DbTypeCategory.scalar)
+                        ? getScalarResolverName(field.type)
+                        : itemTypeName;
                     js.writeBlockLn(`
-                const ${filterName} = array(${itemTypeName});
+                const ${filterName} = array(${itemResolverName});
                 `);
                 });
                 itemTypeName += 'Array';
@@ -389,13 +402,7 @@ function main(schemaDef: TypeDef) {
                     field.type.name +
                     'Array'.repeat(field.arrayDepth);
             } else if (field.type.category === DbTypeCategory.scalar) {
-                if (field.type === scalarTypes.uint64) {
-                    typeDeclaration = 'bigUInt1';
-                } else if (field.type === scalarTypes.uint1024) {
-                    typeDeclaration = 'bigUInt2';
-                } else {
-                    typeDeclaration = 'scalar';
-                }
+                typeDeclaration = getScalarResolverName(field.type);
             } else if (field.type.fields.length > 0) {
                 typeDeclaration = field.type.name;
             }

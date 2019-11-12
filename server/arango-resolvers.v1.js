@@ -412,7 +412,7 @@ const BlockExtraAccountBlocksStateUpdate = struct({
     new_hash: scalar,
 });
 
-const StringArray = array(String);
+const StringArray = array(scalar);
 const BlockExtraAccountBlocks = struct({
     account_addr: scalar,
     transactions: StringArray,
