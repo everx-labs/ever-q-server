@@ -342,6 +342,7 @@ const TransactionSplitInfo = struct({
     sibling_addr: scalar,
 });
 
+const MessageArray = array(Message);
 const TransactionTotalFeesOtherArray = array(TransactionTotalFeesOther);
 const Transaction = struct({
     id: scalar,
@@ -357,7 +358,9 @@ const Transaction = struct({
     orig_status: scalar,
     end_status: scalar,
     in_msg: scalar,
+    in_message: join('in_msg', 'messages', Message),
     out_msgs: StringArray,
+    out_messages: joinArray('out_msgs', 'messages', Message),
     total_fees: bigUInt2,
     total_fees_other: TransactionTotalFeesOtherArray,
     old_hash: scalar,
@@ -613,6 +616,12 @@ function createResolvers(db) {
         Transaction: {
             id(parent) {
                 return parent._key;
+            },
+            in_message(parent) {
+                return db.fetchDocByKey(db.messages, parent.in_msg);
+            },
+            out_messages(parent) {
+                return db.fetchDocsByKeys(db.messages, parent.out_msgs);
             },
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);

@@ -381,7 +381,9 @@ type Transaction {
 	orig_status: Int
 	end_status: Int
 	in_msg: String
+	in_message: Message
 	out_msgs: [String]
+	out_messages: [Message]
 	total_fees: String
 	total_fees_other: [TransactionTotalFeesOther]
 	old_hash: String
@@ -817,6 +819,11 @@ input TransactionSplitInfoFilter {
 	sibling_addr: StringFilter
 }
 
+input MessageArrayFilter {
+	any: MessageFilter
+	all: MessageFilter
+}
+
 input TransactionTotalFeesOtherArrayFilter {
 	any: TransactionTotalFeesOtherFilter
 	all: TransactionTotalFeesOtherFilter
@@ -836,7 +843,9 @@ input TransactionFilter {
 	orig_status: IntFilter
 	end_status: IntFilter
 	in_msg: StringFilter
+	in_message: MessageFilter
 	out_msgs: StringArrayFilter
+	out_messages: MessageArrayFilter
 	total_fees: StringFilter
 	total_fees_other: TransactionTotalFeesOtherArrayFilter
 	old_hash: StringFilter

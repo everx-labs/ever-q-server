@@ -20,6 +20,9 @@ import type { IntSizeType, TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
 const { string, bool, ref, arrayOf } = Def;
+const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
+    return { ...ref(refDef), _: { join: { on } } }
+};
 const withDoc = (def: TypeDef, doc?: string) => ({
     ...def,
     ...(doc ? { _doc: doc } : {})
@@ -250,7 +253,9 @@ const Transaction: TypeDef = {
     orig_status: accountStatus(),
     end_status: accountStatus(),
     in_msg: string(),
+    in_message: join({ Message }, 'in_msg'),
     out_msgs: arrayOf(string()),
+    out_messages: arrayOf(join({ Message }, 'out_msgs')),
     total_fees: grams(),
     total_fees_other: otherCurrencyCollection(),
     old_hash: string(),
