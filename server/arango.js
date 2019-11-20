@@ -18,6 +18,7 @@
 import { Database, DocumentCollection } from 'arangojs';
 import arangochair from 'arangochair';
 import { PubSub, withFilter } from 'apollo-server';
+import { QLContext } from "./arango-types";
 import type { QType } from "./arango-types";
 import type { QConfig } from './config'
 import type { QLog } from "./logs";
@@ -193,8 +194,9 @@ export default class Arango {
     async fetchDocs(collection: DocumentCollection, args: any, docType: QType) {
         return this.wrap(async () => {
             const filter = args.filter || {};
+            const context = new QLContext();
             const filterSection = Object.keys(filter).length > 0
-                ? `FILTER ${docType.ql('doc', filter)}`
+                ? `FILTER ${docType.ql(context, 'doc', filter)}`
                 : '';
             const orderBy = (args.orderBy || [])
                 .map((field) => {
@@ -215,7 +217,7 @@ export default class Arango {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
-            const cursor = await this.db.query({ query, bindVars: {} });
+            const cursor = await this.db.query({ query, bindVars: context.vars });
             return await cursor.all();
         });
     }

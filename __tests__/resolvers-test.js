@@ -1,6 +1,6 @@
 
-import { convertBigUInt, resolveBigUInt } from "../server/arango-types";
-import { Transaction } from "../server/arango-resolvers.v2";
+import { convertBigUInt, QLContext, resolveBigUInt } from "../server/arango-types";
+import { Transaction, Account } from "../server/arango-resolvers.v2";
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, 0x1)).toEqual('11');
@@ -68,8 +68,24 @@ test("Filter test", () => {
 });
 
 test("Generate AQL", () => {
-    let ql = Transaction.ql('doc', { in_msg: { ne: "1" } });
-    expect(ql).toEqual(`doc.in_msg != "1"`);
-    ql = Transaction.ql('doc', { out_msgs: { any: { ne: "1" } } });
-    expect(ql).toEqual(`LENGTH(doc.out_msgs[* FILTER CURRENT != "1"]) > 0`);
+    const context = new QLContext();
+    let ql = Transaction.ql(context, 'doc', { in_msg: { ne: "1" } });
+    expect(ql).toEqual(`doc.in_msg != @v1`);
+    expect(context.vars.v1).toEqual('1');
+
+    context.clear();
+    ql = Transaction.ql(context, 'doc', { out_msgs: { any: { ne: "1" } } });
+    expect(ql).toEqual(`LENGTH(doc.out_msgs[* FILTER CURRENT != @v1]) > 0`);
+    expect(context.vars.v1).toEqual('1');
+
+    context.clear();
+    ql = Account.ql(context, 'doc', { id: { gt: 'fff' } });
+    expect(ql).toEqual(`TO_STRING(doc._key) > @v1`);
+    expect(context.vars.v1).toEqual('fff');
+
+    context.clear();
+    ql = Account.ql(context, 'doc', { id: { gt: 'fff' }, last_paid: { ge: 20 } });
+    expect(ql).toEqual(`(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)`);
+    expect(context.vars.v1).toEqual('fff');
+    expect(context.vars.v2).toEqual(20);
 });
