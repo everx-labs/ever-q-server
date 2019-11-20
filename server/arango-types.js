@@ -18,6 +18,28 @@
 
 declare function BigInt(a: any): any;
 
+export class QLContext {
+    vars: { [string]: any };
+    varCount: number;
+
+    constructor() {
+        this.varCount = 0;
+        this.vars = {};
+    }
+
+    clear() {
+        this.varCount = 0;
+        this.vars = {};
+    }
+
+    bindVar(value: any): string {
+        this.varCount += 1;
+        const name = `v${this.varCount.toString()}`;
+        this.vars[name] = value;
+        return name;
+    }
+}
+
 /**
  * Abstract interface for objects that acts as a helpers to perform queries over documents
  * using query filters.
@@ -31,7 +53,7 @@ type QType = {
      * @param {any} filter Filter that will be applied to this field
      * @return {string} Arango QL condition text
      */
-    ql: (path: string, filter: any) => string,
+    ql: (context: QLContext, path: string, filter: any) => string,
     /**
      * Tests value in document from Arango DB against specified filter.
      *
@@ -106,8 +128,9 @@ function fixKeyPath(path: string): string {
     return path.endsWith('._key') ? `TO_STRING(${path})` : path;
 }
 
-function qlOp(path: string, op: string, filter: any): string {
-    return `${fixKeyPath(path)} ${op} ${JSON.stringify(filter)}`;
+function qlOp(context: QLContext, path: string, op: string, filter: any): string {
+    const varName = context.bindVar(filter);
+    return `${fixKeyPath(path)} ${op} @${varName}`;
 }
 
 function qlCombine(conditions: string[], op: string, defaultConditions: string): string {
@@ -120,16 +143,16 @@ function qlCombine(conditions: string[], op: string, defaultConditions: string):
     return '(' + conditions.join(`) ${op} (`) + ')';
 }
 
-function qlIn(path: string, filter: any): string {
-    const conditions = filter.map(value => qlOp(fixKeyPath(path), '==', value));
+function qlIn(context: QLContext, path: string, filter: any): string {
+    const conditions = filter.map(value => qlOp(context, fixKeyPath(path), '==', value));
     return qlCombine(conditions, 'OR', 'false');
 }
 
 // Scalars
 
 const scalarEq: QType = {
-    ql(path, filter) {
-        return qlOp(path, '==', filter);
+    ql(context: QLContext, path, filter) {
+        return qlOp(context, path, '==', filter);
     },
     test(value, filter) {
         return value === filter;
@@ -137,8 +160,8 @@ const scalarEq: QType = {
 };
 
 const scalarNe: QType = {
-    ql(path, filter) {
-        return qlOp(path, '!=', filter);
+    ql(context, path, filter) {
+        return qlOp(context, path, '!=', filter);
     },
     test(value, filter) {
         return value !== filter;
@@ -146,8 +169,8 @@ const scalarNe: QType = {
 };
 
 const scalarLt: QType = {
-    ql(path, filter) {
-        return qlOp(path, '<', filter);
+    ql(context, path, filter) {
+        return qlOp(context, path, '<', filter);
     },
     test(value, filter) {
         return value < filter;
@@ -155,8 +178,8 @@ const scalarLt: QType = {
 };
 
 const scalarLe: QType = {
-    ql(path, filter) {
-        return qlOp(path, '<=', filter);
+    ql(context, path, filter) {
+        return qlOp(context, path, '<=', filter);
     },
     test(value, filter) {
         return value <= filter;
@@ -164,8 +187,8 @@ const scalarLe: QType = {
 };
 
 const scalarGt: QType = {
-    ql(path, filter) {
-        return qlOp(path, '>', filter);
+    ql(context, path, filter) {
+        return qlOp(context, path, '>', filter);
     },
     test(value, filter) {
         return value > filter;
@@ -173,8 +196,8 @@ const scalarGt: QType = {
 };
 
 const scalarGe: QType = {
-    ql(path, filter) {
-        return qlOp(path, '>=', filter);
+    ql(context, path, filter) {
+        return qlOp(context, path, '>=', filter);
     },
     test(value, filter) {
         return value >= filter;
@@ -182,8 +205,8 @@ const scalarGe: QType = {
 };
 
 const scalarIn: QType = {
-    ql(path, filter) {
-        return qlIn(path, filter);
+    ql(context, path, filter) {
+        return qlIn(context, path, filter);
     },
     test(value, filter) {
         return filter.includes(value);
@@ -191,8 +214,8 @@ const scalarIn: QType = {
 };
 
 const scalarNotIn: QType = {
-    ql(path, filter) {
-        return `NOT (${qlIn(path, filter)})`;
+    ql(context, path, filter) {
+        return `NOT (${qlIn(context, path, filter)})`;
     },
     test(value, filter) {
         return !filter.includes(value);
@@ -211,9 +234,9 @@ function createScalar(): QType {
         notIn: scalarNotIn,
     };
     return {
-        ql(path, filter) {
+        ql(context, path, filter) {
             return qlFields(path, filter, fields, (op, path, filterKey, filterValue) => {
-                return op.ql(path, filterValue);
+                return op.ql(context, path, filterValue);
             });
         },
         test(value, filter) {
@@ -256,9 +279,9 @@ function createBigUInt(prefixLength: number): QType {
         notIn: scalarNotIn,
     };
     return {
-        ql(path, filter) {
+        ql(context, path, filter) {
             return qlFields(path, filter, fields, (op, path, filterKey, filterValue) => {
-                return op.ql(path, convertBigUInt(prefixLength, filterValue));
+                return op.ql(context, path, convertBigUInt(prefixLength, filterValue));
             });
         },
         test(value, filter) {
@@ -277,10 +300,10 @@ const bigUInt2: QType = createBigUInt(2);
 
 function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
     return {
-        ql(path, filter) {
+        ql(context, path, filter) {
             return qlFields(path, filter, fields, (fieldType, path, filterKey, filterValue) => {
                 const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                return fieldType.ql(combine(path, fieldName), filterValue);
+                return fieldType.ql(context, combine(path, fieldName), filterValue);
             });
         },
         test(value, filter) {
@@ -300,8 +323,8 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
 function array(itemType: QType): QType {
     const ops = {
         all: {
-            ql(path, filter) {
-                const itemQl = itemType.ql('CURRENT', filter);
+            ql(context, path, filter) {
+                const itemQl = itemType.ql(context, 'CURRENT', filter);
                 return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
             },
             test(value, filter) {
@@ -310,8 +333,8 @@ function array(itemType: QType): QType {
             },
         },
         any: {
-            ql(path, filter) {
-                const itemQl = itemType.ql('CURRENT', filter);
+            ql(context, path, filter) {
+                const itemQl = itemType.ql(context, 'CURRENT', filter);
                 return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
             },
             test(value, filter) {
@@ -321,9 +344,9 @@ function array(itemType: QType): QType {
         },
     };
     return {
-        ql(path, filter) {
+        ql(context, path, filter) {
             return qlFields(path, filter, ops, (op, path, filterKey, filterValue) => {
-                return op.ql(path, filterValue);
+                return op.ql(context, path, filterValue);
             });
         },
         test(value, filter) {
@@ -341,10 +364,10 @@ function array(itemType: QType): QType {
 
 function join(onField: string, refCollection: string, refType: QType): QType {
     return {
-        ql(path, filter) {
+        ql(context, path, filter) {
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
-            const refQl = refType.ql(alias, filter);
+            const refQl = refType.ql(context, alias, filter);
             return `
                 LENGTH(
                     FOR ${alias} IN ${refCollection}
@@ -359,12 +382,12 @@ function join(onField: string, refCollection: string, refType: QType): QType {
 
 function joinArray(onField: string, refCollection: string, refType: QType): QType {
     return {
-        ql(path, filter) {
+        ql(context, path, filter) {
             const refFilter = filter.all || filter.any;
             const all = !!filter.all;
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
-            const refQl = refType.ql(alias, refFilter);
+            const refQl = refType.ql(context, alias, refFilter);
             return `
                 (LENGTH(${on_path}) > 0)
                 AND (LENGTH(
