@@ -1,6 +1,6 @@
 
 import { convertBigUInt, resolveBigUInt } from "../server/arango-types";
-import { Transaction } from "../server/arango-resolvers.v2";
+import { Transaction, Account } from "../server/arango-resolvers.v2";
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, 0x1)).toEqual('11');
@@ -72,4 +72,6 @@ test("Generate AQL", () => {
     expect(ql).toEqual(`doc.in_msg != "1"`);
     ql = Transaction.ql('doc', { out_msgs: { any: { ne: "1" } } });
     expect(ql).toEqual(`LENGTH(doc.out_msgs[* FILTER CURRENT != "1"]) > 0`);
+    ql = Account.ql('doc', { id: { gt: 'fff' } });
+    expect(ql).toEqual(`TO_STRING(doc._key) > "fff"`);
 });

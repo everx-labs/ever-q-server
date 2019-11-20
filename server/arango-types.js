@@ -95,8 +95,19 @@ function combine(path: string, key: string): string {
     return key !== '' ? `${path}.${key}` : path;
 }
 
+/*
+ * Following TO_STRING cast required due to specific comparision of _key fields in Arango
+ * For example this query:
+ * ```FOR doc IN accounts FILTER doc._key >= "ff" RETURN doc._key````
+ * Will return:
+ * ```["fe03318161937ebb3682f69ac9f97beafbc4b9ee6e1f86d59e1bf8d27ab84867"]```
+ */
+function fixKeyPath(path: string): string {
+    return path.endsWith('._key') ? `TO_STRING(${path})` : path;
+}
+
 function qlOp(path: string, op: string, filter: any): string {
-    return `${path} ${op} ${JSON.stringify(filter)}`;
+    return `${fixKeyPath(path)} ${op} ${JSON.stringify(filter)}`;
 }
 
 function qlCombine(conditions: string[], op: string, defaultConditions: string): string {
@@ -110,7 +121,7 @@ function qlCombine(conditions: string[], op: string, defaultConditions: string):
 }
 
 function qlIn(path: string, filter: any): string {
-    const conditions = filter.map(value => qlOp(path, '==', value));
+    const conditions = filter.map(value => qlOp(fixKeyPath(path), '==', value));
     return qlCombine(conditions, 'OR', 'false');
 }
 
