@@ -50,7 +50,7 @@ type ExtBlkRef {
 }
 
 type MsgEnvelope {
-	msg: String
+	msg_id: String
 	next_addr: String
 	cur_addr: String
 	fwd_fee_remaining: String
@@ -194,17 +194,17 @@ type BlockStateUpdate {
 	old_depth: Int
 }
 
-type BlockShardHashesDescrFeesCollectedOther {
+type BlockMasterShardHashesDescrFeesCollectedOther {
 	currency: Float
 	value: String
 }
 
-type BlockShardHashesDescrFundsCreatedOther {
+type BlockMasterShardHashesDescrFundsCreatedOther {
 	currency: Float
 	value: String
 }
 
-type BlockShardHashesDescr {
+type BlockMasterShardHashesDescr {
 	seq_no: Float
 	reg_mc_seqno: Float
 	start_lt: String
@@ -224,15 +224,40 @@ type BlockShardHashesDescr {
 	split_type: Int
 	split: Float
 	fees_collected: String
-	fees_collected_other: [BlockShardHashesDescrFeesCollectedOther]
+	fees_collected_other: [BlockMasterShardHashesDescrFeesCollectedOther]
 	funds_created: String
-	funds_created_other: [BlockShardHashesDescrFundsCreatedOther]
+	funds_created_other: [BlockMasterShardHashesDescrFundsCreatedOther]
 }
 
-type BlockShardHashes {
+type BlockMasterShardHashes {
 	workchain_id: Int
 	shard: String
-	descr: BlockShardHashesDescr
+	descr: BlockMasterShardHashesDescr
+}
+
+type BlockMasterShardFeesFeesOther {
+	currency: Float
+	value: String
+}
+
+type BlockMasterShardFeesCreateOther {
+	currency: Float
+	value: String
+}
+
+type BlockMasterShardFees {
+	workchain_id: Int
+	shard: String
+	fees: String
+	fees_other: [BlockMasterShardFeesFeesOther]
+	create: String
+	create_other: [BlockMasterShardFeesCreateOther]
+}
+
+type BlockMaster {
+	shard_hashes: [BlockMasterShardHashes]
+	shard_fees: [BlockMasterShardFees]
+	recover_create_msg: InMsg
 }
 
 type Block {
@@ -267,7 +292,7 @@ type Block {
 	out_msg_descr: [OutMsg]
 	account_blocks: [BlockAccountBlocks]
 	state_update: BlockStateUpdate
-	shard_hashes: [BlockShardHashes]
+	master: BlockMaster
 }
 
 type AccountBalanceOther {
@@ -412,7 +437,7 @@ input ExtBlkRefFilter {
 }
 
 input MsgEnvelopeFilter {
-	msg: StringFilter
+	msg_id: StringFilter
 	next_addr: StringFilter
 	cur_addr: StringFilter
 	fwd_fee_remaining: StringFilter
@@ -606,27 +631,27 @@ input BlockStateUpdateFilter {
 	old_depth: IntFilter
 }
 
-input BlockShardHashesDescrFeesCollectedOtherFilter {
+input BlockMasterShardHashesDescrFeesCollectedOtherFilter {
 	currency: FloatFilter
 	value: StringFilter
 }
 
-input BlockShardHashesDescrFundsCreatedOtherFilter {
+input BlockMasterShardHashesDescrFundsCreatedOtherFilter {
 	currency: FloatFilter
 	value: StringFilter
 }
 
-input BlockShardHashesDescrFeesCollectedOtherArrayFilter {
-	any: BlockShardHashesDescrFeesCollectedOtherFilter
-	all: BlockShardHashesDescrFeesCollectedOtherFilter
+input BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter {
+	any: BlockMasterShardHashesDescrFeesCollectedOtherFilter
+	all: BlockMasterShardHashesDescrFeesCollectedOtherFilter
 }
 
-input BlockShardHashesDescrFundsCreatedOtherArrayFilter {
-	any: BlockShardHashesDescrFundsCreatedOtherFilter
-	all: BlockShardHashesDescrFundsCreatedOtherFilter
+input BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter {
+	any: BlockMasterShardHashesDescrFundsCreatedOtherFilter
+	all: BlockMasterShardHashesDescrFundsCreatedOtherFilter
 }
 
-input BlockShardHashesDescrFilter {
+input BlockMasterShardHashesDescrFilter {
 	seq_no: FloatFilter
 	reg_mc_seqno: FloatFilter
 	start_lt: StringFilter
@@ -646,15 +671,60 @@ input BlockShardHashesDescrFilter {
 	split_type: IntFilter
 	split: FloatFilter
 	fees_collected: StringFilter
-	fees_collected_other: BlockShardHashesDescrFeesCollectedOtherArrayFilter
+	fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter
 	funds_created: StringFilter
-	funds_created_other: BlockShardHashesDescrFundsCreatedOtherArrayFilter
+	funds_created_other: BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter
 }
 
-input BlockShardHashesFilter {
+input BlockMasterShardHashesFilter {
 	workchain_id: IntFilter
 	shard: StringFilter
-	descr: BlockShardHashesDescrFilter
+	descr: BlockMasterShardHashesDescrFilter
+}
+
+input BlockMasterShardFeesFeesOtherFilter {
+	currency: FloatFilter
+	value: StringFilter
+}
+
+input BlockMasterShardFeesCreateOtherFilter {
+	currency: FloatFilter
+	value: StringFilter
+}
+
+input BlockMasterShardFeesFeesOtherArrayFilter {
+	any: BlockMasterShardFeesFeesOtherFilter
+	all: BlockMasterShardFeesFeesOtherFilter
+}
+
+input BlockMasterShardFeesCreateOtherArrayFilter {
+	any: BlockMasterShardFeesCreateOtherFilter
+	all: BlockMasterShardFeesCreateOtherFilter
+}
+
+input BlockMasterShardFeesFilter {
+	workchain_id: IntFilter
+	shard: StringFilter
+	fees: StringFilter
+	fees_other: BlockMasterShardFeesFeesOtherArrayFilter
+	create: StringFilter
+	create_other: BlockMasterShardFeesCreateOtherArrayFilter
+}
+
+input BlockMasterShardHashesArrayFilter {
+	any: BlockMasterShardHashesFilter
+	all: BlockMasterShardHashesFilter
+}
+
+input BlockMasterShardFeesArrayFilter {
+	any: BlockMasterShardFeesFilter
+	all: BlockMasterShardFeesFilter
+}
+
+input BlockMasterFilter {
+	shard_hashes: BlockMasterShardHashesArrayFilter
+	shard_fees: BlockMasterShardFeesArrayFilter
+	recover_create_msg: InMsgFilter
 }
 
 input InMsgArrayFilter {
@@ -670,11 +740,6 @@ input OutMsgArrayFilter {
 input BlockAccountBlocksArrayFilter {
 	any: BlockAccountBlocksFilter
 	all: BlockAccountBlocksFilter
-}
-
-input BlockShardHashesArrayFilter {
-	any: BlockShardHashesFilter
-	all: BlockShardHashesFilter
 }
 
 input BlockFilter {
@@ -709,7 +774,7 @@ input BlockFilter {
 	out_msg_descr: OutMsgArrayFilter
 	account_blocks: BlockAccountBlocksArrayFilter
 	state_update: BlockStateUpdateFilter
-	shard_hashes: BlockShardHashesArrayFilter
+	master: BlockMasterFilter
 }
 
 input AccountBalanceOtherFilter {

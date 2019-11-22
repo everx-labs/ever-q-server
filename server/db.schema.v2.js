@@ -340,7 +340,7 @@ const ExtBlkRef: TypeDef = {
 const extBlkRef = () => ref({ ExtBlkRef });
 
 const MsgEnvelope: TypeDef = {
-    msg: string(),
+    msg_id: string(),
     next_addr: string(),
     cur_addr: string(),
     fwd_fee_remaining: grams(),
@@ -466,11 +466,28 @@ const Block: TypeDef = {
         old_hash: string(),
         old_depth: u16()
     },
-    shard_hashes: arrayOf({
-        workchain_id: i32(),
-        shard: string(),
-        descr: shardDescr(),
-    }),
+    master: {
+        shard_hashes: arrayOf({
+            workchain_id: i32(),
+            shard: string(),
+            descr: shardDescr(),
+        }),
+        shard_fees: arrayOf({
+            workchain_id: i32(),
+            shard: string(),
+            fees: grams(),
+            fees_other: otherCurrencyCollection(),
+            create: grams(),
+            create_other: otherCurrencyCollection(),
+        }),
+        recover_create_msg: inMsg(),
+        //TODO: Пока сериализатор пишет это в виде массива [node_id, r, s]
+        // prev_blk_signatures: arrayOf({
+        //     node_id: string(),
+        //     r: string(),
+        //     s: string(),
+        // }),
+    },
 };
 
 
