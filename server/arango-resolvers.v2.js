@@ -47,7 +47,6 @@ const Message = struct({
     id: scalar,
     msg_type: scalar,
     status: scalar,
-    transaction_id: scalar,
     block_id: scalar,
     body: scalar,
     split_depth: scalar,
@@ -225,12 +224,20 @@ const BlockMasterShardFees = struct({
     create_other: BlockMasterShardFeesCreateOtherArray,
 });
 
+const BlockMasterPrevBlkSignatures = struct({
+    node_id: scalar,
+    r: scalar,
+    s: scalar,
+});
+
 const BlockMasterShardHashesArray = array(BlockMasterShardHashes);
 const BlockMasterShardFeesArray = array(BlockMasterShardFees);
+const BlockMasterPrevBlkSignaturesArray = array(BlockMasterPrevBlkSignatures);
 const BlockMaster = struct({
     shard_hashes: BlockMasterShardHashesArray,
     shard_fees: BlockMasterShardFeesArray,
     recover_create_msg: InMsg,
+    prev_blk_signatures: BlockMasterPrevBlkSignaturesArray,
 });
 
 const InMsgArray = array(InMsg);
@@ -720,6 +727,7 @@ module.exports = {
     BlockMasterShardFeesFeesOther,
     BlockMasterShardFeesCreateOther,
     BlockMasterShardFees,
+    BlockMasterPrevBlkSignatures,
     BlockMaster,
     Block,
     AccountBalanceOther,

@@ -89,7 +89,6 @@ type Message {
 	id: String
 	msg_type: Int
 	status: Int
-	transaction_id: String
 	block_id: String
 	body: String
 	split_depth: Int
@@ -254,10 +253,17 @@ type BlockMasterShardFees {
 	create_other: [BlockMasterShardFeesCreateOther]
 }
 
+type BlockMasterPrevBlkSignatures {
+	node_id: String
+	r: String
+	s: String
+}
+
 type BlockMaster {
 	shard_hashes: [BlockMasterShardHashes]
 	shard_fees: [BlockMasterShardFees]
 	recover_create_msg: InMsg
+	prev_blk_signatures: [BlockMasterPrevBlkSignatures]
 }
 
 type Block {
@@ -481,7 +487,6 @@ input MessageFilter {
 	id: StringFilter
 	msg_type: IntFilter
 	status: IntFilter
-	transaction_id: StringFilter
 	block_id: StringFilter
 	body: StringFilter
 	split_depth: IntFilter
@@ -711,6 +716,12 @@ input BlockMasterShardFeesFilter {
 	create_other: BlockMasterShardFeesCreateOtherArrayFilter
 }
 
+input BlockMasterPrevBlkSignaturesFilter {
+	node_id: StringFilter
+	r: StringFilter
+	s: StringFilter
+}
+
 input BlockMasterShardHashesArrayFilter {
 	any: BlockMasterShardHashesFilter
 	all: BlockMasterShardHashesFilter
@@ -721,10 +732,16 @@ input BlockMasterShardFeesArrayFilter {
 	all: BlockMasterShardFeesFilter
 }
 
+input BlockMasterPrevBlkSignaturesArrayFilter {
+	any: BlockMasterPrevBlkSignaturesFilter
+	all: BlockMasterPrevBlkSignaturesFilter
+}
+
 input BlockMasterFilter {
 	shard_hashes: BlockMasterShardHashesArrayFilter
 	shard_fees: BlockMasterShardFeesArrayFilter
 	recover_create_msg: InMsgFilter
+	prev_blk_signatures: BlockMasterPrevBlkSignaturesArrayFilter
 }
 
 input InMsgArrayFilter {

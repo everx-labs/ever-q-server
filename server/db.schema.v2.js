@@ -212,7 +212,6 @@ const Message: TypeDef = {
     _: { collection: 'messages' },
     msg_type: required(messageType()),
     status: required(messageProcessingStatus()),
-    transaction_id: required(string()),
     block_id: required(string()),
     body: string(),
     split_depth: u8(),
@@ -481,12 +480,11 @@ const Block: TypeDef = {
             create_other: otherCurrencyCollection(),
         }),
         recover_create_msg: inMsg(),
-        //TODO: Пока сериализатор пишет это в виде массива [node_id, r, s]
-        // prev_blk_signatures: arrayOf({
-        //     node_id: string(),
-        //     r: string(),
-        //     s: string(),
-        // }),
+        prev_blk_signatures: arrayOf({
+            node_id: string(),
+            r: string(),
+            s: string(),
+        }),
     },
 };
 
