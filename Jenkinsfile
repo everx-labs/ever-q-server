@@ -1,5 +1,14 @@
-G_promoted_version = "master"
+G_promoted_version = "0.16.0-rc"
 G_promoted_branch = "origin/${G_promoted_version}"
+
+if (G_promoted_version == "master") {
+	G_promoted_tag = "latest"
+} else {
+	G_promoted_tag = "${G_promoted_version}_latest"
+}
+
+// echo "G_promoted_tag: ${G_promoted_tag}"
+
 G_giturl = "https://github.com/tonlabs/ton-q-server.git"
 G_gitcred = "LaninSSHgit"
 G_dockerCred = 'dockerhubLanin'
@@ -152,7 +161,7 @@ pipeline {
 					steps {
 						script {
 							docker.withRegistry('', "${G_dockerCred}") {
-								builtImage.push("latest")
+								builtImage.push("${G_promoted_tag}")
 							}
 						}
 					}

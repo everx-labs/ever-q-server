@@ -19,24 +19,33 @@
 import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
-const { string, int, bool, float, ref, arrayOf, unionOf } = Def;
+const { string, int, bool, ref, arrayOf, unionOf } = Def;
 
 // Types scheme begin
 
 function uint(size: number, doc?: '') {
-    return { _int: { unsigned: true, size }, ...(doc ? { _doc: doc } : {}) }
+    return { _int: { unsigned: size }, ...(doc ? { _doc: doc } : {}) }
+}
+
+function i8(doc?: '') {
+    return { _int: { signed: 8 }, ...(doc ? { _doc: doc } : {}) }
+}
+
+function i32(doc?: '') {
+    return { _int: { signed: 32 }, ...(doc ? { _doc: doc } : {}) }
 }
 
 const u8 = (doc?: '') => uint(8, doc);
 const u16 = (doc?: '') => uint(16, doc);
 const u32 = (doc?: '') => uint(32, doc);
-const u64 = (doc?: '') => float(doc);
+const u64 = (doc?: '') => uint(64, doc);
+const u128 = (doc?: '') => uint(128, doc);
 const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
     return { ...ref(refDef), _: { join: { on } } }
 };
 
 const CurrencyCollection: TypeDef = {
-    Grams: string(),
+    Grams: u128(),
 };
 
 const None: TypeDef = { None: string() };
@@ -46,11 +55,11 @@ const IntermediateAddress: TypeDef = unionOf({
         use_src_bits: u8()
     },
     Simple: {
-        workchain_id: int(),
+        workchain_id: i32(),
         addr_pfx: string()
     },
     Ext: {
-        workchain_id: int(),
+        workchain_id: i32(),
         addr_pfx: string()
     }
 });
@@ -68,14 +77,14 @@ const MsgAddressInt: TypeDef = unionOf({
         anycast: {
             rewrite_pfx: string()
         },
-        workchain_id: u8(),
+        workchain_id: i8(),
         address: string()
     },
     AddrVar: {
         anycast: {
             rewrite_pfx: string()
         },
-        workchain_id: int(),
+        workchain_id: i32(),
         address: string()
     },
 });
@@ -93,8 +102,8 @@ const TickTock: TypeDef = {
 };
 
 const StorageUsedShort: TypeDef = {
-    cells: int(),
-    bits: int()
+    cells: i32(),
+    bits: i32()
 };
 
 const SplitMergeInfo: TypeDef = {
@@ -120,25 +129,25 @@ const Message: TypeDef = {
             src: ref({ MsgAddressInt }),
             dst: ref({ MsgAddressInt }),
             value: ref({ CurrencyCollection }),
-            ihr_fee: int(),
-            fwd_fee: int(),
+            ihr_fee: i32(),
+            fwd_fee: i32(),
             created_lt: u64(),
-            created_at: int()
+            created_at: i32()
         },
         ExtInMsgInfo: {
             src: ref({ MsgAddressExt }),
             dst: ref({ MsgAddressInt }),
-            import_fee: int()
+            import_fee: i32()
         },
         ExtOutMsgInfo: {
             src: ref({ MsgAddressInt }),
             dst: ref({ MsgAddressExt }),
             created_lt: u64(),
-            created_at: int()
+            created_at: i32()
         }
     }),
     init: {
-        split_depth: int(),
+        split_depth: i32(),
         special: ref({ TickTock }),
         code: string(),
         data: string(),
@@ -164,33 +173,33 @@ const InMsg: TypeDef = unionOf({
     IHR: {
         msg: string(),
         transaction: string(),
-        ihr_fee: int(),
+        ihr_fee: i32(),
         proof_created: string()
     },
     Immediatelly: {
         in_msg: ref({ MsgEnvelope }),
-        fwd_fee: int(),
+        fwd_fee: i32(),
         transaction: string()
     },
     Final: {
         in_msg: ref({ MsgEnvelope }),
-        fwd_fee: int(),
+        fwd_fee: i32(),
         transaction: string()
     },
     Transit: {
         in_msg: ref({ MsgEnvelope }),
         out_msg: ref({ MsgEnvelope }),
-        transit_fee: int()
+        transit_fee: i32()
     },
     DiscardedFinal: {
         in_msg: ref({ MsgEnvelope }),
-        transaction_id: u64(),
-        fwd_fee: int()
+        transaction_id: string(),
+        fwd_fee: i32()
     },
     DiscardedTransit: {
         in_msg: ref({ MsgEnvelope }),
-        transaction_id: u64(),
-        fwd_fee: int(),
+        transaction_id: string(),
+        fwd_fee: i32(),
         proof_delivered: string()
     }
 });
@@ -235,15 +244,15 @@ const Block: TypeDef = {
         want_split: bool(),
         seq_no: u32(),
         after_merge: bool(),
-        gen_utime: int(),
+        gen_utime: i32(),
         gen_catchain_seqno: u32(),
         flags: u16(),
         prev_ref: {
             prev: {
-                seq_no: int(),
+                seq_no: i32(),
                 file_hash: string(),
                 root_hash: string(),
-                end_lt: int()
+                end_lt: i32()
             }
         },
         version: u32(),
@@ -251,12 +260,12 @@ const Block: TypeDef = {
         before_split: bool(),
         after_split: bool(),
         want_merge: bool(),
-        vert_seq_no: int(),
+        vert_seq_no: i32(),
         start_lt: u64(),
         end_lt: u64(),
         shard: {
             shard_pfx_bits: u8(),
-            workchain_id: int(),
+            workchain_id: i32(),
             shard_prefix: string(),
         },
         min_ref_mc_seqno: u32(),
@@ -289,16 +298,16 @@ const Block: TypeDef = {
                 old_hash: string(),
                 new_hash: string()
             },
-            tr_count: int()
+            tr_count: i32()
         })
     },
     state_update: {
         new: string(),
         new_hash: string(),
-        new_depth: int(),
+        new_depth: i32(),
         old: string(),
         old_hash: string(),
-        old_depth: int()
+        old_depth: i32()
     }
 };
 
@@ -310,7 +319,7 @@ const Account: TypeDef = {
     _key: string(),
     storage_stat: {
         last_paid: u32(),
-        due_payment: int()
+        due_payment: i32()
     },
     storage: {
         last_trans_lt: u64(),
@@ -318,7 +327,7 @@ const Account: TypeDef = {
         state: unionOf({
             AccountUninit: ref({ None }),
             AccountActive: {
-                split_depth: int(),
+                split_depth: i32(),
                 special: ref({ TickTock }),
                 code: string(),
                 data: string(),
@@ -333,13 +342,13 @@ const Account: TypeDef = {
 //Transaction scheme begin
 
 const TrStoragePhase: TypeDef = {
-    storage_fees_collected: int(),
-    storage_fees_due: int(),
+    storage_fees_collected: i32(),
+    storage_fees_due: i32(),
     status_change: string()
 };
 
 const TrCreditPhase: TypeDef = {
-    due_fees_collected: int(),
+    due_fees_collected: i32(),
     credit: ref({ CurrencyCollection })
 };
 
@@ -351,13 +360,13 @@ const TrComputePhase: TypeDef = unionOf({
         success: bool(),
         msg_state_used: bool(),
         account_activated: bool(),
-        gas_fees: int(),
-        gas_used: int(),
-        gas_limit: int(),
-        gas_credit: int(),
-        mode: int(),
-        exit_code: int(),
-        exit_arg: int(),
+        gas_fees: i32(),
+        gas_used: i32(),
+        gas_limit: i32(),
+        gas_credit: i32(),
+        mode: i32(),
+        exit_code: i32(),
+        exit_arg: i32(),
         vm_steps: u32(),
         vm_init_state_hash: string(),
         vm_final_state_hash: string()
@@ -369,14 +378,14 @@ const TrActionPhase: TypeDef = {
     valid: bool(),
     no_funds: bool(),
     status_change: string(),
-    total_fwd_fees: int(),
-    total_action_fees: int(),
-    result_code: int(),
-    result_arg: int(),
-    tot_actions: int(),
-    spec_actions: int(),
-    skipped_actions: int(),
-    msgs_created: int(),
+    total_fwd_fees: i32(),
+    total_action_fees: i32(),
+    result_code: i32(),
+    result_arg: i32(),
+    tot_actions: i32(),
+    spec_actions: i32(),
+    skipped_actions: i32(),
+    msgs_created: i32(),
     action_list_hash: string(),
     tot_msg_size: ref({ StorageUsedShort })
 };
@@ -385,12 +394,12 @@ const TrBouncePhase: TypeDef = unionOf({
     Negfunds: ref({ None }),
     Nofunds: {
         msg_size: ref({ StorageUsedShort }),
-        req_fwd_fees: int(),
+        req_fwd_fees: i32(),
     },
     Ok: {
         msg_size: ref({ StorageUsedShort }),
-        msg_fees: int(),
-        fwd_fees: int(),
+        msg_fees: i32(),
+        fwd_fees: i32(),
     },
 });
 
@@ -401,18 +410,17 @@ const Transaction: TypeDef = {
     status: string(),
     account_addr: string(),
     lt: u64(),
-    last_trans_lt: u64(),
     prev_trans_hash: string(),
     prev_trans_lt: u64(),
     now: u32(),
-    outmsg_cnt: int(),
+    outmsg_cnt: i32(),
     orig_status: string(),
     end_status: string(),
     in_msg: string(),
     in_message: join({ Message }, 'in_msg'),
     out_msgs: arrayOf(string()),
     out_messages: arrayOf(join({ Message }, 'out_msgs')),
-    total_fees: int(),
+    total_fees: i32(),
     state_update: {
         old_hash: string(),
         new_hash: string()

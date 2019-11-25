@@ -18,11 +18,17 @@
 import { Database, DocumentCollection } from 'arangojs';
 import arangochair from 'arangochair';
 import { PubSub, withFilter } from 'apollo-server';
+import { QLContext } from "./arango-types";
 import type { QType } from "./arango-types";
 import type { QConfig } from './config'
 import type { QLog } from "./logs";
 import QLogs from './logs'
 
+type CollectionFilters = {
+    lastId: number,
+    docType: QType,
+    filtersById: Map<number, any>
+}
 
 export default class Arango {
     config: QConfig;
@@ -37,6 +43,7 @@ export default class Arango {
     blocks: DocumentCollection;
     collections: DocumentCollection[];
     listener: any;
+    filtersByCollectionName: Map<string, CollectionFilters>;
 
     constructor(config: QConfig, logs: QLogs) {
         this.config = config;
@@ -59,6 +66,37 @@ export default class Arango {
             this.accounts,
             this.blocks
         ];
+        this.filtersByCollectionName = new Map();
+    }
+
+    addFilter(collection: string, docType: QType, filter: any): number {
+        let filters: CollectionFilters;
+        const existing = this.filtersByCollectionName.get(collection);
+        if (existing) {
+            filters = existing;
+        } else {
+            filters = {
+                lastId: 0,
+                docType,
+                filtersById: new Map()
+            };
+            this.filtersByCollectionName.set(collection, filters);
+        }
+        do {
+            filters.lastId = filters.lastId < Number.MAX_SAFE_INTEGER ? filters.lastId + 1 : 1;
+        } while (filters.filtersById.has(filters.lastId));
+        filters.filtersById.set(filters.lastId, filter);
+        return filters.lastId;
+    }
+
+    removeFilter(collection: string, id: number) {
+        const filters = this.filtersByCollectionName.get(collection);
+        if (filters) {
+            if (filters.filtersById.delete(id)) {
+                return;
+            }
+        }
+        console.error(`Failed to remove filter ${collection}[${id}]: filter does not exists`);
     }
 
     start() {
@@ -70,7 +108,16 @@ export default class Arango {
             this.listener.on(name, (docJson, type) => {
                 if (type === 'insert/update') {
                     const doc = JSON.parse(docJson);
-                    this.pubsub.publish(name, { [name]: doc });
+                    const filters = this.filtersByCollectionName.get(name);
+                    if (filters) {
+                        for (const filter of filters.filtersById.values()) {
+                            if (filters.docType.test(doc, filter || {})) {
+                                this.pubsub.publish(name, { [name]: doc });
+                                break;
+                            }
+                        }
+                    }
+
                 }
             });
         });
@@ -101,8 +148,23 @@ export default class Arango {
     collectionSubscription(collection: DocumentCollection, docType: QType) {
         return {
             subscribe: withFilter(
-                () => {
-                    return this.pubsub.asyncIterator(collection.name);
+                (_, args) => {
+                    const iter = this.pubsub.asyncIterator(collection.name);
+                    const filterId = this.addFilter(collection.name, docType, args.filter);
+                    const _this = this;
+                    return {
+                        next(value?: any): Promise<any> {
+                            return iter.next(value);
+                        },
+                        return(value?: any): Promise<any> {
+                            _this.removeFilter(collection.name, filterId);
+                            return iter.return(value);
+                        },
+                        throw(e?: any): Promise<any> {
+                            _this.removeFilter(collection.name, filterId);
+                            return iter.throw(e);
+                        }
+                    };
                 },
                 (data, args) => {
                     try {
@@ -132,8 +194,9 @@ export default class Arango {
     async fetchDocs(collection: DocumentCollection, args: any, docType: QType) {
         return this.wrap(async () => {
             const filter = args.filter || {};
+            const context = new QLContext();
             const filterSection = Object.keys(filter).length > 0
-                ? `FILTER ${docType.ql('doc', filter)}`
+                ? `FILTER ${docType.ql(context, 'doc', filter)}`
                 : '';
             const orderBy = (args.orderBy || [])
                 .map((field) => {
@@ -154,7 +217,7 @@ export default class Arango {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
-            const cursor = await this.db.query({ query, bindVars: {} });
+            const cursor = await this.db.query({ query, bindVars: context.vars });
             return await cursor.all();
         });
     }
