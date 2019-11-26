@@ -1,4 +1,15 @@
-const { scalar, bigUInt1, bigUInt2, resolveBigUInt, struct, array, join, joinArray } = require('./arango-types.js');
+const {
+    scalar,
+    bigUInt1,
+    bigUInt2,
+    resolveBigUInt,
+    struct,
+    array,
+    join,
+    joinArray,
+    enumName,
+    createEnumNameResolver,
+} = require('./q-types.js');
 const None = struct({
     None: scalar,
 });
@@ -758,9 +769,12 @@ function createResolvers(db) {
             blocks: db.collectionSubscription(db.blocks, Block),
             accounts: db.collectionSubscription(db.accounts, Account),
             transactions: db.collectionSubscription(db.transactions, Transaction),
+        },
+        Mutation: {
         }
     }
 }
+
 module.exports = {
     createResolvers,
     None,

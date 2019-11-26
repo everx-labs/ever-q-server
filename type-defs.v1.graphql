@@ -1300,3 +1300,7 @@ type Subscription {
 	accounts(filter: AccountFilter): Account
 	transactions(filter: TransactionFilter): Transaction
 }
+
+type Mutation {
+	postMessage(id: String, body: String): Boolean
+}
