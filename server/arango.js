@@ -18,8 +18,8 @@
 import { Database, DocumentCollection } from 'arangojs';
 import arangochair from 'arangochair';
 import { PubSub, withFilter } from 'apollo-server';
-import { QLContext } from "./arango-types";
-import type { QType } from "./arango-types";
+import { QParams } from "./q-types";
+import type { QType } from "./q-types";
 import type { QConfig } from './config'
 import type { QLog } from "./logs";
 import QLogs from './logs'
@@ -111,7 +111,7 @@ export default class Arango {
                     const filters = this.filtersByCollectionName.get(name);
                     if (filters) {
                         for (const filter of filters.filtersById.values()) {
-                            if (filters.docType.test(doc, filter || {})) {
+                            if (filters.docType.test(null, doc, filter || {})) {
                                 this.pubsub.publish(name, { [name]: doc });
                                 break;
                             }
@@ -168,7 +168,7 @@ export default class Arango {
                 },
                 (data, args) => {
                     try {
-                        return docType.test(data[collection.name], args.filter || {});
+                        return docType.test(null, data[collection.name], args.filter || {});
                     } catch(error) {
                         console.error('[Subscription] doc test failed', data, error);
                         throw error;
@@ -194,9 +194,9 @@ export default class Arango {
     async fetchDocs(collection: DocumentCollection, args: any, docType: QType) {
         return this.wrap(async () => {
             const filter = args.filter || {};
-            const context = new QLContext();
+            const params = new QParams();
             const filterSection = Object.keys(filter).length > 0
-                ? `FILTER ${docType.ql(context, 'doc', filter)}`
+                ? `FILTER ${docType.ql(params, 'doc', filter)}`
                 : '';
             const orderBy = (args.orderBy || [])
                 .map((field) => {
@@ -217,7 +217,7 @@ export default class Arango {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
-            const cursor = await this.db.query({ query, bindVars: context.vars });
+            const cursor = await this.db.query({ query, bindVars: params.values });
             return await cursor.all();
         });
     }

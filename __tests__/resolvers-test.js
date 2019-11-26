@@ -1,6 +1,12 @@
-
-import { convertBigUInt, QLContext, resolveBigUInt } from "../server/arango-types";
-import { Transaction, Account } from "../server/arango-resolvers.v2";
+import Arango from "../server/arango";
+import QLogs from "../server/logs";
+import { convertBigUInt, QParams, resolveBigUInt } from "../server/q-types";
+import {
+    Transaction,
+    Account,
+    Message,
+    createResolvers
+} from "../server/q-resolvers.v2";
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, 0x1)).toEqual('11');
@@ -32,60 +38,72 @@ test("BigUInt", () => {
     expect(resolveBigUInt(2, '1110000000000000000')).toEqual('0x10000000000000000');
 });
 
-const resolvers = require('../server/arango-resolvers.v1');
-
 test("Filter test", () => {
     const filter = {
         "id": { "eq": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2" },
-        "storage": {
-            "state": {
-                "AccountActive": {
-                    "code": { "gt": "" },
-                    "data": { "gt": "" }
-                }
-            }
-        }
+        "acc_type": { eq: 3 },
     };
     const doc = {
         "id": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
         "_key": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
-        "storage": {
-            "state": {
-                "AccountActive": {
-                    "code": "1",
-                    "data": "1",
-                },
-                "AccountUninit": {
-                    "None": null,
-                    "__typename": "None"
-                },
-                "__typename": "AccountStorageStateAccountUninitVariant"
-            }, "__typename": "AccountStorage"
-        }, "__typename": "Account"
+        "acc_type": 3,
     };
-
-    console.log('>>>', resolvers.Account.test(doc, filter));
+    expect(Account.test(null, doc, filter)).toBeTruthy();
 });
 
 test("Generate AQL", () => {
-    const context = new QLContext();
-    let ql = Transaction.ql(context, 'doc', { in_msg: { ne: "1" } });
+    const params = new QParams();
+    let ql = Transaction.ql(params, 'doc', { in_msg: { ne: "1" } });
     expect(ql).toEqual(`doc.in_msg != @v1`);
-    expect(context.vars.v1).toEqual('1');
+    expect(params.values.v1).toEqual('1');
 
-    context.clear();
-    ql = Transaction.ql(context, 'doc', { out_msgs: { any: { ne: "1" } } });
+    params.clear();
+    ql = Transaction.ql(params, 'doc', { out_msgs: { any: { ne: "1" } } });
     expect(ql).toEqual(`LENGTH(doc.out_msgs[* FILTER CURRENT != @v1]) > 0`);
-    expect(context.vars.v1).toEqual('1');
+    expect(params.values.v1).toEqual('1');
 
-    context.clear();
-    ql = Account.ql(context, 'doc', { id: { gt: 'fff' } });
+    params.clear();
+    ql = Account.ql(params, 'doc', { id: { gt: 'fff' } });
     expect(ql).toEqual(`TO_STRING(doc._key) > @v1`);
-    expect(context.vars.v1).toEqual('fff');
+    expect(params.values.v1).toEqual('fff');
 
-    context.clear();
-    ql = Account.ql(context, 'doc', { id: { gt: 'fff' }, last_paid: { ge: 20 } });
+    params.clear();
+    ql = Account.ql(params, 'doc', { id: { gt: 'fff' }, last_paid: { ge: 20 } });
     expect(ql).toEqual(`(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)`);
-    expect(context.vars.v1).toEqual('fff');
-    expect(context.vars.v2).toEqual(20);
+    expect(params.values.v1).toEqual('fff');
+    expect(params.values.v2).toEqual(20);
+});
+
+test("Enum Names", () => {
+    const db = new Arango({ database: { server: 'http://0.0.0.0', name: 'blockchain' } }, new QLogs());
+    const params = new QParams();
+    const resolvers = createResolvers(db);
+    const m1 = {
+        msg_type: 1,
+    };
+    const m2 = {
+        ...m1,
+        msg_type_name: resolvers.Message.msg_type_name(m1),
+    };
+    expect(m2.msg_type_name).toEqual('ExtIn');
+    expect(resolvers.Message.msg_type_name({ msg_type: 0 })).toEqual('Internal');
+
+    let ql = Message.ql(params, 'doc', { msg_type_name: { eq: "ExtIn" } });
+    expect(ql).toEqual(`doc.msg_type == @v1`);
+    expect(params.values.v1).toEqual(1);
+
+    params.clear();
+    ql = Message.ql(params, 'doc', { msg_type_name: { eq: "Internal" } });
+    expect(ql).toEqual(`doc.msg_type == @v1`);
+    expect(params.values.v1).toEqual(0);
+
+    expect(Message.test(null, m1, { msg_type_name: { eq: "ExtIn" } })).toBeTruthy();
+    expect(Message.test(null, { msg_type: 0 }, { msg_type_name: { eq: "Internal" } })).toBeTruthy();
+
+    params.clear();
+    ql = Message.ql(params, 'doc', { msg_type_name: { in: ["Internal"] } });
+    expect(ql).toEqual(`doc.msg_type == @v1`);
+    expect(params.values.v1).toEqual(0);
+
+    expect(Message.test(null, m1, { msg_type_name: { in: ["ExtIn"] } })).toBeTruthy();
 });

@@ -42,6 +42,112 @@ input FloatFilter {
 	notIn: [Float]
 }
 
+enum InMsgTypeEnum {
+    External
+    Ihr
+    Immediately
+    Final
+    Transit
+    DiscardedFinal
+    DiscardedTransit
+}
+
+enum OutMsgTypeEnum {
+    External
+    Immediately
+    OutMsgNew
+    Transit
+    DequeueImmediately
+    Dequeue
+    TransitRequired
+    None
+}
+
+enum MessageTypeEnum {
+    Internal
+    ExtIn
+    ExtOut
+}
+
+enum MessageProcessingStatusEnum {
+    Unknown
+    Queued
+    Processing
+    Preliminary
+    Proposed
+    Finalized
+    Refused
+    Transiting
+}
+
+enum BlockProcessingStatusEnum {
+    Unknown
+    Proposed
+    Finalized
+    Refused
+}
+
+enum SplitTypeEnum {
+    None
+    Split
+    Merge
+}
+
+enum AccountTypeEnum {
+    Uninit
+    Active
+    Frozen
+}
+
+enum TransactionTypeEnum {
+    Ordinary
+    Storage
+    Tick
+    Tock
+    SplitPrepare
+    SplitInstall
+    MergePrepare
+    MergeInstall
+}
+
+enum TransactionProcessingStatusEnum {
+    Unknown
+    Preliminary
+    Proposed
+    Finalized
+    Refused
+}
+
+enum AccountStatusEnum {
+    Uninit
+    Active
+    Frozen
+    NonExist
+}
+
+enum AccountStatusChangeEnum {
+    Unchanged
+    Frozen
+    Deleted
+}
+
+enum ComputeTypeEnum {
+    Skipped
+    Vm
+}
+
+enum SkipReasonEnum {
+    NoState
+    BadState
+    NoGas
+}
+
+enum BounceTypeEnum {
+    NegFunds
+    NoFunds
+    Ok
+}
+
 type ExtBlkRef {
 	end_lt: String
 	seq_no: Float
@@ -58,6 +164,7 @@ type MsgEnvelope {
 
 type InMsg {
 	msg_type: Int
+	msg_type_name: InMsgTypeEnum
 	msg: String
 	transaction: String
 	ihr_fee: String
@@ -72,6 +179,7 @@ type InMsg {
 
 type OutMsg {
 	msg_type: Int
+	msg_type_name: OutMsgTypeEnum
 	msg: String
 	transaction: String
 	out_msg: MsgEnvelope
@@ -88,7 +196,9 @@ type MessageValueOther {
 type Message {
 	id: String
 	msg_type: Int
+	msg_type_name: MessageTypeEnum
 	status: Int
+	status_name: MessageProcessingStatusEnum
 	block_id: String
 	body: String
 	split_depth: Int
@@ -221,6 +331,7 @@ type BlockMasterShardHashesDescr {
 	min_ref_mc_seqno: Float
 	gen_utime: Float
 	split_type: Int
+	split_type_name: SplitTypeEnum
 	split: Float
 	fees_collected: String
 	fees_collected_other: [BlockMasterShardHashesDescrFeesCollectedOther]
@@ -269,6 +380,7 @@ type BlockMaster {
 type Block {
 	id: String
 	status: Int
+	status_name: BlockProcessingStatusEnum
 	global_id: Float
 	want_split: Boolean
 	seq_no: Float
@@ -309,6 +421,7 @@ type AccountBalanceOther {
 type Account {
 	id: String
 	acc_type: Int
+	acc_type_name: AccountTypeEnum
 	last_paid: Float
 	due_payment: String
 	last_trans_lt: String
@@ -333,6 +446,7 @@ type TransactionStorage {
 	storage_fees_collected: String
 	storage_fees_due: String
 	status_change: Int
+	status_change_name: AccountStatusChangeEnum
 }
 
 type TransactionCreditCreditOther {
@@ -348,7 +462,9 @@ type TransactionCredit {
 
 type TransactionCompute {
 	compute_type: Int
+	compute_type_name: ComputeTypeEnum
 	skipped_reason: Int
+	skipped_reason_name: SkipReasonEnum
 	success: Boolean
 	msg_state_used: Boolean
 	account_activated: Boolean
@@ -369,6 +485,7 @@ type TransactionAction {
 	valid: Boolean
 	no_funds: Boolean
 	status_change: Int
+	status_change_name: AccountStatusChangeEnum
 	total_fwd_fees: String
 	total_action_fees: String
 	result_code: Int
@@ -384,6 +501,7 @@ type TransactionAction {
 
 type TransactionBounce {
 	bounce_type: Int
+	bounce_type_name: BounceTypeEnum
 	msg_size_cells: Float
 	msg_size_bits: Float
 	req_fwd_fees: String
@@ -401,7 +519,9 @@ type TransactionSplitInfo {
 type Transaction {
 	id: String
 	tr_type: Int
+	tr_type_name: TransactionTypeEnum
 	status: Int
+	status_name: TransactionProcessingStatusEnum
 	block_id: String
 	account_addr: String
 	lt: String
@@ -410,7 +530,9 @@ type Transaction {
 	now: Float
 	outmsg_cnt: Int
 	orig_status: Int
+	orig_status_name: AccountStatusEnum
 	end_status: Int
+	end_status_name: AccountStatusEnum
 	in_msg: String
 	in_message: Message
 	out_msgs: [String]
@@ -449,8 +571,20 @@ input MsgEnvelopeFilter {
 	fwd_fee_remaining: StringFilter
 }
 
+input InMsgTypeEnumFilter {
+	eq: InMsgTypeEnum
+	ne: InMsgTypeEnum
+	gt: InMsgTypeEnum
+	lt: InMsgTypeEnum
+	ge: InMsgTypeEnum
+	le: InMsgTypeEnum
+	in: [InMsgTypeEnum]
+	notIn: [InMsgTypeEnum]
+}
+
 input InMsgFilter {
 	msg_type: IntFilter
+	msg_type_name: InMsgTypeEnumFilter
 	msg: StringFilter
 	transaction: StringFilter
 	ihr_fee: StringFilter
@@ -463,8 +597,20 @@ input InMsgFilter {
 	proof_delivered: StringFilter
 }
 
+input OutMsgTypeEnumFilter {
+	eq: OutMsgTypeEnum
+	ne: OutMsgTypeEnum
+	gt: OutMsgTypeEnum
+	lt: OutMsgTypeEnum
+	ge: OutMsgTypeEnum
+	le: OutMsgTypeEnum
+	in: [OutMsgTypeEnum]
+	notIn: [OutMsgTypeEnum]
+}
+
 input OutMsgFilter {
 	msg_type: IntFilter
+	msg_type_name: OutMsgTypeEnumFilter
 	msg: StringFilter
 	transaction: StringFilter
 	out_msg: MsgEnvelopeFilter
@@ -483,10 +629,34 @@ input MessageValueOtherArrayFilter {
 	all: MessageValueOtherFilter
 }
 
+input MessageTypeEnumFilter {
+	eq: MessageTypeEnum
+	ne: MessageTypeEnum
+	gt: MessageTypeEnum
+	lt: MessageTypeEnum
+	ge: MessageTypeEnum
+	le: MessageTypeEnum
+	in: [MessageTypeEnum]
+	notIn: [MessageTypeEnum]
+}
+
+input MessageProcessingStatusEnumFilter {
+	eq: MessageProcessingStatusEnum
+	ne: MessageProcessingStatusEnum
+	gt: MessageProcessingStatusEnum
+	lt: MessageProcessingStatusEnum
+	ge: MessageProcessingStatusEnum
+	le: MessageProcessingStatusEnum
+	in: [MessageProcessingStatusEnum]
+	notIn: [MessageProcessingStatusEnum]
+}
+
 input MessageFilter {
 	id: StringFilter
 	msg_type: IntFilter
+	msg_type_name: MessageTypeEnumFilter
 	status: IntFilter
+	status_name: MessageProcessingStatusEnumFilter
 	block_id: StringFilter
 	body: StringFilter
 	split_depth: IntFilter
@@ -656,6 +826,17 @@ input BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter {
 	all: BlockMasterShardHashesDescrFundsCreatedOtherFilter
 }
 
+input SplitTypeEnumFilter {
+	eq: SplitTypeEnum
+	ne: SplitTypeEnum
+	gt: SplitTypeEnum
+	lt: SplitTypeEnum
+	ge: SplitTypeEnum
+	le: SplitTypeEnum
+	in: [SplitTypeEnum]
+	notIn: [SplitTypeEnum]
+}
+
 input BlockMasterShardHashesDescrFilter {
 	seq_no: FloatFilter
 	reg_mc_seqno: FloatFilter
@@ -674,6 +855,7 @@ input BlockMasterShardHashesDescrFilter {
 	min_ref_mc_seqno: FloatFilter
 	gen_utime: FloatFilter
 	split_type: IntFilter
+	split_type_name: SplitTypeEnumFilter
 	split: FloatFilter
 	fees_collected: StringFilter
 	fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter
@@ -759,9 +941,21 @@ input BlockAccountBlocksArrayFilter {
 	all: BlockAccountBlocksFilter
 }
 
+input BlockProcessingStatusEnumFilter {
+	eq: BlockProcessingStatusEnum
+	ne: BlockProcessingStatusEnum
+	gt: BlockProcessingStatusEnum
+	lt: BlockProcessingStatusEnum
+	ge: BlockProcessingStatusEnum
+	le: BlockProcessingStatusEnum
+	in: [BlockProcessingStatusEnum]
+	notIn: [BlockProcessingStatusEnum]
+}
+
 input BlockFilter {
 	id: StringFilter
 	status: IntFilter
+	status_name: BlockProcessingStatusEnumFilter
 	global_id: FloatFilter
 	want_split: BooleanFilter
 	seq_no: FloatFilter
@@ -804,9 +998,21 @@ input AccountBalanceOtherArrayFilter {
 	all: AccountBalanceOtherFilter
 }
 
+input AccountTypeEnumFilter {
+	eq: AccountTypeEnum
+	ne: AccountTypeEnum
+	gt: AccountTypeEnum
+	lt: AccountTypeEnum
+	ge: AccountTypeEnum
+	le: AccountTypeEnum
+	in: [AccountTypeEnum]
+	notIn: [AccountTypeEnum]
+}
+
 input AccountFilter {
 	id: StringFilter
 	acc_type: IntFilter
+	acc_type_name: AccountTypeEnumFilter
 	last_paid: FloatFilter
 	due_payment: StringFilter
 	last_trans_lt: StringFilter
@@ -827,10 +1033,22 @@ input TransactionTotalFeesOtherFilter {
 	value: StringFilter
 }
 
+input AccountStatusChangeEnumFilter {
+	eq: AccountStatusChangeEnum
+	ne: AccountStatusChangeEnum
+	gt: AccountStatusChangeEnum
+	lt: AccountStatusChangeEnum
+	ge: AccountStatusChangeEnum
+	le: AccountStatusChangeEnum
+	in: [AccountStatusChangeEnum]
+	notIn: [AccountStatusChangeEnum]
+}
+
 input TransactionStorageFilter {
 	storage_fees_collected: StringFilter
 	storage_fees_due: StringFilter
 	status_change: IntFilter
+	status_change_name: AccountStatusChangeEnumFilter
 }
 
 input TransactionCreditCreditOtherFilter {
@@ -849,9 +1067,33 @@ input TransactionCreditFilter {
 	credit_other: TransactionCreditCreditOtherArrayFilter
 }
 
+input ComputeTypeEnumFilter {
+	eq: ComputeTypeEnum
+	ne: ComputeTypeEnum
+	gt: ComputeTypeEnum
+	lt: ComputeTypeEnum
+	ge: ComputeTypeEnum
+	le: ComputeTypeEnum
+	in: [ComputeTypeEnum]
+	notIn: [ComputeTypeEnum]
+}
+
+input SkipReasonEnumFilter {
+	eq: SkipReasonEnum
+	ne: SkipReasonEnum
+	gt: SkipReasonEnum
+	lt: SkipReasonEnum
+	ge: SkipReasonEnum
+	le: SkipReasonEnum
+	in: [SkipReasonEnum]
+	notIn: [SkipReasonEnum]
+}
+
 input TransactionComputeFilter {
 	compute_type: IntFilter
+	compute_type_name: ComputeTypeEnumFilter
 	skipped_reason: IntFilter
+	skipped_reason_name: SkipReasonEnumFilter
 	success: BooleanFilter
 	msg_state_used: BooleanFilter
 	account_activated: BooleanFilter
@@ -872,6 +1114,7 @@ input TransactionActionFilter {
 	valid: BooleanFilter
 	no_funds: BooleanFilter
 	status_change: IntFilter
+	status_change_name: AccountStatusChangeEnumFilter
 	total_fwd_fees: StringFilter
 	total_action_fees: StringFilter
 	result_code: IntFilter
@@ -885,8 +1128,20 @@ input TransactionActionFilter {
 	total_msg_size_bits: FloatFilter
 }
 
+input BounceTypeEnumFilter {
+	eq: BounceTypeEnum
+	ne: BounceTypeEnum
+	gt: BounceTypeEnum
+	lt: BounceTypeEnum
+	ge: BounceTypeEnum
+	le: BounceTypeEnum
+	in: [BounceTypeEnum]
+	notIn: [BounceTypeEnum]
+}
+
 input TransactionBounceFilter {
 	bounce_type: IntFilter
+	bounce_type_name: BounceTypeEnumFilter
 	msg_size_cells: FloatFilter
 	msg_size_bits: FloatFilter
 	req_fwd_fees: StringFilter
@@ -911,10 +1166,45 @@ input TransactionTotalFeesOtherArrayFilter {
 	all: TransactionTotalFeesOtherFilter
 }
 
+input TransactionTypeEnumFilter {
+	eq: TransactionTypeEnum
+	ne: TransactionTypeEnum
+	gt: TransactionTypeEnum
+	lt: TransactionTypeEnum
+	ge: TransactionTypeEnum
+	le: TransactionTypeEnum
+	in: [TransactionTypeEnum]
+	notIn: [TransactionTypeEnum]
+}
+
+input TransactionProcessingStatusEnumFilter {
+	eq: TransactionProcessingStatusEnum
+	ne: TransactionProcessingStatusEnum
+	gt: TransactionProcessingStatusEnum
+	lt: TransactionProcessingStatusEnum
+	ge: TransactionProcessingStatusEnum
+	le: TransactionProcessingStatusEnum
+	in: [TransactionProcessingStatusEnum]
+	notIn: [TransactionProcessingStatusEnum]
+}
+
+input AccountStatusEnumFilter {
+	eq: AccountStatusEnum
+	ne: AccountStatusEnum
+	gt: AccountStatusEnum
+	lt: AccountStatusEnum
+	ge: AccountStatusEnum
+	le: AccountStatusEnum
+	in: [AccountStatusEnum]
+	notIn: [AccountStatusEnum]
+}
+
 input TransactionFilter {
 	id: StringFilter
 	tr_type: IntFilter
+	tr_type_name: TransactionTypeEnumFilter
 	status: IntFilter
+	status_name: TransactionProcessingStatusEnumFilter
 	block_id: StringFilter
 	account_addr: StringFilter
 	lt: StringFilter
@@ -923,7 +1213,9 @@ input TransactionFilter {
 	now: FloatFilter
 	outmsg_cnt: IntFilter
 	orig_status: IntFilter
+	orig_status_name: AccountStatusEnumFilter
 	end_status: IntFilter
+	end_status_name: AccountStatusEnumFilter
 	in_msg: StringFilter
 	in_message: MessageFilter
 	out_msgs: StringArrayFilter
@@ -970,4 +1262,8 @@ type Subscription {
 	blocks(filter: BlockFilter): Block
 	accounts(filter: AccountFilter): Account
 	transactions(filter: TransactionFilter): Transaction
+}
+
+type Mutation {
+	postMessage(id: String, body: String): Boolean
 }

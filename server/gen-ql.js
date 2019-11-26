@@ -18,16 +18,22 @@ type DbJoin = {
 
 type DbType = {
     name: string,
-    category: $Keys<typeof DbTypeCategory>,
-    collection?: string,
     fields: DbField[],
+    category: 'unresolved' | 'scalar' | 'union' | 'struct',
+    collection?: string,
+}
+
+type IntEnumDef = {
+    name: string,
+    values: { [string]: number },
 }
 
 type DbField = {
     name: string,
+    type: DbType,
     arrayDepth: number,
     join?: DbJoin,
-    type: DbType,
+    enumDef?: IntEnumDef,
 }
 
 function scalarType(name: string): DbType {
@@ -55,9 +61,38 @@ function unresolvedType(name: string): DbType {
     }
 }
 
-type IntEnumDef = {
-    name: string,
-    values: { [string]: number },
+function isLowerCased(s: string): boolean {
+    const l = s.toLowerCase();
+    const u = s.toUpperCase();
+    return (u !== l) && (s === l);
+}
+
+function isUpperCased(s: string): boolean {
+    const l = s.toLowerCase();
+    const u = s.toUpperCase();
+    return (u !== l) && (s === u);
+}
+
+function toAllCaps(s: string): string {
+    let result = '';
+    for (let i = 0; i < s.length; i += 1) {
+        if ((i > 0) && (s[i - 1] !== '_') && isLowerCased(s[i - 1]) && isUpperCased(s[i])) {
+            result += '_';
+        }
+        result += s[i];
+    }
+    return result.toUpperCase();
+}
+
+function toEnumStyle(s: string): string {
+    return `${s.substr(0, 1).toUpperCase()}${s.substr(1)}`;
+}
+
+function stringifyEnumValues(values: { [string]: number }): string {
+    const fields = Object.entries(values).map(([name, value]) => {
+        return `${toEnumStyle(name)}: ${(value: any)}`;
+    });
+    return `{ ${fields.join(', ')} }`;
 }
 
 function main(schemaDef: TypeDef) {
@@ -65,14 +100,6 @@ function main(schemaDef: TypeDef) {
     let dbTypes: DbType[] = [];
     let lastReportedType: string = '';
     let enumTypes: Map<string, IntEnumDef> = new Map();
-
-    function reportEnumType(schemaType: SchemaType) {
-        if (!(schemaType._ && schemaType._.enum)) {
-            return;
-        }
-        const enumDef: IntEnumDef = schemaType._.enum;
-        enumTypes.set(enumDef.name, enumDef);
-    }
 
     function reportType(name: string, field: string, type: string) {
         if (name !== lastReportedType) {
@@ -88,7 +115,6 @@ function main(schemaDef: TypeDef) {
         schemaField: SchemaMember<SchemaType>,
     ): DbField {
         let schemaType = schemaField;
-        reportEnumType(schemaType);
         const field: DbField = {
             name: schemaField.name,
             arrayDepth: 0,
@@ -97,6 +123,11 @@ function main(schemaDef: TypeDef) {
         while (schemaType.array) {
             field.arrayDepth += 1;
             schemaType = schemaType.array;
+        }
+        const enumDef: ?IntEnumDef = (schemaType._ && schemaType._.enum) || null;
+        if (enumDef) {
+            field.enumDef = enumDef;
+            enumTypes.set(enumDef.name, enumDef);
         }
         const join = (schemaType: any)._.join;
         if (join) {
@@ -159,7 +190,7 @@ function main(schemaDef: TypeDef) {
     ) {
         const struct = schemaType.union || schemaType.struct;
         if (!struct) {
-            console.log('>>>', `?? ${name}: ${JSON.stringify(schemaType).substr(0, 20)}`);
+            console.log('>>>', `?? ${name}: ${JSON.stringify(schemaType).substr(0, 200)}`);
             return;
         }
         const type: DbType = {
@@ -251,6 +282,17 @@ function main(schemaDef: TypeDef) {
         });
     }
 
+    function genQLEnumTypes() {
+        for (const enumDef: IntEnumDef of enumTypes.values()) {
+            ql.writeLn(`enum ${enumDef.name}Enum {`);
+            Object.keys(enumDef.values).forEach((name) => {
+                ql.writeLn(`    ${toEnumStyle(name)}`);
+            });
+            ql.writeLn(`}`);
+            ql.writeLn();
+        }
+    }
+
     function genQLTypeDeclaration(type: DbType) {
         if (type.category === DbTypeCategory.union) {
             genQLTypeDeclarationsForUnionVariants(type);
@@ -267,6 +309,10 @@ function main(schemaDef: TypeDef) {
                     field.type.name +
                     ']'.repeat(field.arrayDepth);
                 ql.writeLn(`\t${field.name}: ${typeDeclaration}`);
+                const enumDef = field.enumDef;
+                if (enumDef) {
+                    ql.writeLn(`\t${field.name}_name: ${enumDef.name}Enum`);
+                }
             });
             ql.writeLn(`}`);
         }
@@ -299,15 +345,31 @@ function main(schemaDef: TypeDef) {
         });
     }
 
+    function genQLFiltersForEnumNameFields(type: DbType, qlNames: Set<string>) {
+        type.fields.forEach((field) => {
+            const enumDef = field.enumDef;
+            if (enumDef) {
+                preventTwice(`${enumDef.name}EnumFilter`, qlNames, () => {
+                    genQLScalarTypesFilter(`${enumDef.name}Enum`);
+                });
+            }
+        });
+    }
+
     function genQLFilter(type: DbType, qlNames: Set<string>) {
         if (type.fields.length === 0) {
             return;
         }
         genQLFiltersForArrayFields(type, qlNames);
+        genQLFiltersForEnumNameFields(type, qlNames);
         ql.writeLn(`input ${type.name}Filter {`);
         type.fields.forEach((field) => {
             const typeDeclaration = field.type.name + "Array".repeat(field.arrayDepth);
             ql.writeLn(`\t${field.name}: ${typeDeclaration}Filter`);
+            const enumDef = field.enumDef;
+            if (enumDef) {
+                ql.writeLn(`\t${field.name}_name: ${enumDef.name}EnumFilter`);
+            }
         });
         ql.writeLn(`}`);
         ql.writeLn();
@@ -359,11 +421,19 @@ function main(schemaDef: TypeDef) {
     }
 
 
-    function getScalarResolverName(type: DbType): string {
-        if (type === scalarTypes.uint64) {
+    function genQLMutation() {
+        ql.writeLn('');
+        ql.writeLn('type Mutation {');
+        ql.writeLn('\tpostMessage(id: String, body: String): Boolean');
+        ql.writeLn('}');
+    }
+
+
+    function getScalarResolverName(field: DbField): string {
+        if (field.type === scalarTypes.uint64) {
             return 'bigUInt1';
         }
-        if (type === scalarTypes.uint1024) {
+        if (field.type === scalarTypes.uint1024) {
             return 'bigUInt2';
         }
         return 'scalar';
@@ -376,7 +446,7 @@ function main(schemaDef: TypeDef) {
                 const filterName = `${itemTypeName}Array`;
                 preventTwice(filterName, jsNames, () => {
                     const itemResolverName = (i === 0 && field.type.category === DbTypeCategory.scalar)
-                        ? getScalarResolverName(field.type)
+                        ? getScalarResolverName(field)
                         : itemTypeName;
                     js.writeBlockLn(`
                 const ${filterName} = array(${itemResolverName});
@@ -401,12 +471,16 @@ function main(schemaDef: TypeDef) {
                     field.type.name +
                     'Array'.repeat(field.arrayDepth);
             } else if (field.type.category === DbTypeCategory.scalar) {
-                typeDeclaration = getScalarResolverName(field.type);
+                typeDeclaration = getScalarResolverName(field);
             } else if (field.type.fields.length > 0) {
                 typeDeclaration = field.type.name;
             }
             if (typeDeclaration) {
                 js.writeLn(`    ${field.name}: ${typeDeclaration},`);
+                const enumDef = field.enumDef;
+                if (enumDef) {
+                    js.writeLn(`    ${field.name}_name: enumName('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
+                }
             }
         });
         js.writeBlockLn(`
@@ -459,9 +533,11 @@ function main(schemaDef: TypeDef) {
     function genJSCustomResolvers(type: DbType) {
         const joinFields = type.fields.filter(x => !!x.join);
         const bigUIntFields = type.fields.filter((x: DbField) => (x.type === scalarTypes.uint64) || (x.type === scalarTypes.uint1024));
+        const enumFields = type.fields.filter(x => x.enumDef);
         const customResolverRequired = type.collection
             || joinFields.length > 0
-            || bigUIntFields.length > 0;
+            || bigUIntFields.length > 0
+            || enumFields.length > 0;
         if (!customResolverRequired) {
             return;
         }
@@ -496,6 +572,12 @@ function main(schemaDef: TypeDef) {
             js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name});`);
             js.writeLn(`            },`);
         });
+        enumFields.forEach((field) => {
+            const enumDef = field.enumDef;
+            if (enumDef) {
+                js.writeLn(`            ${field.name}_name: createEnumNameResolver('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
+            }
+        });
         js.writeLn(`        },`);
     }
 
@@ -511,6 +593,7 @@ function main(schemaDef: TypeDef) {
         // QL
 
         ['String', 'Boolean', 'Int', 'Float'].forEach(genQLScalarTypesFilter);
+        genQLEnumTypes();
         types.forEach(type => genQLTypeDeclaration(type));
         const qlArrayFilters = new Set<string>();
         types.forEach(type => genQLFilter(type, qlArrayFilters));
@@ -518,11 +601,23 @@ function main(schemaDef: TypeDef) {
         const collections = types.filter(t => !!t.collection);
         genQLQueries(collections);
         genQLSubscriptions(collections);
+        genQLMutation();
 
         // JS
 
         js.writeBlockLn(`
-        const { scalar, bigUInt1, bigUInt2, resolveBigUInt, struct, array, join, joinArray } = require('./arango-types.js');
+        const {
+            scalar,
+            bigUInt1,
+            bigUInt2,
+            resolveBigUInt,
+            struct,
+            array,
+            join,
+            joinArray,
+            enumName,
+            createEnumNameResolver,
+        } = require('./q-types.js');
         `);
         const jsArrayFilters = new Set<string>();
         types.forEach(type => genJSFilter(type, jsArrayFilters));
@@ -545,9 +640,12 @@ function main(schemaDef: TypeDef) {
             js.writeLn(`            ${type.collection || ''}: db.collectionSubscription(db.${type.collection || ''}, ${type.name}),`)
         });
         js.writeBlockLn(`
+                },
+                Mutation: {
                 }
             }
         }
+
         `);
 
         js.writeBlockLn(`

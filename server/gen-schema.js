@@ -16,7 +16,7 @@
 
 import schemaDefV1 from './db.schema.v1.js';
 import schemaDefV2 from './db.schema.v2.js';
-import gen from './gen-ql-js.js';
+import gen from './gen-ql.js';
 const fs = require('fs');
 
 function genSchema(def, suffix) {
@@ -24,7 +24,7 @@ function genSchema(def, suffix) {
 
 
     fs.writeFileSync(`./type-defs${suffix}.graphql`, ql);
-    fs.writeFileSync(`./server/arango-resolvers${suffix}.js`, js);
+    fs.writeFileSync(`./server/q-resolvers${suffix}.js`, js);
 }
 
 genSchema(schemaDefV1, '.v1');

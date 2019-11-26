@@ -13,29 +13,33 @@
  * See the License for the specific TON DEV software governing permissions and
  * limitations under the License.
  */
+
 // @flow
 
 
 declare function BigInt(a: any): any;
 
-export class QLContext {
-    vars: { [string]: any };
-    varCount: number;
+/**
+ * Query parameters
+ */
+export class QParams {
+    values: { [string]: any };
+    count: number;
 
     constructor() {
-        this.varCount = 0;
-        this.vars = {};
+        this.count = 0;
+        this.values = {};
     }
 
     clear() {
-        this.varCount = 0;
-        this.vars = {};
+        this.count = 0;
+        this.values = {};
     }
 
-    bindVar(value: any): string {
-        this.varCount += 1;
-        const name = `v${this.varCount.toString()}`;
-        this.vars[name] = value;
+    add(value: any): string {
+        this.count += 1;
+        const name = `v${this.count.toString()}`;
+        this.values[name] = value;
         return name;
     }
 }
@@ -53,7 +57,7 @@ type QType = {
      * @param {any} filter Filter that will be applied to this field
      * @return {string} Arango QL condition text
      */
-    ql: (context: QLContext, path: string, filter: any) => string,
+    ql: (params: QParams, path: string, filter: any) => string,
     /**
      * Tests value in document from Arango DB against specified filter.
      *
@@ -61,7 +65,7 @@ type QType = {
      * @param {any} filter Filter used to test a value
      * @return true if value matches filter
      */
-    test: (value: any, filter: any) => boolean,
+    test: (parent: any, value: any, filter: any) => boolean,
 }
 
 
@@ -128,9 +132,9 @@ function fixKeyPath(path: string): string {
     return path.endsWith('._key') ? `TO_STRING(${path})` : path;
 }
 
-function qlOp(context: QLContext, path: string, op: string, filter: any): string {
-    const varName = context.bindVar(filter);
-    return `${fixKeyPath(path)} ${op} @${varName}`;
+function qlOp(params: QParams, path: string, op: string, filter: any): string {
+    const paramName = params.add(filter);
+    return `${fixKeyPath(path)} ${op} @${paramName}`;
 }
 
 function qlCombine(conditions: string[], op: string, defaultConditions: string): string {
@@ -143,105 +147,106 @@ function qlCombine(conditions: string[], op: string, defaultConditions: string):
     return '(' + conditions.join(`) ${op} (`) + ')';
 }
 
-function qlIn(context: QLContext, path: string, filter: any): string {
-    const conditions = filter.map(value => qlOp(context, fixKeyPath(path), '==', value));
+function qlIn(params: QParams, path: string, filter: any): string {
+    const conditions = filter.map(value => qlOp(params, fixKeyPath(path), '==', value));
     return qlCombine(conditions, 'OR', 'false');
 }
 
 // Scalars
 
 const scalarEq: QType = {
-    ql(context: QLContext, path, filter) {
-        return qlOp(context, path, '==', filter);
+    ql(params: QParams, path, filter) {
+        return qlOp(params, path, '==', filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return value === filter;
     },
 };
 
 const scalarNe: QType = {
-    ql(context, path, filter) {
-        return qlOp(context, path, '!=', filter);
+    ql(params, path, filter) {
+        return qlOp(params, path, '!=', filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return value !== filter;
     },
 };
 
 const scalarLt: QType = {
-    ql(context, path, filter) {
-        return qlOp(context, path, '<', filter);
+    ql(params, path, filter) {
+        return qlOp(params, path, '<', filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return value < filter;
     },
 };
 
 const scalarLe: QType = {
-    ql(context, path, filter) {
-        return qlOp(context, path, '<=', filter);
+    ql(params, path, filter) {
+        return qlOp(params, path, '<=', filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return value <= filter;
     },
 };
 
 const scalarGt: QType = {
-    ql(context, path, filter) {
-        return qlOp(context, path, '>', filter);
+    ql(params, path, filter) {
+        return qlOp(params, path, '>', filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return value > filter;
     },
 };
 
 const scalarGe: QType = {
-    ql(context, path, filter) {
-        return qlOp(context, path, '>=', filter);
+    ql(params, path, filter) {
+        return qlOp(params, path, '>=', filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return value >= filter;
     },
 };
 
 const scalarIn: QType = {
-    ql(context, path, filter) {
-        return qlIn(context, path, filter);
+    ql(params, path, filter) {
+        return qlIn(params, path, filter);
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return filter.includes(value);
     },
 };
 
 const scalarNotIn: QType = {
-    ql(context, path, filter) {
-        return `NOT (${qlIn(context, path, filter)})`;
+    ql(params, path, filter) {
+        return `NOT (${qlIn(params, path, filter)})`;
     },
-    test(value, filter) {
+    test(parent, value, filter) {
         return !filter.includes(value);
     }
 };
 
+const scalarOps = {
+    eq: scalarEq,
+    ne: scalarNe,
+    lt: scalarLt,
+    le: scalarLe,
+    gt: scalarGt,
+    ge: scalarGe,
+    in: scalarIn,
+    notIn: scalarNotIn,
+};
+
 function createScalar(): QType {
-    const fields = {
-        eq: scalarEq,
-        ne: scalarNe,
-        lt: scalarLt,
-        le: scalarLe,
-        gt: scalarGt,
-        ge: scalarGe,
-        in: scalarIn,
-        notIn: scalarNotIn,
-    };
     return {
-        ql(context, path, filter) {
-            return qlFields(path, filter, fields, (op, path, filterKey, filterValue) => {
-                return op.ql(context, path, filterValue);
+        ql(params, path, filter) {
+            return qlFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
+                return op.ql(params, path, filterValue);
             });
         },
-        test(value, filter) {
-            return testFields(value, filter, fields, (op, value, filterKey, filterValue) => {
-                return op.test(value, filterValue);
+        test(parent, value, filter) {
+            return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
+                return op.test(parent, value, filterValue);
             });
         },
     };
@@ -268,25 +273,21 @@ function convertBigUInt(prefixLength: number, value: any): string {
 }
 
 function createBigUInt(prefixLength: number): QType {
-    const fields = {
-        eq: scalarEq,
-        ne: scalarNe,
-        lt: scalarLt,
-        le: scalarLe,
-        gt: scalarGt,
-        ge: scalarGe,
-        in: scalarIn,
-        notIn: scalarNotIn,
-    };
     return {
-        ql(context, path, filter) {
-            return qlFields(path, filter, fields, (op, path, filterKey, filterValue) => {
-                return op.ql(context, path, convertBigUInt(prefixLength, filterValue));
+        ql(params, path, filter) {
+            return qlFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
+                const converted = (op === scalarOps.in || op === scalarOps.notIn)
+                    ? filterValue.map(x => convertBigUInt(prefixLength, x))
+                    : convertBigUInt(prefixLength, filterValue);
+                return op.ql(params, path, converted);
             });
         },
-        test(value, filter) {
-            return testFields(value, filter, fields, (op, value, filterKey, filterValue) => {
-                return op.test(value, convertBigUInt(prefixLength, filterValue));
+        test(parent, value, filter) {
+            return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
+                const converted = (op === scalarOps.in || op === scalarOps.notIn)
+                    ? filterValue.map(x => convertBigUInt(prefixLength, x))
+                    : convertBigUInt(prefixLength, filterValue);
+                return op.test(parent, value, converted);
             });
         },
     };
@@ -300,19 +301,19 @@ const bigUInt2: QType = createBigUInt(2);
 
 function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
     return {
-        ql(context, path, filter) {
+        ql(params, path, filter) {
             return qlFields(path, filter, fields, (fieldType, path, filterKey, filterValue) => {
                 const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                return fieldType.ql(context, combine(path, fieldName), filterValue);
+                return fieldType.ql(params, combine(path, fieldName), filterValue);
             });
         },
-        test(value, filter) {
+        test(parent, value, filter) {
             if (!value) {
                 return false;
             }
             return testFields(value, filter, fields, (fieldType, value, filterKey, filterValue) => {
                 const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                return fieldType.test(value[fieldName], filterValue);
+                return fieldType.test(value, value[fieldName], filterValue);
             });
         }
     }
@@ -323,51 +324,100 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
 function array(itemType: QType): QType {
     const ops = {
         all: {
-            ql(context, path, filter) {
-                const itemQl = itemType.ql(context, 'CURRENT', filter);
+            ql(params, path, filter) {
+                const itemQl = itemType.ql(params, 'CURRENT', filter);
                 return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
             },
-            test(value, filter) {
-                const failedIndex = value.findIndex(x => !itemType.test(x, filter));
+            test(parent, value, filter) {
+                const failedIndex = value.findIndex(x => !itemType.test(parent, x, filter));
                 return failedIndex < 0;
             },
         },
         any: {
-            ql(context, path, filter) {
-                const itemQl = itemType.ql(context, 'CURRENT', filter);
+            ql(params, path, filter) {
+                const itemQl = itemType.ql(params, 'CURRENT', filter);
                 return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
             },
-            test(value, filter) {
-                const succeededIndex = value.findIndex(x => itemType.test(x, filter));
+            test(parent, value, filter) {
+                const succeededIndex = value.findIndex(x => itemType.test(parent, x, filter));
                 return succeededIndex >= 0;
             }
         },
     };
     return {
-        ql(context, path, filter) {
+        ql(params, path, filter) {
             return qlFields(path, filter, ops, (op, path, filterKey, filterValue) => {
-                return op.ql(context, path, filterValue);
+                return op.ql(params, path, filterValue);
             });
         },
-        test(value, filter) {
+        test(parent, value, filter) {
             if (!value) {
                 return false;
             }
             return testFields(value, filter, ops, (op, value, filterKey, filterValue) => {
-                return op.test(value, filterValue);
+                return op.test(parent, value, filterValue);
             });
         }
     }
+}
+
+// Enum Names
+
+function createEnumNamesMap(values: { [string]: number }): Map<number, string> {
+    const names: Map<number, string> = new Map();
+    Object.entries(values).forEach(([name, value]) => {
+        names.set(Number.parseInt((value: any)), name);
+    });
+    return names;
+}
+
+export function enumName(onField: string, values: { [string]: number }): QType {
+    const resolveValue = (name) => {
+        let value = values[name];
+        if (value === undefined) {
+            throw new Error(`Invalid value [${name}] for ${onField}_name`);
+        }
+        return value;
+    };
+
+    return {
+        ql(params, path, filter) {
+            const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
+            return qlFields(on_path, filter, scalarOps, (op, path, filterKey, filterValue) => {
+                const resolved = (op === scalarOps.in || op === scalarOps.notIn)
+                    ? filterValue.map(resolveValue)
+                    : resolveValue(filterValue);
+                return op.ql(params, path, resolved);
+            });
+        },
+        test(parent, value, filter) {
+            return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
+                const resolved = (op === scalarOps.in || op === scalarOps.notIn)
+                    ? filterValue.map(resolveValue)
+                    : resolveValue(filterValue);
+                return op.test(parent, parent[onField], resolved);
+            });
+        },
+    };
+}
+
+export function createEnumNameResolver(onField: string, values: { [string]: number }): (parent) => ?string {
+    const names = createEnumNamesMap(values);
+    return (parent) => {
+        const value = parent[onField];
+        const name = names.get(value);
+        return name !== undefined ? name : null;
+    };
 }
 
 // Joins
 
 function join(onField: string, refCollection: string, refType: QType): QType {
     return {
-        ql(context, path, filter) {
+        ql(params, path, filter) {
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
-            const refQl = refType.ql(context, alias, filter);
+            const refQl = refType.ql(params, alias, filter);
             return `
                 LENGTH(
                     FOR ${alias} IN ${refCollection}
@@ -382,12 +432,12 @@ function join(onField: string, refCollection: string, refType: QType): QType {
 
 function joinArray(onField: string, refCollection: string, refType: QType): QType {
     return {
-        ql(context, path, filter) {
+        ql(params, path, filter) {
             const refFilter = filter.all || filter.any;
             const all = !!filter.all;
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
-            const refQl = refType.ql(context, alias, refFilter);
+            const refQl = refType.ql(params, alias, refFilter);
             return `
                 (LENGTH(${on_path}) > 0)
                 AND (LENGTH(
