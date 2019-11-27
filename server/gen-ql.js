@@ -399,7 +399,12 @@ function main(schemaDef: TypeDef) {
             direction: QueryOrderByDirection
         }
 
+        type Info {
+            version: String
+        }
+        
         type Query {
+            info: Info
         `);
 
         types.forEach((type: DbType) => {
@@ -422,10 +427,17 @@ function main(schemaDef: TypeDef) {
 
 
     function genQLMutation() {
-        ql.writeLn('');
-        ql.writeLn('type Mutation {');
-        ql.writeLn('\tpostMessage(id: String, body: String): Boolean');
-        ql.writeLn('}');
+        ql.writeBlockLn(`
+        
+        input Request {
+            id: String
+            body: String
+        }
+        
+        type Mutation {
+            postRequests(requests: [Request]): [String]
+        }
+        `);
     }
 
 
@@ -623,7 +635,7 @@ function main(schemaDef: TypeDef) {
         types.forEach(type => genJSFilter(type, jsArrayFilters));
 
         js.writeBlockLn(`
-        function createResolvers(db) {
+        function createResolvers(db, postRequests, info) {
             return {
         `);
         types.forEach((type) => {
@@ -631,6 +643,7 @@ function main(schemaDef: TypeDef) {
             genJSTypeResolversForUnion(type);
         });
         js.writeLn('        Query: {');
+        js.writeLn('            info,');
         collections.forEach((type) => {
             js.writeLn(`            ${type.collection || ''}: db.collectionQuery(db.${type.collection || ''}, ${type.name}),`)
         });
@@ -642,6 +655,7 @@ function main(schemaDef: TypeDef) {
         js.writeBlockLn(`
                 },
                 Mutation: {
+                    postRequests,
                 }
             }
         }

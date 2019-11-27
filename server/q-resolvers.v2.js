@@ -443,7 +443,7 @@ const Transaction = struct({
     boc: scalar,
 }, true);
 
-function createResolvers(db) {
+function createResolvers(db, postRequests, info) {
     return {
         ExtBlkRef: {
             end_lt(parent) {
@@ -730,6 +730,7 @@ function createResolvers(db) {
             end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Query: {
+            info,
             messages: db.collectionQuery(db.messages, Message),
             blocks: db.collectionQuery(db.blocks, Block),
             accounts: db.collectionQuery(db.accounts, Account),
@@ -742,6 +743,7 @@ function createResolvers(db) {
             transactions: db.collectionSubscription(db.transactions, Transaction),
         },
         Mutation: {
+            postRequests,
         }
     }
 }
