@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.16.0",
+	"version": "0.17.0",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "server/index.js",
 	"scripts": {
@@ -22,7 +22,8 @@
 		"apollo-server-express": "^2.9.7",
 		"express": "^4.17.1",
 		"commander": "^4.0.0",
-		"@babel/runtime": "^7.7.2"
+		"@babel/runtime": "^7.7.2",
+		"node-fetch": "latest"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.7.0",

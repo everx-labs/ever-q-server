@@ -25,12 +25,11 @@ function getIp(): string {
     return ipv4 && ipv4.address;
 }
 
-const MODE = {
-    production: 'production',
-    development: 'development',
-};
-
 type ProgramOptions = {
+    requestsMode: 'kafka' | 'rest',
+    requestsServer: string,
+    requestsTopic: string,
+    dbName: string,
     dbServer: string,
     dbName: string,
     dbVersion: string,
@@ -43,6 +42,14 @@ program
         process.env.Q_SERVER_HOST || getIp())
     .option('-p, --port <port>', 'listening port',
         process.env.Q_SERVER_PORT || '4000')
+
+    .option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)',
+        process.env.Q_REQUESTS_MODE || 'kafka')
+    .option('-r, --requests-server <url>', 'Requests server url',
+        process.env.Q_REQUESTS_SERVER || 'requests')
+    .option('-t, --requests-topic <name>', 'Requests topic name',
+        process.env.Q_REQUESTS_TOPIC || 'requests')
+
     .option('-d, --db-server <address>', 'database server:port',
         process.env.Q_DATABASE_SERVER || 'arangodb:8529')
     .option('-n, --db-name <name>', 'database name',
@@ -53,24 +60,20 @@ program
 
 const options: ProgramOptions = program;
 
-const env = {
-    ssl: (process.env.Q_SSL || '') === 'true',
-    database_server: options.dbServer,
-    database_name: options.dbName,
-    database_version: options.dbVersion,
-    server_host: options.host,
-    server_port: options.port,
+export const QRequestsMode = {
+    kafka: 'kafka',
+    rest: 'rest,'
 };
 
 export type QConfig = {
     server: {
         host: string,
         port: number,
-        ssl: ?{
-            port: number,
-            key: string,
-            cert: string,
-        },
+    },
+    requests: {
+        mode: 'kafka' | 'rest',
+        server: string,
+        topic: string,
     },
     database: {
         server: string,
@@ -84,20 +87,18 @@ export type QConfig = {
 
 const config: QConfig = {
     server: {
-        host: env.server_host,
-        port: Number.parseInt(env.server_port),
-        ssl: env.ssl
-            ? {
-                port: 4001,
-                key: 'server/ssl/server.key',
-                cert: 'server/ssl/server.crt',
-            }
-            : null,
+        host: options.host,
+        port: Number.parseInt(options.port),
+    },
+    requests: {
+        mode: options.requestsMode,
+        server: options.requestsServer,
+        topic: options.requestsTopic,
     },
     database: {
-        server: env.database_server,
-        name: env.database_name,
-        version: env.database_version,
+        server: options.dbServer,
+        name: options.dbName,
+        version: options.dbVersion,
     },
     listener: {
         restartTimeout: 1000

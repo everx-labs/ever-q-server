@@ -720,7 +720,7 @@ const Transaction = struct({
     root_cell: scalar,
 }, true);
 
-function createResolvers(db) {
+function createResolvers(db, postRequests, info) {
     return {
         IntermediateAddress: IntermediateAddressResolver,
         MsgAddressInt: MsgAddressIntResolver,
@@ -759,6 +759,7 @@ function createResolvers(db) {
             },
         },
         Query: {
+            info,
             messages: db.collectionQuery(db.messages, Message),
             blocks: db.collectionQuery(db.blocks, Block),
             accounts: db.collectionQuery(db.accounts, Account),
@@ -771,6 +772,7 @@ function createResolvers(db) {
             transactions: db.collectionSubscription(db.transactions, Transaction),
         },
         Mutation: {
+            postRequests,
         }
     }
 }

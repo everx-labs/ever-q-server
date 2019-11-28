@@ -16,7 +16,8 @@
 
 // @flow
 import fs from 'fs';
-
+import path from 'path';
+import fetch from 'node-fetch';
 import express from 'express';
 import http from 'http';
 
@@ -35,6 +36,15 @@ import type { QLog } from "./logs";
 type QOptions = {
     config: QConfig,
     logs: QLogs,
+}
+
+type Info = {
+    version: string,
+}
+
+type Request = {
+    id: string,
+    body: string,
 }
 
 export default class TONQServer {
@@ -58,7 +68,7 @@ export default class TONQServer {
         const typeDefs = fs.readFileSync(`type-defs.v${ver}.graphql`, 'utf-8');
         const createResolvers = ver === '1' ? createResolversV1 : createResolversV2;
         const attachCustomResolvers = ver === '1' ? attachCustomResolversV1 : (x) => x;
-        const resolvers = attachCustomResolvers(createResolvers(this.db));
+        const resolvers = attachCustomResolvers(createResolvers(this.db, this.postRequests, this.info));
 
         await this.db.start();
 
@@ -81,5 +91,54 @@ export default class TONQServer {
             this.log.debug(`Started on ${uri}`);
         });
     }
+
+    postRequests = async (parent, args): Promise<string[]> => {
+        const requests: ?(Request[]) = args.requests;
+        if (!requests) {
+            return [];
+        }
+        const config = this.config.requests;
+        const result: string[] = [];
+        for (const request: Request of requests) {
+            try {
+                const url = `${config.server}/topics/${config.topic}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    redirect: 'follow',
+                    referrer: 'no-referrer',
+                    body: JSON.stringify({
+                        records: [
+                            {
+                                key: request.id,
+                                value: request.body,
+                            },
+                        ],
+                    }),
+                });
+                if (response.status !== 200) {
+                    const message = `Post request failed: ${await response.text()}`;
+                    throw new Error(message);
+                }
+                result.push(request.id);
+            } catch (error) {
+                console.log('[Q Server] post request failed]', error);
+                throw error;
+            }
+        }
+        return result;
+    };
+
+    info = async (): Promise<Info> => {
+        const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
+        return {
+            version: pkg.version,
+        }
+    };
 }
 
