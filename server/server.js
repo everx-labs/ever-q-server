@@ -16,8 +16,6 @@
 
 // @flow
 import fs from 'fs';
-import path from 'path';
-import fetch from 'node-fetch';
 import express from 'express';
 import http from 'http';
 
@@ -28,6 +26,7 @@ import Arango from './arango';
 import { createResolvers as createResolversV1 } from './q-resolvers.v1';
 import { createResolvers as createResolversV2 } from './q-resolvers.v2';
 import { attachCustomResolvers as attachCustomResolversV1 } from "./custom-resolvers.v1";
+import { attachCustomResolvers as attachCustomResolversV2 } from "./custom-resolvers.v2";
 
 import type { QConfig } from "./config";
 import QLogs from "./logs";
@@ -38,25 +37,18 @@ type QOptions = {
     logs: QLogs,
 }
 
-type Info = {
-    version: string,
-}
-
-type Request = {
-    id: string,
-    body: string,
-}
-
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
     log: QLog;
     db: Arango;
+    shared: Map<string, any>;
 
     constructor(options: QOptions) {
         this.config = options.config;
         this.logs = options.logs;
         this.log = this.logs.create('Q Server');
+        this.shared = new Map();
     }
 
 
@@ -65,16 +57,23 @@ export default class TONQServer {
 
         this.db = new Arango(this.config, this.logs);
         const ver = this.config.database.version;
-        const typeDefs = fs.readFileSync(`type-defs.v${ver}.graphql`, 'utf-8');
+        const generatedTypeDefs = fs.readFileSync(`type-defs.v${ver}.graphql`, 'utf-8');
+        const customTypeDefs = fs.readFileSync('custom-type-defs.graphql', 'utf-8');
+        const typeDefs = `${generatedTypeDefs}\n${customTypeDefs}`;
         const createResolvers = ver === '1' ? createResolversV1 : createResolversV2;
-        const attachCustomResolvers = ver === '1' ? attachCustomResolversV1 : (x) => x;
-        const resolvers = attachCustomResolvers(createResolvers(this.db, this.postRequests, this.info));
+        const attachCustomResolvers = ver === '1' ? attachCustomResolversV1 : attachCustomResolversV2;
+        const resolvers = attachCustomResolvers(createResolvers(this.db));
 
         await this.db.start();
 
         const apollo = new ApolloServer({
             typeDefs,
             resolvers,
+            context: () => ({
+                db: this.db,
+                config: this.config,
+                shared: this.shared,
+            })
         });
 
         const app = express();
@@ -91,54 +90,5 @@ export default class TONQServer {
             this.log.debug(`Started on ${uri}`);
         });
     }
-
-    postRequests = async (parent, args): Promise<string[]> => {
-        const requests: ?(Request[]) = args.requests;
-        if (!requests) {
-            return [];
-        }
-        const config = this.config.requests;
-        const result: string[] = [];
-        for (const request: Request of requests) {
-            try {
-                const url = `${config.server}/topics/${config.topic}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    mode: 'cors',
-                    cache: 'no-cache',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    redirect: 'follow',
-                    referrer: 'no-referrer',
-                    body: JSON.stringify({
-                        records: [
-                            {
-                                key: request.id,
-                                value: request.body,
-                            },
-                        ],
-                    }),
-                });
-                if (response.status !== 200) {
-                    const message = `Post request failed: ${await response.text()}`;
-                    throw new Error(message);
-                }
-                result.push(request.id);
-            } catch (error) {
-                console.log('[Q Server] post request failed]', error);
-                throw error;
-            }
-        }
-        return result;
-    };
-
-    info = async (): Promise<Info> => {
-        const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
-        return {
-            version: pkg.version,
-        }
-    };
 }
 

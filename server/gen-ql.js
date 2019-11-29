@@ -399,12 +399,7 @@ function main(schemaDef: TypeDef) {
             direction: QueryOrderByDirection
         }
 
-        type Info {
-            version: String
-        }
-        
         type Query {
-            info: Info
         `);
 
         types.forEach((type: DbType) => {
@@ -423,21 +418,6 @@ function main(schemaDef: TypeDef) {
             ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter): ${type.name}`);
         });
         ql.writeLn('}');
-    }
-
-
-    function genQLMutation() {
-        ql.writeBlockLn(`
-        
-        input Request {
-            id: String
-            body: String
-        }
-        
-        type Mutation {
-            postRequests(requests: [Request]): [String]
-        }
-        `);
     }
 
 
@@ -568,11 +548,11 @@ function main(schemaDef: TypeDef) {
             if (!collection) {
                 throw 'Joined type is not a collection.';
             }
-            js.writeLn(`            ${field.name}(parent) {`);
+            js.writeLn(`            ${field.name}(parent, _args, context) {`);
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return db.fetchDocByKey(db.${collection}, parent.${onField.name});`);
+                js.writeLn(`                return context.db.fetchDocByKey(context.db.${collection}, parent.${onField.name});`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return db.fetchDocsByKeys(db.${collection}, parent.${onField.name});`);
+                js.writeLn(`                return context.db.fetchDocsByKeys(context.db.${collection}, parent.${onField.name});`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }
@@ -613,7 +593,6 @@ function main(schemaDef: TypeDef) {
         const collections = types.filter(t => !!t.collection);
         genQLQueries(collections);
         genQLSubscriptions(collections);
-        genQLMutation();
 
         // JS
 
@@ -635,7 +614,7 @@ function main(schemaDef: TypeDef) {
         types.forEach(type => genJSFilter(type, jsArrayFilters));
 
         js.writeBlockLn(`
-        function createResolvers(db, postRequests, info) {
+        function createResolvers(db) {
             return {
         `);
         types.forEach((type) => {
@@ -643,7 +622,6 @@ function main(schemaDef: TypeDef) {
             genJSTypeResolversForUnion(type);
         });
         js.writeLn('        Query: {');
-        js.writeLn('            info,');
         collections.forEach((type) => {
             js.writeLn(`            ${type.collection || ''}: db.collectionQuery(db.${type.collection || ''}, ${type.name}),`)
         });
@@ -653,9 +631,6 @@ function main(schemaDef: TypeDef) {
             js.writeLn(`            ${type.collection || ''}: db.collectionSubscription(db.${type.collection || ''}, ${type.name}),`)
         });
         js.writeBlockLn(`
-                },
-                Mutation: {
-                    postRequests,
                 }
             }
         }

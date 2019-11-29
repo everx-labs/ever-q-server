@@ -720,7 +720,7 @@ const Transaction = struct({
     root_cell: scalar,
 }, true);
 
-function createResolvers(db, postRequests, info) {
+function createResolvers(db) {
     return {
         IntermediateAddress: IntermediateAddressResolver,
         MsgAddressInt: MsgAddressIntResolver,
@@ -751,15 +751,14 @@ function createResolvers(db, postRequests, info) {
             id(parent) {
                 return parent._key;
             },
-            in_message(parent) {
-                return db.fetchDocByKey(db.messages, parent.in_msg);
+            in_message(parent, _args, context) {
+                return context.db.fetchDocByKey(context.db.messages, parent.in_msg);
             },
-            out_messages(parent) {
-                return db.fetchDocsByKeys(db.messages, parent.out_msgs);
+            out_messages(parent, _args, context) {
+                return context.db.fetchDocsByKeys(context.db.messages, parent.out_msgs);
             },
         },
         Query: {
-            info,
             messages: db.collectionQuery(db.messages, Message),
             blocks: db.collectionQuery(db.blocks, Block),
             accounts: db.collectionQuery(db.accounts, Account),
@@ -770,9 +769,6 @@ function createResolvers(db, postRequests, info) {
             blocks: db.collectionSubscription(db.blocks, Block),
             accounts: db.collectionSubscription(db.accounts, Account),
             transactions: db.collectionSubscription(db.transactions, Transaction),
-        },
-        Mutation: {
-            postRequests,
         }
     }
 }

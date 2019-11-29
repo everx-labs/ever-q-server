@@ -46,7 +46,7 @@ program
     .option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)',
         process.env.Q_REQUESTS_MODE || 'kafka')
     .option('-r, --requests-server <url>', 'Requests server url',
-        process.env.Q_REQUESTS_SERVER || 'requests')
+        process.env.Q_REQUESTS_SERVER || 'kafka:9092')
     .option('-t, --requests-topic <name>', 'Requests topic name',
         process.env.Q_REQUESTS_TOPIC || 'requests')
 
@@ -107,3 +107,8 @@ const config: QConfig = {
 
 console.log('Using config:', config);
 export default config;
+
+export function ensureProtocol(address: string, defaultProtocol: string): string {
+    return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://'${address}`;
+}
+

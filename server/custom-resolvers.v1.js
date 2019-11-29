@@ -1,3 +1,4 @@
+// @flow
 const customResolvers = {
     MessageHeaderIntMsgInfo: ['src', 'dst'],
     MessageHeaderExtInMsgInfo: ['src','dst'],
@@ -9,7 +10,7 @@ const customResolvers = {
 };
 
 
-function attachCustomResolvers(resolvers) {
+export function attachCustomResolvers(resolvers: any): any {
     const attached = Object.assign({}, resolvers);
     Object.entries(customResolvers).forEach(([name, fields]) => {
         let resolver = attached[name];
@@ -17,7 +18,7 @@ function attachCustomResolvers(resolvers) {
             resolver = {};
             attached[name] = resolver;
         }
-        fields.forEach((field) => {
+        (fields:any).forEach((field) => {
             resolver[field] = (parent) => {
                 const value = parent[field];
                 return typeof value === 'string' ? { [value]: {} } : value;
@@ -27,6 +28,3 @@ function attachCustomResolvers(resolvers) {
     return attached;
 }
 
-export {
-    attachCustomResolvers
-}

@@ -443,7 +443,7 @@ const Transaction = struct({
     boc: scalar,
 }, true);
 
-function createResolvers(db, postRequests, info) {
+function createResolvers(db) {
     return {
         ExtBlkRef: {
             end_lt(parent) {
@@ -709,11 +709,11 @@ function createResolvers(db, postRequests, info) {
             id(parent) {
                 return parent._key;
             },
-            in_message(parent) {
-                return db.fetchDocByKey(db.messages, parent.in_msg);
+            in_message(parent, _args, context) {
+                return context.db.fetchDocByKey(context.db.messages, parent.in_msg);
             },
-            out_messages(parent) {
-                return db.fetchDocsByKeys(db.messages, parent.out_msgs);
+            out_messages(parent, _args, context) {
+                return context.db.fetchDocsByKeys(context.db.messages, parent.out_msgs);
             },
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);
@@ -730,7 +730,6 @@ function createResolvers(db, postRequests, info) {
             end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Query: {
-            info,
             messages: db.collectionQuery(db.messages, Message),
             blocks: db.collectionQuery(db.blocks, Block),
             accounts: db.collectionQuery(db.accounts, Account),
@@ -741,9 +740,6 @@ function createResolvers(db, postRequests, info) {
             blocks: db.collectionSubscription(db.blocks, Block),
             accounts: db.collectionSubscription(db.accounts, Account),
             transactions: db.collectionSubscription(db.transactions, Transaction),
-        },
-        Mutation: {
-            postRequests,
         }
     }
 }

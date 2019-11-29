@@ -1287,12 +1287,7 @@ input QueryOrderBy {
     direction: QueryOrderByDirection
 }
 
-type Info {
-    version: String
-}
-
 type Query {
-    info: Info
 	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int): [Message]
 	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int): [Block]
 	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int): [Account]
@@ -1304,13 +1299,4 @@ type Subscription {
 	blocks(filter: BlockFilter): Block
 	accounts(filter: AccountFilter): Account
 	transactions(filter: TransactionFilter): Transaction
-}
-
-input Request {
-    id: String
-    body: String
-}
-
-type Mutation {
-    postRequests(requests: [Request]): [String]
 }

@@ -18,6 +18,7 @@
 import { Database, DocumentCollection } from 'arangojs';
 import arangochair from 'arangochair';
 import { PubSub, withFilter } from 'apollo-server';
+import { ensureProtocol } from "./config";
 import { QParams } from "./q-types";
 import type { QType } from "./q-types";
 import type { QConfig } from './config'
@@ -53,7 +54,7 @@ export default class Arango {
 
         this.pubsub = new PubSub();
 
-        this.db = new Database(`http://${this.serverAddress}`);
+        this.db = new Database(`${ensureProtocol(this.serverAddress, 'http')}`);
         this.db.useDatabase(this.databaseName);
 
         this.transactions = this.db.collection('transactions');
@@ -100,7 +101,7 @@ export default class Arango {
     }
 
     start() {
-        const listenerUrl = `http://${this.serverAddress}/${this.databaseName}`;
+        const listenerUrl = `${ensureProtocol(this.serverAddress, 'http')}/${this.databaseName}`;
         this.listener = new arangochair(listenerUrl);
         this.collections.forEach(collection => {
             const name = collection.name;
@@ -169,7 +170,7 @@ export default class Arango {
                 (data, args) => {
                     try {
                         return docType.test(null, data[collection.name], args.filter || {});
-                    } catch(error) {
+                    } catch (error) {
                         console.error('[Subscription] doc test failed', data, error);
                         throw error;
                     }
