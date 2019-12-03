@@ -148,6 +148,11 @@ enum BounceTypeEnum {
     Ok
 }
 
+type OtherCurrency {
+	currency: Float
+	value: String
+}
+
 type ExtBlkRef {
 	end_lt: String
 	seq_no: Float
@@ -188,11 +193,6 @@ type OutMsg {
 	import_block_lt: String
 }
 
-type MessageValueOther {
-	currency: Float
-	value: String
-}
-
 type Message {
 	id: String
 	msg_type: Int
@@ -218,68 +218,28 @@ type Message {
 	bounce: Boolean
 	bounced: Boolean
 	value: String
-	value_other: [MessageValueOther]
+	value_other: [OtherCurrency]
 	proof: String
 	boc: String
 }
 
-type BlockValueFlowToNextBlkOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowExportedOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowFeesCollectedOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowCreatedOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowImportedOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowFromPrevBlkOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowMintedOther {
-	currency: Float
-	value: String
-}
-
-type BlockValueFlowFeesImportedOther {
-	currency: Float
-	value: String
-}
-
 type BlockValueFlow {
 	to_next_blk: String
-	to_next_blk_other: [BlockValueFlowToNextBlkOther]
+	to_next_blk_other: [OtherCurrency]
 	exported: String
-	exported_other: [BlockValueFlowExportedOther]
+	exported_other: [OtherCurrency]
 	fees_collected: String
-	fees_collected_other: [BlockValueFlowFeesCollectedOther]
+	fees_collected_other: [OtherCurrency]
 	created: String
-	created_other: [BlockValueFlowCreatedOther]
+	created_other: [OtherCurrency]
 	imported: String
-	imported_other: [BlockValueFlowImportedOther]
+	imported_other: [OtherCurrency]
 	from_prev_blk: String
-	from_prev_blk_other: [BlockValueFlowFromPrevBlkOther]
+	from_prev_blk_other: [OtherCurrency]
 	minted: String
-	minted_other: [BlockValueFlowMintedOther]
+	minted_other: [OtherCurrency]
 	fees_imported: String
-	fees_imported_other: [BlockValueFlowFeesImportedOther]
+	fees_imported_other: [OtherCurrency]
 }
 
 type BlockAccountBlocksStateUpdate {
@@ -303,16 +263,6 @@ type BlockStateUpdate {
 	old_depth: Int
 }
 
-type BlockMasterShardHashesDescrFeesCollectedOther {
-	currency: Float
-	value: String
-}
-
-type BlockMasterShardHashesDescrFundsCreatedOther {
-	currency: Float
-	value: String
-}
-
 type BlockMasterShardHashesDescr {
 	seq_no: Float
 	reg_mc_seqno: Float
@@ -334,9 +284,9 @@ type BlockMasterShardHashesDescr {
 	split_type_name: SplitTypeEnum
 	split: Float
 	fees_collected: String
-	fees_collected_other: [BlockMasterShardHashesDescrFeesCollectedOther]
+	fees_collected_other: [OtherCurrency]
 	funds_created: String
-	funds_created_other: [BlockMasterShardHashesDescrFundsCreatedOther]
+	funds_created_other: [OtherCurrency]
 }
 
 type BlockMasterShardHashes {
@@ -345,23 +295,13 @@ type BlockMasterShardHashes {
 	descr: BlockMasterShardHashesDescr
 }
 
-type BlockMasterShardFeesFeesOther {
-	currency: Float
-	value: String
-}
-
-type BlockMasterShardFeesCreateOther {
-	currency: Float
-	value: String
-}
-
 type BlockMasterShardFees {
 	workchain_id: Int
 	shard: String
 	fees: String
-	fees_other: [BlockMasterShardFeesFeesOther]
+	fees_other: [OtherCurrency]
 	create: String
-	create_other: [BlockMasterShardFeesCreateOther]
+	create_other: [OtherCurrency]
 }
 
 type BlockMasterPrevBlkSignatures {
@@ -413,11 +353,6 @@ type Block {
 	master: BlockMaster
 }
 
-type AccountBalanceOther {
-	currency: Float
-	value: String
-}
-
 type Account {
 	id: String
 	acc_type: Int
@@ -426,7 +361,7 @@ type Account {
 	due_payment: String
 	last_trans_lt: String
 	balance: String
-	balance_other: [AccountBalanceOther]
+	balance_other: [OtherCurrency]
 	split_depth: Int
 	tick: Boolean
 	tock: Boolean
@@ -437,11 +372,6 @@ type Account {
 	boc: String
 }
 
-type TransactionTotalFeesOther {
-	currency: Float
-	value: String
-}
-
 type TransactionStorage {
 	storage_fees_collected: String
 	storage_fees_due: String
@@ -449,15 +379,10 @@ type TransactionStorage {
 	status_change_name: AccountStatusChangeEnum
 }
 
-type TransactionCreditCreditOther {
-	currency: Float
-	value: String
-}
-
 type TransactionCredit {
 	due_fees_collected: String
 	credit: String
-	credit_other: [TransactionCreditCreditOther]
+	credit_other: [OtherCurrency]
 }
 
 type TransactionCompute {
@@ -538,7 +463,7 @@ type Transaction {
 	out_msgs: [String]
 	out_messages: [Message]
 	total_fees: String
-	total_fees_other: [TransactionTotalFeesOther]
+	total_fees_other: [OtherCurrency]
 	old_hash: String
 	new_hash: String
 	credit_first: Boolean
@@ -555,6 +480,11 @@ type Transaction {
 	installed: Boolean
 	proof: String
 	boc: String
+}
+
+input OtherCurrencyFilter {
+	currency: FloatFilter
+	value: StringFilter
 }
 
 input ExtBlkRefFilter {
@@ -619,14 +549,9 @@ input OutMsgFilter {
 	import_block_lt: StringFilter
 }
 
-input MessageValueOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input MessageValueOtherArrayFilter {
-	any: MessageValueOtherFilter
-	all: MessageValueOtherFilter
+input OtherCurrencyArrayFilter {
+	any: OtherCurrencyFilter
+	all: OtherCurrencyFilter
 }
 
 input MessageTypeEnumFilter {
@@ -676,108 +601,28 @@ input MessageFilter {
 	bounce: BooleanFilter
 	bounced: BooleanFilter
 	value: StringFilter
-	value_other: MessageValueOtherArrayFilter
+	value_other: OtherCurrencyArrayFilter
 	proof: StringFilter
 	boc: StringFilter
 }
 
-input BlockValueFlowToNextBlkOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowExportedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowFeesCollectedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowCreatedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowImportedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowFromPrevBlkOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowMintedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowFeesImportedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockValueFlowToNextBlkOtherArrayFilter {
-	any: BlockValueFlowToNextBlkOtherFilter
-	all: BlockValueFlowToNextBlkOtherFilter
-}
-
-input BlockValueFlowExportedOtherArrayFilter {
-	any: BlockValueFlowExportedOtherFilter
-	all: BlockValueFlowExportedOtherFilter
-}
-
-input BlockValueFlowFeesCollectedOtherArrayFilter {
-	any: BlockValueFlowFeesCollectedOtherFilter
-	all: BlockValueFlowFeesCollectedOtherFilter
-}
-
-input BlockValueFlowCreatedOtherArrayFilter {
-	any: BlockValueFlowCreatedOtherFilter
-	all: BlockValueFlowCreatedOtherFilter
-}
-
-input BlockValueFlowImportedOtherArrayFilter {
-	any: BlockValueFlowImportedOtherFilter
-	all: BlockValueFlowImportedOtherFilter
-}
-
-input BlockValueFlowFromPrevBlkOtherArrayFilter {
-	any: BlockValueFlowFromPrevBlkOtherFilter
-	all: BlockValueFlowFromPrevBlkOtherFilter
-}
-
-input BlockValueFlowMintedOtherArrayFilter {
-	any: BlockValueFlowMintedOtherFilter
-	all: BlockValueFlowMintedOtherFilter
-}
-
-input BlockValueFlowFeesImportedOtherArrayFilter {
-	any: BlockValueFlowFeesImportedOtherFilter
-	all: BlockValueFlowFeesImportedOtherFilter
-}
-
 input BlockValueFlowFilter {
 	to_next_blk: StringFilter
-	to_next_blk_other: BlockValueFlowToNextBlkOtherArrayFilter
+	to_next_blk_other: OtherCurrencyArrayFilter
 	exported: StringFilter
-	exported_other: BlockValueFlowExportedOtherArrayFilter
+	exported_other: OtherCurrencyArrayFilter
 	fees_collected: StringFilter
-	fees_collected_other: BlockValueFlowFeesCollectedOtherArrayFilter
+	fees_collected_other: OtherCurrencyArrayFilter
 	created: StringFilter
-	created_other: BlockValueFlowCreatedOtherArrayFilter
+	created_other: OtherCurrencyArrayFilter
 	imported: StringFilter
-	imported_other: BlockValueFlowImportedOtherArrayFilter
+	imported_other: OtherCurrencyArrayFilter
 	from_prev_blk: StringFilter
-	from_prev_blk_other: BlockValueFlowFromPrevBlkOtherArrayFilter
+	from_prev_blk_other: OtherCurrencyArrayFilter
 	minted: StringFilter
-	minted_other: BlockValueFlowMintedOtherArrayFilter
+	minted_other: OtherCurrencyArrayFilter
 	fees_imported: StringFilter
-	fees_imported_other: BlockValueFlowFeesImportedOtherArrayFilter
+	fees_imported_other: OtherCurrencyArrayFilter
 }
 
 input BlockAccountBlocksStateUpdateFilter {
@@ -804,26 +649,6 @@ input BlockStateUpdateFilter {
 	old: StringFilter
 	old_hash: StringFilter
 	old_depth: IntFilter
-}
-
-input BlockMasterShardHashesDescrFeesCollectedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockMasterShardHashesDescrFundsCreatedOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter {
-	any: BlockMasterShardHashesDescrFeesCollectedOtherFilter
-	all: BlockMasterShardHashesDescrFeesCollectedOtherFilter
-}
-
-input BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter {
-	any: BlockMasterShardHashesDescrFundsCreatedOtherFilter
-	all: BlockMasterShardHashesDescrFundsCreatedOtherFilter
 }
 
 input SplitTypeEnumFilter {
@@ -858,9 +683,9 @@ input BlockMasterShardHashesDescrFilter {
 	split_type_name: SplitTypeEnumFilter
 	split: FloatFilter
 	fees_collected: StringFilter
-	fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArrayFilter
+	fees_collected_other: OtherCurrencyArrayFilter
 	funds_created: StringFilter
-	funds_created_other: BlockMasterShardHashesDescrFundsCreatedOtherArrayFilter
+	funds_created_other: OtherCurrencyArrayFilter
 }
 
 input BlockMasterShardHashesFilter {
@@ -869,33 +694,13 @@ input BlockMasterShardHashesFilter {
 	descr: BlockMasterShardHashesDescrFilter
 }
 
-input BlockMasterShardFeesFeesOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockMasterShardFeesCreateOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input BlockMasterShardFeesFeesOtherArrayFilter {
-	any: BlockMasterShardFeesFeesOtherFilter
-	all: BlockMasterShardFeesFeesOtherFilter
-}
-
-input BlockMasterShardFeesCreateOtherArrayFilter {
-	any: BlockMasterShardFeesCreateOtherFilter
-	all: BlockMasterShardFeesCreateOtherFilter
-}
-
 input BlockMasterShardFeesFilter {
 	workchain_id: IntFilter
 	shard: StringFilter
 	fees: StringFilter
-	fees_other: BlockMasterShardFeesFeesOtherArrayFilter
+	fees_other: OtherCurrencyArrayFilter
 	create: StringFilter
-	create_other: BlockMasterShardFeesCreateOtherArrayFilter
+	create_other: OtherCurrencyArrayFilter
 }
 
 input BlockMasterPrevBlkSignaturesFilter {
@@ -988,16 +793,6 @@ input BlockFilter {
 	master: BlockMasterFilter
 }
 
-input AccountBalanceOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input AccountBalanceOtherArrayFilter {
-	any: AccountBalanceOtherFilter
-	all: AccountBalanceOtherFilter
-}
-
 input AccountTypeEnumFilter {
 	eq: AccountTypeEnum
 	ne: AccountTypeEnum
@@ -1017,7 +812,7 @@ input AccountFilter {
 	due_payment: StringFilter
 	last_trans_lt: StringFilter
 	balance: StringFilter
-	balance_other: AccountBalanceOtherArrayFilter
+	balance_other: OtherCurrencyArrayFilter
 	split_depth: IntFilter
 	tick: BooleanFilter
 	tock: BooleanFilter
@@ -1026,11 +821,6 @@ input AccountFilter {
 	library: StringFilter
 	proof: StringFilter
 	boc: StringFilter
-}
-
-input TransactionTotalFeesOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
 }
 
 input AccountStatusChangeEnumFilter {
@@ -1051,20 +841,10 @@ input TransactionStorageFilter {
 	status_change_name: AccountStatusChangeEnumFilter
 }
 
-input TransactionCreditCreditOtherFilter {
-	currency: FloatFilter
-	value: StringFilter
-}
-
-input TransactionCreditCreditOtherArrayFilter {
-	any: TransactionCreditCreditOtherFilter
-	all: TransactionCreditCreditOtherFilter
-}
-
 input TransactionCreditFilter {
 	due_fees_collected: StringFilter
 	credit: StringFilter
-	credit_other: TransactionCreditCreditOtherArrayFilter
+	credit_other: OtherCurrencyArrayFilter
 }
 
 input ComputeTypeEnumFilter {
@@ -1161,11 +941,6 @@ input MessageArrayFilter {
 	all: MessageFilter
 }
 
-input TransactionTotalFeesOtherArrayFilter {
-	any: TransactionTotalFeesOtherFilter
-	all: TransactionTotalFeesOtherFilter
-}
-
 input TransactionTypeEnumFilter {
 	eq: TransactionTypeEnum
 	ne: TransactionTypeEnum
@@ -1221,7 +996,7 @@ input TransactionFilter {
 	out_msgs: StringArrayFilter
 	out_messages: MessageArrayFilter
 	total_fees: StringFilter
-	total_fees_other: TransactionTotalFeesOtherArrayFilter
+	total_fees_other: OtherCurrencyArrayFilter
 	old_hash: StringFilter
 	new_hash: StringFilter
 	credit_first: BooleanFilter

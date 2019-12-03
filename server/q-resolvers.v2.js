@@ -10,6 +10,11 @@ const {
     enumName,
     createEnumNameResolver,
 } = require('./q-types.js');
+const OtherCurrency = struct({
+    currency: scalar,
+    value: bigUInt2,
+});
+
 const ExtBlkRef = struct({
     end_lt: bigUInt1,
     seq_no: scalar,
@@ -50,12 +55,7 @@ const OutMsg = struct({
     import_block_lt: bigUInt1,
 });
 
-const MessageValueOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const MessageValueOtherArray = array(MessageValueOther);
+const OtherCurrencyArray = array(OtherCurrency);
 const Message = struct({
     id: scalar,
     msg_type: scalar,
@@ -81,76 +81,28 @@ const Message = struct({
     bounce: scalar,
     bounced: scalar,
     value: bigUInt2,
-    value_other: MessageValueOtherArray,
+    value_other: OtherCurrencyArray,
     proof: scalar,
     boc: scalar,
 }, true);
 
-const BlockValueFlowToNextBlkOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowExportedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowFeesCollectedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowCreatedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowImportedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowFromPrevBlkOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowMintedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowFeesImportedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockValueFlowToNextBlkOtherArray = array(BlockValueFlowToNextBlkOther);
-const BlockValueFlowExportedOtherArray = array(BlockValueFlowExportedOther);
-const BlockValueFlowFeesCollectedOtherArray = array(BlockValueFlowFeesCollectedOther);
-const BlockValueFlowCreatedOtherArray = array(BlockValueFlowCreatedOther);
-const BlockValueFlowImportedOtherArray = array(BlockValueFlowImportedOther);
-const BlockValueFlowFromPrevBlkOtherArray = array(BlockValueFlowFromPrevBlkOther);
-const BlockValueFlowMintedOtherArray = array(BlockValueFlowMintedOther);
-const BlockValueFlowFeesImportedOtherArray = array(BlockValueFlowFeesImportedOther);
 const BlockValueFlow = struct({
     to_next_blk: bigUInt2,
-    to_next_blk_other: BlockValueFlowToNextBlkOtherArray,
+    to_next_blk_other: OtherCurrencyArray,
     exported: bigUInt2,
-    exported_other: BlockValueFlowExportedOtherArray,
+    exported_other: OtherCurrencyArray,
     fees_collected: bigUInt2,
-    fees_collected_other: BlockValueFlowFeesCollectedOtherArray,
+    fees_collected_other: OtherCurrencyArray,
     created: bigUInt2,
-    created_other: BlockValueFlowCreatedOtherArray,
+    created_other: OtherCurrencyArray,
     imported: bigUInt2,
-    imported_other: BlockValueFlowImportedOtherArray,
+    imported_other: OtherCurrencyArray,
     from_prev_blk: bigUInt2,
-    from_prev_blk_other: BlockValueFlowFromPrevBlkOtherArray,
+    from_prev_blk_other: OtherCurrencyArray,
     minted: bigUInt2,
-    minted_other: BlockValueFlowMintedOtherArray,
+    minted_other: OtherCurrencyArray,
     fees_imported: bigUInt2,
-    fees_imported_other: BlockValueFlowFeesImportedOtherArray,
+    fees_imported_other: OtherCurrencyArray,
 });
 
 const BlockAccountBlocksStateUpdate = struct({
@@ -175,18 +127,6 @@ const BlockStateUpdate = struct({
     old_depth: scalar,
 });
 
-const BlockMasterShardHashesDescrFeesCollectedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockMasterShardHashesDescrFundsCreatedOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockMasterShardHashesDescrFeesCollectedOtherArray = array(BlockMasterShardHashesDescrFeesCollectedOther);
-const BlockMasterShardHashesDescrFundsCreatedOtherArray = array(BlockMasterShardHashesDescrFundsCreatedOther);
 const BlockMasterShardHashesDescr = struct({
     seq_no: scalar,
     reg_mc_seqno: scalar,
@@ -208,9 +148,9 @@ const BlockMasterShardHashesDescr = struct({
     split_type_name: enumName('split_type', { None: 0, Split: 2, Merge: 3 }),
     split: scalar,
     fees_collected: bigUInt2,
-    fees_collected_other: BlockMasterShardHashesDescrFeesCollectedOtherArray,
+    fees_collected_other: OtherCurrencyArray,
     funds_created: bigUInt2,
-    funds_created_other: BlockMasterShardHashesDescrFundsCreatedOtherArray,
+    funds_created_other: OtherCurrencyArray,
 });
 
 const BlockMasterShardHashes = struct({
@@ -219,25 +159,13 @@ const BlockMasterShardHashes = struct({
     descr: BlockMasterShardHashesDescr,
 });
 
-const BlockMasterShardFeesFeesOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockMasterShardFeesCreateOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const BlockMasterShardFeesFeesOtherArray = array(BlockMasterShardFeesFeesOther);
-const BlockMasterShardFeesCreateOtherArray = array(BlockMasterShardFeesCreateOther);
 const BlockMasterShardFees = struct({
     workchain_id: scalar,
     shard: scalar,
     fees: bigUInt2,
-    fees_other: BlockMasterShardFeesFeesOtherArray,
+    fees_other: OtherCurrencyArray,
     create: bigUInt2,
-    create_other: BlockMasterShardFeesCreateOtherArray,
+    create_other: OtherCurrencyArray,
 });
 
 const BlockMasterPrevBlkSignatures = struct({
@@ -295,12 +223,6 @@ const Block = struct({
     master: BlockMaster,
 }, true);
 
-const AccountBalanceOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const AccountBalanceOtherArray = array(AccountBalanceOther);
 const Account = struct({
     id: scalar,
     acc_type: scalar,
@@ -309,7 +231,7 @@ const Account = struct({
     due_payment: bigUInt2,
     last_trans_lt: bigUInt1,
     balance: bigUInt2,
-    balance_other: AccountBalanceOtherArray,
+    balance_other: OtherCurrencyArray,
     split_depth: scalar,
     tick: scalar,
     tock: scalar,
@@ -320,11 +242,6 @@ const Account = struct({
     boc: scalar,
 }, true);
 
-const TransactionTotalFeesOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
 const TransactionStorage = struct({
     storage_fees_collected: bigUInt2,
     storage_fees_due: bigUInt2,
@@ -332,16 +249,10 @@ const TransactionStorage = struct({
     status_change_name: enumName('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
 });
 
-const TransactionCreditCreditOther = struct({
-    currency: scalar,
-    value: bigUInt2,
-});
-
-const TransactionCreditCreditOtherArray = array(TransactionCreditCreditOther);
 const TransactionCredit = struct({
     due_fees_collected: bigUInt2,
     credit: bigUInt2,
-    credit_other: TransactionCreditCreditOtherArray,
+    credit_other: OtherCurrencyArray,
 });
 
 const TransactionCompute = struct({
@@ -401,7 +312,6 @@ const TransactionSplitInfo = struct({
 });
 
 const MessageArray = array(Message);
-const TransactionTotalFeesOtherArray = array(TransactionTotalFeesOther);
 const Transaction = struct({
     id: scalar,
     tr_type: scalar,
@@ -424,7 +334,7 @@ const Transaction = struct({
     out_msgs: StringArray,
     out_messages: joinArray('out_msgs', 'messages', Message),
     total_fees: bigUInt2,
-    total_fees_other: TransactionTotalFeesOtherArray,
+    total_fees_other: OtherCurrencyArray,
     old_hash: scalar,
     new_hash: scalar,
     credit_first: scalar,
@@ -445,6 +355,11 @@ const Transaction = struct({
 
 function createResolvers(db) {
     return {
+        OtherCurrency: {
+            value(parent) {
+                return resolveBigUInt(2, parent.value);
+            },
+        },
         ExtBlkRef: {
             end_lt(parent) {
                 return resolveBigUInt(1, parent.end_lt);
@@ -476,11 +391,6 @@ function createResolvers(db) {
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, None: -1 }),
         },
-        MessageValueOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
         Message: {
             id(parent) {
                 return parent._key;
@@ -502,46 +412,6 @@ function createResolvers(db) {
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
-        },
-        BlockValueFlowToNextBlkOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowExportedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowFeesCollectedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowCreatedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowImportedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowFromPrevBlkOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowMintedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockValueFlowFeesImportedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
         },
         BlockValueFlow: {
             to_next_blk(parent) {
@@ -569,16 +439,6 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.fees_imported);
             },
         },
-        BlockMasterShardHashesDescrFeesCollectedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockMasterShardHashesDescrFundsCreatedOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
         BlockMasterShardHashesDescr: {
             start_lt(parent) {
                 return resolveBigUInt(1, parent.start_lt);
@@ -593,16 +453,6 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.funds_created);
             },
             split_type_name: createEnumNameResolver('split_type', { None: 0, Split: 2, Merge: 3 }),
-        },
-        BlockMasterShardFeesFeesOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
-        BlockMasterShardFeesCreateOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
         },
         BlockMasterShardFees: {
             fees(parent) {
@@ -624,11 +474,6 @@ function createResolvers(db) {
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
-        AccountBalanceOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
         Account: {
             id(parent) {
                 return parent._key;
@@ -644,11 +489,6 @@ function createResolvers(db) {
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2 }),
         },
-        TransactionTotalFeesOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
-        },
         TransactionStorage: {
             storage_fees_collected(parent) {
                 return resolveBigUInt(2, parent.storage_fees_collected);
@@ -657,11 +497,6 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.storage_fees_due);
             },
             status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-        },
-        TransactionCreditCreditOther: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
-            },
         },
         TransactionCredit: {
             due_fees_collected(parent) {
@@ -746,39 +581,24 @@ function createResolvers(db) {
 
 module.exports = {
     createResolvers,
+    OtherCurrency,
     ExtBlkRef,
     MsgEnvelope,
     InMsg,
     OutMsg,
-    MessageValueOther,
     Message,
-    BlockValueFlowToNextBlkOther,
-    BlockValueFlowExportedOther,
-    BlockValueFlowFeesCollectedOther,
-    BlockValueFlowCreatedOther,
-    BlockValueFlowImportedOther,
-    BlockValueFlowFromPrevBlkOther,
-    BlockValueFlowMintedOther,
-    BlockValueFlowFeesImportedOther,
     BlockValueFlow,
     BlockAccountBlocksStateUpdate,
     BlockAccountBlocks,
     BlockStateUpdate,
-    BlockMasterShardHashesDescrFeesCollectedOther,
-    BlockMasterShardHashesDescrFundsCreatedOther,
     BlockMasterShardHashesDescr,
     BlockMasterShardHashes,
-    BlockMasterShardFeesFeesOther,
-    BlockMasterShardFeesCreateOther,
     BlockMasterShardFees,
     BlockMasterPrevBlkSignatures,
     BlockMaster,
     Block,
-    AccountBalanceOther,
     Account,
-    TransactionTotalFeesOther,
     TransactionStorage,
-    TransactionCreditCreditOther,
     TransactionCredit,
     TransactionCompute,
     TransactionAction,

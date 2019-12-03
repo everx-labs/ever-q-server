@@ -74,10 +74,13 @@ function u8enum(name: string, values: IntEnumValues) {
     }
 }
 
-const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf({
+const OtherCurrency: TypeDef = {
     currency: u32(),
     value: u256(),
-}, doc);
+};
+
+
+const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf(ref({OtherCurrency}), doc);
 
 const accountStatus = u8enum('AccountStatus', {
     uninit: 0,
@@ -193,7 +196,7 @@ const Account: TypeDef = {
     _: { collection: 'accounts' },
     acc_type: required(accountType('Current status of the account')),
     last_paid: required(u32('Contains either the unixtime of the most recent storage payment collected (usually this is the unixtime of the most recent transaction), or the unixtime when the account was created (again, by a transaction)')),
-    due_payment: grams('If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitial- ized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.'),
+    due_payment: grams('If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the account is destroyed altogether, and its balance, if any, is transferred to the zero account.'),
     last_trans_lt: required(u64()),
     balance: required(grams()),
     balance_other: otherCurrencyCollection(),
@@ -494,6 +497,7 @@ const Block: TypeDef = {
 const schema: TypeDef = {
     _class: {
         types: {
+            OtherCurrency,
             ExtBlkRef,
             MsgEnvelope,
             InMsg,

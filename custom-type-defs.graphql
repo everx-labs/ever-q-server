@@ -7,23 +7,11 @@ type Info {
     version: String
 }
 
-type AccountTransactionSummary {
-	id: String
-	time: Float
-	amount: String
-	from: String
-	to: String
-	block: String
-}
-
 extend type Query {
     info: Info
     getAccountsCount: Float
-    getAccountTransactionSummaries(
-		accountId: String,
-		startLt: String,
-		limit: Int
-	): [AccountTransactionSummary]
+    getTransactionsCount: Float
+    getAccountsTotalBalance: String
 }
 
 type Mutation {

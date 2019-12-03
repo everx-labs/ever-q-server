@@ -39,15 +39,6 @@ type Context = {
 
 // Query
 
-type AccountTransactionSummary = {
-    id: string,
-    time: number,
-    amount: string,
-    from: string,
-    to: string,
-    block: string,
-}
-
 function info(): Info {
     const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
     return {
@@ -61,41 +52,33 @@ async function getAccountsCount(_parent, _args, context: Context): Promise<numbe
     return counts.length > 0 ? counts[0] : 0;
 }
 
-async function getAccountTransactionSummaries(
-    _parent,
-    args: { accountId?: string, afterLt?: string, limit?: number },
-    context: Context
-): Promise<AccountTransactionSummary[]> {
-    const result: any = await context.db.fetchQuery(`
-        FOR t IN transactions
-        FILTER (t.account_addr == @accountId || m.src == @accountId) && t.lt > @afterLt
-            FOR msg_id IN APPEND([t.in_msg], t.out_msgs)
-            LET m = DOCUMENT("messages", msg_id)
-            LET b = DOCUMENT("blocks", t.block_id})
-            FILTER (m.msg_type == 0) && (m.value > "0") && b.seq_no
-        SORT t.gen_utime DESC
-        LIMIT @limit
-        RETURN 
-            "id": t._key,
-            "time": t.gen_utime,
-            "amount": m.value,
-            "from": m.src,
-            "to": m.dst,
-            "block": b.seq_no
-    `, {
-        accountId: args.accountId,
-        afterLt: args.afterLt || "0",
-        limit: Math.max(50, Number(args.limit || 50))
-    });
-    return (result: AccountTransactionSummary[]);
+
+async function getTransactionsCount(_parent, _args, context: Context): Promise<number> {
+    const result: any = await context.db.fetchQuery(`RETURN LENGTH(transactions)`, {});
+    const counts = (result: number[]);
+    return counts.length > 0 ? counts[0] : 0;
 }
+
+async function getAccountsTotalBalance(_parent, _args, context: Context): Promise<String> {
+    const result: any = await context.db.fetchQuery(`
+        LET d = 16777216
+        FOR a in accounts
+        LET b = TO_NUMBER(CONCAT("0x", SUBSTRING(a.balance, 2)))
+        COLLECT AGGREGATE
+            hs = SUM(FLOOR(b / d)),
+            ls = SUM(b % (d - 1))
+        RETURN { hs, ls }
+    `, {});
+    const parts = (result: {hs:number, ls: number}[])[0];
+    return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
+}
+
 
 // Mutation
 
 async function postRequestsUsingRest(requests: Request[], context: Context): Promise<void> {
     const config = context.config.requests;
     const url = `${ensureProtocol(config.server, 'http')}/topics/${config.topic}`;
-    console.log('>>>', 'POST REQUESTS');
     const response = await fetch(url, {
         method: 'POST',
         mode: 'cors',
@@ -171,7 +154,8 @@ const customResolvers = {
     Query: {
         info,
         getAccountsCount,
-        getAccountTransactionSummaries,
+        getTransactionsCount,
+        getAccountsTotalBalance,
     },
     Mutation: {
         postRequests,
