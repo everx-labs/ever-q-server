@@ -60,6 +60,14 @@ async function getTransactionsCount(_parent, _args, context: Context): Promise<n
 }
 
 async function getAccountsTotalBalance(_parent, _args, context: Context): Promise<String> {
+    /*
+    там надо в аранге засуммировать все балансы
+    Because arango can not sum BigInts we need to sum separately:
+    hs = SUM of high bits (from 24-bit and higher)
+    ls = SUM of lower 24 bits
+    And the total result is (hs << 24) + ls
+     */
+
     const result: any = await context.db.fetchQuery(`
         LET d = 16777216
         FOR a in accounts
