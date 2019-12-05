@@ -213,6 +213,7 @@ type MessageInit {
 	library: String
 }
 
+"This is message"
 type Message {
 	id: String
 	transaction_id: String
@@ -467,6 +468,7 @@ type BlockStateUpdate {
 	old_depth: Int
 }
 
+"This is Block"
 type Block {
 	id: String
 	status: String
@@ -514,6 +516,7 @@ type AccountStorage {
 	state: AccountStorageState
 }
 
+"TON Account"
 type Account {
 	id: String
 	_key: String
@@ -705,6 +708,7 @@ union TransactionDescription =
 	| TransactionDescriptionMergeInstallVariant
 
 
+"This is transaction"
 type Transaction {
 	id: String
 	block_id: String
@@ -854,6 +858,7 @@ input MessageInitFilter {
 	library: StringFilter
 }
 
+"This is message"
 input MessageFilter {
 	id: StringFilter
 	transaction_id: StringFilter
@@ -1072,6 +1077,7 @@ input BlockStateUpdateFilter {
 	old_depth: IntFilter
 }
 
+"This is Block"
 input BlockFilter {
 	id: StringFilter
 	status: StringFilter
@@ -1107,6 +1113,7 @@ input AccountStorageFilter {
 	state: AccountStorageStateFilter
 }
 
+"TON Account"
 input AccountFilter {
 	id: StringFilter
 	_key: StringFilter
@@ -1255,6 +1262,7 @@ input MessageArrayFilter {
 	all: MessageFilter
 }
 
+"This is transaction"
 input TransactionFilter {
 	id: StringFilter
 	block_id: StringFilter
@@ -1277,13 +1285,26 @@ input TransactionFilter {
 	root_cell: StringFilter
 }
 
+"Specify sort order direction"
 enum QueryOrderByDirection {
+    "Documents will be sorted in ascended order (e.g. from A to Z)"
     ASC
+    "Documents will be sorted in descendant order (e.g. from Z to A)"
     DESC
 }
 
+
+"""
+Specify how to sort results.
+You can sort documents in result set using more than one field.
+"""
 input QueryOrderBy {
+    """
+    Path to field which must be used as a sort criteria.
+    If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+    """
     path: String
+    "Sort order direction"
     direction: QueryOrderByDirection
 }
 

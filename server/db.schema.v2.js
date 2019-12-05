@@ -16,71 +16,26 @@
 
 //@flow
 
-import type { IntSizeType, TypeDef } from 'ton-labs-dev-ops/src/schema';
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
+import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
+import {
+    grams,
+    i32,
+    i8,
+    join,
+    OtherCurrency,
+    otherCurrencyCollection,
+    required,
+    u16,
+    u32,
+    u64,
+    u8,
+    u8enum,
+    withDoc
+} from "./q-schema";
 
 const { string, bool, ref, arrayOf } = Def;
-const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
-    return { ...ref(refDef), _: { join: { on } } }
-};
-const withDoc = (def: TypeDef, doc?: string) => ({
-    ...def,
-    ...(doc ? { _doc: doc } : {})
-});
-const required = (def: TypeDef) => def;
 
-const uint = (size: IntSizeType, doc?: string) => withDoc({
-    _int: { unsigned: true, size }
-}, doc);
-
-const int = (size: IntSizeType, doc?: string) => withDoc({
-    _int: { unsigned: false, size }
-}, doc);
-
-const i8 = (doc?: string) => int(8, doc);
-const i32 = (doc?: string) => int(32, doc);
-
-const u8 = (doc?: string) => uint(8, doc);
-const u16 = (doc?: string) => uint(16, doc);
-const u32 = (doc?: string) => uint(32, doc);
-const u64 = (doc?: string) => uint(64, doc);
-const u128 = (doc?: string) => uint(128, doc);
-const u256 = (doc?: string) => uint(256, doc);
-
-const grams = u128;
-
-type IntEnumValues = {
-    [string]: number
-};
-
-function u8enum(name: string, values: IntEnumValues) {
-    return (doc?: string): TypeDef => {
-        const valuesDoc = Object.entries(values).map(([name, value]) => {
-            return `${(value: any)} – ${name}`;
-        }).join('\n');
-        const effectiveDoc = `${doc ? `${doc}\n` : ''}${valuesDoc}`;
-        return withDoc({
-            _int: {
-                unsigned: true,
-                size: 8,
-            },
-            _: {
-                enum: {
-                    name,
-                    values
-                }
-            }
-        }, effectiveDoc);
-    }
-}
-
-const OtherCurrency: TypeDef = {
-    currency: u32(),
-    value: u256(),
-};
-
-
-const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf(ref({OtherCurrency}), doc);
 
 const accountStatus = u8enum('AccountStatus', {
     uninit: 0,
