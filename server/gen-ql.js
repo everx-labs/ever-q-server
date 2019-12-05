@@ -1,7 +1,7 @@
 //@flow
 
 import { makeFieldTypeName, Writer } from 'ton-labs-dev-ops/dist/src/gen.js';
-import type { SchemaMember, SchemaType, TypeDef } from 'ton-labs-dev-ops/src/schema.js';
+import type { SchemaDoc, SchemaMember, SchemaType, TypeDef } from 'ton-labs-dev-ops/src/schema.js';
 import { parseTypeDef } from 'ton-labs-dev-ops/dist/src/schema.js';
 
 const DbTypeCategory = {
@@ -21,11 +21,14 @@ type DbType = {
     fields: DbField[],
     category: 'unresolved' | 'scalar' | 'union' | 'struct',
     collection?: string,
+    doc: string,
 }
 
 type IntEnumDef = {
     name: string,
-    values: { [string]: number },
+    values: {
+        [string]: number
+    },
 }
 
 type DbField = {
@@ -34,13 +37,15 @@ type DbField = {
     arrayDepth: number,
     join?: DbJoin,
     enumDef?: IntEnumDef,
+    doc: string,
 }
 
 function scalarType(name: string): DbType {
     return {
         name,
         category: DbTypeCategory.scalar,
-        fields: []
+        fields: [],
+        doc: '',
     }
 }
 
@@ -58,6 +63,7 @@ function unresolvedType(name: string): DbType {
         name,
         category: DbTypeCategory.unresolved,
         fields: [],
+        doc: '',
     }
 }
 
@@ -95,6 +101,20 @@ function stringifyEnumValues(values: { [string]: number }): string {
     return `{ ${fields.join(', ')} }`;
 }
 
+function getDocMD(schema: SchemaDoc): string {
+    const doc = schema.doc;
+    if (!doc) {
+        return '';
+    }
+    if (typeof doc === 'string') {
+        return doc;
+    }
+    if (doc.md) {
+        return (doc.md: any);
+    }
+    return '';
+}
+
 function main(schemaDef: TypeDef) {
 
     let dbTypes: DbType[] = [];
@@ -119,6 +139,7 @@ function main(schemaDef: TypeDef) {
             name: schemaField.name,
             arrayDepth: 0,
             type: scalarTypes.string,
+            doc: getDocMD(schemaField),
         };
         while (schemaType.array) {
             field.arrayDepth += 1;
@@ -198,6 +219,7 @@ function main(schemaDef: TypeDef) {
             category: schemaType.union ? DbTypeCategory.union : DbTypeCategory.struct,
             fields: [],
             collection: (schemaType: any)._.collection,
+            doc: getDocMD(schemaType),
         };
 
         if (type.collection) {
@@ -205,6 +227,7 @@ function main(schemaDef: TypeDef) {
                 name: 'id',
                 arrayDepth: 0,
                 type: scalarTypes.string,
+                doc: '',
             });
         }
         struct.forEach((field) => {
@@ -267,6 +290,22 @@ function main(schemaDef: TypeDef) {
     const ql = new Writer();
     const js = new Writer();
 
+    function genQLDoc(prefix: string, doc: string) {
+        if (doc.trim() === '') {
+            return;
+        }
+        const lines = doc.split(/\n\r?|\r\n?/);
+        if (lines.length === 1 && !lines[0].includes('"')) {
+            ql.writeLn(prefix, '"', lines[0], '"');
+        } else {
+            ql.writeLn(prefix, '"""');
+            lines.forEach((line) => {
+                ql.writeLn(prefix, line);
+            });
+            ql.writeLn(prefix, '"""');
+        }
+    }
+
     function unionVariantType(type: DbType, variant: DbField): string {
         return `${type.name}${variant.name}Variant`;
     }
@@ -302,8 +341,10 @@ function main(schemaDef: TypeDef) {
             });
             ql.writeLn();
         } else {
+            genQLDoc('', type.doc);
             ql.writeLn(`type ${type.name} {`);
             type.fields.forEach(field => {
+                genQLDoc('\t', field.doc);
                 const typeDeclaration =
                     '['.repeat(field.arrayDepth) +
                     field.type.name +
@@ -362,8 +403,10 @@ function main(schemaDef: TypeDef) {
         }
         genQLFiltersForArrayFields(type, qlNames);
         genQLFiltersForEnumNameFields(type, qlNames);
+        genQLDoc('', type.doc);
         ql.writeLn(`input ${type.name}Filter {`);
         type.fields.forEach((field) => {
+            genQLDoc('\t', field.doc);
             const typeDeclaration = field.type.name + "Array".repeat(field.arrayDepth);
             ql.writeLn(`\t${field.name}: ${typeDeclaration}Filter`);
             const enumDef = field.enumDef;
@@ -389,13 +432,26 @@ function main(schemaDef: TypeDef) {
 
     function genQLQueries(types: DbType[]) {
         ql.writeBlockLn(`
+        "Specify sort order direction"
         enum QueryOrderByDirection {
+            "Documents will be sorted in ascended order (e.g. from A to Z)"
             ASC
+            "Documents will be sorted in descendant order (e.g. from Z to A)"
             DESC
         }
 
+        
+        """
+        Specify how to sort results.
+        You can sort documents in result set using more than one field.
+        """
         input QueryOrderBy {
+            """
+            Path to field which must be used as a sort criteria.
+            If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+            """
             path: String
+            "Sort order direction"
             direction: QueryOrderByDirection
         }
 

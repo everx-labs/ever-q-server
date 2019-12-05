@@ -168,6 +168,15 @@ type MsgEnvelope {
 }
 
 type InMsg {
+	"""
+	- 0 – external
+	- 1 – ihr
+	- 2 – immediately
+	- 3 – final
+	- 4 – transit
+	- 5 – discardedFinal
+	- 6 – discardedTransit
+	"""
 	msg_type: Int
 	msg_type_name: InMsgTypeEnum
 	msg: String
@@ -183,6 +192,16 @@ type InMsg {
 }
 
 type OutMsg {
+	"""
+	- 0 – external
+	- 1 – immediately
+	- 2 – outMsgNew
+	- 3 – transit
+	- 4 – dequeueImmediately
+	- 5 – dequeue
+	- 6 – transitRequired
+	- -1 – none
+	"""
 	msg_type: Int
 	msg_type_name: OutMsgTypeEnum
 	msg: String
@@ -193,31 +212,68 @@ type OutMsg {
 	import_block_lt: String
 }
 
+"TON Message"
 type Message {
 	id: String
+	"""
+	Message type
+	- 0 – internal
+	- 1 – extIn
+	- 2 – extOut
+	"""
 	msg_type: Int
 	msg_type_name: MessageTypeEnum
+	"""
+	Internal processing status
+	- 0 – unknown
+	- 1 – queued
+	- 2 – processing
+	- 3 – preliminary
+	- 4 – proposed
+	- 5 – finalized
+	- 6 – refused
+	- 7 – transiting
+	"""
 	status: Int
 	status_name: MessageProcessingStatusEnum
+	"Block to which this message belongs"
 	block_id: String
 	body: String
+	"Used in deploy message for special contracts in masterchain"
 	split_depth: Int
+	"Used in deploy message for special contracts in masterchain"
 	tick: Boolean
+	"Used in deploy message for special contracts in masterchain"
 	tock: Boolean
+	"Represents contract code in deploy messages"
 	code: String
+	"Represents initial data for a contract in deploy messages"
 	data: String
+	"Represents contract library in deploy messages"
 	library: String
+	"Source address"
 	src: String
+	"Destination address"
 	dst: String
+	"Logical creation time automatically set by the generating transaction"
 	created_lt: String
+	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
 	created_at: Float
+	"Not described in spec"
 	ihr_disabled: Boolean
+	"This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism."
 	ihr_fee: String
+	"Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated."
 	fwd_fee: String
+	"Not described in spec"
 	import_fee: String
+	"Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounce: Boolean
+	"Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounced: Boolean
+	"Internal message may bear some value in Grams"
 	value: String
+	"Internal message may bear some value in other currencies"
 	value_other: [OtherCurrency]
 	proof: String
 	boc: String
@@ -280,6 +336,11 @@ type BlockMasterShardHashesDescr {
 	next_validator_shard: String
 	min_ref_mc_seqno: Float
 	gen_utime: Float
+	"""
+	- 0 – none
+	- 2 – split
+	- 3 – merge
+	"""
 	split_type: Int
 	split_type_name: SplitTypeEnum
 	split: Float
@@ -317,8 +378,15 @@ type BlockMaster {
 	prev_blk_signatures: [BlockMasterPrevBlkSignatures]
 }
 
+"This is Block"
 type Block {
 	id: String
+	"""
+	- 0 – unknown
+	- 1 – proposed
+	- 2 – finalized
+	- 3 – refused
+	"""
 	status: Int
 	status_name: BlockProcessingStatusEnum
 	global_id: Float
@@ -353,20 +421,35 @@ type Block {
 	master: BlockMaster
 }
 
+"TON Account"
 type Account {
 	id: String
+	"""
+	Current status of the account
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	"""
 	acc_type: Int
 	acc_type_name: AccountTypeEnum
+	"Contains either the unixtime of the most recent storage payment collected (usually this is the unixtime of the most recent transaction), or the unixtime when the account was created (again, by a transaction)"
 	last_paid: Float
+	"If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the account is destroyed altogether, and its balance, if any, is transferred to the zero account."
 	due_payment: String
 	last_trans_lt: String
 	balance: String
 	balance_other: [OtherCurrency]
+	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: Int
+	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
 	tick: Boolean
+	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
 	tock: Boolean
+	"If present, contains smart-contract code encoded with in base64"
 	code: String
+	"If present, contains smart-contract data encoded with in base64"
 	data: String
+	"If present, contains library code used in smart-contract"
 	library: String
 	proof: String
 	boc: String
@@ -375,6 +458,11 @@ type Account {
 type TransactionStorage {
 	storage_fees_collected: String
 	storage_fees_due: String
+	"""
+	- 0 – unchanged
+	- 1 – frozen
+	- 2 – deleted
+	"""
 	status_change: Int
 	status_change_name: AccountStatusChangeEnum
 }
@@ -386,8 +474,17 @@ type TransactionCredit {
 }
 
 type TransactionCompute {
+	"""
+	- 0 – skipped
+	- 1 – vm
+	"""
 	compute_type: Int
 	compute_type_name: ComputeTypeEnum
+	"""
+	- 0 – noState
+	- 1 – badState
+	- 2 – noGas
+	"""
 	skipped_reason: Int
 	skipped_reason_name: SkipReasonEnum
 	success: Boolean
@@ -409,6 +506,11 @@ type TransactionAction {
 	success: Boolean
 	valid: Boolean
 	no_funds: Boolean
+	"""
+	- 0 – unchanged
+	- 1 – frozen
+	- 2 – deleted
+	"""
 	status_change: Int
 	status_change_name: AccountStatusChangeEnum
 	total_fwd_fees: String
@@ -425,6 +527,11 @@ type TransactionAction {
 }
 
 type TransactionBounce {
+	"""
+	- 0 – negFunds
+	- 1 – noFunds
+	- 2 – ok
+	"""
 	bounce_type: Int
 	bounce_type_name: BounceTypeEnum
 	msg_size_cells: Float
@@ -441,10 +548,28 @@ type TransactionSplitInfo {
 	sibling_addr: String
 }
 
+"TON Transaction"
 type Transaction {
 	id: String
+	"""
+	- 0 – ordinary
+	- 1 – storage
+	- 2 – tick
+	- 3 – tock
+	- 4 – splitPrepare
+	- 5 – splitInstall
+	- 6 – mergePrepare
+	- 7 – mergeInstall
+	"""
 	tr_type: Int
 	tr_type_name: TransactionTypeEnum
+	"""
+	- 0 – unknown
+	- 1 – preliminary
+	- 2 – proposed
+	- 3 – finalized
+	- 4 – refused
+	"""
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	block_id: String
@@ -454,8 +579,20 @@ type Transaction {
 	prev_trans_lt: String
 	now: Float
 	outmsg_cnt: Int
+	"""
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	- 3 – nonExist
+	"""
 	orig_status: Int
 	orig_status_name: AccountStatusEnum
+	"""
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	- 3 – nonExist
+	"""
 	end_status: Int
 	end_status_name: AccountStatusEnum
 	in_msg: String
@@ -513,6 +650,15 @@ input InMsgTypeEnumFilter {
 }
 
 input InMsgFilter {
+	"""
+	- 0 – external
+	- 1 – ihr
+	- 2 – immediately
+	- 3 – final
+	- 4 – transit
+	- 5 – discardedFinal
+	- 6 – discardedTransit
+	"""
 	msg_type: IntFilter
 	msg_type_name: InMsgTypeEnumFilter
 	msg: StringFilter
@@ -539,6 +685,16 @@ input OutMsgTypeEnumFilter {
 }
 
 input OutMsgFilter {
+	"""
+	- 0 – external
+	- 1 – immediately
+	- 2 – outMsgNew
+	- 3 – transit
+	- 4 – dequeueImmediately
+	- 5 – dequeue
+	- 6 – transitRequired
+	- -1 – none
+	"""
 	msg_type: IntFilter
 	msg_type_name: OutMsgTypeEnumFilter
 	msg: StringFilter
@@ -576,31 +732,68 @@ input MessageProcessingStatusEnumFilter {
 	notIn: [MessageProcessingStatusEnum]
 }
 
+"TON Message"
 input MessageFilter {
 	id: StringFilter
+	"""
+	Message type
+	- 0 – internal
+	- 1 – extIn
+	- 2 – extOut
+	"""
 	msg_type: IntFilter
 	msg_type_name: MessageTypeEnumFilter
+	"""
+	Internal processing status
+	- 0 – unknown
+	- 1 – queued
+	- 2 – processing
+	- 3 – preliminary
+	- 4 – proposed
+	- 5 – finalized
+	- 6 – refused
+	- 7 – transiting
+	"""
 	status: IntFilter
 	status_name: MessageProcessingStatusEnumFilter
+	"Block to which this message belongs"
 	block_id: StringFilter
 	body: StringFilter
+	"Used in deploy message for special contracts in masterchain"
 	split_depth: IntFilter
+	"Used in deploy message for special contracts in masterchain"
 	tick: BooleanFilter
+	"Used in deploy message for special contracts in masterchain"
 	tock: BooleanFilter
+	"Represents contract code in deploy messages"
 	code: StringFilter
+	"Represents initial data for a contract in deploy messages"
 	data: StringFilter
+	"Represents contract library in deploy messages"
 	library: StringFilter
+	"Source address"
 	src: StringFilter
+	"Destination address"
 	dst: StringFilter
+	"Logical creation time automatically set by the generating transaction"
 	created_lt: StringFilter
+	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
 	created_at: FloatFilter
+	"Not described in spec"
 	ihr_disabled: BooleanFilter
+	"This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism."
 	ihr_fee: StringFilter
+	"Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated."
 	fwd_fee: StringFilter
+	"Not described in spec"
 	import_fee: StringFilter
+	"Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounce: BooleanFilter
+	"Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounced: BooleanFilter
+	"Internal message may bear some value in Grams"
 	value: StringFilter
+	"Internal message may bear some value in other currencies"
 	value_other: OtherCurrencyArrayFilter
 	proof: StringFilter
 	boc: StringFilter
@@ -679,6 +872,11 @@ input BlockMasterShardHashesDescrFilter {
 	next_validator_shard: StringFilter
 	min_ref_mc_seqno: FloatFilter
 	gen_utime: FloatFilter
+	"""
+	- 0 – none
+	- 2 – split
+	- 3 – merge
+	"""
 	split_type: IntFilter
 	split_type_name: SplitTypeEnumFilter
 	split: FloatFilter
@@ -757,8 +955,15 @@ input BlockProcessingStatusEnumFilter {
 	notIn: [BlockProcessingStatusEnum]
 }
 
+"This is Block"
 input BlockFilter {
 	id: StringFilter
+	"""
+	- 0 – unknown
+	- 1 – proposed
+	- 2 – finalized
+	- 3 – refused
+	"""
 	status: IntFilter
 	status_name: BlockProcessingStatusEnumFilter
 	global_id: FloatFilter
@@ -804,20 +1009,35 @@ input AccountTypeEnumFilter {
 	notIn: [AccountTypeEnum]
 }
 
+"TON Account"
 input AccountFilter {
 	id: StringFilter
+	"""
+	Current status of the account
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	"""
 	acc_type: IntFilter
 	acc_type_name: AccountTypeEnumFilter
+	"Contains either the unixtime of the most recent storage payment collected (usually this is the unixtime of the most recent transaction), or the unixtime when the account was created (again, by a transaction)"
 	last_paid: FloatFilter
+	"If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the account is destroyed altogether, and its balance, if any, is transferred to the zero account."
 	due_payment: StringFilter
 	last_trans_lt: StringFilter
 	balance: StringFilter
 	balance_other: OtherCurrencyArrayFilter
+	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: IntFilter
+	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
 	tick: BooleanFilter
+	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
 	tock: BooleanFilter
+	"If present, contains smart-contract code encoded with in base64"
 	code: StringFilter
+	"If present, contains smart-contract data encoded with in base64"
 	data: StringFilter
+	"If present, contains library code used in smart-contract"
 	library: StringFilter
 	proof: StringFilter
 	boc: StringFilter
@@ -837,6 +1057,11 @@ input AccountStatusChangeEnumFilter {
 input TransactionStorageFilter {
 	storage_fees_collected: StringFilter
 	storage_fees_due: StringFilter
+	"""
+	- 0 – unchanged
+	- 1 – frozen
+	- 2 – deleted
+	"""
 	status_change: IntFilter
 	status_change_name: AccountStatusChangeEnumFilter
 }
@@ -870,8 +1095,17 @@ input SkipReasonEnumFilter {
 }
 
 input TransactionComputeFilter {
+	"""
+	- 0 – skipped
+	- 1 – vm
+	"""
 	compute_type: IntFilter
 	compute_type_name: ComputeTypeEnumFilter
+	"""
+	- 0 – noState
+	- 1 – badState
+	- 2 – noGas
+	"""
 	skipped_reason: IntFilter
 	skipped_reason_name: SkipReasonEnumFilter
 	success: BooleanFilter
@@ -893,6 +1127,11 @@ input TransactionActionFilter {
 	success: BooleanFilter
 	valid: BooleanFilter
 	no_funds: BooleanFilter
+	"""
+	- 0 – unchanged
+	- 1 – frozen
+	- 2 – deleted
+	"""
 	status_change: IntFilter
 	status_change_name: AccountStatusChangeEnumFilter
 	total_fwd_fees: StringFilter
@@ -920,6 +1159,11 @@ input BounceTypeEnumFilter {
 }
 
 input TransactionBounceFilter {
+	"""
+	- 0 – negFunds
+	- 1 – noFunds
+	- 2 – ok
+	"""
 	bounce_type: IntFilter
 	bounce_type_name: BounceTypeEnumFilter
 	msg_size_cells: FloatFilter
@@ -974,10 +1218,28 @@ input AccountStatusEnumFilter {
 	notIn: [AccountStatusEnum]
 }
 
+"TON Transaction"
 input TransactionFilter {
 	id: StringFilter
+	"""
+	- 0 – ordinary
+	- 1 – storage
+	- 2 – tick
+	- 3 – tock
+	- 4 – splitPrepare
+	- 5 – splitInstall
+	- 6 – mergePrepare
+	- 7 – mergeInstall
+	"""
 	tr_type: IntFilter
 	tr_type_name: TransactionTypeEnumFilter
+	"""
+	- 0 – unknown
+	- 1 – preliminary
+	- 2 – proposed
+	- 3 – finalized
+	- 4 – refused
+	"""
 	status: IntFilter
 	status_name: TransactionProcessingStatusEnumFilter
 	block_id: StringFilter
@@ -987,8 +1249,20 @@ input TransactionFilter {
 	prev_trans_lt: StringFilter
 	now: FloatFilter
 	outmsg_cnt: IntFilter
+	"""
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	- 3 – nonExist
+	"""
 	orig_status: IntFilter
 	orig_status_name: AccountStatusEnumFilter
+	"""
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	- 3 – nonExist
+	"""
 	end_status: IntFilter
 	end_status_name: AccountStatusEnumFilter
 	in_msg: StringFilter
@@ -1015,13 +1289,26 @@ input TransactionFilter {
 	boc: StringFilter
 }
 
+"Specify sort order direction"
 enum QueryOrderByDirection {
+    "Documents will be sorted in ascended order (e.g. from A to Z)"
     ASC
+    "Documents will be sorted in descendant order (e.g. from Z to A)"
     DESC
 }
 
+
+"""
+Specify how to sort results.
+You can sort documents in result set using more than one field.
+"""
 input QueryOrderBy {
+    """
+    Path to field which must be used as a sort criteria.
+    If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+    """
     path: String
+    "Sort order direction"
     direction: QueryOrderByDirection
 }
 

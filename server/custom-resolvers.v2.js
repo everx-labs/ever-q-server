@@ -52,7 +52,6 @@ async function getAccountsCount(_parent, _args, context: Context): Promise<numbe
     return counts.length > 0 ? counts[0] : 0;
 }
 
-
 async function getTransactionsCount(_parent, _args, context: Context): Promise<number> {
     const result: any = await context.db.fetchQuery(`RETURN LENGTH(transactions)`, {});
     const counts = (result: number[]);
@@ -77,9 +76,9 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
         RETURN { hs, ls }
     `, {});
     const parts = (result: {hs:number, ls: number}[])[0];
+    //$FlowFixMe
     return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
 }
-
 
 // Mutation
 
