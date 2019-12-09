@@ -68,6 +68,11 @@ test("Generate AQL", () => {
     expect(params.values.v1).toEqual('fff');
 
     params.clear();
+    ql = Account.ql(params, 'doc', { id: { eq: 'fff' } });
+    expect(ql).toEqual(`doc._key == @v1`);
+    expect(params.values.v1).toEqual('fff');
+
+    params.clear();
     ql = Account.ql(params, 'doc', { id: { gt: 'fff' }, last_paid: { ge: 20 } });
     expect(ql).toEqual(`(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)`);
     expect(params.values.v1).toEqual('fff');
