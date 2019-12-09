@@ -42,6 +42,6 @@ export type QConfig = {
 }
 
 export function ensureProtocol(address: string, defaultProtocol: string): string {
-    return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://'${address}`;
+    return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
 
