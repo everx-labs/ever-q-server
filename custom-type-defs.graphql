@@ -12,8 +12,17 @@ extend type Query {
     getAccountsCount: Float
     getTransactionsCount: Float
     getAccountsTotalBalance: String
+
+    getChangeLog(id: String): [Float]
+}
+
+enum ChangeLogOp {
+    CLEAR
+    ON
+    OFF
 }
 
 type Mutation {
     postRequests(requests: [Request]): [String]
+    setChangeLog(op: ChangeLogOp): Int
 }

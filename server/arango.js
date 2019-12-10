@@ -31,9 +31,40 @@ type CollectionFilters = {
     filtersById: Map<number, any>
 }
 
+export class ChangeLog {
+    enabled: boolean;
+    records: Map<string, number[]>;
+
+    constructor() {
+        this.enabled = false;
+        this.records = new Map();
+    }
+
+    clear() {
+        this.records.clear();
+    }
+
+    log(id: string, time: number) {
+        if (!this.enabled) {
+            return;
+        }
+        const existing = this.records.get(id);
+        if (existing) {
+            existing.push(time);
+        } else {
+            this.records.set(id, [time]);
+        }
+    }
+
+    get(id: string): number[] {
+        return this.records.get(id) || [];
+    }
+}
+
 export default class Arango {
     config: QConfig;
     log: QLog;
+    changeLog: ChangeLog;
     serverAddress: string;
     databaseName: string;
     pubsub: PubSub;
@@ -49,6 +80,7 @@ export default class Arango {
     constructor(config: QConfig, logs: QLogs) {
         this.config = config;
         this.log = logs.create('Arango');
+        this.changeLog = new ChangeLog();
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
 
@@ -121,6 +153,9 @@ export default class Arango {
             this.listener.on(name, (docJson, type) => {
                 if (type === 'insert/update') {
                     const doc = JSON.parse(docJson);
+                    if (this.changeLog.enabled) {
+                        this.changeLog.log(doc._key, Date.now());
+                    }
                     const filters = this.filtersByCollectionName.get(name);
                     if (filters) {
                         for (const filter of filters.filtersById.values()) {
