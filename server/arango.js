@@ -54,8 +54,14 @@ export default class Arango {
 
         this.pubsub = new PubSub();
 
-        this.db = new Database(`${ensureProtocol(this.serverAddress, 'http')}`);
+        this.db = new Database({
+            url: `${ensureProtocol(this.serverAddress, 'http')}`,
+        });
         this.db.useDatabase(this.databaseName);
+        if (this.config.database.auth) {
+            const authParts = this.config.database.auth.split(':');
+            this.db.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
+        }
 
         this.transactions = this.db.collection('transactions');
         this.messages = this.db.collection('messages');
@@ -103,6 +109,12 @@ export default class Arango {
     start() {
         const listenerUrl = `${ensureProtocol(this.serverAddress, 'http')}/${this.databaseName}`;
         this.listener = new arangochair(listenerUrl);
+
+        if (this.config.database.auth) {
+            const userPassword = Buffer.from(this.config.database.auth).toString('base64');
+            this.listener.req.opts.headers['Authorization'] = `Basic ${userPassword}`;
+        }
+
         this.collections.forEach(collection => {
             const name = collection.name;
             this.listener.subscribe({ collection: name });

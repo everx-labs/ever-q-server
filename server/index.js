@@ -38,6 +38,7 @@ type ProgramOptions = {
     dbName: string,
     dbServer: string,
     dbName: string,
+    dbAuth: string,
     dbVersion: string,
     host: string,
     port: string,
@@ -60,6 +61,8 @@ program
         process.env.Q_DATABASE_SERVER || 'arangodb:8529')
     .option('-n, --db-name <name>', 'database name',
         process.env.Q_DATABASE_NAME || 'blockchain')
+    .option('-a, --db-auth <name>', 'database auth in form "user:password',
+        process.env.Q_DATABASE_AUTH || '')
     .option('-n, --db-version <version>', 'database schema version',
         process.env.Q_DATABASE_VERSION || '2')
     .parse(process.argv);
@@ -79,6 +82,7 @@ const config: QConfig = {
     database: {
         server: options.dbServer,
         name: options.dbName,
+        auth: options.dbAuth,
         version: options.dbVersion,
     },
     listener: {
