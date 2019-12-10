@@ -152,8 +152,8 @@ const Account: TypeDef = {
     acc_type: required(accountType('Current status of the account')),
     last_paid: required(u32('Contains either the unixtime of the most recent storage payment collected (usually this is the unixtime of the most recent transaction), or the unixtime when the account was created (again, by a transaction)')),
     due_payment: grams('If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the account is destroyed altogether, and its balance, if any, is transferred to the zero account.'),
-    last_trans_lt: required(u64()),
-    balance: required(grams()),
+    last_trans_lt: required(u64()), // index
+    balance: required(grams()), // index
     balance_other: otherCurrencyCollection(),
     split_depth: u8('Is present and non-zero only in instances of large smart contracts.'),
     tick: bool('May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.'),
