@@ -60,7 +60,7 @@ export default class Arango {
         this.db.useDatabase(this.databaseName);
         if (this.config.database.auth) {
             const authParts = this.config.database.auth.split(':');
-            this.db.useBasicAuth(authParts[0], authParts[1] || '');
+            this.db.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
         }
 
         this.transactions = this.db.collection('transactions');
