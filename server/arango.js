@@ -216,7 +216,11 @@ export default class Arango {
                 },
                 (data, args) => {
                     try {
-                        return docType.test(null, data[collection.name], args.filter || {});
+                        const doc = data[collection.name];
+                        if (this.changeLog.enabled) {
+                            this.changeLog.log(doc._key, Date.now());
+                        }
+                        return docType.test(null, doc, args.filter || {});
                     } catch (error) {
                         console.error('[Subscription] doc test failed', data, error);
                         throw error;
