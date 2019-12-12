@@ -173,7 +173,7 @@ function setChangeLog(_, args: { op: string}, context: Context): number {
     return 1;
 }
 
-const customResolvers = {
+const resolversCustom = {
     Query: {
         info,
         getAccountsCount,
@@ -188,6 +188,6 @@ const customResolvers = {
 };
 
 export function attachCustomResolvers(original: any): any {
-    overrideObject(original, customResolvers);
+    overrideObject(original, resolversCustom);
     return original;
 }

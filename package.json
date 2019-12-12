@@ -5,7 +5,7 @@
 	"main": "server/index.js",
 	"scripts": {
 		"babel": "babel server --out-dir dist/server --source-maps inline",
-		"gen-ql": "node dist/server/gen-schema.js",
+		"gen": "node dist/server/schema/db-schema-generator.js",
 		"flow": "flow",
 		"test": "jest",
 		"server": "node dist/server/index.js",

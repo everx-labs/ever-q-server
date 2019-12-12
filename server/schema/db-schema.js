@@ -32,7 +32,7 @@ import {
     u8,
     u8enum,
     withDoc
-} from "./q-schema";
+} from "./db-schema-types";
 
 const { string, bool, ref, arrayOf } = Def;
 
