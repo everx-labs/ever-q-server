@@ -184,6 +184,18 @@ const BlockMaster = struct({
     prev_blk_signatures: BlockMasterPrevBlkSignaturesArray,
 });
 
+const BlockSignaturesSignatures = struct({
+    node_id: scalar,
+    r: scalar,
+    s: scalar,
+});
+
+const BlockSignaturesSignaturesArray = array(BlockSignaturesSignatures);
+const BlockSignatures = struct({
+    id: scalar,
+    signatures: BlockSignaturesSignaturesArray,
+}, true);
+
 const InMsgArray = array(InMsg);
 const OutMsgArray = array(OutMsg);
 const BlockAccountBlocksArray = array(BlockAccountBlocks);
@@ -221,6 +233,7 @@ const Block = struct({
     account_blocks: BlockAccountBlocksArray,
     state_update: BlockStateUpdate,
     master: BlockMaster,
+    signatures: join('id', 'blocks_signatures', BlockSignatures),
 }, true);
 
 const Account = struct({
@@ -462,9 +475,17 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.create);
             },
         },
+        BlockSignatures: {
+            id(parent) {
+                return parent._key;
+            },
+        },
         Block: {
             id(parent) {
                 return parent._key;
+            },
+            signatures(parent, _args, context) {
+                return context.db.fetchDocByKey(context.db.blocks_signatures, parent.id);
             },
             start_lt(parent) {
                 return resolveBigUInt(1, parent.start_lt);
@@ -566,12 +587,14 @@ function createResolvers(db) {
         },
         Query: {
             messages: db.collectionQuery(db.messages, Message),
+            blocks_signatures: db.collectionQuery(db.blocks_signatures, BlockSignatures),
             blocks: db.collectionQuery(db.blocks, Block),
             accounts: db.collectionQuery(db.accounts, Account),
             transactions: db.collectionQuery(db.transactions, Transaction),
         },
         Subscription: {
             messages: db.collectionSubscription(db.messages, Message),
+            blocks_signatures: db.collectionSubscription(db.blocks_signatures, BlockSignatures),
             blocks: db.collectionSubscription(db.blocks, Block),
             accounts: db.collectionSubscription(db.accounts, Account),
             transactions: db.collectionSubscription(db.transactions, Transaction),
@@ -596,6 +619,8 @@ module.exports = {
     BlockMasterShardFees,
     BlockMasterPrevBlkSignatures,
     BlockMaster,
+    BlockSignaturesSignatures,
+    BlockSignatures,
     Block,
     Account,
     TransactionStorage,
