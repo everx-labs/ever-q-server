@@ -32,11 +32,38 @@ import type { QConfig } from "./config";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
 
+const { Tags, FORMAT_HTTP_HEADERS, FORMAT_TEXT_MAP } = require('opentracing');
+
 type QOptions = {
     config: QConfig,
     logs: QLogs,
 }
+const initJaegerTracer = require("jaeger-client").initTracer;
 
+function initTracer(serviceName) {
+  const config = {
+    serviceName: serviceName,
+    sampler: {
+      type: "const",
+      param: 1,
+    },
+    reporter: {
+       collectorEndpoint: 'http://abf0140091aad11eabdba060f2430c03-49953081.us-west-2.elb.amazonaws.com:14268/api/traces',
+       logSpans: true,
+    },
+  };
+  const options = {
+    logger: {
+      info(msg) {
+        console.log("INFO ", msg);
+      },
+      error(msg) {
+        console.log("ERROR", msg);
+      },
+    },
+  };
+  return initJaegerTracer(config, options);
+}
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
@@ -49,13 +76,14 @@ export default class TONQServer {
         this.logs = options.logs;
         this.log = this.logs.create('Q Server');
         this.shared = new Map();
+        this.tracer = initTracer('Q Server');
     }
 
 
     async start() {
         const config = this.config.server;
 
-        this.db = new Arango(this.config, this.logs);
+        this.db = new Arango(this.config, this.logs, this.tracer);
         const ver = this.config.database.version;
         const generatedTypeDefs = fs.readFileSync(`type-defs.v${ver}.graphql`, 'utf-8');
         const customTypeDefs = fs.readFileSync('custom-type-defs.graphql', 'utf-8');
@@ -69,11 +97,16 @@ export default class TONQServer {
         const apollo = new ApolloServer({
             typeDefs,
             resolvers,
-            context: () => ({
-                db: this.db,
-                config: this.config,
-                shared: this.shared,
-            })
+            context: ({ req }) => {
+                const parentSpanContext = this.tracer.extract(FORMAT_TEXT_MAP, req.headers);
+                //console.log(">>>", req.headers);
+                return {
+                    db: this.db,
+                    config: this.config,
+                    shared: this.shared,
+                    span_ctx: parentSpanContext,
+                }
+            },
         });
 
         const app = express();
