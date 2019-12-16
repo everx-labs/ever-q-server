@@ -444,8 +444,18 @@ const Block: TypeDef = {
             s: string(),
         }),
     },
+    signatures: join({ BlockSignatures }, 'id'),
 };
 
+const BlockSignatures: TypeDef = {
+    _doc: 'Set of validator\'s signstures for the Block with cerrespond id',
+    _: { collection: 'blocks_signatures' },
+    signatures: arrayOf({
+        node_id: string("Validator ID"),
+        r: string("'R' part of signature"),
+        s: string("'s' part of signature"),
+    }, "Array of signatures from block's validators"),
+}
 
 //Root scheme declaration
 
@@ -461,6 +471,7 @@ const schema: TypeDef = {
             Block,
             Account,
             Transaction,
+            BlockSignatures,
         }
     }
 };
