@@ -378,6 +378,22 @@ type BlockMaster {
 	prev_blk_signatures: [BlockMasterPrevBlkSignatures]
 }
 
+type BlockSignaturesSignatures {
+	"Validator ID"
+	node_id: String
+	"'R' part of signature"
+	r: String
+	"'s' part of signature"
+	s: String
+}
+
+"Set of validator's signstures for the Block with cerrespond id"
+type BlockSignatures {
+	id: String
+	"Array of signatures from block's validators"
+	signatures: [BlockSignaturesSignatures]
+}
+
 "This is Block"
 type Block {
 	id: String
@@ -419,6 +435,7 @@ type Block {
 	account_blocks: [BlockAccountBlocks]
 	state_update: BlockStateUpdate
 	master: BlockMaster
+	signatures: BlockSignatures
 }
 
 "TON Account"
@@ -929,6 +946,27 @@ input BlockMasterFilter {
 	prev_blk_signatures: BlockMasterPrevBlkSignaturesArrayFilter
 }
 
+input BlockSignaturesSignaturesFilter {
+	"Validator ID"
+	node_id: StringFilter
+	"'R' part of signature"
+	r: StringFilter
+	"'s' part of signature"
+	s: StringFilter
+}
+
+input BlockSignaturesSignaturesArrayFilter {
+	any: BlockSignaturesSignaturesFilter
+	all: BlockSignaturesSignaturesFilter
+}
+
+"Set of validator's signstures for the Block with cerrespond id"
+input BlockSignaturesFilter {
+	id: StringFilter
+	"Array of signatures from block's validators"
+	signatures: BlockSignaturesSignaturesArrayFilter
+}
+
 input InMsgArrayFilter {
 	any: InMsgFilter
 	all: InMsgFilter
@@ -996,6 +1034,7 @@ input BlockFilter {
 	account_blocks: BlockAccountBlocksArrayFilter
 	state_update: BlockStateUpdateFilter
 	master: BlockMasterFilter
+	signatures: BlockSignaturesFilter
 }
 
 input AccountTypeEnumFilter {
@@ -1314,6 +1353,7 @@ input QueryOrderBy {
 
 type Query {
 	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int): [Message]
+	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int): [BlockSignatures]
 	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int): [Block]
 	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int): [Account]
 	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int): [Transaction]
@@ -1321,6 +1361,7 @@ type Query {
 
 type Subscription {
 	messages(filter: MessageFilter): Message
+	blocks_signatures(filter: BlockSignaturesFilter): BlockSignatures
 	blocks(filter: BlockFilter): Block
 	accounts(filter: AccountFilter): Account
 	transactions(filter: TransactionFilter): Transaction
