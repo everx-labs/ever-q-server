@@ -18,7 +18,7 @@
 
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
-import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
+import type { SchemaDoc, TypeDef } from 'ton-labs-dev-ops/src/schema';
 import {
     grams,
     i32,
@@ -35,7 +35,7 @@ import {
     withDoc
 } from "./db-schema-types";
 
-import {docs} from './db.shema.docs';
+import { docs } from './db.shema.docs';
 
 const { string, bool, ref, arrayOf } = Def;
 
@@ -309,7 +309,7 @@ const ExtBlkRef: TypeDef = {
     file_hash: string()
 };
 
-const extBlkRef = () => ref({ ExtBlkRef });
+const extBlkRef = (doc?: string) => ref({ ExtBlkRef }, doc);
 
 const MsgEnvelope: TypeDef = {
     msg_id: string(),
@@ -334,7 +334,7 @@ const InMsg: TypeDef = {
     proof_delivered: string()
 };
 
-const inMsg = () => ref({ InMsg });
+const inMsg = (doc?: string) => ref({ InMsg }, doc);
 
 const OutMsg: TypeDef = {
     msg_type: required(outMsgType()),
@@ -346,7 +346,7 @@ const OutMsg: TypeDef = {
     import_block_lt: u64(),
 };
 
-const outMsg = () => ref({ OutMsg });
+const outMsg = (doc?: string) => ref({ OutMsg }, doc);
 
 const shardDescr = (doc?: string): TypeDef => withDoc({
     seq_no: u32(docs.shardDescr.seq_no),

@@ -212,7 +212,13 @@ type OutMsg {
 	import_block_lt: String
 }
 
-"TON Message"
+"""
+# Message type
+
+           Message layout queries.  A message consists of its header followed by its
+           body or payload. The body is essentially arbitrary, to be interpreted by the
+           destination smart contract. It can be queried with the following fields:
+"""
 type Message {
 	id: String
 	"""
@@ -284,11 +290,11 @@ type Message {
 type BlockValueFlow {
 	"Amount of grams amount to the next block."
 	to_next_blk: String
-	"Amount of other cryptocurrencies to the next block."
+	"Amount of non gram cryptocurrencies to the next block."
 	to_next_blk_other: [OtherCurrency]
 	"Amount of grams exported."
 	exported: String
-	"Amount of other cryptocurrencies exported."
+	"Amount of non gram cryptocurrencies exported."
 	exported_other: [OtherCurrency]
 	fees_collected: String
 	fees_collected_other: [OtherCurrency]
@@ -296,18 +302,18 @@ type BlockValueFlow {
 	created_other: [OtherCurrency]
 	"Amount of grams imported."
 	imported: String
-	"Amount of other cryptocurrencies imported."
+	"Amount of non gram cryptocurrencies imported."
 	imported_other: [OtherCurrency]
 	"Amount of grams transferred from previous block."
 	from_prev_blk: String
-	"Amount of other cryptocurrencies transferred from previous block."
+	"Amount of non gram cryptocurrencies transferred from previous block."
 	from_prev_blk_other: [OtherCurrency]
 	"Amount of grams minted in this block."
 	minted: String
 	minted_other: [OtherCurrency]
 	"Amount of import fees in grams"
 	fees_imported: String
-	"Amount of import fees in other currrencies."
+	"Amount of import fees in non gram currrencies."
 	fees_imported_other: [OtherCurrency]
 }
 
@@ -374,11 +380,11 @@ type BlockMasterShardHashesDescr {
 	split: Float
 	"Amount of fees collected int his shard in grams."
 	fees_collected: String
-	"Amount of fees collected int his shard in other currencies."
+	"Amount of fees collected int his shard in non gram currencies."
 	fees_collected_other: [OtherCurrency]
 	"Amount of funds created in this shard in grams."
 	funds_created: String
-	"Amount of funds created in this shard in other currencies."
+	"Amount of funds created in this shard in non gram currencies."
 	funds_created_other: [OtherCurrency]
 }
 
@@ -396,11 +402,11 @@ type BlockMasterShardFees {
 	shard: String
 	"Amount of fees in grams"
 	fees: String
-	"Array of fees in other crypto currencies"
+	"Array of fees in non gram crypto currencies"
 	fees_other: [OtherCurrency]
 	"Amount of fees created during shard"
 	create: String
-	"Amount of other fees created in other crypto currencies during the block."
+	"Amount of non gram fees created in non gram crypto currencies during the block."
 	create_other: [OtherCurrency]
 }
 
@@ -455,8 +461,11 @@ type Block {
 	gen_catchain_seqno: Float
 	flags: Int
 	master_ref: ExtBlkRef
+	"External block reference for previous block."
 	prev_ref: ExtBlkRef
+	"External block reference for previous block in case of shard merge."
 	prev_alt_ref: ExtBlkRef
+	"External block reference for previous block in case of vertical blocks."
 	prev_vert_ref: ExtBlkRef
 	prev_vert_alt_ref: ExtBlkRef
 	"uin32 block version identifier"
@@ -541,7 +550,7 @@ type Account {
 	last_paid: Float
 	"""
 	
-	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
 	  accounts(filter: { due_payment: { ne: null } })
@@ -554,15 +563,51 @@ type Account {
 	"""
 	due_payment: String
 	last_trans_lt: String
+	"""
+	
+	```
+	{
+	  accounts(orderBy:{path:"balance",direction:DESC}){
+	    balance
+	  }
+	}
+	```
+	        
+	"""
 	balance: String
 	balance_other: [OtherCurrency]
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: Int
 	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
 	tick: Boolean
-	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
+	"""
+	May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
+	```        
+	{
+	  accounts (filter:{tock:{ne:null}}){
+	    id
+	    tock
+	    tick
+	  }
+	}
+	```
+	        
+	"""
 	tock: Boolean
-	"If present, contains smart-contract code encoded with in base64."
+	"""
+	If present, contains smart-contract code encoded with in base64.
+	```  
+	{
+	  accounts (filter:{code:{eq:null}}){
+	    id
+	    acc_type
+	  }
+	}   
+	```          
+	        
+	        
+	        
+	"""
 	code: String
 	"If present, contains smart-contract data encoded with in base64."
 	data: String
@@ -575,9 +620,12 @@ type Account {
 }
 
 type TransactionStorage {
+	"This field defines the amount of storage fees collected in grams."
 	storage_fees_collected: String
+	"This field represents the amount of due fees in grams, it might be empty."
 	storage_fees_due: String
 	"""
+	This field represents account status change after the transaction is completed.
 	- 0 – unchanged
 	- 1 – frozen
 	- 2 – deleted
@@ -627,7 +675,9 @@ type TransactionCompute {
 	exit_arg: Int
 	"the total number of steps performed by TVM (usually equal to two plus the number of instructions executed, including implicit RETs)"
 	vm_steps: Float
+	"This parameter is the representation hashes of the original state of TVM."
 	vm_init_state_hash: String
+	"This parameter is the representation hashes of the resulting state of TVM."
 	vm_final_state_hash: String
 }
 
@@ -738,7 +788,7 @@ type Transaction {
 	out_messages: [Message]
 	"Total amount of fees that entails account state change and used in Merkle update"
 	total_fees: String
-	"Same as above, but reserved for other coins that may appear in the blockchain"
+	"Same as above, but reserved for non gram coins that may appear in the blockchain"
 	total_fees_other: [OtherCurrency]
 	"Merkle update field"
 	old_hash: String
@@ -873,7 +923,13 @@ input MessageProcessingStatusEnumFilter {
 	notIn: [MessageProcessingStatusEnum]
 }
 
-"TON Message"
+"""
+# Message type
+
+           Message layout queries.  A message consists of its header followed by its
+           body or payload. The body is essentially arbitrary, to be interpreted by the
+           destination smart contract. It can be queried with the following fields:
+"""
 input MessageFilter {
 	id: StringFilter
 	"""
@@ -945,11 +1001,11 @@ input MessageFilter {
 input BlockValueFlowFilter {
 	"Amount of grams amount to the next block."
 	to_next_blk: StringFilter
-	"Amount of other cryptocurrencies to the next block."
+	"Amount of non gram cryptocurrencies to the next block."
 	to_next_blk_other: OtherCurrencyArrayFilter
 	"Amount of grams exported."
 	exported: StringFilter
-	"Amount of other cryptocurrencies exported."
+	"Amount of non gram cryptocurrencies exported."
 	exported_other: OtherCurrencyArrayFilter
 	fees_collected: StringFilter
 	fees_collected_other: OtherCurrencyArrayFilter
@@ -957,18 +1013,18 @@ input BlockValueFlowFilter {
 	created_other: OtherCurrencyArrayFilter
 	"Amount of grams imported."
 	imported: StringFilter
-	"Amount of other cryptocurrencies imported."
+	"Amount of non gram cryptocurrencies imported."
 	imported_other: OtherCurrencyArrayFilter
 	"Amount of grams transferred from previous block."
 	from_prev_blk: StringFilter
-	"Amount of other cryptocurrencies transferred from previous block."
+	"Amount of non gram cryptocurrencies transferred from previous block."
 	from_prev_blk_other: OtherCurrencyArrayFilter
 	"Amount of grams minted in this block."
 	minted: StringFilter
 	minted_other: OtherCurrencyArrayFilter
 	"Amount of import fees in grams"
 	fees_imported: StringFilter
-	"Amount of import fees in other currrencies."
+	"Amount of import fees in non gram currrencies."
 	fees_imported_other: OtherCurrencyArrayFilter
 }
 
@@ -1051,11 +1107,11 @@ input BlockMasterShardHashesDescrFilter {
 	split: FloatFilter
 	"Amount of fees collected int his shard in grams."
 	fees_collected: StringFilter
-	"Amount of fees collected int his shard in other currencies."
+	"Amount of fees collected int his shard in non gram currencies."
 	fees_collected_other: OtherCurrencyArrayFilter
 	"Amount of funds created in this shard in grams."
 	funds_created: StringFilter
-	"Amount of funds created in this shard in other currencies."
+	"Amount of funds created in this shard in non gram currencies."
 	funds_created_other: OtherCurrencyArrayFilter
 }
 
@@ -1073,11 +1129,11 @@ input BlockMasterShardFeesFilter {
 	shard: StringFilter
 	"Amount of fees in grams"
 	fees: StringFilter
-	"Array of fees in other crypto currencies"
+	"Array of fees in non gram crypto currencies"
 	fees_other: OtherCurrencyArrayFilter
 	"Amount of fees created during shard"
 	create: StringFilter
-	"Amount of other fees created in other crypto currencies during the block."
+	"Amount of non gram fees created in non gram crypto currencies during the block."
 	create_other: OtherCurrencyArrayFilter
 }
 
@@ -1178,8 +1234,11 @@ input BlockFilter {
 	gen_catchain_seqno: FloatFilter
 	flags: IntFilter
 	master_ref: ExtBlkRefFilter
+	"External block reference for previous block."
 	prev_ref: ExtBlkRefFilter
+	"External block reference for previous block in case of shard merge."
 	prev_alt_ref: ExtBlkRefFilter
+	"External block reference for previous block in case of vertical blocks."
 	prev_vert_ref: ExtBlkRefFilter
 	prev_vert_alt_ref: ExtBlkRefFilter
 	"uin32 block version identifier"
@@ -1275,7 +1334,7 @@ input AccountFilter {
 	last_paid: FloatFilter
 	"""
 	
-	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in other cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
 	  accounts(filter: { due_payment: { ne: null } })
@@ -1288,15 +1347,51 @@ input AccountFilter {
 	"""
 	due_payment: StringFilter
 	last_trans_lt: StringFilter
+	"""
+	
+	```
+	{
+	  accounts(orderBy:{path:"balance",direction:DESC}){
+	    balance
+	  }
+	}
+	```
+	        
+	"""
 	balance: StringFilter
 	balance_other: OtherCurrencyArrayFilter
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: IntFilter
 	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
 	tick: BooleanFilter
-	"May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function."
+	"""
+	May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
+	```        
+	{
+	  accounts (filter:{tock:{ne:null}}){
+	    id
+	    tock
+	    tick
+	  }
+	}
+	```
+	        
+	"""
 	tock: BooleanFilter
-	"If present, contains smart-contract code encoded with in base64."
+	"""
+	If present, contains smart-contract code encoded with in base64.
+	```  
+	{
+	  accounts (filter:{code:{eq:null}}){
+	    id
+	    acc_type
+	  }
+	}   
+	```          
+	        
+	        
+	        
+	"""
 	code: StringFilter
 	"If present, contains smart-contract data encoded with in base64."
 	data: StringFilter
@@ -1320,9 +1415,12 @@ input AccountStatusChangeEnumFilter {
 }
 
 input TransactionStorageFilter {
+	"This field defines the amount of storage fees collected in grams."
 	storage_fees_collected: StringFilter
+	"This field represents the amount of due fees in grams, it might be empty."
 	storage_fees_due: StringFilter
 	"""
+	This field represents account status change after the transaction is completed.
 	- 0 – unchanged
 	- 1 – frozen
 	- 2 – deleted
@@ -1394,7 +1492,9 @@ input TransactionComputeFilter {
 	exit_arg: IntFilter
 	"the total number of steps performed by TVM (usually equal to two plus the number of instructions executed, including implicit RETs)"
 	vm_steps: FloatFilter
+	"This parameter is the representation hashes of the original state of TVM."
 	vm_init_state_hash: StringFilter
+	"This parameter is the representation hashes of the resulting state of TVM."
 	vm_final_state_hash: StringFilter
 }
 
@@ -1554,7 +1654,7 @@ input TransactionFilter {
 	out_messages: MessageArrayFilter
 	"Total amount of fees that entails account state change and used in Merkle update"
 	total_fees: StringFilter
-	"Same as above, but reserved for other coins that may appear in the blockchain"
+	"Same as above, but reserved for non gram coins that may appear in the blockchain"
 	total_fees_other: OtherCurrencyArrayFilter
 	"Merkle update field"
 	old_hash: StringFilter
