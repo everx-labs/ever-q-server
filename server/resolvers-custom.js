@@ -158,32 +158,15 @@ async function postRequests(_, args: { requests: Request[] }, context: Context):
     return requests.map(x => x.id);
 }
 
-function getChangeLog(_, args: { id: string}, context: Context): number[] {
-    return context.db.changeLog.get(args.id);
-}
-
-function setChangeLog(_, args: { op: string}, context: Context): number {
-    if (args.op === 'CLEAR') {
-        context.db.changeLog.clear();
-    } else if (args.op === 'ON') {
-        context.db.changeLog.enabled = true;
-    } else if (args.op === 'OFF') {
-        context.db.changeLog.enabled = false;
-    }
-    return 1;
-}
-
 const resolversCustom = {
     Query: {
         info,
         getAccountsCount,
         getTransactionsCount,
         getAccountsTotalBalance,
-        getChangeLog,
     },
     Mutation: {
         postRequests,
-        setChangeLog,
     },
 };
 

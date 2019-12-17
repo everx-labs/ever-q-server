@@ -285,6 +285,18 @@ const Transaction: TypeDef = {
     boc: string(),
 };
 
+// BLOCK SIGNATURES
+
+const BlockSignatures: TypeDef = {
+    _doc: 'Set of validator\'s signatures for the Block with correspond id',
+    _: { collection: 'blocks_signatures' },
+    signatures: arrayOf({
+        node_id: string("Validator ID"),
+        r: string("'R' part of signature"),
+        s: string("'s' part of signature"),
+    }, "Array of signatures from block's validators"),
+};
+
 // BLOCK
 
 const ExtBlkRef: TypeDef = {
@@ -446,16 +458,6 @@ const Block: TypeDef = {
     },
     signatures: join({ BlockSignatures }, 'id'),
 };
-
-const BlockSignatures: TypeDef = {
-    _doc: 'Set of validator\'s signstures for the Block with cerrespond id',
-    _: { collection: 'blocks_signatures' },
-    signatures: arrayOf({
-        node_id: string("Validator ID"),
-        r: string("'R' part of signature"),
-        s: string("'s' part of signature"),
-    }, "Array of signatures from block's validators"),
-}
 
 //Root scheme declaration
 

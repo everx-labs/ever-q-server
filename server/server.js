@@ -25,6 +25,7 @@ import Arango from './arango';
 
 import { createResolvers } from './resolvers-generated';
 import { attachCustomResolvers } from "./resolvers-custom";
+import { resolversMam } from "./resolvers-mam";
 
 import type { QConfig } from "./config";
 import QLogs from "./logs";
@@ -50,6 +51,22 @@ export default class TONQServer {
     }
 
 
+    async startMam(app: express.Application) {
+        const typeDefs = fs.readFileSync('type-defs-mam.graphql', 'utf-8');
+
+        const apollo = new ApolloServer({
+            typeDefs,
+            resolversMam,
+            context: () => ({
+                db: this.db,
+                config: this.config,
+                shared: this.shared,
+            })
+        });
+
+        apollo.applyMiddleware({ app, path: '/graphql/mam' });
+    }
+
     async start() {
         const config = this.config.server;
 
@@ -72,6 +89,7 @@ export default class TONQServer {
         });
 
         const app = express();
+        await this.startMam(app);
         apollo.applyMiddleware({ app, path: '/graphql' });
 
         const server = http.createServer(app);

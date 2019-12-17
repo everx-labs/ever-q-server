@@ -1,0 +1,18 @@
+type Info {
+    version: String
+}
+
+type Query {
+    info: Info
+    getChangeLog(id: String): [Float]
+}
+
+enum ChangeLogOp {
+    CLEAR
+    ON
+    OFF
+}
+
+type Mutation {
+    setChangeLog(op: ChangeLogOp): Int
+}

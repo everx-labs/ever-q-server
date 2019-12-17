@@ -387,7 +387,7 @@ type BlockSignaturesSignatures {
 	s: String
 }
 
-"Set of validator's signstures for the Block with cerrespond id"
+"Set of validator's signatures for the Block with correspond id"
 type BlockSignatures {
 	id: String
 	"Array of signatures from block's validators"
@@ -960,7 +960,7 @@ input BlockSignaturesSignaturesArrayFilter {
 	all: BlockSignaturesSignaturesFilter
 }
 
-"Set of validator's signstures for the Block with cerrespond id"
+"Set of validator's signatures for the Block with correspond id"
 input BlockSignaturesFilter {
 	id: StringFilter
 	"Array of signatures from block's validators"
