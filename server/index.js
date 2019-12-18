@@ -42,6 +42,7 @@ type ProgramOptions = {
     dbVersion: string,
     host: string,
     port: string,
+    jaegerEndpoint: string,
 }
 
 program
@@ -65,6 +66,8 @@ program
         process.env.Q_DATABASE_AUTH || '')
     .option('-n, --db-version <version>', 'database schema version',
         process.env.Q_DATABASE_VERSION || '2')
+    .option('-j, --jaeger-endpoint <host>', 'jaeger collector host',
+        process.env.JAEGER_ENDPOINT || '')
     .parse(process.argv);
 
 const options: ProgramOptions = program;
@@ -87,6 +90,9 @@ const config: QConfig = {
     },
     listener: {
         restartTimeout: 1000
+    },
+    jaeger: {
+        endpoint: options.jaegerEndpoint
     }
 };
 

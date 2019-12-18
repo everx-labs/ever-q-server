@@ -39,6 +39,9 @@ export type QConfig = {
     },
     listener: {
         restartTimeout: number
+    },
+    jaeger: {
+        endpoint: string
     }
 }
 

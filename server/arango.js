@@ -18,11 +18,11 @@
 import { Database, DocumentCollection } from 'arangojs';
 import arangochair from 'arangochair';
 import { PubSub, withFilter } from 'apollo-server';
-import { ensureProtocol } from "./config";
-import { QParams } from "./q-types";
-import type { QType } from "./q-types";
+import { ensureProtocol } from './config';
+import { QParams } from './q-types';
+import type { QType } from './q-types';
 import type { QConfig } from './config'
-import type { QLog } from "./logs";
+import type { QLog } from './logs';
 import QLogs from './logs'
 const { Tags, FORMAT_HTTP_HEADERS, FORMAT_TEXT_MAP } = require('opentracing');
 
@@ -85,7 +85,7 @@ export default class Arango {
         this.changeLog = new ChangeLog();
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
-        this.tracer = tr;//initTracer('Arango');
+        this.tracer = tr;
 
         this.pubsub = new PubSub();
 
@@ -306,7 +306,7 @@ export default class Arango {
 
     async fetchQuery(query: any, bindVars: any, span_ctx: any) {
         return this.wrap(async () => {
-            const span = await this.tracer.startSpan("arango.js:fetchQuery", {
+            const span = await this.tracer.startSpan('arango.js:fetchQuery', {
                 childOf: span_ctx
             });
             await span.setTag(Tags.SPAN_KIND, 'server');

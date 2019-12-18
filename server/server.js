@@ -25,45 +25,22 @@ import Arango from './arango';
 
 import { createResolvers as createResolversV1 } from './q-resolvers.v1';
 import { createResolvers as createResolversV2 } from './q-resolvers.v2';
-import { attachCustomResolvers as attachCustomResolversV1 } from "./custom-resolvers.v1";
-import { attachCustomResolvers as attachCustomResolversV2 } from "./custom-resolvers.v2";
+import { attachCustomResolvers as attachCustomResolversV1 } from './custom-resolvers.v1';
+import { attachCustomResolvers as attachCustomResolversV2 } from './custom-resolvers.v2';
 
-import type { QConfig } from "./config";
-import QLogs from "./logs";
-import type { QLog } from "./logs";
+import type { QConfig } from './config';
+import QLogs from './logs';
+import type { QLog } from './logs';
 
-const { Tags, FORMAT_HTTP_HEADERS, FORMAT_TEXT_MAP } = require('opentracing');
+const initJaegerTracer = require('jaeger-client').initTracerFromEnv;
+const { Tags, FORMAT_TEXT_MAP } = require('opentracing');
 
 type QOptions = {
     config: QConfig,
     logs: QLogs,
 }
-const initJaegerTracer = require("jaeger-client").initTracer;
 
-function initTracer(serviceName) {
-  const config = {
-    serviceName: serviceName,
-    sampler: {
-      type: "const",
-      param: 1,
-    },
-    reporter: {
-       collectorEndpoint: 'http://abf0140091aad11eabdba060f2430c03-49953081.us-west-2.elb.amazonaws.com:14268/api/traces',
-       logSpans: true,
-    },
-  };
-  const options = {
-    logger: {
-      info(msg) {
-        console.log("INFO ", msg);
-      },
-      error(msg) {
-        console.log("ERROR", msg);
-      },
-    },
-  };
-  return initJaegerTracer(config, options);
-}
+
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
@@ -76,9 +53,33 @@ export default class TONQServer {
         this.logs = options.logs;
         this.log = this.logs.create('Q Server');
         this.shared = new Map();
-        this.tracer = initTracer('Q Server');
+        this.tracer = this.initTracer('Q Server', options.config.jaeger.endpoint);
     }
 
+    initTracer(serviceName, jaegerEndpoint) {
+      const config = {
+        serviceName: serviceName,
+        sampler: {
+          type: 'const',
+          param: 1,
+        },
+        reporter: jaegerEndpoint ? {
+          collectorEndpoint: jaegerEndpoint,
+          logSpans: true,
+        } : {}
+      };
+      const options = {
+        logger: {
+          info(msg) {
+            console.log('INFO ', msg);
+          },
+          error(msg) {
+            console.log('ERROR', msg);
+          },
+        },
+      };
+      return initJaegerTracer(config, options);
+    }
 
     async start() {
         const config = this.config.server;
@@ -99,7 +100,6 @@ export default class TONQServer {
             resolvers,
             context: ({ req }) => {
                 const parentSpanContext = this.tracer.extract(FORMAT_TEXT_MAP, req.headers);
-                //console.log(">>>", req.headers);
                 return {
                     db: this.db,
                     config: this.config,
