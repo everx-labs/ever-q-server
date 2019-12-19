@@ -23,10 +23,9 @@ import { ApolloServer } from 'apollo-server-express';
 
 import Arango from './arango';
 
-import { createResolvers as createResolversV1 } from './q-resolvers.v1';
-import { createResolvers as createResolversV2 } from './q-resolvers.v2';
-import { attachCustomResolvers as attachCustomResolversV1 } from './custom-resolvers.v1';
-import { attachCustomResolvers as attachCustomResolversV2 } from './custom-resolvers.v2';
+import { createResolvers } from './resolvers-generated';
+import { attachCustomResolvers } from "./resolvers-custom";
+import { resolversMam } from "./resolvers-mam";
 
 import type { QConfig } from './config';
 import QLogs from './logs';
@@ -39,7 +38,6 @@ type QOptions = {
     config: QConfig,
     logs: QLogs,
 }
-
 
 export default class TONQServer {
     config: QConfig;
@@ -81,16 +79,29 @@ export default class TONQServer {
       return initJaegerTracer(config, options);
     }
 
+    async startMam(app: express.Application) {
+        const typeDefs = fs.readFileSync('type-defs-mam.graphql', 'utf-8');
+
+        const apollo = new ApolloServer({
+            typeDefs,
+            resolversMam,
+            context: () => ({
+                db: this.db,
+                config: this.config,
+                shared: this.shared,
+            })
+        });
+
+        apollo.applyMiddleware({ app, path: '/graphql/mam' });
+    }
+
     async start() {
         const config = this.config.server;
 
         this.db = new Arango(this.config, this.logs, this.tracer);
-        const ver = this.config.database.version;
-        const generatedTypeDefs = fs.readFileSync(`type-defs.v${ver}.graphql`, 'utf-8');
-        const customTypeDefs = fs.readFileSync('custom-type-defs.graphql', 'utf-8');
+        const generatedTypeDefs = fs.readFileSync(`type-defs-generated.graphql`, 'utf-8');
+        const customTypeDefs = fs.readFileSync('type-defs-custom.graphql', 'utf-8');
         const typeDefs = `${generatedTypeDefs}\n${customTypeDefs}`;
-        const createResolvers = ver === '1' ? createResolversV1 : createResolversV2;
-        const attachCustomResolvers = ver === '1' ? attachCustomResolversV1 : attachCustomResolversV2;
         const resolvers = attachCustomResolvers(createResolvers(this.db));
 
         await this.db.start();
@@ -110,6 +121,7 @@ export default class TONQServer {
         });
 
         const app = express();
+        await this.startMam(app);
         apollo.applyMiddleware({ app, path: '/graphql' });
 
         const server = http.createServer(app);
