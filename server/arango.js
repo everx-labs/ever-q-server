@@ -24,7 +24,7 @@ import type { QType } from './q-types';
 import type { QConfig } from './config'
 import type { QLog } from './logs';
 import QLogs from './logs'
-const { Tags, FORMAT_HTTP_HEADERS, FORMAT_TEXT_MAP } = require('opentracing');
+import { Tracer } from "./tracer";
 
 type CollectionFilters = {
     lastId: number,
@@ -66,26 +66,30 @@ export class ChangeLog {
 export default class Arango {
     config: QConfig;
     log: QLog;
-    changeLog: ChangeLog;
     serverAddress: string;
     databaseName: string;
-    pubsub: PubSub;
     db: Database;
+
+    changeLog: ChangeLog;
+    tracer: Tracer;
+
     transactions: DocumentCollection;
     messages: DocumentCollection;
     accounts: DocumentCollection;
     blocks: DocumentCollection;
     collections: DocumentCollection[];
+
     listener: any;
+    pubsub: PubSub;
     filtersByCollectionName: Map<string, CollectionFilters>;
 
-    constructor(config: QConfig, logs: QLogs, tr: JaegerTracer) {
+    constructor(config: QConfig, logs: QLogs, tracer: Tracer) {
         this.config = config;
         this.log = logs.create('Arango');
         this.changeLog = new ChangeLog();
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
-        this.tracer = tr;
+        this.tracer = tracer;
 
         this.pubsub = new PubSub();
 
@@ -183,7 +187,7 @@ export default class Arango {
     collectionQuery(collection: DocumentCollection, filter: any) {
         return async (parent: any, args: any, context: any) => {
             this.log.debug(`Query ${collection.name}`, args);
-            return this.fetchDocs(collection, args, filter, context.span_ctx);
+            return this.fetchDocs(collection, args, filter, context);
         }
     }
 
@@ -191,7 +195,7 @@ export default class Arango {
         return async (parent: any, args: any, context: any) => {
             const query = args.query;
             const bindVars = JSON.parse(args.bindVarsJson);
-            return JSON.stringify(await this.fetchQuery(query, bindVars, context.span_ctx));
+            return JSON.stringify(await this.fetchQuery(query, bindVars, context));
         }
     }
 
@@ -246,12 +250,8 @@ export default class Arango {
         }
     }
 
-    async fetchDocs(collection: DocumentCollection, args: any, docType: QType, span_ctx: any) {
+    async fetchDocs(collection: DocumentCollection, args: any, docType: QType, context: any) {
         return this.wrap(async () => {
-            const span = await this.tracer.startSpan('arango.js:fetchDocs', {
-                    childOf: span_ctx,
-            });
-            await span.setTag(Tags.SPAN_KIND, 'server');
             const filter = args.filter || {};
             const params = new QParams();
             const filterSection = Object.keys(filter).length > 0
@@ -262,7 +262,6 @@ export default class Arango {
                     const direction = (field.direction && field.direction.toLowerCase() === 'desc')
                         ? ' DESC'
                         : '';
-                    span.finish();
                     return `doc.${field.path.replace(/\bid\b/gi, '_key')}${direction}`;
                 })
                 .join(', ');
@@ -277,10 +276,12 @@ export default class Arango {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
-            await span.log({
-                'event': 'new query',
-                'value': query
-            });
+            const span = await this.tracer.startSpanLog(
+                context,
+                'arango.js:fetchDocs',
+                'new query',
+                query
+            );
             const cursor = await this.db.query({ query, bindVars: params.values });
             const res = await cursor.all();
             await span.finish();
@@ -304,16 +305,14 @@ export default class Arango {
         return Promise.all(keys.map(key => this.fetchDocByKey(collection, key)));
     }
 
-    async fetchQuery(query: any, bindVars: any, span_ctx: any) {
+    async fetchQuery(query: any, bindVars: any, context: any) {
         return this.wrap(async () => {
-            const span = await this.tracer.startSpan('arango.js:fetchQuery', {
-                childOf: span_ctx
-            });
-            await span.setTag(Tags.SPAN_KIND, 'server');
-            await span.log({
-                'event': 'new query',
-                'value': query
-            });
+            const span = await this.tracer.startSpanLog(
+                context,
+                'arango.js:fetchQuery',
+                'new query',
+                query,
+            );
             const cursor = await this.db.query({ query, bindVars });
             const res = cursor.all();
             await span.finish();

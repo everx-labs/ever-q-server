@@ -30,9 +30,7 @@ import { resolversMam } from "./resolvers-mam";
 import type { QConfig } from './config';
 import QLogs from './logs';
 import type { QLog } from './logs';
-
-const initJaegerTracer = require('jaeger-client').initTracerFromEnv;
-const { Tags, FORMAT_TEXT_MAP } = require('opentracing');
+import { Tracer } from "./tracer";
 
 type QOptions = {
     config: QConfig,
@@ -44,6 +42,7 @@ export default class TONQServer {
     logs: QLogs;
     log: QLog;
     db: Arango;
+    tracer: Tracer;
     shared: Map<string, any>;
 
     constructor(options: QOptions) {
@@ -51,32 +50,7 @@ export default class TONQServer {
         this.logs = options.logs;
         this.log = this.logs.create('Q Server');
         this.shared = new Map();
-        this.tracer = this.initTracer('Q Server', options.config.jaeger.endpoint);
-    }
-
-    initTracer(serviceName, jaegerEndpoint) {
-      const config = {
-        serviceName: serviceName,
-        sampler: {
-          type: 'const',
-          param: 1,
-        },
-        reporter: jaegerEndpoint ? {
-          collectorEndpoint: jaegerEndpoint,
-          logSpans: true,
-        } : {}
-      };
-      const options = {
-        logger: {
-          info(msg) {
-            console.log('INFO ', msg);
-          },
-          error(msg) {
-            console.log('ERROR', msg);
-          },
-        },
-      };
-      return initJaegerTracer(config, options);
+        this.tracer = new Tracer(options.config);
     }
 
     async startMam(app: express.Application) {
@@ -110,13 +84,12 @@ export default class TONQServer {
             typeDefs,
             resolvers,
             context: ({ req }) => {
-                const parentSpanContext = this.tracer.extract(FORMAT_TEXT_MAP, req.headers);
                 return {
                     db: this.db,
                     config: this.config,
                     shared: this.shared,
-                    span_ctx: parentSpanContext,
-                }
+                    ...this.tracer.getContext(req),
+                };
             },
         });
 

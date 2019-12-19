@@ -260,7 +260,7 @@ type Message {
 	library: String
 	"Returns source address string"
 	src: String
-	"Reutrns destination address string"
+	"Returns destination address string"
 	dst: String
 	"Logical creation time automatically set by the generating transaction."
 	created_lt: String
@@ -313,7 +313,7 @@ type BlockValueFlow {
 	minted_other: [OtherCurrency]
 	"Amount of import fees in grams"
 	fees_imported: String
-	"Amount of import fees in non gram currrencies."
+	"Amount of import fees in non gram currencies."
 	fees_imported_other: [OtherCurrency]
 }
 
@@ -355,7 +355,7 @@ type BlockMasterShardHashesDescr {
 	"Shard block file hash."
 	file_hash: String
 	"""
-	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of accountchains.
+	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 	A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
 	The masterchain cannot be split or merged.
 	"""
@@ -971,7 +971,7 @@ input MessageFilter {
 	library: StringFilter
 	"Returns source address string"
 	src: StringFilter
-	"Reutrns destination address string"
+	"Returns destination address string"
 	dst: StringFilter
 	"Logical creation time automatically set by the generating transaction."
 	created_lt: StringFilter
@@ -1024,7 +1024,7 @@ input BlockValueFlowFilter {
 	minted_other: OtherCurrencyArrayFilter
 	"Amount of import fees in grams"
 	fees_imported: StringFilter
-	"Amount of import fees in non gram currrencies."
+	"Amount of import fees in non gram currencies."
 	fees_imported_other: OtherCurrencyArrayFilter
 }
 
@@ -1082,7 +1082,7 @@ input BlockMasterShardHashesDescrFilter {
 	"Shard block file hash."
 	file_hash: StringFilter
 	"""
-	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of accountchains.
+	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 	A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
 	The masterchain cannot be split or merged.
 	"""

@@ -108,7 +108,7 @@ If present, accumulates the storage payments that could not be exacted from the 
         data: `Represents initial data for a contract in deploy messages`,
         library: `Represents contract library in deploy messages`,
         src: `Returns source address string`,
-        dst: `Reutrns destination address string`,
+        dst: `Returns destination address string`,
         created_lt: `Logical creation time automatically set by the generating transaction.`,
         created_at: `Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction.`,
         ihr_disabled: `IHR is disabled for the message.`,
@@ -229,7 +229,7 @@ If there is no reason to skip the computing phase, TVM is invoked and the result
         end_lt: `Logical time of the shardchain end`,
         root_hash: `Returns last known master block at the time of shard generation. The shard block configuration is derived from that block.`,
         file_hash: `Shard block file hash.`,
-        before_split: `TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of accountchains.
+        before_split: `TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
 The masterchain cannot be split or merged.`,
         before_merge: ``,
@@ -292,7 +292,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
         minted: `Amount of grams minted in this block.`,
         minted_other: ``,
         fees_imported: `Amount of import fees in grams`,
-        fees_imported_other: `Amount of import fees in non gram currrencies.`,
+        fees_imported_other: `Amount of import fees in non gram currencies.`,
     },
     in_msg_descr: ``,
     rand_seed: ``,
