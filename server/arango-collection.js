@@ -28,6 +28,21 @@ type CollectionSubscription = {
     filter: any,
 }
 
+type CollectionWaitFor = {
+    filter: any,
+    onInsertOrUpdate: (doc: any) => void,
+}
+
+type OrderBy = {
+    path: string,
+    direction: string,
+}
+
+type Query = {
+    query: string,
+    bindVars: { [string]: any },
+}
+
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {
         return await fetch();
@@ -41,6 +56,42 @@ export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Pro
     }
 }
 
+class RegistryMap<T> {
+    name: string;
+    items: Map<number, T>;
+    lastId: number;
+
+    constructor(name: string) {
+        this.name = name;
+        this.lastId = 0;
+        this.items = new Map();
+    }
+
+    add(item: T): number {
+        let id = this.lastId;
+        do {
+            id = id < Number.MAX_SAFE_INTEGER ? id + 1 : 1;
+        } while (this.items.has(id));
+        this.lastId = id;
+        this.items.set(id, item);
+        return id;
+    }
+
+    remove(id: number) {
+        if (!this.items.delete(id)) {
+            console.error(`Failed to remove ${this.name}: item with id [${id}] does not exists`);
+        }
+    }
+
+    entries(): [number, T][] {
+        return [...this.items.entries()];
+    }
+
+    values(): T[] {
+        return [...this.items.values()];
+    }
+}
+
 export class Collection {
     name: string;
     docType: QType;
@@ -51,8 +102,8 @@ export class Collection {
     tracer: Tracer;
     db: Database;
 
-    lastSubscriptionId: number;
-    subscriptionsById: Map<number, CollectionSubscription>;
+    subscriptions: RegistryMap<CollectionSubscription>;
+    waitFor: RegistryMap<CollectionWaitFor>;
 
     constructor(
         name: string,
@@ -72,36 +123,25 @@ export class Collection {
         this.tracer = tracer;
         this.db = db;
 
-        this.lastSubscriptionId = 0;
-        this.subscriptionsById = new Map();
+        this.subscriptions = new RegistryMap<CollectionSubscription>(`${name} subscriptions`);
+        this.waitFor = new RegistryMap<CollectionWaitFor>(`${name} waitFor`);
     }
 
     // Subscriptions
-
-    addSubscription(filter: any): number {
-        let id = this.lastSubscriptionId;
-        do {
-            id = id < Number.MAX_SAFE_INTEGER ? id + 1 : 1;
-        } while (this.subscriptionsById.has(id));
-        this.lastSubscriptionId = id;
-        this.subscriptionsById.set(id, { filter });
-        return id;
-    }
 
     getSubscriptionPubSubName(id: number) {
         return `${this.name}${id}`;
     }
 
-    removeSubscription(id: number) {
-        if (!this.subscriptionsById.delete(id)) {
-            console.error(`Failed to remove subscription ${this.name}[${id}]: subscription does not exists`);
-        }
-    }
-
     onDocumentInsertOrUpdate(doc: any) {
-        for (const [id, { filter }] of this.subscriptionsById.entries()) {
-            if (this.docType.test(null, doc, filter || {})) {
+        for (const [id, { filter }] of this.subscriptions.entries()) {
+            if (this.docType.test(null, doc, filter)) {
                 this.pubsub.publish(this.getSubscriptionPubSubName(id), { [this.name]: doc });
+            }
+        }
+        for (const { filter, onInsertOrUpdate } of this.waitFor.items.values()) {
+            if (this.docType.test(null, doc, filter)) {
+                onInsertOrUpdate(doc);
             }
         }
     }
@@ -110,18 +150,19 @@ export class Collection {
         return {
             subscribe: withFilter(
                 (_, args) => {
-                    const subscriptionId = this.addSubscription(args.filter);
+                    const subscriptionId = this.subscriptions.add({ filter: args.filter || {} });
                     const iter = this.pubsub.asyncIterator(this.getSubscriptionPubSubName(subscriptionId));
+                    const _this = this;
                     return {
                         next(value?: any): Promise<any> {
                             return iter.next(value);
                         },
                         return(value?: any): Promise<any> {
-                            this.removeSubscription(subscriptionId);
+                            _this.subscriptions.remove(subscriptionId);
                             return iter.return(value);
                         },
                         throw(e?: any): Promise<any> {
-                            this.removeSubscription(subscriptionId);
+                            _this.subscriptions.remove(subscriptionId);
                             return iter.throw(e);
                         }
                     };
@@ -147,29 +188,72 @@ export class Collection {
     queryResolver() {
         return async (parent: any, args: any, context: any) => wrap(this.log, 'QUERY', args, async () => {
             this.log.debug('QUERY', args);
-            const aql = this.genAQL(args);
-            const span = await this.tracer.startSpanLog(
-                context,
-                'arango.js:fetchDocs',
-                'new query',
-                args
-            );
+            const filter = args.filter || {};
+            const orderBy: OrderBy[] = args.orderBy || [];
+            const limit: number = args.limit || 50;
+            const timeout = (Number(args.timeout) || 0) * 1000;
+            const q = this.genQuery(filter, orderBy, limit);
+
+            const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
-                const cursor = await this.db.query(aql);
-                return await cursor.all();
+                if (timeout > 0) {
+                    return await this.queryWaitFor(q, filter, timeout);
+                } else {
+                    return await this.query(q);
+                }
             } finally {
                 await span.finish();
             }
         });
     }
 
-    genAQL(args: any): { query: string, bindVars: { [string]: any } } {
-        const filter = args.filter || {};
+    async query(q: Query): Promise<any> {
+        const cursor = await this.db.query(q);
+        return await cursor.all();
+    }
+
+
+    async queryWaitFor(q: Query, filter: any, timeout: number): Promise<any> {
+        let waitForResolve: ?((docs: any[]) => void) = null;
+        const waitForId = this.waitFor.add({
+            filter,
+            onInsertOrUpdate: (doc) => {
+                if (waitForResolve) {
+                    waitForResolve([doc]);
+                }
+            }
+        });
+        try {
+            return await Promise.race([
+                new Promise((resolve, reject) => {
+                    this.query(q)
+                        .then((docs) => {
+                            if (docs.length > 0) {
+                                resolve(docs)
+                            }
+                        }, (err) => {
+                            reject(err);
+                        })
+                }),
+                new Promise((resolve) => {
+                    waitForResolve = resolve;
+                }),
+                new Promise((resolve) => {
+                    setTimeout(() => resolve([]), timeout);
+                }),
+            ]);
+        } finally {
+            this.waitFor.remove(waitForId);
+        }
+    }
+
+
+    genQuery(filter: any, orderBy: OrderBy[], limit: number): Query {
         const params = new QParams();
         const filterSection = Object.keys(filter).length > 0
             ? `FILTER ${this.docType.ql(params, 'doc', filter)}`
             : '';
-        const orderBy = (args.orderBy || [])
+        const orderByQl = orderBy
             .map((field) => {
                 const direction = (field.direction && field.direction.toLowerCase() === 'desc')
                     ? ' DESC'
@@ -178,9 +262,9 @@ export class Collection {
             })
             .join(', ');
 
-        const sortSection = orderBy !== '' ? `SORT ${orderBy}` : '';
-        const limit = Math.min(args.limit || 50, 50);
-        const limitSection = `LIMIT ${limit}`;
+        const sortSection = orderByQl !== '' ? `SORT ${orderByQl}` : '';
+        const limitQl = Math.min(limit, 50);
+        const limitSection = `LIMIT ${limitQl}`;
 
         const query = `
             FOR doc IN ${this.name}
@@ -188,7 +272,10 @@ export class Collection {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
-        return { query, bindVars: params.values };
+        return {
+            query,
+            bindVars: params.values
+        };
     }
 
     dbCollection(): DocumentCollection {

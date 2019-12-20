@@ -41,6 +41,7 @@ type EndPoint = {
     path: string,
     resolvers: any,
     typeDefFileNames: string[],
+    supportSubscriptions: boolean,
     extraContext: (req: express.Request) => any,
 }
 
@@ -70,12 +71,14 @@ export default class TONQServer {
             path: '/graphql/mam',
             resolvers: resolversMam,
             typeDefFileNames: ['type-defs-mam.graphql'],
+            supportSubscriptions: false,
             extraContext: () => ({}),
         });
         this.addEndPoint({
             path: '/graphql',
             resolvers: attachCustomResolvers(createResolvers(this.db)),
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
+            supportSubscriptions: true,
             extraContext: (req) => this.tracer.getContext(req)
         });
     }
@@ -109,7 +112,9 @@ export default class TONQServer {
             },
         });
         apollo.applyMiddleware({ app: this.app, path: endPoint.path });
-        apollo.installSubscriptionHandlers(this.server);
+        if (endPoint.supportSubscriptions) {
+            apollo.installSubscriptionHandlers(this.server);
+        }
         this.endPoints.push(endPoint);
     }
 

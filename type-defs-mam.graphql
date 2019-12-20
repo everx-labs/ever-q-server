@@ -7,15 +7,26 @@ type IndexInfo {
 }
 
 type CollectionSummary {
-    collection: String
+    name: String
     count: Float
     indexes: [String]
+}
+
+type CollectionStat {
+    name: String
+    subscriptions: Int
+    waitFor: Int
+}
+
+type Stat {
+    collections: [CollectionStat]
 }
 
 type Query {
     info: Info
     getChangeLog(id: String): [Float]
     getCollections: [CollectionSummary]
+    stat: Stat
 }
 
 enum ChangeLogOp {

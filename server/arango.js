@@ -115,8 +115,8 @@ export default class Arango {
         });
         this.listener.start();
         this.log.debug('LISTEN', listenerUrl);
-        this.listener.on('error', (err, httpStatus, headers, body) => {
-            this.log.error('FAILED', 'LISTEN', { err, httpStatus, headers, body });
+        this.listener.on('error', (err) => {
+            this.log.error('FAILED', 'LISTEN', `${err}`);
             setTimeout(() => this.listener.start(), this.config.listener.restartTimeout);
         });
     }

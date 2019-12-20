@@ -1,8 +1,8 @@
 // @flow
 
-import { Database } from "arangojs";
 import fs from "fs";
 import Arango from "./arango";
+import { Collection } from "./arango-collection";
 import type { QConfig } from "./config";
 import path from 'path';
 
@@ -14,6 +14,16 @@ type Context = {
 
 type Info = {
     version: string,
+}
+
+type CollectionStat = {
+    name: string,
+    subscriptions: number,
+    waitFor: number,
+}
+
+type Stat = {
+    collections: CollectionStat[]
 }
 
 type CollectionSummary = {
@@ -29,6 +39,19 @@ function info(): Info {
     return {
         version: pkg.version,
     };
+}
+
+function stat(_parent: any, _args: any, context: Context): Stat {
+    const db: Arango = context.db;
+    return {
+        collections: db.collections.map((collection: Collection) => {
+            return {
+                name: collection.name,
+                subscriptions: collection.subscriptions.items.size,
+                waitFor: collection.waitFor.items.size,
+            }
+        })
+    }
 }
 
 function getChangeLog(_parent: any, args: { id: string }, context: Context): number[] {
@@ -71,6 +94,7 @@ export const resolversMam = {
         info,
         getChangeLog,
         getCollections,
+        stat
     },
     Mutation: {
         setChangeLog,
