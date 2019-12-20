@@ -132,7 +132,7 @@ pipeline {
 								[
 									$class: 'BooleanParameterValue',
 									name: 'TEST_ONLY',
-									value: "true"
+									value: true
 								]
 							] 
 
