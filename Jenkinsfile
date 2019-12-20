@@ -122,6 +122,22 @@ pipeline {
 					steps {
 						script {
 							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+
+						def params = [
+							[
+								$class: 'StringParameterValue',
+								name: 'dockerimage_q_server',
+								value: "${G_gqlimage}"
+							]
+							[
+								$class: 'BooleanParameterValue',
+								name: 'TEST_ONLY',
+								value: true
+							]
+						] 
+
+						build job: "Infrastructure/startup-edition-node/feature-integration-tests", parameters: params
+
 						}
 					}
 					post {
