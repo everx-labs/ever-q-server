@@ -123,17 +123,15 @@ pipeline {
 						script {
 							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
 
-							// def params = [
-							params = [
+							def params = [
 								[
 									$class: 'StringParameterValue',
 									name: 'dockerimage_q_server',
 									value: "${G_gqlimage}"
-								]
+								],
 								[
 									$class: 'BooleanParameterValue',
 									name: 'TEST_ONLY',
-									// value: Boolean.valueOf('true')
 									value: true
 								]
 							] 
