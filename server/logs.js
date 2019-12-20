@@ -21,14 +21,23 @@ export type QLog = {
     debug: (...args: any) => void,
 }
 
+function str(arg: any): string {
+    const s = typeof arg === 'string' ? arg : JSON.stringify(arg);
+    return s.split('\n').join('\\n').split('\t').join('\\t');
+}
+
+function format(name: string, args: string[]) {
+    return `${name}\t${args.map(str).join('\t')}`;
+}
+
 export default class QLogs {
 	create(name: string): QLog {
 		return {
 			error(...args) {
-				console.error(`[${name}]`, ...args);
+				console.error(format(name, args));
 			},
 			debug(...args) {
-				console.debug(`[${name}]`, ...args);
+				console.debug(format(name, args));
 			}
 		}
 	}

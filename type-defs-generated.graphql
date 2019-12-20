@@ -1700,11 +1700,11 @@ input QueryOrderBy {
 }
 
 type Query {
-	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int): [Message]
-	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int): [BlockSignatures]
-	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int): [Block]
-	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int): [Account]
-	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int): [Transaction]
+	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Message]
+	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [BlockSignatures]
+	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Block]
+	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Account]
+	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Transaction]
 }
 
 type Subscription {

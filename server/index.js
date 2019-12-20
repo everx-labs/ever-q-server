@@ -96,11 +96,13 @@ const config: QConfig = {
     }
 };
 
-console.log('Using config:', config);
+const logs = new QLogs();
+const configLog = logs.create('config');
+configLog.debug('USE', config);
 
 const server = new TONQServer({
     config,
-    logs: new QLogs(),
+    logs,
 });
 
 export function main() {
@@ -108,7 +110,7 @@ export function main() {
         try {
             await server.start();
         } catch (error) {
-            server.log.error('Start failed:', error);
+            server.log.error('FAILED', 'START', error);
             process.exit(1);
         }
     })();

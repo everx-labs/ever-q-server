@@ -485,7 +485,7 @@ function createResolvers(db) {
                 return parent._key;
             },
             signatures(parent, _args, context) {
-                return context.db.fetchDocByKey(context.db.blocks_signatures, parent.id);
+                return context.db.blocks_signatures.fetchDocByKey(parent.id);
             },
             start_lt(parent) {
                 return resolveBigUInt(1, parent.start_lt);
@@ -566,10 +566,10 @@ function createResolvers(db) {
                 return parent._key;
             },
             in_message(parent, _args, context) {
-                return context.db.fetchDocByKey(context.db.messages, parent.in_msg);
+                return context.db.messages.fetchDocByKey(parent.in_msg);
             },
             out_messages(parent, _args, context) {
-                return context.db.fetchDocsByKeys(context.db.messages, parent.out_msgs);
+                return context.db.messages.fetchDocsByKeys(parent.out_msgs);
             },
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);
@@ -586,18 +586,18 @@ function createResolvers(db) {
             end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Query: {
-            messages: db.collectionQuery(db.messages, Message),
-            blocks_signatures: db.collectionQuery(db.blocks_signatures, BlockSignatures),
-            blocks: db.collectionQuery(db.blocks, Block),
-            accounts: db.collectionQuery(db.accounts, Account),
-            transactions: db.collectionQuery(db.transactions, Transaction),
+            messages: db.messages.queryResolver(),
+            blocks_signatures: db.blocks_signatures.queryResolver(),
+            blocks: db.blocks.queryResolver(),
+            accounts: db.accounts.queryResolver(),
+            transactions: db.transactions.queryResolver(),
         },
         Subscription: {
-            messages: db.collectionSubscription(db.messages, Message),
-            blocks_signatures: db.collectionSubscription(db.blocks_signatures, BlockSignatures),
-            blocks: db.collectionSubscription(db.blocks, Block),
-            accounts: db.collectionSubscription(db.accounts, Account),
-            transactions: db.collectionSubscription(db.transactions, Transaction),
+            messages: db.messages.subscriptionResolver(),
+            blocks_signatures: db.blocks_signatures.subscriptionResolver(),
+            blocks: db.blocks.subscriptionResolver(),
+            accounts: db.accounts.subscriptionResolver(),
+            transactions: db.transactions.subscriptionResolver(),
         }
     }
 }

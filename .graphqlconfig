@@ -4,7 +4,14 @@
   "extensions": {
     "endpoints": {
       "Default GraphQL Endpoint": {
-        "url": "http://localhost:8080/graphql",
+        "url": "http://localhost:8531/graphql",
+        "headers": {
+          "user-agent": "JS GraphQL"
+        },
+        "introspect": false
+      },
+      "mam": {
+        "url": "http://localhost:8531/mam",
         "headers": {
           "user-agent": "JS GraphQL"
         },

@@ -2,9 +2,20 @@ type Info {
     version: String
 }
 
+type IndexInfo {
+    fields: String
+}
+
+type CollectionSummary {
+    collection: String
+    count: Float
+    indexes: [String]
+}
+
 type Query {
     info: Info
     getChangeLog(id: String): [Float]
+    getCollections: [CollectionSummary]
 }
 
 enum ChangeLogOp {

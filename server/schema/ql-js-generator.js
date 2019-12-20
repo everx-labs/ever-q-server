@@ -459,7 +459,7 @@ function main(schemaDef: TypeDef) {
         `);
 
         types.forEach((type: DbType) => {
-            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, orderBy: [QueryOrderBy], limit: Int): [${type.name}]`);
+            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [${type.name}]`);
         });
 
         ql.writeBlockLn(`
@@ -606,9 +606,9 @@ function main(schemaDef: TypeDef) {
             }
             js.writeLn(`            ${field.name}(parent, _args, context) {`);
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.db.fetchDocByKey(context.db.${collection}, parent.${onField.name});`);
+                js.writeLn(`                return context.db.${collection}.fetchDocByKey(parent.${onField.name});`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.db.fetchDocsByKeys(context.db.${collection}, parent.${onField.name});`);
+                js.writeLn(`                return context.db.${collection}.fetchDocsByKeys(parent.${onField.name});`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }
@@ -679,12 +679,12 @@ function main(schemaDef: TypeDef) {
         });
         js.writeLn('        Query: {');
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection || ''}: db.collectionQuery(db.${type.collection || ''}, ${type.name}),`)
+            js.writeLn(`            ${type.collection || ''}: db.${type.collection || ''}.queryResolver(),`)
         });
         js.writeLn('        },');
         js.writeLn('        Subscription: {');
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection || ''}: db.collectionSubscription(db.${type.collection || ''}, ${type.name}),`)
+            js.writeLn(`            ${type.collection || ''}: db.${type.collection || ''}.subscriptionResolver(),`)
         });
         js.writeBlockLn(`
                 }

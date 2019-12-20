@@ -25,24 +25,32 @@ interface JaegerTracer {
     }): Promise<JaegerSpan>
 }
 
+const missingSpan: TracerSpan = {
+    finish(): Promise<void> {
+        return Promise.resolve();
+    }
+};
+
 export class Tracer {
-    jaeger: JaegerTracer;
+    jaeger: ?JaegerTracer;
 
     constructor(config: QConfig) {
-        const jaegerConfig = {
+        const endpoint = config.jaeger.endpoint;
+        if (!endpoint) {
+            this.jaeger = null;
+            return;
+        }
+        this.jaeger = initJaegerTracer({
             serviceName: 'Q Server',
             sampler: {
                 type: 'const',
                 param: 1,
             },
-            reporter: config.jaeger.endpoint
-                ? {
-                    collectorEndpoint: config.jaeger.endpoint,
-                    logSpans: true,
-                }
-                : {}
-        };
-        const options = {
+            reporter: {
+                collectorEndpoint: endpoint,
+                logSpans: true,
+            }
+        }, {
             logger: {
                 info(msg) {
                     console.log('INFO ', msg);
@@ -51,18 +59,23 @@ export class Tracer {
                     console.log('ERROR', msg);
                 },
             },
-        };
-        this.jaeger = initJaegerTracer(jaegerConfig, options);
+        });
     }
 
     getContext(req: express.Request): any {
-        return {
-            tracer: this.jaeger.extract(FORMAT_TEXT_MAP, req.headers),
-        }
+        return this.jaeger
+            ? {
+                tracer: this.jaeger.extract(FORMAT_TEXT_MAP, req.headers),
+            }
+            : {}
     }
 
     async startSpanLog(context: any, name: string, event: string, value: any): Promise<TracerSpan> {
-        const span: JaegerSpan = await this.jaeger.startSpan(name, {
+        const jaeger = this.jaeger;
+        if (!jaeger) {
+            return missingSpan;
+        }
+        const span: JaegerSpan = await jaeger.startSpan(name, {
             childOf: context.tracer,
         });
         await span.setTag(Tags.SPAN_KIND, 'server');
