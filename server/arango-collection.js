@@ -24,8 +24,9 @@ import type { QType } from "./q-types";
 import { QParams } from "./q-types";
 import { Tracer } from "./tracer";
 
-type CollectionSubscription = {
+export type CollectionSubscription = {
     filter: any,
+    iter: any,
 }
 
 type CollectionWaitFor = {
@@ -150,8 +151,12 @@ export class Collection {
         return {
             subscribe: withFilter(
                 (_, args) => {
-                    const subscriptionId = this.subscriptions.add({ filter: args.filter || {} });
+                    const subscription: any = {
+                        filter: args.filter || {},
+                    };
+                    const subscriptionId = this.subscriptions.add(subscription);
                     const iter = this.pubsub.asyncIterator(this.getSubscriptionPubSubName(subscriptionId));
+                    subscription.iter = iter;
                     const _this = this;
                     return {
                         next(value?: any): Promise<any> {

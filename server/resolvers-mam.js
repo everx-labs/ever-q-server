@@ -2,6 +2,7 @@
 
 import fs from "fs";
 import Arango from "./arango";
+import type { CollectionSubscription } from "./arango-collection";
 import { Collection } from "./arango-collection";
 import type { QConfig } from "./config";
 import path from 'path';
@@ -16,10 +17,16 @@ type Info = {
     version: string,
 }
 
+type SubscriptionStat = {
+    filter: string,
+    queueSize: number,
+}
+
 type CollectionStat = {
     name: string,
-    subscriptions: number,
-    waitFor: number,
+    subscriptionCount: number,
+    waitForCount: number,
+    subscriptions: SubscriptionStat[],
 }
 
 type Stat = {
@@ -42,13 +49,20 @@ function info(): Info {
 }
 
 function stat(_parent: any, _args: any, context: Context): Stat {
+    const subscriptionToStat = (subscription: CollectionSubscription): SubscriptionStat => {
+        return {
+            filter: JSON.stringify(subscription.filter),
+            queueSize: subscription.iter.pushQueue.length,
+        };
+    };
     const db: Arango = context.db;
     return {
         collections: db.collections.map((collection: Collection) => {
             return {
                 name: collection.name,
-                subscriptions: collection.subscriptions.items.size,
-                waitFor: collection.waitFor.items.size,
+                subscriptionCount: collection.subscriptions.items.size,
+                waitForCount: collection.waitFor.items.size,
+                subscriptions: [...collection.subscriptions.values()].map(subscriptionToStat),
             }
         })
     }

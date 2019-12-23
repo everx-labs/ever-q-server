@@ -12,10 +12,16 @@ type CollectionSummary {
     indexes: [String]
 }
 
+type SubscriptionStat {
+    filter: String
+    queueSize: Int
+}
+
 type CollectionStat {
     name: String
-    subscriptions: Int
-    waitFor: Int
+    subscriptionCount: Int
+    waitForCount: Int
+    subscriptions: [SubscriptionStat]
 }
 
 type Stat {
