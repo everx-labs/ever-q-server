@@ -140,8 +140,9 @@ export class Collection {
     }
 
     onDocumentInsertOrUpdate(doc: any) {
-        for (const [id, { filter }] of this.subscriptions.entries()) {
-            if (this.docType.test(null, doc, filter)) {
+        for (const [id, { filter, iter }] of this.subscriptions.entries()) {
+            const queueSize = iter.pushQueue.length + iter.pullQueue.length;
+            if (queueSize < 10 && this.docType.test(null, doc, filter)) {
                 this.pubsub.publish(this.getSubscriptionPubSubName(id), { [this.name]: doc });
             }
         }
