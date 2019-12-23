@@ -317,17 +317,20 @@ type BlockValueFlow {
 	fees_imported_other: [OtherCurrency]
 }
 
-type BlockAccountBlocksStateUpdate {
-	"old version of block hashes"
-	old_hash: String
-	"new version of block hashes"
-	new_hash: String
+type BlockAccountBlocksTransactions {
+	lt: String
+	transaction_id: String
+	total_fees: String
+	total_fees_other: [OtherCurrency]
 }
 
 type BlockAccountBlocks {
 	account_addr: String
-	transactions: [String]
-	state_update: BlockAccountBlocksStateUpdate
+	transactions: [BlockAccountBlocksTransactions]
+	"old version of block hashes"
+	old_hash: String
+	"new version of block hashes"
+	new_hash: String
 	tr_count: Int
 }
 
@@ -492,6 +495,7 @@ type Block {
 	rand_seed: String
 	out_msg_descr: [OutMsg]
 	account_blocks: [BlockAccountBlocks]
+	tr_count: Int
 	state_update: BlockStateUpdate
 	master: BlockMaster
 	signatures: BlockSignatures
@@ -1028,22 +1032,25 @@ input BlockValueFlowFilter {
 	fees_imported_other: OtherCurrencyArrayFilter
 }
 
-input BlockAccountBlocksStateUpdateFilter {
-	"old version of block hashes"
-	old_hash: StringFilter
-	"new version of block hashes"
-	new_hash: StringFilter
+input BlockAccountBlocksTransactionsFilter {
+	lt: StringFilter
+	transaction_id: StringFilter
+	total_fees: StringFilter
+	total_fees_other: OtherCurrencyArrayFilter
 }
 
-input StringArrayFilter {
-	any: StringFilter
-	all: StringFilter
+input BlockAccountBlocksTransactionsArrayFilter {
+	any: BlockAccountBlocksTransactionsFilter
+	all: BlockAccountBlocksTransactionsFilter
 }
 
 input BlockAccountBlocksFilter {
 	account_addr: StringFilter
-	transactions: StringArrayFilter
-	state_update: BlockAccountBlocksStateUpdateFilter
+	transactions: BlockAccountBlocksTransactionsArrayFilter
+	"old version of block hashes"
+	old_hash: StringFilter
+	"new version of block hashes"
+	new_hash: StringFilter
 	tr_count: IntFilter
 }
 
@@ -1265,6 +1272,7 @@ input BlockFilter {
 	rand_seed: StringFilter
 	out_msg_descr: OutMsgArrayFilter
 	account_blocks: BlockAccountBlocksArrayFilter
+	tr_count: IntFilter
 	state_update: BlockStateUpdateFilter
 	master: BlockMasterFilter
 	signatures: BlockSignaturesFilter
@@ -1555,6 +1563,11 @@ input TransactionSplitInfoFilter {
 	acc_split_depth: IntFilter
 	this_addr: StringFilter
 	sibling_addr: StringFilter
+}
+
+input StringArrayFilter {
+	any: StringFilter
+	all: StringFilter
 }
 
 input MessageArrayFilter {

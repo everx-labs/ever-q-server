@@ -423,13 +423,19 @@ const Block: TypeDef = {
     out_msg_descr: arrayOf(outMsg(docs.block.out_msg_descr)),
     account_blocks: arrayOf({
         account_addr: string(docs.block.account_blocks.account_addr),
-        transactions: arrayOf(string(docs.block.account_blocks.transactions)),
-        state_update: {
-            old_hash: string(docs.block.account_blocks.state_update.old_hash),
-            new_hash: string(docs.block.account_blocks.state_update.new_hash)
-        },
+        transactions: arrayOf({
+                lt: u64(), // TODO: doc
+                transaction_id: string(), // TODO: doc
+                total_fees: grams(), // TODO: doc
+                total_fees_other: otherCurrencyCollection(), // TODO: doc
+            },
+            docs.block.account_blocks.transactions
+        ),
+        old_hash: string(docs.block.account_blocks.state_update.old_hash),
+        new_hash: string(docs.block.account_blocks.state_update.new_hash),
         tr_count: i32(docs.block.account_blocks.tr_count)
     }),
+    tr_count: i32(), // TODO: doc
     state_update: {
         new: string(docs.block.state_update.new),
         new_hash: string(docs.block.state_update.new_hash),

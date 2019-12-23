@@ -105,16 +105,19 @@ const BlockValueFlow = struct({
     fees_imported_other: OtherCurrencyArray,
 });
 
-const BlockAccountBlocksStateUpdate = struct({
-    old_hash: scalar,
-    new_hash: scalar,
+const BlockAccountBlocksTransactions = struct({
+    lt: bigUInt1,
+    transaction_id: scalar,
+    total_fees: bigUInt2,
+    total_fees_other: OtherCurrencyArray,
 });
 
-const StringArray = array(scalar);
+const BlockAccountBlocksTransactionsArray = array(BlockAccountBlocksTransactions);
 const BlockAccountBlocks = struct({
     account_addr: scalar,
-    transactions: StringArray,
-    state_update: BlockAccountBlocksStateUpdate,
+    transactions: BlockAccountBlocksTransactionsArray,
+    old_hash: scalar,
+    new_hash: scalar,
     tr_count: scalar,
 });
 
@@ -231,6 +234,7 @@ const Block = struct({
     rand_seed: scalar,
     out_msg_descr: OutMsgArray,
     account_blocks: BlockAccountBlocksArray,
+    tr_count: scalar,
     state_update: BlockStateUpdate,
     master: BlockMaster,
     signatures: join('id', 'blocks_signatures', BlockSignatures),
@@ -324,6 +328,7 @@ const TransactionSplitInfo = struct({
     sibling_addr: scalar,
 });
 
+const StringArray = array(scalar);
 const MessageArray = array(Message);
 const Transaction = struct({
     id: scalar,
@@ -450,6 +455,14 @@ function createResolvers(db) {
             },
             fees_imported(parent) {
                 return resolveBigUInt(2, parent.fees_imported);
+            },
+        },
+        BlockAccountBlocksTransactions: {
+            lt(parent) {
+                return resolveBigUInt(1, parent.lt);
+            },
+            total_fees(parent) {
+                return resolveBigUInt(2, parent.total_fees);
             },
         },
         BlockMasterShardHashesDescr: {
@@ -611,7 +624,7 @@ module.exports = {
     OutMsg,
     Message,
     BlockValueFlow,
-    BlockAccountBlocksStateUpdate,
+    BlockAccountBlocksTransactions,
     BlockAccountBlocks,
     BlockStateUpdate,
     BlockMasterShardHashesDescr,
