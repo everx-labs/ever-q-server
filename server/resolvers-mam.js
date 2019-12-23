@@ -50,9 +50,10 @@ function info(): Info {
 
 function stat(_parent: any, _args: any, context: Context): Stat {
     const subscriptionToStat = (subscription: CollectionSubscription): SubscriptionStat => {
+        const iter = subscription.iter;
         return {
             filter: JSON.stringify(subscription.filter),
-            queueSize: subscription.iter.pushQueue.length,
+            queueSize: iter.pushQueue.length + iter.pullQueue.length,
         };
     };
     const db: Arango = context.db;
