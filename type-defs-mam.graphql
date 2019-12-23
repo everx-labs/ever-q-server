@@ -22,6 +22,7 @@ type CollectionStat {
     name: String
     subscriptionCount: Int
     waitForCount: Int
+    maxQueueSize: Int
     subscriptions: [SubscriptionStat]
 }
 

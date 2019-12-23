@@ -107,6 +107,8 @@ export class Collection {
     subscriptions: RegistryMap<CollectionSubscription>;
     waitFor: RegistryMap<CollectionWaitFor>;
 
+    maxQueueSize: number;
+
     constructor(
         name: string,
         docType: QType,
@@ -127,6 +129,8 @@ export class Collection {
 
         this.subscriptions = new RegistryMap<CollectionSubscription>(`${name} subscriptions`);
         this.waitFor = new RegistryMap<CollectionWaitFor>(`${name} waitFor`);
+
+        this.maxQueueSize = 0;
     }
 
     // Subscriptions
@@ -163,6 +167,10 @@ export class Collection {
                     return {
                         next(value?: any): Promise<any> {
                             subscription.eventCount += 1;
+                            const queueSize = iter.pushQueue.length + iter.pullQueue.length;
+                            if (queueSize > _this.maxQueueSize) {
+                                _this.maxQueueSize = queueSize;
+                            }
                             return iter.next(value);
                         },
                         return(value?: any): Promise<any> {

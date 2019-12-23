@@ -27,6 +27,7 @@ type CollectionStat = {
     name: string,
     subscriptionCount: number,
     waitForCount: number,
+    maxQueueSize: number,
     subscriptions: SubscriptionStat[],
 }
 
@@ -65,6 +66,7 @@ function stat(_parent: any, _args: any, context: Context): Stat {
                 name: collection.name,
                 subscriptionCount: collection.subscriptions.items.size,
                 waitForCount: collection.waitFor.items.size,
+                maxQueueSize: collection.maxQueueSize,
                 subscriptions: [...collection.subscriptions.values()].map(subscriptionToStat),
             }
         })
