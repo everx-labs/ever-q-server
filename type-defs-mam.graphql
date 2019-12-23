@@ -15,6 +15,7 @@ type CollectionSummary {
 type SubscriptionStat {
     filter: String
     queueSize: Int
+    eventCount: Int
 }
 
 type CollectionStat {

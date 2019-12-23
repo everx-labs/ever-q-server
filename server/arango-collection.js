@@ -27,6 +27,7 @@ import { Tracer } from "./tracer";
 export type CollectionSubscription = {
     filter: any,
     iter: any,
+    eventCount: number,
 }
 
 type CollectionWaitFor = {
@@ -153,6 +154,7 @@ export class Collection {
                 (_, args) => {
                     const subscription: any = {
                         filter: args.filter || {},
+                        eventCount: 0,
                     };
                     const subscriptionId = this.subscriptions.add(subscription);
                     const iter = this.pubsub.asyncIterator(this.getSubscriptionPubSubName(subscriptionId));
@@ -160,6 +162,7 @@ export class Collection {
                     const _this = this;
                     return {
                         next(value?: any): Promise<any> {
+                            subscription.eventCount += 1;
                             return iter.next(value);
                         },
                         return(value?: any): Promise<any> {

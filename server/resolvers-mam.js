@@ -20,6 +20,7 @@ type Info = {
 type SubscriptionStat = {
     filter: string,
     queueSize: number,
+    eventCount: number,
 }
 
 type CollectionStat = {
@@ -54,6 +55,7 @@ function stat(_parent: any, _args: any, context: Context): Stat {
         return {
             filter: JSON.stringify(subscription.filter),
             queueSize: iter.pushQueue.length + iter.pullQueue.length,
+            eventCount: subscription.eventCount,
         };
     };
     const db: Arango = context.db;
