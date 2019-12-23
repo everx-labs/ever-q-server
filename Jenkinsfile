@@ -162,7 +162,7 @@ pipeline {
 								]
 							] 
 
-							build job: "Infrastructure/startup-edition-node/feature-integration-tests", parameters: params
+							build job: "Infrastructure/startup-edition-node/master", parameters: params
 						}
 					}
 					post {
