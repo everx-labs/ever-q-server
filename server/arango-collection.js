@@ -315,36 +315,35 @@ export class Collection {
 
 
     async queryWaitFor(q: Query, filter: any, timeout: number): Promise<any> {
-        let waitForResolve: ?((docs: any[]) => void) = null;
-        const waitForId = this.waitFor.add({
-            filter,
-            onInsertOrUpdate: (doc) => {
-                if (waitForResolve) {
-                    waitForResolve([doc]);
-                }
-            }
-        });
+        let waitForId: ?number = null;
         try {
+            const onQuery = new Promise((resolve, reject) => {
+                this.query(q).then((docs) => {
+                    if (docs.length > 0) {
+                        resolve(docs)
+                    }
+                }, reject);
+            });
+            const onChangesFeed = new Promise((resolve) => {
+                waitForId = this.waitFor.add({
+                    filter,
+                    onInsertOrUpdate(doc) {
+                        resolve([doc])
+                    },
+                });
+            });
+            const onTimeout = new Promise((resolve) => {
+                setTimeout(() => resolve([]), timeout);
+            });
             return await Promise.race([
-                new Promise((resolve, reject) => {
-                    this.query(q)
-                        .then((docs) => {
-                            if (docs.length > 0) {
-                                resolve(docs)
-                            }
-                        }, (err) => {
-                            reject(err);
-                        })
-                }),
-                new Promise((resolve) => {
-                    waitForResolve = resolve;
-                }),
-                new Promise((resolve) => {
-                    setTimeout(() => resolve([]), timeout);
-                }),
+                onQuery,
+                onChangesFeed,
+                onTimeout,
             ]);
         } finally {
-            this.waitFor.remove(waitForId);
+            if (waitForId !== null && waitForId !== undefined) {
+                this.waitFor.remove(waitForId);
+            }
         }
     }
 

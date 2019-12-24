@@ -192,7 +192,7 @@ function main(schemaDef: TypeDef) {
             field.type = scalarTypes.string;
         } else {
             field.type = scalarTypes.string;
-            console.log('>>> Invalid field type: ', JSON.stringify(schemaType));
+            console.log('Invalid field type: ', JSON.stringify(schemaType));
             process.exit(1);
         }
         return field;
@@ -211,7 +211,7 @@ function main(schemaDef: TypeDef) {
     ) {
         const struct = schemaType.union || schemaType.struct;
         if (!struct) {
-            console.log('>>>', `?? ${name}: ${JSON.stringify(schemaType).substr(0, 200)}`);
+            console.log(`?? ${name}: ${JSON.stringify(schemaType).substr(0, 200)}`);
             return;
         }
         const type: DbType = {
@@ -255,7 +255,7 @@ function main(schemaDef: TypeDef) {
                 return;
             }
             if (resolving.has(type.name)) {
-                console.log('>>>', `Circular reference to type ${type.name}`);
+                console.log(`Circular reference to type ${type.name}`);
                 process.exit(1);
             }
             resolving.add(type.name);
@@ -267,7 +267,7 @@ function main(schemaDef: TypeDef) {
                         if (type) {
                             resolveType(type);
                         } else {
-                            console.log('>>>', `Referenced type not found: ${field.type.name}`);
+                            console.log(`Referenced type not found: ${field.type.name}`);
                             process.exit(1);
                         }
                     }

@@ -16,32 +16,25 @@ npm install
 
 # Setup
  
- If you want to run q-server in development mode you can set EVN:
- ```bash
- EXPORT Q_MODE="development"
- ```
- You can set options with env variables:
- ```bash
-EXPORT Q_DATABASE_SERVER="arangodb:8529"
-EXPORT Q_DATABASE_NAME="blockchain"
-EXPORT Q_SERVER_HOST="<local IP address used by default>"
-EXPORT Q_SERVER_PORT=4000
-```
+You can configure Q Server with command line parameters and/or ENV variables:
+  
+    Option                        ENV                 Default        Description
+    ----------------------------  ------------------  -------------  -----------------------------------
+    -h, --host <host>             Q_SERVER_HOST       getIp()        Listening address
+    -p, --port <port>             Q_SERVER_PORT       4000           Listening port
+    -m, --requests-mode <mode>    Q_REQUESTS_MODE     kafka          Requests mode (kafka | rest)
+    -r, --requests-server <url>   Q_REQUESTS_SERVER   kafka:9092     Requests server url
+    -t, --requests-topic <name>   Q_REQUESTS_TOPIC    requests       Requests topic name
+    -d, --db-server <address>     Q_DATABASE_SERVER   arangodb:8529  Database server:port
+    -n, --db-name <name>          Q_DATABASE_NAME     blockchain     Database name
+    -a, --db-auth <name>          Q_DATABASE_AUTH                    Database auth in form user:password
+    -n, --db-version <version>    Q_DATABASE_VERSION  2              Database schema version
+    -j, --jaeger-endpoint <host>  JAEGER_ENDPOINT                    Jaeger collector host
 
 # Run
 
 ```bash
 node index.js
-```
-Command line parameters:
-
-```
-Options:
-  -h, --host <host>          listening address (default: "192.168.1.11")
-  -p, --port <port>          listening port (default: "4000")
-  -d, --db-server <address>  database server:port (default: "arangodb:8529")
-  -n, --db-name <name>       database name (default: "blockchain")
-
 ```
 
 # Connectivity
@@ -65,7 +58,7 @@ After that you need to generate source code for a graphql type definitions and f
 You must do it with:
 ```bash
 npm run babel
-npm run gen-ql
+npm run gen
 npm run babel
 ``` 
 Yes, you need too run babel twice :(. 
