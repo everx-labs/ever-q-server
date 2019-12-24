@@ -8,7 +8,8 @@ G_container = "alanin/container:latest"
 G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
 G_MakeImage = "NotSet"
-G_TestImage = "NotSet"
+G_UnitTestImage = "NotSet"
+G_IntegTestImage = "NotSet"
 G_PushImage = "NotSet"
 G_PushImageLatest = "NotSet"
 C_PROJECT = "NotSet"
@@ -118,15 +119,15 @@ pipeline {
 					}
 				}
 
-				stage ('Test Image') {
+				stage ('Unit Tests') {
 					steps {
 						script {
 							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
 						}
 					}
 					post {
-						success {script{G_TestImage = "success"}}
-						failure {script{G_TestImage = "failure"}}
+						success {script{G_UnitTestImage = "success"}}
+						failure {script{G_UnitTestImage = "failure"}}
 					}
 				}
 
@@ -142,6 +143,31 @@ pipeline {
 						success {script{G_PushImage = "success"}}
 						failure {script{G_PushImage = "failure"}}
 						always {script{cleanWs notFailBuild: true}}
+					}
+				}
+
+				stage ('Integration Tests') {
+					steps {
+						script {
+							def params = [
+								[
+									$class: 'StringParameterValue',
+									name: 'dockerimage_q_server',
+									value: "${G_gqlimage}"
+								],
+								[
+									$class: 'BooleanParameterValue',
+									name: 'TEST_ONLY',
+									value: true
+								]
+							] 
+
+							build job: "Infrastructure/startup-edition-node/master", parameters: params
+						}
+					}
+					post {
+						success {script{G_IntegTestImage = "success"}}
+						failure {script{G_IntegTestImage = "failure"}}
 					}
 				}
 
@@ -176,7 +202,8 @@ pipeline {
                 + "Build number ${BUILD_NUMBER}" + "\n" \
                 + "Build: **" + G_buildstatus + "**" + "\n" \
                 + "Build Image: **" + G_MakeImage + "**" + "\n" \
-                + "Test Image: **" + G_TestImage + "**" + "\n" \
+                + "Unit Tests: **" + G_UnitTestImage + "**" + "\n" \
+                + "Integration Tests: **" + G_IntegTestImage + "**" + "\n" \
                 + "Push Image: **" + G_PushImage + "**" + "\n" \
                 + "Tag Image As Latest: **" + G_PushImageLatest + "**"
                 discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
