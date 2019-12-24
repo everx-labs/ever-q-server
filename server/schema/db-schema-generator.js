@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-import schemaDefV1 from './db.schema.v1.js';
-import schemaDefV2 from './db.schema.v2.js';
-import gen from './gen-ql.js';
+import schemaDef from './db-schema.js';
+import gen from './ql-js-generator.js';
 const fs = require('fs');
 
-function genSchema(def, suffix) {
-    const { ql, js } = gen(def);
-
-
-    fs.writeFileSync(`./type-defs${suffix}.graphql`, ql);
-    fs.writeFileSync(`./server/q-resolvers${suffix}.js`, js);
-}
-
-genSchema(schemaDefV1, '.v1');
-genSchema(schemaDefV2, '.v2');
+const { ql, js } = gen(schemaDef);
+fs.writeFileSync(`./type-defs-generated.graphql`, ql);
+fs.writeFileSync(`./server/resolvers-generated.js`, js);

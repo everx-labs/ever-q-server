@@ -23,72 +23,101 @@ import { ApolloServer } from 'apollo-server-express';
 
 import Arango from './arango';
 
-import { createResolvers as createResolversV1 } from './q-resolvers.v1';
-import { createResolvers as createResolversV2 } from './q-resolvers.v2';
-import { attachCustomResolvers as attachCustomResolversV1 } from "./custom-resolvers.v1";
-import { attachCustomResolvers as attachCustomResolversV2 } from "./custom-resolvers.v2";
+import { createResolvers } from './resolvers-generated';
+import { attachCustomResolvers } from "./resolvers-custom";
+import { resolversMam } from "./resolvers-mam";
 
-import type { QConfig } from "./config";
-import QLogs from "./logs";
-import type { QLog } from "./logs";
+import type { QConfig } from './config';
+import QLogs from './logs';
+import type { QLog } from './logs';
+import { Tracer } from "./tracer";
 
 type QOptions = {
     config: QConfig,
     logs: QLogs,
 }
 
+type EndPoint = {
+    path: string,
+    resolvers: any,
+    typeDefFileNames: string[],
+    supportSubscriptions: boolean,
+    extraContext: (req: express.Request) => any,
+}
+
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
     log: QLog;
+    app: express.Application;
+    server: any;
+    endPoints: EndPoint[];
     db: Arango;
+    tracer: Tracer;
     shared: Map<string, any>;
+
 
     constructor(options: QOptions) {
         this.config = options.config;
         this.logs = options.logs;
-        this.log = this.logs.create('Q Server');
+        this.log = this.logs.create('server');
         this.shared = new Map();
+        this.tracer = new Tracer(options.config);
+        this.endPoints = [];
+        this.app = express();
+        this.server = http.createServer(this.app);
+        this.db = new Arango(this.config, this.logs, this.tracer);
+        this.addEndPoint({
+            path: '/graphql/mam',
+            resolvers: resolversMam,
+            typeDefFileNames: ['type-defs-mam.graphql'],
+            supportSubscriptions: false,
+            extraContext: () => ({}),
+        });
+        this.addEndPoint({
+            path: '/graphql',
+            resolvers: attachCustomResolvers(createResolvers(this.db)),
+            typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
+            supportSubscriptions: true,
+            extraContext: (req) => this.tracer.getContext(req)
+        });
     }
 
 
     async start() {
-        const config = this.config.server;
-
-        this.db = new Arango(this.config, this.logs);
-        const ver = this.config.database.version;
-        const generatedTypeDefs = fs.readFileSync(`type-defs.v${ver}.graphql`, 'utf-8');
-        const customTypeDefs = fs.readFileSync('custom-type-defs.graphql', 'utf-8');
-        const typeDefs = `${generatedTypeDefs}\n${customTypeDefs}`;
-        const createResolvers = ver === '1' ? createResolversV1 : createResolversV2;
-        const attachCustomResolvers = ver === '1' ? attachCustomResolversV1 : attachCustomResolversV2;
-        const resolvers = attachCustomResolvers(createResolvers(this.db));
-
         await this.db.start();
-
-        const apollo = new ApolloServer({
-            typeDefs,
-            resolvers,
-            context: () => ({
-                db: this.db,
-                config: this.config,
-                shared: this.shared,
-            })
-        });
-
-        const app = express();
-        apollo.applyMiddleware({ app, path: '/graphql' });
-
-        const server = http.createServer(app);
-        apollo.installSubscriptionHandlers(server);
-
-        server.listen({
-            host: config.host,
-            port: config.port,
-        }, () => {
-            const uri = `http://${config.host}:${config.port}/graphql`;
-            this.log.debug(`Started on ${uri}`);
+        const { host, port } = this.config.server;
+        this.server.listen({ host, port }, () => {
+            this.endPoints.forEach((endPoint: EndPoint) => {
+                this.log.debug('GRAPHQL', `http://${host}:${port}${endPoint.path}`);
+            });
         });
     }
+
+
+    addEndPoint(endPoint: EndPoint) {
+        const typeDefs = endPoint.typeDefFileNames
+            .map(x => fs.readFileSync(x, 'utf-8'))
+            .join('\n');
+        const apollo = new ApolloServer({
+            typeDefs,
+            resolvers: endPoint.resolvers,
+            context: ({ req }) => {
+                return {
+                    db: this.db,
+                    config: this.config,
+                    shared: this.shared,
+                    ...endPoint.extraContext(req),
+                };
+            },
+        });
+        apollo.applyMiddleware({ app: this.app, path: endPoint.path });
+        if (endPoint.supportSubscriptions) {
+            apollo.installSubscriptionHandlers(this.server);
+        }
+        this.endPoints.push(endPoint);
+    }
+
+
 }
 

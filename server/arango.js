@@ -15,234 +15,130 @@
  */
 
 // @flow
-import { Database, DocumentCollection } from 'arangojs';
-import arangochair from 'arangochair';
-import { PubSub, withFilter } from 'apollo-server';
-import { ensureProtocol } from "./config";
-import { QParams } from "./q-types";
-import type { QType } from "./q-types";
-import type { QConfig } from './config'
-import type { QLog } from "./logs";
-import QLogs from './logs'
 
-type CollectionFilters = {
-    lastId: number,
-    docType: QType,
-    filtersById: Map<number, any>
-}
+import arangochair from 'arangochair';
+import { Database } from 'arangojs';
+import { ChangeLog, Collection, wrap } from "./arango-collection";
+import type { QConfig } from './config'
+import { ensureProtocol } from './config';
+import type { QLog } from './logs';
+import QLogs from './logs'
+import type { QType } from './q-types';
+import { Account, Block, BlockSignatures, Message, Transaction } from './resolvers-generated';
+import { Tracer } from "./tracer";
+
 
 export default class Arango {
     config: QConfig;
     log: QLog;
     serverAddress: string;
     databaseName: string;
-    pubsub: PubSub;
     db: Database;
-    transactions: DocumentCollection;
-    messages: DocumentCollection;
-    accounts: DocumentCollection;
-    blocks: DocumentCollection;
-    collections: DocumentCollection[];
-    listener: any;
-    filtersByCollectionName: Map<string, CollectionFilters>;
 
-    constructor(config: QConfig, logs: QLogs) {
+    changeLog: ChangeLog;
+    tracer: Tracer;
+
+    transactions: Collection;
+    messages: Collection;
+    accounts: Collection;
+    blocks: Collection;
+    blocks_signatures: Collection;
+
+    collections: Collection[];
+    collectionsByName: Map<string, Collection>;
+
+    listener: any;
+
+    constructor(config: QConfig, logs: QLogs, tracer: Tracer) {
         this.config = config;
-        this.log = logs.create('Arango');
+        this.log = logs.create('db');
+        this.changeLog = new ChangeLog();
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
+        this.tracer = tracer;
 
-        this.pubsub = new PubSub();
-
-        this.db = new Database(`${ensureProtocol(this.serverAddress, 'http')}`);
+        this.db = new Database({
+            url: `${ensureProtocol(this.serverAddress, 'http')}`,
+        });
         this.db.useDatabase(this.databaseName);
+        if (this.config.database.auth) {
+            const authParts = this.config.database.auth.split(':');
+            this.db.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
+        }
 
-        this.transactions = this.db.collection('transactions');
-        this.messages = this.db.collection('messages');
-        this.accounts = this.db.collection('accounts');
-        this.blocks = this.db.collection('blocks');
-        this.collections = [
-            this.transactions,
-            this.messages,
-            this.accounts,
-            this.blocks
-        ];
-        this.filtersByCollectionName = new Map();
-    }
+        this.collections = [];
+        this.collectionsByName = new Map();
 
-    addFilter(collection: string, docType: QType, filter: any): number {
-        let filters: CollectionFilters;
-        const existing = this.filtersByCollectionName.get(collection);
-        if (existing) {
-            filters = existing;
-        } else {
-            filters = {
-                lastId: 0,
+        const addCollection = (name: string, docType: QType) => {
+            const collection = new Collection(
+                name,
                 docType,
-                filtersById: new Map()
-            };
-            this.filtersByCollectionName.set(collection, filters);
-        }
-        do {
-            filters.lastId = filters.lastId < Number.MAX_SAFE_INTEGER ? filters.lastId + 1 : 1;
-        } while (filters.filtersById.has(filters.lastId));
-        filters.filtersById.set(filters.lastId, filter);
-        return filters.lastId;
-    }
+                logs,
+                this.changeLog,
+                this.tracer,
+                this.db
+            );
+            this.collections.push(collection);
+            this.collectionsByName.set(name, collection);
+            return collection;
+        };
 
-    removeFilter(collection: string, id: number) {
-        const filters = this.filtersByCollectionName.get(collection);
-        if (filters) {
-            if (filters.filtersById.delete(id)) {
-                return;
-            }
-        }
-        console.error(`Failed to remove filter ${collection}[${id}]: filter does not exists`);
+        this.transactions = addCollection('transactions', Transaction);
+        this.messages = addCollection('messages', Message);
+        this.accounts = addCollection('accounts', Account);
+        this.blocks = addCollection('blocks', Block);
+        this.blocks_signatures = addCollection('blocks_signatures', BlockSignatures);
     }
 
     start() {
         const listenerUrl = `${ensureProtocol(this.serverAddress, 'http')}/${this.databaseName}`;
         this.listener = new arangochair(listenerUrl);
+
+        if (this.config.database.auth) {
+            const userPassword = Buffer.from(this.config.database.auth).toString('base64');
+            this.listener.req.opts.headers['Authorization'] = `Basic ${userPassword}`;
+        }
+
         this.collections.forEach(collection => {
             const name = collection.name;
             this.listener.subscribe({ collection: name });
             this.listener.on(name, (docJson, type) => {
                 if (type === 'insert/update') {
-                    const doc = JSON.parse(docJson);
-                    const filters = this.filtersByCollectionName.get(name);
-                    if (filters) {
-                        for (const filter of filters.filtersById.values()) {
-                            if (filters.docType.test(null, doc, filter || {})) {
-                                this.pubsub.publish(name, { [name]: doc });
-                                break;
-                            }
-                        }
-                    }
-
+                    this.onDocumentInsertOrUpdate(name, JSON.parse(docJson));
                 }
             });
         });
         this.listener.start();
-        this.log.debug('Listen database', listenerUrl);
-        this.listener.on('error', (err, httpStatus, headers, body) => {
-            this.log.error('Listener failed: ', { err, httpStatus, headers, body });
+        this.log.debug('LISTEN', listenerUrl);
+        this.listener.on('error', (err) => {
+            this.log.error('FAILED', 'LISTEN', `${err}`);
             setTimeout(() => this.listener.start(), this.config.listener.restartTimeout);
         });
     }
 
-    collectionQuery(collection: DocumentCollection, filter: any) {
-        return async (parent: any, args: any) => {
-            this.log.debug(`Query ${collection.name}`, args);
-            return this.fetchDocs(collection, args, filter);
+    onDocumentInsertOrUpdate(name: string, doc: any) {
+        if (this.changeLog.enabled) {
+            this.changeLog.log(doc._key, Date.now());
         }
-    }
-
-    selectQuery() {
-        return async (parent: any, args: any) => {
-            const query = args.query;
-            const bindVars = JSON.parse(args.bindVarsJson);
-            return JSON.stringify(await this.fetchQuery(query, bindVars));
+        const collection: (Collection | typeof undefined) = this.collectionsByName.get(name);
+        if (collection) {
+            collection.onDocumentInsertOrUpdate(doc);
         }
     }
 
 
-    collectionSubscription(collection: DocumentCollection, docType: QType) {
-        return {
-            subscribe: withFilter(
-                (_, args) => {
-                    const iter = this.pubsub.asyncIterator(collection.name);
-                    const filterId = this.addFilter(collection.name, docType, args.filter);
-                    const _this = this;
-                    return {
-                        next(value?: any): Promise<any> {
-                            return iter.next(value);
-                        },
-                        return(value?: any): Promise<any> {
-                            _this.removeFilter(collection.name, filterId);
-                            return iter.return(value);
-                        },
-                        throw(e?: any): Promise<any> {
-                            _this.removeFilter(collection.name, filterId);
-                            return iter.throw(e);
-                        }
-                    };
-                },
-                (data, args) => {
-                    try {
-                        return docType.test(null, data[collection.name], args.filter || {});
-                    } catch (error) {
-                        console.error('[Subscription] doc test failed', data, error);
-                        throw error;
-                    }
-                }
-            ),
-        }
-    }
-
-    async wrap<R>(fetch: () => Promise<R>) {
-        try {
-            return await fetch();
-        } catch (err) {
-            const error = {
-                message: err.message || err.ArangoError || err.toString(),
-                code: err.code
-            };
-            this.log.error('Db operation failed: ', err);
-            throw error;
-        }
-    }
-
-    async fetchDocs(collection: DocumentCollection, args: any, docType: QType) {
-        return this.wrap(async () => {
-            const filter = args.filter || {};
-            const params = new QParams();
-            const filterSection = Object.keys(filter).length > 0
-                ? `FILTER ${docType.ql(params, 'doc', filter)}`
-                : '';
-            const orderBy = (args.orderBy || [])
-                .map((field) => {
-                    const direction = (field.direction && field.direction.toLowerCase() === 'desc')
-                        ? ' DESC'
-                        : '';
-                    return `doc.${field.path.replace(/\bid\b/gi, '_key')}${direction}`;
-                })
-                .join(', ');
-
-            const sortSection = orderBy !== '' ? `SORT ${orderBy}` : '';
-            const limit = Math.min(args.limit || 50, 50);
-            const limitSection = `LIMIT ${limit}`;
-
-            const query = `
-            FOR doc IN ${collection.name}
-            ${filterSection}
-            ${sortSection}
-            ${limitSection}
-            RETURN doc`;
-            const cursor = await this.db.query({ query, bindVars: params.values });
-            return await cursor.all();
-        });
-    }
-
-    async fetchDocByKey(collection: DocumentCollection, key: string): Promise<any> {
-        if (!key) {
-            return Promise.resolve(null);
-        }
-        return this.wrap(async () => {
-            return collection.document(key, true);
-        });
-    }
-
-    async fetchDocsByKeys(collection: DocumentCollection, keys: string[]): Promise<any[]> {
-        if (!keys || keys.length === 0) {
-            return Promise.resolve([]);
-        }
-        return Promise.all(keys.map(key => this.fetchDocByKey(collection, key)));
-    }
-
-    async fetchQuery(query: any, bindVars: any) {
-        return this.wrap(async () => {
+    async fetchQuery(query: any, bindVars: any, context: any) {
+        return wrap(this.log, 'QUERY', { query, bindVars }, async () => {
+            const span = await this.tracer.startSpanLog(
+                context,
+                'arango.js:fetchQuery',
+                'new query',
+                query,
+            );
             const cursor = await this.db.query({ query, bindVars });
-            return cursor.all();
+            const res = cursor.all();
+            await span.finish();
+            return res;
         });
     }
 }

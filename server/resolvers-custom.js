@@ -75,7 +75,7 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
             ls = SUM(b % (d - 1))
         RETURN { hs, ls }
     `, {});
-    const parts = (result: {hs:number, ls: number}[])[0];
+    const parts = (result: { hs: number, ls: number }[])[0];
     //$FlowFixMe
     return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
 }
@@ -129,12 +129,14 @@ async function postRequestsUsingKafka(requests: Request[], context: Context): Pr
         return newProducer;
 
     });
+    console.log('[postRequests]', requests);
+    const messages = requests.map((request) => ({
+        key: Buffer.from(request.id, 'base64'),
+        value: Buffer.from(request.body, 'base64'),
+    }));
     await producer.send({
         topic: config.topic,
-        messages: requests.map((request) => ({
-            key: request.id,
-            value: request.body,
-        })),
+        messages,
     });
 }
 
@@ -156,7 +158,7 @@ async function postRequests(_, args: { requests: Request[] }, context: Context):
     return requests.map(x => x.id);
 }
 
-const customResolvers = {
+const resolversCustom = {
     Query: {
         info,
         getAccountsCount,
@@ -169,6 +171,6 @@ const customResolvers = {
 };
 
 export function attachCustomResolvers(original: any): any {
-    overrideObject(original, customResolvers);
+    overrideObject(original, resolversCustom);
     return original;
 }

@@ -34,10 +34,14 @@ export type QConfig = {
     database: {
         server: string,
         name: string,
+        auth: string,
         version: string,
     },
     listener: {
         restartTimeout: number
+    },
+    jaeger: {
+        endpoint: string
     }
 }
 

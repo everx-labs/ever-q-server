@@ -6,7 +6,7 @@ import {
     Account,
     Message,
     createResolvers
-} from "../server/q-resolvers.v2";
+} from "../server/resolvers-generated";
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, 0x1)).toEqual('11');
