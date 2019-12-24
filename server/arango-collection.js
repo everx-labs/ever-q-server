@@ -16,19 +16,13 @@
 
 // @flow
 
-import { PubSub, withFilter } from "apollo-server";
+import { $$asyncIterator } from 'iterall';
 import { Database, DocumentCollection } from "arangojs";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
 import type { QType } from "./q-types";
 import { QParams } from "./q-types";
 import { Tracer } from "./tracer";
-
-export type CollectionSubscription = {
-    filter: any,
-    iter: any,
-    eventCount: number,
-}
 
 type CollectionWaitFor = {
     filter: any,
@@ -94,11 +88,145 @@ class RegistryMap<T> {
     }
 }
 
+export type FieldSelection = {
+    name: string,
+    selection: FieldSelection[],
+}
+
+function parseSelectionSet(selectionSet: any, returnFieldSelection: string): FieldSelection[] {
+    const fields: FieldSelection[] = [];
+    const selections = selectionSet && selectionSet.selections;
+    if (selections) {
+        for (const item of selections) {
+            const name = (item.name && item.name.value) || '';
+            if (name) {
+                const field: FieldSelection = {
+                    name,
+                    selection: parseSelectionSet(item.selectionSet, ''),
+                };
+                if (returnFieldSelection !== '' && field.name === returnFieldSelection) {
+                    return field.selection;
+                }
+                fields.push(field);
+            }
+        }
+    }
+    return fields;
+}
+
+function selectFields(doc: any, selection: FieldSelection[]): any {
+    const selected: any = {};
+    if (doc._key) {
+        selected._key = doc._key;
+    }
+    for (const item of selection) {
+        const value = doc[item.name];
+        if (value !== undefined) {
+            selected[item.name] = item.selection.length > 0 ? selectFields(value, item.selection) : value;
+        }
+    }
+    return selected;
+}
+
+//$FlowFixMe
+export class CollectionSubscription implements AsyncIterator<any> {
+    collection: Collection;
+    id: number;
+    filter: any;
+    selection: FieldSelection[];
+    eventCount: number;
+    pullQueue: ((value: any) => void)[];
+    pushQueue: any[];
+    running: boolean;
+
+    constructor(collection: Collection, filter: any, selection: FieldSelection[]) {
+        this.collection = collection;
+        this.filter = filter;
+        this.selection = selection;
+        this.eventCount = 0;
+        this.pullQueue = [];
+        this.pushQueue = [];
+        this.running = true;
+        this.id = collection.subscriptions.add(this);
+    }
+
+    onDocumentInsertOrUpdate(doc: any) {
+        if (!this.isQueueOverflow() && this.collection.docType.test(null, doc, this.filter)) {
+
+            this.pushValue({ [this.collection.name]: selectFields(doc, this.selection) });
+        }
+    }
+
+    isQueueOverflow(): boolean {
+        return this.getQueueSize() >= 10;
+    }
+
+    getQueueSize(): number {
+        return this.pushQueue.length + this.pullQueue.length;
+    }
+
+    pushValue(value: any) {
+        const queueSize = this.getQueueSize();
+        if (queueSize > this.collection.maxQueueSize) {
+            this.collection.maxQueueSize = queueSize;
+        }
+        this.eventCount += 1;
+        if (this.pullQueue.length !== 0) {
+            this.pullQueue.shift()(this.running
+                ? { value, done: false }
+                : { value: undefined, done: true },
+            );
+        } else {
+            this.pushQueue.push(value);
+        }
+    }
+
+    async next(): Promise<any> {
+        return new Promise((resolve) => {
+            if (this.pushQueue.length !== 0) {
+                resolve(this.running
+                    ? { value: this.pushQueue.shift(), done: false }
+                    : { value: undefined, done: true },
+                );
+            } else {
+                this.pullQueue.push(resolve);
+            }
+        });
+    }
+
+    async return(): Promise<any> {
+        this.collection.subscriptions.remove(this.id);
+        await this.emptyQueue();
+        return { value: undefined, done: true };
+    }
+
+    async throw(error?: any): Promise<any> {
+        this.collection.subscriptions.remove(this.id);
+        await this.emptyQueue();
+        return Promise.reject(error);
+    }
+
+    //$FlowFixMe
+    [$$asyncIterator]() {
+        return this;
+    }
+
+    async emptyQueue() {
+        if (this.running) {
+            this.running = false;
+            this.pullQueue.forEach(resolve => resolve({ value: undefined, done: true }));
+            this.pullQueue = [];
+            this.pushQueue = [];
+        }
+    }
+
+}
+
+
 export class Collection {
     name: string;
     docType: QType;
 
-    pubsub: PubSub;
     log: QLog;
     changeLog: ChangeLog;
     tracer: Tracer;
@@ -112,7 +240,6 @@ export class Collection {
     constructor(
         name: string,
         docType: QType,
-        pubsub: PubSub,
         logs: QLogs,
         changeLog: ChangeLog,
         tracer: Tracer,
@@ -121,7 +248,6 @@ export class Collection {
         this.name = name;
         this.docType = docType;
 
-        this.pubsub = pubsub;
         this.log = logs.create(name);
         this.changeLog = changeLog;
         this.tracer = tracer;
@@ -135,68 +261,26 @@ export class Collection {
 
     // Subscriptions
 
-    getSubscriptionPubSubName(id: number) {
-        return `${this.name}${id}`;
-    }
-
     onDocumentInsertOrUpdate(doc: any) {
-        for (const [id, { filter, iter }] of this.subscriptions.entries()) {
-            const queueSize = iter.pushQueue.length + iter.pullQueue.length;
-            if (queueSize < 10 && this.docType.test(null, doc, filter)) {
-                this.pubsub.publish(this.getSubscriptionPubSubName(id), { [this.name]: doc });
-            }
-        }
-        for (const { filter, onInsertOrUpdate } of this.waitFor.items.values()) {
+        for (const { filter, onInsertOrUpdate } of this.waitFor.values()) {
             if (this.docType.test(null, doc, filter)) {
                 onInsertOrUpdate(doc);
             }
+        }
+        for (const subscription: CollectionSubscription of this.subscriptions.values()) {
+            subscription.onDocumentInsertOrUpdate(doc);
         }
     }
 
     subscriptionResolver() {
         return {
-            subscribe: withFilter(
-                (_, args) => {
-                    const subscription: any = {
-                        filter: args.filter || {},
-                        eventCount: 0,
-                    };
-                    const subscriptionId = this.subscriptions.add(subscription);
-                    const iter = this.pubsub.asyncIterator(this.getSubscriptionPubSubName(subscriptionId));
-                    subscription.iter = iter;
-                    const _this = this;
-                    return {
-                        next(value?: any): Promise<any> {
-                            subscription.eventCount += 1;
-                            const queueSize = iter.pushQueue.length + iter.pullQueue.length;
-                            if (queueSize > _this.maxQueueSize) {
-                                _this.maxQueueSize = queueSize;
-                            }
-                            return iter.next(value);
-                        },
-                        return(value?: any): Promise<any> {
-                            _this.subscriptions.remove(subscriptionId);
-                            return iter.return(value);
-                        },
-                        throw(e?: any): Promise<any> {
-                            _this.subscriptions.remove(subscriptionId);
-                            return iter.throw(e);
-                        }
-                    };
-                },
-                (data, args) => {
-                    try {
-                        const doc = data[this.name];
-                        if (this.changeLog.enabled) {
-                            this.changeLog.log(doc._key, Date.now());
-                        }
-                        return this.docType.test(null, doc, args.filter || {});
-                    } catch (error) {
-                        console.error('[Subscription] doc test failed', data, error);
-                        throw error;
-                    }
-                }
-            ),
+            subscribe: (_: any, args: { filter: any }, _context: any, info: any) => {
+                return new CollectionSubscription(
+                    this,
+                    args.filter || {},
+                    parseSelectionSet(info.operation.selectionSet, this.name),
+                );
+            },
         }
     }
 

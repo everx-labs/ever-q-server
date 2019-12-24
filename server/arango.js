@@ -16,7 +16,6 @@
 
 // @flow
 
-import { PubSub } from 'apollo-server';
 import arangochair from 'arangochair';
 import { Database } from 'arangojs';
 import { ChangeLog, Collection, wrap } from "./arango-collection";
@@ -49,7 +48,6 @@ export default class Arango {
     collectionsByName: Map<string, Collection>;
 
     listener: any;
-    pubsub: PubSub;
 
     constructor(config: QConfig, logs: QLogs, tracer: Tracer) {
         this.config = config;
@@ -58,8 +56,6 @@ export default class Arango {
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
         this.tracer = tracer;
-
-        this.pubsub = new PubSub();
 
         this.db = new Database({
             url: `${ensureProtocol(this.serverAddress, 'http')}`,
@@ -77,7 +73,6 @@ export default class Arango {
             const collection = new Collection(
                 name,
                 docType,
-                this.pubsub,
                 logs,
                 this.changeLog,
                 this.tracer,

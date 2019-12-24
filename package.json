@@ -26,7 +26,8 @@
 		"jaeger-client": "^3.17.1",
 		"kafkajs": "^1.11.0",
 		"node-fetch": "latest",
-		"opentracing": "latest"
+		"opentracing": "latest",
+		"iterall": "latest"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.7.0",

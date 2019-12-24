@@ -2,8 +2,8 @@
 
 import fs from "fs";
 import Arango from "./arango";
-import type { CollectionSubscription } from "./arango-collection";
-import { Collection } from "./arango-collection";
+import type { FieldSelection } from "./arango-collection";
+import { Collection, CollectionSubscription } from "./arango-collection";
 import type { QConfig } from "./config";
 import path from 'path';
 
@@ -19,6 +19,7 @@ type Info = {
 
 type SubscriptionStat = {
     filter: string,
+    selection: string,
     queueSize: number,
     eventCount: number,
 }
@@ -50,12 +51,21 @@ function info(): Info {
     };
 }
 
+function selectionToString(selection: FieldSelection[]): string {
+    return selection
+        .filter(x => x.name !== '__typename')
+        .map((field: FieldSelection) => {
+            const fieldSelection = selectionToString(field.selection);
+            return `${field.name}${fieldSelection !== '' ? ` { ${fieldSelection} }` : ''}`;
+        }).join(' ');
+}
+
 function stat(_parent: any, _args: any, context: Context): Stat {
     const subscriptionToStat = (subscription: CollectionSubscription): SubscriptionStat => {
-        const iter = subscription.iter;
         return {
             filter: JSON.stringify(subscription.filter),
-            queueSize: iter.pushQueue.length + iter.pullQueue.length,
+            selection: selectionToString(subscription.selection),
+            queueSize: subscription.getQueueSize(),
             eventCount: subscription.eventCount,
         };
     };
