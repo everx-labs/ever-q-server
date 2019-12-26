@@ -385,7 +385,7 @@ const GasLimitsPrices: TypeDef = {
     flat_gas_price: string(),
 };
 
-const gasLimitsPrices = () => ref({ GasLimitsPrices });
+const gasLimitsPrices = (doc?: string) => ref({ GasLimitsPrices }, doc);
 
 const BlockLimits: TypeDef = {
     bytes: {
@@ -405,7 +405,7 @@ const BlockLimits: TypeDef = {
     },
 };
 
-const blockLimits = () => ref({ BlockLimits });
+const blockLimits = (doc?: string) => ref({ BlockLimits }, doc);
 
 const MsgForwardPrices: TypeDef = {
     lump_price: string(),
@@ -416,7 +416,7 @@ const MsgForwardPrices: TypeDef = {
     next_frac: u16(),
 };
 
-const msgForwardPrices = () => ref({ MsgForwardPrices });
+const msgForwardPrices = (doc?: string) => ref({ MsgForwardPrices }, doc);
 
 const ValidatorSet: TypeDef = {
     utime_since: u32(),
@@ -430,7 +430,7 @@ const ValidatorSet: TypeDef = {
     }),
 };
 
-const validatorSet = () => ref({ ValidatorSet });
+const validatorSet = (doc?: string) => ref({ ValidatorSet }, doc);
 
 const Block: TypeDef = {
     _doc: docs.block._doc,
@@ -525,25 +525,27 @@ const Block: TypeDef = {
         }),
         config_addr: string(),
         config: {
-            0: string(),
-            1: string(),
-            2: string(),
-            3: string(),
-            4: string(),
-            6: {
+            p0: string(docs.block.master.config.p0),
+            p1: string(docs.block.master.config.p1),
+            p2: string(docs.block.master.config.p2),
+            p3: string(docs.block.master.config.p3),
+            p4: string(docs.block.master.config.p4),
+            p6: {
+                _doc: docs.block.master.config.p6._doc,
                 mint_new_price: string(),
                 mint_add_price: string(),
             },
-            7: arrayOf({
+            p7: arrayOf({
                 currency: u32(),
                 value: string(),
-            }),
-            8: {
+            }, docs.block.master.config.p7._doc),
+            p8: {
+                _doc: docs.block.master.config.p8._doc,
                 version: u32(),
                 capabilities: string(),
             },
-            9: arrayOf(u32()),
-            12: arrayOf({
+            p9: arrayOf(u32(), docs.block.master.config.p9._doc),
+            p12: arrayOf({
                 workchain_id: i32(),
                 enabled_since: u32(),
                 actual_min_split: u8(),
@@ -562,48 +564,54 @@ const Block: TypeDef = {
                 max_addr_len: u16(),
                 addr_len_step: u16(),
                 workchain_type_id: u32(),
-            }),
-            14: {
+            }, docs.block.master.config.p12._doc),
+            p14: {
+                _doc: docs.block.master.config.p14._doc,
                 masterchain_block_fee: string(),
                 basechain_block_fee: string(),
             },
-            15: {
+            p15: {
+                _doc: docs.block.master.config.p15._doc,
                 validators_elected_for: u32(),
                 elections_start_before: u32(),
                 elections_end_before: u32(),
                 stake_held_for: u32(),
             },
-            16: {
+            p16: {
+                _doc: docs.block.master.config.p16._doc,
                 max_validators: u16(),
                 max_main_validators: u16(),
                 min_validators: u16(),
             },
-            17: {
+            p17: {
+                _doc: docs.block.master.config.p17._doc,
                 min_stake: string(),
                 max_stake: string(),
                 min_total_stake: string(),
                 max_stake_factor: u32()
             },
-            18: arrayOf({
+            p18: arrayOf({
                 utime_since: u32(),
                 bit_price_ps: string(),
                 cell_price_ps: string(),
                 mc_bit_price_ps: string(),
                 mc_cell_price_ps: string(),
-            }),
-            20: gasLimitsPrices(),
-            21: gasLimitsPrices(),
-            22: blockLimits(),
-            23: blockLimits(),
-            24: msgForwardPrices(),
-            25: msgForwardPrices(),
-            28: {
+            }, docs.block.master.config.p18._doc),
+            p20: gasLimitsPrices(docs.block.master.config.p20),
+            p21: gasLimitsPrices(docs.block.master.config.p21),
+            p22: blockLimits(docs.block.master.config.p22),
+            p23: blockLimits(docs.block.master.config.p23),
+            p24: msgForwardPrices(docs.block.master.config.p24),
+            p25: msgForwardPrices(docs.block.master.config.p25),
+            p28: {
+                _doc: docs.block.master.config.p28._doc,
                 mc_catchain_lifetime: u32(),
                 shard_catchain_lifetime: u32(),
                 shard_validators_lifetime: u32(),
                 shard_validators_num: u32(),
             },
-            29: {
+            p29: {
+                _doc: docs.block.master.config.p29._doc,
                 round_candidates: u32(),
                 next_candidate_delay_ms: u32(),
                 consensus_timeout_ms: u32(),
@@ -613,21 +621,21 @@ const Block: TypeDef = {
                 max_block_bytes: u32(),
                 max_collated_bytes: u32()
             },
-            31: arrayOf(string()),
-            32: validatorSet(),
-            33: validatorSet(),
-            34: validatorSet(),
-            35: validatorSet(),
-            36: validatorSet(),
-            37: validatorSet(),
-            39: arrayOf({
+            p31: arrayOf(string(), docs.block.master.config.p31._doc),
+            p32: validatorSet(docs.block.master.config.p32),
+            p33: validatorSet(docs.block.master.config.p33),
+            p34: validatorSet(docs.block.master.config.p34),
+            p35: validatorSet(docs.block.master.config.p35),
+            p36: validatorSet(docs.block.master.config.p36),
+            p37: validatorSet(docs.block.master.config.p37),
+            p39: arrayOf({
                 adnl_addr: string(),
                 temp_public_key: string(),
                 seqno: u32(),
                 valid_until: u32(),
                 signature_r: string(),
                 signature_s: string(),
-            }),
+            }, docs.block.master.config.p39._doc),
         }
     },
     signatures: join({ BlockSignatures }, 'id'),
