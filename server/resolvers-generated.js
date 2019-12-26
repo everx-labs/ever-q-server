@@ -177,6 +177,202 @@ const BlockMasterPrevBlkSignatures = struct({
     s: scalar,
 });
 
+const BlockMasterConfig6 = struct({
+    mint_new_price: scalar,
+    mint_add_price: scalar,
+});
+
+const BlockMasterConfig7 = struct({
+    currency: scalar,
+    value: scalar,
+});
+
+const BlockMasterConfig8 = struct({
+    version: scalar,
+    capabilities: scalar,
+});
+
+const BlockMasterConfig12 = struct({
+    workchain_id: scalar,
+    enabled_since: scalar,
+    actual_min_split: scalar,
+    min_split: scalar,
+    max_split: scalar,
+    active: scalar,
+    accept_msgs: scalar,
+    flags: scalar,
+    zerostate_root_hash: scalar,
+    zerostate_file_hash: scalar,
+    version: scalar,
+    basic: scalar,
+    vm_version: scalar,
+    vm_mode: scalar,
+    min_addr_len: scalar,
+    max_addr_len: scalar,
+    addr_len_step: scalar,
+    workchain_type_id: scalar,
+});
+
+const BlockMasterConfig14 = struct({
+    masterchain_block_fee: scalar,
+    basechain_block_fee: scalar,
+});
+
+const BlockMasterConfig15 = struct({
+    validators_elected_for: scalar,
+    elections_start_before: scalar,
+    elections_end_before: scalar,
+    stake_held_for: scalar,
+});
+
+const BlockMasterConfig16 = struct({
+    max_validators: scalar,
+    max_main_validators: scalar,
+    min_validators: scalar,
+});
+
+const BlockMasterConfig17 = struct({
+    min_stake: scalar,
+    max_stake: scalar,
+    min_total_stake: scalar,
+    max_stake_factor: scalar,
+});
+
+const BlockMasterConfig18 = struct({
+    utime_since: scalar,
+    bit_price_ps: scalar,
+    cell_price_ps: scalar,
+    mc_bit_price_ps: scalar,
+    mc_cell_price_ps: scalar,
+});
+
+const BlockMasterConfig28 = struct({
+    mc_catchain_lifetime: scalar,
+    shard_catchain_lifetime: scalar,
+    shard_validators_lifetime: scalar,
+    shard_validators_num: scalar,
+});
+
+const BlockMasterConfig29 = struct({
+    round_candidates: scalar,
+    next_candidate_delay_ms: scalar,
+    consensus_timeout_ms: scalar,
+    fast_attempts: scalar,
+    attempt_duration: scalar,
+    catchain_max_deps: scalar,
+    max_block_bytes: scalar,
+    max_collated_bytes: scalar,
+});
+
+const BlockMasterConfig39 = struct({
+    adnl_addr: scalar,
+    temp_public_key: scalar,
+    seqno: scalar,
+    valid_until: scalar,
+    signature_r: scalar,
+    signature_s: scalar,
+});
+
+const GasLimitsPrices = struct({
+    gas_price: scalar,
+    gas_limit: scalar,
+    special_gas_limit: scalar,
+    gas_credit: scalar,
+    block_gas_limit: scalar,
+    freeze_due_limit: scalar,
+    delete_due_limit: scalar,
+    flat_gas_limit: scalar,
+    flat_gas_price: scalar,
+});
+
+const BlockLimitsBytes = struct({
+    underload: scalar,
+    soft_limit: scalar,
+    hard_limit: scalar,
+});
+
+const BlockLimitsGas = struct({
+    underload: scalar,
+    soft_limit: scalar,
+    hard_limit: scalar,
+});
+
+const BlockLimitsLtDelta = struct({
+    underload: scalar,
+    soft_limit: scalar,
+    hard_limit: scalar,
+});
+
+const BlockLimits = struct({
+    bytes: BlockLimitsBytes,
+    gas: BlockLimitsGas,
+    lt_delta: BlockLimitsLtDelta,
+});
+
+const MsgForwardPrices = struct({
+    lump_price: scalar,
+    bit_price: scalar,
+    cell_price: scalar,
+    ihr_price_factor: scalar,
+    first_frac: scalar,
+    next_frac: scalar,
+});
+
+const ValidatorSetList = struct({
+    public_key: scalar,
+    weight: scalar,
+    adnl_addr: scalar,
+});
+
+const ValidatorSetListArray = array(ValidatorSetList);
+const ValidatorSet = struct({
+    utime_since: scalar,
+    utime_until: scalar,
+    total: scalar,
+    total_weight: scalar,
+    list: ValidatorSetListArray,
+});
+
+const BlockMasterConfig7Array = array(BlockMasterConfig7);
+const FloatArray = array(scalar);
+const BlockMasterConfig12Array = array(BlockMasterConfig12);
+const BlockMasterConfig18Array = array(BlockMasterConfig18);
+const StringArray = array(scalar);
+const BlockMasterConfig39Array = array(BlockMasterConfig39);
+const BlockMasterConfig = struct({
+    0: scalar,
+    1: scalar,
+    2: scalar,
+    3: scalar,
+    4: scalar,
+    6: BlockMasterConfig6,
+    7: BlockMasterConfig7Array,
+    8: BlockMasterConfig8,
+    9: FloatArray,
+    12: BlockMasterConfig12Array,
+    14: BlockMasterConfig14,
+    15: BlockMasterConfig15,
+    16: BlockMasterConfig16,
+    17: BlockMasterConfig17,
+    18: BlockMasterConfig18Array,
+    20: GasLimitsPrices,
+    21: GasLimitsPrices,
+    22: BlockLimits,
+    23: BlockLimits,
+    24: MsgForwardPrices,
+    25: MsgForwardPrices,
+    28: BlockMasterConfig28,
+    29: BlockMasterConfig29,
+    31: StringArray,
+    32: ValidatorSet,
+    33: ValidatorSet,
+    34: ValidatorSet,
+    35: ValidatorSet,
+    36: ValidatorSet,
+    37: ValidatorSet,
+    39: BlockMasterConfig39Array,
+});
+
 const BlockMasterShardHashesArray = array(BlockMasterShardHashes);
 const BlockMasterShardFeesArray = array(BlockMasterShardFees);
 const BlockMasterPrevBlkSignaturesArray = array(BlockMasterPrevBlkSignatures);
@@ -185,6 +381,8 @@ const BlockMaster = struct({
     shard_fees: BlockMasterShardFeesArray,
     recover_create_msg: InMsg,
     prev_blk_signatures: BlockMasterPrevBlkSignaturesArray,
+    config_addr: scalar,
+    config: BlockMasterConfig,
 });
 
 const BlockSignaturesSignatures = struct({
@@ -328,7 +526,6 @@ const TransactionSplitInfo = struct({
     sibling_addr: scalar,
 });
 
-const StringArray = array(scalar);
 const MessageArray = array(Message);
 const Transaction = struct({
     id: scalar,
@@ -631,6 +828,27 @@ module.exports = {
     BlockMasterShardHashes,
     BlockMasterShardFees,
     BlockMasterPrevBlkSignatures,
+    BlockMasterConfig6,
+    BlockMasterConfig7,
+    BlockMasterConfig8,
+    BlockMasterConfig12,
+    BlockMasterConfig14,
+    BlockMasterConfig15,
+    BlockMasterConfig16,
+    BlockMasterConfig17,
+    BlockMasterConfig18,
+    BlockMasterConfig28,
+    BlockMasterConfig29,
+    BlockMasterConfig39,
+    GasLimitsPrices,
+    BlockLimitsBytes,
+    BlockLimitsGas,
+    BlockLimitsLtDelta,
+    BlockLimits,
+    MsgForwardPrices,
+    ValidatorSetList,
+    ValidatorSet,
+    BlockMasterConfig,
     BlockMaster,
     BlockSignaturesSignatures,
     BlockSignatures,

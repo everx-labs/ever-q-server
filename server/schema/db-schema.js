@@ -373,6 +373,65 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
     funds_created_other: otherCurrencyCollection(docs.shardDescr.funds_created_other),
 }, doc);
 
+const GasLimitsPrices: TypeDef = {
+    gas_price: string(),
+    gas_limit: string(), 
+    special_gas_limit: string(),
+    gas_credit: string(),
+    block_gas_limit: string(),
+    freeze_due_limit: string(),
+    delete_due_limit: string(),
+    flat_gas_limit: string(),
+    flat_gas_price: string(),
+};
+
+const gasLimitsPrices = () => ref({ GasLimitsPrices });
+
+const BlockLimits: TypeDef = {
+    bytes: {
+        underload: u32(),
+        soft_limit: u32(),
+        hard_limit: u32(),
+    },
+    gas: {
+        underload: u32(),
+        soft_limit: u32(),
+        hard_limit: u32(),
+    },
+    lt_delta: {
+        underload: u32(),
+        soft_limit: u32(),
+        hard_limit: u32(),
+    },
+};
+
+const blockLimits = () => ref({ BlockLimits });
+
+const MsgForwardPrices: TypeDef = {
+    lump_price: string(),
+    bit_price: string(),
+    cell_price: string(),
+    ihr_price_factor: u32(),
+    first_frac: u16(),
+    next_frac: u16(),
+};
+
+const msgForwardPrices = () => ref({ MsgForwardPrices });
+
+const ValidatorSet: TypeDef = {
+    utime_since: u32(),
+    utime_until: u32(),
+    total: u16(),
+    total_weight: string(),
+    list: arrayOf({
+        public_key: string(),
+        weight: string(),
+        adnl_addr: string(),
+    }),
+};
+
+const validatorSet = () => ref({ ValidatorSet });
+
 const Block: TypeDef = {
     _doc: docs.block._doc,
     _: { collection: 'blocks' },
@@ -464,6 +523,112 @@ const Block: TypeDef = {
             r: string(docs.block.master.prev_blk_signatures.r),
             s: string(docs.block.master.prev_blk_signatures.s),
         }),
+        config_addr: string(),
+        config: {
+            0: string(),
+            1: string(),
+            2: string(),
+            3: string(),
+            4: string(),
+            6: {
+                mint_new_price: string(),
+                mint_add_price: string(),
+            },
+            7: arrayOf({
+                currency: u32(),
+                value: string(),
+            }),
+            8: {
+                version: u32(),
+                capabilities: string(),
+            },
+            9: arrayOf(u32()),
+            12: arrayOf({
+                workchain_id: i32(),
+                enabled_since: u32(),
+                actual_min_split: u8(),
+                min_split: u8(),
+                max_split: u8(),
+                active: bool(),
+                accept_msgs: bool(),
+                flags: u16(),
+                zerostate_root_hash: string(),
+                zerostate_file_hash: string(),
+                version: u32(),
+                basic: bool(),
+                vm_version: i32(),
+                vm_mode: string(),
+                min_addr_len: u16(),
+                max_addr_len: u16(),
+                addr_len_step: u16(),
+                workchain_type_id: u32(),
+            }),
+            14: {
+                masterchain_block_fee: string(),
+                basechain_block_fee: string(),
+            },
+            15: {
+                validators_elected_for: u32(),
+                elections_start_before: u32(),
+                elections_end_before: u32(),
+                stake_held_for: u32(),
+            },
+            16: {
+                max_validators: u16(),
+                max_main_validators: u16(),
+                min_validators: u16(),
+            },
+            17: {
+                min_stake: string(),
+                max_stake: string(),
+                min_total_stake: string(),
+                max_stake_factor: u32()
+            },
+            18: arrayOf({
+                utime_since: u32(),
+                bit_price_ps: string(),
+                cell_price_ps: string(),
+                mc_bit_price_ps: string(),
+                mc_cell_price_ps: string(),
+            }),
+            20: gasLimitsPrices(),
+            21: gasLimitsPrices(),
+            22: blockLimits(),
+            23: blockLimits(),
+            24: msgForwardPrices(),
+            25: msgForwardPrices(),
+            28: {
+                mc_catchain_lifetime: u32(),
+                shard_catchain_lifetime: u32(),
+                shard_validators_lifetime: u32(),
+                shard_validators_num: u32(),
+            },
+            29: {
+                round_candidates: u32(),
+                next_candidate_delay_ms: u32(),
+                consensus_timeout_ms: u32(),
+                fast_attempts: u32(),
+                attempt_duration: u32(),
+                catchain_max_deps: u32(),
+                max_block_bytes: u32(),
+                max_collated_bytes: u32()
+            },
+            31: arrayOf(string()),
+            32: validatorSet(),
+            33: validatorSet(),
+            34: validatorSet(),
+            35: validatorSet(),
+            36: validatorSet(),
+            37: validatorSet(),
+            39: arrayOf({
+                adnl_addr: string(),
+                temp_public_key: string(),
+                seqno: u32(),
+                valid_until: u32(),
+                signature_r: string(),
+                signature_s: string(),
+            }),
+        }
     },
     signatures: join({ BlockSignatures }, 'id'),
 };
@@ -483,6 +648,10 @@ const schema: TypeDef = {
             Account,
             Transaction,
             BlockSignatures,
+            GasLimitsPrices,
+            BlockLimits,
+            MsgForwardPrices,
+            ValidatorSet
         }
     }
 };

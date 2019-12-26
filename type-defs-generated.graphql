@@ -419,11 +419,202 @@ type BlockMasterPrevBlkSignatures {
 	s: String
 }
 
+type BlockMasterConfig6 {
+	mint_new_price: String
+	mint_add_price: String
+}
+
+type BlockMasterConfig7 {
+	currency: Float
+	value: String
+}
+
+type BlockMasterConfig8 {
+	version: Float
+	capabilities: String
+}
+
+type BlockMasterConfig12 {
+	workchain_id: Int
+	enabled_since: Float
+	actual_min_split: Int
+	min_split: Int
+	max_split: Int
+	active: Boolean
+	accept_msgs: Boolean
+	flags: Int
+	zerostate_root_hash: String
+	zerostate_file_hash: String
+	version: Float
+	basic: Boolean
+	vm_version: Int
+	vm_mode: String
+	min_addr_len: Int
+	max_addr_len: Int
+	addr_len_step: Int
+	workchain_type_id: Float
+}
+
+type BlockMasterConfig14 {
+	masterchain_block_fee: String
+	basechain_block_fee: String
+}
+
+type BlockMasterConfig15 {
+	validators_elected_for: Float
+	elections_start_before: Float
+	elections_end_before: Float
+	stake_held_for: Float
+}
+
+type BlockMasterConfig16 {
+	max_validators: Int
+	max_main_validators: Int
+	min_validators: Int
+}
+
+type BlockMasterConfig17 {
+	min_stake: String
+	max_stake: String
+	min_total_stake: String
+	max_stake_factor: Float
+}
+
+type BlockMasterConfig18 {
+	utime_since: Float
+	bit_price_ps: String
+	cell_price_ps: String
+	mc_bit_price_ps: String
+	mc_cell_price_ps: String
+}
+
+type BlockMasterConfig28 {
+	mc_catchain_lifetime: Float
+	shard_catchain_lifetime: Float
+	shard_validators_lifetime: Float
+	shard_validators_num: Float
+}
+
+type BlockMasterConfig29 {
+	round_candidates: Float
+	next_candidate_delay_ms: Float
+	consensus_timeout_ms: Float
+	fast_attempts: Float
+	attempt_duration: Float
+	catchain_max_deps: Float
+	max_block_bytes: Float
+	max_collated_bytes: Float
+}
+
+type BlockMasterConfig39 {
+	adnl_addr: String
+	temp_public_key: String
+	seqno: Float
+	valid_until: Float
+	signature_r: String
+	signature_s: String
+}
+
+type GasLimitsPrices {
+	gas_price: String
+	gas_limit: String
+	special_gas_limit: String
+	gas_credit: String
+	block_gas_limit: String
+	freeze_due_limit: String
+	delete_due_limit: String
+	flat_gas_limit: String
+	flat_gas_price: String
+}
+
+type BlockLimitsBytes {
+	underload: Float
+	soft_limit: Float
+	hard_limit: Float
+}
+
+type BlockLimitsGas {
+	underload: Float
+	soft_limit: Float
+	hard_limit: Float
+}
+
+type BlockLimitsLtDelta {
+	underload: Float
+	soft_limit: Float
+	hard_limit: Float
+}
+
+type BlockLimits {
+	bytes: BlockLimitsBytes
+	gas: BlockLimitsGas
+	lt_delta: BlockLimitsLtDelta
+}
+
+type MsgForwardPrices {
+	lump_price: String
+	bit_price: String
+	cell_price: String
+	ihr_price_factor: Float
+	first_frac: Int
+	next_frac: Int
+}
+
+type ValidatorSetList {
+	public_key: String
+	weight: String
+	adnl_addr: String
+}
+
+type ValidatorSet {
+	utime_since: Float
+	utime_until: Float
+	total: Int
+	total_weight: String
+	list: [ValidatorSetList]
+}
+
+type BlockMasterConfig {
+	0: String
+	1: String
+	2: String
+	3: String
+	4: String
+	6: BlockMasterConfig6
+	7: [BlockMasterConfig7]
+	8: BlockMasterConfig8
+	9: [Float]
+	12: [BlockMasterConfig12]
+	14: BlockMasterConfig14
+	15: BlockMasterConfig15
+	16: BlockMasterConfig16
+	17: BlockMasterConfig17
+	18: [BlockMasterConfig18]
+	20: GasLimitsPrices
+	21: GasLimitsPrices
+	22: BlockLimits
+	23: BlockLimits
+	24: MsgForwardPrices
+	25: MsgForwardPrices
+	28: BlockMasterConfig28
+	29: BlockMasterConfig29
+	31: [String]
+	32: ValidatorSet
+	33: ValidatorSet
+	34: ValidatorSet
+	35: ValidatorSet
+	36: ValidatorSet
+	37: ValidatorSet
+	39: [BlockMasterConfig39]
+}
+
 type BlockMaster {
 	shard_hashes: [BlockMasterShardHashes]
 	shard_fees: [BlockMasterShardFees]
 	recover_create_msg: InMsg
 	prev_blk_signatures: [BlockMasterPrevBlkSignatures]
+	config_addr: String
+	config: BlockMasterConfig
 }
 
 type BlockSignaturesSignatures {
@@ -1150,6 +1341,230 @@ input BlockMasterPrevBlkSignaturesFilter {
 	s: StringFilter
 }
 
+input BlockMasterConfig6Filter {
+	mint_new_price: StringFilter
+	mint_add_price: StringFilter
+}
+
+input BlockMasterConfig7Filter {
+	currency: FloatFilter
+	value: StringFilter
+}
+
+input BlockMasterConfig8Filter {
+	version: FloatFilter
+	capabilities: StringFilter
+}
+
+input BlockMasterConfig12Filter {
+	workchain_id: IntFilter
+	enabled_since: FloatFilter
+	actual_min_split: IntFilter
+	min_split: IntFilter
+	max_split: IntFilter
+	active: BooleanFilter
+	accept_msgs: BooleanFilter
+	flags: IntFilter
+	zerostate_root_hash: StringFilter
+	zerostate_file_hash: StringFilter
+	version: FloatFilter
+	basic: BooleanFilter
+	vm_version: IntFilter
+	vm_mode: StringFilter
+	min_addr_len: IntFilter
+	max_addr_len: IntFilter
+	addr_len_step: IntFilter
+	workchain_type_id: FloatFilter
+}
+
+input BlockMasterConfig14Filter {
+	masterchain_block_fee: StringFilter
+	basechain_block_fee: StringFilter
+}
+
+input BlockMasterConfig15Filter {
+	validators_elected_for: FloatFilter
+	elections_start_before: FloatFilter
+	elections_end_before: FloatFilter
+	stake_held_for: FloatFilter
+}
+
+input BlockMasterConfig16Filter {
+	max_validators: IntFilter
+	max_main_validators: IntFilter
+	min_validators: IntFilter
+}
+
+input BlockMasterConfig17Filter {
+	min_stake: StringFilter
+	max_stake: StringFilter
+	min_total_stake: StringFilter
+	max_stake_factor: FloatFilter
+}
+
+input BlockMasterConfig18Filter {
+	utime_since: FloatFilter
+	bit_price_ps: StringFilter
+	cell_price_ps: StringFilter
+	mc_bit_price_ps: StringFilter
+	mc_cell_price_ps: StringFilter
+}
+
+input BlockMasterConfig28Filter {
+	mc_catchain_lifetime: FloatFilter
+	shard_catchain_lifetime: FloatFilter
+	shard_validators_lifetime: FloatFilter
+	shard_validators_num: FloatFilter
+}
+
+input BlockMasterConfig29Filter {
+	round_candidates: FloatFilter
+	next_candidate_delay_ms: FloatFilter
+	consensus_timeout_ms: FloatFilter
+	fast_attempts: FloatFilter
+	attempt_duration: FloatFilter
+	catchain_max_deps: FloatFilter
+	max_block_bytes: FloatFilter
+	max_collated_bytes: FloatFilter
+}
+
+input BlockMasterConfig39Filter {
+	adnl_addr: StringFilter
+	temp_public_key: StringFilter
+	seqno: FloatFilter
+	valid_until: FloatFilter
+	signature_r: StringFilter
+	signature_s: StringFilter
+}
+
+input GasLimitsPricesFilter {
+	gas_price: StringFilter
+	gas_limit: StringFilter
+	special_gas_limit: StringFilter
+	gas_credit: StringFilter
+	block_gas_limit: StringFilter
+	freeze_due_limit: StringFilter
+	delete_due_limit: StringFilter
+	flat_gas_limit: StringFilter
+	flat_gas_price: StringFilter
+}
+
+input BlockLimitsBytesFilter {
+	underload: FloatFilter
+	soft_limit: FloatFilter
+	hard_limit: FloatFilter
+}
+
+input BlockLimitsGasFilter {
+	underload: FloatFilter
+	soft_limit: FloatFilter
+	hard_limit: FloatFilter
+}
+
+input BlockLimitsLtDeltaFilter {
+	underload: FloatFilter
+	soft_limit: FloatFilter
+	hard_limit: FloatFilter
+}
+
+input BlockLimitsFilter {
+	bytes: BlockLimitsBytesFilter
+	gas: BlockLimitsGasFilter
+	lt_delta: BlockLimitsLtDeltaFilter
+}
+
+input MsgForwardPricesFilter {
+	lump_price: StringFilter
+	bit_price: StringFilter
+	cell_price: StringFilter
+	ihr_price_factor: FloatFilter
+	first_frac: IntFilter
+	next_frac: IntFilter
+}
+
+input ValidatorSetListFilter {
+	public_key: StringFilter
+	weight: StringFilter
+	adnl_addr: StringFilter
+}
+
+input ValidatorSetListArrayFilter {
+	any: ValidatorSetListFilter
+	all: ValidatorSetListFilter
+}
+
+input ValidatorSetFilter {
+	utime_since: FloatFilter
+	utime_until: FloatFilter
+	total: IntFilter
+	total_weight: StringFilter
+	list: ValidatorSetListArrayFilter
+}
+
+input BlockMasterConfig7ArrayFilter {
+	any: BlockMasterConfig7Filter
+	all: BlockMasterConfig7Filter
+}
+
+input FloatArrayFilter {
+	any: FloatFilter
+	all: FloatFilter
+}
+
+input BlockMasterConfig12ArrayFilter {
+	any: BlockMasterConfig12Filter
+	all: BlockMasterConfig12Filter
+}
+
+input BlockMasterConfig18ArrayFilter {
+	any: BlockMasterConfig18Filter
+	all: BlockMasterConfig18Filter
+}
+
+input StringArrayFilter {
+	any: StringFilter
+	all: StringFilter
+}
+
+input BlockMasterConfig39ArrayFilter {
+	any: BlockMasterConfig39Filter
+	all: BlockMasterConfig39Filter
+}
+
+input BlockMasterConfigFilter {
+	0: StringFilter
+	1: StringFilter
+	2: StringFilter
+	3: StringFilter
+	4: StringFilter
+	6: BlockMasterConfig6Filter
+	7: BlockMasterConfig7ArrayFilter
+	8: BlockMasterConfig8Filter
+	9: FloatArrayFilter
+	12: BlockMasterConfig12ArrayFilter
+	14: BlockMasterConfig14Filter
+	15: BlockMasterConfig15Filter
+	16: BlockMasterConfig16Filter
+	17: BlockMasterConfig17Filter
+	18: BlockMasterConfig18ArrayFilter
+	20: GasLimitsPricesFilter
+	21: GasLimitsPricesFilter
+	22: BlockLimitsFilter
+	23: BlockLimitsFilter
+	24: MsgForwardPricesFilter
+	25: MsgForwardPricesFilter
+	28: BlockMasterConfig28Filter
+	29: BlockMasterConfig29Filter
+	31: StringArrayFilter
+	32: ValidatorSetFilter
+	33: ValidatorSetFilter
+	34: ValidatorSetFilter
+	35: ValidatorSetFilter
+	36: ValidatorSetFilter
+	37: ValidatorSetFilter
+	39: BlockMasterConfig39ArrayFilter
+}
+
 input BlockMasterShardHashesArrayFilter {
 	any: BlockMasterShardHashesFilter
 	all: BlockMasterShardHashesFilter
@@ -1170,6 +1585,8 @@ input BlockMasterFilter {
 	shard_fees: BlockMasterShardFeesArrayFilter
 	recover_create_msg: InMsgFilter
 	prev_blk_signatures: BlockMasterPrevBlkSignaturesArrayFilter
+	config_addr: StringFilter
+	config: BlockMasterConfigFilter
 }
 
 input BlockSignaturesSignaturesFilter {
@@ -1563,11 +1980,6 @@ input TransactionSplitInfoFilter {
 	acc_split_depth: IntFilter
 	this_addr: StringFilter
 	sibling_addr: StringFilter
-}
-
-input StringArrayFilter {
-	any: StringFilter
-	all: StringFilter
 }
 
 input MessageArrayFilter {
