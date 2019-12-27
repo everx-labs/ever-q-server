@@ -63,6 +63,11 @@ test("Generate AQL", () => {
     expect(params.values.v1).toEqual('1');
 
     params.clear();
+    ql = Transaction.ql(params, 'doc', { out_msgs: { any: { eq: "1" } } });
+    expect(ql).toEqual(`@v1 IN doc.out_msgs[*]`);
+    expect(params.values.v1).toEqual('1');
+
+    params.clear();
     ql = Account.ql(params, 'doc', { id: { gt: 'fff' } });
     expect(ql).toEqual(`TO_STRING(doc._key) > @v1`);
     expect(params.values.v1).toEqual('fff');
