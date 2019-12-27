@@ -22,6 +22,7 @@ type SubscriptionStat = {
     selection: string,
     queueSize: number,
     eventCount: number,
+    secondsActive: number,
 }
 
 type CollectionStat = {
@@ -67,6 +68,7 @@ function stat(_parent: any, _args: any, context: Context): Stat {
             selection: selectionToString(subscription.selection),
             queueSize: subscription.getQueueSize(),
             eventCount: subscription.eventCount,
+            secondsActive: (Date.now() - subscription.startTime) / 1000,
         };
     };
     const db: Arango = context.db;

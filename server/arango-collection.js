@@ -138,6 +138,7 @@ export class CollectionSubscription implements AsyncIterator<any> {
     pullQueue: ((value: any) => void)[];
     pushQueue: any[];
     running: boolean;
+    startTime: number;
 
     constructor(collection: Collection, filter: any, selection: FieldSelection[]) {
         this.collection = collection;
@@ -148,6 +149,7 @@ export class CollectionSubscription implements AsyncIterator<any> {
         this.pushQueue = [];
         this.running = true;
         this.id = collection.subscriptions.add(this);
+        this.startTime = Date.now();
     }
 
     onDocumentInsertOrUpdate(doc: any) {
@@ -288,7 +290,6 @@ export class Collection {
 
     queryResolver() {
         return async (parent: any, args: any, context: any) => wrap(this.log, 'QUERY', args, async () => {
-            this.log.debug('QUERY', args);
             const filter = args.filter || {};
             const orderBy: OrderBy[] = args.orderBy || [];
             const limit: number = args.limit || 50;
@@ -297,11 +298,12 @@ export class Collection {
 
             const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
-                if (timeout > 0) {
-                    return await this.queryWaitFor(q, filter, timeout);
-                } else {
-                    return await this.query(q);
-                }
+                const start = Date.now();
+                const result = timeout > 0
+                    ? await this.queryWaitFor(q, filter, timeout)
+                    : await this.query(q);
+                this.log.debug('QUERY', args, (Date.now() - start) / 1000);
+                return result;
             } finally {
                 await span.finish();
             }
@@ -316,13 +318,20 @@ export class Collection {
 
     async queryWaitFor(q: Query, filter: any, timeout: number): Promise<any> {
         let waitForId: ?number = null;
+        let forceTimerId: ?TimeoutID = null;
         try {
             const onQuery = new Promise((resolve, reject) => {
-                this.query(q).then((docs) => {
-                    if (docs.length > 0) {
-                        resolve(docs)
-                    }
-                }, reject);
+                const check = () => {
+                    this.query(q).then((docs) => {
+                        if (docs.length > 0) {
+                            forceTimerId = null;
+                            resolve(docs);
+                        } else {
+                            forceTimerId = setTimeout(check, 5_000);
+                        }
+                    }, reject);
+                };
+                check();
             });
             const onChangesFeed = new Promise((resolve) => {
                 waitForId = this.waitFor.add({
@@ -344,6 +353,11 @@ export class Collection {
             if (waitForId !== null && waitForId !== undefined) {
                 this.waitFor.remove(waitForId);
             }
+            if (forceTimerId !== null) {
+                clearTimeout(forceTimerId);
+                forceTimerId = null;
+            }
+
         }
     }
 
