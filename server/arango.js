@@ -19,7 +19,7 @@
 import arangochair from 'arangochair';
 import { Database } from 'arangojs';
 import { ChangeLog, Collection, wrap } from "./arango-collection";
-import type { QConfig } from './config'
+import type { QConfig, QDbConfig } from './config'
 import { ensureProtocol } from './config';
 import type { QLog } from './logs';
 import QLogs from './logs'
@@ -34,6 +34,7 @@ export default class Arango {
     serverAddress: string;
     databaseName: string;
     db: Database;
+    slowDb: Database;
 
     changeLog: ChangeLog;
     tracer: Tracer;
@@ -57,17 +58,23 @@ export default class Arango {
         this.databaseName = config.database.name;
         this.tracer = tracer;
 
-        this.db = new Database({
-            url: `${ensureProtocol(this.serverAddress, 'http')}`,
-            agentOptions: {
-                maxSockets: 100,
-            },
-        });
-        this.db.useDatabase(this.databaseName);
-        if (this.config.database.auth) {
-            const authParts = this.config.database.auth.split(':');
-            this.db.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
-        }
+        const createDb = (config: QDbConfig): Database => {
+            const db = new Database({
+                url: `${ensureProtocol(config.server, 'http')}`,
+                agentOptions: {
+                    maxSockets: config.maxSockets,
+                },
+            });
+            db.useDatabase(config.name);
+            if (config.auth) {
+                const authParts = config.auth.split(':');
+                db.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
+            }
+            return db;
+        };
+
+        this.db = createDb(config.database);
+        const slowDb = createDb(config.slowDatabase);
 
         this.collections = [];
         this.collectionsByName = new Map();
@@ -79,7 +86,8 @@ export default class Arango {
                 logs,
                 this.changeLog,
                 this.tracer,
-                this.db
+                this.db,
+                slowDb,
             );
             this.collections.push(collection);
             this.collectionsByName.set(name, collection);

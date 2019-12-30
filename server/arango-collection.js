@@ -125,7 +125,7 @@ function selectFields(doc: any, selection: FieldSelection[]): any {
 
 export class CollectionListener {
     collection: Collection;
-    id: number;
+    id: ?number;
     filter: any;
     selection: FieldSelection[];
     startTime: number;
@@ -136,6 +136,14 @@ export class CollectionListener {
         this.selection = selection;
         this.id = collection.listeners.add(this);
         this.startTime = Date.now();
+    }
+
+    close() {
+        const id = this.id;
+        if (id !== null && id !== undefined) {
+            this.id = null;
+            this.collection.listeners.remove(id);
+        }
     }
 
     onDocumentInsertOrUpdate(doc: any) {
@@ -224,13 +232,13 @@ export class SubscriptionListener extends CollectionListener implements AsyncIte
     }
 
     async return(): Promise<any> {
-        this.collection.listeners.remove(this.id);
+        this.close();
         await this.emptyQueue();
         return { value: undefined, done: true };
     }
 
     async throw(error?: any): Promise<any> {
-        this.collection.listeners.remove(this.id);
+        this.close();
         await this.emptyQueue();
         return Promise.reject(error);
     }
@@ -251,6 +259,11 @@ export class SubscriptionListener extends CollectionListener implements AsyncIte
 
 }
 
+export type QueryStat = {
+    estimatedCost: number,
+    slow: boolean,
+    times: number[],
+}
 
 export class Collection {
     name: string;
@@ -260,8 +273,10 @@ export class Collection {
     changeLog: ChangeLog;
     tracer: Tracer;
     db: Database;
+    slowDb: Database;
 
     listeners: RegistryMap<CollectionListener>;
+    queryStats: Map<string, QueryStat>;
 
     maxQueueSize: number;
 
@@ -272,6 +287,7 @@ export class Collection {
         changeLog: ChangeLog,
         tracer: Tracer,
         db: Database,
+        slowDb: Database,
     ) {
         this.name = name;
         this.docType = docType;
@@ -280,9 +296,10 @@ export class Collection {
         this.changeLog = changeLog;
         this.tracer = tracer;
         this.db = db;
+        this.slowDb = slowDb;
 
         this.listeners = new RegistryMap<CollectionListener>(`${name} listeners`);
-
+        this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
     }
 
@@ -310,21 +327,40 @@ export class Collection {
 
     // Queries
 
+    async ensureQueryStat(q: Query): Promise<QueryStat> {
+        const existing = this.queryStats.get(q.query);
+        if (existing !== undefined) {
+            return existing;
+        }
+        const plan = (await this.db.explain(q)).plan;
+        const stat = {
+            estimatedCost: plan.estimatedCost,
+            slow: false,
+            times: [],
+        };
+        if (plan.nodes.find(node => node.type === 'EnumerateCollectionNode')) {
+            stat.slow = true;
+        }
+        this.queryStats.set(q.query, stat);
+        return stat;
+    }
+
     queryResolver() {
         return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
             const filter = args.filter || {};
+            const selection = parseSelectionSet(info.operation.selectionSet, this.name);
             const orderBy: OrderBy[] = args.orderBy || [];
             const limit: number = args.limit || 50;
             const timeout = (Number(args.timeout) || 0) * 1000;
             const q = this.genQuery(filter, orderBy, limit);
-
+            const stat = await this.ensureQueryStat(q);
             const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
                 const start = Date.now();
                 const result = timeout > 0
-                    ? await this.queryWaitFor(q, filter, parseSelectionSet(info.operation.selectionSet, this.name), timeout)
-                    : await this.query(q);
-                this.log.debug('QUERY', args, (Date.now() - start) / 1000);
+                    ? await this.queryWaitFor(q, stat, filter, selection, timeout)
+                    : await this.query(q, stat);
+                this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST');
                 return result;
             } finally {
                 await span.finish();
@@ -332,19 +368,26 @@ export class Collection {
         });
     }
 
-    async query(q: Query): Promise<any> {
-        const cursor = await this.db.query(q);
-        return await cursor.all();
+    async query(q: Query, stat: QueryStat): Promise<any> {
+        const db = stat.slow ? this.slowDb : this.db;
+        const start = Date.now();
+        const cursor = await db.query(q);
+        const result = await cursor.all();
+        stat.times.push(Date.now() - start);
+        if (stat.times.length > 1000) {
+            stat.times.shift();
+        }
+        return result;
     }
 
 
-    async queryWaitFor(q: Query, filter: any, selection: FieldSelection[], timeout: number): Promise<any> {
+    async queryWaitFor(q: Query, stat: QueryStat, filter: any, selection: FieldSelection[], timeout: number): Promise<any> {
         let waitFor: ?WaitForListener = null;
         let forceTimerId: ?TimeoutID = null;
         try {
             const onQuery = new Promise((resolve, reject) => {
                 const check = () => {
-                    this.query(q).then((docs) => {
+                    this.query(q, stat).then((docs) => {
                         if (docs.length > 0) {
                             forceTimerId = null;
                             resolve(docs);
@@ -370,7 +413,7 @@ export class Collection {
             ]);
         } finally {
             if (waitFor !== null && waitFor !== undefined) {
-                this.listeners.remove(waitFor.id);
+                waitFor.close();
             }
             if (forceTimerId !== null) {
                 clearTimeout(forceTimerId);
