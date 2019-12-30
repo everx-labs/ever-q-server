@@ -353,6 +353,10 @@ export class Collection {
             const limit: number = args.limit || 50;
             const timeout = (Number(args.timeout) || 0) * 1000;
             const q = this.genQuery(filter, orderBy, limit);
+            if (!q) {
+                this.log.debug('QUERY', args, 0, 'SKIPPED');
+                return [];
+            }
             const stat = await this.ensureQueryStat(q);
             const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
@@ -424,11 +428,14 @@ export class Collection {
     }
 
 
-    genQuery(filter: any, orderBy: OrderBy[], limit: number): Query {
+    genQuery(filter: any, orderBy: OrderBy[], limit: number): ?Query {
         const params = new QParams();
         const filterSection = Object.keys(filter).length > 0
             ? `FILTER ${this.docType.ql(params, 'doc', filter)}`
             : '';
+        if (filterSection === 'FILTER false') {
+            return null;
+        }
         const orderByQl = orderBy
             .map((field) => {
                 const direction = (field.direction && field.direction.toLowerCase() === 'desc')
