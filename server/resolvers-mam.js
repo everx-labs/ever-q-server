@@ -3,7 +3,7 @@
 import fs from "fs";
 import Arango from "./arango";
 import type { FieldSelection } from "./arango-collection";
-import { Collection, CollectionSubscription } from "./arango-collection";
+import { Collection, CollectionListener, SubscriptionListener } from "./arango-collection";
 import type { QConfig } from "./config";
 import path from 'path';
 
@@ -17,7 +17,7 @@ type Info = {
     version: string,
 }
 
-type SubscriptionStat = {
+type ListenerStat = {
     filter: string,
     selection: string,
     queueSize: number,
@@ -30,7 +30,8 @@ type CollectionStat = {
     subscriptionCount: number,
     waitForCount: number,
     maxQueueSize: number,
-    subscriptions: SubscriptionStat[],
+    subscriptions: ListenerStat[],
+    waitFor: ListenerStat[],
 }
 
 type Stat = {
@@ -62,24 +63,31 @@ function selectionToString(selection: FieldSelection[]): string {
 }
 
 function stat(_parent: any, _args: any, context: Context): Stat {
-    const subscriptionToStat = (subscription: CollectionSubscription): SubscriptionStat => {
+    const listenerToStat = (listener: CollectionListener): ListenerStat => {
         return {
-            filter: JSON.stringify(subscription.filter),
-            selection: selectionToString(subscription.selection),
-            queueSize: subscription.getQueueSize(),
-            eventCount: subscription.eventCount,
-            secondsActive: (Date.now() - subscription.startTime) / 1000,
+            filter: JSON.stringify(listener.filter),
+            selection: selectionToString(listener.selection),
+            queueSize: 0,
+            eventCount: listener.getEventCount(),
+            secondsActive: (Date.now() - listener.startTime) / 1000,
         };
+    };
+    const isSubscription = (listener: CollectionListener): bool => {
+        return listener instanceof SubscriptionListener;
     };
     const db: Arango = context.db;
     return {
         collections: db.collections.map((collection: Collection) => {
+            const listeners = [...collection.listeners.values()];
+            const waitFor = listeners.filter(x => !isSubscription(x));
+            const subscriptions = listeners.filter(isSubscription);
             return {
                 name: collection.name,
-                subscriptionCount: collection.subscriptions.items.size,
-                waitForCount: collection.waitFor.items.size,
+                subscriptionCount: subscriptions.length,
+                waitForCount: waitFor.length,
                 maxQueueSize: collection.maxQueueSize,
-                subscriptions: [...collection.subscriptions.values()].map(subscriptionToStat),
+                subscriptions: subscriptions.map(listenerToStat),
+                waitFor: waitFor.map(listenerToStat),
             }
         })
     }
