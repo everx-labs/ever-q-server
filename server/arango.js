@@ -59,6 +59,9 @@ export default class Arango {
 
         this.db = new Database({
             url: `${ensureProtocol(this.serverAddress, 'http')}`,
+            agentOptions: {
+                maxSockets: 100,
+            },
         });
         this.db.useDatabase(this.databaseName);
         if (this.config.database.auth) {

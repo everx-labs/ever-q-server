@@ -24,11 +24,6 @@ import type { QType } from "./q-types";
 import { QParams } from "./q-types";
 import { Tracer } from "./tracer";
 
-type CollectionWaitFor = {
-    filter: any,
-    onInsertOrUpdate: (doc: any) => void,
-}
-
 type OrderBy = {
     path: string,
     direction: string,
@@ -128,37 +123,71 @@ function selectFields(doc: any, selection: FieldSelection[]): any {
     return selected;
 }
 
-//$FlowFixMe
-export class CollectionSubscription implements AsyncIterator<any> {
+export class CollectionListener {
     collection: Collection;
     id: number;
     filter: any;
     selection: FieldSelection[];
+    startTime: number;
+
+    constructor(collection: Collection, filter: any, selection: FieldSelection[]) {
+        this.collection = collection;
+        this.filter = filter;
+        this.selection = selection;
+        this.id = collection.listeners.add(this);
+        this.startTime = Date.now();
+    }
+
+    onDocumentInsertOrUpdate(doc: any) {
+    }
+
+    getEventCount(): number {
+        return 0;
+    }
+}
+
+
+export class WaitForListener extends CollectionListener {
+    onInsertOrUpdate: (doc: any) => void;
+
+    constructor(collection: Collection, filter: any, selection: FieldSelection[], onInsertOrUpdate: (doc: any) => void) {
+        super(collection, filter, selection);
+        this.onInsertOrUpdate = onInsertOrUpdate;
+    }
+
+    onDocumentInsertOrUpdate(doc: any) {
+        this.onInsertOrUpdate(doc);
+    }
+}
+
+
+//$FlowFixMe
+export class SubscriptionListener extends CollectionListener implements AsyncIterator<any> {
     eventCount: number;
     pullQueue: ((value: any) => void)[];
     pushQueue: any[];
     running: boolean;
 
     constructor(collection: Collection, filter: any, selection: FieldSelection[]) {
-        this.collection = collection;
-        this.filter = filter;
-        this.selection = selection;
+        super(collection, filter, selection);
         this.eventCount = 0;
         this.pullQueue = [];
         this.pushQueue = [];
         this.running = true;
-        this.id = collection.subscriptions.add(this);
     }
 
     onDocumentInsertOrUpdate(doc: any) {
         if (!this.isQueueOverflow() && this.collection.docType.test(null, doc, this.filter)) {
-
             this.pushValue({ [this.collection.name]: selectFields(doc, this.selection) });
         }
     }
 
     isQueueOverflow(): boolean {
         return this.getQueueSize() >= 10;
+    }
+
+    getEventCount(): number {
+        return this.eventCount;
     }
 
     getQueueSize(): number {
@@ -195,13 +224,13 @@ export class CollectionSubscription implements AsyncIterator<any> {
     }
 
     async return(): Promise<any> {
-        this.collection.subscriptions.remove(this.id);
+        this.collection.listeners.remove(this.id);
         await this.emptyQueue();
         return { value: undefined, done: true };
     }
 
     async throw(error?: any): Promise<any> {
-        this.collection.subscriptions.remove(this.id);
+        this.collection.listeners.remove(this.id);
         await this.emptyQueue();
         return Promise.reject(error);
     }
@@ -232,8 +261,7 @@ export class Collection {
     tracer: Tracer;
     db: Database;
 
-    subscriptions: RegistryMap<CollectionSubscription>;
-    waitFor: RegistryMap<CollectionWaitFor>;
+    listeners: RegistryMap<CollectionListener>;
 
     maxQueueSize: number;
 
@@ -253,8 +281,7 @@ export class Collection {
         this.tracer = tracer;
         this.db = db;
 
-        this.subscriptions = new RegistryMap<CollectionSubscription>(`${name} subscriptions`);
-        this.waitFor = new RegistryMap<CollectionWaitFor>(`${name} waitFor`);
+        this.listeners = new RegistryMap<CollectionListener>(`${name} listeners`);
 
         this.maxQueueSize = 0;
     }
@@ -262,20 +289,17 @@ export class Collection {
     // Subscriptions
 
     onDocumentInsertOrUpdate(doc: any) {
-        for (const { filter, onInsertOrUpdate } of this.waitFor.values()) {
-            if (this.docType.test(null, doc, filter)) {
-                onInsertOrUpdate(doc);
+        for (const listener of this.listeners.values()) {
+            if (this.docType.test(null, doc, listener.filter)) {
+                listener.onDocumentInsertOrUpdate(doc);
             }
-        }
-        for (const subscription: CollectionSubscription of this.subscriptions.values()) {
-            subscription.onDocumentInsertOrUpdate(doc);
         }
     }
 
     subscriptionResolver() {
         return {
             subscribe: (_: any, args: { filter: any }, _context: any, info: any) => {
-                return new CollectionSubscription(
+                return new SubscriptionListener(
                     this,
                     args.filter || {},
                     parseSelectionSet(info.operation.selectionSet, this.name),
@@ -287,8 +311,7 @@ export class Collection {
     // Queries
 
     queryResolver() {
-        return async (parent: any, args: any, context: any) => wrap(this.log, 'QUERY', args, async () => {
-            this.log.debug('QUERY', args);
+        return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
             const filter = args.filter || {};
             const orderBy: OrderBy[] = args.orderBy || [];
             const limit: number = args.limit || 50;
@@ -297,11 +320,12 @@ export class Collection {
 
             const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
-                if (timeout > 0) {
-                    return await this.queryWaitFor(q, filter, timeout);
-                } else {
-                    return await this.query(q);
-                }
+                const start = Date.now();
+                const result = timeout > 0
+                    ? await this.queryWaitFor(q, filter, parseSelectionSet(info.operation.selectionSet, this.name), timeout)
+                    : await this.query(q);
+                this.log.debug('QUERY', args, (Date.now() - start) / 1000);
+                return result;
             } finally {
                 await span.finish();
             }
@@ -314,22 +338,26 @@ export class Collection {
     }
 
 
-    async queryWaitFor(q: Query, filter: any, timeout: number): Promise<any> {
-        let waitForId: ?number = null;
+    async queryWaitFor(q: Query, filter: any, selection: FieldSelection[], timeout: number): Promise<any> {
+        let waitFor: ?WaitForListener = null;
+        let forceTimerId: ?TimeoutID = null;
         try {
             const onQuery = new Promise((resolve, reject) => {
-                this.query(q).then((docs) => {
-                    if (docs.length > 0) {
-                        resolve(docs)
-                    }
-                }, reject);
+                const check = () => {
+                    this.query(q).then((docs) => {
+                        if (docs.length > 0) {
+                            forceTimerId = null;
+                            resolve(docs);
+                        } else {
+                            forceTimerId = setTimeout(check, 5_000);
+                        }
+                    }, reject);
+                };
+                check();
             });
             const onChangesFeed = new Promise((resolve) => {
-                waitForId = this.waitFor.add({
-                    filter,
-                    onInsertOrUpdate(doc) {
-                        resolve([doc])
-                    },
+                waitFor = new WaitForListener(this, filter, selection, (doc) => {
+                    resolve([doc])
                 });
             });
             const onTimeout = new Promise((resolve) => {
@@ -341,9 +369,14 @@ export class Collection {
                 onTimeout,
             ]);
         } finally {
-            if (waitForId !== null && waitForId !== undefined) {
-                this.waitFor.remove(waitForId);
+            if (waitFor !== null && waitFor !== undefined) {
+                this.listeners.remove(waitFor.id);
             }
+            if (forceTimerId !== null) {
+                clearTimeout(forceTimerId);
+                forceTimerId = null;
+            }
+
         }
     }
 

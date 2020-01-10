@@ -27,7 +27,7 @@ function str(arg: any): string {
 }
 
 function format(name: string, args: string[]) {
-    return `${name}\t${args.map(str).join('\t')}`;
+    return `${Date.now()}\t${name}\t${args.map(str).join('\t')}`;
 }
 
 export default class QLogs {

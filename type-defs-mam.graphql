@@ -12,11 +12,12 @@ type CollectionSummary {
     indexes: [String]
 }
 
-type SubscriptionStat {
+type ListenerStat {
     filter: String
     selection: String
     queueSize: Int
     eventCount: Int
+    secondsActive: Float
 }
 
 type CollectionStat {
@@ -24,7 +25,8 @@ type CollectionStat {
     subscriptionCount: Int
     waitForCount: Int
     maxQueueSize: Int
-    subscriptions: [SubscriptionStat]
+    subscriptions: [ListenerStat]
+    waitFor: [ListenerStat]
 }
 
 type Stat {

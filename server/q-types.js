@@ -335,7 +335,11 @@ function array(itemType: QType): QType {
         },
         any: {
             ql(params, path, filter) {
+                const paramName = `@v${params.count + 1}`;
                 const itemQl = itemType.ql(params, 'CURRENT', filter);
+                if (itemQl === `CURRENT == ${paramName}`) {
+                    return `${paramName} IN ${path}[*]`;
+                }
                 return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
             },
             test(parent, value, filter) {
