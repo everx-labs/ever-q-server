@@ -70,13 +70,53 @@ export class Tracer {
             : {}
     }
 
+    startSpanSync(context: any, name: string): TracerSpan {
+        const jaeger = this.jaeger;
+        if (!jaeger) {
+            return missingSpan;
+        }
+        const span: JaegerSpan = jaeger.startSpan(name, {
+            childOf: context,
+        });
+        span.setTag(Tags.SPAN_KIND, 'server');
+        return span;
+    }
+
+    async startSpan(context: any, name: string): Promise<TracerSpan> {
+        const jaeger = this.jaeger;
+        if (!jaeger) {
+            return missingSpan;
+        }
+        const span: JaegerSpan = await jaeger.startSpan(name, {
+            childOf: context,
+        });
+        await span.setTag(Tags.SPAN_KIND, 'server');
+        return span;
+    }
+
+    startSpanLogSync(context: any, name: string, event: string, value: any): TracerSpan {
+        const jaeger = this.jaeger;
+        if (!jaeger) {
+            return missingSpan;
+        }
+        const span: JaegerSpan = jaeger.startSpan(name, {
+            childOf: context,
+        });
+        span.setTag(Tags.SPAN_KIND, 'server');
+        span.log({
+            event,
+            value,
+        });
+        return span;
+    }
+
     async startSpanLog(context: any, name: string, event: string, value: any): Promise<TracerSpan> {
         const jaeger = this.jaeger;
         if (!jaeger) {
             return missingSpan;
         }
         const span: JaegerSpan = await jaeger.startSpan(name, {
-            childOf: context.tracer,
+            childOf: context,
         });
         await span.setTag(Tags.SPAN_KIND, 'server');
         await span.log({
@@ -85,4 +125,5 @@ export class Tracer {
         });
         return span;
     }
+
 }
