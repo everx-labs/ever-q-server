@@ -88,7 +88,8 @@ export type FieldSelection = {
     selection: FieldSelection[],
 }
 
-function parseSelectionSet(selectionSet: any, returnFieldSelection: string): FieldSelection[] {
+function parseSelectionSet(selectionSet: any, returnFieldSelection: string, rootSpan: any): FieldSelection[] {
+    const span = this.tracer.startSpanSync(rootSpan, 'arango-collection.js:parseSelectionSet');
     const fields: FieldSelection[] = [];
     const selections = selectionSet && selectionSet.selections;
     if (selections) {
@@ -97,15 +98,18 @@ function parseSelectionSet(selectionSet: any, returnFieldSelection: string): Fie
             if (name) {
                 const field: FieldSelection = {
                     name,
-                    selection: parseSelectionSet(item.selectionSet, ''),
+                    selection: parseSelectionSet(item.selectionSet, '', span),
                 };
                 if (returnFieldSelection !== '' && field.name === returnFieldSelection) {
+                    span.log({event: 'function return', value: field.selection});
                     return field.selection;
                 }
                 fields.push(field);
             }
         }
     }
+    span.log({event: 'function return', value: fields});
+    span.finish();
     return fields;
 }
 
@@ -299,11 +303,15 @@ export class Collection {
     subscriptionResolver() {
         return {
             subscribe: (_: any, args: { filter: any }, _context: any, info: any) => {
-                return new SubscriptionListener(
+                const span = this.tracer.startSpanSync(_context.tracer, 'arango-collection.js:subscriptionResolver',
+                    'new subscription', args);
+                const result = new SubscriptionListener(
                     this,
                     args.filter || {},
-                    parseSelectionSet(info.operation.selectionSet, this.name),
+                    parseSelectionSet(info.operation.selectionSet, this.name, span),
                 );
+                span.finish();
+                return result;
             },
         }
     }
@@ -312,18 +320,20 @@ export class Collection {
 
     queryResolver() {
         return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
+            const span = await this.tracer.startSpanLog(context.tracer, 'arango-collection.js:queryResolver', 'new query', args);
+
             const filter = args.filter || {};
             const orderBy: OrderBy[] = args.orderBy || [];
             const limit: number = args.limit || 50;
             const timeout = (Number(args.timeout) || 0) * 1000;
-            const q = this.genQuery(filter, orderBy, limit);
+            const q = this.genQuery(filter, orderBy, limit, span);
 
-            const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
                 const start = Date.now();
                 const result = timeout > 0
-                    ? await this.queryWaitFor(q, filter, parseSelectionSet(info.operation.selectionSet, this.name), timeout)
-                    : await this.query(q);
+                    ? await this.queryWaitFor(q, filter, parseSelectionSet(info.operation.selectionSet, this.name, span),
+                        timeout, span)
+                    : await this.query(q, span);
                 this.log.debug('QUERY', args, (Date.now() - start) / 1000);
                 return result;
             } finally {
@@ -332,19 +342,23 @@ export class Collection {
         });
     }
 
-    async query(q: Query): Promise<any> {
+    async query(q: Query, rootSpan: any): Promise<any> {
+        const span = await this.tracer.startSpan(rootSpan, 'arango-collections.js:query');
         const cursor = await this.db.query(q);
-        return await cursor.all();
+        const result = await cursor.all();
+        await span.finish();
+        return result;
     }
 
 
-    async queryWaitFor(q: Query, filter: any, selection: FieldSelection[], timeout: number): Promise<any> {
+    async queryWaitFor(q: Query, filter: any, selection: FieldSelection[], timeout: number, rootSpan: any): Promise<any> {
+        const span = await this.tracer.startSpan(rootSpan, 'arango-collection.js:queryWaitFor');
         let waitFor: ?WaitForListener = null;
         let forceTimerId: ?TimeoutID = null;
         try {
             const onQuery = new Promise((resolve, reject) => {
                 const check = () => {
-                    this.query(q).then((docs) => {
+                    this.query(q, span).then((docs) => {
                         if (docs.length > 0) {
                             forceTimerId = null;
                             resolve(docs);
@@ -376,12 +390,14 @@ export class Collection {
                 clearTimeout(forceTimerId);
                 forceTimerId = null;
             }
+            await span.finish();
 
         }
     }
 
 
-    genQuery(filter: any, orderBy: OrderBy[], limit: number): Query {
+    genQuery(filter: any, orderBy: OrderBy[], limit: number, rootSpan: any): Query {
+        const span = this.tracer.startSpanSync(rootSpan, 'arango-collection.js:genQuery');
         const params = new QParams();
         const filterSection = Object.keys(filter).length > 0
             ? `FILTER ${this.docType.ql(params, 'doc', filter)}`
@@ -405,6 +421,11 @@ export class Collection {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
+        span.log({
+            event: 'function return',
+            value: `Query: ${query} \n bindVars: ${params.values}`
+        });
+        span.finish();
         return {
             query,
             bindVars: params.values
