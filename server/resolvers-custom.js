@@ -47,15 +47,23 @@ function info(): Info {
 }
 
 async function getAccountsCount(_parent, _args, context: Context): Promise<number> {
-    const result: any = await context.db.fetchQuery(`RETURN LENGTH(accounts)`, {});
+    const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:getAccountCount",
+        "new getAccountCount query", _args);
+    const result: any = await context.db.fetchQuery(`RETURN LENGTH(accounts)`, {}, span);
     const counts = (result: number[]);
-    return counts.length > 0 ? counts[0] : 0;
+    const r = counts.length > 0 ? counts[0] : 0;
+    await span.finish();
+    return r;
 }
 
 async function getTransactionsCount(_parent, _args, context: Context): Promise<number> {
-    const result: any = await context.db.fetchQuery(`RETURN LENGTH(transactions)`, {});
+    const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:getTransactionsCount",
+        "new getTransactionsCount query", _args);
+    const result: any = await context.db.fetchQuery(`RETURN LENGTH(transactions)`, {}, span);
     const counts = (result: number[]);
-    return counts.length > 0 ? counts[0] : 0;
+    const r = counts.length > 0 ? counts[0] : 0;
+    await span.finish();
+    return r;
 }
 
 async function getAccountsTotalBalance(_parent, _args, context: Context): Promise<String> {
@@ -65,7 +73,8 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
     ls = SUM of lower 24 bits
     And the total result is (hs << 24) + ls
      */
-
+    const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:getAccountTotalBalance",
+        "new getAccountTotalBalance query", _args);
     const result: any = await context.db.fetchQuery(`
         LET d = 16777216
         FOR a in accounts
@@ -74,10 +83,12 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
             hs = SUM(FLOOR(b / d)),
             ls = SUM(b % (d - 1))
         RETURN { hs, ls }
-    `, {});
+    `, {}, span);
     const parts = (result: { hs: number, ls: number }[])[0];
     //$FlowFixMe
-    return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
+    const r = (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
+    await span.finish();
+    return r;
 }
 
 // Mutation

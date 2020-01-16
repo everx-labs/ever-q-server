@@ -63,7 +63,9 @@ function selectionToString(selection: FieldSelection[]): string {
 }
 
 function stat(_parent: any, _args: any, context: Context): Stat {
-    const listenerToStat = (listener: CollectionListener): ListenerStat => {
+    const span = context.db.tracer.startSpanLogSync(context.tracer_ctx, "resolvers-mam.js:stat",
+        "new stat query", _args);
+    const listenerToStat = (listener: CollectionListener ): ListenerStat => {
         return {
             filter: JSON.stringify(listener.filter),
             selection: selectionToString(listener.selection),
@@ -76,7 +78,7 @@ function stat(_parent: any, _args: any, context: Context): Stat {
         return listener instanceof SubscriptionListener;
     };
     const db: Arango = context.db;
-    return {
+    let res = {
         collections: db.collections.map((collection: Collection) => {
             const listeners = [...collection.listeners.values()];
             const waitFor = listeners.filter(x => !isSubscription(x));
@@ -90,14 +92,22 @@ function stat(_parent: any, _args: any, context: Context): Stat {
                 waitFor: waitFor.map(listenerToStat),
             }
         })
-    }
+    };
+    span.finish();
+    return res;
 }
 
 function getChangeLog(_parent: any, args: { id: string }, context: Context): number[] {
-    return context.db.changeLog.get(args.id);
+    const span = context.db.tracer.startSpanLogSync(context.tracer_ctx, "resolvers-mam.js:getChangeLog",
+        'new getChangeLog query', args);
+    const res = context.db.changeLog.get(args.id);
+    span.finish();
+    return res;
 }
 
 async function getCollections(_parent: any, _args: any, context: Context): Promise<CollectionSummary[]> {
+    const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-mam.js:getCollections",
+        'new getCollections query', _args);
     const db: Arango = context.db;
     const collections: CollectionSummary[] = [];
     for (const collection of db.collections) {
@@ -112,12 +122,15 @@ async function getCollections(_parent: any, _args: any, context: Context): Promi
             indexes,
         });
     }
+    await span.finish();
     return collections;
 }
 
 // Mutation
 
 function setChangeLog(_parent: any, args: { op: string }, context: Context): number {
+    const span = context.db.tracer.startSpanLogSync(context.tracer_ctx, "resolvers-mam.js:setChangeLog",
+        "new setChangeLog mutation", args);
     if (args.op === 'CLEAR') {
         context.db.changeLog.clear();
     } else if (args.op === 'ON') {
@@ -125,6 +138,7 @@ function setChangeLog(_parent: any, args: { op: string }, context: Context): num
     } else if (args.op === 'OFF') {
         context.db.changeLog.enabled = false;
     }
+    span.finish();
     return 1;
 }
 

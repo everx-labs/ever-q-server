@@ -72,7 +72,7 @@ export default class TONQServer {
             resolvers: resolversMam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
-            extraContext: () => ({}),
+            extraContext: (req) => this.tracer.getContext(req),
         });
         this.addEndPoint({
             path: '/graphql',
