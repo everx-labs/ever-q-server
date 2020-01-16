@@ -2,6 +2,8 @@
 
 import * as express from "express";
 import type { QConfig } from "./config";
+import {ExecutionParams} from "subscriptions-transport-ws";
+import {FORMAT_BINARY} from "opentracing";
 
 const initJaegerTracer = require('jaeger-client').initTracerFromEnv;
 const { Tags, FORMAT_TEXT_MAP } = require('opentracing');
@@ -62,10 +64,18 @@ export class Tracer {
         });
     }
 
-    getContext(req: express.Request): any {
-        return this.jaeger
-            ? {
-                tracer: this.jaeger.extract(FORMAT_TEXT_MAP, req.headers),
+    getContext(req: any): any {
+        let ctx_src, ctx_frm;
+        if(req.headers){
+            ctx_src = req.headers;
+            ctx_frm = FORMAT_TEXT_MAP;
+        } else {
+            ctx_src = req.context;
+            ctx_frm = FORMAT_BINARY;
+        }
+        return this.jaeger ?
+            {
+                tracer_ctx: this.jaeger.extract(ctx_frm, ctx_src),
             }
             : {}
     }
