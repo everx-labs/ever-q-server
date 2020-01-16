@@ -53,7 +53,7 @@ async function getAccountsCount(_parent, _args, context: Context): Promise<numbe
     const counts = (result: number[]);
     const r = counts.length > 0 ? counts[0] : 0;
     await span.finish();
-    return r;
+    return r
 }
 
 async function getTransactionsCount(_parent, _args, context: Context): Promise<number> {
@@ -93,7 +93,8 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
 
 // Mutation
 
-async function postRequestsUsingRest(requests: Request[], context: Context): Promise<void> {
+async function postRequestsUsingRest(requests: Request[], context: Context, rootSpan: any): Promise<void> {
+    const span = await context.db.tracer.startSpan(rootSpan, "resolvers-custom.js:postRequestsUsingRest");
     const config = context.config.requests;
     const url = `${ensureProtocol(config.server, 'http')}/topics/${config.topic}`;
     const response = await fetch(url, {
@@ -115,11 +116,18 @@ async function postRequestsUsingRest(requests: Request[], context: Context): Pro
     });
     if (response.status !== 200) {
         const message = `Post requests failed: ${await response.text()}`;
+        await span.log({
+            event: 'post request to rest failed ',
+            value: message
+        });
+        await span.finish();
         throw new Error(message);
     }
+    await span.finish();
 }
 
-async function postRequestsUsingKafka(requests: Request[], context: Context): Promise<void> {
+async function postRequestsUsingKafka(requests: Request[], context: Context, rootSpan: any): Promise<void> {
+    const span = await context.db.tracer.startSpan(rootSpan, "resolvers-custom.js:postRequestUsingKafka");
     const ensureShared = async (name, createValue: () => Promise<any>) => {
         if (context.shared.has(name)) {
             return context.shared.get(name);
@@ -141,6 +149,10 @@ async function postRequestsUsingKafka(requests: Request[], context: Context): Pr
 
     });
     console.log('[postRequests]', requests);
+    await span.log({
+        event: 'post requests to kafka',
+        value: requests
+    });
     const messages = requests.map((request) => ({
         key: Buffer.from(request.id, 'base64'),
         value: Buffer.from(request.body, 'base64'),
@@ -149,23 +161,37 @@ async function postRequestsUsingKafka(requests: Request[], context: Context): Pr
         topic: config.topic,
         messages,
     });
+    await span.log({
+        event: 'messages sended to kafka',
+        value: messages
+    });
+    await span.finish();
 }
 
 async function postRequests(_, args: { requests: Request[] }, context: Context): Promise<string[]> {
+    const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:postRequests",
+        "new post request", args);
     const requests: ?(Request[]) = args.requests;
     if (!requests) {
+        await span.finish();
         return [];
     }
     try {
         if (context.config.requests.mode === 'rest') {
-            await postRequestsUsingRest(requests, context);
+            await postRequestsUsingRest(requests, context, span);
         } else {
-            await postRequestsUsingKafka(requests, context);
+            await postRequestsUsingKafka(requests, context, span);
         }
     } catch (error) {
         console.log('[Q Server] post request failed]', error);
+        await span.log({
+            event: 'post request failed',
+            value: error
+        });
+        await span.finish();
         throw error;
     }
+    await span.finish();
     return requests.map(x => x.id);
 }
 
