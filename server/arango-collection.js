@@ -351,7 +351,7 @@ export class Collection {
             const selection = parseSelectionSet(info.operation.selectionSet, this.name);
             const orderBy: OrderBy[] = args.orderBy || [];
             const limit: number = args.limit || 50;
-            const timeout = (Number(args.timeout) || 0) * 1000;
+            const timeout = Number(args.timeout) || 0;
             const q = this.genQuery(filter, orderBy, limit);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED');
