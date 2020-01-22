@@ -63,8 +63,6 @@ function selectionToString(selection: FieldSelection[]): string {
 }
 
 function stat(_parent: any, _args: any, context: Context): Stat {
-    const span = context.db.tracer.startSpanLogSync(context.tracer_ctx, "resolvers-mam.js:stat",
-        "new stat query", _args);
     const listenerToStat = (listener: CollectionListener ): ListenerStat => {
         return {
             filter: JSON.stringify(listener.filter),
@@ -78,7 +76,7 @@ function stat(_parent: any, _args: any, context: Context): Stat {
         return listener instanceof SubscriptionListener;
     };
     const db: Arango = context.db;
-    let res = {
+    return {
         collections: db.collections.map((collection: Collection) => {
             const listeners = [...collection.listeners.values()];
             const waitFor = listeners.filter(x => !isSubscription(x));
@@ -93,16 +91,10 @@ function stat(_parent: any, _args: any, context: Context): Stat {
             }
         })
     };
-    span.finish();
-    return res;
 }
 
 function getChangeLog(_parent: any, args: { id: string }, context: Context): number[] {
-    const span = context.db.tracer.startSpanLogSync(context.tracer_ctx, "resolvers-mam.js:getChangeLog",
-        'new getChangeLog query', args);
-    const res = context.db.changeLog.get(args.id);
-    span.finish();
-    return res;
+    return context.db.changeLog.get(args.id);
 }
 
 async function getCollections(_parent: any, _args: any, context: Context): Promise<CollectionSummary[]> {
@@ -129,8 +121,6 @@ async function getCollections(_parent: any, _args: any, context: Context): Promi
 // Mutation
 
 function setChangeLog(_parent: any, args: { op: string }, context: Context): number {
-    const span = context.db.tracer.startSpanLogSync(context.tracer_ctx, "resolvers-mam.js:setChangeLog",
-        "new setChangeLog mutation", args);
     if (args.op === 'CLEAR') {
         context.db.changeLog.clear();
     } else if (args.op === 'ON') {
@@ -138,7 +128,6 @@ function setChangeLog(_parent: any, args: { op: string }, context: Context): num
     } else if (args.op === 'OFF') {
         context.db.changeLog.enabled = false;
     }
-    span.finish();
     return 1;
 }
 

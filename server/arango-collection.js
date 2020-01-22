@@ -340,9 +340,11 @@ export class Collection {
     async query(q: Query, rootSpan: any): Promise<any> {
         const span = await this.tracer.startSpan(rootSpan, 'arango-collections.js:query');
         const cursor = await this.db.query(q);
-        const result = await cursor.all();
-        await span.finish();
-        return result;
+        try {
+            return await cursor.all();
+        } finally {
+            await span.finish();
+        }
     }
 
 

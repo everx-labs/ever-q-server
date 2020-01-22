@@ -49,21 +49,25 @@ function info(): Info {
 async function getAccountsCount(_parent, _args, context: Context): Promise<number> {
     const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:getAccountCount",
         "new getAccountCount query", _args);
-    const result: any = await context.db.fetchQuery(`RETURN LENGTH(accounts)`, {}, span);
-    const counts = (result: number[]);
-    const r = counts.length > 0 ? counts[0] : 0;
-    await span.finish();
-    return r
+    try {
+        const result: any = await context.db.fetchQuery(`RETURN LENGTH(accounts)`, {}, span);
+        const counts = (result: number[]);
+        return counts.length > 0 ? counts[0] : 0;
+    } finally {
+        await span.finish();
+    }
 }
 
 async function getTransactionsCount(_parent, _args, context: Context): Promise<number> {
     const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:getTransactionsCount",
         "new getTransactionsCount query", _args);
-    const result: any = await context.db.fetchQuery(`RETURN LENGTH(transactions)`, {}, span);
-    const counts = (result: number[]);
-    const r = counts.length > 0 ? counts[0] : 0;
-    await span.finish();
-    return r;
+    try {
+        const result: any = await context.db.fetchQuery(`RETURN LENGTH(transactions)`, {}, span);
+        const counts = (result: number[]);
+        return counts.length > 0 ? counts[0] : 0;
+    } finally {
+        await span.finish();
+    }
 }
 
 async function getAccountsTotalBalance(_parent, _args, context: Context): Promise<String> {
@@ -75,7 +79,8 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
      */
     const span = await context.db.tracer.startSpanLog(context.tracer_ctx, "resolvers-custom.js:getAccountTotalBalance",
         "new getAccountTotalBalance query", _args);
-    const result: any = await context.db.fetchQuery(`
+    try {
+        const result: any = await context.db.fetchQuery(`
         LET d = 16777216
         FOR a in accounts
         LET b = TO_NUMBER(CONCAT("0x", SUBSTRING(a.balance, 2)))
@@ -84,11 +89,12 @@ async function getAccountsTotalBalance(_parent, _args, context: Context): Promis
             ls = SUM(b % (d - 1))
         RETURN { hs, ls }
     `, {}, span);
-    const parts = (result: { hs: number, ls: number }[])[0];
-    //$FlowFixMe
-    const r = (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
-    await span.finish();
-    return r;
+        const parts = (result: { hs: number, ls: number }[])[0];
+        //$FlowFixMe
+        return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
+    } finally {
+        await span.finish();
+    }
 }
 
 // Mutation
