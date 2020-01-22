@@ -88,8 +88,7 @@ export type FieldSelection = {
     selection: FieldSelection[],
 }
 
-function parseSelectionSet(selectionSet: any, returnFieldSelection: string, tracer: any, rootSpan: any): FieldSelection[] {
-    const span = tracer.startSpanSync(rootSpan, 'arango-collection.js:parseSelectionSet');
+function parseSelectionSet(selectionSet: any, returnFieldSelection: string): FieldSelection[] {
     const fields: FieldSelection[] = [];
     const selections = selectionSet && selectionSet.selections;
     if (selections) {
@@ -98,19 +97,15 @@ function parseSelectionSet(selectionSet: any, returnFieldSelection: string, trac
             if (name) {
                 const field: FieldSelection = {
                     name,
-                    selection: parseSelectionSet(item.selectionSet, '', tracer, span),
+                    selection: parseSelectionSet(item.selectionSet, ''),
                 };
                 if (returnFieldSelection !== '' && field.name === returnFieldSelection) {
-                    span.log({event: 'function return', value: field.selection});
-                    span.finish();
                     return field.selection;
                 }
                 fields.push(field);
             }
         }
     }
-    span.log({event: 'function return', value: fields});
-    span.finish();
     return fields;
 }
 
@@ -309,7 +304,7 @@ export class Collection {
                 const result = new SubscriptionListener(
                     this,
                     args.filter || {},
-                    parseSelectionSet(info.operation.selectionSet, this.name, this.tracer, span),
+                    parseSelectionSet(info.operation.selectionSet, this.name),
                 );
                 span.finish();
                 return result;
@@ -326,12 +321,12 @@ export class Collection {
             const orderBy: OrderBy[] = args.orderBy || [];
             const limit: number = args.limit || 50;
             const timeout = (Number(args.timeout) || 0) * 1000;
-            const q = this.genQuery(filter, orderBy, limit, span);
+            const q = this.genQuery(filter, orderBy, limit);
 
             try {
                 const start = Date.now();
                 const result = timeout > 0
-                    ? await this.queryWaitFor(q, filter, parseSelectionSet(info.operation.selectionSet, this.name, this.tracer, span),
+                    ? await this.queryWaitFor(q, filter, parseSelectionSet(info.operation.selectionSet, this.name),
                         timeout, span)
                     : await this.query(q, span);
                 this.log.debug('QUERY', args, (Date.now() - start) / 1000);
@@ -396,8 +391,7 @@ export class Collection {
     }
 
 
-    genQuery(filter: any, orderBy: OrderBy[], limit: number, rootSpan: any): Query {
-        const span = this.tracer.startSpanSync(rootSpan, 'arango-collection.js:genQuery');
+    genQuery(filter: any, orderBy: OrderBy[], limit: number): Query {
         const params = new QParams();
         const filterSection = Object.keys(filter).length > 0
             ? `FILTER ${this.docType.ql(params, 'doc', filter)}`
@@ -421,11 +415,6 @@ export class Collection {
             ${sortSection}
             ${limitSection}
             RETURN doc`;
-        span.log({
-            event: 'function return',
-            value: `Query: ${query} \n bindVars: ${params.values}`
-        });
-        span.finish();
         return {
             query,
             bindVars: params.values
