@@ -113,8 +113,17 @@ function selectFields(doc: any, selection: FieldSelection[]): any {
     const selected: any = {};
     if (doc._key) {
         selected._key = doc._key;
+        selected.id = doc._key;
     }
     for (const item of selection) {
+        const onField = {
+            in_message: 'in_msg',
+            out_messages: 'out_msg',
+            signatures: 'id',
+        }[item.name];
+        if (onField !== undefined && doc[onField] !== undefined) {
+            selected[onField] = doc[onField];
+        }
         const value = doc[item.name];
         if (value !== undefined) {
             selected[item.name] = item.selection.length > 0 ? selectFields(value, item.selection) : value;
