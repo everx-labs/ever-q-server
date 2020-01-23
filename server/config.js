@@ -21,6 +21,13 @@ export const QRequestsMode = {
     rest: 'rest,'
 };
 
+export type QDbConfig = {
+    server: string,
+    name: string,
+    auth: string,
+    maxSockets: number,
+};
+
 export type QConfig = {
     server: {
         host: string,
@@ -31,12 +38,8 @@ export type QConfig = {
         server: string,
         topic: string,
     },
-    database: {
-        server: string,
-        name: string,
-        auth: string,
-        version: string,
-    },
+    database: QDbConfig,
+    slowDatabase: QDbConfig,
     listener: {
         restartTimeout: number
     },

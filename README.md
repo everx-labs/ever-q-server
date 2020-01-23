@@ -18,18 +18,26 @@ npm install
  
 You can configure Q Server with command line parameters and/or ENV variables:
   
-    Option                        ENV                 Default        Description
-    ----------------------------  ------------------  -------------  -----------------------------------
-    -h, --host <host>             Q_SERVER_HOST       getIp()        Listening address
-    -p, --port <port>             Q_SERVER_PORT       4000           Listening port
-    -m, --requests-mode <mode>    Q_REQUESTS_MODE     kafka          Requests mode (kafka | rest)
-    -r, --requests-server <url>   Q_REQUESTS_SERVER   kafka:9092     Requests server url
-    -t, --requests-topic <name>   Q_REQUESTS_TOPIC    requests       Requests topic name
-    -d, --db-server <address>     Q_DATABASE_SERVER   arangodb:8529  Database server:port
-    -n, --db-name <name>          Q_DATABASE_NAME     blockchain     Database name
-    -a, --db-auth <name>          Q_DATABASE_AUTH                    Database auth in form user:password
-    -n, --db-version <version>    Q_DATABASE_VERSION  2              Database schema version
-    -j, --jaeger-endpoint <host>  JAEGER_ENDPOINT                    Jaeger collector host
+    Option                              ENV                          Default        Description
+    ----------------------------------  ---------------------------  -------------  -----------------------------------
+    -h, --host <host>                   Q_SERVER_HOST                getIp()        Listening address
+    -p, --port <port>                   Q_SERVER_PORT                4000           Listening port
+
+    -m, --requests-mode <mode>          Q_REQUESTS_MODE              kafka          Requests mode (kafka | rest)
+    -r, --requests-server <url>         Q_REQUESTS_SERVER            kafka:9092     Requests server url
+    -t, --requests-topic <name>         Q_REQUESTS_TOPIC             requests       Requests topic name
+
+    -d, --db-server <address>           Q_DATABASE_SERVER            arangodb:8529  Database server:port
+    -n, --db-name <name>                Q_DATABASE_NAME              blockchain     Database name
+    -a, --db-auth <name>                Q_DATABASE_AUTH                             Database auth in form user:password
+        --db-max-sockets <number>       Q_DATABASE_MAX_SOCKETS       100            Database auth in form user:password
+
+        --slow-db-server <address>      Q_SLOW_DATABASE_SERVER       arangodb:8529  Slow database server:port
+        --slow-db-name <name>           Q_SLOW_DATABASE_NAME         blockchain     Slow database name
+        --slow-db-auth <name>           Q_SLOW_DATABASE_AUTH                        Slow database auth in form user:password
+        --slow-db-max-sockets <number>  Q_SLOW_DATABASE_MAX_SOCKETS  3              Slow database auth in form user:password
+
+    -j, --jaeger-endpoint <host>        JAEGER_ENDPOINT                             Jaeger collector host
 
 # Run
 

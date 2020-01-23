@@ -1,20 +1,20 @@
 // @flow
 
-import * as express from "express";
 import type { QConfig } from "./config";
+import { FORMAT_BINARY } from "opentracing";
 
 const initJaegerTracer = require('jaeger-client').initTracerFromEnv;
 const { Tags, FORMAT_TEXT_MAP } = require('opentracing');
 
 
 export interface TracerSpan {
+    log(options: { event: string, value: any }): Promise<void>,
+
     finish(): Promise<void>
 }
 
 interface JaegerSpan extends TracerSpan {
     setTag(name: string, value: any): Promise<void>,
-
-    log(options: { event: string, value: any }): Promise<void>,
 }
 
 interface JaegerTracer {
@@ -26,6 +26,9 @@ interface JaegerTracer {
 }
 
 const missingSpan: TracerSpan = {
+    log(_options: { event: string, value: any }): Promise<void> {
+        return Promise.resolve();
+    },
     finish(): Promise<void> {
         return Promise.resolve();
     }
@@ -62,12 +65,32 @@ export class Tracer {
         });
     }
 
-    getContext(req: express.Request): any {
-        return this.jaeger
-            ? {
-                tracer: this.jaeger.extract(FORMAT_TEXT_MAP, req.headers),
+    getContext(req: any): any {
+        let ctx_src, ctx_frm;
+        if (req.headers) {
+            ctx_src = req.headers;
+            ctx_frm = FORMAT_TEXT_MAP;
+        } else {
+            ctx_src = req.context;
+            ctx_frm = FORMAT_BINARY;
+        }
+        return this.jaeger ?
+            {
+                tracer_ctx: this.jaeger.extract(ctx_frm, ctx_src),
             }
             : {}
+    }
+
+    async startSpan(context: any, name: string): Promise<TracerSpan> {
+        const jaeger = this.jaeger;
+        if (!jaeger) {
+            return missingSpan;
+        }
+        const span: JaegerSpan = await jaeger.startSpan(name, {
+            childOf: context.tracer_ctx,
+        });
+        await span.setTag(Tags.SPAN_KIND, 'server');
+        return span;
     }
 
     async startSpanLog(context: any, name: string, event: string, value: any): Promise<TracerSpan> {
@@ -76,7 +99,7 @@ export class Tracer {
             return missingSpan;
         }
         const span: JaegerSpan = await jaeger.startSpan(name, {
-            childOf: context.tracer,
+            childOf: context.tracer_ctx,
         });
         await span.setTag(Tags.SPAN_KIND, 'server');
         await span.log({
@@ -85,4 +108,5 @@ export class Tracer {
         });
         return span;
     }
+
 }

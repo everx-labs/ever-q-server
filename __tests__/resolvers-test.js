@@ -39,16 +39,19 @@ test("BigUInt", () => {
 });
 
 test("Filter test", () => {
-    const filter = {
-        "id": { "eq": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2" },
-        "acc_type": { eq: 3 },
-    };
-    const doc = {
+    expect(Account.test(null, {
         "id": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
         "_key": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
         "acc_type": 3,
-    };
-    expect(Account.test(null, doc, filter)).toBeTruthy();
+    }, {
+        "id": { "eq": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2" },
+        "acc_type": { eq: 3 },
+    })).toBeTruthy();
+
+    expect(Transaction.test(null, { in_msg: null, }, { in_msg: { ne: null }, })).toBeFalsy();
+    expect(Transaction.test(null, { in_msg: null, }, { in_msg: { eq: null }, })).toBeTruthy();
+    expect(Transaction.test(null, {}, { in_msg: { ne: null }, })).toBeFalsy();
+    expect(Transaction.test(null, {}, { in_msg: { eq: null }, })).toBeTruthy();
 });
 
 test("Generate AQL", () => {
@@ -85,7 +88,10 @@ test("Generate AQL", () => {
 });
 
 test("Enum Names", () => {
-    const db = new Arango({ database: { server: 'http://0.0.0.0', name: 'blockchain' } }, new QLogs());
+    const db = new Arango({
+        database: { server: 'http://0.0.0.0', name: 'blockchain' },
+        slowDatabase: { server: 'http://0.0.0.0', name: 'blockchain' }
+    }, new QLogs());
     const params = new QParams();
     const resolvers = createResolvers(db);
     const m1 = {

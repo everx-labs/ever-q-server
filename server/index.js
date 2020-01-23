@@ -35,11 +35,14 @@ type ProgramOptions = {
     requestsMode: 'kafka' | 'rest',
     requestsServer: string,
     requestsTopic: string,
-    dbName: string,
     dbServer: string,
     dbName: string,
     dbAuth: string,
-    dbVersion: string,
+    dbMaxSockets: string,
+    slowDbServer: string,
+    slowDbName: string,
+    slowDbAuth: string,
+    slowDbMaxSockets: string,
     host: string,
     port: string,
     jaegerEndpoint: string,
@@ -64,8 +67,18 @@ program
         process.env.Q_DATABASE_NAME || 'blockchain')
     .option('-a, --db-auth <name>', 'database auth in form "user:password',
         process.env.Q_DATABASE_AUTH || '')
-    .option('-n, --db-version <version>', 'database schema version',
-        process.env.Q_DATABASE_VERSION || '2')
+    .option('--db-max-sockets <number>', 'database max sockets',
+        process.env.Q_DATABASE_MAX_SOCKETS || '100')
+
+    .option('--slow-db-server <address>', 'slow queries database server:port',
+        process.env.Q_SLOW_DATABASE_SERVER || '')
+    .option('--slow-db-name <name>', 'slow database name',
+        process.env.Q_SLOW_DATABASE_NAME || '')
+    .option('--slow-db-auth <name>', 'slow database auth in form "user:password',
+        process.env.Q_SLOW_DATABASE_AUTH || '')
+    .option('--slow-db-max-sockets <number>', 'slow database max sockets',
+        process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3')
+
     .option('-j, --jaeger-endpoint <host>', 'jaeger collector host',
         process.env.JAEGER_ENDPOINT || '')
     .parse(process.argv);
@@ -86,7 +99,13 @@ const config: QConfig = {
         server: options.dbServer,
         name: options.dbName,
         auth: options.dbAuth,
-        version: options.dbVersion,
+        maxSockets: Number(options.dbMaxSockets),
+    },
+    slowDatabase: {
+        server: options.slowDbServer || options.dbServer,
+        name: options.slowDbName || options.dbName,
+        auth: options.slowDbAuth || options.dbAuth,
+        maxSockets: Number(options.slowDbMaxSockets),
     },
     listener: {
         restartTimeout: 1000

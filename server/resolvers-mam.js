@@ -63,7 +63,7 @@ function selectionToString(selection: FieldSelection[]): string {
 }
 
 function stat(_parent: any, _args: any, context: Context): Stat {
-    const listenerToStat = (listener: CollectionListener): ListenerStat => {
+    const listenerToStat = (listener: CollectionListener ): ListenerStat => {
         return {
             filter: JSON.stringify(listener.filter),
             selection: selectionToString(listener.selection),
@@ -90,7 +90,7 @@ function stat(_parent: any, _args: any, context: Context): Stat {
                 waitFor: waitFor.map(listenerToStat),
             }
         })
-    }
+    };
 }
 
 function getChangeLog(_parent: any, args: { id: string }, context: Context): number[] {
@@ -98,6 +98,8 @@ function getChangeLog(_parent: any, args: { id: string }, context: Context): num
 }
 
 async function getCollections(_parent: any, _args: any, context: Context): Promise<CollectionSummary[]> {
+    const span = await context.db.tracer.startSpanLog(context, "resolvers-mam.js:getCollections",
+        'new getCollections query', _args);
     const db: Arango = context.db;
     const collections: CollectionSummary[] = [];
     for (const collection of db.collections) {
@@ -112,6 +114,7 @@ async function getCollections(_parent: any, _args: any, context: Context): Promi
             indexes,
         });
     }
+    await span.finish();
     return collections;
 }
 

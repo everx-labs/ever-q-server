@@ -154,6 +154,10 @@ function qlIn(params: QParams, path: string, filter: any): string {
 
 // Scalars
 
+function undefinedToNull(v: any): any {
+    return v !== undefined ? v : null;
+}
+
 const scalarEq: QType = {
     ql(params: QParams, path, filter) {
         return qlOp(params, path, '==', filter);
@@ -246,7 +250,7 @@ function createScalar(): QType {
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
-                return op.test(parent, value, filterValue);
+                return op.test(parent, undefinedToNull(value), filterValue);
             });
         },
     };
