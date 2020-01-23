@@ -316,11 +316,18 @@ export class Collection {
     subscriptionResolver() {
         return {
             subscribe: (_: any, args: { filter: any }, _context: any, info: any) => {
-                return new SubscriptionListener(
+                //TODO: const span = this.tracer.startSpanLog(
+                //     _context,
+                //     'arango-collection.js:subscriptionResolver',
+                //     'new subscription',
+                //     args);
+                const result = new SubscriptionListener(
                     this,
                     args.filter || {},
                     parseSelectionSet(info.operation.selectionSet, this.name),
                 );
+                //TODO: span.finish();
+                return result;
             },
         }
     }
@@ -347,6 +354,11 @@ export class Collection {
 
     queryResolver() {
         return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
+            const span = await this.tracer.startSpanLog(
+                context,
+                'arango-collection.js:queryResolver',
+                'new query',
+                args);
             const filter = args.filter || {};
             const selection = parseSelectionSet(info.operation.selectionSet, this.name);
             const orderBy: OrderBy[] = args.orderBy || [];
@@ -358,12 +370,11 @@ export class Collection {
                 return [];
             }
             const stat = await this.ensureQueryStat(q);
-            const span = await this.tracer.startSpanLog(context, 'arango.js:fetchDocs', 'new query', args);
             try {
                 const start = Date.now();
                 const result = timeout > 0
-                    ? await this.queryWaitFor(q, stat, filter, selection, timeout)
-                    : await this.query(q, stat);
+                    ? await this.queryWaitFor(q, stat, filter, selection, timeout, span)
+                    : await this.query(q, stat, span);
                 this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST');
                 return result;
             } finally {
@@ -372,26 +383,32 @@ export class Collection {
         });
     }
 
-    async query(q: Query, stat: QueryStat): Promise<any> {
-        const db = stat.slow ? this.slowDb : this.db;
-        const start = Date.now();
-        const cursor = await db.query(q);
-        const result = await cursor.all();
-        stat.times.push(Date.now() - start);
-        if (stat.times.length > 1000) {
-            stat.times.shift();
+    async query(q: Query, stat: QueryStat, rootSpan: any): Promise<any> {
+        const span = await this.tracer.startSpan(rootSpan, 'arango-collections.js:query');
+        try {
+            const db = stat.slow ? this.slowDb : this.db;
+            const start = Date.now();
+            const cursor = await db.query(q);
+            const result = await cursor.all();
+            stat.times.push(Date.now() - start);
+            if (stat.times.length > 1000) {
+                stat.times.shift();
+            }
+            return result;
+        } finally {
+            await span.finish();
         }
-        return result;
     }
 
 
-    async queryWaitFor(q: Query, stat: QueryStat, filter: any, selection: FieldSelection[], timeout: number): Promise<any> {
+    async queryWaitFor(q: Query, stat: QueryStat, filter: any, selection: FieldSelection[], timeout: number, rootSpan: any): Promise<any> {
+        const span = await this.tracer.startSpan(rootSpan, 'arango-collection.js:queryWaitFor');
         let waitFor: ?WaitForListener = null;
         let forceTimerId: ?TimeoutID = null;
         try {
             const onQuery = new Promise((resolve, reject) => {
                 const check = () => {
-                    this.query(q, stat).then((docs) => {
+                    this.query(q, stat, span).then((docs) => {
                         if (docs.length > 0) {
                             forceTimerId = null;
                             resolve(docs);
@@ -423,7 +440,7 @@ export class Collection {
                 clearTimeout(forceTimerId);
                 forceTimerId = null;
             }
-
+            await span.finish();
         }
     }
 

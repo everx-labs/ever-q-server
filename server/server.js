@@ -72,7 +72,7 @@ export default class TONQServer {
             resolvers: resolversMam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
-            extraContext: () => ({}),
+            extraContext: (req) => this.tracer.getContext(req),
         });
         this.addEndPoint({
             path: '/graphql',
@@ -102,12 +102,12 @@ export default class TONQServer {
         const apollo = new ApolloServer({
             typeDefs,
             resolvers: endPoint.resolvers,
-            context: ({ req }) => {
+            context: ({ req, connection }) => {
                 return {
                     db: this.db,
                     config: this.config,
                     shared: this.shared,
-                    ...endPoint.extraContext(req),
+                    ...endPoint.extraContext(connection ? connection : req),
                 };
             },
         });
