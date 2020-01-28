@@ -325,17 +325,11 @@ export class Collection {
     subscriptionResolver() {
         return {
             subscribe: (_: any, args: { filter: any }, _context: any, info: any) => {
-                //TODO: const span = this.tracer.startSpanLog(
-                //     _context,
-                //     'arango-collection.js:subscriptionResolver',
-                //     'new subscription',
-                //     args);
                 const result = new SubscriptionListener(
                     this,
                     args.filter || {},
-                    parseSelectionSet(info.operation.selectionSet, this.name),
+                    parseSelectionSet(info.operation.selectionSet, this.name)
                 );
-                //TODO: span.finish();
                 return result;
             },
         }
@@ -393,7 +387,7 @@ export class Collection {
     }
 
     async query(q: Query, stat: QueryStat, rootSpan: any): Promise<any> {
-        const span = await this.tracer.startSpan(rootSpan, 'arango-collections.js:query');
+        const span = await this.tracer.startSpan(await rootSpan.context(), 'arango-collections.js:query');
         try {
             const db = stat.slow ? this.slowDb : this.db;
             const start = Date.now();
@@ -411,7 +405,7 @@ export class Collection {
 
 
     async queryWaitFor(q: Query, stat: QueryStat, filter: any, selection: FieldSelection[], timeout: number, rootSpan: any): Promise<any> {
-        const span = await this.tracer.startSpan(rootSpan, 'arango-collection.js:queryWaitFor');
+        const span = await this.tracer.startSpan(await rootSpan.context(), 'arango-collection.js:queryWaitFor');
         let waitFor: ?WaitForListener = null;
         let forceTimerId: ?TimeoutID = null;
         try {

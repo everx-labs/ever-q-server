@@ -87,8 +87,9 @@ export class Tracer {
             return missingSpan;
         }
         const span: JaegerSpan = await jaeger.startSpan(name, {
-            childOf: context.tracer_ctx,
+            childOf: context
         });
+
         await span.setTag(Tags.SPAN_KIND, 'server');
         return span;
     }
