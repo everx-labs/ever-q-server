@@ -276,6 +276,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
     workchain_id: `uint32 workchain identifier`,
     shard: ``,
     min_ref_mc_seqno: `Returns last known master block at the time of shard generation.`,
+    prev_key_block_seqno: `Returns a number of a previous key block.`,
     value_flow: {
         to_next_blk: `Amount of grams amount to the next block.`,
         to_next_blk_other: `Amount of non gram cryptocurrencies to the next block.`,
