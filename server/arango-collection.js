@@ -16,22 +16,18 @@
 
 // @flow
 
-import { $$asyncIterator } from 'iterall';
 import { Database, DocumentCollection } from "arangojs";
-import QLogs from "./logs";
+import { $$asyncIterator } from 'iterall';
+import { Span, SpanContext, Tracer } from "opentracing";
 import type { QLog } from "./logs";
+import QLogs from "./logs";
 import type { QType } from "./q-types";
 import { QParams } from "./q-types";
-import { Tracer } from "./tracer";
+import { QTracer } from "./tracer";
 
 type OrderBy = {
     path: string,
     direction: string,
-}
-
-type Query = {
-    query: string,
-    bindVars: { [string]: any },
 }
 
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
@@ -109,6 +105,15 @@ function parseSelectionSet(selectionSet: any, returnFieldSelection: string): Fie
     return fields;
 }
 
+export function selectionToString(selection: FieldSelection[]): string {
+    return selection
+        .filter(x => x.name !== '__typename')
+        .map((field: FieldSelection) => {
+            const fieldSelection = selectionToString(field.selection);
+            return `${field.name}${fieldSelection !== '' ? ` { ${fieldSelection} }` : ''}`;
+        }).join(' ');
+}
+
 function selectFields(doc: any, selection: FieldSelection[]): any {
     const selected: any = {};
     if (doc._key) {
@@ -130,6 +135,16 @@ function selectFields(doc: any, selection: FieldSelection[]): any {
         }
     }
     return selected;
+}
+
+type DatabaseQuery = {
+    filter: any,
+    selection: FieldSelection[],
+    orderBy: OrderBy[],
+    limit: number,
+    timeout: number,
+    text: string,
+    params: { [string]: any },
 }
 
 export class CollectionListener {
@@ -167,8 +182,8 @@ export class CollectionListener {
 export class WaitForListener extends CollectionListener {
     onInsertOrUpdate: (doc: any) => void;
 
-    constructor(collection: Collection, filter: any, selection: FieldSelection[], onInsertOrUpdate: (doc: any) => void) {
-        super(collection, filter, selection);
+    constructor(collection: Collection, q: DatabaseQuery, onInsertOrUpdate: (doc: any) => void) {
+        super(collection, q.filter, q.selection);
         this.onInsertOrUpdate = onInsertOrUpdate;
     }
 
@@ -274,12 +289,12 @@ export type QueryStat = {
     times: number[],
 }
 
+
 export class Collection {
     name: string;
     docType: QType;
 
     log: QLog;
-    changeLog: ChangeLog;
     tracer: Tracer;
     db: Database;
     slowDb: Database;
@@ -293,7 +308,6 @@ export class Collection {
         name: string,
         docType: QType,
         logs: QLogs,
-        changeLog: ChangeLog,
         tracer: Tracer,
         db: Database,
         slowDb: Database,
@@ -302,7 +316,6 @@ export class Collection {
         this.docType = docType;
 
         this.log = logs.create(name);
-        this.changeLog = changeLog;
         this.tracer = tracer;
         this.db = db;
         this.slowDb = slowDb;
@@ -337,118 +350,16 @@ export class Collection {
 
     // Queries
 
-    async ensureQueryStat(q: Query): Promise<QueryStat> {
-        const existing = this.queryStats.get(q.query);
-        if (existing !== undefined) {
-            return existing;
-        }
-        const plan = (await this.db.explain(q)).plan;
-        const stat = {
-            estimatedCost: plan.estimatedCost,
-            slow: false,
-            times: [],
-        };
-        if (plan.nodes.find(node => node.type === 'EnumerateCollectionNode')) {
-            stat.slow = true;
-        }
-        this.queryStats.set(q.query, stat);
-        return stat;
-    }
-
-    queryResolver() {
-        return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
-            const span = await this.tracer.startSpanLog(
-                context,
-                'arango-collection.js:queryResolver',
-                'new query',
-                args);
-            const filter = args.filter || {};
-            const selection = parseSelectionSet(info.operation.selectionSet, this.name);
-            const orderBy: OrderBy[] = args.orderBy || [];
-            const limit: number = args.limit || 50;
-            const timeout = Number(args.timeout) || 0;
-            const q = this.genQuery(filter, orderBy, limit);
-            if (!q) {
-                this.log.debug('QUERY', args, 0, 'SKIPPED');
-                return [];
-            }
-            const stat = await this.ensureQueryStat(q);
-            try {
-                const start = Date.now();
-                const result = timeout > 0
-                    ? await this.queryWaitFor(q, stat, filter, selection, timeout, span)
-                    : await this.query(q, stat, span);
-                this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST');
-                return result;
-            } finally {
-                await span.finish();
-            }
-        });
-    }
-
-    async query(q: Query, stat: QueryStat, rootSpan: any): Promise<any> {
-        const span = await this.tracer.startSpan(await rootSpan.context(), 'arango-collections.js:query');
-        try {
-            const db = stat.slow ? this.slowDb : this.db;
-            const start = Date.now();
-            const cursor = await db.query(q);
-            const result = await cursor.all();
-            stat.times.push(Date.now() - start);
-            if (stat.times.length > 1000) {
-                stat.times.shift();
-            }
-            return result;
-        } finally {
-            await span.finish();
-        }
-    }
-
-
-    async queryWaitFor(q: Query, stat: QueryStat, filter: any, selection: FieldSelection[], timeout: number, rootSpan: any): Promise<any> {
-        const span = await this.tracer.startSpan(await rootSpan.context(), 'arango-collection.js:queryWaitFor');
-        let waitFor: ?WaitForListener = null;
-        let forceTimerId: ?TimeoutID = null;
-        try {
-            const onQuery = new Promise((resolve, reject) => {
-                const check = () => {
-                    this.query(q, stat, span).then((docs) => {
-                        if (docs.length > 0) {
-                            forceTimerId = null;
-                            resolve(docs);
-                        } else {
-                            forceTimerId = setTimeout(check, 5_000);
-                        }
-                    }, reject);
-                };
-                check();
-            });
-            const onChangesFeed = new Promise((resolve) => {
-                waitFor = new WaitForListener(this, filter, selection, (doc) => {
-                    resolve([doc])
-                });
-            });
-            const onTimeout = new Promise((resolve) => {
-                setTimeout(() => resolve([]), timeout);
-            });
-            return await Promise.race([
-                onQuery,
-                onChangesFeed,
-                onTimeout,
-            ]);
-        } finally {
-            if (waitFor !== null && waitFor !== undefined) {
-                waitFor.close();
-            }
-            if (forceTimerId !== null) {
-                clearTimeout(forceTimerId);
-                forceTimerId = null;
-            }
-            await span.finish();
-        }
-    }
-
-
-    genQuery(filter: any, orderBy: OrderBy[], limit: number): ?Query {
+    createDatabaseQuery(
+        args: {
+            filter?: any,
+            orderBy?: OrderBy[],
+            limit?: number,
+            timeout?: number,
+        },
+        selectionInfo: any,
+    ): ?DatabaseQuery {
+        const filter = args.filter || {};
         const params = new QParams();
         const filterSection = Object.keys(filter).length > 0
             ? `FILTER ${this.docType.ql(params, 'doc', filter)}`
@@ -456,7 +367,11 @@ export class Collection {
         if (filterSection === 'FILTER false') {
             return null;
         }
-        const orderByQl = orderBy
+        const selection = parseSelectionSet(selectionInfo, this.name);
+        const orderBy: OrderBy[] = args.orderBy || [];
+        const limit: number = args.limit || 50;
+        const timeout = Number(args.timeout) || 0;
+        const orderByText = orderBy
             .map((field) => {
                 const direction = (field.direction && field.direction.toLowerCase() === 'desc')
                     ? ' DESC'
@@ -465,21 +380,159 @@ export class Collection {
             })
             .join(', ');
 
-        const sortSection = orderByQl !== '' ? `SORT ${orderByQl}` : '';
-        const limitQl = Math.min(limit, 50);
-        const limitSection = `LIMIT ${limitQl}`;
+        const sortSection = orderByText !== '' ? `SORT ${orderByText}` : '';
+        const limitText = Math.min(limit, 50);
+        const limitSection = `LIMIT ${limitText}`;
 
-        const query = `
+        const text = `
             FOR doc IN ${this.name}
             ${filterSection}
             ${sortSection}
             ${limitSection}
             RETURN doc`;
+
         return {
-            query,
-            bindVars: params.values
+            filter,
+            selection,
+            orderBy,
+            limit,
+            timeout,
+            text,
+            params: params.values
         };
     }
+
+    async ensureQueryStat(q: DatabaseQuery): Promise<QueryStat> {
+        const existing = this.queryStats.get(q.text);
+        if (existing !== undefined) {
+            return existing;
+        }
+        const plan = (await this.db.explain(q.text, q.params)).plan;
+        const stat = {
+            estimatedCost: plan.estimatedCost,
+            slow: false,
+            times: [],
+        };
+        if (plan.nodes.find(node => node.type === 'EnumerateCollectionNode')) {
+            stat.slow = true;
+        }
+        this.queryStats.set(q.text, stat);
+        return stat;
+    }
+
+    queryResolver() {
+        return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
+            const parentSpan = QTracer.getParentSpan(this.tracer, context);
+            const q = this.createDatabaseQuery(args, info.operation.selectionSet);
+            if (!q) {
+                this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
+                return [];
+            }
+            const stat = await this.ensureQueryStat(q);
+            const start = Date.now();
+            const result = q.timeout > 0
+                ? await this.queryWaitFor(q, stat, parentSpan)
+                : await this.query(q, stat, parentSpan);
+            this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST', context.remoteAddress);
+            return result;
+        });
+    }
+
+    static setQueryTraceParams(q: DatabaseQuery, span: Span) {
+        const params: any = {
+            filter: q.filter,
+            selection: selectionToString(q.selection),
+        };
+        if (q.orderBy.length > 0) {
+            params.orderBy = q.orderBy;
+        }
+        if (q.limit !== 50) {
+            params.limit = q.limit;
+        }
+        if (q.timeout > 0) {
+            params.timeout = q.timeout;
+        }
+        span.setTag('params', params);
+    }
+
+    async query(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
+        return QTracer.trace(this.tracer, `${this.name}.query'`, async (span: Span) => {
+            Collection.setQueryTraceParams(q, span);
+            return this.queryDatabase(q, stat);
+        }, parentSpan);
+    }
+
+    async queryDatabase(q: DatabaseQuery, stat: QueryStat): Promise<any> {
+        const db = stat.slow ? this.slowDb : this.db;
+        const start = Date.now();
+        const cursor = await db.query(q.text, q.params);
+        const result = await cursor.all();
+        stat.times.push(Date.now() - start);
+        if (stat.times.length > 100) {
+            stat.times.shift();
+        }
+        return result;
+    }
+
+
+    async queryWaitFor(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
+        return QTracer.trace(this.tracer, `${this.name}.waitFor'`, async (span: Span) => {
+            Collection.setQueryTraceParams(q, span);
+            let waitFor: ?WaitForListener = null;
+            let forceTimerId: ?TimeoutID = null;
+            let resolvedBy: ?string = null;
+            try {
+                const onQuery = new Promise((resolve, reject) => {
+                    const check = () => {
+                        this.queryDatabase(q, stat).then((docs) => {
+                            if (!resolvedBy) {
+                                if (docs.length > 0) {
+                                    forceTimerId = null;
+                                    resolvedBy = 'query';
+                                    resolve(docs);
+                                } else {
+                                    forceTimerId = setTimeout(check, 5_000);
+                                }
+                            }
+                        }, reject);
+                    };
+                    check();
+                });
+                const onChangesFeed = new Promise((resolve) => {
+                    waitFor = new WaitForListener(this, q, (doc) => {
+                        if (!resolvedBy) {
+                            resolvedBy = 'listener';
+                            resolve([doc]);
+                        }
+                    });
+                });
+                const onTimeout = new Promise((resolve) => {
+                    setTimeout(() => {
+                        if (!resolvedBy) {
+                            resolvedBy = 'timeout';
+                            resolve([]);
+                        }
+                    }, q.timeout);
+                });
+                const result = await Promise.race([
+                    onQuery,
+                    onChangesFeed,
+                    onTimeout,
+                ]);
+                span.setTag('resolved', resolvedBy);
+                return result;
+            } finally {
+                if (waitFor !== null && waitFor !== undefined) {
+                    waitFor.close();
+                }
+                if (forceTimerId !== null) {
+                    clearTimeout(forceTimerId);
+                    forceTimerId = null;
+                }
+            }
+        }, parentSpan);
+    }
+
 
     dbCollection(): DocumentCollection {
         return this.db.collection(this.name);
@@ -502,32 +555,3 @@ export class Collection {
     }
 }
 
-export class ChangeLog {
-    enabled: boolean;
-    records: Map<string, number[]>;
-
-    constructor() {
-        this.enabled = false;
-        this.records = new Map();
-    }
-
-    clear() {
-        this.records.clear();
-    }
-
-    log(id: string, time: number) {
-        if (!this.enabled) {
-            return;
-        }
-        const existing = this.records.get(id);
-        if (existing) {
-            existing.push(time);
-        } else {
-            this.records.set(id, [time]);
-        }
-    }
-
-    get(id: string): number[] {
-        return this.records.get(id) || [];
-    }
-}
