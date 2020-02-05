@@ -44,9 +44,7 @@ export type QConfig = {
         restartTimeout: number
     },
     authorization: {
-        server: string,
-        port: number,
-        this_server_id: number,
+        endpoint: string,
     },
     jaeger: {
         endpoint: string

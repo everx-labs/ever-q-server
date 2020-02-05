@@ -19,11 +19,25 @@
 import { Database, DocumentCollection } from "arangojs";
 import { $$asyncIterator } from 'iterall';
 import { Span, SpanContext, Tracer } from "opentracing";
+import type { QConfig } from "./config";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
+import QAuth from "./q-auth";
 import type { QType } from "./q-types";
 import { QParams } from "./q-types";
 import { QTracer } from "./tracer";
+
+export type GraphQLRequestContext = {
+    config: QConfig,
+    auth: QAuth,
+    tracer: Tracer,
+
+    remoteAddress?: string,
+    authToken: string,
+    parentSpan: (Span | SpanContext | typeof undefined),
+
+    shared: Map<string, any>,
+}
 
 type OrderBy = {
     path: string,
@@ -421,8 +435,8 @@ export class Collection {
     }
 
     queryResolver() {
-        return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
-            const parentSpan = QTracer.getParentSpan(this.tracer, context);
+        return async (parent: any, args: any, context: GraphQLRequestContext, info: any) => wrap(this.log, 'QUERY', args, async () => {
+            await context.auth.requireGrantedAccess(context.authToken || args.auth);
             const q = this.createDatabaseQuery(args, info.operation.selectionSet);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
@@ -431,8 +445,8 @@ export class Collection {
             const stat = await this.ensureQueryStat(q);
             const start = Date.now();
             const result = q.timeout > 0
-                ? await this.queryWaitFor(q, stat, parentSpan)
-                : await this.query(q, stat, parentSpan);
+                ? await this.queryWaitFor(q, stat, context.parentSpan)
+                : await this.query(q, stat, context.parentSpan);
             this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST', context.remoteAddress);
             return result;
         });

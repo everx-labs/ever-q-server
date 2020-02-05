@@ -9,11 +9,11 @@ type Info {
 
 extend type Query {
     info: Info
-    getAccountsCount: Float
-    getTransactionsCount: Float
-    getAccountsTotalBalance: String
+    getAccountsCount(auth: String): Float
+    getTransactionsCount(auth: String): Float
+    getAccountsTotalBalance(auth: String): String
 }
 
 type Mutation {
-    postRequests(requests: [Request]): [String]
+    postRequests(requests: [Request], auth: String): [String]
 }

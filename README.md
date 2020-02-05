@@ -15,9 +15,9 @@ npm install
 ```
 
 # Setup
- 
+
 You can configure Q Server with command line parameters and/or ENV variables:
-  
+
     Option                              ENV                          Default        Description
     ----------------------------------  ---------------------------  -------------  -----------------------------------
     -h, --host <host>                   Q_SERVER_HOST                getIp()        Listening address
@@ -37,7 +37,9 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --slow-db-auth <name>           Q_SLOW_DATABASE_AUTH                        Slow database auth in form user:password
         --slow-db-max-sockets <number>  Q_SLOW_DATABASE_MAX_SOCKETS  3              Slow database auth in form user:password
 
-    -j, --jaeger-endpoint <host>        JAEGER_ENDPOINT                             Jaeger collector host
+    -j, --jaeger-endpoint <url>         JAEGER_ENDPOINT                             Jaeger collector url
+
+        --auth-endpoint <url>           AUTH_ENDPOINT                               Auth server API url
 
 # Run
 
@@ -68,5 +70,5 @@ You must do it with:
 npm run babel
 npm run gen
 npm run babel
-``` 
-Yes, you need too run babel twice :(. 
+```
+Yes, you need too run babel twice :(.
