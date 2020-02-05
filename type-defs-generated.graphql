@@ -262,6 +262,8 @@ type Message {
 	src: String
 	"Returns destination address string"
 	dst: String
+	src_workchain_id: String
+	dst_workchain_id: String
 	"Logical creation time automatically set by the generating transaction."
 	created_lt: String
 	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
@@ -746,6 +748,7 @@ address and state.
 """
 type Account {
 	id: String
+	workchain_id: String
 	"""
 	Returns the current status of the account.
 	```
@@ -989,6 +992,7 @@ type Transaction {
 	status_name: TransactionProcessingStatusEnum
 	block_id: String
 	account_addr: String
+	workchain_id: String
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: String
 	prev_trans_hash: String
@@ -1205,6 +1209,8 @@ input MessageFilter {
 	src: StringFilter
 	"Returns destination address string"
 	dst: StringFilter
+	src_workchain_id: StringFilter
+	dst_workchain_id: StringFilter
 	"Logical creation time automatically set by the generating transaction."
 	created_lt: StringFilter
 	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
@@ -1797,6 +1803,7 @@ address and state.
 """
 input AccountFilter {
 	id: StringFilter
+	workchain_id: StringFilter
 	"""
 	Returns the current status of the account.
 	```
@@ -2122,6 +2129,7 @@ input TransactionFilter {
 	status_name: TransactionProcessingStatusEnumFilter
 	block_id: StringFilter
 	account_addr: StringFilter
+	workchain_id: StringFilter
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: StringFilter
 	prev_trans_hash: StringFilter

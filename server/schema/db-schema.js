@@ -152,6 +152,7 @@ const splitType = u8enum('SplitType', {
 const Account: TypeDef = {
     _doc: docs.account._doc,
     _: { collection: 'accounts' },
+    workchain_id: string(), // TODO: add doc
     acc_type: required(accountType(docs.account.acc_type)),
     last_paid: required(u32(docs.account.last_paid)),
     due_payment: grams(docs.account.due_payment),
@@ -183,6 +184,8 @@ const Message: TypeDef = {
     library: string(docs.message.library),
     src: string(docs.message.src),
     dst: string(docs.message.dst),
+    src_workchain_id: string(), // TODO: add doc
+    dst_workchain_id: string(), // TODO: add doc
     created_lt: u64(docs.message.created_lt),
     created_at: u32(docs.message.created_at),
     ihr_disabled: bool(docs.message.ihr_disabled),
@@ -205,6 +208,7 @@ const Transaction: TypeDef = {
     status: required(transactionProcessingStatus(docs.transaction.status)),
     block_id: string(docs.transaction.block_id),
     account_addr: string(docs.transaction.account_addr),
+    workchain_id: string(), // TODO: add doc
     lt: u64(docs.transaction.lt),
     prev_trans_hash: string(docs.transaction.prev_trans_hash),
     prev_trans_lt: u64(docs.transaction.prev_trans_lt),
@@ -375,7 +379,7 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
 
 const GasLimitsPrices: TypeDef = {
     gas_price: string(),
-    gas_limit: string(), 
+    gas_limit: string(),
     special_gas_limit: string(),
     gas_credit: string(),
     block_gas_limit: string(),
