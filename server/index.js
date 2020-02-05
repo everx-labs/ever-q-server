@@ -110,6 +110,11 @@ const config: QConfig = {
     listener: {
         restartTimeout: 1000
     },
+    authorization: {
+        server: "127.0.0.1",
+        port: 8888,
+        this_server_id: 1
+    },
     jaeger: {
         endpoint: options.jaegerEndpoint
     }

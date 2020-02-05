@@ -31,6 +31,8 @@ import type { QConfig } from './config';
 import QLogs from './logs';
 import type { QLog } from './logs';
 import { Tracer } from "./tracer";
+import TokenChecker from './token-checker';
+
 
 type QOptions = {
     config: QConfig,
@@ -55,6 +57,7 @@ export default class TONQServer {
     db: Arango;
     tracer: Tracer;
     shared: Map<string, any>;
+    checker: TokenChecker;
 
 
     constructor(options: QOptions) {
@@ -81,6 +84,7 @@ export default class TONQServer {
             supportSubscriptions: true,
             extraContext: (req) => this.tracer.getContext(req)
         });
+        this.checker = new TokenChecker(this.config);
     }
 
 
@@ -102,13 +106,19 @@ export default class TONQServer {
         const apollo = new ApolloServer({
             typeDefs,
             resolvers: endPoint.resolvers,
-            context: ({ req, connection }) => {
-                return {
-                    db: this.db,
-                    config: this.config,
-                    shared: this.shared,
-                    ...endPoint.extraContext(connection ? connection : req),
-                };
+            context: async ({ req, connection }) => {
+                if (req.headers.authorization !== undefined) {
+                    let authorization = JSON.parse(req.headers.authorization);
+                    if (await this.checker.check_token(authorization.token, authorization.app_key)) {
+                        return {
+                            db: this.db,
+                            config: this.config,
+                            shared: this.shared,
+                            ...endPoint.extraContext(connection ? connection : req),
+                        };
+                    }
+                }
+                throw new Error("ERROR: Auth denied");
             },
         });
         apollo.applyMiddleware({ app: this.app, path: endPoint.path });
@@ -120,4 +130,3 @@ export default class TONQServer {
 
 
 }
-

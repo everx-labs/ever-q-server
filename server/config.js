@@ -43,6 +43,11 @@ export type QConfig = {
     listener: {
         restartTimeout: number
     },
+    authorization: {
+        server: string,
+        port: number,
+        this_server_id: number,
+    },
     jaeger: {
         endpoint: string
     }
@@ -51,4 +56,3 @@ export type QConfig = {
 export function ensureProtocol(address: string, defaultProtocol: string): string {
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
-
