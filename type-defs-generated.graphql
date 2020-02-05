@@ -262,7 +262,9 @@ type Message {
 	src: String
 	"Returns destination address string"
 	dst: String
+	"Workchain id of the source address (src field)"
 	src_workchain_id: Int
+	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: Int
 	"Logical creation time automatically set by the generating transaction."
 	created_lt: String
@@ -748,6 +750,7 @@ address and state.
 """
 type Account {
 	id: String
+	"Workchain id of the account address (id field)."
 	workchain_id: Int
 	"""
 	Returns the current status of the account.
@@ -992,6 +995,7 @@ type Transaction {
 	status_name: TransactionProcessingStatusEnum
 	block_id: String
 	account_addr: String
+	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: String
@@ -1209,7 +1213,9 @@ input MessageFilter {
 	src: StringFilter
 	"Returns destination address string"
 	dst: StringFilter
+	"Workchain id of the source address (src field)"
 	src_workchain_id: IntFilter
+	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: IntFilter
 	"Logical creation time automatically set by the generating transaction."
 	created_lt: StringFilter
@@ -1803,6 +1809,7 @@ address and state.
 """
 input AccountFilter {
 	id: StringFilter
+	"Workchain id of the account address (id field)."
 	workchain_id: IntFilter
 	"""
 	Returns the current status of the account.
@@ -2129,6 +2136,7 @@ input TransactionFilter {
 	status_name: TransactionProcessingStatusEnumFilter
 	block_id: StringFilter
 	account_addr: StringFilter
+	"Workchain id of the account address (account_addr field)"
 	workchain_id: IntFilter
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: StringFilter
