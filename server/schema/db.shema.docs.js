@@ -15,6 +15,7 @@ its state. In other words, there is nothing else in an account apart from its
 address and state.
            `,
         id: ``,
+        workchain_id: `Workchain id of the account address (id field).`,
         acc_type: `Returns the current status of the account.
 \`\`\`
 {
@@ -109,6 +110,8 @@ If present, accumulates the storage payments that could not be exacted from the 
         library: `Represents contract library in deploy messages`,
         src: `Returns source address string`,
         dst: `Returns destination address string`,
+        src_workchain_id: `Workchain id of the source address (src field)`,
+        dst_workchain_id: `Workchain id of the destination address (dst field)`,
         created_lt: `Logical creation time automatically set by the generating transaction.`,
         created_at: `Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction.`,
         ihr_disabled: `IHR is disabled for the message.`,
@@ -131,6 +134,7 @@ If present, accumulates the storage payments that could not be exacted from the 
         status: `Transaction processing status`,
         block_id: ``,
         account_addr: ``,
+        workchain_id: `Workchain id of the account address (account_addr field)`,
         lt: `Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf).`,
         prev_trans_hash: ``,
         prev_trans_lt: ``,
