@@ -18,14 +18,14 @@
 
 import arangochair from 'arangochair';
 import { Database } from 'arangojs';
-import { ChangeLog, Collection, wrap } from "./arango-collection";
+import { Collection, wrap } from "./arango-collection";
 import type { QConfig, QDbConfig } from './config'
 import { ensureProtocol } from './config';
 import type { QLog } from './logs';
 import QLogs from './logs'
 import type { QType } from './q-types';
 import { Account, Block, BlockSignatures, Message, Transaction } from './resolvers-generated';
-import { Tracer } from "./tracer";
+import { Tracer } from "opentracing";
 
 
 export default class Arango {
@@ -36,7 +36,6 @@ export default class Arango {
     db: Database;
     slowDb: Database;
 
-    changeLog: ChangeLog;
     tracer: Tracer;
 
     transactions: Collection;
@@ -53,7 +52,6 @@ export default class Arango {
     constructor(config: QConfig, logs: QLogs, tracer: Tracer) {
         this.config = config;
         this.log = logs.create('db');
-        this.changeLog = new ChangeLog();
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
         this.tracer = tracer;
@@ -84,7 +82,6 @@ export default class Arango {
                 name,
                 docType,
                 logs,
-                this.changeLog,
                 this.tracer,
                 this.db,
                 slowDb,
@@ -128,9 +125,6 @@ export default class Arango {
     }
 
     onDocumentInsertOrUpdate(name: string, doc: any) {
-        if (this.changeLog.enabled) {
-            this.changeLog.log(doc._key, Date.now());
-        }
         const collection: (Collection | typeof undefined) = this.collectionsByName.get(name);
         if (collection) {
             collection.onDocumentInsertOrUpdate(doc);
@@ -138,18 +132,10 @@ export default class Arango {
     }
 
 
-    async fetchQuery(query: any, bindVars: any, context: any) {
+    async query(query: any, bindVars: any) {
         return wrap(this.log, 'QUERY', { query, bindVars }, async () => {
-            const span = await this.tracer.startSpanLog(
-                context,
-                'arango.js:fetchQuery',
-                'new query',
-                query,
-            );
             const cursor = await this.db.query({ query, bindVars });
-            const res = cursor.all();
-            await span.finish();
-            return res;
+            return cursor.all();
         });
     }
 }
