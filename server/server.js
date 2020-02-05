@@ -30,9 +30,9 @@ import { resolversMam } from "./resolvers-mam";
 import type { QConfig } from './config';
 import QLogs from './logs';
 import type { QLog } from './logs';
-import { Tracer } from "./tracer";
+import { QTracer } from "./tracer";
+import { Tracer } from "opentracing";
 import TokenChecker from './token-checker';
-
 
 type QOptions = {
     config: QConfig,
@@ -65,7 +65,7 @@ export default class TONQServer {
         this.logs = options.logs;
         this.log = this.logs.create('server');
         this.shared = new Map();
-        this.tracer = new Tracer(options.config);
+        this.tracer = QTracer.create(options.config);
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
@@ -75,14 +75,14 @@ export default class TONQServer {
             resolvers: resolversMam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
-            extraContext: (req) => this.tracer.getContext(req),
+            extraContext: (req) => QTracer.createContext(this.tracer, req),
         });
         this.addEndPoint({
             path: '/graphql',
             resolvers: attachCustomResolvers(createResolvers(this.db)),
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
             supportSubscriptions: true,
-            extraContext: (req) => this.tracer.getContext(req)
+            extraContext: (req) => QTracer.createContext(this.tracer, req)
         });
         this.checker = new TokenChecker(this.config);
     }
@@ -106,19 +106,18 @@ export default class TONQServer {
         const apollo = new ApolloServer({
             typeDefs,
             resolvers: endPoint.resolvers,
-            context: async ({ req, connection }) => {
+            context: ({ req, connection }) => {
                 if (req.headers.authorization !== undefined) {
                     let authorization = JSON.parse(req.headers.authorization);
-                    if (await this.checker.check_token(authorization.token, authorization.app_key)) {
-                        return {
-                            db: this.db,
-                            config: this.config,
-                            shared: this.shared,
-                            ...endPoint.extraContext(connection ? connection : req),
-                        };
-                    }
                 }
-                throw new Error("ERROR: Auth denied");
+                const remoteAddress = (req && req.socket && req.socket.remoteAddress) || '';
+                return {
+                    db: this.db,
+                    config: this.config,
+                    shared: this.shared,
+                    remoteAddress,
+                    ...endPoint.extraContext(connection ? connection : req),
+                };
             },
         });
         apollo.applyMiddleware({ app: this.app, path: endPoint.path });
@@ -130,3 +129,4 @@ export default class TONQServer {
 
 
 }
+

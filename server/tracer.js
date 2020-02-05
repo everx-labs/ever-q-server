@@ -1,49 +1,18 @@
 // @flow
 
 import type { QConfig } from "./config";
-import { FORMAT_BINARY } from "opentracing";
+import { tracer as noopTracer } from "opentracing/lib/noop";
+import { Tracer, Tags, FORMAT_TEXT_MAP, FORMAT_BINARY, Span, SpanContext } from "opentracing";
 
-const initJaegerTracer = require('jaeger-client').initTracerFromEnv;
-const { Tags, FORMAT_TEXT_MAP } = require('opentracing');
+import { initTracerFromEnv as initJaegerTracer } from 'jaeger-client';
 
-
-export interface TracerSpan {
-    log(options: { event: string, value: any }): Promise<void>,
-
-    finish(): Promise<void>
-}
-
-interface JaegerSpan extends TracerSpan {
-    setTag(name: string, value: any): Promise<void>,
-}
-
-interface JaegerTracer {
-    extract(key: string, headers: { [string]: any }): any,
-
-    startSpan(name: string, options: {
-        childOf: any,
-    }): Promise<JaegerSpan>
-}
-
-const missingSpan: TracerSpan = {
-    log(_options: { event: string, value: any }): Promise<void> {
-        return Promise.resolve();
-    },
-    finish(): Promise<void> {
-        return Promise.resolve();
-    }
-};
-
-export class Tracer {
-    jaeger: ?JaegerTracer;
-
-    constructor(config: QConfig) {
+export class QTracer {
+    static create(config: QConfig): Tracer {
         const endpoint = config.jaeger.endpoint;
         if (!endpoint) {
-            this.jaeger = null;
-            return;
+            return noopTracer;
         }
-        this.jaeger = initJaegerTracer({
+        return initJaegerTracer({
             serviceName: 'Q Server',
             sampler: {
                 type: 'const',
@@ -65,7 +34,7 @@ export class Tracer {
         });
     }
 
-    getContext(req: any): any {
+    static createContext(tracer: Tracer, req: any): any {
         let ctx_src, ctx_frm;
         if (req.headers) {
             ctx_src = req.headers;
@@ -74,39 +43,34 @@ export class Tracer {
             ctx_src = req.context;
             ctx_frm = FORMAT_BINARY;
         }
-        return this.jaeger ?
-            {
-                tracer_ctx: this.jaeger.extract(ctx_frm, ctx_src),
+        return {
+            tracer: tracer.extract(ctx_frm, ctx_src),
+        }
+    }
+
+    static getParentSpan(tracer: Tracer, context: any): (SpanContext | typeof undefined) {
+        return context.tracer;
+    }
+
+    static async trace<T>(
+        tracer: Tracer,
+        name: string,
+        f: (span: Span) => Promise<T>,
+        parentSpan?: (Span | SpanContext)
+    ): Promise<T> {
+        const span = tracer.startSpan(name, { childOf: parentSpan });
+        try {
+            span.setTag(Tags.SPAN_KIND, 'server');
+            const result = await f(span);
+            if (result !== undefined) {
+                span.setTag('result', result);
             }
-            : {}
-    }
-
-    async startSpan(context: any, name: string): Promise<TracerSpan> {
-        const jaeger = this.jaeger;
-        if (!jaeger) {
-            return missingSpan;
+            span.finish();
+            return result;
+        } catch (error) {
+            span.logEvent('failed', error);
+            span.finish();
+            throw error;
         }
-        const span: JaegerSpan = await jaeger.startSpan(name, {
-            childOf: context.tracer_ctx,
-        });
-        await span.setTag(Tags.SPAN_KIND, 'server');
-        return span;
     }
-
-    async startSpanLog(context: any, name: string, event: string, value: any): Promise<TracerSpan> {
-        const jaeger = this.jaeger;
-        if (!jaeger) {
-            return missingSpan;
-        }
-        const span: JaegerSpan = await jaeger.startSpan(name, {
-            childOf: context.tracer_ctx,
-        });
-        await span.setTag(Tags.SPAN_KIND, 'server');
-        await span.log({
-            event,
-            value,
-        });
-        return span;
-    }
-
 }
