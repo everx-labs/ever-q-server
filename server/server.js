@@ -104,7 +104,7 @@ export default class TONQServer {
             typeDefs,
             resolvers: endPoint.resolvers,
             context: ({ req, connection }) => {
-                const remoteAddress = (req.socket && req.socket.remoteAddress) || '';
+                const remoteAddress = (req && req.socket && req.socket.remoteAddress) || '';
                 return {
                     db: this.db,
                     config: this.config,
