@@ -43,7 +43,7 @@ function getIp() {
   return ipv4 && ipv4.address;
 }
 
-program.option('-h, --host <host>', 'listening address', process.env.Q_SERVER_HOST || getIp()).option('-p, --port <port>', 'listening port', process.env.Q_SERVER_PORT || '4000').option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)', process.env.Q_REQUESTS_MODE || 'kafka').option('-r, --requests-server <url>', 'Requests server url', process.env.Q_REQUESTS_SERVER || 'kafka:9092').option('-t, --requests-topic <name>', 'Requests topic name', process.env.Q_REQUESTS_TOPIC || 'requests').option('-d, --db-server <address>', 'database server:port', process.env.Q_DATABASE_SERVER || 'arangodb:8529').option('-n, --db-name <name>', 'database name', process.env.Q_DATABASE_NAME || 'blockchain').option('-a, --db-auth <name>', 'database auth in form "user:password', process.env.Q_DATABASE_AUTH || '').option('--db-max-sockets <number>', 'database max sockets', process.env.Q_DATABASE_MAX_SOCKETS || '100').option('--slow-db-server <address>', 'slow queries database server:port', process.env.Q_SLOW_DATABASE_SERVER || '').option('--slow-db-name <name>', 'slow database name', process.env.Q_SLOW_DATABASE_NAME || '').option('--slow-db-auth <name>', 'slow database auth in form "user:password', process.env.Q_SLOW_DATABASE_AUTH || '').option('--slow-db-max-sockets <number>', 'slow database max sockets', process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3').option('-j, --jaeger-endpoint <host>', 'jaeger collector host', process.env.JAEGER_ENDPOINT || '').parse(process.argv);
+program.option('-h, --host <host>', 'listening address', process.env.Q_SERVER_HOST || getIp()).option('-p, --port <port>', 'listening port', process.env.Q_SERVER_PORT || '4000').option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)', process.env.Q_REQUESTS_MODE || 'kafka').option('-r, --requests-server <url>', 'Requests server url', process.env.Q_REQUESTS_SERVER || 'kafka:9092').option('-t, --requests-topic <name>', 'Requests topic name', process.env.Q_REQUESTS_TOPIC || 'requests').option('-d, --db-server <address>', 'database server:port', process.env.Q_DATABASE_SERVER || 'arangodb:8529').option('-n, --db-name <name>', 'database name', process.env.Q_DATABASE_NAME || 'blockchain').option('-a, --db-auth <name>', 'database auth in form "user:password', process.env.Q_DATABASE_AUTH || '').option('--db-max-sockets <number>', 'database max sockets', process.env.Q_DATABASE_MAX_SOCKETS || '100').option('--slow-db-server <address>', 'slow queries database server:port', process.env.Q_SLOW_DATABASE_SERVER || '').option('--slow-db-name <name>', 'slow database name', process.env.Q_SLOW_DATABASE_NAME || '').option('--slow-db-auth <name>', 'slow database auth in form "user:password', process.env.Q_SLOW_DATABASE_AUTH || '').option('--slow-db-max-sockets <number>', 'slow database max sockets', process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3').option('--auth-server <address>', 'auth-service address', process.env.AUTH_SERVER || '127.0.0.1').option('--auth-port <port>', 'auth-service port', process.env.AUTH_PORT || '8888').option('--q-server-id <name>', 'This server id', process.env.Q_SERVER_ID || '1').option('-j, --jaeger-endpoint <host>', 'jaeger collector host', process.env.JAEGER_ENDPOINT || '').parse(process.argv);
 var options = program;
 var config = {
   server: {
@@ -71,9 +71,9 @@ var config = {
     restartTimeout: 1000
   },
   authorization: {
-    server: "127.0.0.1",
-    port: 8888,
-    this_server_id: 1
+    server: options.authServer,
+    port: options.authPort,
+    this_server_id: options.qServerId
   },
   jaeger: {
     endpoint: options.jaegerEndpoint

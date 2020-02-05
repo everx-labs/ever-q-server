@@ -79,6 +79,13 @@ program
     .option('--slow-db-max-sockets <number>', 'slow database max sockets',
         process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3')
 
+    .option('--auth-server <address>', 'auth-service address',
+        process.env.AUTH_SERVER || '127.0.0.1')
+    .option('--auth-port <port>', 'auth-service port',
+        process.env.AUTH_PORT || '8888')
+    .option('--q-server-id <name>', 'This server id',
+        process.env.Q_SERVER_ID || '1')
+
     .option('-j, --jaeger-endpoint <host>', 'jaeger collector host',
         process.env.JAEGER_ENDPOINT || '')
     .parse(process.argv);
@@ -111,9 +118,9 @@ const config: QConfig = {
         restartTimeout: 1000
     },
     authorization: {
-        server: "127.0.0.1",
-        port: 8888,
-        this_server_id: 1
+        server: options.authServer,
+        port: options.authPort,
+        this_server_id: options.qServerId,
     },
     jaeger: {
         endpoint: options.jaegerEndpoint

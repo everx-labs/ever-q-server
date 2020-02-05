@@ -46,10 +46,10 @@ function () {
                   var post_data = querystring.stringify({
                     token: token,
                     app_key: app_key,
-                    service_id: _this.config.authorization.graphql_server_id
+                    service_id: _this.config.authorization.this_server_id
                   });
                   var post_options = {
-                    hostname: _this.config.authorization.port.address,
+                    hostname: _this.config.authorization.server,
                     port: _this.config.authorization.port,
                     path: '/tokens/check_token',
                     method: 'POST',

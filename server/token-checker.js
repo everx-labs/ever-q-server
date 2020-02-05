@@ -13,11 +13,11 @@ export default class TokenChecker {
         let post_data = querystring.stringify({
           token: token,
           app_key: app_key,
-          service_id: this.config.authorization.graphql_server_id
+          service_id: this.config.authorization.this_server_id
         });
 
         let post_options = {
-          hostname: this.config.authorization.port.address,
+          hostname: this.config.authorization.server,
           port: this.config.authorization.port,
           path: '/tokens/check_token',
           method: 'POST',
