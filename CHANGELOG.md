@@ -7,9 +7,9 @@ All notable changes to this project will be documented in this file.
 - Auth support
 
 ### New
-- NEW: --auth-endpoint (or AUTH_ENDPOINT env) config option. Specify address of auth service.
-- NEW: `authorization` optional header added to specify access token.
-- NEW: `auth` optional parameter added to all GraphQL queries to specify access token in GraphQL playground.
+- --auth-endpoint (or AUTH_ENDPOINT env) config option. Specify address of auth service.
+- `authorization` optional header added to specify access token.
+- `auth` optional parameter added to all GraphQL queries to specify access token in GraphQL playground.
 
 ## 0.23.0 - Feb 5, 2020
 
