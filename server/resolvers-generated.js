@@ -72,6 +72,8 @@ const Message = struct({
     library: scalar,
     src: scalar,
     dst: scalar,
+    src_workchain_id: scalar,
+    dst_workchain_id: scalar,
     created_lt: bigUInt1,
     created_at: scalar,
     ihr_disabled: scalar,
@@ -441,6 +443,7 @@ const Block = struct({
 
 const Account = struct({
     id: scalar,
+    workchain_id: scalar,
     acc_type: scalar,
     acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2 }),
     last_paid: scalar,
@@ -536,6 +539,7 @@ const Transaction = struct({
     status_name: enumName('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
     block_id: scalar,
     account_addr: scalar,
+    workchain_id: scalar,
     lt: bigUInt1,
     prev_trans_hash: scalar,
     prev_trans_lt: bigUInt1,
