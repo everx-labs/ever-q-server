@@ -463,6 +463,7 @@ const Block: TypeDef = {
     workchain_id: i32(docs.block.workchain_id),
     shard: string(docs.block.shard),
     min_ref_mc_seqno: u32(docs.block.min_ref_mc_seqno),
+    prev_key_block_seqno: u32(docs.block.prev_key_block_seqno),
     value_flow: {
         to_next_blk: grams(docs.block.value_flow.to_next_blk),
         to_next_blk_other: otherCurrencyCollection(docs.block.value_flow.to_next_blk_other),

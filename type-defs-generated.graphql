@@ -722,6 +722,8 @@ type Block {
 	shard: String
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: Float
+	"Returns a number of a previous key block."
+	prev_key_block_seqno: Float
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
 	rand_seed: String
@@ -1770,6 +1772,8 @@ input BlockFilter {
 	shard: StringFilter
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: FloatFilter
+	"Returns a number of a previous key block."
+	prev_key_block_seqno: FloatFilter
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter
 	rand_seed: StringFilter

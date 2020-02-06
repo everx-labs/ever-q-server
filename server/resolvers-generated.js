@@ -429,6 +429,7 @@ const Block = struct({
     workchain_id: scalar,
     shard: scalar,
     min_ref_mc_seqno: scalar,
+    prev_key_block_seqno: scalar,
     value_flow: BlockValueFlow,
     in_msg_descr: InMsgArray,
     rand_seed: scalar,
