@@ -30,7 +30,8 @@ import { resolversMam } from "./resolvers-mam";
 import type { QConfig } from './config';
 import QLogs from './logs';
 import type { QLog } from './logs';
-import { Tracer } from "./tracer";
+import { QTracer } from "./tracer";
+import { Tracer } from "opentracing";
 
 type QOptions = {
     config: QConfig,
@@ -62,7 +63,7 @@ export default class TONQServer {
         this.logs = options.logs;
         this.log = this.logs.create('server');
         this.shared = new Map();
-        this.tracer = new Tracer(options.config);
+        this.tracer = QTracer.create(options.config);
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
@@ -72,14 +73,14 @@ export default class TONQServer {
             resolvers: resolversMam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
-            extraContext: (req) => this.tracer.getContext(req),
+            extraContext: (req) => QTracer.createContext(this.tracer, req),
         });
         this.addEndPoint({
             path: '/graphql',
             resolvers: attachCustomResolvers(createResolvers(this.db)),
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
             supportSubscriptions: true,
-            extraContext: (req) => this.tracer.getContext(req)
+            extraContext: (req) => QTracer.createContext(this.tracer, req)
         });
     }
 
@@ -103,10 +104,12 @@ export default class TONQServer {
             typeDefs,
             resolvers: endPoint.resolvers,
             context: ({ req, connection }) => {
+                const remoteAddress = (req && req.socket && req.socket.remoteAddress) || '';
                 return {
                     db: this.db,
                     config: this.config,
                     shared: this.shared,
+                    remoteAddress,
                     ...endPoint.extraContext(connection ? connection : req),
                 };
             },
