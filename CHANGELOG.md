@@ -2,14 +2,16 @@
 All notable changes to this project will be documented in this file.
 
 
-## 0.24.0 - Feb 6, 2020
+## 0.24.0 - Feb 10, 2020
 ### Featured
 - Auth support
 
 ### New
-- --auth-endpoint (or AUTH_ENDPOINT env) config option. Specify address of auth service.
+- `--auth-endpoint` (or `AUTH_ENDPOINT` env) config option. Specify address of auth service.
 - `authorization` optional header added to specify access token.
-- `auth` optional parameter added to all GraphQL queries to specify access token in GraphQL playground.
+- `accessKey` optional parameter added to all GraphQL queries to specify access token in GraphQL playground.
+- `registerAccessKeys` mutation to register account's access keys. 
+- `revokeAccessKeys` mutation to revoke account's access keys. 
 
 ## 0.23.0 - Feb 5, 2020
 

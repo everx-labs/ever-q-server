@@ -111,7 +111,7 @@ export default class TONQServer {
                     config: this.config,
                     shared: this.shared,
                     remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
-                    authToken: QAuth.extractToken(req),
+                    accessKey: QAuth.extractAccessKey(req),
                     parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
                 };
             },

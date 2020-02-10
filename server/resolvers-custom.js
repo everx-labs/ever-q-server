@@ -2,14 +2,12 @@
 
 import fs from "fs";
 import { Kafka, Producer } from "kafkajs";
-import tracing, { Span } from "opentracing";
+import { Span, FORMAT_BINARY } from 'opentracing';
 import Arango from "./arango";
 import type { GraphQLRequestContext } from "./arango-collection";
-import type { QConfig } from "./config";
 import { ensureProtocol } from "./config";
 import path from 'path';
 import fetch from 'node-fetch';
-import QAuth from "./q-auth";
 import { QTracer } from "./tracer";
 
 function isObject(test: any): boolean {
@@ -51,7 +49,7 @@ function info(): Info {
 async function getAccountsCount(_parent, args, context: GraphQLRequestContextEx): Promise<number> {
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, 'getAccountsCount', async () => {
-        await context.auth.requireGrantedAccess(context.authToken || args.auth);
+        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
         const result: any = await context.db.query(`RETURN LENGTH(accounts)`, {});
         const counts = (result: number[]);
         return counts.length > 0 ? counts[0] : 0;
@@ -61,7 +59,7 @@ async function getAccountsCount(_parent, args, context: GraphQLRequestContextEx)
 async function getTransactionsCount(_parent, args, context: GraphQLRequestContextEx): Promise<number> {
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, 'getTransactionsCount', async () => {
-        await context.auth.requireGrantedAccess(context.authToken || args.auth);
+        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
         const result: any = await context.db.query(`RETURN LENGTH(transactions)`, {});
         const counts = (result: number[]);
         return counts.length > 0 ? counts[0] : 0;
@@ -71,7 +69,7 @@ async function getTransactionsCount(_parent, args, context: GraphQLRequestContex
 async function getAccountsTotalBalance(_parent, args, context: GraphQLRequestContextEx): Promise<String> {
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, 'getAccountsTotalBalance', async () => {
-        await context.auth.requireGrantedAccess(context.authToken || args.auth);
+        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
         /*
         Because arango can not sum BigInt's we need to sum separately:
         hs = SUM of high bits (from 24-bit and higher)
@@ -95,7 +93,7 @@ async function getAccountsTotalBalance(_parent, args, context: GraphQLRequestCon
 
 // Mutation
 
-async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx, span: Span): Promise<void> {
+async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx): Promise<void> {
     const config = context.config.requests;
     const url = `${ensureProtocol(config.server, 'http')}/topics/${config.topic}`;
     const response = await fetch(url, {
@@ -145,7 +143,7 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
     const messages = requests.map((request) => {
         const keyBuffer = Buffer.from(request.id, 'base64');
         const traceBuffer = Buffer.from([]);
-        context.db.tracer.inject(span, tracing.FORMAT_BINARY, traceBuffer);
+        context.db.tracer.inject(span, FORMAT_BINARY, traceBuffer);
         return {
             key: Buffer.concat([keyBuffer, traceBuffer]),
             value: Buffer.from(request.body, 'base64'),
@@ -157,7 +155,7 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
     });
 }
 
-async function postRequests(_, args: { requests: Request[], auth?: string }, context: GraphQLRequestContextEx): Promise<string[]> {
+async function postRequests(_, args: { requests: Request[], accessKey?: string }, context: GraphQLRequestContextEx): Promise<string[]> {
     const requests: ?(Request[]) = args.requests;
     if (!requests) {
         return [];
@@ -166,10 +164,10 @@ async function postRequests(_, args: { requests: Request[], auth?: string }, con
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, "postRequests", async (span: Span) => {
         span.setTag('params', requests);
-        await context.auth.requireGrantedAccess(context.authToken || args.auth);
+        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
         try {
             if (context.config.requests.mode === 'rest') {
-                await postRequestsUsingRest(requests, context, span);
+                await postRequestsUsingRest(requests, context);
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }
@@ -182,6 +180,20 @@ async function postRequests(_, args: { requests: Request[], auth?: string }, con
     }, context.parentSpan);
 }
 
+type RegistrationArgs = {
+    account?: string,
+    keys?: string[],
+    signature?: string,
+}
+
+async function registerAccessKeys(_, args: RegistrationArgs, context: GraphQLRequestContextEx,): Promise<number> {
+    return context.auth.registerAccessKeys(args.account || '', args.keys || [], args.signature || '');
+}
+
+async function revokeAccessKeys(_, args: RegistrationArgs, context: GraphQLRequestContextEx,): Promise<number> {
+    return context.auth.revokeAccessKeys(args.account || '', args.keys || [], args.signature || '');
+}
+
 const resolversCustom = {
     Query: {
         info,
@@ -191,6 +203,8 @@ const resolversCustom = {
     },
     Mutation: {
         postRequests,
+        registerAccessKeys,
+        revokeAccessKeys,
     },
 };
 

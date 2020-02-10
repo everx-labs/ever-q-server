@@ -33,7 +33,7 @@ export type GraphQLRequestContext = {
     tracer: Tracer,
 
     remoteAddress?: string,
-    authToken: string,
+    accessKey: string,
     parentSpan: (Span | SpanContext | typeof undefined),
 
     shared: Map<string, any>,
@@ -436,7 +436,7 @@ export class Collection {
 
     queryResolver() {
         return async (parent: any, args: any, context: GraphQLRequestContext, info: any) => wrap(this.log, 'QUERY', args, async () => {
-            await context.auth.requireGrantedAccess(context.authToken || args.auth);
+            await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
             const q = this.createDatabaseQuery(args, info.operation.selectionSet);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
@@ -470,7 +470,7 @@ export class Collection {
     }
 
     async query(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
-        return QTracer.trace(this.tracer, `${this.name}.query'`, async (span: Span) => {
+        return QTracer.trace(this.tracer, `${this.name}.query`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
             return this.queryDatabase(q, stat);
         }, parentSpan);
@@ -490,7 +490,7 @@ export class Collection {
 
 
     async queryWaitFor(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
-        return QTracer.trace(this.tracer, `${this.name}.waitFor'`, async (span: Span) => {
+        return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
             let waitFor: ?WaitForListener = null;
             let forceTimerId: ?TimeoutID = null;

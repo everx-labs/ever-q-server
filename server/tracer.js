@@ -50,6 +50,10 @@ export class QTracer {
         return context.tracerParentSpan;
     }
 
+    static failed(tracer: Tracer, span: Span, error: any) {
+        span.log({ event: 'failed', payload: error });
+    }
+
     static async trace<T>(
         tracer: Tracer,
         name: string,
@@ -66,7 +70,7 @@ export class QTracer {
             span.finish();
             return result;
         } catch (error) {
-            span.logEvent('failed', error);
+            QTracer.failed(tracer, span, error);
             span.finish();
             throw error;
         }

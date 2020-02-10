@@ -14,7 +14,7 @@ const grantedBlockchainAccess: BlockchainAccessRights = Object.freeze({
 });
 
 const deniedBlockchainAccess: BlockchainAccessRights = Object.freeze({
-    granted: true,
+    granted: false,
     restrictToAccounts: [],
 });
 
@@ -25,32 +25,63 @@ export default class QAuth {
         this.config = config;
     }
 
-    static extractToken(req: any): string {
+    static extractAccessKey(req: any): string {
         return (req && req.headers && req.headers.authorization) || ''
     }
 
-    async requireGrantedAccess(token: string | typeof undefined): Promise<BlockchainAccessRights> {
-        const access = await this.getBlockchainAccessRights(token);
+    static error(code: number, message: string): Error {
+        const error = new Error(message);
+        (error: any).source = 'graphql';
+        (error: any).code = code;
+        return error;
+    }
+
+    async requireGrantedAccess(accessKey: string | typeof undefined): Promise<BlockchainAccessRights> {
+        const access = await this.getBlockchainAccessRights(accessKey);
         if (!access.granted) {
-            const error = new Error('You have not access to GraphQL services');
-            (error: any).code = 8000;
-            throw error;
+            throw QAuth.error(401, 'Unauthorized');
         }
         if (access.restrictToAccounts.length > 0) {
-            const error = new Error('Internal error: GraphQL services doesn\'t support account restrictions yet');
-            (error: any).code = 8001;
-            throw error;
+            throw QAuth.error(500, 'Internal error: GraphQL services doesn\'t support account restrictions yet');
         }
         return access;
     }
 
-    async getBlockchainAccessRights(token: string | typeof undefined): Promise<BlockchainAccessRights> {
+    async getBlockchainAccessRights(accessKey: string | typeof undefined): Promise<BlockchainAccessRights> {
         if (!this.config.authorization.endpoint) {
             return grantedBlockchainAccess;
         }
-        if ((token || '') === '') {
+        if ((accessKey || '') === '') {
             return deniedBlockchainAccess;
         }
+        return this.invokeAuth('getBlockchainAccessRights', {
+            accessKey,
+        });
+    }
+
+    async registerAccessKeys(account: string, keys: string[], signature: string): Promise<number> {
+        if (!this.config.authorization.endpoint) {
+            throw QAuth.error(500, 'Auth service unavailable');
+        }
+        return this.invokeAuth('registerAccessKeys', {
+            account,
+            keys,
+            signature
+        });
+    }
+
+    async revokeAccessKeys(account: string, keys: string[], signature: string): Promise<number> {
+        if (!this.config.authorization.endpoint) {
+            throw QAuth.error(500, 'Auth service unavailable');
+        }
+        return this.invokeAuth('revokeAccessKeys', {
+            account,
+            keys,
+            signature
+        });
+    }
+
+    async invokeAuth(method: string, params: any): Promise<any> {
         const res = await fetch(this.config.authorization.endpoint, {
             method: 'POST',
             headers: {
@@ -59,10 +90,8 @@ export default class QAuth {
             body: JSON.stringify({
                 jsonrpc: '2.0',
                 id: '1',
-                method: 'getBlockchainAccessRights',
-                params: {
-                    token: token || '',
-                }
+                method,
+                params
             }),
         });
 
@@ -72,7 +101,10 @@ export default class QAuth {
 
         const response = await res.json();
         if (response.error) {
-            throw response.error;
+            const error = new Error(response.error.message || response.error.description);
+            (error: any).source = response.error.source || 'graphql';
+            (error: any).code = response.error.code || 500;
+            throw error;
         }
 
         return response.result;
