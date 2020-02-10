@@ -163,6 +163,13 @@ pipeline {
 							] 
 
 							build job: "Infrastructure/startup-edition-node/master", parameters: params
+
+							RELEASE_VERSION = sh (script: "jq -r '.version' package.json",returnStdout: true).trim()
+							echo "RELEASE_VERSION: ${RELEASE_VERSION}"
+
+							docker.withRegistry('', "${G_dockerCred}") {
+								builtImage.push(RELEASE_VERSION)
+							}
 						}
 					}
 					post {
@@ -178,6 +185,10 @@ pipeline {
 					}
 					steps {
 						script {
+
+							RELEASE_VERSION = sh (script: "jq -r '.version' package.json",returnStdout: true).trim()
+							echo "RELEASE_VERSION: ${RELEASE_VERSION}"
+
 							docker.withRegistry('', "${G_dockerCred}") {
 								builtImage.push("${G_promoted_tag}")
 							}
