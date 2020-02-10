@@ -52,6 +52,7 @@ pipeline {
 							C_PROJECT = G_giturl.substring(15,G_giturl.length()-4)
 							C_GITURL = sh (script: 'echo ${GIT_URL}',returnStdout: true).trim()
 							C_GITCOMMIT = sh (script: 'echo ${GIT_COMMIT}',returnStdout: true).trim()
+							RELEASE_VERSION = sh (script: "jq -r '.version' package.json",returnStdout: true).trim()
 						}
 					}
 				}
@@ -178,7 +179,11 @@ pipeline {
 					}
 					steps {
 						script {
+
+							echo "RELEASE_VERSION: ${RELEASE_VERSION}"
+
 							docker.withRegistry('', "${G_dockerCred}") {
+								builtImage.push(RELEASE_VERSION)
 								builtImage.push("${G_promoted_tag}")
 							}
 						}
