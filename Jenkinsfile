@@ -52,6 +52,8 @@ pipeline {
 							C_PROJECT = G_giturl.substring(15,G_giturl.length()-4)
 							C_GITURL = sh (script: 'echo ${GIT_URL}',returnStdout: true).trim()
 							C_GITCOMMIT = sh (script: 'echo ${GIT_COMMIT}',returnStdout: true).trim()
+
+							sh "which jq"
 						}
 					}
 				}
