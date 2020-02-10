@@ -12,10 +12,31 @@ extend type Query {
     getAccountsCount(accessKey: String): Float
     getTransactionsCount(accessKey: String): Float
     getAccountsTotalBalance(accessKey: String): String
+
+    "Returns one time access key for management functions"
+    getManagementAccessKey: String
 }
 
 type Mutation {
     postRequests(requests: [Request], accessKey: String): [String]
-    registerAccessKeys(account: String, keys: [String], signature: String): Int
-    revokeAccessKeys(account: String, keys: [String], signature: String): Int
+
+    "Register GraphQL services access keys. Returns number of actually registered keys"
+    registerAccessKeys(
+        "Account contract address"
+        account: String,
+        "Access keys associated with account"
+        keys: [String],
+        "Management access key obtained with getManagementAccessKey and signed using key pair of account contract"
+        signedManagementAccessKey: String,
+    ): Int
+
+    "Revoke GraphQL services access keys. Returns number of actually revoked keys"
+    revokeAccessKeys(
+        "Account contract address"
+        account: String,
+        "Access keys associated with account"
+        keys: [String],
+        "Management access key obtained with getManagementAccessKey and signed using key pair of account contract"
+        signedManagementAccessKey: String,
+    ): Int
 }

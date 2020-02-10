@@ -3,17 +3,17 @@
 import type { QConfig } from "./config";
 import fetch from 'node-fetch';
 
-export type BlockchainAccessRights = {
+export type AccessRights = {
     granted: bool,
     restrictToAccounts: string[],
 }
 
-const grantedBlockchainAccess: BlockchainAccessRights = Object.freeze({
+const grantedAccess: AccessRights = Object.freeze({
     granted: true,
     restrictToAccounts: [],
 });
 
-const deniedBlockchainAccess: BlockchainAccessRights = Object.freeze({
+const deniedAccess: AccessRights = Object.freeze({
     granted: false,
     restrictToAccounts: [],
 });
@@ -36,8 +36,14 @@ export default class QAuth {
         return error;
     }
 
-    async requireGrantedAccess(accessKey: string | typeof undefined): Promise<BlockchainAccessRights> {
-        const access = await this.getBlockchainAccessRights(accessKey);
+    authServiceRequired() {
+        if (!this.config.authorization.endpoint) {
+            throw QAuth.error(500, 'Auth service unavailable');
+        }
+    }
+
+    async requireGrantedAccess(accessKey: string | typeof undefined): Promise<AccessRights> {
+        const access = await this.getAccessRights(accessKey);
         if (!access.granted) {
             throw QAuth.error(401, 'Unauthorized');
         }
@@ -47,37 +53,46 @@ export default class QAuth {
         return access;
     }
 
-    async getBlockchainAccessRights(accessKey: string | typeof undefined): Promise<BlockchainAccessRights> {
+    async getAccessRights(accessKey: string | typeof undefined): Promise<AccessRights> {
         if (!this.config.authorization.endpoint) {
-            return grantedBlockchainAccess;
+            return grantedAccess;
         }
         if ((accessKey || '') === '') {
-            return deniedBlockchainAccess;
+            return deniedAccess;
         }
-        return this.invokeAuth('getBlockchainAccessRights', {
+        return this.invokeAuth('getAccessRights', {
             accessKey,
         });
     }
 
-    async registerAccessKeys(account: string, keys: string[], signature: string): Promise<number> {
-        if (!this.config.authorization.endpoint) {
-            throw QAuth.error(500, 'Auth service unavailable');
-        }
+    async getManagementAccessKey(): Promise<string> {
+        this.authServiceRequired();
+        return this.invokeAuth('getManagementAccessKey', {});
+    }
+
+    async registerAccessKeys(
+        account: string,
+        keys: string[],
+        signedManagementAccessKey: string
+    ): Promise<number> {
+        this.authServiceRequired();
         return this.invokeAuth('registerAccessKeys', {
             account,
             keys,
-            signature
+            signedManagementAccessKey
         });
     }
 
-    async revokeAccessKeys(account: string, keys: string[], signature: string): Promise<number> {
-        if (!this.config.authorization.endpoint) {
-            throw QAuth.error(500, 'Auth service unavailable');
-        }
+    async revokeAccessKeys(
+        account: string,
+        keys: string[],
+        signedManagementAccessKey: string
+    ): Promise<number> {
+        this.authServiceRequired();
         return this.invokeAuth('revokeAccessKeys', {
             account,
             keys,
-            signature
+            signedManagementAccessKey
         });
     }
 

@@ -91,6 +91,10 @@ async function getAccountsTotalBalance(_parent, args, context: GraphQLRequestCon
     }, QTracer.getParentSpan(tracer, context))
 }
 
+async function getManagementAccessKey(_parent, args, context: GraphQLRequestContextEx): Promise<string> {
+    return context.auth.getManagementAccessKey();
+}
+
 // Mutation
 
 async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx): Promise<void> {
@@ -183,15 +187,21 @@ async function postRequests(_, args: { requests: Request[], accessKey?: string }
 type RegistrationArgs = {
     account?: string,
     keys?: string[],
-    signature?: string,
+    signedManagementAccessKey?: string,
 }
 
 async function registerAccessKeys(_, args: RegistrationArgs, context: GraphQLRequestContextEx,): Promise<number> {
-    return context.auth.registerAccessKeys(args.account || '', args.keys || [], args.signature || '');
+    return context.auth.registerAccessKeys(
+        args.account || '',
+        args.keys || [],
+        args.signedManagementAccessKey || '');
 }
 
 async function revokeAccessKeys(_, args: RegistrationArgs, context: GraphQLRequestContextEx,): Promise<number> {
-    return context.auth.revokeAccessKeys(args.account || '', args.keys || [], args.signature || '');
+    return context.auth.revokeAccessKeys(
+        args.account || '',
+        args.keys || [],
+        args.signedManagementAccessKey || '');
 }
 
 const resolversCustom = {
@@ -200,6 +210,7 @@ const resolversCustom = {
         getAccountsCount,
         getTransactionsCount,
         getAccountsTotalBalance,
+        getManagementAccessKey,
     },
     Mutation: {
         postRequests,

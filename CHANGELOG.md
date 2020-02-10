@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - `--auth-endpoint` (or `AUTH_ENDPOINT` env) config option. Specify address of auth service.
 - `authorization` optional header added to specify access token.
 - `accessKey` optional parameter added to all GraphQL queries to specify access token in GraphQL playground.
+- `getManagementAccessKey` query one time management access key.
 - `registerAccessKeys` mutation to register account's access keys. 
 - `revokeAccessKeys` mutation to revoke account's access keys. 
 

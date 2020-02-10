@@ -48,12 +48,8 @@ export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Pro
     try {
         return await fetch();
     } catch (err) {
-        const error = {
-            message: err.message || err.ArangoError || err.toString(),
-            code: err.code
-        };
-        log.error('FAILED', op, args, error.message);
-        throw error;
+        log.error('FAILED', op, args, err.message || err.ArangoError || err.toString());
+        throw err;
     }
 }
 
