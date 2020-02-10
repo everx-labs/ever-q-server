@@ -34,7 +34,7 @@ export class QTracer {
         });
     }
 
-    static createContext(tracer: Tracer, req: any): any {
+    static extractParentSpan(tracer: Tracer, req: any): any {
         let ctx_src, ctx_frm;
         if (req.headers) {
             ctx_src = req.headers;
@@ -43,13 +43,15 @@ export class QTracer {
             ctx_src = req.context;
             ctx_frm = FORMAT_BINARY;
         }
-        return {
-            tracer: tracer.extract(ctx_frm, ctx_src),
-        }
+        return tracer.extract(ctx_frm, ctx_src);
     }
 
     static getParentSpan(tracer: Tracer, context: any): (SpanContext | typeof undefined) {
-        return context.tracer;
+        return context.tracerParentSpan;
+    }
+
+    static failed(tracer: Tracer, span: Span, error: any) {
+        span.log({ event: 'failed', payload: error });
     }
 
     static async trace<T>(
@@ -68,7 +70,7 @@ export class QTracer {
             span.finish();
             return result;
         } catch (error) {
-            span.logEvent('failed', error);
+            QTracer.failed(tracer, span, error);
             span.finish();
             throw error;
         }

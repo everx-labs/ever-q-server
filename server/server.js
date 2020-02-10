@@ -32,6 +32,7 @@ import QLogs from './logs';
 import type { QLog } from './logs';
 import { QTracer } from "./tracer";
 import { Tracer } from "opentracing";
+import QAuth from './q-auth';
 
 type QOptions = {
     config: QConfig,
@@ -43,7 +44,6 @@ type EndPoint = {
     resolvers: any,
     typeDefFileNames: string[],
     supportSubscriptions: boolean,
-    extraContext: (req: express.Request) => any,
 }
 
 export default class TONQServer {
@@ -55,6 +55,7 @@ export default class TONQServer {
     endPoints: EndPoint[];
     db: Arango;
     tracer: Tracer;
+    auth: QAuth;
     shared: Map<string, any>;
 
 
@@ -64,6 +65,7 @@ export default class TONQServer {
         this.log = this.logs.create('server');
         this.shared = new Map();
         this.tracer = QTracer.create(options.config);
+        this.auth = new QAuth(options.config);
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
@@ -73,14 +75,12 @@ export default class TONQServer {
             resolvers: resolversMam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
-            extraContext: (req) => QTracer.createContext(this.tracer, req),
         });
         this.addEndPoint({
             path: '/graphql',
             resolvers: attachCustomResolvers(createResolvers(this.db)),
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
             supportSubscriptions: true,
-            extraContext: (req) => QTracer.createContext(this.tracer, req)
         });
     }
 
@@ -104,13 +104,15 @@ export default class TONQServer {
             typeDefs,
             resolvers: endPoint.resolvers,
             context: ({ req, connection }) => {
-                const remoteAddress = (req && req.socket && req.socket.remoteAddress) || '';
                 return {
                     db: this.db,
+                    tracer: this.tracer,
+                    auth: this.auth,
                     config: this.config,
                     shared: this.shared,
-                    remoteAddress,
-                    ...endPoint.extraContext(connection ? connection : req),
+                    remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
+                    accessKey: QAuth.extractAccessKey(req),
+                    parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
                 };
             },
         });

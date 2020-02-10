@@ -46,6 +46,7 @@ type ProgramOptions = {
     host: string,
     port: string,
     jaegerEndpoint: string,
+    authEndpoint: string,
 }
 
 program
@@ -79,7 +80,10 @@ program
     .option('--slow-db-max-sockets <number>', 'slow database max sockets',
         process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3')
 
-    .option('-j, --jaeger-endpoint <host>', 'jaeger collector host',
+    .option('--auth-endpoint <url>', 'auth endpoint',
+        process.env.AUTH_ENDPOINT || '')
+
+    .option('-j, --jaeger-endpoint <url>', 'jaeger endpoint',
         process.env.JAEGER_ENDPOINT || '')
     .parse(process.argv);
 
@@ -109,6 +113,9 @@ const config: QConfig = {
     },
     listener: {
         restartTimeout: 1000
+    },
+    authorization: {
+        endpoint: options.authEndpoint,
     },
     jaeger: {
         endpoint: options.jaegerEndpoint

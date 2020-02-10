@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.23.0",
+	"version": "0.24.0",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "server/index.js",
 	"scripts": {
@@ -23,11 +23,11 @@
 		"commander": "^4.1.0",
 		"express": "^4.17.1",
 		"graphql": "^14.5.8",
+		"iterall": "latest",
 		"jaeger-client": "^3.17.1",
 		"kafkajs": "^1.11.0",
 		"node-fetch": "latest",
-		"opentracing": "latest",
-		"iterall": "latest"
+		"opentracing": "^0.14.4"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.8.3",

@@ -19,11 +19,25 @@
 import { Database, DocumentCollection } from "arangojs";
 import { $$asyncIterator } from 'iterall';
 import { Span, SpanContext, Tracer } from "opentracing";
+import type { QConfig } from "./config";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
+import QAuth from "./q-auth";
 import type { QType } from "./q-types";
 import { QParams } from "./q-types";
 import { QTracer } from "./tracer";
+
+export type GraphQLRequestContext = {
+    config: QConfig,
+    auth: QAuth,
+    tracer: Tracer,
+
+    remoteAddress?: string,
+    accessKey: string,
+    parentSpan: (Span | SpanContext | typeof undefined),
+
+    shared: Map<string, any>,
+}
 
 type OrderBy = {
     path: string,
@@ -34,12 +48,8 @@ export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Pro
     try {
         return await fetch();
     } catch (err) {
-        const error = {
-            message: err.message || err.ArangoError || err.toString(),
-            code: err.code
-        };
-        log.error('FAILED', op, args, error.message);
-        throw error;
+        log.error('FAILED', op, args, err.message || err.ArangoError || err.toString());
+        throw err;
     }
 }
 
@@ -421,8 +431,8 @@ export class Collection {
     }
 
     queryResolver() {
-        return async (parent: any, args: any, context: any, info: any) => wrap(this.log, 'QUERY', args, async () => {
-            const parentSpan = QTracer.getParentSpan(this.tracer, context);
+        return async (parent: any, args: any, context: GraphQLRequestContext, info: any) => wrap(this.log, 'QUERY', args, async () => {
+            await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
             const q = this.createDatabaseQuery(args, info.operation.selectionSet);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
@@ -431,8 +441,8 @@ export class Collection {
             const stat = await this.ensureQueryStat(q);
             const start = Date.now();
             const result = q.timeout > 0
-                ? await this.queryWaitFor(q, stat, parentSpan)
-                : await this.query(q, stat, parentSpan);
+                ? await this.queryWaitFor(q, stat, context.parentSpan)
+                : await this.query(q, stat, context.parentSpan);
             this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST', context.remoteAddress);
             return result;
         });
@@ -456,7 +466,7 @@ export class Collection {
     }
 
     async query(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
-        return QTracer.trace(this.tracer, `${this.name}.query'`, async (span: Span) => {
+        return QTracer.trace(this.tracer, `${this.name}.query`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
             return this.queryDatabase(q, stat);
         }, parentSpan);
@@ -476,7 +486,7 @@ export class Collection {
 
 
     async queryWaitFor(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
-        return QTracer.trace(this.tracer, `${this.name}.waitFor'`, async (span: Span) => {
+        return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
             let waitFor: ?WaitForListener = null;
             let forceTimerId: ?TimeoutID = null;
