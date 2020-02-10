@@ -53,7 +53,8 @@ pipeline {
 							C_GITURL = sh (script: 'echo ${GIT_URL}',returnStdout: true).trim()
 							C_GITCOMMIT = sh (script: 'echo ${GIT_COMMIT}',returnStdout: true).trim()
 
-							sh "which jq"
+							RELEASE_VERSION = sh (script: "jq -r '.version' package.json",returnStdout: true).trim()
+							echo "RELEASE_VERSION: ${RELEASE_VERSION}"
 						}
 					}
 				}
@@ -166,8 +167,6 @@ pipeline {
 
 							build job: "Infrastructure/startup-edition-node/master", parameters: params
 
-							RELEASE_VERSION = sh (script: "jq -r '.version' package.json",returnStdout: true).trim()
-							echo "RELEASE_VERSION: ${RELEASE_VERSION}"
 
 							docker.withRegistry('', "${G_dockerCred}") {
 								builtImage.push(RELEASE_VERSION)
