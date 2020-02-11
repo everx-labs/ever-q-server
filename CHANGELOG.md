@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.1 – Feb 11, 2020
+
+### New
+- `--trace-service` (or `Q_TRACE_SERVICE` env) specify service name that will be used in jaeger. 
+- `--trace-tags` (or `Q_TRACE_TAGS` env) specify additional tags associated with a spans. 
 
 ## 0.24.0 - Feb 10, 2020
 ### Featured

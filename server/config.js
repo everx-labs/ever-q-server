@@ -47,7 +47,9 @@ export type QConfig = {
         endpoint: string,
     },
     jaeger: {
-        endpoint: string
+        endpoint: string,
+        service: string,
+        tags: { [string]: string }
     }
 }
 
