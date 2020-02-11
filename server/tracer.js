@@ -7,13 +7,15 @@ import { Tracer, Tags, FORMAT_TEXT_MAP, FORMAT_BINARY, Span, SpanContext } from 
 import { initTracerFromEnv as initJaegerTracer } from 'jaeger-client';
 
 export class QTracer {
+    static config: QConfig;
     static create(config: QConfig): Tracer {
+        QTracer.config = config;
         const endpoint = config.jaeger.endpoint;
         if (!endpoint) {
             return noopTracer;
         }
         return initJaegerTracer({
-            serviceName: 'Q Server',
+            serviceName: config.jaeger.service,
             sampler: {
                 type: 'const',
                 param: 1,
@@ -63,6 +65,9 @@ export class QTracer {
         const span = tracer.startSpan(name, { childOf: parentSpan });
         try {
             span.setTag(Tags.SPAN_KIND, 'server');
+            Object.entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
+                span.setTag(name, value);
+            });
             const result = await f(span);
             if (result !== undefined) {
                 span.setTag('result', result);

@@ -46,6 +46,8 @@ type ProgramOptions = {
     host: string,
     port: string,
     jaegerEndpoint: string,
+    traceService: string,
+    traceTags: string,
     authEndpoint: string,
 }
 
@@ -85,10 +87,27 @@ program
 
     .option('-j, --jaeger-endpoint <url>', 'jaeger endpoint',
         process.env.JAEGER_ENDPOINT || '')
+    .option('--trace-service <name>', 'trace service name',
+        process.env.Q_TRACE_SERVICE || 'Q Server')
+    .option('--trace-tags <tags>', 'additional trace tags (comma separated name=value pairs)',
+        process.env.Q_TRACE_TAGS || '')
     .parse(process.argv);
 
 const options: ProgramOptions = program;
 
+function parseTags(s: string): { [string]: string } {
+    const tags: { [string]: string } = {};
+    s.split(',').forEach((t) => {
+        const i = t.indexOf('=');
+        if (i >= 0) {
+            tags[t.substr(0, i)] = t.substr(i + 1);
+        } else {
+            tags[t] = '';
+        }
+    });
+    return tags;
+
+}
 const config: QConfig = {
     server: {
         host: options.host,
@@ -118,7 +137,9 @@ const config: QConfig = {
         endpoint: options.authEndpoint,
     },
     jaeger: {
-        endpoint: options.jaegerEndpoint
+        endpoint: options.jaegerEndpoint,
+        service: options.traceService,
+        tags: parseTags(options.traceTags),
     }
 };
 
