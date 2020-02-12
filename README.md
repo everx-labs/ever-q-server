@@ -41,7 +41,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --trace-service <name>          Q_TRACE_SERVICE              Q Server       Service name assigned to spans
         --trace-tags <tags>             Q_TRACE_TAGS                                Additional comma separated tags (name=value)
 
-        --auth-endpoint <url>           Q_AUTH_ENDPOINT                             Auth server API url
+        --auth-endpoint <url>           AUTH_ENDPOINT                               Auth server API url
 
 # Run
 
