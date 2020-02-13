@@ -3,6 +3,11 @@
 import type { QConfig } from "./config";
 import fetch from 'node-fetch';
 
+export type AccessKey = {
+    key: string,
+    restrictToAccounts?: string[],
+}
+
 export type AccessRights = {
     granted: bool,
     restrictToAccounts: string[],
@@ -60,9 +65,13 @@ export default class QAuth {
         if ((accessKey || '') === '') {
             return deniedAccess;
         }
-        return this.invokeAuth('getAccessRights', {
+        const rights = await this.invokeAuth('getAccessRights', {
             accessKey,
         });
+        if (!rights.restrictToAccounts) {
+            rights.restrictToAccounts = [];
+        }
+        return rights;
     }
 
     async getManagementAccessKey(): Promise<string> {
@@ -72,7 +81,7 @@ export default class QAuth {
 
     async registerAccessKeys(
         account: string,
-        keys: string[],
+        keys: AccessKey[],
         signedManagementAccessKey: string
     ): Promise<number> {
         this.authServiceRequired();

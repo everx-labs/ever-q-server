@@ -17,6 +17,11 @@ extend type Query {
     getManagementAccessKey: String
 }
 
+input AccessKey {
+    key: String
+    restrictToAccounts: [String]
+}
+
 type Mutation {
     postRequests(requests: [Request], accessKey: String): [String]
 
@@ -25,7 +30,7 @@ type Mutation {
         "Account contract address"
         account: String,
         "Access keys associated with account"
-        keys: [String],
+        keys: [AccessKey],
         "Management access key obtained with getManagementAccessKey and signed using key pair of account contract"
         signedManagementAccessKey: String,
     ): Int
