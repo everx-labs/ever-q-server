@@ -52,9 +52,6 @@ export default class QAuth {
         if (!access.granted) {
             throw QAuth.error(401, 'Unauthorized');
         }
-        if (access.restrictToAccounts.length > 0) {
-            throw QAuth.error(500, 'Internal error: GraphQL services doesn\'t support account restrictions yet');
-        }
         return access;
     }
 

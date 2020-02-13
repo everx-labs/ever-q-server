@@ -66,7 +66,9 @@ export class QTracer {
         try {
             span.setTag(Tags.SPAN_KIND, 'server');
             Object.entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
-                span.setTag(name, value);
+                if (name) {
+                    span.setTag(name, value);
+                }
             });
             const result = await f(span);
             if (result !== undefined) {

@@ -22,6 +22,7 @@ import { Span, SpanContext, Tracer } from "opentracing";
 import type { QConfig } from "./config";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
+import type { AccessRights } from "./q-auth";
 import QAuth from "./q-auth";
 import type { QType } from "./q-types";
 import { QParams } from "./q-types";
@@ -48,8 +49,9 @@ export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Pro
     try {
         return await fetch();
     } catch (err) {
+        delete err.response;
         log.error('FAILED', op, args, err.message || err.ArangoError || err.toString());
-        throw err;
+        throw err.ArangoError || err;
     }
 }
 
@@ -360,6 +362,26 @@ export class Collection {
 
     // Queries
 
+    getAdditionalCondition(accessRights: AccessRights, params: QParams) {
+        const accounts = accessRights.restrictToAccounts;
+        if (accounts.length === 0) {
+            return '';
+        }
+        const condition = accounts.length === 1
+            ? `== @${params.add(accounts[0])}`
+            : `IN [${accounts.map(x => `@${params.add(x)}`).join(',')}]`;
+        switch (this.name) {
+        case 'accounts':
+            return `doc._key ${condition}`;
+        case 'transactions':
+            return `doc.account_addr ${condition}`;
+        case 'messages':
+            return `(doc.src ${condition}) OR (doc.dst ${condition})`;
+        default:
+            return 'false';
+        }
+    }
+
     createDatabaseQuery(
         args: {
             filter?: any,
@@ -368,15 +390,19 @@ export class Collection {
             timeout?: number,
         },
         selectionInfo: any,
+        accessRights: AccessRights,
     ): ?DatabaseQuery {
         const filter = args.filter || {};
         const params = new QParams();
-        const filterSection = Object.keys(filter).length > 0
-            ? `FILTER ${this.docType.ql(params, 'doc', filter)}`
-            : '';
-        if (filterSection === 'FILTER false') {
+        const primaryCondition = Object.keys(filter).length > 0 ? this.docType.ql(params, 'doc', filter) : '';
+        const additionalCondition = this.getAdditionalCondition(accessRights, params);
+        if (primaryCondition === 'false' || additionalCondition === 'false') {
             return null;
         }
+        let condition = (primaryCondition && additionalCondition)
+            ? `(${primaryCondition}) AND (${additionalCondition})`
+            : (primaryCondition || additionalCondition);
+        const filterSection = condition ? `FILTER ${condition}` : '';
         const selection = parseSelectionSet(selectionInfo, this.name);
         const orderBy: OrderBy[] = args.orderBy || [];
         const limit: number = args.limit || 50;
@@ -432,8 +458,8 @@ export class Collection {
 
     queryResolver() {
         return async (parent: any, args: any, context: GraphQLRequestContext, info: any) => wrap(this.log, 'QUERY', args, async () => {
-            await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
-            const q = this.createDatabaseQuery(args, info.operation.selectionSet);
+            const accessRights = await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
+            const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
                 return [];
