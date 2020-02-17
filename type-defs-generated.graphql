@@ -204,8 +204,8 @@ type OutMsg {
 	"""
 	msg_type: Int
 	msg_type_name: OutMsgTypeEnum
-	msg: String
-	transaction: String
+	msg_id: String
+	transaction_id: String
 	out_msg: MsgEnvelope
 	reimport: InMsg
 	imported: InMsg
@@ -1130,8 +1130,8 @@ input OutMsgFilter {
 	"""
 	msg_type: IntFilter
 	msg_type_name: OutMsgTypeEnumFilter
-	msg: StringFilter
-	transaction: StringFilter
+	msg_id: StringFilter
+	transaction_id: StringFilter
 	out_msg: MsgEnvelopeFilter
 	reimport: InMsgFilter
 	imported: InMsgFilter
