@@ -21,8 +21,16 @@ export type QLog = {
     debug: (...args: any) => void,
 }
 
+function toJSON(value: any): string {
+    try {
+        return JSON.stringify(value);
+    } catch (error) {
+        return JSON.stringify(`${value}`);
+    }
+}
+
 function str(arg: any): string {
-    const s = typeof arg === 'string' ? arg : JSON.stringify(arg);
+    const s = typeof arg === 'string' ? arg : toJSON(arg);
     return s.split('\n').join('\\n').split('\t').join('\\t');
 }
 

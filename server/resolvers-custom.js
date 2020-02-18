@@ -8,6 +8,7 @@ import type { GraphQLRequestContext } from "./arango-collection";
 import { ensureProtocol } from "./config";
 import path from 'path';
 import fetch from 'node-fetch';
+import type { AccessKey } from "./q-auth";
 import { QTracer } from "./tracer";
 
 function isObject(test: any): boolean {
@@ -184,20 +185,35 @@ async function postRequests(_, args: { requests: Request[], accessKey?: string }
     }, context.parentSpan);
 }
 
-type RegistrationArgs = {
+type ManagementArgs = {
     account?: string,
-    keys?: string[],
     signedManagementAccessKey?: string,
 }
 
-async function registerAccessKeys(_, args: RegistrationArgs, context: GraphQLRequestContextEx,): Promise<number> {
+type RegisterAccessKeysArgs = ManagementArgs & {
+    keys: AccessKey[],
+}
+
+type RevokeAccessKeysArgs = ManagementArgs & {
+    keys: string[],
+}
+
+async function registerAccessKeys(
+    _,
+    args: RegisterAccessKeysArgs,
+    context: GraphQLRequestContextEx,
+): Promise<number> {
     return context.auth.registerAccessKeys(
         args.account || '',
         args.keys || [],
         args.signedManagementAccessKey || '');
 }
 
-async function revokeAccessKeys(_, args: RegistrationArgs, context: GraphQLRequestContextEx,): Promise<number> {
+async function revokeAccessKeys(
+    _,
+    args: RevokeAccessKeysArgs,
+    context: GraphQLRequestContextEx,
+): Promise<number> {
     return context.auth.revokeAccessKeys(
         args.account || '',
         args.keys || [],
