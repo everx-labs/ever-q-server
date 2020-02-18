@@ -17,20 +17,23 @@
 // @flow
 
 import { Database, DocumentCollection } from "arangojs";
-import { $$asyncIterator } from 'iterall';
 import { Span, SpanContext, Tracer } from "opentracing";
+import { CollectionListener, SubscriptionListener, WaitForListener } from "./arango-listeners";
 import type { QConfig } from "./config";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
-import type { AccessRights } from "./q-auth";
-import QAuth from "./q-auth";
-import type { QType } from "./q-types";
-import { QParams } from "./q-types";
+import type { AccessRights } from "./auth";
+import { Auth } from "./auth";
+import type { QType } from "./db-types";
+import { QParams } from "./db-types";
 import { QTracer } from "./tracer";
+import type { FieldSelection } from "./utils";
+import { parseSelectionSet, RegistryMap, selectionToString, wrap } from "./utils";
+
 
 export type GraphQLRequestContext = {
     config: QConfig,
-    auth: QAuth,
+    auth: Auth,
     tracer: Tracer,
 
     remoteAddress?: string,
@@ -45,110 +48,6 @@ type OrderBy = {
     direction: string,
 }
 
-export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
-    try {
-        return await fetch();
-    } catch (err) {
-        delete err.response;
-        log.error('FAILED', op, args, err.message || err.ArangoError || err.toString());
-        throw err.ArangoError || err;
-    }
-}
-
-class RegistryMap<T> {
-    name: string;
-    items: Map<number, T>;
-    lastId: number;
-
-    constructor(name: string) {
-        this.name = name;
-        this.lastId = 0;
-        this.items = new Map();
-    }
-
-    add(item: T): number {
-        let id = this.lastId;
-        do {
-            id = id < Number.MAX_SAFE_INTEGER ? id + 1 : 1;
-        } while (this.items.has(id));
-        this.lastId = id;
-        this.items.set(id, item);
-        return id;
-    }
-
-    remove(id: number) {
-        if (!this.items.delete(id)) {
-            console.error(`Failed to remove ${this.name}: item with id [${id}] does not exists`);
-        }
-    }
-
-    entries(): [number, T][] {
-        return [...this.items.entries()];
-    }
-
-    values(): T[] {
-        return [...this.items.values()];
-    }
-}
-
-export type FieldSelection = {
-    name: string,
-    selection: FieldSelection[],
-}
-
-function parseSelectionSet(selectionSet: any, returnFieldSelection: string): FieldSelection[] {
-    const fields: FieldSelection[] = [];
-    const selections = selectionSet && selectionSet.selections;
-    if (selections) {
-        for (const item of selections) {
-            const name = (item.name && item.name.value) || '';
-            if (name) {
-                const field: FieldSelection = {
-                    name,
-                    selection: parseSelectionSet(item.selectionSet, ''),
-                };
-                if (returnFieldSelection !== '' && field.name === returnFieldSelection) {
-                    return field.selection;
-                }
-                fields.push(field);
-            }
-        }
-    }
-    return fields;
-}
-
-export function selectionToString(selection: FieldSelection[]): string {
-    return selection
-        .filter(x => x.name !== '__typename')
-        .map((field: FieldSelection) => {
-            const fieldSelection = selectionToString(field.selection);
-            return `${field.name}${fieldSelection !== '' ? ` { ${fieldSelection} }` : ''}`;
-        }).join(' ');
-}
-
-function selectFields(doc: any, selection: FieldSelection[]): any {
-    const selected: any = {};
-    if (doc._key) {
-        selected._key = doc._key;
-        selected.id = doc._key;
-    }
-    for (const item of selection) {
-        const onField = {
-            in_message: 'in_msg',
-            out_messages: 'out_msg',
-            signatures: 'id',
-        }[item.name];
-        if (onField !== undefined && doc[onField] !== undefined) {
-            selected[onField] = doc[onField];
-        }
-        const value = doc[item.name];
-        if (value !== undefined) {
-            selected[item.name] = item.selection.length > 0 ? selectFields(value, item.selection) : value;
-        }
-    }
-    return selected;
-}
-
 type DatabaseQuery = {
     filter: any,
     selection: FieldSelection[],
@@ -157,142 +56,7 @@ type DatabaseQuery = {
     timeout: number,
     text: string,
     params: { [string]: any },
-}
-
-export class CollectionListener {
-    collection: Collection;
-    id: ?number;
-    filter: any;
-    selection: FieldSelection[];
-    startTime: number;
-
-    constructor(collection: Collection, filter: any, selection: FieldSelection[]) {
-        this.collection = collection;
-        this.filter = filter;
-        this.selection = selection;
-        this.id = collection.listeners.add(this);
-        this.startTime = Date.now();
-    }
-
-    close() {
-        const id = this.id;
-        if (id !== null && id !== undefined) {
-            this.id = null;
-            this.collection.listeners.remove(id);
-        }
-    }
-
-    onDocumentInsertOrUpdate(doc: any) {
-    }
-
-    getEventCount(): number {
-        return 0;
-    }
-}
-
-
-export class WaitForListener extends CollectionListener {
-    onInsertOrUpdate: (doc: any) => void;
-
-    constructor(collection: Collection, q: DatabaseQuery, onInsertOrUpdate: (doc: any) => void) {
-        super(collection, q.filter, q.selection);
-        this.onInsertOrUpdate = onInsertOrUpdate;
-    }
-
-    onDocumentInsertOrUpdate(doc: any) {
-        this.onInsertOrUpdate(doc);
-    }
-}
-
-
-//$FlowFixMe
-export class SubscriptionListener extends CollectionListener implements AsyncIterator<any> {
-    eventCount: number;
-    pullQueue: ((value: any) => void)[];
-    pushQueue: any[];
-    running: boolean;
-
-    constructor(collection: Collection, filter: any, selection: FieldSelection[]) {
-        super(collection, filter, selection);
-        this.eventCount = 0;
-        this.pullQueue = [];
-        this.pushQueue = [];
-        this.running = true;
-    }
-
-    onDocumentInsertOrUpdate(doc: any) {
-        if (!this.isQueueOverflow() && this.collection.docType.test(null, doc, this.filter)) {
-            this.pushValue({ [this.collection.name]: selectFields(doc, this.selection) });
-        }
-    }
-
-    isQueueOverflow(): boolean {
-        return this.getQueueSize() >= 10;
-    }
-
-    getEventCount(): number {
-        return this.eventCount;
-    }
-
-    getQueueSize(): number {
-        return this.pushQueue.length + this.pullQueue.length;
-    }
-
-    pushValue(value: any) {
-        const queueSize = this.getQueueSize();
-        if (queueSize > this.collection.maxQueueSize) {
-            this.collection.maxQueueSize = queueSize;
-        }
-        this.eventCount += 1;
-        if (this.pullQueue.length !== 0) {
-            this.pullQueue.shift()(this.running
-                ? { value, done: false }
-                : { value: undefined, done: true },
-            );
-        } else {
-            this.pushQueue.push(value);
-        }
-    }
-
-    async next(): Promise<any> {
-        return new Promise((resolve) => {
-            if (this.pushQueue.length !== 0) {
-                resolve(this.running
-                    ? { value: this.pushQueue.shift(), done: false }
-                    : { value: undefined, done: true },
-                );
-            } else {
-                this.pullQueue.push(resolve);
-            }
-        });
-    }
-
-    async return(): Promise<any> {
-        this.close();
-        await this.emptyQueue();
-        return { value: undefined, done: true };
-    }
-
-    async throw(error?: any): Promise<any> {
-        this.close();
-        await this.emptyQueue();
-        return Promise.reject(error);
-    }
-
-    //$FlowFixMe
-    [$$asyncIterator]() {
-        return this;
-    }
-
-    async emptyQueue() {
-        if (this.running) {
-            this.running = false;
-            this.pullQueue.forEach(resolve => resolve({ value: undefined, done: true }));
-            this.pullQueue = [];
-            this.pushQueue = [];
-        }
-    }
-
+    accessRights: AccessRights,
 }
 
 export type QueryStat = {
@@ -301,12 +65,12 @@ export type QueryStat = {
     times: number[],
 }
 
-
 export class Collection {
     name: string;
     docType: QType;
 
     log: QLog;
+    auth: Auth;
     tracer: Tracer;
     db: Database;
     slowDb: Database;
@@ -320,6 +84,7 @@ export class Collection {
         name: string,
         docType: QType,
         logs: QLogs,
+        auth: Auth,
         tracer: Tracer,
         db: Database,
         slowDb: Database,
@@ -328,6 +93,7 @@ export class Collection {
         this.docType = docType;
 
         this.log = logs.create(name);
+        this.auth = auth;
         this.tracer = tracer;
         this.db = db;
         this.slowDb = slowDb;
@@ -341,7 +107,7 @@ export class Collection {
 
     onDocumentInsertOrUpdate(doc: any) {
         for (const listener of this.listeners.values()) {
-            if (this.docType.test(null, doc, listener.filter)) {
+            if (listener.isFiltered(doc)) {
                 listener.onDocumentInsertOrUpdate(doc);
             }
         }
@@ -349,13 +115,16 @@ export class Collection {
 
     subscriptionResolver() {
         return {
-            subscribe: (_: any, args: { filter: any }, _context: any, info: any) => {
-                const result = new SubscriptionListener(
-                    this,
+            subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
+                const accessRights = await this.auth.getAccessRights(context.accessKey);
+                return new SubscriptionListener(
+                    this.name,
+                    this.docType,
+                    this.listeners,
+                    accessRights,
                     args.filter || {},
-                    parseSelectionSet(info.operation.selectionSet, this.name)
+                    parseSelectionSet(info.operation.selectionSet, this.name),
                 );
-                return result;
             },
         }
     }
@@ -434,7 +203,8 @@ export class Collection {
             limit,
             timeout,
             text,
-            params: params.values
+            params: params.values,
+            accessRights,
         };
     }
 
@@ -535,12 +305,19 @@ export class Collection {
                     check();
                 });
                 const onChangesFeed = new Promise((resolve) => {
-                    waitFor = new WaitForListener(this, q, (doc) => {
-                        if (!resolvedBy) {
-                            resolvedBy = 'listener';
-                            resolve([doc]);
-                        }
-                    });
+                    waitFor = new WaitForListener(
+                        this.name,
+                        this.docType,
+                        this.listeners,
+                        q.accessRights,
+                        q.filter,
+                        q.selection,
+                        (doc) => {
+                            if (!resolvedBy) {
+                                resolvedBy = 'listener';
+                                resolve([doc]);
+                            }
+                        });
                 });
                 const onTimeout = new Promise((resolve) => {
                     setTimeout(() => {
@@ -560,6 +337,7 @@ export class Collection {
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
                     waitFor.close();
+                    waitFor = null;
                 }
                 if (forceTimerId !== null) {
                     clearTimeout(forceTimerId);

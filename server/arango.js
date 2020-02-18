@@ -18,14 +18,16 @@
 
 import arangochair from 'arangochair';
 import { Database } from 'arangojs';
-import { Collection, wrap } from "./arango-collection";
+import { Collection} from "./arango-collection";
+import { Auth } from "./auth";
 import type { QConfig, QDbConfig } from './config'
 import { ensureProtocol } from './config';
 import type { QLog } from './logs';
 import QLogs from './logs'
-import type { QType } from './q-types';
+import type { QType } from './db-types';
 import { Account, Block, BlockSignatures, Message, Transaction } from './resolvers-generated';
 import { Tracer } from "opentracing";
+import { wrap } from "./utils";
 
 
 export default class Arango {
@@ -36,6 +38,7 @@ export default class Arango {
     db: Database;
     slowDb: Database;
 
+    auth: Auth;
     tracer: Tracer;
 
     transactions: Collection;
@@ -49,9 +52,15 @@ export default class Arango {
 
     listener: any;
 
-    constructor(config: QConfig, logs: QLogs, tracer: Tracer) {
+    constructor(
+        config: QConfig,
+        logs: QLogs,
+        auth: Auth,
+        tracer: Tracer,
+    ) {
         this.config = config;
         this.log = logs.create('db');
+        this.auth = auth;
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
         this.tracer = tracer;
@@ -82,6 +91,7 @@ export default class Arango {
                 name,
                 docType,
                 logs,
+                this.auth,
                 this.tracer,
                 this.db,
                 slowDb,

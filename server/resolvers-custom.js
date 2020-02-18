@@ -8,7 +8,7 @@ import type { GraphQLRequestContext } from "./arango-collection";
 import { ensureProtocol } from "./config";
 import path from 'path';
 import fetch from 'node-fetch';
-import type { AccessKey } from "./q-auth";
+import type { AccessKey } from "./auth";
 import { QTracer } from "./tracer";
 
 function isObject(test: any): boolean {
