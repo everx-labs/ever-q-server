@@ -20,7 +20,7 @@ import express from 'express';
 import http from 'http';
 
 import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
-import { ConnectionContext } from "subscriptions-transport-ws";
+import { ConnectionContext } from 'subscriptions-transport-ws';
 
 import Arango from './arango';
 
