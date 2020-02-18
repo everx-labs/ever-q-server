@@ -1,6 +1,6 @@
 import Arango from "../server/arango";
 import QLogs from "../server/logs";
-import { convertBigUInt, QParams, resolveBigUInt } from "../server/q-types";
+import { convertBigUInt, QParams, resolveBigUInt } from "../server/db-types";
 import {
     Transaction,
     Account,

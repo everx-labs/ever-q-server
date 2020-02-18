@@ -23,15 +23,16 @@ const deniedAccess: AccessRights = Object.freeze({
     restrictToAccounts: [],
 });
 
-export default class QAuth {
+export class Auth {
     config: QConfig;
 
     constructor(config: QConfig) {
         this.config = config;
     }
 
-    static extractAccessKey(req: any): string {
-        return (req && req.headers && req.headers.authorization) || ''
+    static extractAccessKey(req: any, connection: any): string {
+        return (req && req.headers && (req.headers.accessKey || req.headers.accesskey))
+            || (connection && connection.context && connection.context.accessKey);
     }
 
     static error(code: number, message: string): Error {
@@ -43,14 +44,14 @@ export default class QAuth {
 
     authServiceRequired() {
         if (!this.config.authorization.endpoint) {
-            throw QAuth.error(500, 'Auth service unavailable');
+            throw Auth.error(500, 'Auth service unavailable');
         }
     }
 
     async requireGrantedAccess(accessKey: string | typeof undefined): Promise<AccessRights> {
         const access = await this.getAccessRights(accessKey);
         if (!access.granted) {
-            throw QAuth.error(401, 'Unauthorized');
+            throw Auth.error(401, 'Unauthorized');
         }
         return access;
     }

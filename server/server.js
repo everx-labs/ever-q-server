@@ -19,7 +19,8 @@ import fs from 'fs';
 import express from 'express';
 import http from 'http';
 
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
+import { ConnectionContext } from 'subscriptions-transport-ws';
 
 import Arango from './arango';
 
@@ -32,7 +33,7 @@ import QLogs from './logs';
 import type { QLog } from './logs';
 import { QTracer } from "./tracer";
 import { Tracer } from "opentracing";
-import QAuth from './q-auth';
+import { Auth } from './auth';
 
 type QOptions = {
     config: QConfig,
@@ -55,7 +56,7 @@ export default class TONQServer {
     endPoints: EndPoint[];
     db: Arango;
     tracer: Tracer;
-    auth: QAuth;
+    auth: Auth;
     shared: Map<string, any>;
 
 
@@ -65,11 +66,11 @@ export default class TONQServer {
         this.log = this.logs.create('server');
         this.shared = new Map();
         this.tracer = QTracer.create(options.config);
-        this.auth = new QAuth(options.config);
+        this.auth = new Auth(options.config);
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
-        this.db = new Arango(this.config, this.logs, this.tracer);
+        this.db = new Arango(this.config, this.logs, this.auth, this.tracer);
         this.addEndPoint({
             path: '/graphql/mam',
             resolvers: resolversMam,
@@ -100,9 +101,16 @@ export default class TONQServer {
         const typeDefs = endPoint.typeDefFileNames
             .map(x => fs.readFileSync(x, 'utf-8'))
             .join('\n');
-        const apollo = new ApolloServer({
+        const config: ApolloServerExpressConfig = {
             typeDefs,
             resolvers: endPoint.resolvers,
+            subscriptions: {
+                onConnect(connectionParams: Object, _websocket: WebSocket, _context: ConnectionContext): any {
+                    return {
+                        accessKey: connectionParams.accessKey || connectionParams.accesskey,
+                    }
+                }
+            },
             context: ({ req, connection }) => {
                 return {
                     db: this.db,
@@ -111,11 +119,12 @@ export default class TONQServer {
                     config: this.config,
                     shared: this.shared,
                     remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
-                    accessKey: QAuth.extractAccessKey(req),
+                    accessKey: Auth.extractAccessKey(req, connection),
                     parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
                 };
             },
-        });
+        };
+        const apollo = new ApolloServer(config);
         apollo.applyMiddleware({ app: this.app, path: endPoint.path });
         if (endPoint.supportSubscriptions) {
             apollo.installSubscriptionHandlers(this.server);

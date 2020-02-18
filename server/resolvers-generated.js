@@ -9,7 +9,7 @@ const {
     joinArray,
     enumName,
     createEnumNameResolver,
-} = require('./q-types.js');
+} = require('./db-types.js');
 const OtherCurrency = struct({
     currency: scalar,
     value: bigUInt2,
