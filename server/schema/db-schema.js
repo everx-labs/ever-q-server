@@ -342,8 +342,8 @@ const inMsg = (doc?: string) => ref({ InMsg }, doc);
 
 const OutMsg: TypeDef = {
     msg_type: required(outMsgType()),
-    msg: string(),
-    transaction: string(),
+    msg_id: string(),
+    transaction_id: string(),
     out_msg: msgEnvelope(),
     reimport: inMsg(),
     imported: inMsg(),

@@ -47,8 +47,8 @@ const InMsg = struct({
 const OutMsg = struct({
     msg_type: scalar,
     msg_type_name: enumName('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, None: -1 }),
-    msg: scalar,
-    transaction: scalar,
+    msg_id: scalar,
+    transaction_id: scalar,
     out_msg: MsgEnvelope,
     reimport: InMsg,
     imported: InMsg,
