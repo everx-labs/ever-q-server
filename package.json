@@ -29,7 +29,7 @@
 		"opentracing": "^0.14.4",
 		"subscriptions-transport-ws": "^0.9.16",
 		"ton-client-js": "git@github.com:tonlabs/ton-client-js.git#0.20.100-rc",
-		"ton-client-node-js": "^0.20.0"
+		"ton-client-node-js": "git@github.com:tonlabs/ton-client-node-js.git#0.20.100-rc"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.8.4",
