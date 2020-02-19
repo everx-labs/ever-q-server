@@ -42,6 +42,10 @@ export class Auth {
         return error;
     }
 
+    static unauthorizedError(): Error {
+        return Auth.error(401, 'Unauthorized');
+    }
+
     authServiceRequired() {
         if (!this.config.authorization.endpoint) {
             throw Auth.error(500, 'Auth service unavailable');
@@ -51,7 +55,7 @@ export class Auth {
     async requireGrantedAccess(accessKey: string | typeof undefined): Promise<AccessRights> {
         const access = await this.getAccessRights(accessKey);
         if (!access.granted) {
-            throw Auth.error(401, 'Unauthorized');
+            throw Auth.unauthorizedError();
         }
         return access;
     }

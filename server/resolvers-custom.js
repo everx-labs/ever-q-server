@@ -3,12 +3,14 @@
 import fs from "fs";
 import { Kafka, Producer } from "kafkajs";
 import { Span, FORMAT_BINARY } from 'opentracing';
+import type { TONContracts } from "ton-client-js/types";
 import Arango from "./arango";
 import type { GraphQLRequestContext } from "./arango-collection";
+import { Auth } from "./auth";
 import { ensureProtocol } from "./config";
 import path from 'path';
 import fetch from 'node-fetch';
-import type { AccessKey } from "./auth";
+import type { AccessKey, AccessRights } from "./auth";
 import { QTracer } from "./tracer";
 
 function isObject(test: any): boolean {
@@ -160,7 +162,30 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
     });
 }
 
-async function postRequests(_, args: { requests: Request[], accessKey?: string }, context: GraphQLRequestContextEx): Promise<string[]> {
+async function checkPostRestrictions(
+    contracts: TONContracts,
+    requests: Request[],
+    accessRights: AccessRights,
+) {
+    if (accessRights.restrictToAccounts.length === 0) {
+        return;
+    }
+    const accounts = new Set(accessRights.restrictToAccounts);
+    for (const request: Request of requests) {
+        const message = await contracts.parseMessage({
+            bocBase64: request.body,
+        });
+        if (!accounts.has(message.dst)) {
+            throw Auth.unauthorizedError();
+        }
+    }
+}
+
+async function postRequests(
+    _,
+    args: { requests: Request[], accessKey?: string },
+    context: GraphQLRequestContextEx,
+): Promise<string[]> {
     const requests: ?(Request[]) = args.requests;
     if (!requests) {
         return [];
@@ -169,7 +194,10 @@ async function postRequests(_, args: { requests: Request[], accessKey?: string }
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, "postRequests", async (span: Span) => {
         span.setTag('params', requests);
-        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
+        const accessRights = await context.auth.requireGrantedAccess(
+            context.accessKey || args.accessKey,
+        );
+        await checkPostRestrictions(context.client.contracts, requests, accessRights);
         try {
             if (context.config.requests.mode === 'rest') {
                 await postRequestsUsingRest(requests, context);

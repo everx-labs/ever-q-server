@@ -18,6 +18,7 @@
 
 import { Database, DocumentCollection } from "arangojs";
 import { Span, SpanContext, Tracer } from "opentracing";
+import type { TONClient } from "ton-client-js/types";
 import { CollectionListener, SubscriptionListener, WaitForListener } from "./arango-listeners";
 import type { QConfig } from "./config";
 import type { QLog } from "./logs";
@@ -35,6 +36,7 @@ export type GraphQLRequestContext = {
     config: QConfig,
     auth: Auth,
     tracer: Tracer,
+    client: TONClient,
 
     remoteAddress?: string,
     accessKey: string,

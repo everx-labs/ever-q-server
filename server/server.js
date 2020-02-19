@@ -21,7 +21,8 @@ import http from 'http';
 
 import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import { ConnectionContext } from 'subscriptions-transport-ws';
-
+import type { TONClient } from "ton-client-js/types";
+import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
 import Arango from './arango';
 
 import { createResolvers } from './resolvers-generated';
@@ -56,6 +57,7 @@ export default class TONQServer {
     endPoints: EndPoint[];
     db: Arango;
     tracer: Tracer;
+    client: TONClient;
     auth: Auth;
     shared: Map<string, any>;
 
@@ -87,6 +89,7 @@ export default class TONQServer {
 
 
     async start() {
+        this.client = await TONClientNodeJs.create({ servers: [''] });
         await this.db.start();
         const { host, port } = this.config.server;
         this.server.listen({ host, port }, () => {
@@ -116,6 +119,7 @@ export default class TONQServer {
                     db: this.db,
                     tracer: this.tracer,
                     auth: this.auth,
+                    client: this.client,
                     config: this.config,
                     shared: this.shared,
                     remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
