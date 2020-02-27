@@ -664,7 +664,7 @@ function main(schemaDef: TypeDef) {
             joinArray,
             enumName,
             createEnumNameResolver,
-        } = require('./q-types.js');
+        } = require('./db-types.js');
         `);
         const jsArrayFilters = new Set<string>();
         types.forEach(type => genJSFilter(type, jsArrayFilters));

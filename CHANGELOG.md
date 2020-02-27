@@ -1,6 +1,17 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.2 – Feb 19, 2020
+### Featured
+Ability to set restrictions to accounts for particular access keys
+
+### New
+- `accessKey` optional header used instead of `authorization`.
+- keys passed to `registerAccessKeys` as structures (instead of strings) and include `restrictToAccounts` optional field
+
+### Fixed
+- message & transaction ids in `out_msg_descr`
+
 ## 0.24.1 – Feb 11, 2020
 
 ### New

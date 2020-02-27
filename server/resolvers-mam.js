@@ -3,8 +3,10 @@
 import fs from "fs";
 import path from 'path';
 import Arango from "./arango";
-import { Collection, CollectionListener, selectionToString, SubscriptionListener } from "./arango-collection";
+import { Collection} from "./arango-collection";
+import { CollectionListener, SubscriptionListener } from "./arango-listeners";
 import type { QConfig } from "./config";
+import { selectionToString } from "./utils";
 
 type Context = {
     db: Arango,
