@@ -113,3 +113,37 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
     }
     return selected;
 }
+
+export function toLog(value: any): any {
+    const typeOf = typeof value;
+    switch (typeOf) {
+    case "undefined":
+    case "boolean":
+    case "number":
+    case "bigint":
+    case "symbol":
+        return value;
+    case "string":
+        if (value.length > 80) {
+            return `${value.substr(0, 50)}… [${value.length}]`
+        }
+        return value;
+    case "function":
+        return undefined;
+    default:
+        if (value === null) {
+            return value;
+        }
+        if (Array.isArray(value)) {
+            return value.map(toLog);
+        }
+        const valueToLog: { [string]: any } = {};
+        Object.entries(value).forEach(([n, v]) => {
+            const propertyValueToLog = toLog(v);
+            if (propertyValueToLog !== undefined) {
+                valueToLog[n] = propertyValueToLog;
+            }
+        });
+        return valueToLog
+    }
+}
