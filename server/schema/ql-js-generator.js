@@ -606,9 +606,9 @@ function main(schemaDef: TypeDef) {
             }
             js.writeLn(`            ${field.name}(parent, _args, context) {`);
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.db.${collection}.fetchDocByKey(parent.${onField.name});`);
+                js.writeLn(`                return context.db.${collection}.waitForDoc(parent.${onField.name});`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.db.${collection}.fetchDocsByKeys(parent.${onField.name});`);
+                js.writeLn(`                return context.db.${collection}.waitForDocs(parent.${onField.name});`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }

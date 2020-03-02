@@ -5,6 +5,7 @@ import { tracer as noopTracer } from "opentracing/lib/noop";
 import { Tracer, Tags, FORMAT_TEXT_MAP, FORMAT_BINARY, Span, SpanContext } from "opentracing";
 
 import { initTracerFromEnv as initJaegerTracer } from 'jaeger-client';
+import { cleanError } from "./utils";
 
 export class QTracer {
     static config: QConfig;
@@ -77,9 +78,10 @@ export class QTracer {
             span.finish();
             return result;
         } catch (error) {
-            QTracer.failed(tracer, span, error);
+            const cleaned = cleanError(error);
+            QTracer.failed(tracer, span, cleaned);
             span.finish();
-            throw error;
+            throw cleaned;
         }
     }
 }

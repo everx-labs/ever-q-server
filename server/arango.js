@@ -36,7 +36,6 @@ export default class Arango {
     serverAddress: string;
     databaseName: string;
     db: Database;
-    slowDb: Database;
 
     auth: Auth;
     tracer: Tracer;
