@@ -650,6 +650,10 @@ type BlockMasterConfig {
 }
 
 type BlockMaster {
+	"Min block generation time of shards"
+	min_shard_gen_utime: Float
+	"Max block generation time of shards"
+	max_shard_gen_utime: Float
 	shard_hashes: [BlockMasterShardHashes]
 	shard_fees: [BlockMasterShardFees]
 	recover_create_msg: InMsg
@@ -1669,6 +1673,10 @@ input BlockMasterPrevBlkSignaturesArrayFilter {
 }
 
 input BlockMasterFilter {
+	"Min block generation time of shards"
+	min_shard_gen_utime: FloatFilter
+	"Max block generation time of shards"
+	max_shard_gen_utime: FloatFilter
 	shard_hashes: BlockMasterShardHashesArrayFilter
 	shard_fees: BlockMasterShardFeesArrayFilter
 	recover_create_msg: InMsgFilter

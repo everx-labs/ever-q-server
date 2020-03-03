@@ -320,6 +320,8 @@ Logical time is a component of the TON Blockchain that also plays an important r
         old_depth: ``
     },
     master: {
+        min_shard_gen_utime: 'Min block generation time of shards',
+        max_shard_gen_utime: 'Max block generation time of shards',
         shard_hashes: {
             _doc: `Array of shard hashes`,
             workchain_id: `Uint32 workchain ID`,

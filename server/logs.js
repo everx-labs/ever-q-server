@@ -16,6 +16,8 @@
 
 // @flow
 
+import { toLog } from "./utils";
+
 export type QLog = {
     error: (...args: any) => void,
     debug: (...args: any) => void,
@@ -23,7 +25,7 @@ export type QLog = {
 
 function toJSON(value: any): string {
     try {
-        return JSON.stringify(value);
+        return JSON.stringify(toLog(value));
     } catch (error) {
         return JSON.stringify(`${value}`);
     }

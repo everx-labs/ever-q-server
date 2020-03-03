@@ -5,8 +5,11 @@ All notable changes to this project will be documented in this file.
 ### Featured
 Stability fixes
 
+### New
+- `min_shard_gen_utime` and `max_shard_gen_utime` fields in `block.master`
+
 ### Fixed
-- joined objects sometime returned as `null`
+- joined objects returned as `null` if joined object inserted in DB later than parent object.   
 
 ## 0.24.2 – Feb 19, 2020
 ### Featured
