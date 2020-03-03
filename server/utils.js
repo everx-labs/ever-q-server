@@ -1,12 +1,17 @@
 import type { QLog } from './logs';
 
+export function cleanError(err: any): any {
+    delete err.response;
+    return err.ArangoError || err;
+}
+
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {
         return await fetch();
     } catch (err) {
-        delete err.response;
-        log.error('FAILED', op, args, err.message || err.ArangoError || err.toString());
-        throw err.ArangoError || err;
+        const cleaned = cleanError(err);
+        log.error('FAILED', op, args, cleaned.message || err.toString());
+        throw cleaned;
     }
 }
 
@@ -82,6 +87,9 @@ export function selectionToString(selection: FieldSelection[]): string {
 }
 
 export function selectFields(doc: any, selection: FieldSelection[]): any {
+    if (selection.length === 0) {
+        return doc;
+    }
     const selected: any = {};
     if (doc._key) {
         selected._key = doc._key;
@@ -98,7 +106,9 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
         }
         const value = doc[item.name];
         if (value !== undefined) {
-            selected[item.name] = item.selection.length > 0 ? selectFields(value, item.selection) : value;
+            selected[item.name] = item.selection.length > 0
+                ? selectFields(value, item.selection)
+                : value;
         }
     }
     return selected;

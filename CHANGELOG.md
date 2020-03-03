@@ -1,6 +1,13 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.3 – Mar 2, 2020
+### Featured
+Stability fixes
+
+### Fixed
+- joined objects sometime returned as `null`
+
 ## 0.24.2 – Feb 19, 2020
 ### Featured
 Ability to set restrictions to accounts for particular access keys

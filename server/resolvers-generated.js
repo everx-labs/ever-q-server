@@ -700,7 +700,7 @@ function createResolvers(db) {
                 return parent._key;
             },
             signatures(parent, _args, context) {
-                return context.db.blocks_signatures.fetchDocByKey(parent.id);
+                return context.db.blocks_signatures.waitForDoc(parent.id);
             },
             start_lt(parent) {
                 return resolveBigUInt(1, parent.start_lt);
@@ -781,10 +781,10 @@ function createResolvers(db) {
                 return parent._key;
             },
             in_message(parent, _args, context) {
-                return context.db.messages.fetchDocByKey(parent.in_msg);
+                return context.db.messages.waitForDoc(parent.in_msg);
             },
             out_messages(parent, _args, context) {
-                return context.db.messages.fetchDocsByKeys(parent.out_msgs);
+                return context.db.messages.waitForDocs(parent.out_msgs);
             },
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);
