@@ -509,6 +509,8 @@ const Block: TypeDef = {
         old_depth: u16(docs.block.state_update.old_depth)
     },
     master: {
+        min_shard_gen_utime: u32(docs.block.master.min_shard_gen_utime),
+        max_shard_gen_utime: u32(docs.block.master.max_shard_gen_utime),
         shard_hashes: arrayOf({
             workchain_id: i32(docs.block.master.shard_hashes.workchain_id),
             shard: string(docs.block.master.shard_hashes.shard),

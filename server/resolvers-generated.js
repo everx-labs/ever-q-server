@@ -379,6 +379,8 @@ const BlockMasterShardHashesArray = array(BlockMasterShardHashes);
 const BlockMasterShardFeesArray = array(BlockMasterShardFees);
 const BlockMasterPrevBlkSignaturesArray = array(BlockMasterPrevBlkSignatures);
 const BlockMaster = struct({
+    min_shard_gen_utime: scalar,
+    max_shard_gen_utime: scalar,
     shard_hashes: BlockMasterShardHashesArray,
     shard_fees: BlockMasterShardFeesArray,
     recover_create_msg: InMsg,
