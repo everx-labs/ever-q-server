@@ -179,8 +179,7 @@ type InMsg {
 	"""
 	msg_type: Int
 	msg_type_name: InMsgTypeEnum
-	msg: String
-	transaction: String
+	msg_id: String
 	ihr_fee: String
 	proof_created: String
 	in_msg: MsgEnvelope
@@ -1098,8 +1097,7 @@ input InMsgFilter {
 	"""
 	msg_type: IntFilter
 	msg_type_name: InMsgTypeEnumFilter
-	msg: StringFilter
-	transaction: StringFilter
+	msg_id: StringFilter
 	ihr_fee: StringFilter
 	proof_created: StringFilter
 	in_msg: MsgEnvelopeFilter
