@@ -18,7 +18,7 @@
 
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
-import type { SchemaDoc, TypeDef } from 'ton-labs-dev-ops/src/schema';
+import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
 import {
     grams,
     i32,
@@ -326,8 +326,7 @@ const msgEnvelope = () => ref({ MsgEnvelope });
 
 const InMsg: TypeDef = {
     msg_type: required(inMsgType()),
-    msg: string(),
-    transaction: string(),
+    msg_id: string(),
     ihr_fee: grams(),
     proof_created: string(),
     in_msg: msgEnvelope(),

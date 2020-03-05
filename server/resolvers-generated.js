@@ -32,8 +32,7 @@ const MsgEnvelope = struct({
 const InMsg = struct({
     msg_type: scalar,
     msg_type_name: enumName('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
-    msg: scalar,
-    transaction: scalar,
+    msg_id: scalar,
     ihr_fee: bigUInt2,
     proof_created: scalar,
     in_msg: MsgEnvelope,
