@@ -333,7 +333,7 @@ const InMsg: TypeDef = {
     fwd_fee: grams(),
     out_msg: msgEnvelope(),
     transit_fee: grams(),
-    transaction_id: u64(),
+    transaction_id: string(),
     proof_delivered: string()
 };
 

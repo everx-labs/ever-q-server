@@ -39,7 +39,7 @@ const InMsg = struct({
     fwd_fee: bigUInt2,
     out_msg: MsgEnvelope,
     transit_fee: bigUInt2,
-    transaction_id: bigUInt1,
+    transaction_id: scalar,
     proof_delivered: scalar,
 });
 
@@ -600,9 +600,6 @@ function createResolvers(db) {
             },
             transit_fee(parent) {
                 return resolveBigUInt(2, parent.transit_fee);
-            },
-            transaction_id(parent) {
-                return resolveBigUInt(1, parent.transaction_id);
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
         },
