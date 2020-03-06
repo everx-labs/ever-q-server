@@ -18,7 +18,7 @@
 
 import { Def } from 'ton-labs-dev-ops/dist/src/schema';
 
-import type { SchemaDoc, TypeDef } from 'ton-labs-dev-ops/src/schema';
+import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
 import {
     grams,
     i32,
@@ -326,15 +326,14 @@ const msgEnvelope = () => ref({ MsgEnvelope });
 
 const InMsg: TypeDef = {
     msg_type: required(inMsgType()),
-    msg: string(),
-    transaction: string(),
+    msg_id: string(),
     ihr_fee: grams(),
     proof_created: string(),
     in_msg: msgEnvelope(),
     fwd_fee: grams(),
     out_msg: msgEnvelope(),
     transit_fee: grams(),
-    transaction_id: u64(),
+    transaction_id: string(),
     proof_delivered: string()
 };
 
@@ -509,6 +508,8 @@ const Block: TypeDef = {
         old_depth: u16(docs.block.state_update.old_depth)
     },
     master: {
+        min_shard_gen_utime: u32(docs.block.master.min_shard_gen_utime),
+        max_shard_gen_utime: u32(docs.block.master.max_shard_gen_utime),
         shard_hashes: arrayOf({
             workchain_id: i32(docs.block.master.shard_hashes.workchain_id),
             shard: string(docs.block.master.shard_hashes.shard),

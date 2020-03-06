@@ -67,6 +67,11 @@ export type QueryStat = {
     times: number[],
 }
 
+const accessGranted: AccessRights = {
+    granted: true,
+    restrictToAccounts: []
+};
+
 export class Collection {
     name: string;
     docType: QType;
@@ -165,7 +170,9 @@ export class Collection {
     ): ?DatabaseQuery {
         const filter = args.filter || {};
         const params = new QParams();
-        const primaryCondition = Object.keys(filter).length > 0 ? this.docType.ql(params, 'doc', filter) : '';
+        const primaryCondition = Object.keys(filter).length > 0
+            ? this.docType.ql(params, 'doc', filter)
+            : '';
         const additionalCondition = this.getAdditionalCondition(accessRights, params);
         if (primaryCondition === 'false' || additionalCondition === 'false') {
             return null;
@@ -229,8 +236,15 @@ export class Collection {
     }
 
     queryResolver() {
-        return async (parent: any, args: any, context: GraphQLRequestContext, info: any) => wrap(this.log, 'QUERY', args, async () => {
-            const accessRights = await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
+        return async (
+            parent: any,
+            args: any,
+            context: GraphQLRequestContext,
+            info: any
+        ) => wrap(this.log, 'QUERY', args, async () => {
+            const accessRights = await context.auth.requireGrantedAccess(
+                context.accessKey || args.accessKey,
+            );
             const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
@@ -241,7 +255,12 @@ export class Collection {
             const result = q.timeout > 0
                 ? await this.queryWaitFor(q, stat, context.parentSpan)
                 : await this.query(q, stat, context.parentSpan);
-            this.log.debug('QUERY', args, (Date.now() - start) / 1000, stat.slow ? 'SLOW' : 'FAST', context.remoteAddress);
+            this.log.debug(
+                'QUERY',
+                args,
+                (Date.now() - start) / 1000,
+                stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
+            );
             return result;
         });
     }
@@ -263,27 +282,37 @@ export class Collection {
         span.setTag('params', params);
     }
 
-    async query(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
+    async query(
+        q: DatabaseQuery,
+        stat: QueryStat,
+        parentSpan?: (Span | SpanContext),
+    ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.query`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
             return this.queryDatabase(q, stat);
         }, parentSpan);
     }
 
-    async queryDatabase(q: DatabaseQuery, stat: QueryStat): Promise<any> {
-        const db = stat.slow ? this.slowDb : this.db;
+    async queryDatabase(q: DatabaseQuery, stat: ?QueryStat): Promise<any> {
+        const db = (stat && stat.slow) ? this.slowDb : this.db;
         const start = Date.now();
         const cursor = await db.query(q.text, q.params);
         const result = await cursor.all();
-        stat.times.push(Date.now() - start);
-        if (stat.times.length > 100) {
-            stat.times.shift();
+        if (stat) {
+            stat.times.push(Date.now() - start);
+            if (stat.times.length > 100) {
+                stat.times.shift();
+            }
         }
         return result;
     }
 
 
-    async queryWaitFor(q: DatabaseQuery, stat: QueryStat, parentSpan?: (Span | SpanContext)): Promise<any> {
+    async queryWaitFor(
+        q: DatabaseQuery,
+        stat: ?QueryStat,
+        parentSpan?: (Span | SpanContext),
+    ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
             let waitFor: ?WaitForListener = null;
@@ -349,25 +378,32 @@ export class Collection {
         }, parentSpan);
     }
 
-
     dbCollection(): DocumentCollection {
         return this.db.collection(this.name);
     }
 
-    async fetchDocByKey(key: string): Promise<any> {
+    async waitForDoc(key: string): Promise<any> {
         if (!key) {
             return Promise.resolve(null);
         }
-        return wrap(this.log, 'FETCH_DOC_BY_KEY', key, async () => {
-            return this.dbCollection().document(key, true);
-        });
+        const docs = await this.queryWaitFor({
+            filter: { id: { eq: key } },
+            selection: [],
+            orderBy: [],
+            limit: 1,
+            timeout: 40000,
+            text: `FOR doc IN ${this.name} FILTER doc._key == @key RETURN doc`,
+            params: { key },
+            accessRights: accessGranted,
+        }, null, null);
+        return docs[0];
     }
 
-    async fetchDocsByKeys(keys: string[]): Promise<any[]> {
+    async waitForDocs(keys: string[]): Promise<any[]> {
         if (!keys || keys.length === 0) {
             return Promise.resolve([]);
         }
-        return Promise.all(keys.map(key => this.fetchDocByKey(key)));
+        return Promise.all(keys.map(key => this.waitForDoc(key)));
     }
 }
 

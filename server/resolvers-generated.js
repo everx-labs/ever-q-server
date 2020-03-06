@@ -32,15 +32,14 @@ const MsgEnvelope = struct({
 const InMsg = struct({
     msg_type: scalar,
     msg_type_name: enumName('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
-    msg: scalar,
-    transaction: scalar,
+    msg_id: scalar,
     ihr_fee: bigUInt2,
     proof_created: scalar,
     in_msg: MsgEnvelope,
     fwd_fee: bigUInt2,
     out_msg: MsgEnvelope,
     transit_fee: bigUInt2,
-    transaction_id: bigUInt1,
+    transaction_id: scalar,
     proof_delivered: scalar,
 });
 
@@ -379,6 +378,8 @@ const BlockMasterShardHashesArray = array(BlockMasterShardHashes);
 const BlockMasterShardFeesArray = array(BlockMasterShardFees);
 const BlockMasterPrevBlkSignaturesArray = array(BlockMasterPrevBlkSignatures);
 const BlockMaster = struct({
+    min_shard_gen_utime: scalar,
+    max_shard_gen_utime: scalar,
     shard_hashes: BlockMasterShardHashesArray,
     shard_fees: BlockMasterShardFeesArray,
     recover_create_msg: InMsg,
@@ -600,9 +601,6 @@ function createResolvers(db) {
             transit_fee(parent) {
                 return resolveBigUInt(2, parent.transit_fee);
             },
-            transaction_id(parent) {
-                return resolveBigUInt(1, parent.transaction_id);
-            },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
         },
         OutMsg: {
@@ -700,7 +698,7 @@ function createResolvers(db) {
                 return parent._key;
             },
             signatures(parent, _args, context) {
-                return context.db.blocks_signatures.fetchDocByKey(parent.id);
+                return context.db.blocks_signatures.waitForDoc(parent.id);
             },
             start_lt(parent) {
                 return resolveBigUInt(1, parent.start_lt);
@@ -781,10 +779,10 @@ function createResolvers(db) {
                 return parent._key;
             },
             in_message(parent, _args, context) {
-                return context.db.messages.fetchDocByKey(parent.in_msg);
+                return context.db.messages.waitForDoc(parent.in_msg);
             },
             out_messages(parent, _args, context) {
-                return context.db.messages.fetchDocsByKeys(parent.out_msgs);
+                return context.db.messages.waitForDocs(parent.out_msgs);
             },
             lt(parent) {
                 return resolveBigUInt(1, parent.lt);

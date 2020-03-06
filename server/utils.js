@@ -1,12 +1,17 @@
 import type { QLog } from './logs';
 
+export function cleanError(err: any): any {
+    delete err.response;
+    return err.ArangoError || err;
+}
+
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {
         return await fetch();
     } catch (err) {
-        delete err.response;
-        log.error('FAILED', op, args, err.message || err.ArangoError || err.toString());
-        throw err.ArangoError || err;
+        const cleaned = cleanError(err);
+        log.error('FAILED', op, args, cleaned.message || err.toString());
+        throw cleaned;
     }
 }
 
@@ -82,6 +87,9 @@ export function selectionToString(selection: FieldSelection[]): string {
 }
 
 export function selectFields(doc: any, selection: FieldSelection[]): any {
+    if (selection.length === 0) {
+        return doc;
+    }
     const selected: any = {};
     if (doc._key) {
         selected._key = doc._key;
@@ -98,8 +106,44 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
         }
         const value = doc[item.name];
         if (value !== undefined) {
-            selected[item.name] = item.selection.length > 0 ? selectFields(value, item.selection) : value;
+            selected[item.name] = item.selection.length > 0
+                ? selectFields(value, item.selection)
+                : value;
         }
     }
     return selected;
+}
+
+export function toLog(value: any): any {
+    const typeOf = typeof value;
+    switch (typeOf) {
+    case "undefined":
+    case "boolean":
+    case "number":
+    case "bigint":
+    case "symbol":
+        return value;
+    case "string":
+        if (value.length > 80) {
+            return `${value.substr(0, 50)}… [${value.length}]`
+        }
+        return value;
+    case "function":
+        return undefined;
+    default:
+        if (value === null) {
+            return value;
+        }
+        if (Array.isArray(value)) {
+            return value.map(toLog);
+        }
+        const valueToLog: { [string]: any } = {};
+        Object.entries(value).forEach(([n, v]) => {
+            const propertyValueToLog = toLog(v);
+            if (propertyValueToLog !== undefined) {
+                valueToLog[n] = propertyValueToLog;
+            }
+        });
+        return valueToLog
+    }
 }
