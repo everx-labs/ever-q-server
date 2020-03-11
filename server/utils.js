@@ -1,16 +1,21 @@
 import type { QLog } from './logs';
 
 export function cleanError(err: any): any {
+    if ('ArangoError' in err) {
+        return err.ArangoError;
+    }
+    delete err.request;
     delete err.response;
-    return err.ArangoError || err;
+    return err;
 }
+
 
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {
         return await fetch();
     } catch (err) {
         const cleaned = cleanError(err);
-        log.error('FAILED', op, args, cleaned.message || err.toString());
+        log.error('FAILED', op, args, cleaned);
         throw cleaned;
     }
 }
@@ -114,7 +119,7 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
     return selected;
 }
 
-export function toLog(value: any): any {
+export function toLog(value: any, objs?: Object[]): any {
     const typeOf = typeof value;
     switch (typeOf) {
     case "undefined":
@@ -134,12 +139,16 @@ export function toLog(value: any): any {
         if (value === null) {
             return value;
         }
+        if (objs && objs.includes(value)) {
+            return undefined;
+        }
+        const newObjs = objs ? [...objs, value] : [value];
         if (Array.isArray(value)) {
-            return value.map(toLog);
+            return value.map(x => toLog(x, newObjs));
         }
         const valueToLog: { [string]: any } = {};
         Object.entries(value).forEach(([n, v]) => {
-            const propertyValueToLog = toLog(v);
+            const propertyValueToLog = toLog(v, newObjs);
             if (propertyValueToLog !== undefined) {
                 valueToLog[n] = propertyValueToLog;
             }
