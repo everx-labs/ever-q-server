@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.24.4 – Mar 12, 2020
 ### Featured
-Stability fixes
+Security fixes
 
 ### New
 - `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint
