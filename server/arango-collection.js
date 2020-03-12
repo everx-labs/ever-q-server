@@ -122,8 +122,10 @@ export class Collection {
 
     subscriptionResolver() {
         return {
-            subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
-                const accessRights = await this.auth.getAccessRights(context.accessKey);
+            subscribe: async (_: any, args: { filter: any, accessKey?: string }, context: any, info: any) => {
+                const accessRights = await this.auth.requireGrantedAccess(
+                    context.accessKey || args.accessKey
+                );
                 return new SubscriptionListener(
                     this.name,
                     this.docType,
