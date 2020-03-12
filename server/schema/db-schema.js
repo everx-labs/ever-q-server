@@ -683,7 +683,8 @@ const schema: TypeDef = {
             GasLimitsPrices,
             BlockLimits,
             MsgForwardPrices,
-            ValidatorSet
+            ValidatorSet,
+            ConfigProposalSetup
         }
     }
 };
