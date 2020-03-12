@@ -121,10 +121,11 @@ export class Auth {
 
         const response = await res.json();
         if (response.error) {
-            const error = new Error(response.error.message || response.error.description);
-            (error: any).source = response.error.source || 'graphql';
-            (error: any).code = response.error.code || 500;
-            throw error;
+            throw createError(
+                response.error.code || 500,
+                response.error.message || response.error.description,
+                response.error.source || 'graphql',
+            );
         }
 
         return response.result;
