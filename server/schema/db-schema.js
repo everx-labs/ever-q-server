@@ -435,6 +435,19 @@ const ValidatorSet: TypeDef = {
 
 const validatorSet = (doc?: string) => ref({ ValidatorSet }, doc);
 
+const ConfigProposalSetup: TypeDef = {
+    min_tot_rounds: u8(),
+    max_tot_rounds: u8(),
+    min_wins: u8(),
+    max_losses: u8(),
+    min_store_sec: u32(),
+    max_store_sec: u32(),
+    bit_price: u32(),
+    cell_price: u32(),
+};
+
+const configProposalSetup = (doc?: string) => ref({ ConfigProposalSetup }, doc);
+
 const Block: TypeDef = {
     _doc: docs.block._doc,
     _: { collection: 'blocks' },
@@ -551,6 +564,11 @@ const Block: TypeDef = {
                 capabilities: string(),
             },
             p9: arrayOf(u32(), docs.block.master.config.p9._doc),
+            p11: {
+                _doc: docs.block.master.config.p11._doc,
+                normal_params: configProposalSetup(docs.block.master.config.p11.normal_params),
+                critical_params: configProposalSetup(docs.block.master.config.p11.critical_params),
+            },
             p12: arrayOf({
                 workchain_id: i32(),
                 enabled_since: u32(),
