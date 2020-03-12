@@ -193,6 +193,22 @@ const BlockMasterConfigP8 = struct({
     capabilities: scalar,
 });
 
+const ConfigProposalSetup = struct({
+    min_tot_rounds: scalar,
+    max_tot_rounds: scalar,
+    min_wins: scalar,
+    max_losses: scalar,
+    min_store_sec: scalar,
+    max_store_sec: scalar,
+    bit_price: scalar,
+    cell_price: scalar,
+});
+
+const BlockMasterConfigP11 = struct({
+    normal_params: ConfigProposalSetup,
+    critical_params: ConfigProposalSetup,
+});
+
 const BlockMasterConfigP12 = struct({
     workchain_id: scalar,
     enabled_since: scalar,
@@ -350,6 +366,7 @@ const BlockMasterConfig = struct({
     p7: BlockMasterConfigP7Array,
     p8: BlockMasterConfigP8,
     p9: FloatArray,
+    p11: BlockMasterConfigP11,
     p12: BlockMasterConfigP12Array,
     p14: BlockMasterConfigP14,
     p15: BlockMasterConfigP15,
@@ -834,6 +851,8 @@ module.exports = {
     BlockMasterConfigP6,
     BlockMasterConfigP7,
     BlockMasterConfigP8,
+    ConfigProposalSetup,
+    BlockMasterConfigP11,
     BlockMasterConfigP12,
     BlockMasterConfigP14,
     BlockMasterConfigP15,

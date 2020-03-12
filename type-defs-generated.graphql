@@ -439,6 +439,23 @@ type BlockMasterConfigP8 {
 	capabilities: String
 }
 
+type ConfigProposalSetup {
+	min_tot_rounds: Int
+	max_tot_rounds: Int
+	min_wins: Int
+	max_losses: Int
+	min_store_sec: Float
+	max_store_sec: Float
+	bit_price: Float
+	cell_price: Float
+}
+
+"Config voting setup"
+type BlockMasterConfigP11 {
+	normal_params: ConfigProposalSetup
+	critical_params: ConfigProposalSetup
+}
+
 type BlockMasterConfigP12 {
 	workchain_id: Int
 	enabled_since: Float
@@ -603,6 +620,8 @@ type BlockMasterConfig {
 	"Global version"
 	p8: BlockMasterConfigP8
 	p9: [Float]
+	"Config voting setup"
+	p11: BlockMasterConfigP11
 	"Array of all workchains descriptions"
 	p12: [BlockMasterConfigP12]
 	"Block create fees"
@@ -1411,6 +1430,23 @@ input BlockMasterConfigP8Filter {
 	capabilities: StringFilter
 }
 
+input ConfigProposalSetupFilter {
+	min_tot_rounds: IntFilter
+	max_tot_rounds: IntFilter
+	min_wins: IntFilter
+	max_losses: IntFilter
+	min_store_sec: FloatFilter
+	max_store_sec: FloatFilter
+	bit_price: FloatFilter
+	cell_price: FloatFilter
+}
+
+"Config voting setup"
+input BlockMasterConfigP11Filter {
+	normal_params: ConfigProposalSetupFilter
+	critical_params: ConfigProposalSetupFilter
+}
+
 input BlockMasterConfigP12Filter {
 	workchain_id: IntFilter
 	enabled_since: FloatFilter
@@ -1610,6 +1646,8 @@ input BlockMasterConfigFilter {
 	"Global version"
 	p8: BlockMasterConfigP8Filter
 	p9: FloatArrayFilter
+	"Config voting setup"
+	p11: BlockMasterConfigP11Filter
 	"Array of all workchains descriptions"
 	p12: BlockMasterConfigP12ArrayFilter
 	"Block create fees"
