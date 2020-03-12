@@ -5,6 +5,7 @@ import path from 'path';
 import Arango from "./arango";
 import { Collection} from "./arango-collection";
 import { CollectionListener, SubscriptionListener } from "./arango-listeners";
+import { Auth } from "./auth";
 import type { QConfig } from "./config";
 import { selectionToString } from "./utils";
 
@@ -40,7 +41,7 @@ type Stat = {
 }
 
 type CollectionSummary = {
-    collection: string,
+    name: string,
     count: number,
     indexes: string[],
 }
@@ -54,7 +55,15 @@ function info(): Info {
     };
 }
 
-function stat(_parent: any, _args: any, context: Context): Stat {
+function checkMamAccess(args: any, context: Context) {
+    const accessKey = args.accessKey;
+    if (!accessKey || !context.config.mamAccessKeys.has(accessKey)) {
+        throw Auth.unauthorizedError();
+    }
+}
+
+function stat(_parent: any, args: any, context: Context): Stat {
+    checkMamAccess(args, context);
     const listenerToStat = (listener: CollectionListener ): ListenerStat => {
         return {
             filter: JSON.stringify(listener.filter),
@@ -85,7 +94,8 @@ function stat(_parent: any, _args: any, context: Context): Stat {
     };
 }
 
-async function getCollections(_parent: any, _args: any, context: Context): Promise<CollectionSummary[]> {
+async function getCollections(_parent: any, args: any, context: Context): Promise<CollectionSummary[]> {
+    checkMamAccess(args, context);
     const db: Arango = context.db;
     const collections: CollectionSummary[] = [];
     for (const collection of db.collections) {
@@ -95,7 +105,7 @@ async function getCollections(_parent: any, _args: any, context: Context): Promi
             indexes.push(index.fields.join(', '));
         }
         collections.push({
-            collection: collection.name,
+            name: collection.name,
             count: (await dbCollection.count()).count,
             indexes,
         });
@@ -110,7 +120,5 @@ export const resolversMam = {
         info,
         getCollections,
         stat
-    },
-    Mutation: {
     },
 };

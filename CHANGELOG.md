@@ -1,6 +1,18 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.4 – Mar 12, 2020
+### Featured
+Stability fixes
+
+### New
+- `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint
+
+### Fixed
+- change type of `transaction_id` to string
+- `auth` parameter of subscription changed to `accessKey`
+- invalid `accessKey` treated by subscribe as a valid key
+
 ## 0.24.3 – Mar 2, 2020
 ### Featured
 Stability fixes

@@ -6,9 +6,18 @@ export function cleanError(err: any): any {
     }
     delete err.request;
     delete err.response;
+    error.stack = '...';
     return err;
 }
 
+
+export function createError(code: number, message: string, source: string = 'graphql'): Error {
+    const error = new Error(message);
+    (error: any).source = source;
+    (error: any).code = code;
+    error.stack = '...';
+    return error;
+}
 
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {

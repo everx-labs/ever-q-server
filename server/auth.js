@@ -2,6 +2,7 @@
 
 import type { QConfig } from "./config";
 import fetch from 'node-fetch';
+import { createError } from "./utils";
 
 export type AccessKey = {
     key: string,
@@ -35,20 +36,13 @@ export class Auth {
             || (connection && connection.context && connection.context.accessKey);
     }
 
-    static error(code: number, message: string): Error {
-        const error = new Error(message);
-        (error: any).source = 'graphql';
-        (error: any).code = code;
-        return error;
-    }
-
     static unauthorizedError(): Error {
-        return Auth.error(401, 'Unauthorized');
+        return createError(401, 'Unauthorized');
     }
 
     authServiceRequired() {
         if (!this.config.authorization.endpoint) {
-            throw Auth.error(500, 'Auth service unavailable');
+            throw createError(500, 'Auth service unavailable');
         }
     }
 

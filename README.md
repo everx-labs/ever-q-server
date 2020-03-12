@@ -42,6 +42,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --trace-tags <tags>             Q_TRACE_TAGS                                Additional comma separated tags (name=value)
 
         --auth-endpoint <url>           AUTH_ENDPOINT                               Auth server API url
+        --mam-access-keys <keys>        MAM_ACCESS_KEYS                             Access keys used to authorize mam endpoint access
 
 # Run
 

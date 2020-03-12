@@ -35,17 +35,12 @@ type Stat {
 
 type Query {
     info: Info
-    getChangeLog(id: String): [Float]
-    getCollections: [CollectionSummary]
-    stat: Stat
+    getCollections(accessKey: String): [CollectionSummary]
+    stat(accessKey: String): Stat
 }
 
 enum ChangeLogOp {
     CLEAR
     ON
     OFF
-}
-
-type Mutation {
-    setChangeLog(op: ChangeLogOp): Int
 }
