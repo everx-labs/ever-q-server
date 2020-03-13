@@ -7,6 +7,7 @@ Security fixes
 
 ### New
 - `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint
+- all queries and mutations inside single GraphQL request must use the same access key
 
 ### Fixed
 - change type of `transaction_id` to string

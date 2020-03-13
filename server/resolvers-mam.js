@@ -3,17 +3,10 @@
 import fs from "fs";
 import path from 'path';
 import Arango from "./arango";
-import { Collection} from "./arango-collection";
+import { Collection, mamAccessRequired } from "./arango-collection";
 import { CollectionListener, SubscriptionListener } from "./arango-listeners";
-import { Auth } from "./auth";
-import type { QConfig } from "./config";
+import type { GraphQLRequestContextEx } from "./resolvers-custom";
 import { selectionToString } from "./utils";
-
-type Context = {
-    db: Arango,
-    config: QConfig,
-    shared: Map<string, any>,
-}
 
 type Info = {
     version: string,
@@ -55,15 +48,8 @@ function info(): Info {
     };
 }
 
-function checkMamAccess(args: any, context: Context) {
-    const accessKey = args.accessKey;
-    if (!accessKey || !context.config.mamAccessKeys.has(accessKey)) {
-        throw Auth.unauthorizedError();
-    }
-}
-
-function stat(_parent: any, args: any, context: Context): Stat {
-    checkMamAccess(args, context);
+function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
+    mamAccessRequired(context, args);
     const listenerToStat = (listener: CollectionListener ): ListenerStat => {
         return {
             filter: JSON.stringify(listener.filter),
@@ -94,8 +80,8 @@ function stat(_parent: any, args: any, context: Context): Stat {
     };
 }
 
-async function getCollections(_parent: any, args: any, context: Context): Promise<CollectionSummary[]> {
-    checkMamAccess(args, context);
+async function getCollections(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<CollectionSummary[]> {
+    mamAccessRequired(context, args);
     const db: Arango = context.db;
     const collections: CollectionSummary[] = [];
     for (const collection of db.collections) {

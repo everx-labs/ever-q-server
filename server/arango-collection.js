@@ -29,7 +29,7 @@ import type { QType } from "./db-types";
 import { QParams } from "./db-types";
 import { QTracer } from "./tracer";
 import type { FieldSelection } from "./utils";
-import { parseSelectionSet, RegistryMap, selectionToString, wrap } from "./utils";
+import { createError, parseSelectionSet, RegistryMap, selectionToString, wrap } from "./utils";
 
 
 export type GraphQLRequestContext = {
@@ -40,9 +40,44 @@ export type GraphQLRequestContext = {
 
     remoteAddress?: string,
     accessKey: string,
+    usedAccessKey: ?string,
+    usedMamAccessKey: ?string,
+    multipleAccessKeysDetected?: boolean,
     parentSpan: (Span | SpanContext | typeof undefined),
 
     shared: Map<string, any>,
+}
+
+function checkUsedAccessKey(
+    usedAccessKey: ?string,
+    accessKey: ?string,
+    context: GraphQLRequestContext
+): ?string {
+    if (!accessKey) {
+        return usedAccessKey;
+    }
+    if (usedAccessKey && accessKey !== usedAccessKey) {
+        context.multipleAccessKeysDetected = true;
+        throw createError(
+            400,
+            'Request must use the same access key for all queries and mutations',
+        );
+    }
+    return accessKey;
+}
+
+export async function requireGrantedAccess(context: GraphQLRequestContext, args: any): Promise<AccessRights> {
+    const accessKey = context.accessKey || args.accessKey;
+    context.usedAccessKey = checkUsedAccessKey(context.usedAccessKey, accessKey, context);
+    return context.auth.requireGrantedAccess(accessKey);
+}
+
+export function mamAccessRequired(context: GraphQLRequestContext, args: any) {
+    const accessKey = args.accessKey;
+    context.usedMamAccessKey = checkUsedAccessKey(context.usedMamAccessKey, accessKey, context);
+    if (!accessKey || !context.config.mamAccessKeys.has(accessKey)) {
+        throw Auth.unauthorizedError();
+    }
 }
 
 type OrderBy = {
@@ -122,10 +157,8 @@ export class Collection {
 
     subscriptionResolver() {
         return {
-            subscribe: async (_: any, args: { filter: any, accessKey?: string }, context: any, info: any) => {
-                const accessRights = await this.auth.requireGrantedAccess(
-                    context.accessKey || args.accessKey
-                );
+            subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
+                const accessRights = await requireGrantedAccess(context, args);
                 return new SubscriptionListener(
                     this.name,
                     this.docType,
@@ -244,9 +277,7 @@ export class Collection {
             context: GraphQLRequestContext,
             info: any
         ) => wrap(this.log, 'QUERY', args, async () => {
-            const accessRights = await context.auth.requireGrantedAccess(
-                context.accessKey || args.accessKey,
-            );
+            const accessRights = await requireGrantedAccess(context, args);
             const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
             if (!q) {
                 this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
