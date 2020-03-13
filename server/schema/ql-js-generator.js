@@ -471,7 +471,7 @@ function main(schemaDef: TypeDef) {
     function genQLSubscriptions(types: DbType[]) {
         ql.writeLn('type Subscription {');
         types.forEach((type) => {
-            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, auth: String): ${type.name}`);
+            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, accessKey: String): ${type.name}`);
         });
         ql.writeLn('}');
     }

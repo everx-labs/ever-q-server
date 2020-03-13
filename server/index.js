@@ -49,6 +49,7 @@ type ProgramOptions = {
     traceService: string,
     traceTags: string,
     authEndpoint: string,
+    mamAccessKeys: string,
 }
 
 program
@@ -84,6 +85,8 @@ program
 
     .option('--auth-endpoint <url>', 'auth endpoint',
         process.env.AUTH_ENDPOINT || '')
+    .option('--mam-access-keys <keys>', 'Access keys used to authorize mam endpoint access',
+        process.env.MAM_ACCESS_KEYS || '')
 
     .option('-j, --jaeger-endpoint <url>', 'jaeger endpoint',
         process.env.JAEGER_ENDPOINT || '')
@@ -108,6 +111,7 @@ function parseTags(s: string): { [string]: string } {
     return tags;
 
 }
+
 const config: QConfig = {
     server: {
         host: options.host,
@@ -140,7 +144,8 @@ const config: QConfig = {
         endpoint: options.jaegerEndpoint,
         service: options.traceService,
         tags: parseTags(options.traceTags),
-    }
+    },
+    mamAccessKeys: new Set((options.mamAccessKeys || '').split(',')),
 };
 
 const logs = new QLogs();

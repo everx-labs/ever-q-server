@@ -2271,9 +2271,9 @@ type Query {
 }
 
 type Subscription {
-	messages(filter: MessageFilter, auth: String): Message
-	blocks_signatures(filter: BlockSignaturesFilter, auth: String): BlockSignatures
-	blocks(filter: BlockFilter, auth: String): Block
-	accounts(filter: AccountFilter, auth: String): Account
-	transactions(filter: TransactionFilter, auth: String): Transaction
+	messages(filter: MessageFilter, accessKey: String): Message
+	blocks_signatures(filter: BlockSignaturesFilter, accessKey: String): BlockSignatures
+	blocks(filter: BlockFilter, accessKey: String): Block
+	accounts(filter: AccountFilter, accessKey: String): Account
+	transactions(filter: TransactionFilter, accessKey: String): Transaction
 }

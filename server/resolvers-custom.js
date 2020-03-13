@@ -5,6 +5,7 @@ import { Kafka, Producer } from "kafkajs";
 import { Span, FORMAT_BINARY } from 'opentracing';
 import type { TONContracts } from "ton-client-js/types";
 import Arango from "./arango";
+import { requireGrantedAccess } from "./arango-collection";
 import type { GraphQLRequestContext } from "./arango-collection";
 import { Auth } from "./auth";
 import { ensureProtocol } from "./config";
@@ -36,7 +37,7 @@ type Request = {
     body: string,
 }
 
-type GraphQLRequestContextEx = GraphQLRequestContext & {
+export type GraphQLRequestContextEx = GraphQLRequestContext & {
     db: Arango,
 }
 
@@ -52,7 +53,7 @@ function info(): Info {
 async function getAccountsCount(_parent, args, context: GraphQLRequestContextEx): Promise<number> {
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, 'getAccountsCount', async () => {
-        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
+        await requireGrantedAccess(context, args);
         const result: any = await context.db.query(`RETURN LENGTH(accounts)`, {});
         const counts = (result: number[]);
         return counts.length > 0 ? counts[0] : 0;
@@ -62,7 +63,7 @@ async function getAccountsCount(_parent, args, context: GraphQLRequestContextEx)
 async function getTransactionsCount(_parent, args, context: GraphQLRequestContextEx): Promise<number> {
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, 'getTransactionsCount', async () => {
-        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
+        await requireGrantedAccess(context, args);
         const result: any = await context.db.query(`RETURN LENGTH(transactions)`, {});
         const counts = (result: number[]);
         return counts.length > 0 ? counts[0] : 0;
@@ -72,7 +73,7 @@ async function getTransactionsCount(_parent, args, context: GraphQLRequestContex
 async function getAccountsTotalBalance(_parent, args, context: GraphQLRequestContextEx): Promise<String> {
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, 'getAccountsTotalBalance', async () => {
-        await context.auth.requireGrantedAccess(context.accessKey || args.accessKey);
+        await requireGrantedAccess(context, args);
         /*
         Because arango can not sum BigInt's we need to sum separately:
         hs = SUM of high bits (from 24-bit and higher)
@@ -194,9 +195,7 @@ async function postRequests(
     const tracer = context.db.tracer;
     return QTracer.trace(tracer, "postRequests", async (span: Span) => {
         span.setTag('params', requests);
-        const accessRights = await context.auth.requireGrantedAccess(
-            context.accessKey || args.accessKey,
-        );
+        const accessRights = await requireGrantedAccess(context, args);
         await checkPostRestrictions(context.client.contracts, requests, accessRights);
         try {
             if (context.config.requests.mode === 'rest') {

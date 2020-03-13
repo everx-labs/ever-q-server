@@ -1,21 +1,42 @@
 import type { QLog } from './logs';
 
-export function cleanError(err: any): any {
-    if ('ArangoError' in err) {
-        return err.ArangoError;
+export function cleanError(error: any): any {
+    if ('ArangoError' in error) {
+        return error.ArangoError;
     }
-    delete err.request;
-    delete err.response;
-    return err;
+    delete error.request;
+    delete error.response;
+    error.stack = '...';
+    return error;
 }
 
+
+export function createError(code: number, message: string, source: string = 'graphql'): Error {
+    const error = new Error(message);
+    (error: any).source = source;
+    (error: any).code = code;
+    error.stack = '...';
+    return error;
+}
+
+function isInternalServerError(error: Error): boolean {
+    if ('type' in error && error.type === 'system') {
+        return true;
+    }
+    if ('errno' in error && 'syscall' in error) {
+        return true;
+    }
+}
 
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {
         return await fetch();
     } catch (err) {
-        const cleaned = cleanError(err);
+        let cleaned = cleanError(err);
         log.error('FAILED', op, args, cleaned);
+        if (isInternalServerError(cleaned)) {
+            cleaned = createError(500, 'Service temporary unavailable');
+        }
         throw cleaned;
     }
 }
