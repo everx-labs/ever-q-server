@@ -8,7 +8,7 @@ import {
     createResolvers
 } from "../server/resolvers-generated";
 
-test("BigUInt", () => {
+test.skip("BigUInt", () => {
     expect(convertBigUInt(1, 0x1)).toEqual('11');
     expect(convertBigUInt(1, 0x100)).toEqual('3100');
     expect(convertBigUInt(1, 0x1000000000)).toEqual('a1000000000');

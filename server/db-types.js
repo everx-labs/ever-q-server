@@ -260,9 +260,11 @@ function resolveBigUInt(prefixLength: number, value: any): string {
     if (value === null || value === undefined) {
         return value;
     }
-    return (typeof value === 'number')
+    const hex = (typeof value === 'number')
         ? `0x${value.toString(16)}`
         : `0x${value.toString().substr(prefixLength)}`;
+
+    return BigInt(hex).toString();
 }
 
 function convertBigUInt(prefixLength: number, value: any): string {
@@ -325,20 +327,24 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
 
 // Arrays
 
-function array(itemType: QType): QType {
+function array(resolveItemType: () => QType): QType {
+    let resolved: ?QType = null;
     const ops = {
         all: {
             ql(params, path, filter) {
+                const itemType = resolved || (resolved = resolveItemType());
                 const itemQl = itemType.ql(params, 'CURRENT', filter);
                 return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
             },
             test(parent, value, filter) {
+                const itemType = resolved || (resolved = resolveItemType());
                 const failedIndex = value.findIndex(x => !itemType.test(parent, x, filter));
                 return failedIndex < 0;
             },
         },
         any: {
             ql(params, path, filter) {
+                const itemType = resolved || (resolved = resolveItemType());
                 const paramName = `@v${params.count + 1}`;
                 const itemQl = itemType.ql(params, 'CURRENT', filter);
                 if (itemQl === `CURRENT == ${paramName}`) {
@@ -347,6 +353,7 @@ function array(itemType: QType): QType {
                 return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
             },
             test(parent, value, filter) {
+                const itemType = resolved || (resolved = resolveItemType());
                 const succeededIndex = value.findIndex(x => itemType.test(parent, x, filter));
                 return succeededIndex >= 0;
             }
@@ -420,9 +427,11 @@ export function createEnumNameResolver(onField: string, values: { [string]: numb
 
 // Joins
 
-function join(onField: string, refCollection: string, refType: QType): QType {
+function join(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
+    let resolved: ?QType = null;
     return {
         ql(params, path, filter) {
+            const refType = resolved || (resolved = resolveRefType());
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
             const refQl = refType.ql(params, alias, filter);
@@ -434,13 +443,18 @@ function join(onField: string, refCollection: string, refType: QType): QType {
                     RETURN 1
                 ) > 0`;
         },
-        test: refType.test,
+        test(parent, value, filter) {
+            const refType = resolved || (resolved = resolveRefType());
+            return refType.test(parent, value, filter);
+        }
     };
 }
 
-function joinArray(onField: string, refCollection: string, refType: QType): QType {
+function joinArray(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
+    let resolved: ?QType = null;
     return {
         ql(params, path, filter) {
+            const refType = resolved || (resolved = resolveRefType());
             const refFilter = filter.all || filter.any;
             const all = !!filter.all;
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
@@ -455,7 +469,10 @@ function joinArray(onField: string, refCollection: string, refType: QType): QTyp
                     RETURN 1
                 ) ${all ? `== LENGTH(${on_path})` : '> 0'})`;
         },
-        test: refType.test,
+        test(parent, value, filter) {
+            const refType = resolved || (resolved = resolveRefType());
+            return refType.test(parent, value, filter);
+        }
     };
 }
 

@@ -198,6 +198,8 @@ const Message: TypeDef = {
     value_other: otherCurrencyCollection(docs.message.value_other),
     proof: string(docs.message.proof),
     boc: string(docs.message.boc),
+    src_transaction: join('Transaction', 'id', 'out_msgs[*]'),
+    dst_transaction: join('Transaction', 'id', 'in_msg'),
 };
 
 
@@ -217,9 +219,9 @@ const Transaction: TypeDef = {
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
     in_msg: string(docs.transaction.in_msg),
-    in_message: join({ Message }, 'in_msg'),
+    in_message: join({ Message }, 'in_msg', 'id'),
     out_msgs: arrayOf(string(docs.transaction.out_msgs)),
-    out_messages: arrayOf(join({ Message }, 'out_msgs')),
+    out_messages: arrayOf(join({ Message }, 'out_msgs', 'id')),
     total_fees: grams(docs.transaction.total_fees),
     total_fees_other: otherCurrencyCollection(docs.transaction.total_fees_other),
     old_hash: string(docs.transaction.old_hash),
@@ -662,7 +664,7 @@ const Block: TypeDef = {
             }, docs.block.master.config.p39._doc),
         }
     },
-    signatures: join({ BlockSignatures }, 'id'),
+    signatures: join({ BlockSignatures }, 'id', 'id'),
 };
 
 //Root scheme declaration

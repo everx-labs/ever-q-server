@@ -415,28 +415,40 @@ export class Collection {
         return this.db.collection(this.name);
     }
 
-    async waitForDoc(key: string): Promise<any> {
-        if (!key) {
+    async waitForDoc(fieldValue: any, fieldPath: string): Promise<any> {
+        if (!fieldValue) {
             return Promise.resolve(null);
         }
+        const queryParams = fieldPath.endsWith('[*]')
+            ? {
+                filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
+                text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
+                params: { v: fieldValue },
+            }
+            : {
+                filter: { id: { eq: fieldValue } },
+                text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
+                params: { v: fieldValue },
+            };
+
         const docs = await this.queryWaitFor({
-            filter: { id: { eq: key } },
+            filter: queryParams.filter,
             selection: [],
             orderBy: [],
             limit: 1,
             timeout: 40000,
-            text: `FOR doc IN ${this.name} FILTER doc._key == @key RETURN doc`,
-            params: { key },
+            text: queryParams.text,
+            params: queryParams.params,
             accessRights: accessGranted,
         }, null, null);
         return docs[0];
     }
 
-    async waitForDocs(keys: string[]): Promise<any[]> {
-        if (!keys || keys.length === 0) {
+    async waitForDocs(fieldValues: string[], fieldPath: string): Promise<any[]> {
+        if (!fieldValues || fieldValues.length === 0) {
             return Promise.resolve([]);
         }
-        return Promise.all(keys.map(key => this.waitForDoc(key)));
+        return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath)));
     }
 }
 
