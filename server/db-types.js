@@ -256,15 +256,20 @@ function createScalar(): QType {
     };
 }
 
-function resolveBigUInt(prefixLength: number, value: any): string {
+const BigNumberFormat = {
+   HEX: 'HEX',
+   DEC: 'DEC',
+};
+
+function resolveBigUInt(prefixLength: number, value: any, args: { format?: 'HEX' | 'DEC' }): string {
     if (value === null || value === undefined) {
         return value;
     }
     const hex = (typeof value === 'number')
         ? `0x${value.toString(16)}`
         : `0x${value.toString().substr(prefixLength)}`;
-
-    return BigInt(hex).toString();
+    const format = args.format || BigNumberFormat.HEX;
+    return (format === BigNumberFormat.HEX) ? hex : BigInt(hex).toString();
 }
 
 function convertBigUInt(prefixLength: number, value: any): string {

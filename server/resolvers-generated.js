@@ -596,86 +596,86 @@ const Account = struct({
 function createResolvers(db) {
     return {
         OtherCurrency: {
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
+            value(parent, args) {
+                return resolveBigUInt(2, parent.value, args);
             },
         },
         ExtBlkRef: {
-            end_lt(parent) {
-                return resolveBigUInt(1, parent.end_lt);
+            end_lt(parent, args) {
+                return resolveBigUInt(1, parent.end_lt, args);
             },
         },
         MsgEnvelope: {
-            fwd_fee_remaining(parent) {
-                return resolveBigUInt(2, parent.fwd_fee_remaining);
+            fwd_fee_remaining(parent, args) {
+                return resolveBigUInt(2, parent.fwd_fee_remaining, args);
             },
         },
         InMsg: {
-            ihr_fee(parent) {
-                return resolveBigUInt(2, parent.ihr_fee);
+            ihr_fee(parent, args) {
+                return resolveBigUInt(2, parent.ihr_fee, args);
             },
-            fwd_fee(parent) {
-                return resolveBigUInt(2, parent.fwd_fee);
+            fwd_fee(parent, args) {
+                return resolveBigUInt(2, parent.fwd_fee, args);
             },
-            transit_fee(parent) {
-                return resolveBigUInt(2, parent.transit_fee);
+            transit_fee(parent, args) {
+                return resolveBigUInt(2, parent.transit_fee, args);
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
         },
         OutMsg: {
-            import_block_lt(parent) {
-                return resolveBigUInt(1, parent.import_block_lt);
+            import_block_lt(parent, args) {
+                return resolveBigUInt(1, parent.import_block_lt, args);
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, None: -1 }),
         },
         TransactionStorage: {
-            storage_fees_collected(parent) {
-                return resolveBigUInt(2, parent.storage_fees_collected);
+            storage_fees_collected(parent, args) {
+                return resolveBigUInt(2, parent.storage_fees_collected, args);
             },
-            storage_fees_due(parent) {
-                return resolveBigUInt(2, parent.storage_fees_due);
+            storage_fees_due(parent, args) {
+                return resolveBigUInt(2, parent.storage_fees_due, args);
             },
             status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
         },
         TransactionCredit: {
-            due_fees_collected(parent) {
-                return resolveBigUInt(2, parent.due_fees_collected);
+            due_fees_collected(parent, args) {
+                return resolveBigUInt(2, parent.due_fees_collected, args);
             },
-            credit(parent) {
-                return resolveBigUInt(2, parent.credit);
+            credit(parent, args) {
+                return resolveBigUInt(2, parent.credit, args);
             },
         },
         TransactionCompute: {
-            gas_fees(parent) {
-                return resolveBigUInt(2, parent.gas_fees);
+            gas_fees(parent, args) {
+                return resolveBigUInt(2, parent.gas_fees, args);
             },
-            gas_used(parent) {
-                return resolveBigUInt(1, parent.gas_used);
+            gas_used(parent, args) {
+                return resolveBigUInt(1, parent.gas_used, args);
             },
-            gas_limit(parent) {
-                return resolveBigUInt(1, parent.gas_limit);
+            gas_limit(parent, args) {
+                return resolveBigUInt(1, parent.gas_limit, args);
             },
             compute_type_name: createEnumNameResolver('compute_type', { Skipped: 0, Vm: 1 }),
             skipped_reason_name: createEnumNameResolver('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
         },
         TransactionAction: {
-            total_fwd_fees(parent) {
-                return resolveBigUInt(2, parent.total_fwd_fees);
+            total_fwd_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_fwd_fees, args);
             },
-            total_action_fees(parent) {
-                return resolveBigUInt(2, parent.total_action_fees);
+            total_action_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_action_fees, args);
             },
             status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
         },
         TransactionBounce: {
-            req_fwd_fees(parent) {
-                return resolveBigUInt(2, parent.req_fwd_fees);
+            req_fwd_fees(parent, args) {
+                return resolveBigUInt(2, parent.req_fwd_fees, args);
             },
-            msg_fees(parent) {
-                return resolveBigUInt(2, parent.msg_fees);
+            msg_fees(parent, args) {
+                return resolveBigUInt(2, parent.msg_fees, args);
             },
-            fwd_fees(parent) {
-                return resolveBigUInt(2, parent.fwd_fees);
+            fwd_fees(parent, args) {
+                return resolveBigUInt(2, parent.fwd_fees, args);
             },
             bounce_type_name: createEnumNameResolver('bounce_type', { NegFunds: 0, NoFunds: 1, Ok: 2 }),
         },
@@ -689,14 +689,14 @@ function createResolvers(db) {
             out_messages(parent, _args, context) {
                 return context.db.messages.waitForDocs(parent.out_msgs, '_key');
             },
-            lt(parent) {
-                return resolveBigUInt(1, parent.lt);
+            lt(parent, args) {
+                return resolveBigUInt(1, parent.lt, args);
             },
-            prev_trans_lt(parent) {
-                return resolveBigUInt(1, parent.prev_trans_lt);
+            prev_trans_lt(parent, args) {
+                return resolveBigUInt(1, parent.prev_trans_lt, args);
             },
-            total_fees(parent) {
-                return resolveBigUInt(2, parent.total_fees);
+            total_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_fees, args);
             },
             tr_type_name: createEnumNameResolver('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
@@ -713,79 +713,79 @@ function createResolvers(db) {
             dst_transaction(parent, _args, context) {
                 return context.db.transactions.waitForDoc(parent._key, 'in_msg');
             },
-            created_lt(parent) {
-                return resolveBigUInt(1, parent.created_lt);
+            created_lt(parent, args) {
+                return resolveBigUInt(1, parent.created_lt, args);
             },
-            ihr_fee(parent) {
-                return resolveBigUInt(2, parent.ihr_fee);
+            ihr_fee(parent, args) {
+                return resolveBigUInt(2, parent.ihr_fee, args);
             },
-            fwd_fee(parent) {
-                return resolveBigUInt(2, parent.fwd_fee);
+            fwd_fee(parent, args) {
+                return resolveBigUInt(2, parent.fwd_fee, args);
             },
-            import_fee(parent) {
-                return resolveBigUInt(2, parent.import_fee);
+            import_fee(parent, args) {
+                return resolveBigUInt(2, parent.import_fee, args);
             },
-            value(parent) {
-                return resolveBigUInt(2, parent.value);
+            value(parent, args) {
+                return resolveBigUInt(2, parent.value, args);
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
         },
         BlockValueFlow: {
-            to_next_blk(parent) {
-                return resolveBigUInt(2, parent.to_next_blk);
+            to_next_blk(parent, args) {
+                return resolveBigUInt(2, parent.to_next_blk, args);
             },
-            exported(parent) {
-                return resolveBigUInt(2, parent.exported);
+            exported(parent, args) {
+                return resolveBigUInt(2, parent.exported, args);
             },
-            fees_collected(parent) {
-                return resolveBigUInt(2, parent.fees_collected);
+            fees_collected(parent, args) {
+                return resolveBigUInt(2, parent.fees_collected, args);
             },
-            created(parent) {
-                return resolveBigUInt(2, parent.created);
+            created(parent, args) {
+                return resolveBigUInt(2, parent.created, args);
             },
-            imported(parent) {
-                return resolveBigUInt(2, parent.imported);
+            imported(parent, args) {
+                return resolveBigUInt(2, parent.imported, args);
             },
-            from_prev_blk(parent) {
-                return resolveBigUInt(2, parent.from_prev_blk);
+            from_prev_blk(parent, args) {
+                return resolveBigUInt(2, parent.from_prev_blk, args);
             },
-            minted(parent) {
-                return resolveBigUInt(2, parent.minted);
+            minted(parent, args) {
+                return resolveBigUInt(2, parent.minted, args);
             },
-            fees_imported(parent) {
-                return resolveBigUInt(2, parent.fees_imported);
+            fees_imported(parent, args) {
+                return resolveBigUInt(2, parent.fees_imported, args);
             },
         },
         BlockAccountBlocksTransactions: {
-            lt(parent) {
-                return resolveBigUInt(1, parent.lt);
+            lt(parent, args) {
+                return resolveBigUInt(1, parent.lt, args);
             },
-            total_fees(parent) {
-                return resolveBigUInt(2, parent.total_fees);
+            total_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_fees, args);
             },
         },
         BlockMasterShardHashesDescr: {
-            start_lt(parent) {
-                return resolveBigUInt(1, parent.start_lt);
+            start_lt(parent, args) {
+                return resolveBigUInt(1, parent.start_lt, args);
             },
-            end_lt(parent) {
-                return resolveBigUInt(1, parent.end_lt);
+            end_lt(parent, args) {
+                return resolveBigUInt(1, parent.end_lt, args);
             },
-            fees_collected(parent) {
-                return resolveBigUInt(2, parent.fees_collected);
+            fees_collected(parent, args) {
+                return resolveBigUInt(2, parent.fees_collected, args);
             },
-            funds_created(parent) {
-                return resolveBigUInt(2, parent.funds_created);
+            funds_created(parent, args) {
+                return resolveBigUInt(2, parent.funds_created, args);
             },
             split_type_name: createEnumNameResolver('split_type', { None: 0, Split: 2, Merge: 3 }),
         },
         BlockMasterShardFees: {
-            fees(parent) {
-                return resolveBigUInt(2, parent.fees);
+            fees(parent, args) {
+                return resolveBigUInt(2, parent.fees, args);
             },
-            create(parent) {
-                return resolveBigUInt(2, parent.create);
+            create(parent, args) {
+                return resolveBigUInt(2, parent.create, args);
             },
         },
         BlockSignatures: {
@@ -800,11 +800,11 @@ function createResolvers(db) {
             signatures(parent, _args, context) {
                 return context.db.blocks_signatures.waitForDoc(parent._key, '_key');
             },
-            start_lt(parent) {
-                return resolveBigUInt(1, parent.start_lt);
+            start_lt(parent, args) {
+                return resolveBigUInt(1, parent.start_lt, args);
             },
-            end_lt(parent) {
-                return resolveBigUInt(1, parent.end_lt);
+            end_lt(parent, args) {
+                return resolveBigUInt(1, parent.end_lt, args);
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
@@ -812,14 +812,14 @@ function createResolvers(db) {
             id(parent) {
                 return parent._key;
             },
-            due_payment(parent) {
-                return resolveBigUInt(2, parent.due_payment);
+            due_payment(parent, args) {
+                return resolveBigUInt(2, parent.due_payment, args);
             },
-            last_trans_lt(parent) {
-                return resolveBigUInt(1, parent.last_trans_lt);
+            last_trans_lt(parent, args) {
+                return resolveBigUInt(1, parent.last_trans_lt, args);
             },
-            balance(parent) {
-                return resolveBigUInt(2, parent.balance);
+            balance(parent, args) {
+                return resolveBigUInt(2, parent.balance, args);
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2 }),
         },

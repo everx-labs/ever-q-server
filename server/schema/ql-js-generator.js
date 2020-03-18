@@ -351,7 +351,7 @@ function main(schemaDef: TypeDef) {
                     field.type.name +
                     ']'.repeat(field.arrayDepth);
                 const params = (field.type === scalarTypes.uint64 || field.type === scalarTypes.uint1024)
-                    ? '(decimal: Boolean)'
+                    ? '(format: BigIntFormat)'
                     : '';
                 ql.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
                 const enumDef = field.enumDef;
@@ -626,8 +626,8 @@ function main(schemaDef: TypeDef) {
         });
         bigUIntFields.forEach((field) => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
-            js.writeLn(`            ${field.name}(parent) {`);
-            js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name});`);
+            js.writeLn(`            ${field.name}(parent, args) {`);
+            js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
             js.writeLn(`            },`);
         });
         enumFields.forEach((field) => {
@@ -650,6 +650,18 @@ function main(schemaDef: TypeDef) {
 
         // QL
 
+        ql.writeBlockLn(`
+        """
+        Due to GraphQL limitations big numbers are returned as a string.
+        You can specify format used to string representation for big integers.
+        """
+        enum BigIntFormat {
+            " Hexadecimal representation started with 0x (default) "
+            HEX
+            " Decimal representation "
+            DEC
+        }
+        `);
         ['String', 'Boolean', 'Int', 'Float'].forEach(genQLScalarTypesFilter);
         genQLEnumTypes();
         types.forEach(type => genQLTypeDeclaration(type));

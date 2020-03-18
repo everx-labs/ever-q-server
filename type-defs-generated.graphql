@@ -1,3 +1,13 @@
+"""
+Due to GraphQL limitations big numbers are returned as a string.
+You can specify format used to string representation for big integers.
+"""
+enum BigIntFormat {
+    " Hexadecimal representation started with 0x (default) "
+    HEX
+    " Decimal representation "
+    DEC
+}
 input StringFilter {
 	eq: String
 	ne: String
@@ -150,11 +160,11 @@ enum BounceTypeEnum {
 
 type OtherCurrency {
 	currency: Float
-	value(decimal: Boolean): String
+	value(format: BigIntFormat): String
 }
 
 type ExtBlkRef {
-	end_lt(decimal: Boolean): String
+	end_lt(format: BigIntFormat): String
 	seq_no: Float
 	root_hash: String
 	file_hash: String
@@ -164,7 +174,7 @@ type MsgEnvelope {
 	msg_id: String
 	next_addr: String
 	cur_addr: String
-	fwd_fee_remaining(decimal: Boolean): String
+	fwd_fee_remaining(format: BigIntFormat): String
 }
 
 type InMsg {
@@ -180,12 +190,12 @@ type InMsg {
 	msg_type: Int
 	msg_type_name: InMsgTypeEnum
 	msg_id: String
-	ihr_fee(decimal: Boolean): String
+	ihr_fee(format: BigIntFormat): String
 	proof_created: String
 	in_msg: MsgEnvelope
-	fwd_fee(decimal: Boolean): String
+	fwd_fee(format: BigIntFormat): String
 	out_msg: MsgEnvelope
-	transit_fee(decimal: Boolean): String
+	transit_fee(format: BigIntFormat): String
 	transaction_id: String
 	proof_delivered: String
 }
@@ -208,14 +218,14 @@ type OutMsg {
 	out_msg: MsgEnvelope
 	reimport: InMsg
 	imported: InMsg
-	import_block_lt(decimal: Boolean): String
+	import_block_lt(format: BigIntFormat): String
 }
 
 type TransactionStorage {
 	"This field defines the amount of storage fees collected in grams."
-	storage_fees_collected(decimal: Boolean): String
+	storage_fees_collected(format: BigIntFormat): String
 	"This field represents the amount of due fees in grams, it might be empty."
-	storage_fees_due(decimal: Boolean): String
+	storage_fees_due(format: BigIntFormat): String
 	"""
 	This field represents account status change after the transaction is completed.
 	- 0 – unchanged
@@ -228,8 +238,8 @@ type TransactionStorage {
 
 type TransactionCredit {
 	"The sum of due_fees_collected and credit must equal the value of the message received, plus its ihr_fee if the message has not been received via Instant Hypercube Routing, IHR (otherwise the ihr_fee is awarded to the validators)."
-	due_fees_collected(decimal: Boolean): String
-	credit(decimal: Boolean): String
+	due_fees_collected(format: BigIntFormat): String
+	credit(format: BigIntFormat): String
 	credit_other: [OtherCurrency]
 }
 
@@ -255,10 +265,10 @@ type TransactionCompute {
 	"The flag reflects whether this has resulted in the activation of a previously frozen, uninitialized or non-existent account."
 	account_activated: Boolean
 	"This parameter reflects the total gas fees collected by the validators for executing this transaction. It must be equal to the product of gas_used and gas_price from the current block header."
-	gas_fees(decimal: Boolean): String
-	gas_used(decimal: Boolean): String
+	gas_fees(format: BigIntFormat): String
+	gas_used(format: BigIntFormat): String
 	"This parameter reflects the gas limit for this instance of TVM. It equals the lesser of either the Grams credited in the credit phase from the value of the inbound message divided by the current gas price, or the global per-transaction gas limit."
-	gas_limit(decimal: Boolean): String
+	gas_limit(format: BigIntFormat): String
 	"This parameter may be non-zero only for external inbound messages. It is the lesser of either the amount of gas that can be paid from the account balance or the maximum gas credit"
 	gas_credit: Int
 	mode: Int
@@ -285,8 +295,8 @@ type TransactionAction {
 	"""
 	status_change: Int
 	status_change_name: AccountStatusChangeEnum
-	total_fwd_fees(decimal: Boolean): String
-	total_action_fees(decimal: Boolean): String
+	total_fwd_fees(format: BigIntFormat): String
+	total_action_fees(format: BigIntFormat): String
 	result_code: Int
 	result_arg: Int
 	tot_actions: Int
@@ -308,9 +318,9 @@ type TransactionBounce {
 	bounce_type_name: BounceTypeEnum
 	msg_size_cells: Float
 	msg_size_bits: Float
-	req_fwd_fees(decimal: Boolean): String
-	msg_fees(decimal: Boolean): String
-	fwd_fees(decimal: Boolean): String
+	req_fwd_fees(format: BigIntFormat): String
+	msg_fees(format: BigIntFormat): String
+	fwd_fees(format: BigIntFormat): String
 }
 
 type TransactionSplitInfo {
@@ -352,9 +362,9 @@ type Transaction {
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
-	lt(decimal: Boolean): String
+	lt(format: BigIntFormat): String
 	prev_trans_hash: String
-	prev_trans_lt(decimal: Boolean): String
+	prev_trans_lt(format: BigIntFormat): String
 	now: Float
 	"The number of generated outbound messages (one of the common transaction parameters defined by the specification)"
 	outmsg_cnt: Int
@@ -381,7 +391,7 @@ type Transaction {
 	out_msgs: [String]
 	out_messages: [Message]
 	"Total amount of fees that entails account state change and used in Merkle update"
-	total_fees(decimal: Boolean): String
+	total_fees(format: BigIntFormat): String
 	"Same as above, but reserved for non gram coins that may appear in the blockchain"
 	total_fees_other: [OtherCurrency]
 	"Merkle update field"
@@ -459,22 +469,22 @@ type Message {
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: Int
 	"Logical creation time automatically set by the generating transaction."
-	created_lt(decimal: Boolean): String
+	created_lt(format: BigIntFormat): String
 	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
 	created_at: Float
 	"IHR is disabled for the message."
 	ihr_disabled: Boolean
 	"This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism."
-	ihr_fee(decimal: Boolean): String
+	ihr_fee(format: BigIntFormat): String
 	"Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated."
-	fwd_fee(decimal: Boolean): String
-	import_fee(decimal: Boolean): String
+	fwd_fee(format: BigIntFormat): String
+	import_fee(format: BigIntFormat): String
 	"Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounce: Boolean
 	"Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounced: Boolean
 	"May or may not be present"
-	value(decimal: Boolean): String
+	value(format: BigIntFormat): String
 	"May or may not be present."
 	value_other: [OtherCurrency]
 	"Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64."
@@ -487,38 +497,38 @@ type Message {
 
 type BlockValueFlow {
 	"Amount of grams amount to the next block."
-	to_next_blk(decimal: Boolean): String
+	to_next_blk(format: BigIntFormat): String
 	"Amount of non gram cryptocurrencies to the next block."
 	to_next_blk_other: [OtherCurrency]
 	"Amount of grams exported."
-	exported(decimal: Boolean): String
+	exported(format: BigIntFormat): String
 	"Amount of non gram cryptocurrencies exported."
 	exported_other: [OtherCurrency]
-	fees_collected(decimal: Boolean): String
+	fees_collected(format: BigIntFormat): String
 	fees_collected_other: [OtherCurrency]
-	created(decimal: Boolean): String
+	created(format: BigIntFormat): String
 	created_other: [OtherCurrency]
 	"Amount of grams imported."
-	imported(decimal: Boolean): String
+	imported(format: BigIntFormat): String
 	"Amount of non gram cryptocurrencies imported."
 	imported_other: [OtherCurrency]
 	"Amount of grams transferred from previous block."
-	from_prev_blk(decimal: Boolean): String
+	from_prev_blk(format: BigIntFormat): String
 	"Amount of non gram cryptocurrencies transferred from previous block."
 	from_prev_blk_other: [OtherCurrency]
 	"Amount of grams minted in this block."
-	minted(decimal: Boolean): String
+	minted(format: BigIntFormat): String
 	minted_other: [OtherCurrency]
 	"Amount of import fees in grams"
-	fees_imported(decimal: Boolean): String
+	fees_imported(format: BigIntFormat): String
 	"Amount of import fees in non gram currencies."
 	fees_imported_other: [OtherCurrency]
 }
 
 type BlockAccountBlocksTransactions {
-	lt(decimal: Boolean): String
+	lt(format: BigIntFormat): String
 	transaction_id: String
-	total_fees(decimal: Boolean): String
+	total_fees(format: BigIntFormat): String
 	total_fees_other: [OtherCurrency]
 }
 
@@ -548,9 +558,9 @@ type BlockMasterShardHashesDescr {
 	"Returns last known master block at the time of shard generation."
 	reg_mc_seqno: Float
 	"Logical time of the shardchain start"
-	start_lt(decimal: Boolean): String
+	start_lt(format: BigIntFormat): String
 	"Logical time of the shardchain end"
-	end_lt(decimal: Boolean): String
+	end_lt(format: BigIntFormat): String
 	"Returns last known master block at the time of shard generation. The shard block configuration is derived from that block."
 	root_hash: String
 	"Shard block file hash."
@@ -580,11 +590,11 @@ type BlockMasterShardHashesDescr {
 	split_type_name: SplitTypeEnum
 	split: Float
 	"Amount of fees collected int his shard in grams."
-	fees_collected(decimal: Boolean): String
+	fees_collected(format: BigIntFormat): String
 	"Amount of fees collected int his shard in non gram currencies."
 	fees_collected_other: [OtherCurrency]
 	"Amount of funds created in this shard in grams."
-	funds_created(decimal: Boolean): String
+	funds_created(format: BigIntFormat): String
 	"Amount of funds created in this shard in non gram currencies."
 	funds_created_other: [OtherCurrency]
 }
@@ -602,11 +612,11 @@ type BlockMasterShardFees {
 	workchain_id: Int
 	shard: String
 	"Amount of fees in grams"
-	fees(decimal: Boolean): String
+	fees(format: BigIntFormat): String
 	"Array of fees in non gram crypto currencies"
 	fees_other: [OtherCurrency]
 	"Amount of fees created during shard"
-	create(decimal: Boolean): String
+	create(format: BigIntFormat): String
 	"Amount of non gram fees created in non gram crypto currencies during the block."
 	create_other: [OtherCurrency]
 }
@@ -931,9 +941,9 @@ type Block {
 	Logical creation time automatically set by the block formation start.
 	Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
 	"""
-	start_lt(decimal: Boolean): String
+	start_lt(format: BigIntFormat): String
 	"Logical creation time automatically set by the block formation end."
-	end_lt(decimal: Boolean): String
+	end_lt(format: BigIntFormat): String
 	"uint32 workchain identifier"
 	workchain_id: Int
 	shard: String
@@ -1018,8 +1028,8 @@ type Account {
 	```
 	        
 	"""
-	due_payment(decimal: Boolean): String
-	last_trans_lt(decimal: Boolean): String
+	due_payment(format: BigIntFormat): String
+	last_trans_lt(format: BigIntFormat): String
 	"""
 	
 	```
@@ -1031,7 +1041,7 @@ type Account {
 	```
 	        
 	"""
-	balance(decimal: Boolean): String
+	balance(format: BigIntFormat): String
 	balance_other: [OtherCurrency]
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: Int
