@@ -1,16 +1,16 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.24.4 – Mar 18, 2020
+## 0.24.4 – Mar 12, 2020
 ### Featured
+Scheme enhancements
 Security fixes
-Schema additions
 
 ### New
-- `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint
-- all queries and mutations inside single GraphQL request must use the same access key
-- `src_transaction` and `dst_transaction` joins on `messages`
-- (decimal: Boolean) parameter for all big int fields
+- all big number fields can be optionally parametrized with `format` argument `HEX` (default) or `DEC`.
+- `Message` contains new joined fields `src_transaction` (from where this message was originated) and `dst_transaction` (where this message was handled).  
+- `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint.
+- all queries and mutations inside single GraphQL request must use the same access key.
 
 ### Fixed
 - change type of `transaction_id` to string
