@@ -15,6 +15,7 @@ type DbJoin = {
     collection: string,
     on: string,
     refOn: string,
+    preCondition: string,
 }
 
 type DbType = {
@@ -58,6 +59,10 @@ const scalarTypes = {
     boolean: scalarType('Boolean'),
     string: scalarType('String'),
 };
+
+function isBigInt(type: DbType): boolean {
+    return type === scalarTypes.uint1024 || type === scalarTypes.uint64;
+}
 
 function unresolvedType(name: string): DbType {
     return {
@@ -350,9 +355,7 @@ function main(schemaDef: TypeDef) {
                     '['.repeat(field.arrayDepth) +
                     field.type.name +
                     ']'.repeat(field.arrayDepth);
-                const params = (field.type === scalarTypes.uint64 || field.type === scalarTypes.uint1024)
-                    ? '(decimal: Boolean)'
-                    : '';
+                const params = isBigInt(field.type) ? '(decimal: Boolean)' : '';
                 ql.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
                 const enumDef = field.enumDef;
                 if (enumDef) {
@@ -517,7 +520,8 @@ function main(schemaDef: TypeDef) {
             let typeDeclaration: ?string = null;
             const join = field.join;
             if (join) {
-                typeDeclaration = `join${field.arrayDepth > 0 ? 'Array' : ''}('${join.on}', '${join.refOn}', '${field.type.collection || ''}', () => ${field.type.name})`;
+                const suffix = field.arrayDepth > 0 ? 'Array' : '';
+                typeDeclaration = `join${suffix}('${join.on}', '${join.refOn}', '${field.type.collection || ''}', () => ${field.type.name})`;
             } else if (field.arrayDepth > 0) {
                 typeDeclaration =
                     field.type.name +
@@ -584,7 +588,7 @@ function main(schemaDef: TypeDef) {
      */
     function genJSCustomResolvers(type: DbType) {
         const joinFields = type.fields.filter(x => !!x.join);
-        const bigUIntFields = type.fields.filter((x: DbField) => (x.type === scalarTypes.uint64) || (x.type === scalarTypes.uint1024));
+        const bigUIntFields = type.fields.filter((x: DbField) => isBigInt(x.type));
         const enumFields = type.fields.filter(x => x.enumDef);
         const customResolverRequired = type.collection
             || joinFields.length > 0
@@ -615,10 +619,12 @@ function main(schemaDef: TypeDef) {
                 throw 'Joined type is not a collection.';
             }
             js.writeLn(`            ${field.name}(parent, _args, context) {`);
+            const pre = join.preCondition ? `${join.preCondition} ? ` : '';
+            const post = join.preCondition ? ` : null` : '';
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.db.${collection}.waitForDoc(parent.${on}, '${refOn}');`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}')${post};`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.db.${collection}.waitForDocs(parent.${on}, '${refOn}');`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}')${post};`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }

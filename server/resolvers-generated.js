@@ -708,10 +708,10 @@ function createResolvers(db) {
                 return parent._key;
             },
             src_transaction(parent, _args, context) {
-                return context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]');
+                return parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]') : null;
             },
             dst_transaction(parent, _args, context) {
-                return context.db.transactions.waitForDoc(parent._key, 'in_msg');
+                return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg') : null;
             },
             created_lt(parent) {
                 return resolveBigUInt(1, parent.created_lt);

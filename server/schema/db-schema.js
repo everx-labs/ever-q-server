@@ -198,8 +198,8 @@ const Message: TypeDef = {
     value_other: otherCurrencyCollection(docs.message.value_other),
     proof: string(docs.message.proof),
     boc: string(docs.message.boc),
-    src_transaction: join('Transaction', 'id', 'out_msgs[*]'),
-    dst_transaction: join('Transaction', 'id', 'in_msg'),
+    src_transaction: join('Transaction', 'id', 'out_msgs[*]', 'parent.msg_type !== 1'),
+    dst_transaction: join('Transaction', 'id', 'in_msg', 'parent.msg_type !== 2'),
 };
 
 

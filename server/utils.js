@@ -122,13 +122,19 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
         selected.id = doc._key;
     }
     for (const item of selection) {
-        const onField = {
-            in_message: 'in_msg',
-            out_messages: 'out_msg',
-            signatures: 'id',
+        const requiredForJoin = {
+            in_message: ['in_msg'],
+            out_messages: ['out_msg'],
+            signatures: ['id'],
+            src_transaction: ['id', 'msg_type'],
+            dst_transaction: ['id', 'msg_type'],
         }[item.name];
-        if (onField !== undefined && doc[onField] !== undefined) {
-            selected[onField] = doc[onField];
+        if (requiredForJoin !== undefined) {
+            requiredForJoin.forEach((field) => {
+                if (doc[field] !== undefined) {
+                    selected[field] = doc[field];
+                }
+            });
         }
         const value = doc[item.name];
         if (value !== undefined) {
