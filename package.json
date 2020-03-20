@@ -28,8 +28,8 @@
 		"node-fetch": "^2.6.0",
 		"opentracing": "^0.14.4",
 		"subscriptions-transport-ws": "^0.9.16",
-		"ton-client-js": "^0.20.100",
-		"ton-client-node-js": "^0.20.101"
+		"ton-client-js": "^0.21.2",
+		"ton-client-node-js": "^0.21.0"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.8.4",
