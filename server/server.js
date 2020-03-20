@@ -99,6 +99,7 @@ export default class TONQServer {
                 this.log.debug('GRAPHQL', `http://${host}:${port}${endPoint.path}`);
             });
         });
+        this.server.setTimeout(2147483647);
     }
 
 
