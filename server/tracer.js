@@ -54,7 +54,7 @@ export class QTracer {
     }
 
     static failed(tracer: Tracer, span: Span, error: any) {
-        span.log({ event: 'failed', payload: error });
+        span.log({ event: 'failed', payload: toLog(error) });
     }
 
     static async trace<T>(

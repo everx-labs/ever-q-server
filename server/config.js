@@ -50,7 +50,8 @@ export type QConfig = {
         endpoint: string,
         service: string,
         tags: { [string]: string }
-    }
+    },
+    mamAccessKeys: Set<string>,
 }
 
 export function ensureProtocol(address: string, defaultProtocol: string): string {

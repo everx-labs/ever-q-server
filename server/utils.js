@@ -1,16 +1,42 @@
 import type { QLog } from './logs';
 
-export function cleanError(err: any): any {
-    delete err.response;
-    return err.ArangoError || err;
+export function cleanError(error: any): any {
+    if ('ArangoError' in error) {
+        return error.ArangoError;
+    }
+    delete error.request;
+    delete error.response;
+    error.stack = '...';
+    return error;
+}
+
+
+export function createError(code: number, message: string, source: string = 'graphql'): Error {
+    const error = new Error(message);
+    (error: any).source = source;
+    (error: any).code = code;
+    error.stack = '...';
+    return error;
+}
+
+function isInternalServerError(error: Error): boolean {
+    if ('type' in error && error.type === 'system') {
+        return true;
+    }
+    if ('errno' in error && 'syscall' in error) {
+        return true;
+    }
 }
 
 export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
     try {
         return await fetch();
     } catch (err) {
-        const cleaned = cleanError(err);
-        log.error('FAILED', op, args, cleaned.message || err.toString());
+        let cleaned = cleanError(err);
+        log.error('FAILED', op, args, cleaned);
+        if (isInternalServerError(cleaned)) {
+            cleaned = createError(500, 'Service temporary unavailable');
+        }
         throw cleaned;
     }
 }
@@ -96,13 +122,19 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
         selected.id = doc._key;
     }
     for (const item of selection) {
-        const onField = {
-            in_message: 'in_msg',
-            out_messages: 'out_msg',
-            signatures: 'id',
+        const requiredForJoin = {
+            in_message: ['in_msg'],
+            out_messages: ['out_msg'],
+            signatures: ['id'],
+            src_transaction: ['id', 'msg_type'],
+            dst_transaction: ['id', 'msg_type'],
         }[item.name];
-        if (onField !== undefined && doc[onField] !== undefined) {
-            selected[onField] = doc[onField];
+        if (requiredForJoin !== undefined) {
+            requiredForJoin.forEach((field) => {
+                if (doc[field] !== undefined) {
+                    selected[field] = doc[field];
+                }
+            });
         }
         const value = doc[item.name];
         if (value !== undefined) {
@@ -114,7 +146,7 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
     return selected;
 }
 
-export function toLog(value: any): any {
+export function toLog(value: any, objs?: Object[]): any {
     const typeOf = typeof value;
     switch (typeOf) {
     case "undefined":
@@ -134,12 +166,16 @@ export function toLog(value: any): any {
         if (value === null) {
             return value;
         }
+        if (objs && objs.includes(value)) {
+            return undefined;
+        }
+        const newObjs = objs ? [...objs, value] : [value];
         if (Array.isArray(value)) {
-            return value.map(toLog);
+            return value.map(x => toLog(x, newObjs));
         }
         const valueToLog: { [string]: any } = {};
         Object.entries(value).forEach(([n, v]) => {
-            const propertyValueToLog = toLog(v);
+            const propertyValueToLog = toLog(v, newObjs);
             if (propertyValueToLog !== undefined) {
                 valueToLog[n] = propertyValueToLog;
             }

@@ -1,6 +1,25 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.4 – Mar 20, 2020
+### Featured
+Scheme enhancements
+Security fixes
+
+### New
+- all big number fields can be optionally parametrized with `format` argument `HEX` (default) or `DEC`.
+- `Message` contains new joined fields `src_transaction` (from where this message was originated) and `dst_transaction` (where this message was handled).  
+- `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint.
+- all queries and mutations inside single GraphQL request must use the same access key.
+
+### Fixed
+- change type of `transaction_id` to string
+- `auth` parameter of subscription changed to `accessKey`
+- invalid `accessKey` treated by subscribe as a valid key
+- all internal errors are logged as is but converted to `Service temporary unavailable` before sending to client
+- server side stack traces are truncated before sending to client
+- waitFor 2 minute limit timeout has been removed  
+
 ## 0.24.3 – Mar 2, 2020
 ### Featured
 Stability fixes

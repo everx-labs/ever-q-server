@@ -14,6 +14,8 @@ const DbTypeCategory = {
 type DbJoin = {
     collection: string,
     on: string,
+    refOn: string,
+    preCondition: string,
 }
 
 type DbType = {
@@ -57,6 +59,10 @@ const scalarTypes = {
     boolean: scalarType('Boolean'),
     string: scalarType('String'),
 };
+
+function isBigInt(type: DbType): boolean {
+    return type === scalarTypes.uint1024 || type === scalarTypes.uint64;
+}
 
 function unresolvedType(name: string): DbType {
     return {
@@ -255,8 +261,8 @@ function main(schemaDef: TypeDef) {
                 return;
             }
             if (resolving.has(type.name)) {
-                console.log(`Circular reference to type ${type.name}`);
-                process.exit(1);
+                console.log(`WARNING: Circular reference to type ${type.name}`);
+                return;
             }
             resolving.add(type.name);
             type.fields.forEach((field) => {
@@ -349,7 +355,10 @@ function main(schemaDef: TypeDef) {
                     '['.repeat(field.arrayDepth) +
                     field.type.name +
                     ']'.repeat(field.arrayDepth);
-                ql.writeLn(`\t${field.name}: ${typeDeclaration}`);
+                const params = isBigInt(field.type)
+                    ? '(format: BigIntFormat)'
+                    : '';
+                ql.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
                 const enumDef = field.enumDef;
                 if (enumDef) {
                     ql.writeLn(`\t${field.name}_name: ${enumDef.name}Enum`);
@@ -471,7 +480,7 @@ function main(schemaDef: TypeDef) {
     function genQLSubscriptions(types: DbType[]) {
         ql.writeLn('type Subscription {');
         types.forEach((type) => {
-            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, auth: String): ${type.name}`);
+            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, accessKey: String): ${type.name}`);
         });
         ql.writeLn('}');
     }
@@ -497,7 +506,7 @@ function main(schemaDef: TypeDef) {
                         ? getScalarResolverName(field)
                         : itemTypeName;
                     js.writeBlockLn(`
-                const ${filterName} = array(${itemResolverName});
+                const ${filterName} = array(() => ${itemResolverName});
                 `);
                 });
                 itemTypeName += 'Array';
@@ -513,7 +522,8 @@ function main(schemaDef: TypeDef) {
             let typeDeclaration: ?string = null;
             const join = field.join;
             if (join) {
-                typeDeclaration = `join${field.arrayDepth > 0 ? 'Array' : ''}('${join.on}', '${field.type.collection || ''}', ${field.type.name})`;
+                const suffix = field.arrayDepth > 0 ? 'Array' : '';
+                typeDeclaration = `join${suffix}('${join.on}', '${join.refOn}', '${field.type.collection || ''}', () => ${field.type.name})`;
             } else if (field.arrayDepth > 0) {
                 typeDeclaration =
                     field.type.name +
@@ -580,7 +590,7 @@ function main(schemaDef: TypeDef) {
      */
     function genJSCustomResolvers(type: DbType) {
         const joinFields = type.fields.filter(x => !!x.join);
-        const bigUIntFields = type.fields.filter((x: DbField) => (x.type === scalarTypes.uint64) || (x.type === scalarTypes.uint1024));
+        const bigUIntFields = type.fields.filter((x: DbField) => isBigInt(x.type));
         const enumFields = type.fields.filter(x => x.enumDef);
         const customResolverRequired = type.collection
             || joinFields.length > 0
@@ -596,19 +606,27 @@ function main(schemaDef: TypeDef) {
             js.writeLn('            },');
         }
         joinFields.forEach((field) => {
-            const onField = type.fields.find(x => x.name === (field.join && field.join.on) || '');
+            const join = field.join;
+            if (!join) {
+                return;
+            }
+            const onField = type.fields.find(x => x.name === join.on);
             if (!onField) {
                 throw 'Join on field does not exist.';
             }
+            const on = join.on === 'id' ? '_key' : (join.on || '_key');
+            const refOn = join.refOn === 'id' ? '_key' : (join.refOn || '_key');
             const collection = field.type.collection;
             if (!collection) {
                 throw 'Joined type is not a collection.';
             }
             js.writeLn(`            ${field.name}(parent, _args, context) {`);
+            const pre = join.preCondition ? `${join.preCondition} ? ` : '';
+            const post = join.preCondition ? ` : null` : '';
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.db.${collection}.waitForDoc(parent.${onField.name});`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}')${post};`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.db.${collection}.waitForDocs(parent.${onField.name});`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}')${post};`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }
@@ -616,8 +634,8 @@ function main(schemaDef: TypeDef) {
         });
         bigUIntFields.forEach((field) => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
-            js.writeLn(`            ${field.name}(parent) {`);
-            js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name});`);
+            js.writeLn(`            ${field.name}(parent, args) {`);
+            js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
             js.writeLn(`            },`);
         });
         enumFields.forEach((field) => {
@@ -640,6 +658,18 @@ function main(schemaDef: TypeDef) {
 
         // QL
 
+        ql.writeBlockLn(`
+        """
+        Due to GraphQL limitations big numbers are returned as a string.
+        You can specify format used to string representation for big integers.
+        """
+        enum BigIntFormat {
+            " Hexadecimal representation started with 0x (default) "
+            HEX
+            " Decimal representation "
+            DEC
+        }
+        `);
         ['String', 'Boolean', 'Int', 'Float'].forEach(genQLScalarTypesFilter);
         genQLEnumTypes();
         types.forEach(type => genQLTypeDeclaration(type));

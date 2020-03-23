@@ -366,6 +366,11 @@ Logical time is a component of the TON Blockchain that also plays an important r
                 capabilities: ``,
             },
             p9: `Mandatory params`,
+            p11: {
+                _doc: `Config voting setup`,
+                normal_params: ``,
+                critical_params: ``,
+            },
             p12: {
                 _doc: `Array of all workchains descriptions`,
                 workchain_id: ``,

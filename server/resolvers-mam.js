@@ -3,16 +3,10 @@
 import fs from "fs";
 import path from 'path';
 import Arango from "./arango";
-import { Collection} from "./arango-collection";
+import { Collection, mamAccessRequired } from "./arango-collection";
 import { CollectionListener, SubscriptionListener } from "./arango-listeners";
-import type { QConfig } from "./config";
+import type { GraphQLRequestContextEx } from "./resolvers-custom";
 import { selectionToString } from "./utils";
-
-type Context = {
-    db: Arango,
-    config: QConfig,
-    shared: Map<string, any>,
-}
 
 type Info = {
     version: string,
@@ -40,7 +34,7 @@ type Stat = {
 }
 
 type CollectionSummary = {
-    collection: string,
+    name: string,
     count: number,
     indexes: string[],
 }
@@ -54,7 +48,8 @@ function info(): Info {
     };
 }
 
-function stat(_parent: any, _args: any, context: Context): Stat {
+function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
+    mamAccessRequired(context, args);
     const listenerToStat = (listener: CollectionListener ): ListenerStat => {
         return {
             filter: JSON.stringify(listener.filter),
@@ -85,7 +80,8 @@ function stat(_parent: any, _args: any, context: Context): Stat {
     };
 }
 
-async function getCollections(_parent: any, _args: any, context: Context): Promise<CollectionSummary[]> {
+async function getCollections(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<CollectionSummary[]> {
+    mamAccessRequired(context, args);
     const db: Arango = context.db;
     const collections: CollectionSummary[] = [];
     for (const collection of db.collections) {
@@ -95,7 +91,7 @@ async function getCollections(_parent: any, _args: any, context: Context): Promi
             indexes.push(index.fields.join(', '));
         }
         collections.push({
-            collection: collection.name,
+            name: collection.name,
             count: (await dbCollection.count()).count,
             indexes,
         });
@@ -110,7 +106,5 @@ export const resolversMam = {
         info,
         getCollections,
         stat
-    },
-    Mutation: {
     },
 };

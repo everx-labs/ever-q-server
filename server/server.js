@@ -24,6 +24,7 @@ import { ConnectionContext } from 'subscriptions-transport-ws';
 import type { TONClient } from "ton-client-js/types";
 import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
 import Arango from './arango';
+import type { GraphQLRequestContext } from "./arango-collection";
 
 import { createResolvers } from './resolvers-generated';
 import { attachCustomResolvers } from "./resolvers-custom";
@@ -35,6 +36,7 @@ import type { QLog } from './logs';
 import { QTracer } from "./tracer";
 import { Tracer } from "opentracing";
 import { Auth } from './auth';
+import { createError } from "./utils";
 
 type QOptions = {
     config: QConfig,
@@ -97,6 +99,7 @@ export default class TONQServer {
                 this.log.debug('GRAPHQL', `http://${host}:${port}${endPoint.path}`);
             });
         });
+        this.server.setTimeout(2147483647);
     }
 
 
@@ -127,6 +130,23 @@ export default class TONQServer {
                     parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
                 };
             },
+            plugins: [
+                {
+                    requestDidStart(_requestContext) {
+                        return {
+                            willSendResponse(ctx) {
+                                const context: GraphQLRequestContext = ctx.context;
+                                if (context.multipleAccessKeysDetected) {
+                                    throw createError(
+                                        400,
+                                        'Request must use the same access key for all queries and mutations',
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
         };
         const apollo = new ApolloServer(config);
         apollo.applyMiddleware({ app: this.app, path: endPoint.path });

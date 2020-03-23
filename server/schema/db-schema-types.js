@@ -1,10 +1,20 @@
 // @flow
 import { Def } from "ton-labs-dev-ops/dist/src/schema";
 import type { IntSizeType, TypeDef } from "ton-labs-dev-ops/src/schema";
+
 const { ref, arrayOf } = Def;
 
-export const join = (refDef: { [string]: TypeDef }, on: string): TypeDef => {
-    return { ...ref(refDef), _: { join: { on } } }
+export const join = (refDef: (string | { [string]: TypeDef }), on: string, refOn: string, preCondition?: string): TypeDef => {
+    return {
+        ...ref(refDef),
+        _: {
+            join: {
+                on,
+                refOn,
+                preCondition: (preCondition || ''),
+            }
+        }
+    }
 };
 
 export const withDoc = (def: TypeDef, doc?: string) => ({

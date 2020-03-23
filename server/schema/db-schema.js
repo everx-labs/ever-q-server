@@ -198,6 +198,8 @@ const Message: TypeDef = {
     value_other: otherCurrencyCollection(docs.message.value_other),
     proof: string(docs.message.proof),
     boc: string(docs.message.boc),
+    src_transaction: join('Transaction', 'id', 'out_msgs[*]', 'parent.msg_type !== 1'),
+    dst_transaction: join('Transaction', 'id', 'in_msg', 'parent.msg_type !== 2'),
 };
 
 
@@ -217,9 +219,9 @@ const Transaction: TypeDef = {
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
     in_msg: string(docs.transaction.in_msg),
-    in_message: join({ Message }, 'in_msg'),
+    in_message: join({ Message }, 'in_msg', 'id'),
     out_msgs: arrayOf(string(docs.transaction.out_msgs)),
-    out_messages: arrayOf(join({ Message }, 'out_msgs')),
+    out_messages: arrayOf(join({ Message }, 'out_msgs', 'id')),
     total_fees: grams(docs.transaction.total_fees),
     total_fees_other: otherCurrencyCollection(docs.transaction.total_fees_other),
     old_hash: string(docs.transaction.old_hash),
@@ -435,6 +437,19 @@ const ValidatorSet: TypeDef = {
 
 const validatorSet = (doc?: string) => ref({ ValidatorSet }, doc);
 
+const ConfigProposalSetup: TypeDef = {
+    min_tot_rounds: u8(),
+    max_tot_rounds: u8(),
+    min_wins: u8(),
+    max_losses: u8(),
+    min_store_sec: u32(),
+    max_store_sec: u32(),
+    bit_price: u32(),
+    cell_price: u32(),
+};
+
+const configProposalSetup = (doc?: string) => ref({ ConfigProposalSetup }, doc);
+
 const Block: TypeDef = {
     _doc: docs.block._doc,
     _: { collection: 'blocks' },
@@ -551,6 +566,11 @@ const Block: TypeDef = {
                 capabilities: string(),
             },
             p9: arrayOf(u32(), docs.block.master.config.p9._doc),
+            p11: {
+                _doc: docs.block.master.config.p11._doc,
+                normal_params: configProposalSetup(docs.block.master.config.p11.normal_params),
+                critical_params: configProposalSetup(docs.block.master.config.p11.critical_params),
+            },
             p12: arrayOf({
                 workchain_id: i32(),
                 enabled_since: u32(),
@@ -644,7 +664,7 @@ const Block: TypeDef = {
             }, docs.block.master.config.p39._doc),
         }
     },
-    signatures: join({ BlockSignatures }, 'id'),
+    signatures: join({ BlockSignatures }, 'id', 'id'),
 };
 
 //Root scheme declaration
@@ -665,7 +685,8 @@ const schema: TypeDef = {
             GasLimitsPrices,
             BlockLimits,
             MsgForwardPrices,
-            ValidatorSet
+            ValidatorSet,
+            ConfigProposalSetup
         }
     }
 };
