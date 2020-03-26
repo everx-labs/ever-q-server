@@ -825,6 +825,7 @@ type BlockMasterConfig {
 	"Global version"
 	p8: BlockMasterConfigP8
 	p9: [Float]
+	p10: [Float]
 	"Config voting setup"
 	p11: BlockMasterConfigP11
 	"Array of all workchains descriptions"
@@ -951,6 +952,8 @@ type Block {
 	min_ref_mc_seqno: Float
 	"Returns a number of a previous key block."
 	prev_key_block_seqno: Float
+	gen_software_version: Float
+	gen_software_capabilities: String
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
 	rand_seed: String
@@ -1935,6 +1938,7 @@ input BlockMasterConfigFilter {
 	"Global version"
 	p8: BlockMasterConfigP8Filter
 	p9: FloatArrayFilter
+	p10: FloatArrayFilter
 	"Config voting setup"
 	p11: BlockMasterConfigP11Filter
 	"Array of all workchains descriptions"
@@ -2107,6 +2111,8 @@ input BlockFilter {
 	min_ref_mc_seqno: FloatFilter
 	"Returns a number of a previous key block."
 	prev_key_block_seqno: FloatFilter
+	gen_software_version: FloatFilter
+	gen_software_capabilities: StringFilter
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter
 	rand_seed: StringFilter
