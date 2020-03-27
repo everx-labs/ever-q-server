@@ -281,6 +281,8 @@ Logical time is a component of the TON Blockchain that also plays an important r
     shard: ``,
     min_ref_mc_seqno: `Returns last known master block at the time of shard generation.`,
     prev_key_block_seqno: `Returns a number of a previous key block.`,
+    gen_software_version: ``,
+    gen_software_capabilities: ``,
     value_flow: {
         to_next_blk: `Amount of grams amount to the next block.`,
         to_next_blk_other: `Amount of non gram cryptocurrencies to the next block.`,
@@ -366,6 +368,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
                 capabilities: ``,
             },
             p9: `Mandatory params`,
+            p10: `Critical params`,
             p11: {
                 _doc: `Config voting setup`,
                 normal_params: ``,

@@ -478,6 +478,8 @@ const Block: TypeDef = {
     shard: string(docs.block.shard),
     min_ref_mc_seqno: u32(docs.block.min_ref_mc_seqno),
     prev_key_block_seqno: u32(docs.block.prev_key_block_seqno),
+    gen_software_version: u32(docs.block.gen_software_version),
+    gen_software_capabilities: string(docs.block.gen_software_capabilities),
     value_flow: {
         to_next_blk: grams(docs.block.value_flow.to_next_blk),
         to_next_blk_other: otherCurrencyCollection(docs.block.value_flow.to_next_blk_other),
@@ -566,6 +568,7 @@ const Block: TypeDef = {
                 capabilities: string(),
             },
             p9: arrayOf(u32(), docs.block.master.config.p9._doc),
+            p10: arrayOf(u32(), docs.block.master.config.p10._doc),
             p11: {
                 _doc: docs.block.master.config.p11._doc,
                 normal_params: configProposalSetup(docs.block.master.config.p11.normal_params),
