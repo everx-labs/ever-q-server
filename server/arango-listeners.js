@@ -12,6 +12,7 @@ export class CollectionListener {
     filter: any;
     authFilter: ?((doc: any) => boolean);
     selection: FieldSelection[];
+    operationId: ?string;
     startTime: number;
 
     constructor(
@@ -20,7 +21,8 @@ export class CollectionListener {
         listeners: RegistryMap<CollectionListener>,
         accessRights: AccessRights,
         filter: any,
-        selection: FieldSelection[]
+        selection: FieldSelection[],
+        operationId: ?string,
     ) {
         this.collectionName = collectionName;
         this.docType = docType;
@@ -30,6 +32,7 @@ export class CollectionListener {
         this.selection = selection;
         this.id = listeners.add(this);
         this.startTime = Date.now();
+        this.operationId = operationId;
     }
 
     static getAuthFilter(collectionName: string, accessRights: AccessRights): ?((doc: any) => boolean) {
@@ -82,9 +85,10 @@ export class WaitForListener extends CollectionListener {
         accessRights: AccessRights,
         filter: any,
         selection: FieldSelection[],
+        operationId: ?string,
         onInsertOrUpdate: (doc: any) => void
     ) {
-        super(collectionName, docType, listeners, accessRights, filter, selection);
+        super(collectionName, docType, listeners, accessRights, filter, selection, operationId);
         this.onInsertOrUpdate = onInsertOrUpdate;
     }
 
@@ -107,7 +111,7 @@ export class SubscriptionListener extends CollectionListener implements AsyncIte
         filter: any,
         selection: FieldSelection[]
     ) {
-        super(collectionName, docType, listeners, accessRights, filter, selection);
+        super(collectionName, docType, listeners, accessRights, filter, selection, null);
 
         this.eventCount = 0;
         this.pullQueue = [];
@@ -117,7 +121,8 @@ export class SubscriptionListener extends CollectionListener implements AsyncIte
 
     onDocumentInsertOrUpdate(doc: any) {
         if (!this.isQueueOverflow()) {
-            this.pushValue({ [this.collectionName]: selectFields(doc, this.selection) });
+            const reduced = selectFields(doc, this.selection);
+            this.pushValue({ [this.collectionName]: reduced });
         }
     }
 

@@ -2277,11 +2277,11 @@ input QueryOrderBy {
 }
 
 type Query {
-	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String): [Transaction]
-	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String): [Message]
-	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String): [BlockSignatures]
-	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String): [Block]
-	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String): [Account]
+	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Transaction]
+	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Message]
+	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [BlockSignatures]
+	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Block]
+	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Account]
 }
 
 type Subscription {
