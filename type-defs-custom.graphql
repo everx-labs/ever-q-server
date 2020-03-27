@@ -44,4 +44,10 @@ type Mutation {
         "Management access key obtained with getManagementAccessKey and signed using key pair of account contract"
         signedManagementAccessKey: String,
     ): Int
+
+    "Stop listeners for specified operations"
+    finishOperations(
+        "Operation identifiers"
+        operationIds: [String],
+    ): Int
 }

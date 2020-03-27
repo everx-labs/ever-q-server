@@ -7,6 +7,7 @@ import {
     Message,
     createResolvers
 } from "../server/resolvers-generated";
+import { selectFields } from "../server/utils";
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, 0x1)).toEqual('11');
@@ -122,4 +123,46 @@ test("Enum Names", () => {
     expect(params.values.v1).toEqual(0);
 
     expect(Message.test(null, m1, { msg_type_name: { in: ["ExtIn"] } })).toBeTruthy();
+});
+
+test("Select Fields", () => {
+    const selected = selectFields({
+        _key: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
+        _id: 'blocks/eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
+        want_split: false,
+        seq_no: 19468,
+        global_id: 4294967057,
+        version: 0,
+        gen_validator_list_hash_short: 2348868602,
+        created_by: '20f8defd07e745cec86c6b66f71645829d923f4f57cbf75e6f7d3c2423871c6b',
+        master: {
+            shard_hashes: [{ shard: '1', shard: '2' }],
+            max_shard_gen_utime: 1585298974,
+        }
+    }, [
+        {
+            name: 'seq_no',
+            selection: []
+        },
+        {
+            name: 'master',
+            selection: [
+                {
+                    name: 'shard_hashes',
+                    selection: [
+                        {
+                            name: 'shard',
+                            selection: []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]);
+    expect(selected).toEqual({
+        _key: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
+        id: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
+        seq_no: 19468,
+        master: { shard_hashes: [{ shard: '1', shard: '2' }] }
+    })
 });

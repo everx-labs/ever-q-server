@@ -468,7 +468,7 @@ function main(schemaDef: TypeDef) {
         `);
 
         types.forEach((type: DbType) => {
-            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String): [${type.name}]`);
+            ql.writeLn(`\t${type.collection || ''}(filter: ${type.name}Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [${type.name}]`);
         });
 
         ql.writeBlockLn(`

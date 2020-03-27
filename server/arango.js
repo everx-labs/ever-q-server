@@ -147,4 +147,10 @@ export default class Arango {
             return cursor.all();
         });
     }
+
+    async finishOperations(operationIds: Set<string>): Promise<number> {
+        let count = 0;
+        this.collections.forEach(x => (count += x.finishOperations(operationIds)));
+        return count;
+    }
 }

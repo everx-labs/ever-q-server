@@ -91,6 +91,7 @@ type DatabaseQuery = {
     orderBy: OrderBy[],
     limit: number,
     timeout: number,
+    operationId: ?string,
     text: string,
     params: { [string]: any },
     accessRights: AccessRights,
@@ -199,6 +200,7 @@ export class Collection {
             orderBy?: OrderBy[],
             limit?: number,
             timeout?: number,
+            operationId?: string,
         },
         selectionInfo: any,
         accessRights: AccessRights,
@@ -246,6 +248,7 @@ export class Collection {
             orderBy,
             limit,
             timeout,
+            operationId: args.operationId || null,
             text,
             params: params.values,
             accessRights,
@@ -376,6 +379,7 @@ export class Collection {
                         q.accessRights,
                         q.filter,
                         q.selection,
+                        q.operationId,
                         (doc) => {
                             if (!resolvedBy) {
                                 resolvedBy = 'listener';
@@ -415,7 +419,10 @@ export class Collection {
         return this.db.collection(this.name);
     }
 
-    async waitForDoc(fieldValue: any, fieldPath: string): Promise<any> {
+    async waitForDoc(
+        fieldValue: any,
+        fieldPath: string,
+    ): Promise<any> {
         if (!fieldValue) {
             return Promise.resolve(null);
         }
@@ -437,6 +444,7 @@ export class Collection {
             orderBy: [],
             limit: 1,
             timeout: 40000,
+            operationId: null,
             text: queryParams.text,
             params: queryParams.params,
             accessRights: accessGranted,
@@ -450,5 +458,17 @@ export class Collection {
         }
         return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath)));
     }
+
+    finishOperations(operationIds: Set<string>): number {
+        const toClose = [];
+        for (const listener of this.listeners.items.values()) {
+            if (listener.operationId && operationIds.has(listener.operationId)) {
+                toClose.push(listener);
+            }
+        }
+        toClose.forEach(x => x.close());
+        return toClose.length;
+    }
+
 }
 

@@ -1,6 +1,18 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.5 – Mar 27, 2020
+### Featured
+Stability fixes
+
+### New
+- `operationId` parameter to query methods
+- `finishOperations` mutation
+
+### Fixed
+- inactive listeners were reduced with help of operation ids
+- subscriptions with arrays crash
+
 ## 0.24.4 – Mar 20, 2020
 ### Featured
 Scheme enhancements

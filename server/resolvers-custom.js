@@ -247,6 +247,22 @@ async function revokeAccessKeys(
         args.signedManagementAccessKey || '');
 }
 
+type FinishOperationsArgs = {
+    operationIds?: string[],
+}
+
+async function finishOperations(
+    _,
+    args: FinishOperationsArgs,
+    context: GraphQLRequestContextEx,
+): Promise<number> {
+    const operationIds = new Set(args.operationIds || []);
+    if (operationIds.size === 0) {
+        return 0;
+    }
+    return context.db.finishOperations(operationIds);
+}
+
 const resolversCustom = {
     Query: {
         info,
@@ -259,6 +275,7 @@ const resolversCustom = {
         postRequests,
         registerAccessKeys,
         revokeAccessKeys,
+        finishOperations,
     },
 };
 

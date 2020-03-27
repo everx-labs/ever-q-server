@@ -116,6 +116,9 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
     if (selection.length === 0) {
         return doc;
     }
+    if (Array.isArray(doc)) {
+        return doc.map(x => selectFields(x, selection));
+    }
     const selected: any = {};
     if (doc._key) {
         selected._key = doc._key;
