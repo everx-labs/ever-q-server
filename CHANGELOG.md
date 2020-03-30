@@ -1,6 +1,13 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.6 – Mar 31, 2020
+### Featured
+Stability fixes
+
+### Fixed
+- slow queries detector use filter and orderBy analysis
+
 ## 0.24.5 – Mar 27, 2020
 ### Featured
 Stability fixes
