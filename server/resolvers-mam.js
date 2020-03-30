@@ -5,8 +5,8 @@ import path from 'path';
 import Arango from "./arango";
 import { Collection, mamAccessRequired } from "./arango-collection";
 import { CollectionListener, SubscriptionListener } from "./arango-listeners";
+import { selectionToString } from "./db-types";
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
-import { selectionToString } from "./utils";
 
 type Info = {
     version: string,

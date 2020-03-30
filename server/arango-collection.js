@@ -20,16 +20,15 @@ import { Database, DocumentCollection } from "arangojs";
 import { Span, SpanContext, Tracer } from "opentracing";
 import type { TONClient } from "ton-client-js/types";
 import { CollectionListener, SubscriptionListener, WaitForListener } from "./arango-listeners";
-import type { QConfig } from "./config";
-import type { QLog } from "./logs";
-import QLogs from "./logs";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
-import type { QType } from "./db-types";
-import { QParams } from "./db-types";
+import type { QConfig } from "./config";
+import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
+import { parseSelectionSet, QParams, selectionToString } from "./db-types";
+import type { QLog } from "./logs";
+import QLogs from "./logs";
 import { QTracer } from "./tracer";
-import type { FieldSelection } from "./utils";
-import { createError, parseSelectionSet, RegistryMap, selectionToString, wrap } from "./utils";
+import { createError, RegistryMap, wrap } from "./utils";
 
 
 export type GraphQLRequestContext = {
@@ -78,29 +77,6 @@ export function mamAccessRequired(context: GraphQLRequestContext, args: any) {
     if (!accessKey || !context.config.mamAccessKeys.has(accessKey)) {
         throw Auth.unauthorizedError();
     }
-}
-
-type OrderBy = {
-    path: string,
-    direction: string,
-}
-
-type DatabaseQuery = {
-    filter: any,
-    selection: FieldSelection[],
-    orderBy: OrderBy[],
-    limit: number,
-    timeout: number,
-    operationId: ?string,
-    text: string,
-    params: { [string]: any },
-    accessRights: AccessRights,
-}
-
-export type QueryStat = {
-    estimatedCost: number,
-    slow: boolean,
-    times: number[],
 }
 
 const accessGranted: AccessRights = {

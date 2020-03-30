@@ -57,3 +57,66 @@ export type QConfig = {
 export function ensureProtocol(address: string, defaultProtocol: string): string {
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
+
+function sortedIndex(fields: string[]): string[] {
+    return fields;
+}
+
+export type CollectionInfo = {
+    indexes: string[][],
+};
+
+export type DbInfo = {
+    name: string,
+    collections: {
+        [string]: CollectionInfo,
+    }
+}
+
+export const BLOCKCHAIN_DB: DbInfo = {
+    name: 'blockchain',
+    collections: {
+        blocks: {
+            indexes: [
+                sortedIndex(['seq_no', 'gen_utime']),
+                sortedIndex(['gen_utime']),
+                sortedIndex(['workchain_id', 'shard', 'seq_no']),
+                sortedIndex(['workchain_id', 'seq_no']),
+                sortedIndex(['workchain_id', 'gen_utime']),
+                sortedIndex(['master.min_shard_gen_utime']),
+            ],
+        },
+        accounts: {
+            indexes: [
+                sortedIndex(['last_trans_lt']),
+                sortedIndex(['balance']),
+            ],
+        },
+        messages: {
+            indexes: [
+                sortedIndex(['block_id']),
+                sortedIndex(['value', 'created_at']),
+                sortedIndex(['src', 'value', 'created_at']),
+                sortedIndex(['dst', 'value', 'created_at']),
+                sortedIndex(['src', 'created_at']),
+                sortedIndex(['dst', 'created_at']),
+                sortedIndex(['created_lt']),
+                sortedIndex(['created_at']),
+            ],
+        },
+        transactions: {
+            indexes: [
+                sortedIndex(['block_id']),
+                sortedIndex(['in_msg']),
+                sortedIndex(['out_msgs[*]']),
+                sortedIndex(['account_addr', 'now']),
+                sortedIndex(['now']),
+                sortedIndex(['lt']),
+                sortedIndex(['account_addr', 'orig_status', 'end_status']),
+            ],
+        },
+        blocks_signatures: {
+            indexes: [],
+        },
+    }
+};
