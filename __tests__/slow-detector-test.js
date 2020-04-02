@@ -1,6 +1,6 @@
 import type { CollectionInfo } from "../server/config";
 import { BLOCKCHAIN_DB } from "../server/config";
-import { isFastQuery } from "../server/slow-detector";
+import {isFastQuery, parseOrderBy} from "../server/slow-detector";
 import {
     Transaction,
     Account,
@@ -10,48 +10,59 @@ import {
 
 
 test('Slow Detector', () => {
+    const log = console;
     const accounts: CollectionInfo = BLOCKCHAIN_DB.collections.accounts;
     expect(isFastQuery(accounts, Account,
         { id: { eq: '1' } },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(accounts, Account,
         {},
-        [{ path: 'balance' }],
+        parseOrderBy('balance'),
+        log,
     )).toBeTruthy();
     expect(isFastQuery(accounts, Account,
         { id: { eq: '1' }, balance: { gt: '0' } },
         [],
+        log,
     )).toBeTruthy();
 
     const transactions: CollectionInfo = BLOCKCHAIN_DB.collections.transactions;
     expect(isFastQuery(transactions, Transaction,
         { account_addr: { eq: '1' } },
-        [{ path: 'lt', direction: 'DESC' }],
-    )).toBeTruthy();
+        parseOrderBy('lt desc'),
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(transactions, Transaction,
         { block_id: { eq: '1' } },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(transactions, Transaction,
         { account_addr: { eq: '1' }, now: { gt: 2 } },
-        [{ path: 'now' }],
+        parseOrderBy('now'),
+        log,
     )).toBeTruthy();
     expect(isFastQuery(transactions, Transaction,
         { workchain_id: { eq: 1 }, now: { gt: 2 } },
-        [{ path: 'now' }],
-    )).toBeTruthy();
+        parseOrderBy('now'),
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(transactions, Transaction,
         { in_msg: { in: ['1', '2'] }, aborted: { eq: true } },
         [],
-    )).toBeTruthy();
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(transactions, Transaction,
         { in_msg: { in: ['1', '2'] } },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(transactions, Transaction,
         { in_msg: { eq: '1' } },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(transactions, Transaction,
         {
@@ -61,10 +72,12 @@ test('Slow Detector', () => {
             account_addr: { eq: '1' }
         },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(transactions, Transaction,
         { out_msgs: { any: { eq: '1' } } },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(transactions, Transaction,
         {
@@ -72,6 +85,7 @@ test('Slow Detector', () => {
             status: { eq: 3 }
         },
         [],
+        log,
     )).toBeTruthy();
 
     const blocks: CollectionInfo = BLOCKCHAIN_DB.collections.blocks;
@@ -81,19 +95,22 @@ test('Slow Detector', () => {
             workchain_id: { eq: -1 }
         },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(blocks, Block,
         {
             workchain_id: { eq: -1 }
         },
-        [{ path: 'seq_no', direction: 'DESC' }],
-    )).toBeTruthy();
+        parseOrderBy('seq_no desc'),
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(blocks, Block,
         {
             seq_no: { in: [2798482, 2798483, 2798484] },
             workchain_id: { eq: -1 },
         },
-        [{ path: 'seq_no', direction: 'DESC' }],
+        parseOrderBy('seq_no desc'),
+        log,
     )).toBeTruthy();
     expect(isFastQuery(blocks, Block,
         {
@@ -101,26 +118,37 @@ test('Slow Detector', () => {
             shard: { eq: '8000000000000000' },
             seq_no: { in: [2799675, 2799676, 2799677, 2799678] }
         },
-        [{ path: 'seq_no' }],
+        parseOrderBy('seq_no'),
+    log,
     )).toBeTruthy();
     expect(isFastQuery(blocks, Block,
         {
             gen_utime: { gt: 1 },
             workchain_id: { eq: 1 },
         },
-        [{ path: 'gen_utime' }],
+        parseOrderBy('gen_utime'),
+        log,
     )).toBeTruthy();
     expect(isFastQuery(blocks, Block,
         {
             seq_no: { gt: 1 },
         },
-        [{ path: 'seq_no' }, { path: 'gen_utime' }],
+        parseOrderBy('seq_no, gen_utime'),
+        log,
     )).toBeTruthy();
     expect(isFastQuery(blocks, Block,
         {
             id: { in: ['1', '2'] },
         },
         [],
+        log,
+    )).toBeTruthy();
+    expect(isFastQuery(blocks, Block,
+        {
+            master: { min_shard_gen_utime: { ge: 1 } },
+        },
+        [],
+        log,
     )).toBeTruthy();
 
     const messages: CollectionInfo = BLOCKCHAIN_DB.collections.messages;
@@ -131,14 +159,16 @@ test('Slow Detector', () => {
             dst: { eq: '2' },
             value: { gt: '1' }
         },
-        [{ path: 'created_at' }],
-    )).toBeTruthy();
+        parseOrderBy('created_at'),
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(messages, Message,
         {
             status: { eq: 5 },
             src: { eq: '1' },
         },
         [],
+        log,
     )).toBeTruthy();
     expect(isFastQuery(messages, Message,
         {
@@ -148,7 +178,8 @@ test('Slow Detector', () => {
             dst: { in: ['3', '4'] }
         },
         [],
-    )).toBeTruthy();
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(messages, Message,
         {
             msg_type: { eq: 1 },
@@ -157,7 +188,7 @@ test('Slow Detector', () => {
             created_at: { gt: 1 },
             created_lt: { gt: 2 },
         },
-        [{ path: 'created_lt' }],
-    )).toBeTruthy();
-
+        parseOrderBy('created_lt'),
+        log,
+    )).toBeFalsy();
 });

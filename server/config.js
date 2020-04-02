@@ -63,6 +63,7 @@ function sortedIndex(fields: string[]): string[] {
 }
 
 export type CollectionInfo = {
+    name: string,
     indexes: string[][],
 };
 
@@ -77,6 +78,7 @@ export const BLOCKCHAIN_DB: DbInfo = {
     name: 'blockchain',
     collections: {
         blocks: {
+            name: 'blocks',
             indexes: [
                 sortedIndex(['seq_no', 'gen_utime']),
                 sortedIndex(['gen_utime']),
@@ -87,12 +89,14 @@ export const BLOCKCHAIN_DB: DbInfo = {
             ],
         },
         accounts: {
+            name: 'accounts',
             indexes: [
                 sortedIndex(['last_trans_lt']),
                 sortedIndex(['balance']),
             ],
         },
         messages: {
+            name: 'messages',
             indexes: [
                 sortedIndex(['block_id']),
                 sortedIndex(['value', 'created_at']),
@@ -105,6 +109,7 @@ export const BLOCKCHAIN_DB: DbInfo = {
             ],
         },
         transactions: {
+            name: 'transactions',
             indexes: [
                 sortedIndex(['block_id']),
                 sortedIndex(['in_msg']),
@@ -116,7 +121,12 @@ export const BLOCKCHAIN_DB: DbInfo = {
             ],
         },
         blocks_signatures: {
+            name: 'blocks_signatures',
             indexes: [],
         },
     }
 };
+
+for (const x: CollectionInfo of (Object.values(BLOCKCHAIN_DB.collections): Array<any>)) {
+    x.indexes.push(['_key']);
+}

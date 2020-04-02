@@ -22,11 +22,13 @@ import type { TONClient } from "ton-client-js/types";
 import { CollectionListener, SubscriptionListener, WaitForListener } from "./arango-listeners";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
+import {BLOCKCHAIN_DB} from './config';
 import type { QConfig } from "./config";
 import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
 import { parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
+import {isFastQuery} from './slow-detector';
 import { QTracer } from "./tracer";
 import { createError, RegistryMap, wrap } from "./utils";
 
@@ -236,15 +238,11 @@ export class Collection {
         if (existing !== undefined) {
             return existing;
         }
-        const plan = (await this.db.explain(q.text, q.params)).plan;
+        const collectionInfo = BLOCKCHAIN_DB.collections[this.name];
         const stat = {
-            estimatedCost: plan.estimatedCost,
-            slow: false,
+            slow: !isFastQuery(collectionInfo, this.docType, q.filter, q.orderBy, console),
             times: [],
         };
-        if (plan.nodes.find(node => node.type === 'EnumerateCollectionNode')) {
-            stat.slow = true;
-        }
         this.queryStats.set(q.text, stat);
         return stat;
     }

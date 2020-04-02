@@ -1,7 +1,7 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.24.6 – Mar 31, 2020
+## 0.24.6 – Apr 2, 2020
 ### Featured
 Stability fixes
 
