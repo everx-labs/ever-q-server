@@ -1,42 +1,42 @@
 import Arango from "../server/arango";
 import QLogs from "../server/logs";
-import { convertBigUInt, QParams, resolveBigUInt } from "../server/db-types";
+import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../server/db-types";
 import {
     Transaction,
     Account,
     Message,
     createResolvers
 } from "../server/resolvers-generated";
-import { selectFields } from "../server/utils";
 
 test("BigUInt", () => {
-    expect(convertBigUInt(1, 0x1)).toEqual('11');
-    expect(convertBigUInt(1, 0x100)).toEqual('3100');
-    expect(convertBigUInt(1, 0x1000000000)).toEqual('a1000000000');
-    expect(convertBigUInt(1, 256)).toEqual('3100');
-    expect(convertBigUInt(1, '256')).toEqual('3100');
-    expect(convertBigUInt(1, '0x256')).toEqual('3256');
-    expect(convertBigUInt(1, '0x3100')).toEqual('43100');
-    expect(convertBigUInt(1, '3100')).toEqual('3c1c');
+    expect(convertBigUInt(1, 0x1)).toEqual('01');
+    expect(convertBigUInt(1, 0x100)).toEqual('2100');
+    expect(convertBigUInt(1, 0x1000000000)).toEqual('91000000000');
+    expect(convertBigUInt(1, 256)).toEqual('2100');
+    expect(convertBigUInt(1, '256')).toEqual('2100');
+    expect(convertBigUInt(1, '0x256')).toEqual('2256');
+    expect(convertBigUInt(1, '0x3100')).toEqual('33100');
+    expect(convertBigUInt(1, '3100')).toEqual('2c1c');
+    expect(convertBigUInt(1, 0xffffffffffffffffn)).toEqual('fffffffffffffffff');
 
-    expect(convertBigUInt(2, 0x1)).toEqual('011');
-    expect(convertBigUInt(2, 0x100)).toEqual('03100');
-    expect(convertBigUInt(2, 0x1000000000)).toEqual('0a1000000000');
-    expect(convertBigUInt(2, 256)).toEqual('03100');
-    expect(convertBigUInt(2, '0x3100')).toEqual('043100');
-    expect(convertBigUInt(2, '3100')).toEqual('03c1c');
-    expect(convertBigUInt(2, '0x10000000000000000')).toEqual('1110000000000000000');
+    expect(convertBigUInt(2, 0x1)).toEqual('001');
+    expect(convertBigUInt(2, 0x100)).toEqual('02100');
+    expect(convertBigUInt(2, 0x1000000000)).toEqual('091000000000');
+    expect(convertBigUInt(2, 256)).toEqual('02100');
+    expect(convertBigUInt(2, '0x3100')).toEqual('033100');
+    expect(convertBigUInt(2, '3100')).toEqual('02c1c');
+    expect(convertBigUInt(2, '0x10000000000000000')).toEqual('1010000000000000000');
 
-    expect(resolveBigUInt(1, '11')).toEqual('0x1');
-    expect(resolveBigUInt(1, '3100')).toEqual('0x100');
-    expect(resolveBigUInt(1, 'a1000000000')).toEqual('0x1000000000');
-    expect(resolveBigUInt(1, '43100')).toEqual('0x3100');
-    expect(resolveBigUInt(2, '011')).toEqual('0x1');
+    expect(resolveBigUInt(1, '01')).toEqual('0x1');
+    expect(resolveBigUInt(1, '2100')).toEqual('0x100');
+    expect(resolveBigUInt(1, '91000000000')).toEqual('0x1000000000');
+    expect(resolveBigUInt(1, '33100')).toEqual('0x3100');
 
-    expect(resolveBigUInt(2, '03100')).toEqual('0x100');
-    expect(resolveBigUInt(2, '0a1000000000')).toEqual('0x1000000000');
-    expect(resolveBigUInt(2, '043100')).toEqual('0x3100');
-    expect(resolveBigUInt(2, '1110000000000000000')).toEqual('0x10000000000000000');
+    expect(resolveBigUInt(2, '001')).toEqual('0x1');
+    expect(resolveBigUInt(2, '02100')).toEqual('0x100');
+    expect(resolveBigUInt(2, '091000000000')).toEqual('0x1000000000');
+    expect(resolveBigUInt(2, '033100')).toEqual('0x3100');
+    expect(resolveBigUInt(2, '1010000000000000000')).toEqual('0x10000000000000000');
 });
 
 test("Filter test", () => {
@@ -136,7 +136,7 @@ test("Select Fields", () => {
         gen_validator_list_hash_short: 2348868602,
         created_by: '20f8defd07e745cec86c6b66f71645829d923f4f57cbf75e6f7d3c2423871c6b',
         master: {
-            shard_hashes: [{ shard: '1', shard: '2' }],
+            shard_hashes: [{ shard: '1' }, { shard: '2' }],
             max_shard_gen_utime: 1585298974,
         }
     }, [
@@ -163,6 +163,7 @@ test("Select Fields", () => {
         _key: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
         id: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
         seq_no: 19468,
-        master: { shard_hashes: [{ shard: '1', shard: '2' }] }
+        master: { shard_hashes: [{ shard: '1' }, { shard: '2' }] }
     })
 });
+

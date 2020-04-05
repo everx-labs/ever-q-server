@@ -1,12 +1,14 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.24.6 – Mar 31, 2020
+## 0.24.6 – Apr 5, 2020
 ### Featured
 Stability fixes
 
 ### Fixed
 - slow queries detector use filter and orderBy analysis
+- fixed string format for big numbers
+- change arangochair dependency to forked version (cause of dropped original repository)
 
 ## 0.24.5 – Mar 27, 2020
 ### Featured
