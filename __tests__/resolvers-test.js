@@ -9,33 +9,34 @@ import {
 } from "../server/resolvers-generated";
 
 test("BigUInt", () => {
-    expect(convertBigUInt(1, 0x1)).toEqual('11');
-    expect(convertBigUInt(1, 0x100)).toEqual('3100');
-    expect(convertBigUInt(1, 0x1000000000)).toEqual('a1000000000');
-    expect(convertBigUInt(1, 256)).toEqual('3100');
-    expect(convertBigUInt(1, '256')).toEqual('3100');
-    expect(convertBigUInt(1, '0x256')).toEqual('3256');
-    expect(convertBigUInt(1, '0x3100')).toEqual('43100');
-    expect(convertBigUInt(1, '3100')).toEqual('3c1c');
+    expect(convertBigUInt(1, 0x1)).toEqual('01');
+    expect(convertBigUInt(1, 0x100)).toEqual('2100');
+    expect(convertBigUInt(1, 0x1000000000)).toEqual('91000000000');
+    expect(convertBigUInt(1, 256)).toEqual('2100');
+    expect(convertBigUInt(1, '256')).toEqual('2100');
+    expect(convertBigUInt(1, '0x256')).toEqual('2256');
+    expect(convertBigUInt(1, '0x3100')).toEqual('33100');
+    expect(convertBigUInt(1, '3100')).toEqual('2c1c');
+    expect(convertBigUInt(1, 0xffffffffffffffffn)).toEqual('fffffffffffffffff');
 
-    expect(convertBigUInt(2, 0x1)).toEqual('011');
-    expect(convertBigUInt(2, 0x100)).toEqual('03100');
-    expect(convertBigUInt(2, 0x1000000000)).toEqual('0a1000000000');
-    expect(convertBigUInt(2, 256)).toEqual('03100');
-    expect(convertBigUInt(2, '0x3100')).toEqual('043100');
-    expect(convertBigUInt(2, '3100')).toEqual('03c1c');
-    expect(convertBigUInt(2, '0x10000000000000000')).toEqual('1110000000000000000');
+    expect(convertBigUInt(2, 0x1)).toEqual('001');
+    expect(convertBigUInt(2, 0x100)).toEqual('02100');
+    expect(convertBigUInt(2, 0x1000000000)).toEqual('091000000000');
+    expect(convertBigUInt(2, 256)).toEqual('02100');
+    expect(convertBigUInt(2, '0x3100')).toEqual('033100');
+    expect(convertBigUInt(2, '3100')).toEqual('02c1c');
+    expect(convertBigUInt(2, '0x10000000000000000')).toEqual('1010000000000000000');
 
-    expect(resolveBigUInt(1, '11')).toEqual('0x1');
-    expect(resolveBigUInt(1, '3100')).toEqual('0x100');
-    expect(resolveBigUInt(1, 'a1000000000')).toEqual('0x1000000000');
-    expect(resolveBigUInt(1, '43100')).toEqual('0x3100');
-    expect(resolveBigUInt(2, '011')).toEqual('0x1');
+    expect(resolveBigUInt(1, '01')).toEqual('0x1');
+    expect(resolveBigUInt(1, '2100')).toEqual('0x100');
+    expect(resolveBigUInt(1, '91000000000')).toEqual('0x1000000000');
+    expect(resolveBigUInt(1, '33100')).toEqual('0x3100');
 
-    expect(resolveBigUInt(2, '03100')).toEqual('0x100');
-    expect(resolveBigUInt(2, '0a1000000000')).toEqual('0x1000000000');
-    expect(resolveBigUInt(2, '043100')).toEqual('0x3100');
-    expect(resolveBigUInt(2, '1110000000000000000')).toEqual('0x10000000000000000');
+    expect(resolveBigUInt(2, '001')).toEqual('0x1');
+    expect(resolveBigUInt(2, '02100')).toEqual('0x100');
+    expect(resolveBigUInt(2, '091000000000')).toEqual('0x1000000000');
+    expect(resolveBigUInt(2, '033100')).toEqual('0x3100');
+    expect(resolveBigUInt(2, '1010000000000000000')).toEqual('0x10000000000000000');
 });
 
 test("Filter test", () => {

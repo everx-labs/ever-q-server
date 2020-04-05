@@ -324,7 +324,7 @@ function convertBigUInt(prefixLength: number, value: any): string {
         return value;
     }
     const hex = BigInt(value).toString(16);
-    const len = hex.length.toString(16);
+    const len = (hex.length - 1).toString(16);
     const missingZeros = prefixLength - len.length;
     const prefix = missingZeros > 0 ? `${'0'.repeat(missingZeros)}${len}` : len;
     return `${prefix}${hex}`;
