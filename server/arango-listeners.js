@@ -1,8 +1,8 @@
 import { $$asyncIterator } from "iterall";
 import type { AccessRights } from "./auth";
-import type { QType } from "./db-types";
-import type { FieldSelection } from "./utils";
-import { RegistryMap, selectFields } from "./utils";
+import { selectFields } from "./db-types";
+import type { FieldSelection, QType } from "./db-types";
+import { RegistryMap} from "./utils";
 
 export class CollectionListener {
     collectionName: string;

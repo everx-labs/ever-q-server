@@ -120,15 +120,20 @@ export default class Arango {
             const name = collection.name;
             this.listener.subscribe({ collection: name });
             this.listener.on(name, (docJson, type) => {
-                if (type === 'insert/update') {
-                    this.onDocumentInsertOrUpdate(name, JSON.parse(docJson));
+                if (type === 'insert/update' || type === 'insert' || type === 'update') {
+                    this.onDocumentInsertOrUpdate(name, docJson);
                 }
             });
         });
         this.listener.start();
         this.log.debug('LISTEN', listenerUrl);
-        this.listener.on('error', (err) => {
-            this.log.error('FAILED', 'LISTEN', `${err}`);
+        this.listener.on('error', (err, status, headers, body) => {
+            let error = err;
+            try {
+                error = JSON.parse(body);
+            } catch {
+            }
+            this.log.error('FAILED', 'LISTEN', `${err}`, error);
             setTimeout(() => this.listener.start(), this.config.listener.restartTimeout);
         });
     }

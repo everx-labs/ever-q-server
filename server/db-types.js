@@ -17,7 +17,48 @@
 // @flow
 
 
+import type { AccessRights } from "./auth";
+
 declare function BigInt(a: any): any;
+
+export type QFieldExplanation = {
+    operations: Set<string>,
+}
+
+function combinePath(base: string, path: string): string {
+    const b = base.endsWith('.') ? base.slice(0, -1) : base;
+    const p = path.startsWith('.') ? path.slice(1) : path;
+    const sep = p && b ? '.' : '';
+    return `${b}${sep}${p}`;
+}
+
+export class QExplanation {
+    parentPath: string;
+    fields: Map<string, QFieldExplanation>;
+    constructor() {
+        this.parentPath = '';
+        this.fields = new Map();
+    }
+
+    explainScalarOperation(path: string, op: string) {
+        let p = path;
+        if (p.startsWith('CURRENT')) {
+            p = combinePath(this.parentPath, p.substr('CURRENT'.length));
+        }
+        const existing: QFieldExplanation | typeof undefined = this.fields.get(p);
+        if (existing) {
+            existing.operations.add(op);
+        } else {
+            this.fields.set(p, {
+                operations: new Set([op]),
+            })
+        }
+    }
+}
+
+export type QParamsOptions = {
+    explain?: boolean,
+}
 
 /**
  * Query parameters
@@ -25,10 +66,14 @@ declare function BigInt(a: any): any;
 export class QParams {
     values: { [string]: any };
     count: number;
+    explanation: ?QExplanation;
 
-    constructor() {
+    constructor(options?: QParamsOptions) {
         this.count = 0;
         this.values = {};
+        this.explanation = (options && options.explain)
+            ? new QExplanation()
+            : null;
     }
 
     clear() {
@@ -41,6 +86,12 @@ export class QParams {
         const name = `v${this.count.toString()}`;
         this.values[name] = value;
         return name;
+    }
+
+    explainScalarOperation(field: string, op: string) {
+        if (this.explanation) {
+            this.explanation.explainScalarOperation(field, op);
+        }
     }
 }
 
@@ -116,12 +167,8 @@ function testFields(
     return !failed;
 }
 
-
-function combine(path: string, key: string): string {
-    return key !== '' ? `${path}.${key}` : path;
-}
-
 function qlOp(params: QParams, path: string, op: string, filter: any): string {
+    params.explainScalarOperation(path, op);
     const paramName = params.add(filter);
 
     /*
@@ -131,7 +178,7 @@ function qlOp(params: QParams, path: string, op: string, filter: any): string {
      * Will return:
      * ```["fe03318161937ebb3682f69ac9f97beafbc4b9ee6e1f86d59e1bf8d27ab84867"]```
      */
-    const isKeyOrderedComparision = path.endsWith('._key') && op !== '==' && op !== '!=';
+    const isKeyOrderedComparision = (path === '_key' || path.endsWith('._key')) && op !== '==' && op !== '!=';
     const fixedPath = isKeyOrderedComparision ? `TO_STRING(${path})` : path;
     const fixedValue = `@${paramName}`;
     return `${fixedPath} ${op} ${fixedValue}`;
@@ -257,8 +304,8 @@ function createScalar(): QType {
 }
 
 const BigNumberFormat = {
-   HEX: 'HEX',
-   DEC: 'DEC',
+    HEX: 'HEX',
+    DEC: 'DEC',
 };
 
 function resolveBigUInt(prefixLength: number, value: any, args?: { format?: 'HEX' | 'DEC' }): string {
@@ -277,7 +324,7 @@ function convertBigUInt(prefixLength: number, value: any): string {
         return value;
     }
     const hex = BigInt(value).toString(16);
-    const len = hex.length.toString(16);
+    const len = (hex.length - 1).toString(16);
     const missingZeros = prefixLength - len.length;
     const prefix = missingZeros > 0 ? `${'0'.repeat(missingZeros)}${len}` : len;
     return `${prefix}${hex}`;
@@ -315,7 +362,7 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
         ql(params, path, filter) {
             return qlFields(path, filter, fields, (fieldType, path, filterKey, filterValue) => {
                 const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                return fieldType.ql(params, combine(path, fieldName), filterValue);
+                return fieldType.ql(params, combinePath(path, fieldName), filterValue);
             });
         },
         test(parent, value, filter) {
@@ -332,13 +379,27 @@ function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
 
 // Arrays
 
+function getItemQL(itemType: QType, params: QParams, path: string, filter: any): string {
+    let itemQl: string;
+    const explanation = params.explanation;
+    if (explanation) {
+        const saveParentPath = explanation.parentPath;
+        explanation.parentPath = `${explanation.parentPath}${path}[*]`;
+        itemQl = itemType.ql(params, 'CURRENT', filter);
+        explanation.parentPath = saveParentPath;
+    } else {
+        itemQl = itemType.ql(params, 'CURRENT', filter);
+    }
+    return itemQl;
+}
+
 function array(resolveItemType: () => QType): QType {
     let resolved: ?QType = null;
     const ops = {
         all: {
             ql(params, path, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const itemQl = itemType.ql(params, 'CURRENT', filter);
+                const itemQl = getItemQL(itemType, params, path, filter);
                 return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
             },
             test(parent, value, filter) {
@@ -351,7 +412,7 @@ function array(resolveItemType: () => QType): QType {
             ql(params, path, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
                 const paramName = `@v${params.count + 1}`;
-                const itemQl = itemType.ql(params, 'CURRENT', filter);
+                const itemQl = getItemQL(itemType, params, path, filter);
                 if (itemQl === `CURRENT == ${paramName}`) {
                     return `${paramName} IN ${path}[*]`;
                 }
@@ -497,3 +558,96 @@ export type {
     QType
 }
 
+export type FieldSelection = {
+    name: string,
+    selection: FieldSelection[],
+}
+
+export function parseSelectionSet(selectionSet: any, returnFieldSelection: string): FieldSelection[] {
+    const fields: FieldSelection[] = [];
+    const selections = selectionSet && selectionSet.selections;
+    if (selections) {
+        for (const item of selections) {
+            const name = (item.name && item.name.value) || '';
+            if (name) {
+                const field: FieldSelection = {
+                    name,
+                    selection: parseSelectionSet(item.selectionSet, ''),
+                };
+                if (returnFieldSelection !== '' && field.name === returnFieldSelection) {
+                    return field.selection;
+                }
+                fields.push(field);
+            }
+        }
+    }
+    return fields;
+}
+
+export function selectionToString(selection: FieldSelection[]): string {
+    return selection
+        .filter(x => x.name !== '__typename')
+        .map((field: FieldSelection) => {
+            const fieldSelection = selectionToString(field.selection);
+            return `${field.name}${fieldSelection !== '' ? ` { ${fieldSelection} }` : ''}`;
+        }).join(' ');
+}
+
+export function selectFields(doc: any, selection: FieldSelection[]): any {
+    if (selection.length === 0) {
+        return doc;
+    }
+    if (Array.isArray(doc)) {
+        return doc.map(x => selectFields(x, selection));
+    }
+    const selected: any = {};
+    if (doc._key) {
+        selected._key = doc._key;
+        selected.id = doc._key;
+    }
+    for (const item of selection) {
+        const requiredForJoin = {
+            in_message: ['in_msg'],
+            out_messages: ['out_msg'],
+            signatures: ['id'],
+            src_transaction: ['id', 'msg_type'],
+            dst_transaction: ['id', 'msg_type'],
+        }[item.name];
+        if (requiredForJoin !== undefined) {
+            requiredForJoin.forEach((field) => {
+                if (doc[field] !== undefined) {
+                    selected[field] = doc[field];
+                }
+            });
+        }
+        const value = doc[item.name];
+        if (value !== undefined) {
+            selected[item.name] = item.selection.length > 0
+                ? selectFields(value, item.selection)
+                : value;
+        }
+    }
+    return selected;
+}
+
+export type OrderBy = {
+    path: string,
+    direction: string,
+}
+
+export type DatabaseQuery = {
+    filter: any,
+    selection: FieldSelection[],
+    orderBy: OrderBy[],
+    limit: number,
+    timeout: number,
+    operationId: ?string,
+    text: string,
+    params: { [string]: any },
+    accessRights: AccessRights,
+}
+
+export type QueryStat = {
+    slow: boolean,
+    times: number[],
+}
