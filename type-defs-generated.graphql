@@ -795,7 +795,7 @@ type MsgForwardPrices {
 
 type ValidatorSetList {
 	public_key: String
-	weight: String
+	weight(format: BigIntFormat): String
 	adnl_addr: String
 }
 
@@ -803,7 +803,7 @@ type ValidatorSet {
 	utime_since: Float
 	utime_until: Float
 	total: Int
-	total_weight: String
+	total_weight(format: BigIntFormat): String
 	list: [ValidatorSetList]
 }
 

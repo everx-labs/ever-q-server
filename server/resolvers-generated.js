@@ -452,7 +452,7 @@ const MsgForwardPrices = struct({
 
 const ValidatorSetList = struct({
     public_key: scalar,
-    weight: scalar,
+    weight: bigUInt1,
     adnl_addr: scalar,
 });
 
@@ -461,7 +461,7 @@ const ValidatorSet = struct({
     utime_since: scalar,
     utime_until: scalar,
     total: scalar,
-    total_weight: scalar,
+    total_weight: bigUInt1,
     list: ValidatorSetListArray,
 });
 
@@ -789,6 +789,16 @@ function createResolvers(db) {
             },
             create(parent, args) {
                 return resolveBigUInt(2, parent.create, args);
+            },
+        },
+        ValidatorSetList: {
+            weight(parent, args) {
+                return resolveBigUInt(1, parent.weight, args);
+            },
+        },
+        ValidatorSet: {
+            total_weight(parent, args) {
+                return resolveBigUInt(1, parent.total_weight, args);
             },
         },
         BlockSignatures: {

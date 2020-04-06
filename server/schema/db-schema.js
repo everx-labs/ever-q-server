@@ -427,10 +427,10 @@ const ValidatorSet: TypeDef = {
     utime_since: u32(),
     utime_until: u32(),
     total: u16(),
-    total_weight: string(),
+    total_weight: u64(),
     list: arrayOf({
         public_key: string(),
-        weight: string(),
+        weight: u64(),
         adnl_addr: string(),
     }),
 };

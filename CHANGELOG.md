@@ -9,6 +9,7 @@ Stability fixes
 - slow queries detector use filter and orderBy analysis
 - fixed string format for big numbers
 - change arangochair dependency to forked version (cause of dropped original repository)
+- type of `total_weight` and `weight` fixed to `u64` 
 
 ## 0.24.5 – Mar 27, 2020
 ### Featured
