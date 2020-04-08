@@ -49,6 +49,7 @@ type ProgramOptions = {
     traceService: string,
     traceTags: string,
     authEndpoint: string,
+    statsdServer: string,
     mamAccessKeys: string,
 }
 
@@ -94,6 +95,10 @@ program
         process.env.Q_TRACE_SERVICE || 'Q Server')
     .option('--trace-tags <tags>', 'additional trace tags (comma separated name=value pairs)',
         process.env.Q_TRACE_TAGS || '')
+
+    .option('-s, --statsd-server <url>', 'statsd server (host:port)',
+        process.env.Q_STATSD_SERVER || '')
+
     .parse(process.argv);
 
 const options: ProgramOptions = program;
@@ -143,6 +148,9 @@ const config: QConfig = {
         endpoint: options.jaegerEndpoint,
         service: options.traceService,
         tags: parseTags(options.traceTags),
+    },
+    statsd: {
+        server: options.statsdServer,
     },
     mamAccessKeys: new Set((options.mamAccessKeys || '').split(',')),
 };

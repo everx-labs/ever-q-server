@@ -1,3 +1,5 @@
+// @flow
+
 import { $$asyncIterator } from "iterall";
 import type { AccessRights } from "./auth";
 import { selectFields } from "./db-types";
@@ -97,6 +99,7 @@ export class WaitForListener extends CollectionListener {
     }
 }
 
+//$FlowFixMe
 export class SubscriptionListener extends CollectionListener implements AsyncIterator<any> {
     eventCount: number;
     pullQueue: ((value: any) => void)[];

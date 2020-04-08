@@ -33,7 +33,8 @@ import { resolversMam } from "./resolvers-mam";
 import type { QConfig } from './config';
 import QLogs from './logs';
 import type { QLog } from './logs';
-import { QTracer } from "./tracer";
+import type {IStats} from './tracer';
+import {QStats, QTracer} from "./tracer";
 import { Tracer } from "opentracing";
 import { Auth } from './auth';
 import { createError } from "./utils";
@@ -59,6 +60,7 @@ export default class TONQServer {
     endPoints: EndPoint[];
     db: Arango;
     tracer: Tracer;
+    stats: IStats;
     client: TONClient;
     auth: Auth;
     shared: Map<string, any>;
@@ -70,11 +72,12 @@ export default class TONQServer {
         this.log = this.logs.create('server');
         this.shared = new Map();
         this.tracer = QTracer.create(options.config);
+        this.stats = QStats.create(options.config.statsd.server);
         this.auth = new Auth(options.config);
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
-        this.db = new Arango(this.config, this.logs, this.auth, this.tracer);
+        this.db = new Arango(this.config, this.logs, this.auth, this.tracer, this.stats);
         this.addEndPoint({
             path: '/graphql/mam',
             resolvers: resolversMam,
@@ -121,6 +124,7 @@ export default class TONQServer {
                 return {
                     db: this.db,
                     tracer: this.tracer,
+                    stats: this.stats,
                     auth: this.auth,
                     client: this.client,
                     config: this.config,

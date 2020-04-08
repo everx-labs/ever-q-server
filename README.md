@@ -44,6 +44,8 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --auth-endpoint <url>           AUTH_ENDPOINT                               Auth server API url
         --mam-access-keys <keys>        MAM_ACCESS_KEYS                             Access keys used to authorize mam endpoint access
 
+    -s, --statsd-server <url>           Q_STATSD_SEREVER                            StatsD server url
+
 # Run
 
 ```bash
@@ -55,6 +57,24 @@ node index.js
 Q-Server is accessible with GraphQL HTTP/WebSocket protocol on port "4000" and path "/graphql".
 
 There is the only valid way to communicate with Q-Server – TON Labs Client Libraries.
+
+# StatsD
+
+Q-Server reports several StatsD metrics if it is configured with `statsd` option:
+
+    Metric                Type     Tags             Description
+    --------------------  -------  ---------------  -------------------------------------------------------------
+    qserver.doc.count     counter  collection=name  Incremented each time when q-server has received notification 
+                                                    from Arango db about document insert/update
+
+    qserver.query.count   counter  collection=name  Incremented each time when q-server has started
+                                                    query handler from SDK client
+
+    qserver.query.time    timer    collection=name  Reported each time when q-server has finished 
+                                                    query handler from SDK client
+                                                       
+    qserver.query.active  gauge    collection=name  Updated each time when q-server has started and finished 
+                                                    query handler from SDK client
 
 # For Developers
 

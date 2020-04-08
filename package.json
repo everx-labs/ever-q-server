@@ -23,7 +23,7 @@
 	"dependencies": {
 		"apollo-server": "2.11.0",
 		"apollo-server-express": "2.11.0",
-		"arangochair": "git@github.com:layro01/arangochair.git#0ac831a8001113ef20180ae1e7c90df47b41be65",
+		"arangochair": "git@github.com:tonlabs/arangochair.git",
 		"arangojs": "6.14.0",
 		"commander": "5.0.0",
 		"express": "4.17.1",
@@ -34,6 +34,7 @@
 		"node-fetch": "2.6.0",
 		"opentracing": "0.14.4",
 		"subscriptions-transport-ws": "0.9.16",
+		"node-statsd": "0.1.1",
 		"ton-client-js": "0.21.21",
 		"ton-client-node-js": "0.21.0"
 	},
