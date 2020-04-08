@@ -4,7 +4,7 @@ export const docs = {
         _doc: `
 # Account type
 
-Recall that a smart contract and an account are the same thing in the context
+Recall that a smart contract contract and an account are the same thing in the context
 of the TON Blockchain, and that these terms can be used interchangeably, at
 least as long as only small (or “usual”) smart contracts are considered. A large
 smart-contract may employ several accounts lying in different shardchains of
