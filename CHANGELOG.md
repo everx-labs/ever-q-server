@@ -1,6 +1,14 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.7 – Apr 8, 2020
+### Featured
+StatsD support
+
+### New
+- `--statsd-server` parameter (`Q_STATSD_SERVER` env) config option to specify StatsD server address
+- `qserver.doc.count`, `qserver.query.count`, `qserver.query.time`, `qserver.query.active` statsd metrics  
+
 ## 0.24.6 – Apr 5, 2020
 ### Featured
 Stability fixes

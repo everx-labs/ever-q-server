@@ -22,21 +22,23 @@ import type { TONClient } from "ton-client-js/types";
 import { CollectionListener, SubscriptionListener, WaitForListener } from "./arango-listeners";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
-import {BLOCKCHAIN_DB} from './config';
+import {BLOCKCHAIN_DB, STATS} from './config';
 import type { QConfig } from "./config";
 import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
 import { parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
 import {isFastQuery} from './slow-detector';
-import { QTracer } from "./tracer";
-import { createError, RegistryMap, wrap } from "./utils";
+import type {IStats} from './tracer';
+import {QTracer, StatsCounter, StatsGauge, StatsTiming} from "./tracer";
+import {createError, RegistryMap, wrap} from "./utils";
 
 
 export type GraphQLRequestContext = {
     config: QConfig,
     auth: Auth,
     tracer: Tracer,
+    stats: IStats,
     client: TONClient,
 
     remoteAddress?: string,
@@ -93,6 +95,10 @@ export class Collection {
     log: QLog;
     auth: Auth;
     tracer: Tracer;
+    statDoc: StatsCounter;
+    statQuery: StatsCounter;
+    statQueryTime: StatsTiming;
+    statQueryActive: StatsGauge;
     db: Database;
     slowDb: Database;
 
@@ -107,6 +113,7 @@ export class Collection {
         logs: QLogs,
         auth: Auth,
         tracer: Tracer,
+        stats: IStats,
         db: Database,
         slowDb: Database,
     ) {
@@ -119,6 +126,11 @@ export class Collection {
         this.db = db;
         this.slowDb = slowDb;
 
+        this.statDoc = new StatsCounter(stats, STATS.doc.count, [`collection:${name}`]);
+        this.statQuery = new StatsCounter(stats, STATS.query.count, [`collection:${name}`]);
+        this.statQueryTime = new StatsTiming(stats, STATS.query.time, [`collection:${name}`]);
+        this.statQueryActive = new StatsGauge(stats, STATS.query.active, [`collection:${name}`]);
+
         this.listeners = new RegistryMap<CollectionListener>(`${name} listeners`);
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
@@ -127,6 +139,7 @@ export class Collection {
     // Subscriptions
 
     onDocumentInsertOrUpdate(doc: any) {
+        this.statDoc.increment();
         for (const listener of this.listeners.values()) {
             if (listener.isFiltered(doc)) {
                 listener.onDocumentInsertOrUpdate(doc);
@@ -254,24 +267,32 @@ export class Collection {
             context: GraphQLRequestContext,
             info: any
         ) => wrap(this.log, 'QUERY', args, async () => {
-            const accessRights = await requireGrantedAccess(context, args);
-            const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
-            if (!q) {
-                this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
-                return [];
-            }
-            const stat = await this.ensureQueryStat(q);
+            this.statQuery.increment();
+            this.statQueryActive.increment();
             const start = Date.now();
-            const result = q.timeout > 0
-                ? await this.queryWaitFor(q, stat, context.parentSpan)
-                : await this.query(q, stat, context.parentSpan);
-            this.log.debug(
-                'QUERY',
-                args,
-                (Date.now() - start) / 1000,
-                stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
-            );
-            return result;
+            try {
+                const accessRights = await requireGrantedAccess(context, args);
+                const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
+                if (!q) {
+                    this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
+                    return [];
+                }
+                const stat = await this.ensureQueryStat(q);
+                const start = Date.now();
+                const result = q.timeout > 0
+                    ? await this.queryWaitFor(q, stat, context.parentSpan)
+                    : await this.query(q, stat, context.parentSpan);
+                this.log.debug(
+                    'QUERY',
+                    args,
+                    (Date.now() - start) / 1000,
+                    stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
+                );
+                return result;
+            } finally {
+                this.statQueryTime.report(Date.now() - start);
+                this.statQueryActive.decrement();
+            }
         });
     }
 

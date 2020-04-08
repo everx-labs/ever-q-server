@@ -63,20 +63,27 @@ function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
         return listener instanceof SubscriptionListener;
     };
     const db: Arango = context.db;
+    let totalWaitForCount = 0;
+    let totalSubscriptionCount = 0;
+    const collections = db.collections.map((collection: Collection) => {
+        const listeners = [...collection.listeners.values()];
+        const waitFor = listeners.filter(x => !isSubscription(x));
+        const subscriptions = listeners.filter(isSubscription);
+        totalWaitForCount += waitFor.length;
+        totalSubscriptionCount += subscriptions.length;
+        return {
+            name: collection.name,
+            subscriptionCount: subscriptions.length,
+            waitForCount: waitFor.length,
+            maxQueueSize: collection.maxQueueSize,
+            subscriptions: subscriptions.map(listenerToStat),
+            waitFor: waitFor.map(listenerToStat),
+        }
+    });
     return {
-        collections: db.collections.map((collection: Collection) => {
-            const listeners = [...collection.listeners.values()];
-            const waitFor = listeners.filter(x => !isSubscription(x));
-            const subscriptions = listeners.filter(isSubscription);
-            return {
-                name: collection.name,
-                subscriptionCount: subscriptions.length,
-                waitForCount: waitFor.length,
-                maxQueueSize: collection.maxQueueSize,
-                subscriptions: subscriptions.map(listenerToStat),
-                waitFor: waitFor.map(listenerToStat),
-            }
-        })
+        waitForCount: totalWaitForCount,
+        subscriptionCount: totalSubscriptionCount,
+        collections,
     };
 }
 
