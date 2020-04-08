@@ -27,7 +27,8 @@ import QLogs from './logs'
 import type { QType } from './db-types';
 import { Account, Block, BlockSignatures, Message, Transaction } from './resolvers-generated';
 import { Tracer } from "opentracing";
-import { wrap } from "./utils";
+import type {IStats} from './tracer';
+import {wrap} from "./utils";
 
 
 export default class Arango {
@@ -56,6 +57,7 @@ export default class Arango {
         logs: QLogs,
         auth: Auth,
         tracer: Tracer,
+        stats: IStats,
     ) {
         this.config = config;
         this.log = logs.create('db');
@@ -92,6 +94,7 @@ export default class Arango {
                 logs,
                 this.auth,
                 this.tracer,
+                stats,
                 this.db,
                 slowDb,
             );

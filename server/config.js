@@ -51,6 +51,9 @@ export type QConfig = {
         service: string,
         tags: { [string]: string }
     },
+    statsd: {
+        server: string,
+    },
     mamAccessKeys: Set<string>,
 }
 
@@ -127,6 +130,25 @@ export const BLOCKCHAIN_DB: DbInfo = {
     }
 };
 
-for (const x: CollectionInfo of (Object.values(BLOCKCHAIN_DB.collections): Array<any>)) {
-    x.indexes.push(['_key']);
+export const STATS = {
+    prefix: 'qserver.',
+    doc: {
+        count: 'doc.count',
+    },
+    query: {
+        count: 'query.count',
+        time: 'query.time',
+        active: 'query.active',
+    },
+    subscription: {
+        count: 'subscription.count',
+    },
+    waitFor: {
+        count: 'waitfor.count',
+    },
+};
+
+for (const [n, c] of (Object.entries(BLOCKCHAIN_DB.collections): Array<any>)) {
+    c.name = n;
+    c.indexes.push(['_key']);
 }

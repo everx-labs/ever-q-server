@@ -17,6 +17,7 @@ test("BigUInt", () => {
     expect(convertBigUInt(1, '0x256')).toEqual('2256');
     expect(convertBigUInt(1, '0x3100')).toEqual('33100');
     expect(convertBigUInt(1, '3100')).toEqual('2c1c');
+    // noinspection JSAnnotator
     expect(convertBigUInt(1, 0xffffffffffffffffn)).toEqual('fffffffffffffffff');
 
     expect(convertBigUInt(2, 0x1)).toEqual('001');

@@ -1,4 +1,4 @@
-import type { QLog } from './logs';
+import type {QLog} from './logs';
 
 export function cleanError(error: any): any {
     if ('ArangoError' in error) {
