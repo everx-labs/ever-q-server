@@ -70,6 +70,7 @@ enum OutMsgTypeEnum {
     DequeueImmediately
     Dequeue
     TransitRequired
+    DequeueShort
     None
 }
 
@@ -209,6 +210,7 @@ type OutMsg {
 	- 4 – dequeueImmediately
 	- 5 – dequeue
 	- 6 – transitRequired
+	- 7 – dequeueShort
 	- -1 – none
 	"""
 	msg_type: Int
@@ -219,6 +221,9 @@ type OutMsg {
 	reimport: InMsg
 	imported: InMsg
 	import_block_lt(format: BigIntFormat): String
+	msg_env_hash: String
+	next_workchain: Int
+	next_addr_pfx(format: BigIntFormat): String
 }
 
 type TransactionStorage {
@@ -1162,6 +1167,7 @@ input OutMsgFilter {
 	- 4 – dequeueImmediately
 	- 5 – dequeue
 	- 6 – transitRequired
+	- 7 – dequeueShort
 	- -1 – none
 	"""
 	msg_type: IntFilter
@@ -1172,6 +1178,9 @@ input OutMsgFilter {
 	reimport: InMsgFilter
 	imported: InMsgFilter
 	import_block_lt: StringFilter
+	msg_env_hash: StringFilter
+	next_workchain: IntFilter
+	next_addr_pfx: StringFilter
 }
 
 input AccountStatusChangeEnumFilter {
