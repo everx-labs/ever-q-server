@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.8 – Apr 9, 2020
+### Featured
+### New
+- supported new type of outbound message `dequeueShort` (msg_type: 7): added fields `msg_env_hash`, `next_workchain`, `next_addr_pfx`, `import_block_lt` to `OutMsg` type.
+
 ## 0.24.7 – Apr 8, 2020
 ### Featured
 StatsD support

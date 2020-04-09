@@ -45,13 +45,16 @@ const InMsg = struct({
 
 const OutMsg = struct({
     msg_type: scalar,
-    msg_type_name: enumName('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, None: -1 }),
+    msg_type_name: enumName('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
     msg_id: scalar,
     transaction_id: scalar,
     out_msg: MsgEnvelope,
     reimport: InMsg,
     imported: InMsg,
     import_block_lt: bigUInt1,
+    msg_env_hash: scalar,
+    next_workchain: scalar,
+    next_addr_pfx: bigUInt1,
 });
 
 const TransactionStorage = struct({
@@ -629,7 +632,10 @@ function createResolvers(db) {
             import_block_lt(parent, args) {
                 return resolveBigUInt(1, parent.import_block_lt, args);
             },
-            msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, None: -1 }),
+            next_addr_pfx(parent, args) {
+                return resolveBigUInt(1, parent.next_addr_pfx, args);
+            },
+            msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
         },
         TransactionStorage: {
             storage_fees_collected(parent, args) {
