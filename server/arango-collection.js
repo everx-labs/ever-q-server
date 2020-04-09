@@ -16,23 +16,23 @@
 
 // @flow
 
-import { Database, DocumentCollection } from "arangojs";
-import { Span, SpanContext, Tracer } from "opentracing";
-import type { TONClient } from "ton-client-js/types";
-import { CollectionListener, SubscriptionListener, WaitForListener } from "./arango-listeners";
-import type { AccessRights } from "./auth";
-import { Auth } from "./auth";
+import {Database, DocumentCollection} from "arangojs";
+import {Span, SpanContext, Tracer} from "opentracing";
+import type {TONClient} from "ton-client-js/types";
+import {DocUpsertHandler, DocSubscription} from "./arango-listeners";
+import type {AccessRights} from "./auth";
+import {Auth} from "./auth";
 import {BLOCKCHAIN_DB, STATS} from './config';
-import type { QConfig } from "./config";
-import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
-import { parseSelectionSet, QParams, selectionToString } from "./db-types";
-import type { QLog } from "./logs";
+import type {QConfig} from "./config";
+import type {DatabaseQuery, OrderBy, QType, QueryStat} from "./db-types";
+import {parseSelectionSet, QParams, selectionToString} from "./db-types";
+import type {QLog} from "./logs";
 import QLogs from "./logs";
 import {isFastQuery} from './slow-detector';
 import type {IStats} from './tracer';
 import {QTracer, StatsCounter, StatsGauge, StatsTiming} from "./tracer";
 import {createError, RegistryMap, wrap} from "./utils";
-
+import EventEmitter from 'events';
 
 export type GraphQLRequestContext = {
     config: QConfig,
@@ -54,7 +54,7 @@ export type GraphQLRequestContext = {
 function checkUsedAccessKey(
     usedAccessKey: ?string,
     accessKey: ?string,
-    context: GraphQLRequestContext
+    context: GraphQLRequestContext,
 ): ?string {
     if (!accessKey) {
         return usedAccessKey;
@@ -85,7 +85,7 @@ export function mamAccessRequired(context: GraphQLRequestContext, args: any) {
 
 const accessGranted: AccessRights = {
     granted: true,
-    restrictToAccounts: []
+    restrictToAccounts: [],
 };
 
 export class Collection {
@@ -99,11 +99,15 @@ export class Collection {
     statQuery: StatsCounter;
     statQueryTime: StatsTiming;
     statQueryActive: StatsGauge;
+    statWaitForActive: StatsGauge;
+    statSubscriptionActive: StatsGauge;
     db: Database;
     slowDb: Database;
 
-    listeners: RegistryMap<CollectionListener>;
+    waitForCount: number;
+    subscriptionCount: number;
     queryStats: Map<string, QueryStat>;
+    docInsertOrUpdate: EventEmitter;
 
     maxQueueSize: number;
 
@@ -125,13 +129,17 @@ export class Collection {
         this.tracer = tracer;
         this.db = db;
         this.slowDb = slowDb;
+        this.waitForCount = 0;
+        this.subscriptionCount = 0;
 
         this.statDoc = new StatsCounter(stats, STATS.doc.count, [`collection:${name}`]);
         this.statQuery = new StatsCounter(stats, STATS.query.count, [`collection:${name}`]);
         this.statQueryTime = new StatsTiming(stats, STATS.query.time, [`collection:${name}`]);
         this.statQueryActive = new StatsGauge(stats, STATS.query.active, [`collection:${name}`]);
+        this.statWaitForActive = new StatsGauge(stats, STATS.waitFor.active, [`collection:${name}`]);
+        this.statSubscriptionActive = new StatsGauge(stats, STATS.subscription.active, [`collection:${name}`]);
 
-        this.listeners = new RegistryMap<CollectionListener>(`${name} listeners`);
+        this.docInsertOrUpdate = new EventEmitter();
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
     }
@@ -140,25 +148,30 @@ export class Collection {
 
     onDocumentInsertOrUpdate(doc: any) {
         this.statDoc.increment();
-        for (const listener of this.listeners.values()) {
-            if (listener.isFiltered(doc)) {
-                listener.onDocumentInsertOrUpdate(doc);
-            }
-        }
+        this.docInsertOrUpdate.emit('doc', doc);
     }
 
     subscriptionResolver() {
         return {
             subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
                 const accessRights = await requireGrantedAccess(context, args);
-                return new SubscriptionListener(
+                const subscription = new DocSubscription(
                     this.name,
                     this.docType,
-                    this.listeners,
                     accessRights,
                     args.filter || {},
                     parseSelectionSet(info.operation.selectionSet, this.name),
                 );
+                const eventListener = (doc) => {
+                    subscription.pushDocument(doc);
+                };
+                this.docInsertOrUpdate.on('doc', eventListener);
+                this.subscriptionCount += 1;
+                subscription.onClose = () => {
+                    this.docInsertOrUpdate.removeListener('doc', eventListener);
+                    this.subscriptionCount = Math.max(0, this.subscriptionCount - 1);
+                };
+                return subscription;
             },
         }
     }
@@ -265,35 +278,37 @@ export class Collection {
             parent: any,
             args: any,
             context: GraphQLRequestContext,
-            info: any
-        ) => wrap(this.log, 'QUERY', args, async () => {
+            info: any,
+        ) => /*wrap(this.log, 'QUERY', args, async () =>*/ {
             this.statQuery.increment();
             this.statQueryActive.increment();
             const start = Date.now();
             try {
-                const accessRights = await requireGrantedAccess(context, args);
-                const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
-                if (!q) {
-                    this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
-                    return [];
-                }
-                const stat = await this.ensureQueryStat(q);
-                const start = Date.now();
-                const result = q.timeout > 0
-                    ? await this.queryWaitFor(q, stat, context.parentSpan)
-                    : await this.query(q, stat, context.parentSpan);
-                this.log.debug(
-                    'QUERY',
-                    args,
-                    (Date.now() - start) / 1000,
-                    stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
-                );
-                return result;
+                // await new Promise(resolve => setTimeout(resolve, 1000));
+                return [];
+                //todo: const accessRights = await requireGrantedAccess(context, args);
+                // const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
+                // if (!q) {
+                //     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
+                //     return [];
+                // }
+                // const stat = await this.ensureQueryStat(q);
+                // const start = Date.now();
+                // const result = q.timeout > 0
+                //     ? await this.queryWaitFor(q, stat, context.parentSpan)
+                //     : await this.query(q, stat, context.parentSpan);
+                // this.log.debug(
+                //     'QUERY',
+                //     args,
+                //     (Date.now() - start) / 1000,
+                //     stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
+                // );
+                // return result;
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();
             }
-        });
+        };
     }
 
     static setQueryTraceParams(q: DatabaseQuery, span: Span) {
@@ -346,41 +361,42 @@ export class Collection {
     ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
             Collection.setQueryTraceParams(q, span);
-            let waitFor: ?WaitForListener = null;
+            let waitFor: ?((doc: any) => void) = null;
             let forceTimerId: ?TimeoutID = null;
             let resolvedBy: ?string = null;
             try {
                 const onQuery = new Promise((resolve, reject) => {
-                    const check = () => {
-                        this.queryDatabase(q, stat).then((docs) => {
-                            if (!resolvedBy) {
-                                if (docs.length > 0) {
-                                    forceTimerId = null;
-                                    resolvedBy = 'query';
-                                    resolve(docs);
-                                } else {
-                                    forceTimerId = setTimeout(check, 5_000);
-                                }
-                            }
-                        }, reject);
-                    };
-                    check();
+                    //todo: const check = () => {
+                    //     this.queryDatabase(q, stat).then((docs) => {
+                    //         if (!resolvedBy) {
+                    //             if (docs.length > 0) {
+                    //                 forceTimerId = null;
+                    //                 resolvedBy = 'query';
+                    //                 resolve(docs);
+                    //             } else {
+                    //                 forceTimerId = setTimeout(check, 5_000);
+                    //             }
+                    //         }
+                    //     }, reject);
+                    // };
+                    // check();
                 });
                 const onChangesFeed = new Promise((resolve) => {
-                    waitFor = new WaitForListener(
-                        this.name,
-                        this.docType,
-                        this.listeners,
-                        q.accessRights,
-                        q.filter,
-                        q.selection,
-                        q.operationId,
-                        (doc) => {
-                            if (!resolvedBy) {
-                                resolvedBy = 'listener';
-                                resolve([doc]);
-                            }
-                        });
+                    //todo: const authFilter = DocUpsertHandler.getAuthFilter(this.name, q.accessRights);
+                    // waitFor = (doc) => {
+                    //     if (authFilter && !authFilter(doc)) {
+                    //         return;
+                    //     }
+                    //     if (this.docType.test(null, doc, q.filter)) {
+                    //         if (!resolvedBy) {
+                    //             resolvedBy = 'listener';
+                    //             resolve([doc]);
+                    //         }
+                    //     }
+                    // };
+                    // this.waitForCount += 1;
+                    // this.docInsertOrUpdate.on('doc', waitFor);
+                    // this.statWaitForActive.increment();
                 });
                 const onTimeout = new Promise((resolve) => {
                     setTimeout(() => {
@@ -399,8 +415,10 @@ export class Collection {
                 return result;
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
-                    waitFor.close();
+                    this.waitForCount = Math.max(0, this.waitForCount - 1);
+                    this.docInsertOrUpdate.removeListener('doc', waitFor);
                     waitFor = null;
+                    this.statWaitForActive.decrement();
                 }
                 if (forceTimerId !== null) {
                     clearTimeout(forceTimerId);
@@ -423,14 +441,14 @@ export class Collection {
         }
         const queryParams = fieldPath.endsWith('[*]')
             ? {
-                filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
+                filter: {[fieldPath.slice(0, -3)]: {any: {eq: fieldValue}}},
                 text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
-                params: { v: fieldValue },
+                params: {v: fieldValue},
             }
             : {
-                filter: { id: { eq: fieldValue } },
+                filter: {id: {eq: fieldValue}},
                 text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
-                params: { v: fieldValue },
+                params: {v: fieldValue},
             };
 
         const docs = await this.queryWaitFor({
@@ -456,12 +474,13 @@ export class Collection {
 
     finishOperations(operationIds: Set<string>): number {
         const toClose = [];
-        for (const listener of this.listeners.items.values()) {
-            if (listener.operationId && operationIds.has(listener.operationId)) {
-                toClose.push(listener);
-            }
-        }
-        toClose.forEach(x => x.close());
+        // TODO: Implement listener cancellation based on operationId
+        // for (const listener of this.listeners.items.values()) {
+        //     if (listener.operationId && operationIds.has(listener.operationId)) {
+        //         toClose.push(listener);
+        //     }
+        // }
+        // toClose.forEach(x => x.close());
         return toClose.length;
     }
 

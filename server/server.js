@@ -18,26 +18,27 @@
 import fs from 'fs';
 import express from 'express';
 import http from 'http';
+import WebSocket from 'ws';
 
-import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
-import { ConnectionContext } from 'subscriptions-transport-ws';
-import type { TONClient } from "ton-client-js/types";
-import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
+import {ApolloServer, ApolloServerExpressConfig} from 'apollo-server-express';
+import {ConnectionContext} from 'subscriptions-transport-ws';
+import type {TONClient} from "ton-client-js/types";
+import {TONClient as TONClientNodeJs} from 'ton-client-node-js';
 import Arango from './arango';
-import type { GraphQLRequestContext } from "./arango-collection";
+import type {GraphQLRequestContext} from "./arango-collection";
 
-import { createResolvers } from './resolvers-generated';
-import { attachCustomResolvers } from "./resolvers-custom";
-import { resolversMam } from "./resolvers-mam";
+import {createResolvers} from './resolvers-generated';
+import {attachCustomResolvers} from "./resolvers-custom";
+import {resolversMam} from "./resolvers-mam";
 
-import type { QConfig } from './config';
+import type {QConfig} from './config';
 import QLogs from './logs';
-import type { QLog } from './logs';
+import type {QLog} from './logs';
 import type {IStats} from './tracer';
-import {QStats, QTracer} from "./tracer";
-import { Tracer } from "opentracing";
-import { Auth } from './auth';
-import { createError } from "./utils";
+import {QStats, QTracer, StatsGauge} from "./tracer";
+import {Tracer} from "opentracing";
+import {Auth} from './auth';
+import {createError} from "./utils";
 
 type QOptions = {
     config: QConfig,
@@ -49,6 +50,38 @@ type EndPoint = {
     resolvers: any,
     typeDefFileNames: string[],
     supportSubscriptions: boolean,
+}
+
+const v8 = require('v8');
+
+class MemStats {
+    stats: IStats;
+
+    constructor(stats: IStats) {
+        this.stats = stats;
+    }
+
+    report() {
+        v8.getHeapSpaceStatistics().forEach((space) => {
+            const spaceName = space.space_name
+                .replace('space_', '')
+                .replace('_space', '');
+            const gauge = (metric: string, value: number) => {
+                this.stats.gauge(`heap.space.${spaceName}.${metric}`, value);
+            };
+            gauge('physical_size', space.physical_space_size);
+            gauge('available_size', space.space_available_size);
+            gauge('size', space.space_size);
+            gauge('used_size', space.space_used_size);
+        });
+    }
+
+    start() {
+        setTimeout(() => {
+            this.report();
+            this.start();
+        }, 5000);
+    }
 }
 
 export default class TONQServer {
@@ -63,6 +96,7 @@ export default class TONQServer {
     stats: IStats;
     client: TONClient;
     auth: Auth;
+    memStats: MemStats;
     shared: Map<string, any>;
 
 
@@ -78,6 +112,8 @@ export default class TONQServer {
         this.app = express();
         this.server = http.createServer(this.app);
         this.db = new Arango(this.config, this.logs, this.auth, this.tracer, this.stats);
+        this.memStats = new MemStats(this.stats);
+        this.memStats.start();
         this.addEndPoint({
             path: '/graphql/mam',
             resolvers: resolversMam,
@@ -94,15 +130,55 @@ export default class TONQServer {
 
 
     async start() {
-        this.client = await TONClientNodeJs.create({ servers: [''] });
+        this.client = await TONClientNodeJs.create({servers: ['']});
         await this.db.start();
-        const { host, port } = this.config.server;
-        this.server.listen({ host, port }, () => {
+        const {host, port} = this.config.server;
+        this.server.listen({
+            host,
+            port,
+        }, () => {
             this.endPoints.forEach((endPoint: EndPoint) => {
                 this.log.debug('GRAPHQL', `http://${host}:${port}${endPoint.path}`);
             });
         });
         this.server.setTimeout(2147483647);
+
+
+        this.app.post('/api', (req, res) => {
+            (async () => {
+                this.db.transactions.statQuery.increment();
+                this.db.transactions.statQueryActive.increment();
+                await new Promise(resolve => setTimeout(resolve, 40000));
+                res.send('{}');
+                this.db.transactions.statQueryActive.decrement();
+            })();
+        });
+
+
+        const MESSAGE = {
+            request: 1,
+            response: 2,
+        };
+
+        const wss = new WebSocket.Server({port: 8084});
+        wss.on('connection', (ws) => {
+            ws.on('message', (data) => {
+                (async () => {
+                    const message = JSON.parse(data);
+                    if (message.type === MESSAGE.request) {
+                        this.db.transactions.statQuery.increment();
+                        this.db.transactions.statQueryActive.increment();
+                        await new Promise(resolve => setTimeout(resolve, 40000));
+                        this.db.transactions.statQueryActive.decrement();
+                        ws.send(JSON.stringify({
+                            type: MESSAGE.response,
+                            id: message.id,
+                            body: Date.now(),
+                        }));
+                    }
+                })();
+            });
+        });
     }
 
 
@@ -118,20 +194,20 @@ export default class TONQServer {
                     return {
                         accessKey: connectionParams.accessKey || connectionParams.accesskey,
                     }
-                }
+                },
             },
-            context: ({ req, connection }) => {
+            context: ({req, connection}) => {
                 return {
-                    db: this.db,
-                    tracer: this.tracer,
-                    stats: this.stats,
-                    auth: this.auth,
-                    client: this.client,
-                    config: this.config,
-                    shared: this.shared,
-                    remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
-                    accessKey: Auth.extractAccessKey(req, connection),
-                    parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
+                    // db: this.db,
+                    // tracer: this.tracer,
+                    // stats: this.stats,
+                    // auth: this.auth,
+                    // client: this.client,
+                    // config: this.config,
+                    // shared: this.shared,
+                    // remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
+                    // accessKey: Auth.extractAccessKey(req, connection),
+                    // parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
                 };
             },
             plugins: [
@@ -146,14 +222,17 @@ export default class TONQServer {
                                         'Request must use the same access key for all queries and mutations',
                                     );
                                 }
-                            }
+                            },
                         }
-                    }
-                }
+                    },
+                },
             ],
         };
         const apollo = new ApolloServer(config);
-        apollo.applyMiddleware({ app: this.app, path: endPoint.path });
+        apollo.applyMiddleware({
+            app: this.app,
+            path: endPoint.path,
+        });
         if (endPoint.supportSubscriptions) {
             apollo.installSubscriptionHandlers(this.server);
         }

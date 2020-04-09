@@ -141,10 +141,10 @@ export const STATS = {
         active: 'query.active',
     },
     subscription: {
-        count: 'subscription.count',
+        active: 'subscription.active',
     },
     waitFor: {
-        count: 'waitfor.count',
+        active: 'waitfor.active',
     },
 };
 

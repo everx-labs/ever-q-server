@@ -4,37 +4,21 @@ import { $$asyncIterator } from "iterall";
 import type { AccessRights } from "./auth";
 import { selectFields } from "./db-types";
 import type { FieldSelection, QType } from "./db-types";
-import { RegistryMap} from "./utils";
 
-export class CollectionListener {
-    collectionName: string;
+export class DocUpsertHandler {
     docType: QType;
-    listeners: RegistryMap<CollectionListener>;
-    id: ?number;
     filter: any;
     authFilter: ?((doc: any) => boolean);
-    selection: FieldSelection[];
-    operationId: ?string;
-    startTime: number;
 
     constructor(
         collectionName: string,
         docType: QType,
-        listeners: RegistryMap<CollectionListener>,
         accessRights: AccessRights,
         filter: any,
-        selection: FieldSelection[],
-        operationId: ?string,
     ) {
-        this.collectionName = collectionName;
         this.docType = docType;
-        this.listeners = listeners;
-        this.authFilter = CollectionListener.getAuthFilter(collectionName, accessRights);
+        this.authFilter = DocUpsertHandler.getAuthFilter(collectionName, accessRights);
         this.filter = filter;
-        this.selection = selection;
-        this.id = listeners.add(this);
-        this.startTime = Date.now();
-        this.operationId = operationId;
     }
 
     static getAuthFilter(collectionName: string, accessRights: AccessRights): ?((doc: any) => boolean) {
@@ -54,76 +38,41 @@ export class CollectionListener {
         }
     }
 
-    close() {
-        const id = this.id;
-        if (id !== null && id !== undefined) {
-            this.id = null;
-            this.listeners.remove(id);
-        }
-    }
-
     isFiltered(doc: any): boolean {
         if (this.authFilter && !this.authFilter(doc)) {
             return false;
         }
         return this.docType.test(null, doc, this.filter);
     }
-
-    onDocumentInsertOrUpdate(doc: any) {
-    }
-
-    getEventCount(): number {
-        return 0;
-    }
-}
-
-export class WaitForListener extends CollectionListener {
-    onInsertOrUpdate: (doc: any) => void;
-
-    constructor(
-        collectionName: string,
-        docType: QType,
-        listeners: RegistryMap<CollectionListener>,
-        accessRights: AccessRights,
-        filter: any,
-        selection: FieldSelection[],
-        operationId: ?string,
-        onInsertOrUpdate: (doc: any) => void
-    ) {
-        super(collectionName, docType, listeners, accessRights, filter, selection, operationId);
-        this.onInsertOrUpdate = onInsertOrUpdate;
-    }
-
-    onDocumentInsertOrUpdate(doc: any) {
-        this.onInsertOrUpdate(doc);
-    }
 }
 
 //$FlowFixMe
-export class SubscriptionListener extends CollectionListener implements AsyncIterator<any> {
-    eventCount: number;
+export class DocSubscription extends DocUpsertHandler implements AsyncIterator<any> {
+    collectionName: string;
+    selection: FieldSelection[];
     pullQueue: ((value: any) => void)[];
     pushQueue: any[];
     running: boolean;
+    onClose: ?(() => void);
 
     constructor(
         collectionName: string,
         docType: QType,
-        listeners: RegistryMap<CollectionListener>,
         accessRights: AccessRights,
         filter: any,
-        selection: FieldSelection[]
+        selection: FieldSelection[],
     ) {
-        super(collectionName, docType, listeners, accessRights, filter, selection, null);
-
-        this.eventCount = 0;
+        super(collectionName, docType, accessRights, filter);
+        this.collectionName = collectionName;
+        this.selection = selection;
         this.pullQueue = [];
         this.pushQueue = [];
         this.running = true;
+        this.onClose = null;
     }
 
-    onDocumentInsertOrUpdate(doc: any) {
-        if (!this.isQueueOverflow()) {
+    pushDocument(doc: any) {
+        if (this.isFiltered(doc) && !this.isQueueOverflow()) {
             const reduced = selectFields(doc, this.selection);
             this.pushValue({ [this.collectionName]: reduced });
         }
@@ -133,16 +82,11 @@ export class SubscriptionListener extends CollectionListener implements AsyncIte
         return this.getQueueSize() >= 10;
     }
 
-    getEventCount(): number {
-        return this.eventCount;
-    }
-
     getQueueSize(): number {
         return this.pushQueue.length + this.pullQueue.length;
     }
 
     pushValue(value: any) {
-        this.eventCount += 1;
         if (this.pullQueue.length !== 0) {
             this.pullQueue.shift()(this.running
                 ? { value, done: false }
@@ -167,13 +111,17 @@ export class SubscriptionListener extends CollectionListener implements AsyncIte
     }
 
     async return(): Promise<any> {
-        this.close();
+        if (this.onClose) {
+            this.onClose();
+        }
         await this.emptyQueue();
         return { value: undefined, done: true };
     }
 
     async throw(error?: any): Promise<any> {
-        this.close();
+        if (this.onClose) {
+            this.onClose();
+        }
         await this.emptyQueue();
         return Promise.reject(error);
     }
