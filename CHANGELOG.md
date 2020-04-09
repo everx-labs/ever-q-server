@@ -1,6 +1,10 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.8 – Apr 9, 2020
+### Featured
+### New
+
 ## 0.24.7 – Apr 8, 2020
 ### Featured
 StatsD support
