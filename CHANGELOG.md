@@ -1,6 +1,12 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.9 – Apr 13, 2020
+
+### Fixed
+- internal memory optimizations
+- jaeger injection format has changed from BINARY to TEXT_MAP
+
 ## 0.24.8 – Apr 9, 2020
 ### Featured
 ### New

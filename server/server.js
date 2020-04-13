@@ -78,7 +78,7 @@ class MemStats {
 
     start() {
         this.checkMemReport();
-        this.checkGc();
+        //TODO: this.checkGc();
     }
 
     checkMemReport() {
@@ -96,8 +96,6 @@ class MemStats {
     }
 }
 
-global.gc();
-console.log('>>>', 1);
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
