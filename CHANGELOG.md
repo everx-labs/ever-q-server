@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.25.0 – Apr 14, 2020
+
+### Fixed
+### New
+
 ## 0.24.9 – Apr 13, 2020
 
 ### Fixed
