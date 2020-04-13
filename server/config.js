@@ -32,6 +32,7 @@ export type QConfig = {
     server: {
         host: string,
         port: number,
+        rpcPort: string,
     },
     requests: {
         mode: 'kafka' | 'rest',

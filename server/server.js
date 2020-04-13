@@ -18,7 +18,6 @@
 import fs from 'fs';
 import express from 'express';
 import http from 'http';
-import WebSocket from 'ws';
 
 import {ApolloServer, ApolloServerExpressConfig} from 'apollo-server-express';
 import {ConnectionContext} from 'subscriptions-transport-ws';
@@ -26,6 +25,7 @@ import type {TONClient} from "ton-client-js/types";
 import {TONClient as TONClientNodeJs} from 'ton-client-node-js';
 import Arango from './arango';
 import type {GraphQLRequestContext} from "./arango-collection";
+import {QRpcServer} from './q-rpc-server';
 
 import {createResolvers} from './resolvers-generated';
 import {attachCustomResolvers} from "./resolvers-custom";
@@ -77,13 +77,27 @@ class MemStats {
     }
 
     start() {
+        this.checkMemReport();
+        this.checkGc();
+    }
+
+    checkMemReport() {
         setTimeout(() => {
             this.report();
-            this.start();
+            this.checkMemReport();
         }, 5000);
+    }
+
+    checkGc() {
+        setTimeout(() => {
+            global.gc();
+            this.checkGc();
+        }, 60000);
     }
 }
 
+global.gc();
+console.log('>>>', 1);
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
@@ -98,6 +112,7 @@ export default class TONQServer {
     auth: Auth;
     memStats: MemStats;
     shared: Map<string, any>;
+    rpcServer: QRpcServer;
 
 
     constructor(options: QOptions) {
@@ -114,6 +129,11 @@ export default class TONQServer {
         this.db = new Arango(this.config, this.logs, this.auth, this.tracer, this.stats);
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
+        this.rpcServer = new QRpcServer({
+            auth: this.auth,
+            db: this.db,
+            port: options.config.server.rpcPort,
+        });
         this.addEndPoint({
             path: '/graphql/mam',
             resolvers: resolversMam,
@@ -143,42 +163,9 @@ export default class TONQServer {
         });
         this.server.setTimeout(2147483647);
 
-
-        this.app.post('/api', (req, res) => {
-            (async () => {
-                this.db.transactions.statQuery.increment();
-                this.db.transactions.statQueryActive.increment();
-                await new Promise(resolve => setTimeout(resolve, 40000));
-                res.send('{}');
-                this.db.transactions.statQueryActive.decrement();
-            })();
-        });
-
-
-        const MESSAGE = {
-            request: 1,
-            response: 2,
-        };
-
-        const wss = new WebSocket.Server({port: 8084});
-        wss.on('connection', (ws) => {
-            ws.on('message', (data) => {
-                (async () => {
-                    const message = JSON.parse(data);
-                    if (message.type === MESSAGE.request) {
-                        this.db.transactions.statQuery.increment();
-                        this.db.transactions.statQueryActive.increment();
-                        await new Promise(resolve => setTimeout(resolve, 40000));
-                        this.db.transactions.statQueryActive.decrement();
-                        ws.send(JSON.stringify({
-                            type: MESSAGE.response,
-                            id: message.id,
-                            body: Date.now(),
-                        }));
-                    }
-                })();
-            });
-        });
+        if (this.rpcServer.port) {
+            this.rpcServer.start();
+        }
     }
 
 
@@ -198,16 +185,16 @@ export default class TONQServer {
             },
             context: ({req, connection}) => {
                 return {
-                    // db: this.db,
-                    // tracer: this.tracer,
-                    // stats: this.stats,
-                    // auth: this.auth,
-                    // client: this.client,
-                    // config: this.config,
-                    // shared: this.shared,
-                    // remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
-                    // accessKey: Auth.extractAccessKey(req, connection),
-                    // parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
+                    db: this.db,
+                    tracer: this.tracer,
+                    stats: this.stats,
+                    auth: this.auth,
+                    client: this.client,
+                    config: this.config,
+                    shared: this.shared,
+                    remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
+                    accessKey: Auth.extractAccessKey(req, connection),
+                    parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
                 };
             },
             plugins: [

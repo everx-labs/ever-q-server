@@ -222,7 +222,9 @@ export class Collection {
             ? `(${primaryCondition}) AND (${additionalCondition})`
             : (primaryCondition || additionalCondition);
         const filterSection = condition ? `FILTER ${condition}` : '';
-        const selection = parseSelectionSet(selectionInfo, this.name);
+        const selection = selectionInfo.selections
+            ? parseSelectionSet(selectionInfo, this.name)
+            : selectionInfo;
         const orderBy: OrderBy[] = args.orderBy || [];
         const limit: number = args.limit || 50;
         const timeout = Number(args.timeout) || 0;
@@ -279,36 +281,34 @@ export class Collection {
             args: any,
             context: GraphQLRequestContext,
             info: any,
-        ) => /*wrap(this.log, 'QUERY', args, async () =>*/ {
+        ) => wrap(this.log, 'QUERY', args, async () => {
             this.statQuery.increment();
             this.statQueryActive.increment();
             const start = Date.now();
             try {
-                // await new Promise(resolve => setTimeout(resolve, 1000));
-                return [];
-                //todo: const accessRights = await requireGrantedAccess(context, args);
-                // const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
-                // if (!q) {
-                //     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
-                //     return [];
-                // }
-                // const stat = await this.ensureQueryStat(q);
-                // const start = Date.now();
-                // const result = q.timeout > 0
-                //     ? await this.queryWaitFor(q, stat, context.parentSpan)
-                //     : await this.query(q, stat, context.parentSpan);
-                // this.log.debug(
-                //     'QUERY',
-                //     args,
-                //     (Date.now() - start) / 1000,
-                //     stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
-                // );
-                // return result;
+                const accessRights = await requireGrantedAccess(context, args);
+                const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
+                if (!q) {
+                    this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
+                    return [];
+                }
+                const stat = await this.ensureQueryStat(q);
+                const start = Date.now();
+                const result = q.timeout > 0
+                    ? await this.queryWaitFor(q, stat, context.parentSpan)
+                    : await this.query(q, stat, context.parentSpan);
+                this.log.debug(
+                    'QUERY',
+                    args,
+                    (Date.now() - start) / 1000,
+                    stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
+                );
+                return result;
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();
             }
-        };
+        });
     }
 
     static setQueryTraceParams(q: DatabaseQuery, span: Span) {
@@ -366,37 +366,37 @@ export class Collection {
             let resolvedBy: ?string = null;
             try {
                 const onQuery = new Promise((resolve, reject) => {
-                    //todo: const check = () => {
-                    //     this.queryDatabase(q, stat).then((docs) => {
-                    //         if (!resolvedBy) {
-                    //             if (docs.length > 0) {
-                    //                 forceTimerId = null;
-                    //                 resolvedBy = 'query';
-                    //                 resolve(docs);
-                    //             } else {
-                    //                 forceTimerId = setTimeout(check, 5_000);
-                    //             }
-                    //         }
-                    //     }, reject);
-                    // };
-                    // check();
+                    const check = () => {
+                        this.queryDatabase(q, stat).then((docs) => {
+                            if (!resolvedBy) {
+                                if (docs.length > 0) {
+                                    forceTimerId = null;
+                                    resolvedBy = 'query';
+                                    resolve(docs);
+                                } else {
+                                    forceTimerId = setTimeout(check, 5_000);
+                                }
+                            }
+                        }, reject);
+                    };
+                    check();
                 });
                 const onChangesFeed = new Promise((resolve) => {
-                    //todo: const authFilter = DocUpsertHandler.getAuthFilter(this.name, q.accessRights);
-                    // waitFor = (doc) => {
-                    //     if (authFilter && !authFilter(doc)) {
-                    //         return;
-                    //     }
-                    //     if (this.docType.test(null, doc, q.filter)) {
-                    //         if (!resolvedBy) {
-                    //             resolvedBy = 'listener';
-                    //             resolve([doc]);
-                    //         }
-                    //     }
-                    // };
-                    // this.waitForCount += 1;
-                    // this.docInsertOrUpdate.on('doc', waitFor);
-                    // this.statWaitForActive.increment();
+                    const authFilter = DocUpsertHandler.getAuthFilter(this.name, q.accessRights);
+                    waitFor = (doc) => {
+                        if (authFilter && !authFilter(doc)) {
+                            return;
+                        }
+                        if (this.docType.test(null, doc, q.filter)) {
+                            if (!resolvedBy) {
+                                resolvedBy = 'listener';
+                                resolve([doc]);
+                            }
+                        }
+                    };
+                    this.waitForCount += 1;
+                    this.docInsertOrUpdate.on('doc', waitFor);
+                    this.statWaitForActive.increment();
                 });
                 const onTimeout = new Promise((resolve) => {
                     setTimeout(() => {
