@@ -32,6 +32,7 @@ export type QConfig = {
     server: {
         host: string,
         port: number,
+        rpcPort: string,
     },
     requests: {
         mode: 'kafka' | 'rest',
@@ -141,10 +142,10 @@ export const STATS = {
         active: 'query.active',
     },
     subscription: {
-        count: 'subscription.count',
+        active: 'subscription.active',
     },
     waitFor: {
-        count: 'waitfor.count',
+        active: 'waitfor.active',
     },
 };
 
