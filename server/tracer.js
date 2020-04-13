@@ -111,26 +111,91 @@ export class StatsTiming {
     }
 }
 
+function parseUrl(url: string): {
+    protocol: string,
+    host: string,
+    port: string,
+    path: string,
+    query: string,
+} {
+    const protocolSeparatorPos = url.indexOf('://');
+    const protocolEnd = protocolSeparatorPos >= 0 ? protocolSeparatorPos + 3 : 0;
+    const questionPos = url.indexOf('?', protocolEnd);
+    const queryStart = questionPos >= 0 ? questionPos + 1 : url.length;
+    const pathEnd = questionPos >= 0 ? questionPos : url.length;
+    const pathSeparatorPos = url.indexOf('/', protocolEnd);
+    // eslint-disable-next-line no-nested-ternary
+    const pathStart = pathSeparatorPos >= 0
+        ? (pathSeparatorPos < pathEnd ? pathSeparatorPos : pathEnd)
+        : (questionPos >= 0 ? questionPos : url.length);
+    const hostPort = url.substring(protocolEnd, pathStart).split(':');
+    return {
+        protocol: url.substring(0, protocolEnd),
+        host: hostPort[0],
+        port: hostPort[1] || '',
+        path: url.substring(pathStart, pathEnd),
+        query: url.substring(queryStart),
+    };
+}
+
 export class QTracer {
     static config: QConfig;
 
+    static getJaegerConfig(config: {
+        endpoint: string,
+        service: string,
+        tags: { [string]: string }
+    }): ?{
+        serviceName: string,
+        agentHost?: string,
+        agentPort?: string,
+        sampler: {
+            type: string,
+            param: number,
+        },
+        reporter: {
+            collectorEndpoint?: string,
+            logSpans: boolean,
+        },
+    } {
+        const endpoint = config.endpoint;
+        if (!endpoint) {
+            return null;
+        }
+        const parts = parseUrl(endpoint);
+        return (parts.protocol === '')
+            ? {
+                agentHost: parts.host,
+                agentPort: parts.port,
+                serviceName: config.service,
+                sampler: {
+                    type: 'const',
+                    param: 1,
+                },
+                reporter: {
+                    logSpans: true,
+                },
+            }
+            : {
+                serviceName: config.service,
+                sampler: {
+                    type: 'const',
+                    param: 1,
+                },
+                reporter: {
+                    collectorEndpoint: endpoint,
+                    logSpans: true,
+                },
+            };
+    }
+
     static create(config: QConfig): Tracer {
         QTracer.config = config;
-        const endpoint = config.jaeger.endpoint;
-        if (!endpoint) {
+        const jaegerConfig = QTracer.getJaegerConfig(config.jaeger);
+        if (!jaegerConfig) {
             return noopTracer;
         }
-        return initJaegerTracer({
-            serviceName: config.jaeger.service,
-            sampler: {
-                type: 'const',
-                param: 1,
-            },
-            reporter: {
-                collectorEndpoint: endpoint,
-                logSpans: true,
-            },
-        }, {
+        return initJaegerTracer(jaegerConfig, {
             logger: {
                 info(msg) {
                     console.log('INFO ', msg);
