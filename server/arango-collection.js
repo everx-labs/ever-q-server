@@ -31,7 +31,7 @@ import QLogs from "./logs";
 import {isFastQuery} from './slow-detector';
 import type {IStats} from './tracer';
 import {QTracer, StatsCounter, StatsGauge, StatsTiming} from "./tracer";
-import {createError, RegistryMap, wrap} from "./utils";
+import {createError, wrap} from "./utils";
 import EventEmitter from 'events';
 
 export type GraphQLRequestContext = {
@@ -140,6 +140,7 @@ export class Collection {
         this.statSubscriptionActive = new StatsGauge(stats, STATS.subscription.active, [`collection:${name}`]);
 
         this.docInsertOrUpdate = new EventEmitter();
+        this.docInsertOrUpdate.setMaxListeners(0);
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
     }
