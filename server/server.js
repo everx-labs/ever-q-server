@@ -35,7 +35,7 @@ import type {QConfig} from './config';
 import QLogs from './logs';
 import type {QLog} from './logs';
 import type {IStats} from './tracer';
-import {QStats, QTracer, StatsGauge} from "./tracer";
+import {QStats, QTracer} from "./tracer";
 import {Tracer} from "opentracing";
 import {Auth} from './auth';
 import {createError} from "./utils";
@@ -77,7 +77,7 @@ class MemStats {
     }
 
     start() {
-        this.checkMemReport();
+        //TODO: this.checkMemReport();
         //TODO: this.checkGc();
     }
 

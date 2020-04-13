@@ -61,10 +61,13 @@ export class QRpcServer {
         this.db.collections.forEach((c) => {
             this.resolvers.set(c.name, c.queryResolver());
         });
-        this.port = options.port || 8084;
+        this.port = options.port || 0;
     }
 
     start() {
+        if (this.port === 0) {
+            throw new Error('QRpcServer port hasn\'t specified');
+        }
         this.wss = new WebSocket.Server({port: this.port});
         this.wss.on('connection', (ws, req) => {
             const connection: RpcConnection = {

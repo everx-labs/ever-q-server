@@ -2,7 +2,7 @@
 
 import fs from "fs";
 import { Kafka, Producer } from "kafkajs";
-import { Span, FORMAT_BINARY } from 'opentracing';
+import { Span, FORMAT_TEXT_MAP } from 'opentracing';
 import type { TONContracts } from "ton-client-js/types";
 import Arango from "./arango";
 import { requireGrantedAccess } from "./arango-collection";
@@ -101,7 +101,7 @@ async function getManagementAccessKey(_parent, args, context: GraphQLRequestCont
 
 // Mutation
 
-async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx): Promise<void> {
+async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx, _span: Span): Promise<void> {
     const config = context.config.requests;
     const url = `${ensureProtocol(config.server, 'http')}/topics/${config.topic}`;
     const response = await fetch(url, {
@@ -149,11 +149,13 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
 
     });
     const messages = requests.map((request) => {
+        const traceInfo = {};
+        context.db.tracer.inject(span, FORMAT_TEXT_MAP, traceInfo);
         const keyBuffer = Buffer.from(request.id, 'base64');
-        const traceBuffer = Buffer.from([]);
-        context.db.tracer.inject(span, FORMAT_BINARY, traceBuffer);
+        const traceBuffer = Buffer.from(JSON.stringify(traceInfo), 'utf8');
+        const key = Buffer.concat([keyBuffer, traceBuffer]);
         return {
-            key: Buffer.concat([keyBuffer, traceBuffer]),
+            key,
             value: Buffer.from(request.body, 'base64'),
         };
     });
@@ -199,7 +201,7 @@ async function postRequests(
         await checkPostRestrictions(context.client.contracts, requests, accessRights);
         try {
             if (context.config.requests.mode === 'rest') {
-                await postRequestsUsingRest(requests, context);
+                await postRequestsUsingRest(requests, context, span);
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }
