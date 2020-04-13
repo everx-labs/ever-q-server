@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.24.7",
+	"version": "0.24.8",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "server/index.js",
 	"repository": "git@github.com:tonlabs/ton-q-server.git",
@@ -15,11 +15,6 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
-	"husky": {
-		"hooks": {
-			"pre-push": "npm run babel && npm run gen && npm run babel"
-		}
-	},
 	"dependencies": {
 		"apollo-server": "2.11.0",
 		"apollo-server-express": "2.11.0",
@@ -62,7 +57,6 @@
 		"flow": "0.2.3",
 		"flow-bin": "0.121.0",
 		"git-hooks": "1.1.10",
-		"husky": "^4.2.3",
 		"jest": "25.1.0",
 		"ton-labs-dev-ops": "git@github.com:tonlabs/ton-labs-dev-ops.git"
 	}
