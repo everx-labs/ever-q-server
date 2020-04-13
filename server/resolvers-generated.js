@@ -382,6 +382,7 @@ const BlockMasterConfigP18 = struct({
 });
 
 const BlockMasterConfigP28 = struct({
+    shuffle_mc_validators: scalar,
     mc_catchain_lifetime: scalar,
     shard_catchain_lifetime: scalar,
     shard_validators_lifetime: scalar,
@@ -389,6 +390,7 @@ const BlockMasterConfigP28 = struct({
 });
 
 const BlockMasterConfigP29 = struct({
+    new_catchain_ids: scalar,
     round_candidates: scalar,
     next_candidate_delay_ms: scalar,
     consensus_timeout_ms: scalar,

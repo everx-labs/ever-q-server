@@ -726,6 +726,7 @@ type BlockMasterConfigP18 {
 
 "Catchain config"
 type BlockMasterConfigP28 {
+	shuffle_mc_validators: Boolean
 	mc_catchain_lifetime: Float
 	shard_catchain_lifetime: Float
 	shard_validators_lifetime: Float
@@ -734,6 +735,7 @@ type BlockMasterConfigP28 {
 
 "Consensus config"
 type BlockMasterConfigP29 {
+	new_catchain_ids: Boolean
 	round_candidates: Float
 	next_candidate_delay_ms: Float
 	consensus_timeout_ms: Float
@@ -1813,6 +1815,7 @@ input BlockMasterConfigP18Filter {
 
 "Catchain config"
 input BlockMasterConfigP28Filter {
+	shuffle_mc_validators: BooleanFilter
 	mc_catchain_lifetime: FloatFilter
 	shard_catchain_lifetime: FloatFilter
 	shard_validators_lifetime: FloatFilter
@@ -1821,6 +1824,7 @@ input BlockMasterConfigP28Filter {
 
 "Consensus config"
 input BlockMasterConfigP29Filter {
+	new_catchain_ids: BooleanFilter
 	round_candidates: FloatFilter
 	next_candidate_delay_ms: FloatFilter
 	consensus_timeout_ms: FloatFilter
