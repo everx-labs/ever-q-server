@@ -176,6 +176,7 @@ const Message: TypeDef = {
     msg_type: required(messageType(docs.message.msg_type)),
     status: required(messageProcessingStatus(docs.message.status)),
     block_id: required(string(docs.message.block_id)),
+    block: join('Block', 'block_id', 'id'),
     body: string(docs.message.body),
     split_depth: u8(docs.message.split_depth),
     tick: bool(docs.message.tick),
@@ -210,6 +211,7 @@ const Transaction: TypeDef = {
     tr_type: required(transactionType(docs.transaction.tr_type)),
     status: required(transactionProcessingStatus(docs.transaction.status)),
     block_id: string(docs.transaction.block_id),
+    block: join('Block', 'block_id', 'id'),
     account_addr: string(docs.transaction.account_addr),
     workchain_id: i32(docs.transaction.workchain_id),
     lt: u64(docs.transaction.lt),
@@ -300,6 +302,7 @@ const Transaction: TypeDef = {
 const BlockSignatures: TypeDef = {
     _doc: 'Set of validator\'s signatures for the Block with correspond id',
     _: { collection: 'blocks_signatures' },
+    block: join('Block', 'id', 'id'),
     signatures: arrayOf({
         node_id: string("Validator ID"),
         r: string("'R' part of signature"),
