@@ -13,8 +13,9 @@ All notable changes to this project will be documented in this file.
 - jaeger injection format has changed from BINARY to TEXT_MAP
 
 ### New
-- added `shuffle_mc_validators` field to `CatchainConfig` struct (config param 28)
-- added `new_catchain_ids` field to `ConsensusConfig` struct (config param 29)
+- `shuffle_mc_validators` field to `CatchainConfig` struct (config param 28)
+- `new_catchain_ids` field to `ConsensusConfig` struct (config param 29)
+- jaeger endpoint without protocol part will use agent instead of collector.
 
 ## 0.24.8 – Apr 9, 2020
 ### Featured

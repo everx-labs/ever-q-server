@@ -1,13 +1,13 @@
 // @flow
 
-import {STATS} from './config';
-import type {QConfig} from "./config";
-import {tracer as noopTracer} from "opentracing/lib/noop";
+import { STATS } from './config';
+import type { QConfig } from "./config";
+import { tracer as noopTracer } from "opentracing/lib/noop";
 import StatsD from 'node-statsd';
-import {Tracer, Tags, FORMAT_TEXT_MAP, FORMAT_BINARY, Span, SpanContext} from "opentracing";
+import { Tracer, Tags, FORMAT_TEXT_MAP, FORMAT_BINARY, Span, SpanContext } from "opentracing";
 
-import {initTracerFromEnv as initJaegerTracer} from 'jaeger-client';
-import {cleanError, toLog} from "./utils";
+import { initTracerFromEnv as initJaegerTracer } from 'jaeger-client';
+import { cleanError, toLog } from "./utils";
 
 export interface IStats {
     increment(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void,
@@ -111,26 +111,108 @@ export class StatsTiming {
     }
 }
 
+function parseUrl(url: string): {
+    protocol: string,
+    host: string,
+    port: string,
+    path: string,
+    query: string,
+} {
+    const protocolSeparatorPos = url.indexOf('://');
+    const protocolEnd = protocolSeparatorPos >= 0 ? protocolSeparatorPos + 3 : 0;
+    const questionPos = url.indexOf('?', protocolEnd);
+    const queryStart = questionPos >= 0 ? questionPos + 1 : url.length;
+    const pathEnd = questionPos >= 0 ? questionPos : url.length;
+    const pathSeparatorPos = url.indexOf('/', protocolEnd);
+    // eslint-disable-next-line no-nested-ternary
+    const pathStart = pathSeparatorPos >= 0
+        ? (pathSeparatorPos < pathEnd ? pathSeparatorPos : pathEnd)
+        : (questionPos >= 0 ? questionPos : url.length);
+    const hostPort = url.substring(protocolEnd, pathStart).split(':');
+    return {
+        protocol: url.substring(0, protocolEnd),
+        host: hostPort[0],
+        port: hostPort[1] || '',
+        path: url.substring(pathStart, pathEnd),
+        query: url.substring(queryStart),
+    };
+}
+
+type JaegerConfig = {
+    serviceName: string,
+    disable?: boolean,
+    sampler: {
+        type: string,
+        param: number,
+        hostPort?: string,
+        host?: string,
+        port?: number,
+        refreshIntervalMs?: number,
+    },
+    reporter: {
+        logSpans: boolean,
+        agentHost?: string,
+        agentPort?: number,
+        agentSocketType?: string,
+        collectorEndpoint?: string,
+        username?: string,
+        password?: string,
+        flushIntervalMs?: number,
+    },
+    throttler?: {
+        host: string,
+        port: number,
+        refreshIntervalMs: number,
+    },
+}
+
 export class QTracer {
     static config: QConfig;
 
+    static getJaegerConfig(config: {
+        endpoint: string,
+        service: string,
+        tags: { [string]: string }
+    }): ?JaegerConfig {
+        const endpoint = config.endpoint;
+        if (!endpoint) {
+            return null;
+        }
+        const parts = parseUrl(endpoint);
+        return (parts.protocol === '')
+            ? {
+                serviceName: config.service,
+                sampler: {
+                    type: 'const',
+                    param: 1,
+                },
+                reporter: {
+                    logSpans: true,
+                    agentHost: parts.host,
+                    agentPort: Number(parts.port)
+                    ,
+                },
+            }
+            : {
+                serviceName: config.service,
+                sampler: {
+                    type: 'const',
+                    param: 1,
+                },
+                reporter: {
+                    logSpans: true,
+                    collectorEndpoint: endpoint,
+                },
+            };
+    }
+
     static create(config: QConfig): Tracer {
         QTracer.config = config;
-        const endpoint = config.jaeger.endpoint;
-        if (!endpoint) {
+        const jaegerConfig = QTracer.getJaegerConfig(config.jaeger);
+        if (!jaegerConfig) {
             return noopTracer;
         }
-        return initJaegerTracer({
-            serviceName: config.jaeger.service,
-            sampler: {
-                type: 'const',
-                param: 1,
-            },
-            reporter: {
-                collectorEndpoint: endpoint,
-                logSpans: true,
-            },
-        }, {
+        return initJaegerTracer(jaegerConfig, {
             logger: {
                 info(msg) {
                     console.log('INFO ', msg);
@@ -172,7 +254,7 @@ export class QTracer {
         f: (span: Span) => Promise<T>,
         parentSpan?: (Span | SpanContext),
     ): Promise<T> {
-        const span = tracer.startSpan(name, {childOf: parentSpan});
+        const span = tracer.startSpan(name, { childOf: parentSpan });
         try {
             span.setTag(Tags.SPAN_KIND, 'server');
             Object.entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
