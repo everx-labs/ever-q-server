@@ -1,4 +1,4 @@
-import {QTracer} from '../server/tracer';
+import { QTracer } from '../server/tracer';
 
 test("Jaeger Config", () => {
     expect(QTracer.getJaegerConfig({
@@ -28,14 +28,14 @@ test("Jaeger Config", () => {
         service: 'service',
         tags: [],
     })).toEqual({
-        agentHost: 'agent',
-        agentPort: '1234',
         serviceName: 'service',
         sampler: {
             type: 'const',
             param: 1,
         },
         reporter: {
+            agentHost: 'agent',
+            agentPort: 1234,
             logSpans: true,
         },
     });
