@@ -45,6 +45,7 @@ type ProgramOptions = {
     slowDbMaxSockets: string,
     host: string,
     port: string,
+    rpcPort: string,
     jaegerEndpoint: string,
     traceService: string,
     traceTags: string,
@@ -58,6 +59,8 @@ program
         process.env.Q_SERVER_HOST || getIp())
     .option('-p, --port <port>', 'listening port',
         process.env.Q_SERVER_PORT || '4000')
+    .option('--rpc-port <port>', 'listening rpc port',
+        process.env.Q_SERVER_RPC_PORT || '')
 
     .option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)',
         process.env.Q_REQUESTS_MODE || 'kafka')
@@ -120,6 +123,7 @@ const config: QConfig = {
     server: {
         host: options.host,
         port: Number.parseInt(options.port),
+        rpcPort: options.rpcPort,
     },
     requests: {
         mode: options.requestsMode,

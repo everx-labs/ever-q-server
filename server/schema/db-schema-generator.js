@@ -19,5 +19,7 @@ import gen from './ql-js-generator.js';
 const fs = require('fs');
 
 const { ql, js } = gen(schemaDef);
+
+// Please ensure that new files are added to package.json "pre-commit" command as well
 fs.writeFileSync(`./type-defs-generated.graphql`, ql);
 fs.writeFileSync(`./server/resolvers-generated.js`, js);

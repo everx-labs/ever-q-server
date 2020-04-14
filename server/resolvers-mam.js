@@ -4,8 +4,6 @@ import fs from "fs";
 import path from 'path';
 import Arango from "./arango";
 import { Collection, mamAccessRequired } from "./arango-collection";
-import { CollectionListener, SubscriptionListener } from "./arango-listeners";
-import { selectionToString } from "./db-types";
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
 
 type Info = {
@@ -50,34 +48,19 @@ function info(): Info {
 
 function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
     mamAccessRequired(context, args);
-    const listenerToStat = (listener: CollectionListener ): ListenerStat => {
-        return {
-            filter: JSON.stringify(listener.filter),
-            selection: selectionToString(listener.selection),
-            queueSize: 0,
-            eventCount: listener.getEventCount(),
-            secondsActive: (Date.now() - listener.startTime) / 1000,
-        };
-    };
-    const isSubscription = (listener: CollectionListener): bool => {
-        return listener instanceof SubscriptionListener;
-    };
     const db: Arango = context.db;
     let totalWaitForCount = 0;
     let totalSubscriptionCount = 0;
     const collections = db.collections.map((collection: Collection) => {
-        const listeners = [...collection.listeners.values()];
-        const waitFor = listeners.filter(x => !isSubscription(x));
-        const subscriptions = listeners.filter(isSubscription);
-        totalWaitForCount += waitFor.length;
-        totalSubscriptionCount += subscriptions.length;
+        totalWaitForCount += collection.waitForCount;
+        totalSubscriptionCount += collection.subscriptionCount;
         return {
             name: collection.name,
-            subscriptionCount: subscriptions.length,
-            waitForCount: waitFor.length,
+            subscriptionCount: collection.subscriptionCount,
+            waitForCount: collection.waitForCount,
             maxQueueSize: collection.maxQueueSize,
-            subscriptions: subscriptions.map(listenerToStat),
-            waitFor: waitFor.map(listenerToStat),
+            subscriptions: [],
+            waitFor: [],
         }
     });
     return {
