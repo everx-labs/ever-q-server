@@ -57,154 +57,7 @@ const OutMsg = struct({
     next_addr_pfx: bigUInt1,
 });
 
-const TransactionStorage = struct({
-    storage_fees_collected: bigUInt2,
-    storage_fees_due: bigUInt2,
-    status_change: scalar,
-    status_change_name: enumName('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-});
-
 const OtherCurrencyArray = array(() => OtherCurrency);
-const TransactionCredit = struct({
-    due_fees_collected: bigUInt2,
-    credit: bigUInt2,
-    credit_other: OtherCurrencyArray,
-});
-
-const TransactionCompute = struct({
-    compute_type: scalar,
-    compute_type_name: enumName('compute_type', { Skipped: 0, Vm: 1 }),
-    skipped_reason: scalar,
-    skipped_reason_name: enumName('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
-    success: scalar,
-    msg_state_used: scalar,
-    account_activated: scalar,
-    gas_fees: bigUInt2,
-    gas_used: bigUInt1,
-    gas_limit: bigUInt1,
-    gas_credit: scalar,
-    mode: scalar,
-    exit_code: scalar,
-    exit_arg: scalar,
-    vm_steps: scalar,
-    vm_init_state_hash: scalar,
-    vm_final_state_hash: scalar,
-});
-
-const TransactionAction = struct({
-    success: scalar,
-    valid: scalar,
-    no_funds: scalar,
-    status_change: scalar,
-    status_change_name: enumName('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-    total_fwd_fees: bigUInt2,
-    total_action_fees: bigUInt2,
-    result_code: scalar,
-    result_arg: scalar,
-    tot_actions: scalar,
-    spec_actions: scalar,
-    skipped_actions: scalar,
-    msgs_created: scalar,
-    action_list_hash: scalar,
-    total_msg_size_cells: scalar,
-    total_msg_size_bits: scalar,
-});
-
-const TransactionBounce = struct({
-    bounce_type: scalar,
-    bounce_type_name: enumName('bounce_type', { NegFunds: 0, NoFunds: 1, Ok: 2 }),
-    msg_size_cells: scalar,
-    msg_size_bits: scalar,
-    req_fwd_fees: bigUInt2,
-    msg_fees: bigUInt2,
-    fwd_fees: bigUInt2,
-});
-
-const TransactionSplitInfo = struct({
-    cur_shard_pfx_len: scalar,
-    acc_split_depth: scalar,
-    this_addr: scalar,
-    sibling_addr: scalar,
-});
-
-const StringArray = array(() => scalar);
-const MessageArray = array(() => Message);
-const Transaction = struct({
-    id: scalar,
-    tr_type: scalar,
-    tr_type_name: enumName('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
-    status: scalar,
-    status_name: enumName('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
-    block_id: scalar,
-    account_addr: scalar,
-    workchain_id: scalar,
-    lt: bigUInt1,
-    prev_trans_hash: scalar,
-    prev_trans_lt: bigUInt1,
-    now: scalar,
-    outmsg_cnt: scalar,
-    orig_status: scalar,
-    orig_status_name: enumName('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    end_status: scalar,
-    end_status_name: enumName('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    in_msg: scalar,
-    in_message: join('in_msg', 'id', 'messages', () => Message),
-    out_msgs: StringArray,
-    out_messages: joinArray('out_msgs', 'id', 'messages', () => Message),
-    total_fees: bigUInt2,
-    total_fees_other: OtherCurrencyArray,
-    old_hash: scalar,
-    new_hash: scalar,
-    credit_first: scalar,
-    storage: TransactionStorage,
-    credit: TransactionCredit,
-    compute: TransactionCompute,
-    action: TransactionAction,
-    bounce: TransactionBounce,
-    aborted: scalar,
-    destroyed: scalar,
-    tt: scalar,
-    split_info: TransactionSplitInfo,
-    prepare_transaction: scalar,
-    installed: scalar,
-    proof: scalar,
-    boc: scalar,
-}, true);
-
-const Message = struct({
-    id: scalar,
-    msg_type: scalar,
-    msg_type_name: enumName('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
-    status: scalar,
-    status_name: enumName('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
-    block_id: scalar,
-    body: scalar,
-    split_depth: scalar,
-    tick: scalar,
-    tock: scalar,
-    code: scalar,
-    data: scalar,
-    library: scalar,
-    src: scalar,
-    dst: scalar,
-    src_workchain_id: scalar,
-    dst_workchain_id: scalar,
-    created_lt: bigUInt1,
-    created_at: scalar,
-    ihr_disabled: scalar,
-    ihr_fee: bigUInt2,
-    fwd_fee: bigUInt2,
-    import_fee: bigUInt2,
-    bounce: scalar,
-    bounced: scalar,
-    value: bigUInt2,
-    value_other: OtherCurrencyArray,
-    proof: scalar,
-    boc: scalar,
-    src_transaction: join('id', 'out_msgs[*]', 'transactions', () => Transaction),
-    dst_transaction: join('id', 'in_msg', 'transactions', () => Transaction),
-}, true);
-
 const BlockValueFlow = struct({
     to_next_blk: bigUInt2,
     to_next_blk_other: OtherCurrencyArray,
@@ -381,35 +234,6 @@ const BlockMasterConfigP18 = struct({
     mc_cell_price_ps: scalar,
 });
 
-const BlockMasterConfigP28 = struct({
-    shuffle_mc_validators: scalar,
-    mc_catchain_lifetime: scalar,
-    shard_catchain_lifetime: scalar,
-    shard_validators_lifetime: scalar,
-    shard_validators_num: scalar,
-});
-
-const BlockMasterConfigP29 = struct({
-    new_catchain_ids: scalar,
-    round_candidates: scalar,
-    next_candidate_delay_ms: scalar,
-    consensus_timeout_ms: scalar,
-    fast_attempts: scalar,
-    attempt_duration: scalar,
-    catchain_max_deps: scalar,
-    max_block_bytes: scalar,
-    max_collated_bytes: scalar,
-});
-
-const BlockMasterConfigP39 = struct({
-    adnl_addr: scalar,
-    temp_public_key: scalar,
-    seqno: scalar,
-    valid_until: scalar,
-    signature_r: scalar,
-    signature_s: scalar,
-});
-
 const GasLimitsPrices = struct({
     gas_price: scalar,
     gas_limit: scalar,
@@ -455,6 +279,26 @@ const MsgForwardPrices = struct({
     next_frac: scalar,
 });
 
+const BlockMasterConfigP28 = struct({
+    shuffle_mc_validators: scalar,
+    mc_catchain_lifetime: scalar,
+    shard_catchain_lifetime: scalar,
+    shard_validators_lifetime: scalar,
+    shard_validators_num: scalar,
+});
+
+const BlockMasterConfigP29 = struct({
+    new_catchain_ids: scalar,
+    round_candidates: scalar,
+    next_candidate_delay_ms: scalar,
+    consensus_timeout_ms: scalar,
+    fast_attempts: scalar,
+    attempt_duration: scalar,
+    catchain_max_deps: scalar,
+    max_block_bytes: scalar,
+    max_collated_bytes: scalar,
+});
+
 const ValidatorSetList = struct({
     public_key: scalar,
     weight: bigUInt1,
@@ -470,10 +314,20 @@ const ValidatorSet = struct({
     list: ValidatorSetListArray,
 });
 
+const BlockMasterConfigP39 = struct({
+    adnl_addr: scalar,
+    temp_public_key: scalar,
+    seqno: scalar,
+    valid_until: scalar,
+    signature_r: scalar,
+    signature_s: scalar,
+});
+
 const BlockMasterConfigP7Array = array(() => BlockMasterConfigP7);
 const FloatArray = array(() => scalar);
 const BlockMasterConfigP12Array = array(() => BlockMasterConfigP12);
 const BlockMasterConfigP18Array = array(() => BlockMasterConfigP18);
+const StringArray = array(() => scalar);
 const BlockMasterConfigP39Array = array(() => BlockMasterConfigP39);
 const BlockMasterConfig = struct({
     p0: scalar,
@@ -534,6 +388,7 @@ const BlockSignaturesSignatures = struct({
 const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
 const BlockSignatures = struct({
     id: scalar,
+    block: join('id', 'id', 'blocks', () => Block),
     signatures: BlockSignaturesSignaturesArray,
 }, true);
 
@@ -579,6 +434,154 @@ const Block = struct({
     state_update: BlockStateUpdate,
     master: BlockMaster,
     signatures: join('id', 'id', 'blocks_signatures', () => BlockSignatures),
+}, true);
+
+const TransactionStorage = struct({
+    storage_fees_collected: bigUInt2,
+    storage_fees_due: bigUInt2,
+    status_change: scalar,
+    status_change_name: enumName('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+});
+
+const TransactionCredit = struct({
+    due_fees_collected: bigUInt2,
+    credit: bigUInt2,
+    credit_other: OtherCurrencyArray,
+});
+
+const TransactionCompute = struct({
+    compute_type: scalar,
+    compute_type_name: enumName('compute_type', { Skipped: 0, Vm: 1 }),
+    skipped_reason: scalar,
+    skipped_reason_name: enumName('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
+    success: scalar,
+    msg_state_used: scalar,
+    account_activated: scalar,
+    gas_fees: bigUInt2,
+    gas_used: bigUInt1,
+    gas_limit: bigUInt1,
+    gas_credit: scalar,
+    mode: scalar,
+    exit_code: scalar,
+    exit_arg: scalar,
+    vm_steps: scalar,
+    vm_init_state_hash: scalar,
+    vm_final_state_hash: scalar,
+});
+
+const TransactionAction = struct({
+    success: scalar,
+    valid: scalar,
+    no_funds: scalar,
+    status_change: scalar,
+    status_change_name: enumName('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+    total_fwd_fees: bigUInt2,
+    total_action_fees: bigUInt2,
+    result_code: scalar,
+    result_arg: scalar,
+    tot_actions: scalar,
+    spec_actions: scalar,
+    skipped_actions: scalar,
+    msgs_created: scalar,
+    action_list_hash: scalar,
+    total_msg_size_cells: scalar,
+    total_msg_size_bits: scalar,
+});
+
+const TransactionBounce = struct({
+    bounce_type: scalar,
+    bounce_type_name: enumName('bounce_type', { NegFunds: 0, NoFunds: 1, Ok: 2 }),
+    msg_size_cells: scalar,
+    msg_size_bits: scalar,
+    req_fwd_fees: bigUInt2,
+    msg_fees: bigUInt2,
+    fwd_fees: bigUInt2,
+});
+
+const TransactionSplitInfo = struct({
+    cur_shard_pfx_len: scalar,
+    acc_split_depth: scalar,
+    this_addr: scalar,
+    sibling_addr: scalar,
+});
+
+const MessageArray = array(() => Message);
+const Transaction = struct({
+    id: scalar,
+    tr_type: scalar,
+    tr_type_name: enumName('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
+    status: scalar,
+    status_name: enumName('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
+    block_id: scalar,
+    block: join('block_id', 'id', 'blocks', () => Block),
+    account_addr: scalar,
+    workchain_id: scalar,
+    lt: bigUInt1,
+    prev_trans_hash: scalar,
+    prev_trans_lt: bigUInt1,
+    now: scalar,
+    outmsg_cnt: scalar,
+    orig_status: scalar,
+    orig_status_name: enumName('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    end_status: scalar,
+    end_status_name: enumName('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    in_msg: scalar,
+    in_message: join('in_msg', 'id', 'messages', () => Message),
+    out_msgs: StringArray,
+    out_messages: joinArray('out_msgs', 'id', 'messages', () => Message),
+    total_fees: bigUInt2,
+    total_fees_other: OtherCurrencyArray,
+    old_hash: scalar,
+    new_hash: scalar,
+    credit_first: scalar,
+    storage: TransactionStorage,
+    credit: TransactionCredit,
+    compute: TransactionCompute,
+    action: TransactionAction,
+    bounce: TransactionBounce,
+    aborted: scalar,
+    destroyed: scalar,
+    tt: scalar,
+    split_info: TransactionSplitInfo,
+    prepare_transaction: scalar,
+    installed: scalar,
+    proof: scalar,
+    boc: scalar,
+}, true);
+
+const Message = struct({
+    id: scalar,
+    msg_type: scalar,
+    msg_type_name: enumName('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
+    status: scalar,
+    status_name: enumName('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
+    block_id: scalar,
+    block: join('block_id', 'id', 'blocks', () => Block),
+    body: scalar,
+    split_depth: scalar,
+    tick: scalar,
+    tock: scalar,
+    code: scalar,
+    data: scalar,
+    library: scalar,
+    src: scalar,
+    dst: scalar,
+    src_workchain_id: scalar,
+    dst_workchain_id: scalar,
+    created_lt: bigUInt1,
+    created_at: scalar,
+    ihr_disabled: scalar,
+    ihr_fee: bigUInt2,
+    fwd_fee: bigUInt2,
+    import_fee: bigUInt2,
+    bounce: scalar,
+    bounced: scalar,
+    value: bigUInt2,
+    value_other: OtherCurrencyArray,
+    proof: scalar,
+    boc: scalar,
+    src_transaction: join('id', 'out_msgs[*]', 'transactions', () => Transaction),
+    dst_transaction: join('id', 'in_msg', 'transactions', () => Transaction),
 }, true);
 
 const Account = struct({
@@ -638,109 +641,6 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.next_addr_pfx, args);
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
-        },
-        TransactionStorage: {
-            storage_fees_collected(parent, args) {
-                return resolveBigUInt(2, parent.storage_fees_collected, args);
-            },
-            storage_fees_due(parent, args) {
-                return resolveBigUInt(2, parent.storage_fees_due, args);
-            },
-            status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-        },
-        TransactionCredit: {
-            due_fees_collected(parent, args) {
-                return resolveBigUInt(2, parent.due_fees_collected, args);
-            },
-            credit(parent, args) {
-                return resolveBigUInt(2, parent.credit, args);
-            },
-        },
-        TransactionCompute: {
-            gas_fees(parent, args) {
-                return resolveBigUInt(2, parent.gas_fees, args);
-            },
-            gas_used(parent, args) {
-                return resolveBigUInt(1, parent.gas_used, args);
-            },
-            gas_limit(parent, args) {
-                return resolveBigUInt(1, parent.gas_limit, args);
-            },
-            compute_type_name: createEnumNameResolver('compute_type', { Skipped: 0, Vm: 1 }),
-            skipped_reason_name: createEnumNameResolver('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
-        },
-        TransactionAction: {
-            total_fwd_fees(parent, args) {
-                return resolveBigUInt(2, parent.total_fwd_fees, args);
-            },
-            total_action_fees(parent, args) {
-                return resolveBigUInt(2, parent.total_action_fees, args);
-            },
-            status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-        },
-        TransactionBounce: {
-            req_fwd_fees(parent, args) {
-                return resolveBigUInt(2, parent.req_fwd_fees, args);
-            },
-            msg_fees(parent, args) {
-                return resolveBigUInt(2, parent.msg_fees, args);
-            },
-            fwd_fees(parent, args) {
-                return resolveBigUInt(2, parent.fwd_fees, args);
-            },
-            bounce_type_name: createEnumNameResolver('bounce_type', { NegFunds: 0, NoFunds: 1, Ok: 2 }),
-        },
-        Transaction: {
-            id(parent) {
-                return parent._key;
-            },
-            in_message(parent, _args, context) {
-                return context.db.messages.waitForDoc(parent.in_msg, '_key');
-            },
-            out_messages(parent, _args, context) {
-                return context.db.messages.waitForDocs(parent.out_msgs, '_key');
-            },
-            lt(parent, args) {
-                return resolveBigUInt(1, parent.lt, args);
-            },
-            prev_trans_lt(parent, args) {
-                return resolveBigUInt(1, parent.prev_trans_lt, args);
-            },
-            total_fees(parent, args) {
-                return resolveBigUInt(2, parent.total_fees, args);
-            },
-            tr_type_name: createEnumNameResolver('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
-            status_name: createEnumNameResolver('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
-            orig_status_name: createEnumNameResolver('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-            end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-        },
-        Message: {
-            id(parent) {
-                return parent._key;
-            },
-            src_transaction(parent, _args, context) {
-                return parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]') : null;
-            },
-            dst_transaction(parent, _args, context) {
-                return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg') : null;
-            },
-            created_lt(parent, args) {
-                return resolveBigUInt(1, parent.created_lt, args);
-            },
-            ihr_fee(parent, args) {
-                return resolveBigUInt(2, parent.ihr_fee, args);
-            },
-            fwd_fee(parent, args) {
-                return resolveBigUInt(2, parent.fwd_fee, args);
-            },
-            import_fee(parent, args) {
-                return resolveBigUInt(2, parent.import_fee, args);
-            },
-            value(parent, args) {
-                return resolveBigUInt(2, parent.value, args);
-            },
-            msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
-            status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
         },
         BlockValueFlow: {
             to_next_blk(parent, args) {
@@ -813,6 +713,9 @@ function createResolvers(db) {
             id(parent) {
                 return parent._key;
             },
+            block(parent, _args, context) {
+                return context.db.blocks.waitForDoc(parent._key, '_key');
+            },
         },
         Block: {
             id(parent) {
@@ -828,6 +731,115 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.end_lt, args);
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
+        },
+        TransactionStorage: {
+            storage_fees_collected(parent, args) {
+                return resolveBigUInt(2, parent.storage_fees_collected, args);
+            },
+            storage_fees_due(parent, args) {
+                return resolveBigUInt(2, parent.storage_fees_due, args);
+            },
+            status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+        },
+        TransactionCredit: {
+            due_fees_collected(parent, args) {
+                return resolveBigUInt(2, parent.due_fees_collected, args);
+            },
+            credit(parent, args) {
+                return resolveBigUInt(2, parent.credit, args);
+            },
+        },
+        TransactionCompute: {
+            gas_fees(parent, args) {
+                return resolveBigUInt(2, parent.gas_fees, args);
+            },
+            gas_used(parent, args) {
+                return resolveBigUInt(1, parent.gas_used, args);
+            },
+            gas_limit(parent, args) {
+                return resolveBigUInt(1, parent.gas_limit, args);
+            },
+            compute_type_name: createEnumNameResolver('compute_type', { Skipped: 0, Vm: 1 }),
+            skipped_reason_name: createEnumNameResolver('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
+        },
+        TransactionAction: {
+            total_fwd_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_fwd_fees, args);
+            },
+            total_action_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_action_fees, args);
+            },
+            status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+        },
+        TransactionBounce: {
+            req_fwd_fees(parent, args) {
+                return resolveBigUInt(2, parent.req_fwd_fees, args);
+            },
+            msg_fees(parent, args) {
+                return resolveBigUInt(2, parent.msg_fees, args);
+            },
+            fwd_fees(parent, args) {
+                return resolveBigUInt(2, parent.fwd_fees, args);
+            },
+            bounce_type_name: createEnumNameResolver('bounce_type', { NegFunds: 0, NoFunds: 1, Ok: 2 }),
+        },
+        Transaction: {
+            id(parent) {
+                return parent._key;
+            },
+            block(parent, _args, context) {
+                return context.db.blocks.waitForDoc(parent.block_id, '_key');
+            },
+            in_message(parent, _args, context) {
+                return context.db.messages.waitForDoc(parent.in_msg, '_key');
+            },
+            out_messages(parent, _args, context) {
+                return context.db.messages.waitForDocs(parent.out_msgs, '_key');
+            },
+            lt(parent, args) {
+                return resolveBigUInt(1, parent.lt, args);
+            },
+            prev_trans_lt(parent, args) {
+                return resolveBigUInt(1, parent.prev_trans_lt, args);
+            },
+            total_fees(parent, args) {
+                return resolveBigUInt(2, parent.total_fees, args);
+            },
+            tr_type_name: createEnumNameResolver('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
+            status_name: createEnumNameResolver('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
+            orig_status_name: createEnumNameResolver('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+            end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+        },
+        Message: {
+            id(parent) {
+                return parent._key;
+            },
+            block(parent, _args, context) {
+                return context.db.blocks.waitForDoc(parent.block_id, '_key');
+            },
+            src_transaction(parent, _args, context) {
+                return parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]') : null;
+            },
+            dst_transaction(parent, _args, context) {
+                return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg') : null;
+            },
+            created_lt(parent, args) {
+                return resolveBigUInt(1, parent.created_lt, args);
+            },
+            ihr_fee(parent, args) {
+                return resolveBigUInt(2, parent.ihr_fee, args);
+            },
+            fwd_fee(parent, args) {
+                return resolveBigUInt(2, parent.fwd_fee, args);
+            },
+            import_fee(parent, args) {
+                return resolveBigUInt(2, parent.import_fee, args);
+            },
+            value(parent, args) {
+                return resolveBigUInt(2, parent.value, args);
+            },
+            msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
+            status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
         },
         Account: {
             id(parent) {
@@ -845,17 +857,17 @@ function createResolvers(db) {
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2 }),
         },
         Query: {
-            transactions: db.transactions.queryResolver(),
-            messages: db.messages.queryResolver(),
             blocks_signatures: db.blocks_signatures.queryResolver(),
             blocks: db.blocks.queryResolver(),
+            transactions: db.transactions.queryResolver(),
+            messages: db.messages.queryResolver(),
             accounts: db.accounts.queryResolver(),
         },
         Subscription: {
-            transactions: db.transactions.subscriptionResolver(),
-            messages: db.messages.subscriptionResolver(),
             blocks_signatures: db.blocks_signatures.subscriptionResolver(),
             blocks: db.blocks.subscriptionResolver(),
+            transactions: db.transactions.subscriptionResolver(),
+            messages: db.messages.subscriptionResolver(),
             accounts: db.accounts.subscriptionResolver(),
         }
     }
@@ -868,14 +880,6 @@ module.exports = {
     MsgEnvelope,
     InMsg,
     OutMsg,
-    TransactionStorage,
-    TransactionCredit,
-    TransactionCompute,
-    TransactionAction,
-    TransactionBounce,
-    TransactionSplitInfo,
-    Transaction,
-    Message,
     BlockValueFlow,
     BlockAccountBlocksTransactions,
     BlockAccountBlocks,
@@ -895,21 +899,29 @@ module.exports = {
     BlockMasterConfigP16,
     BlockMasterConfigP17,
     BlockMasterConfigP18,
-    BlockMasterConfigP28,
-    BlockMasterConfigP29,
-    BlockMasterConfigP39,
     GasLimitsPrices,
     BlockLimitsBytes,
     BlockLimitsGas,
     BlockLimitsLtDelta,
     BlockLimits,
     MsgForwardPrices,
+    BlockMasterConfigP28,
+    BlockMasterConfigP29,
     ValidatorSetList,
     ValidatorSet,
+    BlockMasterConfigP39,
     BlockMasterConfig,
     BlockMaster,
     BlockSignaturesSignatures,
     BlockSignatures,
     Block,
+    TransactionStorage,
+    TransactionCredit,
+    TransactionCompute,
+    TransactionAction,
+    TransactionBounce,
+    TransactionSplitInfo,
+    Transaction,
+    Message,
     Account,
 };
