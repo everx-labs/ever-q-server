@@ -1,6 +1,21 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.24.9 – Apr 13, 2020
+
+### Fixed
+- internal memory optimizations
+- jaeger injection format has changed from BINARY to TEXT_MAP
+
+### New
+- added `shuffle_mc_validators` field to `CatchainConfig` struct (config param 28)
+- added `new_catchain_ids` field to `ConsensusConfig` struct (config param 29)
+
+## 0.24.8 – Apr 9, 2020
+### Featured
+### New
+- supported new type of outbound message `dequeueShort` (msg_type: 7): added fields `msg_env_hash`, `next_workchain`, `next_addr_pfx`, `import_block_lt` to `OutMsg` type.
+
 ## 0.24.7 – Apr 8, 2020
 ### Featured
 StatsD support

@@ -140,6 +140,7 @@ const outMsgType = u8enum('OutMsgType', {
     dequeueImmediately: 4,
     dequeue: 5,
     transitRequired: 6,
+    dequeueShort: 7,
     none: -1,
 });
 
@@ -348,6 +349,10 @@ const OutMsg: TypeDef = {
     out_msg: msgEnvelope(),
     reimport: inMsg(),
     imported: inMsg(),
+    import_block_lt: u64(),
+    msg_env_hash: string(),
+    next_workchain: i32(),
+    next_addr_pfx: u64(),
     import_block_lt: u64(),
 };
 
@@ -634,6 +639,7 @@ const Block: TypeDef = {
             p25: msgForwardPrices(docs.block.master.config.p25),
             p28: {
                 _doc: docs.block.master.config.p28._doc,
+                shuffle_mc_validators: bool(),
                 mc_catchain_lifetime: u32(),
                 shard_catchain_lifetime: u32(),
                 shard_validators_lifetime: u32(),
@@ -641,6 +647,7 @@ const Block: TypeDef = {
             },
             p29: {
                 _doc: docs.block.master.config.p29._doc,
+                new_catchain_ids: bool(),
                 round_candidates: u32(),
                 next_candidate_delay_ms: u32(),
                 consensus_timeout_ms: u32(),
