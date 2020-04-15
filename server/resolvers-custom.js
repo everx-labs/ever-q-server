@@ -152,7 +152,9 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
         const traceInfo = {};
         context.db.tracer.inject(span, FORMAT_TEXT_MAP, traceInfo);
         const keyBuffer = Buffer.from(request.id, 'base64');
-        const traceBuffer = Buffer.from(JSON.stringify(traceInfo), 'utf8');
+        const traceBuffer = (Object.keys(traceInfo).length > 0)
+            ? Buffer.from(JSON.stringify(traceInfo), 'utf8')
+            : Buffer.from([]);
         const key = Buffer.concat([keyBuffer, traceBuffer]);
         return {
             key,
