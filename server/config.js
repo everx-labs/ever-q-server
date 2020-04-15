@@ -86,6 +86,7 @@ const INDEXES: {
         'dst, value, created_at',
         'src, created_at',
         'dst, created_at',
+        'src, dst, created_at, _key',
         'created_lt',
         'created_at',
     ],

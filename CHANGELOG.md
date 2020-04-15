@@ -1,13 +1,14 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.25.0 – Apr 16, 2020
+## 0.25.0 – Apr 17, 2020
 ### Featured
 - Schema graph enhancements
 - Filter language enhancements
 
 ### New
 - `block` join added to `Message` and `Transaction`
+- `OR` combination operator in filters
 
 ### Fixed
 

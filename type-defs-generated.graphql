@@ -1102,6 +1102,7 @@ type Account {
 input OtherCurrencyFilter {
 	currency: FloatFilter
 	value: StringFilter
+    OR: OtherCurrencyFilter
 }
 
 input ExtBlkRefFilter {
@@ -1109,6 +1110,7 @@ input ExtBlkRefFilter {
 	seq_no: FloatFilter
 	root_hash: StringFilter
 	file_hash: StringFilter
+    OR: ExtBlkRefFilter
 }
 
 input MsgEnvelopeFilter {
@@ -1116,6 +1118,7 @@ input MsgEnvelopeFilter {
 	next_addr: StringFilter
 	cur_addr: StringFilter
 	fwd_fee_remaining: StringFilter
+    OR: MsgEnvelopeFilter
 }
 
 input InMsgTypeEnumFilter {
@@ -1150,6 +1153,7 @@ input InMsgFilter {
 	transit_fee: StringFilter
 	transaction_id: StringFilter
 	proof_delivered: StringFilter
+    OR: InMsgFilter
 }
 
 input OutMsgTypeEnumFilter {
@@ -1186,6 +1190,7 @@ input OutMsgFilter {
 	msg_env_hash: StringFilter
 	next_workchain: IntFilter
 	next_addr_pfx: StringFilter
+    OR: OutMsgFilter
 }
 
 input OtherCurrencyArrayFilter {
@@ -1221,6 +1226,7 @@ input BlockValueFlowFilter {
 	fees_imported: StringFilter
 	"Amount of import fees in non gram currencies."
 	fees_imported_other: OtherCurrencyArrayFilter
+    OR: BlockValueFlowFilter
 }
 
 input BlockAccountBlocksTransactionsFilter {
@@ -1228,6 +1234,7 @@ input BlockAccountBlocksTransactionsFilter {
 	transaction_id: StringFilter
 	total_fees: StringFilter
 	total_fees_other: OtherCurrencyArrayFilter
+    OR: BlockAccountBlocksTransactionsFilter
 }
 
 input BlockAccountBlocksTransactionsArrayFilter {
@@ -1243,6 +1250,7 @@ input BlockAccountBlocksFilter {
 	"new version of block hashes"
 	new_hash: StringFilter
 	tr_count: IntFilter
+    OR: BlockAccountBlocksFilter
 }
 
 input BlockStateUpdateFilter {
@@ -1252,6 +1260,7 @@ input BlockStateUpdateFilter {
 	old: StringFilter
 	old_hash: StringFilter
 	old_depth: IntFilter
+    OR: BlockStateUpdateFilter
 }
 
 input SplitTypeEnumFilter {
@@ -1311,6 +1320,7 @@ input BlockMasterShardHashesDescrFilter {
 	funds_created: StringFilter
 	"Amount of funds created in this shard in non gram currencies."
 	funds_created_other: OtherCurrencyArrayFilter
+    OR: BlockMasterShardHashesDescrFilter
 }
 
 input BlockMasterShardHashesFilter {
@@ -1320,6 +1330,7 @@ input BlockMasterShardHashesFilter {
 	shard: StringFilter
 	"Shard description"
 	descr: BlockMasterShardHashesDescrFilter
+    OR: BlockMasterShardHashesFilter
 }
 
 input BlockMasterShardFeesFilter {
@@ -1333,29 +1344,34 @@ input BlockMasterShardFeesFilter {
 	create: StringFilter
 	"Amount of non gram fees created in non gram crypto currencies during the block."
 	create_other: OtherCurrencyArrayFilter
+    OR: BlockMasterShardFeesFilter
 }
 
 input BlockMasterPrevBlkSignaturesFilter {
 	node_id: StringFilter
 	r: StringFilter
 	s: StringFilter
+    OR: BlockMasterPrevBlkSignaturesFilter
 }
 
 "Configuration parameter 6"
 input BlockMasterConfigP6Filter {
 	mint_new_price: StringFilter
 	mint_add_price: StringFilter
+    OR: BlockMasterConfigP6Filter
 }
 
 input BlockMasterConfigP7Filter {
 	currency: FloatFilter
 	value: StringFilter
+    OR: BlockMasterConfigP7Filter
 }
 
 "Global version"
 input BlockMasterConfigP8Filter {
 	version: FloatFilter
 	capabilities: StringFilter
+    OR: BlockMasterConfigP8Filter
 }
 
 input ConfigProposalSetupFilter {
@@ -1367,12 +1383,14 @@ input ConfigProposalSetupFilter {
 	max_store_sec: FloatFilter
 	bit_price: FloatFilter
 	cell_price: FloatFilter
+    OR: ConfigProposalSetupFilter
 }
 
 "Config voting setup"
 input BlockMasterConfigP11Filter {
 	normal_params: ConfigProposalSetupFilter
 	critical_params: ConfigProposalSetupFilter
+    OR: BlockMasterConfigP11Filter
 }
 
 input BlockMasterConfigP12Filter {
@@ -1394,12 +1412,14 @@ input BlockMasterConfigP12Filter {
 	max_addr_len: IntFilter
 	addr_len_step: IntFilter
 	workchain_type_id: FloatFilter
+    OR: BlockMasterConfigP12Filter
 }
 
 "Block create fees"
 input BlockMasterConfigP14Filter {
 	masterchain_block_fee: StringFilter
 	basechain_block_fee: StringFilter
+    OR: BlockMasterConfigP14Filter
 }
 
 "Election parameters"
@@ -1408,6 +1428,7 @@ input BlockMasterConfigP15Filter {
 	elections_start_before: FloatFilter
 	elections_end_before: FloatFilter
 	stake_held_for: FloatFilter
+    OR: BlockMasterConfigP15Filter
 }
 
 "Validators count"
@@ -1415,6 +1436,7 @@ input BlockMasterConfigP16Filter {
 	max_validators: IntFilter
 	max_main_validators: IntFilter
 	min_validators: IntFilter
+    OR: BlockMasterConfigP16Filter
 }
 
 "Validator stake parameters"
@@ -1423,6 +1445,7 @@ input BlockMasterConfigP17Filter {
 	max_stake: StringFilter
 	min_total_stake: StringFilter
 	max_stake_factor: FloatFilter
+    OR: BlockMasterConfigP17Filter
 }
 
 input BlockMasterConfigP18Filter {
@@ -1431,6 +1454,7 @@ input BlockMasterConfigP18Filter {
 	cell_price_ps: StringFilter
 	mc_bit_price_ps: StringFilter
 	mc_cell_price_ps: StringFilter
+    OR: BlockMasterConfigP18Filter
 }
 
 input GasLimitsPricesFilter {
@@ -1443,30 +1467,35 @@ input GasLimitsPricesFilter {
 	delete_due_limit: StringFilter
 	flat_gas_limit: StringFilter
 	flat_gas_price: StringFilter
+    OR: GasLimitsPricesFilter
 }
 
 input BlockLimitsBytesFilter {
 	underload: FloatFilter
 	soft_limit: FloatFilter
 	hard_limit: FloatFilter
+    OR: BlockLimitsBytesFilter
 }
 
 input BlockLimitsGasFilter {
 	underload: FloatFilter
 	soft_limit: FloatFilter
 	hard_limit: FloatFilter
+    OR: BlockLimitsGasFilter
 }
 
 input BlockLimitsLtDeltaFilter {
 	underload: FloatFilter
 	soft_limit: FloatFilter
 	hard_limit: FloatFilter
+    OR: BlockLimitsLtDeltaFilter
 }
 
 input BlockLimitsFilter {
 	bytes: BlockLimitsBytesFilter
 	gas: BlockLimitsGasFilter
 	lt_delta: BlockLimitsLtDeltaFilter
+    OR: BlockLimitsFilter
 }
 
 input MsgForwardPricesFilter {
@@ -1476,6 +1505,7 @@ input MsgForwardPricesFilter {
 	ihr_price_factor: FloatFilter
 	first_frac: IntFilter
 	next_frac: IntFilter
+    OR: MsgForwardPricesFilter
 }
 
 "Catchain config"
@@ -1485,6 +1515,7 @@ input BlockMasterConfigP28Filter {
 	shard_catchain_lifetime: FloatFilter
 	shard_validators_lifetime: FloatFilter
 	shard_validators_num: FloatFilter
+    OR: BlockMasterConfigP28Filter
 }
 
 "Consensus config"
@@ -1498,12 +1529,14 @@ input BlockMasterConfigP29Filter {
 	catchain_max_deps: FloatFilter
 	max_block_bytes: FloatFilter
 	max_collated_bytes: FloatFilter
+    OR: BlockMasterConfigP29Filter
 }
 
 input ValidatorSetListFilter {
 	public_key: StringFilter
 	weight: StringFilter
 	adnl_addr: StringFilter
+    OR: ValidatorSetListFilter
 }
 
 input ValidatorSetListArrayFilter {
@@ -1517,6 +1550,7 @@ input ValidatorSetFilter {
 	total: IntFilter
 	total_weight: StringFilter
 	list: ValidatorSetListArrayFilter
+    OR: ValidatorSetFilter
 }
 
 input BlockMasterConfigP39Filter {
@@ -1526,6 +1560,7 @@ input BlockMasterConfigP39Filter {
 	valid_until: FloatFilter
 	signature_r: StringFilter
 	signature_s: StringFilter
+    OR: BlockMasterConfigP39Filter
 }
 
 input BlockMasterConfigP7ArrayFilter {
@@ -1622,6 +1657,7 @@ input BlockMasterConfigFilter {
 	p37: ValidatorSetFilter
 	"Array of validator signed temprorary keys"
 	p39: BlockMasterConfigP39ArrayFilter
+    OR: BlockMasterConfigFilter
 }
 
 input BlockMasterShardHashesArrayFilter {
@@ -1650,6 +1686,7 @@ input BlockMasterFilter {
 	prev_blk_signatures: BlockMasterPrevBlkSignaturesArrayFilter
 	config_addr: StringFilter
 	config: BlockMasterConfigFilter
+    OR: BlockMasterFilter
 }
 
 input BlockSignaturesSignaturesFilter {
@@ -1659,6 +1696,7 @@ input BlockSignaturesSignaturesFilter {
 	r: StringFilter
 	"'s' part of signature"
 	s: StringFilter
+    OR: BlockSignaturesSignaturesFilter
 }
 
 input BlockSignaturesSignaturesArrayFilter {
@@ -1672,6 +1710,7 @@ input BlockSignaturesFilter {
 	block: BlockFilter
 	"Array of signatures from block's validators"
 	signatures: BlockSignaturesSignaturesArrayFilter
+    OR: BlockSignaturesFilter
 }
 
 input InMsgArrayFilter {
@@ -1761,6 +1800,7 @@ input BlockFilter {
 	state_update: BlockStateUpdateFilter
 	master: BlockMasterFilter
 	signatures: BlockSignaturesFilter
+    OR: BlockFilter
 }
 
 input AccountStatusChangeEnumFilter {
@@ -1787,6 +1827,7 @@ input TransactionStorageFilter {
 	"""
 	status_change: IntFilter
 	status_change_name: AccountStatusChangeEnumFilter
+    OR: TransactionStorageFilter
 }
 
 input TransactionCreditFilter {
@@ -1794,6 +1835,7 @@ input TransactionCreditFilter {
 	due_fees_collected: StringFilter
 	credit: StringFilter
 	credit_other: OtherCurrencyArrayFilter
+    OR: TransactionCreditFilter
 }
 
 input ComputeTypeEnumFilter {
@@ -1856,6 +1898,7 @@ input TransactionComputeFilter {
 	vm_init_state_hash: StringFilter
 	"This parameter is the representation hashes of the resulting state of TVM."
 	vm_final_state_hash: StringFilter
+    OR: TransactionComputeFilter
 }
 
 input TransactionActionFilter {
@@ -1881,6 +1924,7 @@ input TransactionActionFilter {
 	action_list_hash: StringFilter
 	total_msg_size_cells: FloatFilter
 	total_msg_size_bits: FloatFilter
+    OR: TransactionActionFilter
 }
 
 input BounceTypeEnumFilter {
@@ -1907,6 +1951,7 @@ input TransactionBounceFilter {
 	req_fwd_fees: StringFilter
 	msg_fees: StringFilter
 	fwd_fees: StringFilter
+    OR: TransactionBounceFilter
 }
 
 input TransactionSplitInfoFilter {
@@ -1915,6 +1960,7 @@ input TransactionSplitInfoFilter {
 	acc_split_depth: IntFilter
 	this_addr: StringFilter
 	sibling_addr: StringFilter
+    OR: TransactionSplitInfoFilter
 }
 
 input MessageArrayFilter {
@@ -2037,6 +2083,7 @@ input TransactionFilter {
 	installed: BooleanFilter
 	proof: StringFilter
 	boc: StringFilter
+    OR: TransactionFilter
 }
 
 input MessageTypeEnumFilter {
@@ -2141,6 +2188,7 @@ input MessageFilter {
 	boc: StringFilter
 	src_transaction: TransactionFilter
 	dst_transaction: TransactionFilter
+    OR: MessageFilter
 }
 
 input AccountTypeEnumFilter {
@@ -2276,6 +2324,7 @@ input AccountFilter {
 	proof: StringFilter
 	"Bag of cells with the account struct encoded as base64."
 	boc: StringFilter
+    OR: AccountFilter
 }
 
 "Specify sort order direction"

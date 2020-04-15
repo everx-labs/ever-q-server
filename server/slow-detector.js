@@ -2,9 +2,9 @@
 
 
 import type { CollectionInfo, IndexInfo } from "./config";
-import type { OrderBy, QFieldExplanation, QType } from "./db-types";
-import { indexToString, orderByToString, QParams } from "./db-types";
-import type { QLog } from './logs';
+import { indexToString, orderByToString, QParams, splitOr } from "./db-types";
+import type {OrderBy, QFieldExplanation, QType} from "./db-types";
+import type {QLog} from './logs';
 
 function setIs1(s: Set<string>, a: string): boolean {
     return s.size === 1 && s.has(a);
@@ -140,7 +140,7 @@ function logSlowReason(
 
 }
 
-export function isFastQuery(
+function isFastQueryOrOperand(
     collection: CollectionInfo,
     type: QType,
     filter: any,
@@ -208,5 +208,21 @@ export function isFastQuery(
         }
     }
 
+    return true;
+}
+
+export function isFastQuery(
+    collection: CollectionInfo,
+    type: QType,
+    filter: any,
+    orderBy: OrderBy[],
+    log: ?QLog,
+): boolean {
+    const orOperands = splitOr(filter);
+    for (let i = 0; i < orOperands.length; i += 1) {
+        if (!isFastQueryOrOperand(collection, type, orOperands[i], orderBy, log)) {
+            return false;
+        }
+    }
     return true;
 }

@@ -1,7 +1,7 @@
 import type { CollectionInfo } from "../server/config";
 import { BLOCKCHAIN_DB } from "../server/config";
+import { isFastQuery } from "../server/slow-detector";
 import { parseOrderBy } from "../server/db-types";
-import {isFastQuery} from "../server/slow-detector";
 import {
     Transaction,
     Account,
@@ -125,7 +125,7 @@ test('Slow Detector', () => {
             seq_no: { in: [2799675, 2799676, 2799677, 2799678] }
         },
         parseOrderBy('seq_no'),
-    log,
+        log,
     )).toBeTruthy();
     expect(isFastQuery(blocks, Block,
         {
@@ -168,6 +168,18 @@ test('Slow Detector', () => {
         parseOrderBy('created_at'),
         log,
     )).toBeFalsy();
+    expect(isFastQuery(messages, Message,
+        {
+            src: { eq: '1' },
+            dst: { eq: '2' },
+            OR: {
+                src: { eq: '2' },
+                dst: { eq: '1' },
+            }
+        },
+        parseOrderBy('created_at'),
+        log,
+    )).toBeTruthy();
     expect(isFastQuery(messages, Message,
         {
             status: { eq: 5 },
