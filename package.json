@@ -10,6 +10,7 @@
 		"flow": "flow",
 		"test": "jest",
 		"start": "node dist/server/index.js",
+		"update indexes": "node dist/server/update-indexes.js",
 		"npm install": "npm install"
 	},
 	"keywords": [],
