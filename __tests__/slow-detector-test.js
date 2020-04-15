@@ -1,6 +1,7 @@
 import type { CollectionInfo } from "../server/config";
 import { BLOCKCHAIN_DB } from "../server/config";
-import {isFastQuery, parseOrderBy} from "../server/slow-detector";
+import { parseOrderBy } from "../server/db-types";
+import {isFastQuery} from "../server/slow-detector";
 import {
     Transaction,
     Account,
@@ -29,6 +30,11 @@ test('Slow Detector', () => {
     )).toBeTruthy();
 
     const transactions: CollectionInfo = BLOCKCHAIN_DB.collections.transactions;
+    expect(isFastQuery(transactions, Transaction,
+        { now: { ge: 1 } },
+        parseOrderBy('now desc, id desc'),
+        log,
+    )).toBeFalsy();
     expect(isFastQuery(transactions, Transaction,
         { account_addr: { eq: '1' } },
         parseOrderBy('lt desc'),

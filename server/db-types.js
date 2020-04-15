@@ -18,6 +18,7 @@
 
 
 import type { AccessRights } from "./auth";
+import type { IndexInfo } from "./config";
 
 declare function BigInt(a: any): any;
 
@@ -35,6 +36,7 @@ function combinePath(base: string, path: string): string {
 export class QExplanation {
     parentPath: string;
     fields: Map<string, QFieldExplanation>;
+
     constructor() {
         this.parentPath = '';
         this.fields = new Map();
@@ -651,3 +653,32 @@ export type QueryStat = {
     slow: boolean,
     times: number[],
 }
+
+export function indexToString(index: IndexInfo): string {
+    return index.fields.join(', ');
+}
+
+export function parseIndex(s: string): IndexInfo {
+    return {
+        fields: s.split(',').map(x => x.trim()).filter(x => x)
+    }
+}
+
+export function orderByToString(orderBy: OrderBy[]): string {
+    return orderBy.map(x => `${x.path}${(x.direction || '') === 'DESC' ? ' DESC' : ''}`).join(', ');
+}
+
+export function parseOrderBy(s: string): OrderBy[] {
+    return s.split(',')
+        .map(x => x.trim())
+        .filter(x => x)
+        .map((s) => {
+            const parts = s.split(' ').filter(x => x);
+            return {
+                path: parts[0],
+                direction: (parts[1] || '').toLowerCase() === 'desc' ? 'DESC' : 'ASC',
+            }
+        });
+}
+
+
