@@ -648,6 +648,40 @@ function main(schemaDef: TypeDef) {
         js.writeLn(`        },`);
     }
 
+    function genJSScalarFields(type: DbType, parentPath, parentDocPath: string) {
+        type.fields.forEach((field: DbField) => {
+            if (field.join || field.enumDef) {
+                return;
+            }
+            const docName = field.name === 'id' ? '_key' : field.name;
+            const path = `${parentPath}.${field.name}`;
+            const docPath = `${parentDocPath}.${docName}${field.arrayDepth > 0 ? '[*]' : ''}`;
+            switch(field.type.category) {
+            case "scalar":
+                let typeName;
+                if (field.type === scalarTypes.boolean) {
+                    typeName = 'boolean';
+                } else if (field.type === scalarTypes.float) {
+                    typeName = 'number';
+                } else if (field.type === scalarTypes.int) {
+                    typeName = 'number';
+                } else if (field.type === scalarTypes.uint64) {
+                    typeName = 'uint64';
+                } else if (field.type === scalarTypes.uint1024) {
+                    typeName = 'uint1024';
+                } else {
+                    typeName = 'string';
+                }
+                js.writeLn(`scalarFields.set('${path}', { type: '${typeName}', path: '${docPath}' });`);
+                break;
+            case "struct":
+            case "union":
+                genJSScalarFields(field.type, path, docPath);
+                break;
+            }
+        });
+    }
+
 
     function genJSTypeResolversForUnion(type: DbType) {
         if (type.category === DbTypeCategory.union) {
@@ -725,7 +759,15 @@ function main(schemaDef: TypeDef) {
         `);
 
         js.writeBlockLn(`
+        const scalarFields = new Map();
+        `);
+        collections.forEach((type) => {
+            genJSScalarFields(type, type.collection, 'doc');
+        });
+
+        js.writeBlockLn(`
         module.exports = {
+            scalarFields,
             createResolvers,
         `);
         types.forEach(type => js.writeLn(`    ${type.name},`));

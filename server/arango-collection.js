@@ -24,7 +24,7 @@ import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
 import { BLOCKCHAIN_DB, STATS } from './config';
 import type { QConfig } from "./config";
-import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
+import type { DatabaseQuery, OrderBy, QType, QueryStat, ScalarField } from "./db-types";
 import { parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
@@ -32,6 +32,7 @@ import { isFastQuery } from './slow-detector';
 import type { IStats } from './tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "./tracer";
 import { createError, wrap } from "./utils";
+import { scalarFields } from './resolvers-generated';
 import EventEmitter from 'events';
 
 export type GraphQLRequestContext = {
@@ -299,30 +300,6 @@ export class Collection {
         };
     }
 
-    createAggregationQuery(
-        args: AggregationArgs,
-        accessRights: AccessRights,
-    ): ?{
-        text: string,
-        params: { [string]: any }
-    } {
-        const filter = args.filter || {};
-        const params = new QParams();
-        const condition = this.buildConditionQL(filter, params, accessRights);
-        if (condition === null) {
-            return null;
-        }
-        const filterSection = condition ? `FILTER ${condition}` : '';
-        const text = `
-            FOR doc IN ${this.name}
-            ${filterSection}
-            RETURN doc`;
-        return {
-            text,
-            params: params.values,
-        };
-    }
-
     isFastQuery(
         text: string,
         filter: any,
@@ -490,6 +467,96 @@ export class Collection {
 
     //--------------------------------------------------------- Aggregates
 
+
+    createAggregationQuery(
+        args: AggregationArgs,
+        accessRights: AccessRights,
+    ): ?{
+        text: string,
+        params: { [string]: any },
+    } {
+        const filter = args.filter || {};
+        const params = new QParams();
+        const condition = this.buildConditionQL(filter, params, accessRights);
+        if (condition === null) {
+            return null;
+        }
+        const filterSection = condition ? `FILTER ${condition}` : '';
+        const col: string[] = [];
+        const ret: string[] = [];
+
+        function aggregateCount(i: number) {
+            col.push(`v${i} = COUNT(doc)`);
+            ret.push(`v${i}`);
+        }
+
+        function aggregateNumber(i: number, f: ScalarField, fn: AggregationFnType) {
+            col.push(`v${i} = ${fn}(${f.path})`);
+            ret.push(`v${i}`);
+        }
+
+        function aggregateBigNumber(i: number, f: ScalarField, fn: AggregationFnType) {
+            col.push(`v${i} = ${fn}(${f.path})`);
+            ret.push(`{ ${f.type}: v${i} }`);
+        }
+
+        function aggregateBigNumberParts(i: number, f: ScalarField, fn: AggregationFnType) {
+            const len = f.type === 'uint64' ? 1 : 2;
+            const hHex = `SUBSTRING(${f.path}, ${len}, LENGTH(${f.path}) - ${len} - 8)`;
+            const lHex = `RIGHT(SUBSTRING(${f.path}, ${len}), 8)`;
+            col.push(`h${i} = ${fn}(TO_NUMBER(CONCAT("0x", ${hHex})))`);
+            col.push(`l${i} = ${fn}(TO_NUMBER(CONCAT("0x", ${lHex})))`);
+            ret.push(`{ ${f.type}: { h: h${i}, l: l${i} } }`);
+        }
+
+        function aggregateNonNumber(i: number, f: ScalarField, fn: AggregationFnType) {
+            col.push(`v${i} = ${fn}(${f.path})`);
+            ret.push(`v${i}`);
+        }
+
+        args.fields.forEach((f: FieldAggregation, i: number) => {
+            const fn = f.fn || AggregationFn.COUNT;
+            if (fn === AggregationFn.COUNT) {
+                aggregateCount(i);
+            } else {
+                const scalar: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${f.field || 'id'}`);
+                const invalidType = () => new Error(`[${f.field}] can't be used with [${fn}]`);
+                if (!scalar) {
+                    throw invalidType();
+                }
+                switch (scalar.type) {
+                case 'number':
+                    aggregateNumber(i, f, fn);
+                    break;
+                case 'uint64':
+                case 'uint1024':
+                    if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+                        aggregateBigNumber(i, f, fn);
+                    } else {
+                        aggregateBigNumberParts(i, f, fn);
+                    }
+                    break;
+                default:
+                    if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+                        aggregateNonNumber(i, f, fn);
+                    } else {
+                        throw invalidType();
+                    }
+                    break;
+                }
+            }
+        });
+        const text = `
+            FOR doc IN ${this.name}
+            ${filterSection}
+            COLLECT AGGREGATE ${col.join(', ')}
+            RETURN [${ret.join(', ')}]`;
+        return {
+            text,
+            params: params.values,
+        };
+    }
+
     aggregationResolver() {
         return async (
             parent: any,
@@ -518,7 +585,9 @@ export class Collection {
                     (Date.now() - start) / 1000,
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
-                return result;
+                return result[0].map((x) => {
+                    return JSON.stringify(x);
+                });
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();
