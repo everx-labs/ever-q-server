@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 - Schema graph enhancements
 - Filter language enhancements
 
+### Breaking Compatibility
+- some ENV configuration variables have renamed (to be prefixed with `Q_`). 
+
 ### New
 - `block` join added to `Message` and `Transaction`
 - `OR` combination operator in filters
@@ -13,9 +16,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - all configuration env variables changed to be prefixed with `Q_`
-
-### Compatibility issues
-- some ENV configuration variables have renamed (to be prefixed with `Q_`). 
 
 ## 0.24.9 – Apr 13, 2020
 
