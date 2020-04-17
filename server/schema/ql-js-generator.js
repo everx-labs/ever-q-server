@@ -762,7 +762,7 @@ function main(schemaDef: TypeDef) {
         const scalarFields = new Map();
         `);
         collections.forEach((type) => {
-            genJSScalarFields(type, type.collection, 'doc');
+            genJSScalarFields(type, type.collection || '', 'doc');
         });
 
         js.writeBlockLn(`

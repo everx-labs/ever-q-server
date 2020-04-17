@@ -25,7 +25,7 @@ import { Auth } from "./auth";
 import { BLOCKCHAIN_DB, STATS } from './config';
 import type { QConfig } from "./config";
 import type { DatabaseQuery, OrderBy, QType, QueryStat, ScalarField } from "./db-types";
-import { parseSelectionSet, QParams, selectionToString } from "./db-types";
+import { parseSelectionSet, QParams, resolveBigUInt, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
 import { isFastQuery } from './slow-detector';
@@ -514,17 +514,17 @@ export class Collection {
             ret.push(`v${i}`);
         }
 
-        args.fields.forEach((f: FieldAggregation, i: number) => {
-            const fn = f.fn || AggregationFn.COUNT;
+        args.fields.forEach((aggregation: FieldAggregation, i: number) => {
+            const fn = aggregation.fn || AggregationFn.COUNT;
             if (fn === AggregationFn.COUNT) {
                 aggregateCount(i);
             } else {
-                const scalar: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${f.field || 'id'}`);
-                const invalidType = () => new Error(`[${f.field}] can't be used with [${fn}]`);
-                if (!scalar) {
+                const f: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${aggregation.field || 'id'}`);
+                const invalidType = () => new Error(`[${aggregation.field}] can't be used with [${fn}]`);
+                if (!f) {
                     throw invalidType();
                 }
-                switch (scalar.type) {
+                switch (f.type) {
                 case 'number':
                     aggregateNumber(i, f, fn);
                     break;
@@ -551,6 +551,7 @@ export class Collection {
             ${filterSection}
             COLLECT AGGREGATE ${col.join(', ')}
             RETURN [${ret.join(', ')}]`;
+        console.log('>>>', text);
         return {
             text,
             params: params.values,
@@ -586,7 +587,24 @@ export class Collection {
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
                 return result[0].map((x) => {
-                    return JSON.stringify(x);
+                    if (x === undefined || x === null) {
+                        return x;
+                    }
+                    const bigInt = x.uint64 || x.uint1024;
+                    if (bigInt) {
+                        const len = ('uint64' in x) ? 1 : 2;
+                        if (typeof bigInt === 'string') {
+                            //$FlowFixMe
+                            return BigInt(`0x${bigInt.substr(len)}`).toString();
+                        } else {
+                            //$FlowFixMe
+                            let h = BigInt(`0x${Number(bigInt.h).toString(16)}00000000`);
+                            let l = BigInt(bigInt.l);
+                            return (h + l).toString();
+                        }
+                    } else {
+                        return x.toString()
+                    }
                 });
             } finally {
                 this.statQueryTime.report(Date.now() - start);
