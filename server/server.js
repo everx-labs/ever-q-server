@@ -140,7 +140,7 @@ export default class TONQServer {
         });
         this.addEndPoint({
             path: '/graphql',
-            resolvers: attachCustomResolvers(createResolvers(this.db)),
+            resolvers: attachCustomResolvers(this.db, createResolvers(this.db)),
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
             supportSubscriptions: true,
         });

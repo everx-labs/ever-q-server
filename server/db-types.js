@@ -669,8 +669,7 @@ export type DatabaseQuery = {
 }
 
 export type QueryStat = {
-    slow: boolean,
-    times: number[],
+    isFast: boolean,
 }
 
 export function indexToString(index: IndexInfo): string {
