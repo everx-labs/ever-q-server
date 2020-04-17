@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 ### New
 - `block` join added to `Message` and `Transaction`
 - `OR` combination operator in filters
+- aggregation queries: `aggregateBlockSignatures`, `aggregateBlocks`, `aggregateTransactions`, `aggregateMessages`, `aggregateAccounts`
 
 ### Fixed
 
