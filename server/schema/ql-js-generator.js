@@ -423,6 +423,7 @@ function main(schemaDef: TypeDef) {
                 ql.writeLn(`\t${field.name}_name: ${enumDef.name}EnumFilter`);
             }
         });
+        ql.writeLn(`    OR: ${type.name}Filter`);
         ql.writeLn(`}`);
         ql.writeLn();
     }
