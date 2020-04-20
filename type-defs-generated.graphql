@@ -620,7 +620,6 @@ type BlockMaster {
 }
 
 type BlockSignaturesSignatures {
-	"Validator ID"
 	node_id: String
 	"'R' part of signature"
 	r: String
@@ -631,9 +630,20 @@ type BlockSignaturesSignatures {
 "Set of validator's signatures for the Block with correspond id"
 type BlockSignatures {
 	id: String
-	block: Block
+	"Signed block's gen_utime"
+	gen_utime: Float
+	"Signed block's seq_no"
+	seq_no: Float
+	"Signed block's workchain_id"
+	workchain_id: Int
+	"Signed block's merkle proof"
+	proof: String
+	validator_list_hash_short: Float
+	catchain_seqno: Float
+	sig_weight(format: BigIntFormat): String
 	"Array of signatures from block's validators"
 	signatures: [BlockSignaturesSignatures]
+	block: Block
 }
 
 "This is Block"
@@ -1690,7 +1700,6 @@ input BlockMasterFilter {
 }
 
 input BlockSignaturesSignaturesFilter {
-	"Validator ID"
 	node_id: StringFilter
 	"'R' part of signature"
 	r: StringFilter
@@ -1707,9 +1716,20 @@ input BlockSignaturesSignaturesArrayFilter {
 "Set of validator's signatures for the Block with correspond id"
 input BlockSignaturesFilter {
 	id: StringFilter
-	block: BlockFilter
+	"Signed block's gen_utime"
+	gen_utime: FloatFilter
+	"Signed block's seq_no"
+	seq_no: FloatFilter
+	"Signed block's workchain_id"
+	workchain_id: IntFilter
+	"Signed block's merkle proof"
+	proof: StringFilter
+	validator_list_hash_short: FloatFilter
+	catchain_seqno: FloatFilter
+	sig_weight: StringFilter
 	"Array of signatures from block's validators"
 	signatures: BlockSignaturesSignaturesArrayFilter
+	block: BlockFilter
     OR: BlockSignaturesFilter
 }
 

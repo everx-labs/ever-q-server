@@ -388,8 +388,15 @@ const BlockSignaturesSignatures = struct({
 const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
 const BlockSignatures = struct({
     id: scalar,
-    block: join('id', 'id', 'blocks', () => Block),
+    gen_utime: scalar,
+    seq_no: scalar,
+    workchain_id: scalar,
+    proof: scalar,
+    validator_list_hash_short: scalar,
+    catchain_seqno: scalar,
+    sig_weight: bigUInt1,
     signatures: BlockSignaturesSignaturesArray,
+    block: join('id', 'id', 'blocks', () => Block),
 }, true);
 
 const InMsgArray = array(() => InMsg);
@@ -715,6 +722,9 @@ function createResolvers(db) {
             },
             block(parent, _args, context) {
                 return context.db.blocks.waitForDoc(parent._key, '_key');
+            },
+            sig_weight(parent, args) {
+                return resolveBigUInt(1, parent.sig_weight, args);
             },
         },
         Block: {
