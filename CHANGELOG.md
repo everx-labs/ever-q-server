@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - `block` join added to `Message` and `Transaction`
 - `OR` combination operator in filters
 - aggregation queries: `aggregateBlockSignatures`, `aggregateBlocks`, `aggregateTransactions`, `aggregateMessages`, `aggregateAccounts`
+- Added new fields (`gen_utime`, `seq_no`, `workchain_id`, `proof`, `validator_list_hash_short`, `catchain_seqno`, `sig_weight`) into `BlockSignatures` 
 
 ### Fixed
 - all configuration env variables changed to be prefixed with `Q_`
