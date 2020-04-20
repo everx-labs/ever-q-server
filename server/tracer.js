@@ -10,6 +10,8 @@ import { initTracerFromEnv as initJaegerTracer } from 'jaeger-client';
 import { cleanError, toLog } from "./utils";
 
 export interface IStats {
+    configuredTags: string[],
+
     increment(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void,
 
     decrement(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void,
@@ -27,6 +29,7 @@ function dummy(stat: string, value?: number, sampleRate?: number | string[], tag
 }
 
 const dummyStats: IStats = {
+    configuredTags: [],
     increment: dummy,
     decrement: dummy,
     histogram: dummy,
@@ -36,12 +39,20 @@ const dummyStats: IStats = {
 };
 
 export class QStats {
-    static create(server: string): IStats {
+    static create(server: string, configuredTags: string[]): IStats {
         if (!server) {
             return dummyStats;
         }
         const hostPort = server.split(':');
-        return new StatsD(hostPort[0], hostPort[1], STATS.prefix);
+        const stats = new StatsD(hostPort[0], hostPort[1], STATS.prefix);
+        stats['configuredTags'] = configuredTags;
+        return stats;
+    }
+
+    static combineTags(stats: IStats, tags: string[]): string[] {
+        return (stats.configuredTags && stats.configuredTags.length > 0)
+            ? stats.configuredTags.concat(tags)
+            : tags;
     }
 }
 
@@ -53,7 +64,7 @@ export class StatsCounter {
     constructor(stats: IStats, name: string, tags: string[]) {
         this.stats = stats;
         this.name = name;
-        this.tags = tags;
+        this.tags = QStats.combineTags(stats, tags);
     }
 
     increment() {
@@ -70,7 +81,7 @@ export class StatsGauge {
     constructor(stats: IStats, name: string, tags: string[]) {
         this.stats = stats;
         this.name = name;
-        this.tags = tags;
+        this.tags = QStats.combineTags(stats, tags);
         this.value = 0;
     }
 
@@ -96,7 +107,7 @@ export class StatsTiming {
     constructor(stats: IStats, name: string, tags: string[]) {
         this.stats = stats;
         this.name = name;
-        this.tags = tags;
+        this.tags = QStats.combineTags(stats, tags);
     }
 
     report(value: number) {
@@ -212,7 +223,6 @@ export class QTracer {
         if (!jaegerConfig) {
             return noopTracer;
         }
-        console.log('>>>', jaegerConfig);
         return initJaegerTracer(jaegerConfig, {
             logger: {
                 info(msg) {
