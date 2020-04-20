@@ -300,14 +300,21 @@ const Transaction: TypeDef = {
 // BLOCK SIGNATURES
 
 const BlockSignatures: TypeDef = {
-    _doc: 'Set of validator\'s signatures for the Block with correspond id',
+    _doc: docs.blockSignatures._doc,
     _: { collection: 'blocks_signatures' },
-    block: join('Block', 'id', 'id'),
+    gen_utime: u32(docs.blockSignatures.gen_utime),
+    seq_no: u32(docs.blockSignatures.seq_no),
+    workchain_id: i32(docs.blockSignatures.workchain_id),
+    proof: string(docs.blockSignatures.proof),
+    validator_list_hash_short: u32(docs.blockSignatures.validator_list_hash_short),
+    catchain_seqno: u32(docs.blockSignatures.catchain_seqno),
+    sig_weight: u64(docs.blockSignatures.sig_weight),
     signatures: arrayOf({
-        node_id: string("Validator ID"),
-        r: string("'R' part of signature"),
-        s: string("'s' part of signature"),
-    }, "Array of signatures from block's validators"),
+        node_id: string(),
+        r: string(docs.blockSignatures.signatures.r),
+        s: string(docs.blockSignatures.signatures.s),
+    }, docs.blockSignatures.signatures._doc),
+    block: join('Block', 'id', 'id'),
 };
 
 // BLOCK
