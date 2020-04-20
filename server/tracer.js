@@ -50,7 +50,7 @@ export class QStats {
     }
 
     static combineTags(stats: IStats, tags: string[]): string[] {
-        return (stats.configuredTags && stats.configuredTags.length > 0)
+        return (stats && stats.configuredTags && stats.configuredTags.length > 0)
             ? stats.configuredTags.concat(tags)
             : tags;
     }
