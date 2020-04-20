@@ -33,6 +33,11 @@ function combinePath(base: string, path: string): string {
     return `${b}${sep}${p}`;
 }
 
+export type ScalarField = {
+    path: string,
+    type: ('number' | 'uint64' | 'uint1024' | 'boolean' | 'string'),
+}
+
 export class QExplanation {
     parentPath: string;
     fields: Map<string, QFieldExplanation>;
@@ -669,8 +674,7 @@ export type DatabaseQuery = {
 }
 
 export type QueryStat = {
-    slow: boolean,
-    times: number[],
+    isFast: boolean,
 }
 
 export function indexToString(index: IndexInfo): string {

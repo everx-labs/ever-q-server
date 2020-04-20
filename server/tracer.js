@@ -212,6 +212,7 @@ export class QTracer {
         if (!jaegerConfig) {
             return noopTracer;
         }
+        console.log('>>>', jaegerConfig);
         return initJaegerTracer(jaegerConfig, {
             logger: {
                 info(msg) {

@@ -6,7 +6,9 @@ import { Span, FORMAT_TEXT_MAP } from 'opentracing';
 import type { TONContracts } from "ton-client-js/types";
 import Arango from "./arango";
 import { requireGrantedAccess } from "./arango-collection";
-import type { GraphQLRequestContext } from "./arango-collection";
+import type {
+    GraphQLRequestContext
+} from "./arango-collection";
 import { Auth } from "./auth";
 import { ensureProtocol } from "./config";
 import path from 'path';
@@ -216,6 +218,8 @@ async function postRequests(
     }, context.parentSpan);
 }
 
+//------------------------------------------------------------- Access Management
+
 type ManagementArgs = {
     account?: string,
     signedManagementAccessKey?: string,
@@ -267,23 +271,26 @@ async function finishOperations(
     return context.db.finishOperations(operationIds);
 }
 
-const resolversCustom = {
-    Query: {
-        info,
-        getAccountsCount,
-        getTransactionsCount,
-        getAccountsTotalBalance,
-        getManagementAccessKey,
-    },
-    Mutation: {
-        postRequests,
-        registerAccessKeys,
-        revokeAccessKeys,
-        finishOperations,
-    },
-};
-
-export function attachCustomResolvers(original: any): any {
-    overrideObject(original, resolversCustom);
+export function attachCustomResolvers(db: Arango, original: any): any {
+    overrideObject(original, {
+        Query: {
+            info,
+            getAccountsCount,
+            getTransactionsCount,
+            getAccountsTotalBalance,
+            getManagementAccessKey,
+            aggregateBlockSignatures: db.blocks_signatures.aggregationResolver(),
+            aggregateBlocks: db.blocks.aggregationResolver(),
+            aggregateTransactions: db.transactions.aggregationResolver(),
+            aggregateMessages: db.messages.aggregationResolver(),
+            aggregateAccounts: db.accounts.aggregationResolver(),
+        },
+        Mutation: {
+            postRequests,
+            registerAccessKeys,
+            revokeAccessKeys,
+            finishOperations,
+        },
+    });
     return original;
 }
