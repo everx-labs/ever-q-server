@@ -51,6 +51,7 @@ type ProgramOptions = {
     traceTags: string,
     authEndpoint: string,
     statsdServer: string,
+    statsdTags: string,
     mamAccessKeys: string,
 }
 
@@ -101,6 +102,8 @@ program
 
     .option('-s, --statsd-server <url>', 'statsd server (host:port)',
         process.env.Q_STATSD_SERVER || '')
+    .option('--statsd-tags <tags>', 'additional statsd tags (comma separated name=value pairs)',
+        process.env.Q_STATSD_TAGS || '')
 
     .parse(process.argv);
 
@@ -155,6 +158,7 @@ const config: QConfig = {
     },
     statsd: {
         server: options.statsdServer,
+        tags: (options.statsdTags || '').split(',').map(x => x.trim()).filter(x => x),
     },
     mamAccessKeys: new Set((options.mamAccessKeys || '').split(',')),
 };

@@ -551,7 +551,6 @@ export class Collection {
             ${filterSection}
             COLLECT AGGREGATE ${col.join(', ')}
             RETURN [${ret.join(', ')}]`;
-        console.log('>>>', text);
         return {
             text,
             params: params.values,

@@ -56,6 +56,7 @@ export type QConfig = {
     },
     statsd: {
         server: string,
+        tags: string[],
     },
     mamAccessKeys: Set<string>,
 }

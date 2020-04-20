@@ -45,6 +45,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --mam-access-keys <keys>        Q_MAM_ACCESS_KEYS                           Access keys used to authorize mam endpoint access
 
     -s, --statsd-server <url>           Q_STATSD_SEREVER                            StatsD server url
+        --statsd-tags <tags>            Q_STATSD_TAGS                               StatsD additional comma separated tags (name=value)
 
 # Run
 
@@ -76,6 +77,8 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
     qserver.query.active  gauge    collection=name  Updated each time when q-server has started and finished 
                                                     query handler from SDK client
 
+Q-Server can report additional tags with help of optional parameter `Q_STATSD_TAGS`. 
+ 
 # For Developers
 
 IMPORTANT!!!
