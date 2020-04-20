@@ -470,5 +470,23 @@ Logical time is a component of the TON Blockchain that also plays an important r
             },
         }
     },
+},
+
+blockSignatures: {
+    _doc: `Set of validator\'s signatures for the Block with correspond id`,
+    gen_utime: `Signed block's gen_utime`,
+    seq_no: `Signed block's seq_no`,
+    workchain_id: `Signed block's workchain_id`,
+    proof: `Signed block's merkle proof`,
+    validator_list_hash_short: ``,
+    catchain_seqno: ``,
+    sig_weight: ``,
+    signatures: {
+        _doc: `Array of signatures from block's validators`,
+        node_id: `Validator ID`,
+        r: `'R' part of signature`,
+        s: `'s' part of signature`,
+    }
 }
+
 };

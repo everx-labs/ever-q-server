@@ -388,8 +388,15 @@ const BlockSignaturesSignatures = struct({
 const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
 const BlockSignatures = struct({
     id: scalar,
-    block: join('id', 'id', 'blocks', () => Block),
+    gen_utime: scalar,
+    seq_no: scalar,
+    workchain_id: scalar,
+    proof: scalar,
+    validator_list_hash_short: scalar,
+    catchain_seqno: scalar,
+    sig_weight: bigUInt1,
     signatures: BlockSignaturesSignaturesArray,
+    block: join('id', 'id', 'blocks', () => Block),
 }, true);
 
 const InMsgArray = array(() => InMsg);
@@ -716,6 +723,9 @@ function createResolvers(db) {
             block(parent, _args, context) {
                 return context.db.blocks.waitForDoc(parent._key, '_key');
             },
+            sig_weight(parent, args) {
+                return resolveBigUInt(1, parent.sig_weight, args);
+            },
         },
         Block: {
             id(parent) {
@@ -875,6 +885,13 @@ function createResolvers(db) {
 
 const scalarFields = new Map();
 scalarFields.set('blocks_signatures.id', { type: 'string', path: 'doc._key' });
+scalarFields.set('blocks_signatures.gen_utime', { type: 'number', path: 'doc.gen_utime' });
+scalarFields.set('blocks_signatures.seq_no', { type: 'number', path: 'doc.seq_no' });
+scalarFields.set('blocks_signatures.workchain_id', { type: 'number', path: 'doc.workchain_id' });
+scalarFields.set('blocks_signatures.proof', { type: 'string', path: 'doc.proof' });
+scalarFields.set('blocks_signatures.validator_list_hash_short', { type: 'number', path: 'doc.validator_list_hash_short' });
+scalarFields.set('blocks_signatures.catchain_seqno', { type: 'number', path: 'doc.catchain_seqno' });
+scalarFields.set('blocks_signatures.sig_weight', { type: 'uint64', path: 'doc.sig_weight' });
 scalarFields.set('blocks_signatures.signatures.node_id', { type: 'string', path: 'doc.signatures[*].node_id' });
 scalarFields.set('blocks_signatures.signatures.r', { type: 'string', path: 'doc.signatures[*].r' });
 scalarFields.set('blocks_signatures.signatures.s', { type: 'string', path: 'doc.signatures[*].s' });
