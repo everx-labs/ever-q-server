@@ -390,6 +390,7 @@ const BlockSignatures = struct({
     id: scalar,
     gen_utime: scalar,
     seq_no: scalar,
+    shard: scalar,
     workchain_id: scalar,
     proof: scalar,
     validator_list_hash_short: scalar,
@@ -887,6 +888,7 @@ const scalarFields = new Map();
 scalarFields.set('blocks_signatures.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('blocks_signatures.gen_utime', { type: 'number', path: 'doc.gen_utime' });
 scalarFields.set('blocks_signatures.seq_no', { type: 'number', path: 'doc.seq_no' });
+scalarFields.set('blocks_signatures.shard', { type: 'string', path: 'doc.shard' });
 scalarFields.set('blocks_signatures.workchain_id', { type: 'number', path: 'doc.workchain_id' });
 scalarFields.set('blocks_signatures.proof', { type: 'string', path: 'doc.proof' });
 scalarFields.set('blocks_signatures.validator_list_hash_short', { type: 'number', path: 'doc.validator_list_hash_short' });

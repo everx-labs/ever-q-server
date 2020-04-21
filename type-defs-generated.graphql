@@ -634,6 +634,8 @@ type BlockSignatures {
 	gen_utime: Float
 	"Signed block's seq_no"
 	seq_no: Float
+	"Signed block's shard"
+	shard: String
 	"Signed block's workchain_id"
 	workchain_id: Int
 	"Signed block's merkle proof"
@@ -1720,6 +1722,8 @@ input BlockSignaturesFilter {
 	gen_utime: FloatFilter
 	"Signed block's seq_no"
 	seq_no: FloatFilter
+	"Signed block's shard"
+	shard: StringFilter
 	"Signed block's workchain_id"
 	workchain_id: IntFilter
 	"Signed block's merkle proof"
