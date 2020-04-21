@@ -514,43 +514,54 @@ export class Collection {
             ret.push(`v${i}`);
         }
 
-        args.fields.forEach((aggregation: FieldAggregation, i: number) => {
-            const fn = aggregation.fn || AggregationFn.COUNT;
-            if (fn === AggregationFn.COUNT) {
-                aggregateCount(i);
-            } else {
-                const f: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${aggregation.field || 'id'}`);
-                const invalidType = () => new Error(`[${aggregation.field}] can't be used with [${fn}]`);
-                if (!f) {
-                    throw invalidType();
-                }
-                switch (f.type) {
-                case 'number':
-                    aggregateNumber(i, f, fn);
-                    break;
-                case 'uint64':
-                case 'uint1024':
-                    if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
-                        aggregateBigNumber(i, f, fn);
-                    } else {
-                        aggregateBigNumberParts(i, f, fn);
-                    }
-                    break;
-                default:
-                    if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
-                        aggregateNonNumber(i, f, fn);
-                    } else {
+        let text;
+        const isSingleCount = (args.fields.length === 1)
+            && (args.fields[0].fn === AggregationFn.COUNT);
+        if (isSingleCount) {
+            text = `
+                FOR doc IN ${this.name}
+                ${filterSection}
+                COLLECT WITH COUNT INTO v0
+                RETURN [v0]`;
+        } else {
+            args.fields.forEach((aggregation: FieldAggregation, i: number) => {
+                const fn = aggregation.fn || AggregationFn.COUNT;
+                if (fn === AggregationFn.COUNT) {
+                    aggregateCount(i);
+                } else {
+                    const f: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${aggregation.field || 'id'}`);
+                    const invalidType = () => new Error(`[${aggregation.field}] can't be used with [${fn}]`);
+                    if (!f) {
                         throw invalidType();
                     }
-                    break;
+                    switch (f.type) {
+                    case 'number':
+                        aggregateNumber(i, f, fn);
+                        break;
+                    case 'uint64':
+                    case 'uint1024':
+                        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+                            aggregateBigNumber(i, f, fn);
+                        } else {
+                            aggregateBigNumberParts(i, f, fn);
+                        }
+                        break;
+                    default:
+                        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+                            aggregateNonNumber(i, f, fn);
+                        } else {
+                            throw invalidType();
+                        }
+                        break;
+                    }
                 }
-            }
-        });
-        const text = `
-            FOR doc IN ${this.name}
-            ${filterSection}
-            COLLECT AGGREGATE ${col.join(', ')}
-            RETURN [${ret.join(', ')}]`;
+            });
+            text = `
+                FOR doc IN ${this.name}
+                ${filterSection}
+                COLLECT AGGREGATE ${col.join(', ')}
+                RETURN [${ret.join(', ')}]`;
+        }
         return {
             text,
             params: params.values,
@@ -592,15 +603,17 @@ export class Collection {
                     const bigInt = x.uint64 || x.uint1024;
                     if (bigInt) {
                         const len = ('uint64' in x) ? 1 : 2;
+                        if (typeof bigInt === 'number') {
+                            return bigInt.toString();
+                        }
                         if (typeof bigInt === 'string') {
                             //$FlowFixMe
                             return BigInt(`0x${bigInt.substr(len)}`).toString();
-                        } else {
-                            //$FlowFixMe
-                            let h = BigInt(`0x${Number(bigInt.h).toString(16)}00000000`);
-                            let l = BigInt(bigInt.l);
-                            return (h + l).toString();
                         }
+                        //$FlowFixMe
+                        let h = BigInt(`0x${Number(bigInt.h).toString(16)}00000000`);
+                        let l = BigInt(bigInt.l);
+                        return (h + l).toString();
                     } else {
                         return x.toString()
                     }
