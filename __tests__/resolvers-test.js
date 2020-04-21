@@ -50,6 +50,18 @@ test("Filter test", () => {
         "acc_type": { eq: 3 },
     })).toBeTruthy();
 
+    expect(Message.test(null, {
+        src: '2',
+        dst: '1',
+    }, {
+        src: { eq: '1' },
+        dst: { eq: '2' },
+        OR: {
+            src: { eq: '2' },
+            dst: { eq: '1' },
+        }
+    })).toBeTruthy();
+
     expect(Transaction.test(null, { in_msg: null, }, { in_msg: { ne: null }, })).toBeFalsy();
     expect(Transaction.test(null, { in_msg: null, }, { in_msg: { eq: null }, })).toBeTruthy();
     expect(Transaction.test(null, {}, { in_msg: { ne: null }, })).toBeFalsy();
@@ -87,6 +99,21 @@ test("Generate AQL", () => {
     expect(ql).toEqual(`(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)`);
     expect(params.values.v1).toEqual('fff');
     expect(params.values.v2).toEqual(20);
+
+    params.clear();
+    ql = Message.ql(params, 'doc', {
+        src: { eq: '1' },
+        dst: { eq: '2' },
+        OR: {
+            src: { eq: '2' },
+            dst: { eq: '1' },
+        }
+    });
+    expect(ql).toEqual(`((doc.src == @v1) AND (doc.dst == @v2)) OR ((doc.src == @v3) AND (doc.dst == @v4))`);
+    expect(params.values.v1).toEqual('1');
+    expect(params.values.v2).toEqual('2');
+    expect(params.values.v3).toEqual('2');
+    expect(params.values.v4).toEqual('1');
 });
 
 test("Enum Names", () => {

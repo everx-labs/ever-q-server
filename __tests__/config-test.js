@@ -24,7 +24,7 @@ test("Jaeger Config", () => {
     });
 
     expect(QTracer.getJaegerConfig({
-        endpoint: 'agent:1234',
+        endpoint: 'jaeger-agent:8631',
         service: 'service',
         tags: [],
     })).toEqual({
@@ -34,8 +34,8 @@ test("Jaeger Config", () => {
             param: 1,
         },
         reporter: {
-            agentHost: 'agent',
-            agentPort: 1234,
+            agentHost: 'jaeger-agent',
+            agentPort: 8631,
             logSpans: true,
         },
     });

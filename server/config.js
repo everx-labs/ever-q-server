@@ -16,6 +16,8 @@
 
 // @flow
 
+import { parseIndex } from "./db-types";
+
 export const QRequestsMode = {
     kafka: 'kafka',
     rest: 'rest,'
@@ -54,6 +56,7 @@ export type QConfig = {
     },
     statsd: {
         server: string,
+        tags: string[],
     },
     mamAccessKeys: Set<string>,
 }
@@ -62,13 +65,52 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
 
-function sortedIndex(fields: string[]): string[] {
-    return fields;
+const INDEXES: {
+    [string]: string[],
+} = {
+    blocks: [
+        'seq_no, gen_utime',
+        'gen_utime',
+        'workchain_id, shard, seq_no',
+        'workchain_id, seq_no',
+        'workchain_id, gen_utime',
+        'master.min_shard_gen_utime',
+    ],
+    accounts: [
+        'last_trans_lt',
+        'balance',
+    ],
+    messages: [
+        'block_id',
+        'value, created_at',
+        'src, value, created_at',
+        'dst, value, created_at',
+        'src, created_at',
+        'dst, created_at',
+        'src, dst, created_at, _key',
+        'created_lt',
+        'created_at',
+    ],
+    transactions: [
+        'block_id',
+        'in_msg',
+        'out_msgs[*]',
+        'account_addr, now',
+        'now',
+        'lt',
+        'account_addr, orig_status, end_status',
+        'now, account_addr, lt',
+    ],
+    blocks_signatures: [],
+};
+
+export type IndexInfo = {
+    fields: string[],
 }
 
 export type CollectionInfo = {
     name: string,
-    indexes: string[][],
+    indexes: IndexInfo[],
 };
 
 export type DbInfo = {
@@ -80,56 +122,15 @@ export type DbInfo = {
 
 export const BLOCKCHAIN_DB: DbInfo = {
     name: 'blockchain',
-    collections: {
-        blocks: {
-            name: 'blocks',
-            indexes: [
-                sortedIndex(['seq_no', 'gen_utime']),
-                sortedIndex(['gen_utime']),
-                sortedIndex(['workchain_id', 'shard', 'seq_no']),
-                sortedIndex(['workchain_id', 'seq_no']),
-                sortedIndex(['workchain_id', 'gen_utime']),
-                sortedIndex(['master.min_shard_gen_utime']),
-            ],
-        },
-        accounts: {
-            name: 'accounts',
-            indexes: [
-                sortedIndex(['last_trans_lt']),
-                sortedIndex(['balance']),
-            ],
-        },
-        messages: {
-            name: 'messages',
-            indexes: [
-                sortedIndex(['block_id']),
-                sortedIndex(['value', 'created_at']),
-                sortedIndex(['src', 'value', 'created_at']),
-                sortedIndex(['dst', 'value', 'created_at']),
-                sortedIndex(['src', 'created_at']),
-                sortedIndex(['dst', 'created_at']),
-                sortedIndex(['created_lt']),
-                sortedIndex(['created_at']),
-            ],
-        },
-        transactions: {
-            name: 'transactions',
-            indexes: [
-                sortedIndex(['block_id']),
-                sortedIndex(['in_msg']),
-                sortedIndex(['out_msgs[*]']),
-                sortedIndex(['account_addr', 'now']),
-                sortedIndex(['now']),
-                sortedIndex(['lt']),
-                sortedIndex(['account_addr', 'orig_status', 'end_status']),
-            ],
-        },
-        blocks_signatures: {
-            name: 'blocks_signatures',
-            indexes: [],
-        },
-    }
+    collections: {}
 };
+
+Object.entries(INDEXES).forEach(([name, indexes]) => {
+    BLOCKCHAIN_DB.collections[name] = {
+        name,
+        indexes: ['_key', ...(indexes: any)].map(parseIndex),
+    }
+});
 
 export const STATS = {
     prefix: 'qserver.',
@@ -149,7 +150,3 @@ export const STATS = {
     },
 };
 
-for (const [n, c] of (Object.entries(BLOCKCHAIN_DB.collections): Array<any>)) {
-    c.name = n;
-    c.indexes.push(['_key']);
-}

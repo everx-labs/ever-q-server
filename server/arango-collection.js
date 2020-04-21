@@ -16,22 +16,23 @@
 
 // @flow
 
-import {Database, DocumentCollection} from "arangojs";
-import {Span, SpanContext, Tracer} from "opentracing";
-import type {TONClient} from "ton-client-js/types";
-import {DocUpsertHandler, DocSubscription} from "./arango-listeners";
-import type {AccessRights} from "./auth";
-import {Auth} from "./auth";
-import {BLOCKCHAIN_DB, STATS} from './config';
-import type {QConfig} from "./config";
-import type {DatabaseQuery, OrderBy, QType, QueryStat} from "./db-types";
-import {parseSelectionSet, QParams, selectionToString} from "./db-types";
-import type {QLog} from "./logs";
+import { Database, DocumentCollection } from "arangojs";
+import { Span, SpanContext, Tracer } from "opentracing";
+import type { TONClient } from "ton-client-js/types";
+import { DocUpsertHandler, DocSubscription } from "./arango-listeners";
+import type { AccessRights } from "./auth";
+import { Auth } from "./auth";
+import { BLOCKCHAIN_DB, STATS } from './config';
+import type { QConfig } from "./config";
+import type { DatabaseQuery, OrderBy, QType, QueryStat, ScalarField } from "./db-types";
+import { parseSelectionSet, QParams, resolveBigUInt, selectionToString } from "./db-types";
+import type { QLog } from "./logs";
 import QLogs from "./logs";
-import {isFastQuery} from './slow-detector';
-import type {IStats} from './tracer';
-import {QTracer, StatsCounter, StatsGauge, StatsTiming} from "./tracer";
-import {createError, wrap} from "./utils";
+import { isFastQuery } from './slow-detector';
+import type { IStats } from './tracer';
+import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "./tracer";
+import { createError, wrap } from "./utils";
+import { scalarFields } from './resolvers-generated';
 import EventEmitter from 'events';
 
 export type GraphQLRequestContext = {
@@ -49,6 +50,31 @@ export type GraphQLRequestContext = {
     parentSpan: (Span | SpanContext | typeof undefined),
 
     shared: Map<string, any>,
+}
+
+export const AggregationFn = {
+    COUNT: 'COUNT',
+    MIN: 'MIN',
+    MAX: 'MAX',
+    SUM: 'SUM',
+    AVERAGE: 'AVERAGE',
+    STDDEV_POPULATION: 'STDDEV_POPULATION',
+    STDDEV_SAMPLE: 'STDDEV_SAMPLE',
+    VARIANCE_POPULATION: 'VARIANCE_POPULATION',
+    VARIANCE_SAMPLE: 'VARIANCE_SAMPLE',
+}
+
+type AggregationFnType = $Keys<typeof AggregationFn>;
+
+export type FieldAggregation = {
+    field: string,
+    fn: AggregationFnType,
+}
+
+export type AggregationArgs = {
+    filter: any,
+    fields: FieldAggregation[],
+    accessKey?: string,
 }
 
 function checkUsedAccessKey(
@@ -195,8 +221,26 @@ export class Collection {
         case 'messages':
             return `(doc.src ${condition}) OR (doc.dst ${condition})`;
         default:
-            return 'false';
+            return '';
         }
+    }
+
+    buildConditionQL(
+        filter: any,
+        params: QParams,
+        accessRights: AccessRights,
+    ): ?string {
+        const primaryCondition = Object.keys(filter).length > 0
+            ? this.docType.ql(params, 'doc', filter)
+            : '';
+        const additionalCondition = this.getAdditionalCondition(accessRights, params);
+        if (primaryCondition === 'false' || additionalCondition === 'false') {
+            return null;
+        }
+        return (primaryCondition && additionalCondition)
+            ? `(${primaryCondition}) AND (${additionalCondition})`
+            : (primaryCondition || additionalCondition);
+
     }
 
     createDatabaseQuery(
@@ -212,16 +256,10 @@ export class Collection {
     ): ?DatabaseQuery {
         const filter = args.filter || {};
         const params = new QParams();
-        const primaryCondition = Object.keys(filter).length > 0
-            ? this.docType.ql(params, 'doc', filter)
-            : '';
-        const additionalCondition = this.getAdditionalCondition(accessRights, params);
-        if (primaryCondition === 'false' || additionalCondition === 'false') {
+        const condition = this.buildConditionQL(filter, params, accessRights);
+        if (condition === null) {
             return null;
         }
-        let condition = (primaryCondition && additionalCondition)
-            ? `(${primaryCondition}) AND (${additionalCondition})`
-            : (primaryCondition || additionalCondition);
         const filterSection = condition ? `FILTER ${condition}` : '';
         const selection = selectionInfo.selections
             ? parseSelectionSet(selectionInfo, this.name)
@@ -262,18 +300,21 @@ export class Collection {
         };
     }
 
-    async ensureQueryStat(q: DatabaseQuery): Promise<QueryStat> {
-        const existing = this.queryStats.get(q.text);
-        if (existing !== undefined) {
-            return existing;
+    isFastQuery(
+        text: string,
+        filter: any,
+        orderBy?: OrderBy[]
+    ): boolean {
+        const existingStat = this.queryStats.get(text);
+        if (existingStat !== undefined) {
+            return existingStat.isFast;
         }
         const collectionInfo = BLOCKCHAIN_DB.collections[this.name];
         const stat = {
-            slow: !isFastQuery(collectionInfo, this.docType, q.filter, q.orderBy, console),
-            times: [],
+            isFast: isFastQuery(collectionInfo, this.docType, filter, orderBy || [], console),
         };
-        this.queryStats.set(q.text, stat);
-        return stat;
+        this.queryStats.set(text, stat);
+        return stat.isFast;
     }
 
     queryResolver() {
@@ -293,16 +334,29 @@ export class Collection {
                     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
                     return [];
                 }
-                const stat = await this.ensureQueryStat(q);
+                const isFast = this.isFastQuery(q.text, q.filter, q.orderBy);
+                const traceParams: any = {
+                    filter: q.filter,
+                    selection: selectionToString(q.selection),
+                };
+                if (q.orderBy.length > 0) {
+                    traceParams.orderBy = q.orderBy;
+                }
+                if (q.limit !== 50) {
+                    traceParams.limit = q.limit;
+                }
+                if (q.timeout > 0) {
+                    traceParams.timeout = q.timeout;
+                }
                 const start = Date.now();
                 const result = q.timeout > 0
-                    ? await this.queryWaitFor(q, stat, context.parentSpan)
-                    : await this.query(q, stat, context.parentSpan);
+                    ? await this.queryWaitFor(q, isFast, traceParams, context.parentSpan)
+                    : await this.query(q.text, q.params, isFast, traceParams, context.parentSpan);
                 this.log.debug(
                     'QUERY',
                     args,
                     (Date.now() - start) / 1000,
-                    stat.slow ? 'SLOW' : 'FAST', context.remoteAddress,
+                    isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
                 return result;
             } finally {
@@ -312,63 +366,45 @@ export class Collection {
         });
     }
 
-    static setQueryTraceParams(q: DatabaseQuery, span: Span) {
-        const params: any = {
-            filter: q.filter,
-            selection: selectionToString(q.selection),
-        };
-        if (q.orderBy.length > 0) {
-            params.orderBy = q.orderBy;
-        }
-        if (q.limit !== 50) {
-            params.limit = q.limit;
-        }
-        if (q.timeout > 0) {
-            params.timeout = q.timeout;
-        }
-        span.setTag('params', params);
-    }
-
     async query(
-        q: DatabaseQuery,
-        stat: QueryStat,
+        text: string,
+        params: { [string]: any },
+        isFast: boolean,
+        traceParams: any,
         parentSpan?: (Span | SpanContext),
     ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.query`, async (span: Span) => {
-            Collection.setQueryTraceParams(q, span);
-            return this.queryDatabase(q, stat);
+            if (traceParams) {
+                span.setTag('params', traceParams);
+            }
+            return this.queryDatabase(text, params, isFast);
         }, parentSpan);
     }
 
-    async queryDatabase(q: DatabaseQuery, stat: ?QueryStat): Promise<any> {
-        const db = (stat && stat.slow) ? this.slowDb : this.db;
-        const start = Date.now();
-        const cursor = await db.query(q.text, q.params);
-        const result = await cursor.all();
-        if (stat) {
-            stat.times.push(Date.now() - start);
-            if (stat.times.length > 100) {
-                stat.times.shift();
-            }
-        }
-        return result;
+    async queryDatabase(text: string, params: { [string]: any }, isFast: boolean): Promise<any> {
+        const db = isFast ? this.db : this.slowDb;
+        const cursor = await db.query(text, params);
+        return cursor.all();
     }
 
 
     async queryWaitFor(
         q: DatabaseQuery,
-        stat: ?QueryStat,
+        isFast: boolean,
+        traceParams: any,
         parentSpan?: (Span | SpanContext),
     ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
-            Collection.setQueryTraceParams(q, span);
+            if (traceParams) {
+                span.setTag('params', traceParams);
+            }
             let waitFor: ?((doc: any) => void) = null;
             let forceTimerId: ?TimeoutID = null;
             let resolvedBy: ?string = null;
             try {
                 const onQuery = new Promise((resolve, reject) => {
                     const check = () => {
-                        this.queryDatabase(q, stat).then((docs) => {
+                        this.queryDatabase(q.text, q.params, isFast).then((docs) => {
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = null;
@@ -429,6 +465,168 @@ export class Collection {
         }, parentSpan);
     }
 
+    //--------------------------------------------------------- Aggregates
+
+
+    createAggregationQuery(
+        args: AggregationArgs,
+        accessRights: AccessRights,
+    ): ?{
+        text: string,
+        params: { [string]: any },
+    } {
+        const filter = args.filter || {};
+        const params = new QParams();
+        const condition = this.buildConditionQL(filter, params, accessRights);
+        if (condition === null) {
+            return null;
+        }
+        const filterSection = condition ? `FILTER ${condition}` : '';
+        const col: string[] = [];
+        const ret: string[] = [];
+
+        function aggregateCount(i: number) {
+            col.push(`v${i} = COUNT(doc)`);
+            ret.push(`v${i}`);
+        }
+
+        function aggregateNumber(i: number, f: ScalarField, fn: AggregationFnType) {
+            col.push(`v${i} = ${fn}(${f.path})`);
+            ret.push(`v${i}`);
+        }
+
+        function aggregateBigNumber(i: number, f: ScalarField, fn: AggregationFnType) {
+            col.push(`v${i} = ${fn}(${f.path})`);
+            ret.push(`{ ${f.type}: v${i} }`);
+        }
+
+        function aggregateBigNumberParts(i: number, f: ScalarField, fn: AggregationFnType) {
+            const len = f.type === 'uint64' ? 1 : 2;
+            const hHex = `SUBSTRING(${f.path}, ${len}, LENGTH(${f.path}) - ${len} - 8)`;
+            const lHex = `RIGHT(SUBSTRING(${f.path}, ${len}), 8)`;
+            col.push(`h${i} = ${fn}(TO_NUMBER(CONCAT("0x", ${hHex})))`);
+            col.push(`l${i} = ${fn}(TO_NUMBER(CONCAT("0x", ${lHex})))`);
+            ret.push(`{ ${f.type}: { h: h${i}, l: l${i} } }`);
+        }
+
+        function aggregateNonNumber(i: number, f: ScalarField, fn: AggregationFnType) {
+            col.push(`v${i} = ${fn}(${f.path})`);
+            ret.push(`v${i}`);
+        }
+
+        let text;
+        const isSingleCount = (args.fields.length === 1)
+            && (args.fields[0].fn === AggregationFn.COUNT);
+        if (isSingleCount) {
+            text = `
+                FOR doc IN ${this.name}
+                ${filterSection}
+                COLLECT WITH COUNT INTO v0
+                RETURN [v0]`;
+        } else {
+            args.fields.forEach((aggregation: FieldAggregation, i: number) => {
+                const fn = aggregation.fn || AggregationFn.COUNT;
+                if (fn === AggregationFn.COUNT) {
+                    aggregateCount(i);
+                } else {
+                    const f: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${aggregation.field || 'id'}`);
+                    const invalidType = () => new Error(`[${aggregation.field}] can't be used with [${fn}]`);
+                    if (!f) {
+                        throw invalidType();
+                    }
+                    switch (f.type) {
+                    case 'number':
+                        aggregateNumber(i, f, fn);
+                        break;
+                    case 'uint64':
+                    case 'uint1024':
+                        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+                            aggregateBigNumber(i, f, fn);
+                        } else {
+                            aggregateBigNumberParts(i, f, fn);
+                        }
+                        break;
+                    default:
+                        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+                            aggregateNonNumber(i, f, fn);
+                        } else {
+                            throw invalidType();
+                        }
+                        break;
+                    }
+                }
+            });
+            text = `
+                FOR doc IN ${this.name}
+                ${filterSection}
+                COLLECT AGGREGATE ${col.join(', ')}
+                RETURN [${ret.join(', ')}]`;
+        }
+        return {
+            text,
+            params: params.values,
+        };
+    }
+
+    aggregationResolver() {
+        return async (
+            parent: any,
+            args: AggregationArgs,
+            context: GraphQLRequestContext,
+        ) => wrap(this.log, 'AGGREGATE', args, async () => {
+            this.statQuery.increment();
+            this.statQueryActive.increment();
+            const start = Date.now();
+            try {
+                const accessRights = await requireGrantedAccess(context, args);
+                const q = this.createAggregationQuery(args, accessRights);
+                if (!q) {
+                    this.log.debug('AGGREGATE', args, 0, 'SKIPPED', context.remoteAddress);
+                    return [];
+                }
+                const isFast = await this.isFastQuery(q.text, args.filter);
+                const start = Date.now();
+                const result = await this.query(q.text, q.params, isFast, {
+                    filter: args.filter,
+                    aggregate: args.fields,
+                }, context.parentSpan);
+                this.log.debug(
+                    'AGGREGATE',
+                    args,
+                    (Date.now() - start) / 1000,
+                    isFast ? 'FAST' : 'SLOW', context.remoteAddress,
+                );
+                return result[0].map((x) => {
+                    if (x === undefined || x === null) {
+                        return x;
+                    }
+                    const bigInt = x.uint64 || x.uint1024;
+                    if (bigInt) {
+                        const len = ('uint64' in x) ? 1 : 2;
+                        if (typeof bigInt === 'number') {
+                            return bigInt.toString();
+                        }
+                        if (typeof bigInt === 'string') {
+                            //$FlowFixMe
+                            return BigInt(`0x${bigInt.substr(len)}`).toString();
+                        }
+                        //$FlowFixMe
+                        let h = BigInt(`0x${Number(bigInt.h).toString(16)}00000000`);
+                        let l = BigInt(bigInt.l);
+                        return (h + l).toString();
+                    } else {
+                        return x.toString()
+                    }
+                });
+            } finally {
+                this.statQueryTime.report(Date.now() - start);
+                this.statQueryActive.decrement();
+            }
+        });
+    }
+
+    //--------------------------------------------------------- Internals
+
     dbCollection(): DocumentCollection {
         return this.db.collection(this.name);
     }
@@ -442,14 +640,14 @@ export class Collection {
         }
         const queryParams = fieldPath.endsWith('[*]')
             ? {
-                filter: {[fieldPath.slice(0, -3)]: {any: {eq: fieldValue}}},
+                filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
                 text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
-                params: {v: fieldValue},
+                params: { v: fieldValue },
             }
             : {
-                filter: {id: {eq: fieldValue}},
+                filter: { id: { eq: fieldValue } },
                 text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
-                params: {v: fieldValue},
+                params: { v: fieldValue },
             };
 
         const docs = await this.queryWaitFor({
@@ -462,7 +660,7 @@ export class Collection {
             text: queryParams.text,
             params: queryParams.params,
             accessRights: accessGranted,
-        }, null, null);
+        }, true, null, null);
         return docs[0];
     }
 

@@ -51,6 +51,7 @@ type ProgramOptions = {
     traceTags: string,
     authEndpoint: string,
     statsdServer: string,
+    statsdTags: string,
     mamAccessKeys: string,
 }
 
@@ -88,12 +89,12 @@ program
         process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3')
 
     .option('--auth-endpoint <url>', 'auth endpoint',
-        process.env.AUTH_ENDPOINT || '')
+        process.env.Q_AUTH_ENDPOINT || '')
     .option('--mam-access-keys <keys>', 'Access keys used to authorize mam endpoint access',
-        process.env.MAM_ACCESS_KEYS || '')
+        process.env.Q_MAM_ACCESS_KEYS || '')
 
     .option('-j, --jaeger-endpoint <url>', 'jaeger endpoint',
-        process.env.JAEGER_ENDPOINT || '')
+        process.env.Q_JAEGER_ENDPOINT || '')
     .option('--trace-service <name>', 'trace service name',
         process.env.Q_TRACE_SERVICE || 'Q Server')
     .option('--trace-tags <tags>', 'additional trace tags (comma separated name=value pairs)',
@@ -101,6 +102,8 @@ program
 
     .option('-s, --statsd-server <url>', 'statsd server (host:port)',
         process.env.Q_STATSD_SERVER || '')
+    .option('--statsd-tags <tags>', 'additional statsd tags (comma separated name=value pairs)',
+        process.env.Q_STATSD_TAGS || '')
 
     .parse(process.argv);
 
@@ -155,6 +158,7 @@ const config: QConfig = {
     },
     statsd: {
         server: options.statsdServer,
+        tags: (options.statsdTags || '').split(',').map(x => x.trim()).filter(x => x),
     },
     mamAccessKeys: new Set((options.mamAccessKeys || '').split(',')),
 };

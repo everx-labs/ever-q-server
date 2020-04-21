@@ -176,6 +176,7 @@ const Message: TypeDef = {
     msg_type: required(messageType(docs.message.msg_type)),
     status: required(messageProcessingStatus(docs.message.status)),
     block_id: required(string(docs.message.block_id)),
+    block: join('Block', 'block_id', 'id'),
     body: string(docs.message.body),
     split_depth: u8(docs.message.split_depth),
     tick: bool(docs.message.tick),
@@ -210,6 +211,7 @@ const Transaction: TypeDef = {
     tr_type: required(transactionType(docs.transaction.tr_type)),
     status: required(transactionProcessingStatus(docs.transaction.status)),
     block_id: string(docs.transaction.block_id),
+    block: join('Block', 'block_id', 'id'),
     account_addr: string(docs.transaction.account_addr),
     workchain_id: i32(docs.transaction.workchain_id),
     lt: u64(docs.transaction.lt),
@@ -298,13 +300,21 @@ const Transaction: TypeDef = {
 // BLOCK SIGNATURES
 
 const BlockSignatures: TypeDef = {
-    _doc: 'Set of validator\'s signatures for the Block with correspond id',
+    _doc: docs.blockSignatures._doc,
     _: { collection: 'blocks_signatures' },
+    gen_utime: u32(docs.blockSignatures.gen_utime),
+    seq_no: u32(docs.blockSignatures.seq_no),
+    workchain_id: i32(docs.blockSignatures.workchain_id),
+    proof: string(docs.blockSignatures.proof),
+    validator_list_hash_short: u32(docs.blockSignatures.validator_list_hash_short),
+    catchain_seqno: u32(docs.blockSignatures.catchain_seqno),
+    sig_weight: u64(docs.blockSignatures.sig_weight),
     signatures: arrayOf({
-        node_id: string("Validator ID"),
-        r: string("'R' part of signature"),
-        s: string("'s' part of signature"),
-    }, "Array of signatures from block's validators"),
+        node_id: string(),
+        r: string(docs.blockSignatures.signatures.r),
+        s: string(docs.blockSignatures.signatures.s),
+    }, docs.blockSignatures.signatures._doc),
+    block: join('Block', 'id', 'id'),
 };
 
 // BLOCK
@@ -353,7 +363,6 @@ const OutMsg: TypeDef = {
     msg_env_hash: string(),
     next_workchain: i32(),
     next_addr_pfx: u64(),
-    import_block_lt: u64(),
 };
 
 const outMsg = (doc?: string) => ref({ OutMsg }, doc);

@@ -1,31 +1,10 @@
 // @flow
 
 
-import type {CollectionInfo} from "./config";
-import {QParams} from "./db-types";
+import type { CollectionInfo, IndexInfo } from "./config";
+import { indexToString, orderByToString, QParams, splitOr } from "./db-types";
 import type {OrderBy, QFieldExplanation, QType} from "./db-types";
 import type {QLog} from './logs';
-
-export function parseOrderBy(s: string): OrderBy[] {
-    return s.split(',')
-        .map(x => x.trim())
-        .filter(x => x)
-        .map((s) => {
-            const parts = s.split(' ').filter(x => x);
-            return {
-                path: parts[0],
-                direction: (parts[1] || '').toLowerCase() === 'desc' ? 'DESC' : 'ASC',
-            }
-        });
-}
-
-function orderByToString(orderBy: OrderBy[]): string {
-    return orderBy.map(x => `${x.path}${(x.direction || '') === 'DESC' ? ' desc' : ''}`).join(', ');
-}
-
-function indexToString(index: string[]): string {
-    return index.join(', ');
-}
 
 function setIs1(s: Set<string>, a: string): boolean {
     return s.size === 1 && s.has(a);
@@ -57,19 +36,19 @@ function canUseConditionsForIndexedRange(fields: Map<string, QFieldExplanation>)
     return true;
 }
 
-function fieldsCanUseIndex(fields: Map<string, QFieldExplanation>, index: string[]): boolean {
-    if (fields.size > index.length) {
+function fieldsCanUseIndex(fields: Map<string, QFieldExplanation>, index: IndexInfo): boolean {
+    if (fields.size > index.fields.length) {
         return false;
     }
     for (let i = 0; i < fields.size; i += 1) {
-        if (!fields.has(index[i])) {
+        if (!fields.has(index.fields[i])) {
             return false;
         }
     }
     return true;
 }
 
-function getUsedIndexes(fields: Map<string, QFieldExplanation>, collection: CollectionInfo): ?(string[][]) {
+function getUsedIndexes(fields: Map<string, QFieldExplanation>, collection: CollectionInfo): ?(IndexInfo[]) {
     const indexes = collection.indexes.filter(x => fieldsCanUseIndex(fields, x));
     return indexes.length > 0 ? indexes : null;
 }
@@ -77,14 +56,14 @@ function getUsedIndexes(fields: Map<string, QFieldExplanation>, collection: Coll
 function orderByCanUseIndex(
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
-    index: string[],
+    index: IndexInfo,
 ): boolean {
     if (orderBy.length === 0) {
         return true;
     }
     let iOrderBy = 0;
-    for (let iIndex = 0; iIndex < index.length; iIndex += 1) {
-        const indexField = index[iIndex];
+    for (let iIndex = 0; iIndex < index.fields.length; iIndex += 1) {
+        const indexField = index.fields[iIndex];
         if (indexField === orderBy[iOrderBy].path) {
             iOrderBy += 1;
             if (iOrderBy >= orderBy.length) {
@@ -109,7 +88,7 @@ function orderByCanUseIndex(
 function orderByCanUseAllIndexes(
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
-    indexes: string[][],
+    indexes: IndexInfo[],
 ): boolean {
     for (let i = 0; i < indexes.length; i += 1) {
         if (!orderByCanUseIndex(orderBy, fields, indexes[i])) {
@@ -122,7 +101,7 @@ function orderByCanUseAllIndexes(
 function orderByCanUseAnyIndex(
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
-    indexes: string[][],
+    indexes: IndexInfo[],
 ): boolean {
     for (let i = 0; i < indexes.length; i += 1) {
         if (orderByCanUseIndex(orderBy, fields, indexes[i])) {
@@ -144,7 +123,7 @@ function logSlowReason(
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
     collection: CollectionInfo,
-    selectedIndexes?: string[][],
+    selectedIndexes?: IndexInfo[],
 ) {
     const logFields: string[] = [];
     for (const [name, explanation] of fields.entries()) {
@@ -161,7 +140,7 @@ function logSlowReason(
 
 }
 
-export function isFastQuery(
+function isFastQueryOrOperand(
     collection: CollectionInfo,
     type: QType,
     filter: any,
@@ -229,5 +208,21 @@ export function isFastQuery(
         }
     }
 
+    return true;
+}
+
+export function isFastQuery(
+    collection: CollectionInfo,
+    type: QType,
+    filter: any,
+    orderBy: OrderBy[],
+    log: ?QLog,
+): boolean {
+    const orOperands = splitOr(filter);
+    for (let i = 0; i < orOperands.length; i += 1) {
+        if (!isFastQueryOrOperand(collection, type, orOperands[i], orderBy, log)) {
+            return false;
+        }
+    }
     return true;
 }

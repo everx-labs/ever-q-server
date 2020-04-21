@@ -6,6 +6,22 @@ input Request {
 type Info {
     version: String
 }
+enum AggregationFn {
+    COUNT
+    MIN
+    MAX
+    SUM
+    AVERAGE
+    STDDEV_POPULATION
+    STDDEV_SAMPLE
+    VARIANCE_POPULATION
+    VARIANCE_SAMPLE
+}
+
+input FieldAggregation {
+    field: String
+    fn: AggregationFn
+}
 
 extend type Query {
     info: Info
@@ -15,6 +31,17 @@ extend type Query {
 
     "Returns one time access key for management functions"
     getManagementAccessKey: String
+
+    "Compute aggregated values for specified fields"
+    aggregateBlockSignatures(filter: BlockSignaturesFilter, fields: [FieldAggregation], accessKey: String): [String]
+    "Compute aggregated values for specified fields"
+    aggregateBlocks(filter: BlockFilter, fields: [FieldAggregation], accessKey: String): [String]
+    "Compute aggregated values for specified fields"
+    aggregateTransactions(filter: TransactionFilter, fields: [FieldAggregation], accessKey: String): [String]
+    "Compute aggregated values for specified fields"
+    aggregateMessages(filter: MessageFilter, fields: [FieldAggregation], accessKey: String): [String]
+    "Compute aggregated values for specified fields"
+    aggregateAccounts(filter: AccountFilter, fields: [FieldAggregation], accessKey: String): [String]
 }
 
 input AccessKey {

@@ -1,6 +1,24 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.25.0 – Apr 17, 2020
+### Featured
+- Schema graph enhancements
+- Filter language enhancements
+
+### Breaking Compatibility
+- some ENV configuration variables have renamed (to be prefixed with `Q_`). 
+
+### New
+- `block` join added to `Message`, `Transaction`, and `BlockSignatures`
+- `OR` combination operator in filters
+- Added new fields (`gen_utime`, `seq_no`, `workchain_id`, `proof`, `validator_list_hash_short`, `catchain_seqno`, `sig_weight`) into `BlockSignatures` 
+- aggregation queries: `aggregateBlockSignatures`, `aggregateBlocks`, `aggregateTransactions`, `aggregateMessages`, `aggregateAccounts`
+- `--statsd-tags` (`Q_STATSD_TAGS`) config parameter to specify additional tags
+
+### Fixed
+- all configuration env variables changed to be prefixed with `Q_`
+
 ## 0.24.9 – Apr 13, 2020
 
 ### Fixed

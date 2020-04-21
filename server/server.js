@@ -119,7 +119,7 @@ export default class TONQServer {
         this.log = this.logs.create('server');
         this.shared = new Map();
         this.tracer = QTracer.create(options.config);
-        this.stats = QStats.create(options.config.statsd.server);
+        this.stats = QStats.create(options.config.statsd.server, options.config.statsd.tags);
         this.auth = new Auth(options.config);
         this.endPoints = [];
         this.app = express();
@@ -140,7 +140,7 @@ export default class TONQServer {
         });
         this.addEndPoint({
             path: '/graphql',
-            resolvers: attachCustomResolvers(createResolvers(this.db)),
+            resolvers: attachCustomResolvers(this.db, createResolvers(this.db)),
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
             supportSubscriptions: true,
         });

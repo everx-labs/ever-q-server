@@ -18,6 +18,7 @@
 
 
 import type { AccessRights } from "./auth";
+import type { IndexInfo } from "./config";
 
 declare function BigInt(a: any): any;
 
@@ -32,9 +33,15 @@ function combinePath(base: string, path: string): string {
     return `${b}${sep}${p}`;
 }
 
+export type ScalarField = {
+    path: string,
+    type: ('number' | 'uint64' | 'uint1024' | 'boolean' | 'string'),
+}
+
 export class QExplanation {
     parentPath: string;
     fields: Map<string, QFieldExplanation>;
+
     constructor() {
         this.parentPath = '';
         this.fields = new Map();
@@ -140,6 +147,8 @@ function qlFields(
         const fieldType = fieldTypes[filterKey];
         if (fieldType) {
             conditions.push(qlField(fieldType, path, filterKey, filterValue))
+        } else {
+            throw new Error(`Invalid filter field: ${filterKey}`);
         }
     });
     return qlCombine(conditions, 'AND', 'false');
@@ -162,6 +171,9 @@ function testFields(
 ): boolean {
     const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
+        if (!fieldType) {
+            throw new Error(`Invalid filter field: ${filterKey}`);
+        }
         return !(fieldType && testField(fieldType, value, filterKey, filterValue));
     });
     return !failed;
@@ -308,7 +320,7 @@ const BigNumberFormat = {
     DEC: 'DEC',
 };
 
-function resolveBigUInt(prefixLength: number, value: any, args?: { format?: 'HEX' | 'DEC' }): string {
+export function resolveBigUInt(prefixLength: number, value: any, args?: { format?: 'HEX' | 'DEC' }): string {
     if (value === null || value === undefined) {
         return value;
     }
@@ -319,7 +331,7 @@ function resolveBigUInt(prefixLength: number, value: any, args?: { format?: 'HEX
     return (format === BigNumberFormat.HEX) ? hex : BigInt(hex).toString();
 }
 
-function convertBigUInt(prefixLength: number, value: any): string {
+export function convertBigUInt(prefixLength: number, value: any): string {
     if (value === null || value === undefined) {
         return value;
     }
@@ -351,28 +363,54 @@ function createBigUInt(prefixLength: number): QType {
     };
 }
 
-const scalar: QType = createScalar();
-const bigUInt1: QType = createBigUInt(1);
-const bigUInt2: QType = createBigUInt(2);
+export const scalar: QType = createScalar();
+export const bigUInt1: QType = createBigUInt(1);
+export const bigUInt2: QType = createBigUInt(2);
 
 // Structs
 
-function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
+export function splitOr(filter: any): any[] {
+    const operands = [];
+    let operand = filter;
+    while (operand) {
+        if ('OR' in operand) {
+            const withoutOr = Object.assign({}, operand);
+            delete withoutOr['OR'];
+            operands.push(withoutOr);
+            operand = operand.OR;
+        } else {
+            operands.push(operand);
+            operand = null;
+        }
+    }
+    return operands;
+}
+
+export function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
     return {
         ql(params, path, filter) {
-            return qlFields(path, filter, fields, (fieldType, path, filterKey, filterValue) => {
-                const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                return fieldType.ql(params, combinePath(path, fieldName), filterValue);
+            const orOperands = splitOr(filter).map((operand) => {
+                return qlFields(path, operand, fields, (fieldType, path, filterKey, filterValue) => {
+                    const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
+                    return fieldType.ql(params, combinePath(path, fieldName), filterValue);
+                });
             });
+            return (orOperands.length > 1) ? `(${orOperands.join(') OR (')})` : orOperands[0];
         },
         test(parent, value, filter) {
             if (!value) {
                 return false;
             }
-            return testFields(value, filter, fields, (fieldType, value, filterKey, filterValue) => {
-                const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                return fieldType.test(value, value[fieldName], filterValue);
-            });
+            const orOperands = splitOr(filter);
+            for (let i = 0; i < orOperands.length; i += 1) {
+                if (testFields(value, orOperands[i], fields, (fieldType, value, filterKey, filterValue) => {
+                    const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
+                    return fieldType.test(value, value[fieldName], filterValue);
+                })) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
@@ -393,7 +431,7 @@ function getItemQL(itemType: QType, params: QParams, path: string, filter: any):
     return itemQl;
 }
 
-function array(resolveItemType: () => QType): QType {
+export function array(resolveItemType: () => QType): QType {
     let resolved: ?QType = null;
     const ops = {
         all: {
@@ -493,7 +531,7 @@ export function createEnumNameResolver(onField: string, values: { [string]: numb
 
 // Joins
 
-function join(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
+export function join(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
     let resolved: ?QType = null;
     return {
         ql(params, path, filter) {
@@ -516,7 +554,7 @@ function join(onField: string, refField: string, refCollection: string, resolveR
     };
 }
 
-function joinArray(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
+export function joinArray(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
     let resolved: ?QType = null;
     return {
         ql(params, path, filter) {
@@ -540,18 +578,6 @@ function joinArray(onField: string, refField: string, refCollection: string, res
             return refType.test(parent, value, filter);
         }
     };
-}
-
-export {
-    scalar,
-    bigUInt1,
-    bigUInt2,
-    resolveBigUInt,
-    convertBigUInt,
-    struct,
-    array,
-    join,
-    joinArray
 }
 
 export type {
@@ -648,6 +674,34 @@ export type DatabaseQuery = {
 }
 
 export type QueryStat = {
-    slow: boolean,
-    times: number[],
+    isFast: boolean,
 }
+
+export function indexToString(index: IndexInfo): string {
+    return index.fields.join(', ');
+}
+
+export function parseIndex(s: string): IndexInfo {
+    return {
+        fields: s.split(',').map(x => x.trim()).filter(x => x)
+    }
+}
+
+export function orderByToString(orderBy: OrderBy[]): string {
+    return orderBy.map(x => `${x.path}${(x.direction || '') === 'DESC' ? ' DESC' : ''}`).join(', ');
+}
+
+export function parseOrderBy(s: string): OrderBy[] {
+    return s.split(',')
+        .map(x => x.trim())
+        .filter(x => x)
+        .map((s) => {
+            const parts = s.split(' ').filter(x => x);
+            return {
+                path: parts[0],
+                direction: (parts[1] || '').toLowerCase() === 'desc' ? 'DESC' : 'ASC',
+            }
+        });
+}
+
+
