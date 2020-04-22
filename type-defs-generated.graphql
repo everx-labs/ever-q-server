@@ -312,6 +312,7 @@ type BlockMasterShardHashesDescr {
 	min_ref_mc_seqno: Float
 	"Generation time in uint32"
 	gen_utime: Float
+	gen_utime_string: String
 	"""
 	- 0 – none
 	- 2 – split
@@ -444,6 +445,7 @@ type BlockMasterConfigP17 {
 
 type BlockMasterConfigP18 {
 	utime_since: Float
+	utime_since_string: String
 	bit_price_ps: String
 	cell_price_ps: String
 	mc_bit_price_ps: String
@@ -525,7 +527,9 @@ type ValidatorSetList {
 
 type ValidatorSet {
 	utime_since: Float
+	utime_since_string: String
 	utime_until: Float
+	utime_until_string: String
 	total: Int
 	total_weight(format: BigIntFormat): String
 	list: [ValidatorSetList]
@@ -609,8 +613,10 @@ type BlockMasterConfig {
 type BlockMaster {
 	"Min block generation time of shards"
 	min_shard_gen_utime: Float
+	min_shard_gen_utime_string: String
 	"Max block generation time of shards"
 	max_shard_gen_utime: Float
+	max_shard_gen_utime_string: String
 	shard_hashes: [BlockMasterShardHashes]
 	shard_fees: [BlockMasterShardFees]
 	recover_create_msg: InMsg
@@ -632,6 +638,7 @@ type BlockSignatures {
 	id: String
 	"Signed block's gen_utime"
 	gen_utime: Float
+	gen_utime_string: String
 	"Signed block's seq_no"
 	seq_no: Float
 	"Signed block's workchain_id"
@@ -664,7 +671,8 @@ type Block {
 	seq_no: Float
 	after_merge: Boolean
 	"uint 32 generation time stamp"
-	gen_utime: Int
+	gen_utime: Float
+	gen_utime_string: String
 	gen_catchain_seqno: Float
 	flags: Int
 	master_ref: ExtBlkRef
@@ -962,6 +970,7 @@ type Message {
 	created_lt(format: BigIntFormat): String
 	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
 	created_at: Float
+	created_at_string: String
 	"IHR is disabled for the message."
 	ihr_disabled: Boolean
 	"This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism."
@@ -1777,7 +1786,7 @@ input BlockFilter {
 	seq_no: FloatFilter
 	after_merge: BooleanFilter
 	"uint 32 generation time stamp"
-	gen_utime: IntFilter
+	gen_utime: FloatFilter
 	gen_catchain_seqno: FloatFilter
 	flags: IntFilter
 	master_ref: ExtBlkRefFilter
