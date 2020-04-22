@@ -1,7 +1,7 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.22.1 – Apr 13, 2020
+## 0.25.1 – Apr 22, 2020
 
 ### Fixed
 - fixed `seq_no` field in `BlockSignatures` (it contained shard ident before), added correct `shard` field.
