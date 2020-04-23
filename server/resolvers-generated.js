@@ -9,6 +9,7 @@ const {
     joinArray,
     enumName,
     createEnumNameResolver,
+    resolveUnixTimeString,
 } = require('./db-types.js');
 const OtherCurrency = struct({
     currency: scalar,
@@ -696,6 +697,9 @@ function createResolvers(db) {
             funds_created(parent, args) {
                 return resolveBigUInt(2, parent.funds_created, args);
             },
+            gen_utime_string(parent, args) {
+                return resolveUnixTimeString(parent.gen_utime);
+            },
             split_type_name: createEnumNameResolver('split_type', { None: 0, Split: 2, Merge: 3 }),
         },
         BlockMasterShardFees: {
@@ -715,6 +719,12 @@ function createResolvers(db) {
             total_weight(parent, args) {
                 return resolveBigUInt(1, parent.total_weight, args);
             },
+            utime_since_string(parent, args) {
+                return resolveUnixTimeString(parent.utime_since);
+            },
+            utime_until_string(parent, args) {
+                return resolveUnixTimeString(parent.utime_until);
+            },
         },
         BlockSignatures: {
             id(parent) {
@@ -725,6 +735,9 @@ function createResolvers(db) {
             },
             sig_weight(parent, args) {
                 return resolveBigUInt(1, parent.sig_weight, args);
+            },
+            gen_utime_string(parent, args) {
+                return resolveUnixTimeString(parent.gen_utime);
             },
         },
         Block: {
@@ -739,6 +752,9 @@ function createResolvers(db) {
             },
             end_lt(parent, args) {
                 return resolveBigUInt(1, parent.end_lt, args);
+            },
+            gen_utime_string(parent, args) {
+                return resolveUnixTimeString(parent.gen_utime);
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
@@ -847,6 +863,9 @@ function createResolvers(db) {
             },
             value(parent, args) {
                 return resolveBigUInt(2, parent.value, args);
+            },
+            created_at_string(parent, args) {
+                return resolveUnixTimeString(parent.created_at);
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),

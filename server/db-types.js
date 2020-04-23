@@ -315,6 +315,28 @@ function createScalar(): QType {
     };
 }
 
+export function resolveUnixTimeString(value: any): string {
+    if (value === null || value === undefined) {
+        return value;
+    }
+    const d = new Date(value);
+
+    function pad(number) {
+        if (number < 10) {
+            return '0' + number;
+        }
+        return number;
+    }
+
+    return d.getUTCFullYear() +
+        '-' + pad(d.getUTCMonth() + 1) +
+        '-' + pad(d.getUTCDate()) +
+        ' ' + pad(d.getUTCHours()) +
+        ':' + pad(d.getUTCMinutes()) +
+        ':' + pad(d.getUTCSeconds()) +
+        '.' + (d.getUTCMilliseconds() / 1000).toFixed(3).slice(2, 5);
+}
+
 const BigNumberFormat = {
     HEX: 'HEX',
     DEC: 'DEC',
