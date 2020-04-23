@@ -362,9 +362,13 @@ function main(schemaDef: TypeDef) {
                     '['.repeat(field.arrayDepth) +
                     field.type.name +
                     ']'.repeat(field.arrayDepth);
-                const params = isBigInt(field.type)
-                    ? '(format: BigIntFormat)'
-                    : '';
+                let params = '';
+                if (isBigInt(field.type)) {
+                    params = '(format: BigIntFormat)';
+                } else if (field.join) {
+                    params = '(timeout: Int)';
+                }
+
                 ql.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
                 const enumDef = field.enumDef;
                 if (enumDef) {
@@ -632,13 +636,13 @@ function main(schemaDef: TypeDef) {
             if (!collection) {
                 throw 'Joined type is not a collection.';
             }
-            js.writeLn(`            ${field.name}(parent, _args, context) {`);
+            js.writeLn(`            ${field.name}(parent, args, context) {`);
             const pre = join.preCondition ? `${join.preCondition} ? ` : '';
             const post = join.preCondition ? ` : null` : '';
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}')${post};`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}', args)${post};`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}')${post};`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}', args)${post};`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }

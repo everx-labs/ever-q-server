@@ -650,7 +650,7 @@ type BlockSignatures {
 	sig_weight(format: BigIntFormat): String
 	"Array of signatures from block's validators"
 	signatures: [BlockSignaturesSignatures]
-	block: Block
+	block(timeout: Int): Block
 }
 
 "This is Block"
@@ -714,7 +714,7 @@ type Block {
 	tr_count: Int
 	state_update: BlockStateUpdate
 	master: BlockMaster
-	signatures: BlockSignatures
+	signatures(timeout: Int): BlockSignatures
 }
 
 type TransactionStorage {
@@ -854,7 +854,7 @@ type Transaction {
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	block_id: String
-	block: Block
+	block(timeout: Int): Block
 	account_addr: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
@@ -884,9 +884,9 @@ type Transaction {
 	end_status: Int
 	end_status_name: AccountStatusEnum
 	in_msg: String
-	in_message: Message
+	in_message(timeout: Int): Message
 	out_msgs: [String]
-	out_messages: [Message]
+	out_messages(timeout: Int): [Message]
 	"Total amount of fees that entails account state change and used in Merkle update"
 	total_fees(format: BigIntFormat): String
 	"Same as above, but reserved for non gram coins that may appear in the blockchain"
@@ -943,7 +943,7 @@ type Message {
 	status_name: MessageProcessingStatusEnum
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	block_id: String
-	block: Block
+	block(timeout: Int): Block
 	"Bag of cells with the message body encoded as base64."
 	body: String
 	"This is only used for special contracts in masterchain to deploy messages."
@@ -990,8 +990,8 @@ type Message {
 	proof: String
 	"A bag of cells with the message structure encoded as base64."
 	boc: String
-	src_transaction: Transaction
-	dst_transaction: Transaction
+	src_transaction(timeout: Int): Transaction
+	dst_transaction(timeout: Int): Transaction
 }
 
 """
