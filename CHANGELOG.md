@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 - companion fields `*_string` for fields that holds unix time values
+- `timeout` argument (default to 40sec) to all join fields (used to wait joined document in condition of eventual consistency)
 
 ### Fixed
 

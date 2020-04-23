@@ -634,6 +634,7 @@ export class Collection {
     async waitForDoc(
         fieldValue: any,
         fieldPath: string,
+        args: { timeout?: number },
     ): Promise<any> {
         if (!fieldValue) {
             return Promise.resolve(null);
@@ -650,12 +651,18 @@ export class Collection {
                 params: { v: fieldValue },
             };
 
+        const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);
+        if (timeout === 0) {
+            const docs = await this.queryDatabase(queryParams.text, queryParams.params, true);
+            return docs[0];
+        }
+
         const docs = await this.queryWaitFor({
             filter: queryParams.filter,
             selection: [],
             orderBy: [],
             limit: 1,
-            timeout: 40000,
+            timeout,
             operationId: null,
             text: queryParams.text,
             params: queryParams.params,
@@ -664,11 +671,15 @@ export class Collection {
         return docs[0];
     }
 
-    async waitForDocs(fieldValues: string[], fieldPath: string): Promise<any[]> {
+    async waitForDocs(
+        fieldValues: string[],
+        fieldPath: string,
+        args: { timeout?: number },
+    ): Promise<any[]> {
         if (!fieldValues || fieldValues.length === 0) {
             return Promise.resolve([]);
         }
-        return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath)));
+        return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath, args)));
     }
 
     finishOperations(operationIds: Set<string>): number {
