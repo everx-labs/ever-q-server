@@ -1,6 +1,13 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.26.0 – Apr 24, 2020
+### Featured
+
+### New
+
+### Fixed
+
 ## 0.25.0 – Apr 17, 2020
 ### Featured
 - Schema graph enhancements
