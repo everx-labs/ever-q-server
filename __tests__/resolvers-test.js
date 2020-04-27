@@ -1,6 +1,6 @@
 import Arango from "../server/arango";
 import QLogs from "../server/logs";
-import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../server/db-types";
+import {convertBigUInt, QParams, resolveBigUInt, selectFields} from "../server/db-types";
 import {
     Transaction,
     Account,
@@ -9,6 +9,8 @@ import {
 } from "../server/resolvers-generated";
 
 test("BigUInt", () => {
+    expect(convertBigUInt(1, null)).toBeNull();
+    expect(convertBigUInt(1, undefined)).toBeUndefined();
     expect(convertBigUInt(1, 0x1)).toEqual('01');
     expect(convertBigUInt(1, 0x100)).toEqual('2100');
     expect(convertBigUInt(1, 0x1000000000)).toEqual('91000000000');
@@ -17,9 +19,18 @@ test("BigUInt", () => {
     expect(convertBigUInt(1, '0x256')).toEqual('2256');
     expect(convertBigUInt(1, '0x3100')).toEqual('33100');
     expect(convertBigUInt(1, '3100')).toEqual('2c1c');
+
+
+    expect(convertBigUInt(1, 478177959234)).toEqual('96f55a09d42'); //0x6F55A09D42
+    expect(convertBigUInt(1, '9223372036854775807')).toEqual('f7fffffffffffffff'); //0X7FFFFFFFFFFFFFFF
+    expect(convertBigUInt(1, '0X7FFFFFFFFFFFFFFF')).toEqual('f7fffffffffffffff');
+    expect(convertBigUInt(1, '18446744073709551615')).toEqual('fffffffffffffffff');
+    expect(convertBigUInt(1, Number.MAX_SAFE_INTEGER)).toEqual('d1fffffffffffff');
     // noinspection JSAnnotator
     expect(convertBigUInt(1, 0xffffffffffffffffn)).toEqual('fffffffffffffffff');
 
+    expect(convertBigUInt(2, null)).toBeNull();
+    expect(convertBigUInt(2, undefined)).toBeUndefined();
     expect(convertBigUInt(2, 0x1)).toEqual('001');
     expect(convertBigUInt(2, 0x100)).toEqual('02100');
     expect(convertBigUInt(2, 0x1000000000)).toEqual('091000000000');
@@ -28,11 +39,15 @@ test("BigUInt", () => {
     expect(convertBigUInt(2, '3100')).toEqual('02c1c');
     expect(convertBigUInt(2, '0x10000000000000000')).toEqual('1010000000000000000');
 
+    expect(resolveBigUInt(1, null)).toBeNull();
+    expect(resolveBigUInt(1, undefined)).toBeUndefined();
     expect(resolveBigUInt(1, '01')).toEqual('0x1');
     expect(resolveBigUInt(1, '2100')).toEqual('0x100');
     expect(resolveBigUInt(1, '91000000000')).toEqual('0x1000000000');
     expect(resolveBigUInt(1, '33100')).toEqual('0x3100');
 
+    expect(resolveBigUInt(2, null)).toBeNull();
+    expect(resolveBigUInt(2, undefined)).toBeUndefined();
     expect(resolveBigUInt(2, '001')).toEqual('0x1');
     expect(resolveBigUInt(2, '02100')).toEqual('0x100');
     expect(resolveBigUInt(2, '091000000000')).toEqual('0x1000000000');
