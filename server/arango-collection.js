@@ -464,7 +464,7 @@ export class Collection {
         if (condition === null) {
             return null;
         }
-        const query = AggregationHelperFactory.createQuery(this.name, condition, args.fields);
+        const query = AggregationHelperFactory.createQuery(this.name, condition || '', args.fields);
         return {
             text: query.text,
             params: params.values,
@@ -500,7 +500,7 @@ export class Collection {
                     (Date.now() - start) / 1000,
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
-                return AggregationHelperFactory.convertResults(result[0]);
+                return AggregationHelperFactory.convertResults(result[0], q.helpers);
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();

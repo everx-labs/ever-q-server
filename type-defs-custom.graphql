@@ -29,15 +29,15 @@ extend type Query {
     getManagementAccessKey: String
 
     "Compute aggregated values for specified fields"
-    aggregateBlockSignatures(filter: BlockSignaturesFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateBlockSignatures(filter: BlockSignaturesFilter, fields: [FieldAggregation]!, accessKey: String): [String]
     "Compute aggregated values for specified fields"
     aggregateBlocks(filter: BlockFilter, fields: [FieldAggregation], accessKey: String): [String]
     "Compute aggregated values for specified fields"
-    aggregateTransactions(filter: TransactionFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateTransactions(filter: TransactionFilter, fields: [FieldAggregation]!, accessKey: String): [String]
     "Compute aggregated values for specified fields"
-    aggregateMessages(filter: MessageFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateMessages(filter: MessageFilter, fields: [FieldAggregation]!, accessKey: String): [String]
     "Compute aggregated values for specified fields"
-    aggregateAccounts(filter: AccountFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateAccounts(filter: AccountFilter, fields: [FieldAggregation]!, accessKey: String): [String]
 }
 
 input AccessKey {

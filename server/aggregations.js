@@ -224,14 +224,14 @@ export class AggregationHelperFactory {
         const isSingleCount = (fields.length === 1) && (fields[0].fn === AggregationFn.COUNT);
         if (isSingleCount) {
             text = `
-                FOR doc IN ${this.name}
+                FOR doc IN ${collection}
                 ${filterSection}
                 COLLECT WITH COUNT INTO a0
                 RETURN [a0]`;
         } else {
             const queries = helpers.map(x => x.buildQuery(x.context));
             text = `
-                FOR doc IN ${this.name}
+                FOR doc IN ${collection}
                 ${filterSection}
                 COLLECT AGGREGATE ${queries.map(x => x.collect).join(', ')}
                 RETURN [${queries.map(x => x.result).join(', ')}]`;
@@ -243,7 +243,7 @@ export class AggregationHelperFactory {
     }
 
     static convertResults(results: any[], helpers: AggregationHelper[]): any[] {
-        return results[0].map((x, i) => {
+        return results.map((x, i) => {
             if (x === undefined || x === null) {
                 return x;
             }
