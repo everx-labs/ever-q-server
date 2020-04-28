@@ -12,10 +12,6 @@ enum AggregationFn {
     MAX
     SUM
     AVERAGE
-    STDDEV_POPULATION
-    STDDEV_SAMPLE
-    VARIANCE_POPULATION
-    VARIANCE_SAMPLE
 }
 
 input FieldAggregation {

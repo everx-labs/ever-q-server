@@ -19,20 +19,21 @@
 import { Database, DocumentCollection } from "arangojs";
 import { Span, SpanContext, Tracer } from "opentracing";
 import type { TONClient } from "ton-client-js/types";
+import { AggregationHelperFactory } from "./aggregations";
+import type { FieldAggregation, AggregationHelper } from "./aggregations";
 import { DocUpsertHandler, DocSubscription } from "./arango-listeners";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
 import { BLOCKCHAIN_DB, STATS } from './config';
 import type { QConfig } from "./config";
-import type { DatabaseQuery, OrderBy, QType, QueryStat, ScalarField } from "./db-types";
-import { parseSelectionSet, QParams, resolveBigUInt, selectionToString } from "./db-types";
+import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
+import { parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
 import { isFastQuery } from './slow-detector';
 import type { IStats } from './tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "./tracer";
 import { createError, wrap } from "./utils";
-import { scalarFields } from './resolvers-generated';
 import EventEmitter from 'events';
 
 export type GraphQLRequestContext = {
@@ -50,25 +51,6 @@ export type GraphQLRequestContext = {
     parentSpan: (Span | SpanContext | typeof undefined),
 
     shared: Map<string, any>,
-}
-
-export const AggregationFn = {
-    COUNT: 'COUNT',
-    MIN: 'MIN',
-    MAX: 'MAX',
-    SUM: 'SUM',
-    AVERAGE: 'AVERAGE',
-    STDDEV_POPULATION: 'STDDEV_POPULATION',
-    STDDEV_SAMPLE: 'STDDEV_SAMPLE',
-    VARIANCE_POPULATION: 'VARIANCE_POPULATION',
-    VARIANCE_SAMPLE: 'VARIANCE_SAMPLE',
-}
-
-type AggregationFnType = $Keys<typeof AggregationFn>;
-
-export type FieldAggregation = {
-    field: string,
-    fn: AggregationFnType,
 }
 
 export type AggregationArgs = {
@@ -474,6 +456,7 @@ export class Collection {
     ): ?{
         text: string,
         params: { [string]: any },
+        helpers: AggregationHelper[],
     } {
         const filter = args.filter || {};
         const params = new QParams();
@@ -481,90 +464,11 @@ export class Collection {
         if (condition === null) {
             return null;
         }
-        const filterSection = condition ? `FILTER ${condition}` : '';
-        const col: string[] = [];
-        const ret: string[] = [];
-
-        function aggregateCount(i: number) {
-            col.push(`v${i} = COUNT(doc)`);
-            ret.push(`v${i}`);
-        }
-
-        function aggregateNumber(i: number, f: ScalarField, fn: AggregationFnType) {
-            col.push(`v${i} = ${fn}(${f.path})`);
-            ret.push(`v${i}`);
-        }
-
-        function aggregateBigNumber(i: number, f: ScalarField, fn: AggregationFnType) {
-            col.push(`v${i} = ${fn}(${f.path})`);
-            ret.push(`{ ${f.type}: v${i} }`);
-        }
-
-        function aggregateBigNumberParts(i: number, f: ScalarField, fn: AggregationFnType) {
-            const len = f.type === 'uint64' ? 1 : 2;
-            const hHex = `SUBSTRING(${f.path}, ${len}, LENGTH(${f.path}) - ${len} - 8)`;
-            const lHex = `RIGHT(SUBSTRING(${f.path}, ${len}), 8)`;
-            col.push(`h${i} = ${fn}(TO_NUMBER(CONCAT("0x", ${hHex})))`);
-            col.push(`l${i} = ${fn}(TO_NUMBER(CONCAT("0x", ${lHex})))`);
-            ret.push(`{ ${f.type}: { h: h${i}, l: l${i} } }`);
-        }
-
-        function aggregateNonNumber(i: number, f: ScalarField, fn: AggregationFnType) {
-            col.push(`v${i} = ${fn}(${f.path})`);
-            ret.push(`v${i}`);
-        }
-
-        let text;
-        const isSingleCount = (args.fields.length === 1)
-            && (args.fields[0].fn === AggregationFn.COUNT);
-        if (isSingleCount) {
-            text = `
-                FOR doc IN ${this.name}
-                ${filterSection}
-                COLLECT WITH COUNT INTO v0
-                RETURN [v0]`;
-        } else {
-            args.fields.forEach((aggregation: FieldAggregation, i: number) => {
-                const fn = aggregation.fn || AggregationFn.COUNT;
-                if (fn === AggregationFn.COUNT) {
-                    aggregateCount(i);
-                } else {
-                    const f: (typeof undefined | ScalarField) = scalarFields.get(`${this.name}.${aggregation.field || 'id'}`);
-                    const invalidType = () => new Error(`[${aggregation.field}] can't be used with [${fn}]`);
-                    if (!f) {
-                        throw invalidType();
-                    }
-                    switch (f.type) {
-                    case 'number':
-                        aggregateNumber(i, f, fn);
-                        break;
-                    case 'uint64':
-                    case 'uint1024':
-                        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
-                            aggregateBigNumber(i, f, fn);
-                        } else {
-                            aggregateBigNumberParts(i, f, fn);
-                        }
-                        break;
-                    default:
-                        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
-                            aggregateNonNumber(i, f, fn);
-                        } else {
-                            throw invalidType();
-                        }
-                        break;
-                    }
-                }
-            });
-            text = `
-                FOR doc IN ${this.name}
-                ${filterSection}
-                COLLECT AGGREGATE ${col.join(', ')}
-                RETURN [${ret.join(', ')}]`;
-        }
+        const query = AggregationHelperFactory.createQuery(this.name, condition, args.fields);
         return {
-            text,
+            text: query.text,
             params: params.values,
+            helpers: query.helpers,
         };
     }
 
@@ -596,28 +500,7 @@ export class Collection {
                     (Date.now() - start) / 1000,
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
-                return result[0].map((x) => {
-                    if (x === undefined || x === null) {
-                        return x;
-                    }
-                    const bigInt = x.uint64 || x.uint1024;
-                    if (bigInt) {
-                        const len = ('uint64' in x) ? 1 : 2;
-                        if (typeof bigInt === 'number') {
-                            return bigInt.toString();
-                        }
-                        if (typeof bigInt === 'string') {
-                            //$FlowFixMe
-                            return BigInt(`0x${bigInt.substr(len)}`).toString();
-                        }
-                        //$FlowFixMe
-                        let h = BigInt(`0x${Number(bigInt.h).toString(16)}00000000`);
-                        let l = BigInt(bigInt.l);
-                        return (h + l).toString();
-                    } else {
-                        return x.toString()
-                    }
-                });
+                return AggregationHelperFactory.convertResults(result[0]);
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();
