@@ -172,6 +172,7 @@ export default class TONQServer {
             .map(x => fs.readFileSync(x, 'utf-8'))
             .join('\n');
         const config: ApolloServerExpressConfig = {
+            debug: false,
             typeDefs,
             resolvers: endPoint.resolvers,
             subscriptions: {

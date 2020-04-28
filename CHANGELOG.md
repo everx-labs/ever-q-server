@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - `timeout` argument (default to 40sec) to all join fields (used to wait joined document in condition of eventual consistency)
 
 ### Fixed
+- aggregation functions must return `null` when no data to aggregate (was `[Object object]`)
 
 ## 0.25.0 – Apr 17, 2020
 ### Featured
