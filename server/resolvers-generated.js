@@ -566,12 +566,16 @@ const Message = struct({
     block_id: scalar,
     block: join('block_id', 'id', 'blocks', () => Block),
     body: scalar,
+    body_hash: scalar,
     split_depth: scalar,
     tick: scalar,
     tock: scalar,
     code: scalar,
+    code_hash: scalar,
     data: scalar,
+    data_hash: scalar,
     library: scalar,
+    library_hash: scalar,
     src: scalar,
     dst: scalar,
     src_workchain_id: scalar,
@@ -606,8 +610,11 @@ const Account = struct({
     tick: scalar,
     tock: scalar,
     code: scalar,
+    code_hash: scalar,
     data: scalar,
+    data_hash: scalar,
     library: scalar,
+    library_hash: scalar,
     proof: scalar,
     boc: scalar,
 }, true);
@@ -1351,12 +1358,16 @@ scalarFields.set('transactions.boc', { type: 'string', path: 'doc.boc' });
 scalarFields.set('messages.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('messages.block_id', { type: 'string', path: 'doc.block_id' });
 scalarFields.set('messages.body', { type: 'string', path: 'doc.body' });
+scalarFields.set('messages.body_hash', { type: 'string', path: 'doc.body_hash' });
 scalarFields.set('messages.split_depth', { type: 'number', path: 'doc.split_depth' });
 scalarFields.set('messages.tick', { type: 'boolean', path: 'doc.tick' });
 scalarFields.set('messages.tock', { type: 'boolean', path: 'doc.tock' });
 scalarFields.set('messages.code', { type: 'string', path: 'doc.code' });
+scalarFields.set('messages.code_hash', { type: 'string', path: 'doc.code_hash' });
 scalarFields.set('messages.data', { type: 'string', path: 'doc.data' });
+scalarFields.set('messages.data_hash', { type: 'string', path: 'doc.data_hash' });
 scalarFields.set('messages.library', { type: 'string', path: 'doc.library' });
+scalarFields.set('messages.library_hash', { type: 'string', path: 'doc.library_hash' });
 scalarFields.set('messages.src', { type: 'string', path: 'doc.src' });
 scalarFields.set('messages.dst', { type: 'string', path: 'doc.dst' });
 scalarFields.set('messages.src_workchain_id', { type: 'number', path: 'doc.src_workchain_id' });
@@ -1386,8 +1397,11 @@ scalarFields.set('accounts.split_depth', { type: 'number', path: 'doc.split_dept
 scalarFields.set('accounts.tick', { type: 'boolean', path: 'doc.tick' });
 scalarFields.set('accounts.tock', { type: 'boolean', path: 'doc.tock' });
 scalarFields.set('accounts.code', { type: 'string', path: 'doc.code' });
+scalarFields.set('accounts.code_hash', { type: 'string', path: 'doc.code_hash' });
 scalarFields.set('accounts.data', { type: 'string', path: 'doc.data' });
+scalarFields.set('accounts.data_hash', { type: 'string', path: 'doc.data_hash' });
 scalarFields.set('accounts.library', { type: 'string', path: 'doc.library' });
+scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_hash' });
 scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
 scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
 module.exports = {
