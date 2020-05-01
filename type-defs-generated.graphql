@@ -946,6 +946,8 @@ type Message {
 	block(timeout: Int): Block
 	"Bag of cells with the message body encoded as base64."
 	body: String
+	"`body` field root hash."
+	body_hash: String
 	"This is only used for special contracts in masterchain to deploy messages."
 	split_depth: Int
 	"This is only used for special contracts in masterchain to deploy messages."
@@ -954,10 +956,16 @@ type Message {
 	tock: Boolean
 	"Represents contract code in deploy messages."
 	code: String
+	"`code` field root hash."
+	code_hash: String
 	"Represents initial data for a contract in deploy messages"
 	data: String
+	"`data` field root hash."
+	data_hash: String
 	"Represents contract library in deploy messages"
 	library: String
+	"`library` field root hash."
+	library_hash: String
 	"Returns source address string"
 	src: String
 	"Returns destination address string"
@@ -1108,10 +1116,16 @@ type Account {
 	        
 	"""
 	code: String
+	"`code` field root hash."
+	code_hash: String
 	"If present, contains smart-contract data encoded with in base64."
 	data: String
+	"`data` field root hash."
+	data_hash: String
 	"If present, contains library code used in smart-contract."
 	library: String
+	"`library` field root hash."
+	library_hash: String
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: String
 	"Bag of cells with the account struct encoded as base64."
@@ -2172,6 +2186,8 @@ input MessageFilter {
 	block: BlockFilter
 	"Bag of cells with the message body encoded as base64."
 	body: StringFilter
+	"`body` field root hash."
+	body_hash: StringFilter
 	"This is only used for special contracts in masterchain to deploy messages."
 	split_depth: IntFilter
 	"This is only used for special contracts in masterchain to deploy messages."
@@ -2180,10 +2196,16 @@ input MessageFilter {
 	tock: BooleanFilter
 	"Represents contract code in deploy messages."
 	code: StringFilter
+	"`code` field root hash."
+	code_hash: StringFilter
 	"Represents initial data for a contract in deploy messages"
 	data: StringFilter
+	"`data` field root hash."
+	data_hash: StringFilter
 	"Represents contract library in deploy messages"
 	library: StringFilter
+	"`library` field root hash."
+	library_hash: StringFilter
 	"Returns source address string"
 	src: StringFilter
 	"Returns destination address string"
@@ -2345,10 +2367,16 @@ input AccountFilter {
 	        
 	"""
 	code: StringFilter
+	"`code` field root hash."
+	code_hash: StringFilter
 	"If present, contains smart-contract data encoded with in base64."
 	data: StringFilter
+	"`data` field root hash."
+	data_hash: StringFilter
 	"If present, contains library code used in smart-contract."
 	library: StringFilter
+	"`library` field root hash."
+	library_hash: StringFilter
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: StringFilter
 	"Bag of cells with the account struct encoded as base64."
