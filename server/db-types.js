@@ -475,6 +475,9 @@ function isFieldPath(test: string): boolean {
 function tryOptimizeArrayAny(path: string, itemQl: string, params: QParams): ?string {
     const paramName = `@v${params.count}`;
     const suffix = ` == ${paramName}`;
+    if (itemQl === `CURRENT${suffix}`) {
+        return `${paramName} IN ${path}[*]`;
+    }
     if (itemQl.startsWith('CURRENT.') && itemQl.endsWith(suffix)) {
         const fieldPath = itemQl.slice('CURRENT.'.length, -suffix.length);
         if (isFieldPath(fieldPath)) {

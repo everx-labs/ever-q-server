@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 
 ### Optimized
 - array `any` filter with single field `eq` operator optimized to `<param> IN <path-to-field>` AQL
+- aggregate with empty filter and single `COUNT` uses `RETURN LENGTH(<collection>)`
 
 ### Fixed
 - aggregation functions must return `null` when no data to aggregate (was `[Object object]`)
