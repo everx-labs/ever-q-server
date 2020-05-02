@@ -55,7 +55,7 @@ export type GraphQLRequestContext = {
 
 export type AggregationArgs = {
     filter: any,
-    fields: FieldAggregation[],
+    fields?: FieldAggregation[],
     accessKey?: string,
 }
 

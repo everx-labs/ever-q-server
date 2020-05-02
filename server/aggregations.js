@@ -210,12 +210,15 @@ export class AggregationHelperFactory {
     static createQuery(
         collection: string,
         filter: string,
-        fields: FieldAggregation[],
+        argFields: FieldAggregation[] | typeof undefined,
     ): {
         text: string,
         helpers: AggregationHelper[],
     } {
         const filterSection = filter ? `FILTER ${filter}` : '';
+        const fields: FieldAggregation[] = (Array.isArray(argFields) && argFields.length > 0)
+            ? argFields
+            : [{ field: '', fn: AggregationFn.COUNT }];
         const helpers: AggregationHelper[] = fields.map((aggregation, i) => {
             return AggregationHelperFactory.create(collection, i, aggregation);
         });
