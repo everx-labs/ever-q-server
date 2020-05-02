@@ -483,6 +483,7 @@ blockSignatures: {
     _doc: `Set of validator\'s signatures for the Block with correspond id`,
     gen_utime: `Signed block's gen_utime`,
     seq_no: `Signed block's seq_no`,
+    shard: `Signed block's shard`,
     workchain_id: `Signed block's workchain_id`,
     proof: `Signed block's merkle proof`,
     validator_list_hash_short: ``,
