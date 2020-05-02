@@ -50,7 +50,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: BlockSignaturesFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation]!,
+        fields: [FieldAggregation],
         "Specify access key if required"
         accessKey: String
     ): [String]
@@ -70,7 +70,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: TransactionFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation]!,
+        fields: [FieldAggregation],
         "Specify access key if required"
         accessKey: String
     ): [String]
@@ -80,7 +80,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: MessageFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation]!,
+        fields: [FieldAggregation],
         "Specify access key if required"
         accessKey: String
     ): [String]
@@ -90,7 +90,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: AccountFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation]!,
+        fields: [FieldAggregation],
         "Specify access key if required"
         accessKey: String
     ): [String]
