@@ -312,6 +312,7 @@ const BlockSignatures: TypeDef = {
     _: { collection: 'blocks_signatures' },
     gen_utime: unixTime(docs.blockSignatures.gen_utime),
     seq_no: u32(docs.blockSignatures.seq_no),
+    shard: string(docs.blockSignatures.shard),
     workchain_id: i32(docs.blockSignatures.workchain_id),
     proof: string(docs.blockSignatures.proof),
     validator_list_hash_short: u32(docs.blockSignatures.validator_list_hash_short),

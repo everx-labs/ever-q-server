@@ -2,7 +2,6 @@
 All notable changes to this project will be documented in this file.
 
 ## 0.26.0 – May 2, 2020
-
 ### New
 - companion fields `*_string` for fields that holds unix time values
 - `timeout` argument (default to 40sec) to all join fields (used to wait joined document in condition of eventual consistency)
@@ -17,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - aggregate with empty filter and single `COUNT` uses `RETURN LENGTH(<collection>)`
 
 ### Fixed
+- fixed `seq_no` field in `BlockSignatures` (it contained shard ident before), added correct `shard` field.
 - aggregation functions must return `null` when no data to aggregate (was `[Object object]`)
 
 ## 0.25.0 – Apr 17, 2020
