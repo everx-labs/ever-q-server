@@ -312,6 +312,7 @@ type BlockMasterShardHashesDescr {
 	min_ref_mc_seqno: Float
 	"Generation time in uint32"
 	gen_utime: Float
+	gen_utime_string: String
 	"""
 	- 0 – none
 	- 2 – split
@@ -444,6 +445,7 @@ type BlockMasterConfigP17 {
 
 type BlockMasterConfigP18 {
 	utime_since: Float
+	utime_since_string: String
 	bit_price_ps: String
 	cell_price_ps: String
 	mc_bit_price_ps: String
@@ -525,7 +527,9 @@ type ValidatorSetList {
 
 type ValidatorSet {
 	utime_since: Float
+	utime_since_string: String
 	utime_until: Float
+	utime_until_string: String
 	total: Int
 	total_weight(format: BigIntFormat): String
 	list: [ValidatorSetList]
@@ -609,8 +613,10 @@ type BlockMasterConfig {
 type BlockMaster {
 	"Min block generation time of shards"
 	min_shard_gen_utime: Float
+	min_shard_gen_utime_string: String
 	"Max block generation time of shards"
 	max_shard_gen_utime: Float
+	max_shard_gen_utime_string: String
 	shard_hashes: [BlockMasterShardHashes]
 	shard_fees: [BlockMasterShardFees]
 	recover_create_msg: InMsg
@@ -632,6 +638,7 @@ type BlockSignatures {
 	id: String
 	"Signed block's gen_utime"
 	gen_utime: Float
+	gen_utime_string: String
 	"Signed block's seq_no"
 	seq_no: Float
 	"Signed block's shard"
@@ -645,7 +652,7 @@ type BlockSignatures {
 	sig_weight(format: BigIntFormat): String
 	"Array of signatures from block's validators"
 	signatures: [BlockSignaturesSignatures]
-	block: Block
+	block(timeout: Int): Block
 }
 
 "This is Block"
@@ -666,7 +673,8 @@ type Block {
 	seq_no: Float
 	after_merge: Boolean
 	"uint 32 generation time stamp"
-	gen_utime: Int
+	gen_utime: Float
+	gen_utime_string: String
 	gen_catchain_seqno: Float
 	flags: Int
 	master_ref: ExtBlkRef
@@ -708,7 +716,7 @@ type Block {
 	tr_count: Int
 	state_update: BlockStateUpdate
 	master: BlockMaster
-	signatures: BlockSignatures
+	signatures(timeout: Int): BlockSignatures
 }
 
 type TransactionStorage {
@@ -848,7 +856,7 @@ type Transaction {
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	block_id: String
-	block: Block
+	block(timeout: Int): Block
 	account_addr: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
@@ -878,9 +886,9 @@ type Transaction {
 	end_status: Int
 	end_status_name: AccountStatusEnum
 	in_msg: String
-	in_message: Message
+	in_message(timeout: Int): Message
 	out_msgs: [String]
-	out_messages: [Message]
+	out_messages(timeout: Int): [Message]
 	"Total amount of fees that entails account state change and used in Merkle update"
 	total_fees(format: BigIntFormat): String
 	"Same as above, but reserved for non gram coins that may appear in the blockchain"
@@ -937,9 +945,11 @@ type Message {
 	status_name: MessageProcessingStatusEnum
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	block_id: String
-	block: Block
+	block(timeout: Int): Block
 	"Bag of cells with the message body encoded as base64."
 	body: String
+	"`body` field root hash."
+	body_hash: String
 	"This is only used for special contracts in masterchain to deploy messages."
 	split_depth: Int
 	"This is only used for special contracts in masterchain to deploy messages."
@@ -948,10 +958,16 @@ type Message {
 	tock: Boolean
 	"Represents contract code in deploy messages."
 	code: String
+	"`code` field root hash."
+	code_hash: String
 	"Represents initial data for a contract in deploy messages"
 	data: String
+	"`data` field root hash."
+	data_hash: String
 	"Represents contract library in deploy messages"
 	library: String
+	"`library` field root hash."
+	library_hash: String
 	"Returns source address string"
 	src: String
 	"Returns destination address string"
@@ -964,6 +980,7 @@ type Message {
 	created_lt(format: BigIntFormat): String
 	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
 	created_at: Float
+	created_at_string: String
 	"IHR is disabled for the message."
 	ihr_disabled: Boolean
 	"This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism."
@@ -983,8 +1000,8 @@ type Message {
 	proof: String
 	"A bag of cells with the message structure encoded as base64."
 	boc: String
-	src_transaction: Transaction
-	dst_transaction: Transaction
+	src_transaction(timeout: Int): Transaction
+	dst_transaction(timeout: Int): Transaction
 }
 
 """
@@ -1101,10 +1118,16 @@ type Account {
 	        
 	"""
 	code: String
+	"`code` field root hash."
+	code_hash: String
 	"If present, contains smart-contract data encoded with in base64."
 	data: String
+	"`data` field root hash."
+	data_hash: String
 	"If present, contains library code used in smart-contract."
 	library: String
+	"`library` field root hash."
+	library_hash: String
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: String
 	"Bag of cells with the account struct encoded as base64."
@@ -1781,7 +1804,7 @@ input BlockFilter {
 	seq_no: FloatFilter
 	after_merge: BooleanFilter
 	"uint 32 generation time stamp"
-	gen_utime: IntFilter
+	gen_utime: FloatFilter
 	gen_catchain_seqno: FloatFilter
 	flags: IntFilter
 	master_ref: ExtBlkRefFilter
@@ -2167,6 +2190,8 @@ input MessageFilter {
 	block: BlockFilter
 	"Bag of cells with the message body encoded as base64."
 	body: StringFilter
+	"`body` field root hash."
+	body_hash: StringFilter
 	"This is only used for special contracts in masterchain to deploy messages."
 	split_depth: IntFilter
 	"This is only used for special contracts in masterchain to deploy messages."
@@ -2175,10 +2200,16 @@ input MessageFilter {
 	tock: BooleanFilter
 	"Represents contract code in deploy messages."
 	code: StringFilter
+	"`code` field root hash."
+	code_hash: StringFilter
 	"Represents initial data for a contract in deploy messages"
 	data: StringFilter
+	"`data` field root hash."
+	data_hash: StringFilter
 	"Represents contract library in deploy messages"
 	library: StringFilter
+	"`library` field root hash."
+	library_hash: StringFilter
 	"Returns source address string"
 	src: StringFilter
 	"Returns destination address string"
@@ -2340,10 +2371,16 @@ input AccountFilter {
 	        
 	"""
 	code: StringFilter
+	"`code` field root hash."
+	code_hash: StringFilter
 	"If present, contains smart-contract data encoded with in base64."
 	data: StringFilter
+	"`data` field root hash."
+	data_hash: StringFilter
 	"If present, contains library code used in smart-contract."
 	library: StringFilter
+	"`library` field root hash."
+	library_hash: StringFilter
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: StringFilter
 	"Bag of cells with the account struct encoded as base64."

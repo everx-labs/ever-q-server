@@ -40,6 +40,12 @@ export const u32 = (doc?: string) => uint(32, doc);
 export const u64 = (doc?: string) => uint(64, doc);
 const u128 = (doc?: string) => uint(128, doc);
 const u256 = (doc?: string) => uint(256, doc);
+export const unixTime = (doc?: string) => withDoc({
+    _int: { unsigned: true, size: 32 },
+    _: {
+        isUnixTime: true,
+    }
+}, doc);
 
 export const grams = u128;
 

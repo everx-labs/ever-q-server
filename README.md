@@ -44,7 +44,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --auth-endpoint <url>           Q_AUTH_ENDPOINT                             Auth server API url
         --mam-access-keys <keys>        Q_MAM_ACCESS_KEYS                           Access keys used to authorize mam endpoint access
 
-    -s, --statsd-server <url>           Q_STATSD_SEREVER                            StatsD server url
+    -s, --statsd-server <url>           Q_STATSD_SERVER                            StatsD server url
         --statsd-tags <tags>            Q_STATSD_TAGS                               StatsD additional comma separated tags (name=value)
 
 # Run

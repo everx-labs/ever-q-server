@@ -1,10 +1,15 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.25.1 – Apr 22, 2020
+## 0.26.0 – May 1, 2020
+### New
+- companion fields `*_string` for fields that holds unix time values
+- `timeout` argument (default to 40sec) to all join fields (used to wait joined document in condition of eventual consistency)
+- companion fields `*_hash` containing BOC root hash for `code`, `data` and `library` fields in accounts and messages
 
 ### Fixed
 - fixed `seq_no` field in `BlockSignatures` (it contained shard ident before), added correct `shard` field.
+- aggregation functions must return `null` when no data to aggregate (was `[Object object]`)
 
 ## 0.25.0 – Apr 17, 2020
 ### Featured

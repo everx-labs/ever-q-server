@@ -6,7 +6,6 @@ export function cleanError(error: any): any {
     }
     delete error.request;
     delete error.response;
-    error.stack = '...';
     return error;
 }
 
@@ -15,7 +14,6 @@ export function createError(code: number, message: string, source: string = 'gra
     const error = new Error(message);
     (error: any).source = source;
     (error: any).code = code;
-    error.stack = '...';
     return error;
 }
 

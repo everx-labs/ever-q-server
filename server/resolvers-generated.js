@@ -9,6 +9,7 @@ const {
     joinArray,
     enumName,
     createEnumNameResolver,
+    resolveUnixTimeString,
 } = require('./db-types.js');
 const OtherCurrency = struct({
     currency: scalar,
@@ -566,12 +567,16 @@ const Message = struct({
     block_id: scalar,
     block: join('block_id', 'id', 'blocks', () => Block),
     body: scalar,
+    body_hash: scalar,
     split_depth: scalar,
     tick: scalar,
     tock: scalar,
     code: scalar,
+    code_hash: scalar,
     data: scalar,
+    data_hash: scalar,
     library: scalar,
+    library_hash: scalar,
     src: scalar,
     dst: scalar,
     src_workchain_id: scalar,
@@ -606,8 +611,11 @@ const Account = struct({
     tick: scalar,
     tock: scalar,
     code: scalar,
+    code_hash: scalar,
     data: scalar,
+    data_hash: scalar,
     library: scalar,
+    library_hash: scalar,
     proof: scalar,
     boc: scalar,
 }, true);
@@ -697,6 +705,9 @@ function createResolvers(db) {
             funds_created(parent, args) {
                 return resolveBigUInt(2, parent.funds_created, args);
             },
+            gen_utime_string(parent, args) {
+                return resolveUnixTimeString(parent.gen_utime);
+            },
             split_type_name: createEnumNameResolver('split_type', { None: 0, Split: 2, Merge: 3 }),
         },
         BlockMasterShardFees: {
@@ -716,30 +727,42 @@ function createResolvers(db) {
             total_weight(parent, args) {
                 return resolveBigUInt(1, parent.total_weight, args);
             },
+            utime_since_string(parent, args) {
+                return resolveUnixTimeString(parent.utime_since);
+            },
+            utime_until_string(parent, args) {
+                return resolveUnixTimeString(parent.utime_until);
+            },
         },
         BlockSignatures: {
             id(parent) {
                 return parent._key;
             },
-            block(parent, _args, context) {
-                return context.db.blocks.waitForDoc(parent._key, '_key');
+            block(parent, args, context) {
+                return context.db.blocks.waitForDoc(parent._key, '_key', args);
             },
             sig_weight(parent, args) {
                 return resolveBigUInt(1, parent.sig_weight, args);
+            },
+            gen_utime_string(parent, args) {
+                return resolveUnixTimeString(parent.gen_utime);
             },
         },
         Block: {
             id(parent) {
                 return parent._key;
             },
-            signatures(parent, _args, context) {
-                return context.db.blocks_signatures.waitForDoc(parent._key, '_key');
+            signatures(parent, args, context) {
+                return context.db.blocks_signatures.waitForDoc(parent._key, '_key', args);
             },
             start_lt(parent, args) {
                 return resolveBigUInt(1, parent.start_lt, args);
             },
             end_lt(parent, args) {
                 return resolveBigUInt(1, parent.end_lt, args);
+            },
+            gen_utime_string(parent, args) {
+                return resolveUnixTimeString(parent.gen_utime);
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
@@ -798,14 +821,14 @@ function createResolvers(db) {
             id(parent) {
                 return parent._key;
             },
-            block(parent, _args, context) {
-                return context.db.blocks.waitForDoc(parent.block_id, '_key');
+            block(parent, args, context) {
+                return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
             },
-            in_message(parent, _args, context) {
-                return context.db.messages.waitForDoc(parent.in_msg, '_key');
+            in_message(parent, args, context) {
+                return context.db.messages.waitForDoc(parent.in_msg, '_key', args);
             },
-            out_messages(parent, _args, context) {
-                return context.db.messages.waitForDocs(parent.out_msgs, '_key');
+            out_messages(parent, args, context) {
+                return context.db.messages.waitForDocs(parent.out_msgs, '_key', args);
             },
             lt(parent, args) {
                 return resolveBigUInt(1, parent.lt, args);
@@ -825,14 +848,14 @@ function createResolvers(db) {
             id(parent) {
                 return parent._key;
             },
-            block(parent, _args, context) {
-                return context.db.blocks.waitForDoc(parent.block_id, '_key');
+            block(parent, args, context) {
+                return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
             },
-            src_transaction(parent, _args, context) {
-                return parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]') : null;
+            src_transaction(parent, args, context) {
+                return parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args) : null;
             },
-            dst_transaction(parent, _args, context) {
-                return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg') : null;
+            dst_transaction(parent, args, context) {
+                return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg', args) : null;
             },
             created_lt(parent, args) {
                 return resolveBigUInt(1, parent.created_lt, args);
@@ -848,6 +871,9 @@ function createResolvers(db) {
             },
             value(parent, args) {
                 return resolveBigUInt(2, parent.value, args);
+            },
+            created_at_string(parent, args) {
+                return resolveUnixTimeString(parent.created_at);
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
@@ -1334,12 +1360,16 @@ scalarFields.set('transactions.boc', { type: 'string', path: 'doc.boc' });
 scalarFields.set('messages.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('messages.block_id', { type: 'string', path: 'doc.block_id' });
 scalarFields.set('messages.body', { type: 'string', path: 'doc.body' });
+scalarFields.set('messages.body_hash', { type: 'string', path: 'doc.body_hash' });
 scalarFields.set('messages.split_depth', { type: 'number', path: 'doc.split_depth' });
 scalarFields.set('messages.tick', { type: 'boolean', path: 'doc.tick' });
 scalarFields.set('messages.tock', { type: 'boolean', path: 'doc.tock' });
 scalarFields.set('messages.code', { type: 'string', path: 'doc.code' });
+scalarFields.set('messages.code_hash', { type: 'string', path: 'doc.code_hash' });
 scalarFields.set('messages.data', { type: 'string', path: 'doc.data' });
+scalarFields.set('messages.data_hash', { type: 'string', path: 'doc.data_hash' });
 scalarFields.set('messages.library', { type: 'string', path: 'doc.library' });
+scalarFields.set('messages.library_hash', { type: 'string', path: 'doc.library_hash' });
 scalarFields.set('messages.src', { type: 'string', path: 'doc.src' });
 scalarFields.set('messages.dst', { type: 'string', path: 'doc.dst' });
 scalarFields.set('messages.src_workchain_id', { type: 'number', path: 'doc.src_workchain_id' });
@@ -1369,8 +1399,11 @@ scalarFields.set('accounts.split_depth', { type: 'number', path: 'doc.split_dept
 scalarFields.set('accounts.tick', { type: 'boolean', path: 'doc.tick' });
 scalarFields.set('accounts.tock', { type: 'boolean', path: 'doc.tock' });
 scalarFields.set('accounts.code', { type: 'string', path: 'doc.code' });
+scalarFields.set('accounts.code_hash', { type: 'string', path: 'doc.code_hash' });
 scalarFields.set('accounts.data', { type: 'string', path: 'doc.data' });
+scalarFields.set('accounts.data_hash', { type: 'string', path: 'doc.data_hash' });
 scalarFields.set('accounts.library', { type: 'string', path: 'doc.library' });
+scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_hash' });
 scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
 scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
 module.exports = {

@@ -39,6 +39,7 @@ type DbField = {
     arrayDepth: number,
     join?: DbJoin,
     enumDef?: IntEnumDef,
+    isUnixTime: boolean,
     doc: string,
 }
 
@@ -146,19 +147,24 @@ function main(schemaDef: TypeDef) {
             arrayDepth: 0,
             type: scalarTypes.string,
             doc: getDocMD(schemaField),
+            isUnixTime: false,
         };
         while (schemaType.array) {
             field.arrayDepth += 1;
             schemaType = schemaType.array;
         }
-        const enumDef: ?IntEnumDef = (schemaType._ && schemaType._.enum) || null;
+        const ex = (schemaType: any)._;
+        const enumDef: ?IntEnumDef = (ex && ex.enum) || null;
         if (enumDef) {
             field.enumDef = enumDef;
             enumTypes.set(enumDef.name, enumDef);
         }
-        const join = (schemaType: any)._.join;
+        const join = ex && ex.join;
         if (join) {
             field.join = join;
+        }
+        if (ex && ex.isUnixTime) {
+            field.isUnixTime = true;
         }
         if (schemaType.union || schemaType.struct) {
             field.type = unresolvedType(makeFieldTypeName(typeName, schemaField.name));
@@ -233,6 +239,7 @@ function main(schemaDef: TypeDef) {
                 name: 'id',
                 arrayDepth: 0,
                 type: scalarTypes.string,
+                isUnixTime: false,
                 doc: '',
             });
         }
@@ -355,13 +362,20 @@ function main(schemaDef: TypeDef) {
                     '['.repeat(field.arrayDepth) +
                     field.type.name +
                     ']'.repeat(field.arrayDepth);
-                const params = isBigInt(field.type)
-                    ? '(format: BigIntFormat)'
-                    : '';
+                let params = '';
+                if (isBigInt(field.type)) {
+                    params = '(format: BigIntFormat)';
+                } else if (field.join) {
+                    params = '(timeout: Int)';
+                }
+
                 ql.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
                 const enumDef = field.enumDef;
                 if (enumDef) {
                     ql.writeLn(`\t${field.name}_name: ${enumDef.name}Enum`);
+                }
+                if (field.isUnixTime) {
+                    ql.writeLn(`\t${field.name}_string: String`);
                 }
             });
             ql.writeLn(`}`);
@@ -592,6 +606,7 @@ function main(schemaDef: TypeDef) {
     function genJSCustomResolvers(type: DbType) {
         const joinFields = type.fields.filter(x => !!x.join);
         const bigUIntFields = type.fields.filter((x: DbField) => isBigInt(x.type));
+        const unixTimeFields = type.fields.filter((x: DbField) => x.isUnixTime);
         const enumFields = type.fields.filter(x => x.enumDef);
         const customResolverRequired = type.collection
             || joinFields.length > 0
@@ -621,13 +636,13 @@ function main(schemaDef: TypeDef) {
             if (!collection) {
                 throw 'Joined type is not a collection.';
             }
-            js.writeLn(`            ${field.name}(parent, _args, context) {`);
+            js.writeLn(`            ${field.name}(parent, args, context) {`);
             const pre = join.preCondition ? `${join.preCondition} ? ` : '';
             const post = join.preCondition ? ` : null` : '';
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}')${post};`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}', args)${post};`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}')${post};`);
+                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}', args)${post};`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }
@@ -637,6 +652,11 @@ function main(schemaDef: TypeDef) {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
             js.writeLn(`            ${field.name}(parent, args) {`);
             js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
+            js.writeLn(`            },`);
+        });
+        unixTimeFields.forEach((field) => {
+            js.writeLn(`            ${field.name}_string(parent, args) {`);
+            js.writeLn(`                return resolveUnixTimeString(parent.${field.name});`);
             js.writeLn(`            },`);
         });
         enumFields.forEach((field) => {
@@ -729,6 +749,7 @@ function main(schemaDef: TypeDef) {
             joinArray,
             enumName,
             createEnumNameResolver,
+            resolveUnixTimeString,
         } = require('./db-types.js');
         `);
         const jsArrayFilters = new Set<string>();
