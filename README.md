@@ -44,7 +44,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
         --auth-endpoint <url>           Q_AUTH_ENDPOINT                             Auth server API url
         --mam-access-keys <keys>        Q_MAM_ACCESS_KEYS                           Access keys used to authorize mam endpoint access
 
-    -s, --statsd-server <url>           Q_STATSD_SERVER                            StatsD server url
+    -s, --statsd-server <url>           Q_STATSD_SERVER                             StatsD server url
         --statsd-tags <tags>            Q_STATSD_TAGS                               StatsD additional comma separated tags (name=value)
 
 # Run
@@ -65,11 +65,18 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
 
     Metric                Type     Tags             Description
     --------------------  -------  ---------------  -------------------------------------------------------------
-    qserver.doc.count     counter  collection=name  Incremented each time when q-server has received notification 
-                                                    from Arango db about document insert/update
+    qserver.doc.count     counter  collection=name  Incremented for each db event (document insert/update)
 
-    qserver.query.count   counter  collection=name  Incremented each time when q-server has started
-                                                    query handler from SDK client
+    qserver.post.count    counter                   Incremented for each node request
+
+    qserver.post.failed   counter                   Incremented for each failed node request
+
+    qserver.query.count   counter  collection=name  Incremented for each db query
+
+    qserver.query.failed  counter  collection=name  Incremented for each failed db query
+
+    qserver.query.slow    counter  collection=name  Incremented each time when q-server has encountered
+                                                    slow query
 
     qserver.query.time    timer    collection=name  Reported each time when q-server has finished 
                                                     query handler from SDK client
