@@ -223,11 +223,15 @@ export class AggregationHelperFactory {
         let text;
         const isSingleCount = (fields.length === 1) && (fields[0].fn === AggregationFn.COUNT);
         if (isSingleCount) {
-            text = `
-                FOR doc IN ${collection}
-                ${filterSection}
-                COLLECT WITH COUNT INTO a0
-                RETURN [a0]`;
+            if (filterSection !== '') {
+                text = `
+                    FOR doc IN ${collection}
+                    ${filterSection}
+                    COLLECT WITH COUNT INTO a0
+                    RETURN [a0]`;
+            } else {
+                text = `RETURN [LENGTH(${collection})]`;
+            }
         } else {
             const queries = helpers.map(x => x.buildQuery(x.context));
             text = `

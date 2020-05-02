@@ -1,7 +1,8 @@
 import Arango from "../server/arango";
 import QLogs from "../server/logs";
-import {convertBigUInt, QParams, resolveBigUInt, selectFields} from "../server/db-types";
+import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../server/db-types";
 import {
+    BlockSignatures,
     Transaction,
     Account,
     Message,
@@ -81,6 +82,21 @@ test("Filter test", () => {
     expect(Transaction.test(null, { in_msg: null, }, { in_msg: { eq: null }, })).toBeTruthy();
     expect(Transaction.test(null, {}, { in_msg: { ne: null }, })).toBeFalsy();
     expect(Transaction.test(null, {}, { in_msg: { eq: null }, })).toBeTruthy();
+});
+
+
+test("Generate Array AQL", () => {
+    const params = new QParams();
+
+    params.clear();
+    let ql = BlockSignatures.ql(params, 'doc', { signatures: { any: { node_id: { eq: "1" } } } });
+    expect(ql).toEqual(`@v1 IN doc.signatures[*].node_id`);
+    expect(params.values.v1).toEqual('1');
+
+    params.clear();
+    ql = BlockSignatures.ql(params, 'doc', { signatures: { any: { node_id: { ne: "1" } } } });
+    expect(ql).toEqual(`LENGTH(doc.signatures[* FILTER CURRENT.node_id != @v1]) > 0`);
+    expect(params.values.v1).toEqual('1');
 });
 
 test("Generate AQL", () => {

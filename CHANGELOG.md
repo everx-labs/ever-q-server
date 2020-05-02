@@ -1,11 +1,19 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.26.0 – May 1, 2020
+## 0.26.0 – May 2, 2020
 ### New
 - companion fields `*_string` for fields that holds unix time values
 - `timeout` argument (default to 40sec) to all join fields (used to wait joined document in condition of eventual consistency)
 - companion fields `*_hash` containing BOC root hash for `code`, `data` and `library` fields in accounts and messages
+- `qserver.query.failed` - statsd counter for failed queries 
+- `qserver.query.slow` - statsd counter for slow queries 
+- `qserver.post.count` - statsd counter for node requests
+- `qserver.post.failed` - statsd counter for failed node requests
+
+### Optimized
+- array `any` filter with single field `eq` operator optimized to `<param> IN <path-to-field>` AQL
+- aggregate with empty filter and single `COUNT` uses `RETURN LENGTH(<collection>)`
 
 ### Fixed
 - fixed `seq_no` field in `BlockSignatures` (it contained shard ident before), added correct `shard` field.

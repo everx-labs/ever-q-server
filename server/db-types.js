@@ -211,7 +211,7 @@ function qlIn(params: QParams, path: string, filter: any): string {
     return qlCombine(conditions, 'OR', 'false');
 }
 
-// Scalars
+//------------------------------------------------------------- Scalars
 
 function undefinedToNull(v: any): any {
     return v !== undefined ? v : null;
@@ -389,7 +389,7 @@ export const scalar: QType = createScalar();
 export const bigUInt1: QType = createBigUInt(1);
 export const bigUInt2: QType = createBigUInt(2);
 
-// Structs
+//------------------------------------------------------------- Structs
 
 export function splitOr(filter: any): any[] {
     const operands = [];
@@ -453,6 +453,40 @@ function getItemQL(itemType: QType, params: QParams, path: string, filter: any):
     return itemQl;
 }
 
+function isValidFieldPathChar(c: string): boolean {
+    if (c.length !== 1) {
+        return false;
+    }
+    return (c >= 'A' && c <= 'Z')
+        || (c >= 'a' && c <= 'z')
+        || (c >= '0' && c <= '9')
+        || (c === '_' || c === '[' || c === '*' || c === ']' || c === '.');
+}
+
+function isFieldPath(test: string): boolean {
+    for (let i = 0; i < test.length; i += 1) {
+        if (!isValidFieldPathChar(test[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function tryOptimizeArrayAny(path: string, itemQl: string, params: QParams): ?string {
+    const paramName = `@v${params.count}`;
+    const suffix = ` == ${paramName}`;
+    if (itemQl === `CURRENT${suffix}`) {
+        return `${paramName} IN ${path}[*]`;
+    }
+    if (itemQl.startsWith('CURRENT.') && itemQl.endsWith(suffix)) {
+        const fieldPath = itemQl.slice('CURRENT.'.length, -suffix.length);
+        if (isFieldPath(fieldPath)) {
+            return `${paramName} IN ${path}[*].${fieldPath}`;
+        }
+    }
+    return null;
+}
+
 export function array(resolveItemType: () => QType): QType {
     let resolved: ?QType = null;
     const ops = {
@@ -471,10 +505,10 @@ export function array(resolveItemType: () => QType): QType {
         any: {
             ql(params, path, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const paramName = `@v${params.count + 1}`;
                 const itemQl = getItemQL(itemType, params, path, filter);
-                if (itemQl === `CURRENT == ${paramName}`) {
-                    return `${paramName} IN ${path}[*]`;
+                const optimizedQl = tryOptimizeArrayAny(path, itemQl, params);
+                if (optimizedQl) {
+                    return optimizedQl;
                 }
                 return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
             },
@@ -502,7 +536,7 @@ export function array(resolveItemType: () => QType): QType {
     }
 }
 
-// Enum Names
+//------------------------------------------------------------- Enum Names
 
 function createEnumNamesMap(values: { [string]: number }): Map<number, string> {
     const names: Map<number, string> = new Map();
@@ -551,7 +585,7 @@ export function createEnumNameResolver(onField: string, values: { [string]: numb
     };
 }
 
-// Joins
+//------------------------------------------------------------- Joins
 
 export function join(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
     let resolved: ?QType = null;

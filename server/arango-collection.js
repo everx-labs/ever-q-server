@@ -106,6 +106,8 @@ export class Collection {
     statDoc: StatsCounter;
     statQuery: StatsCounter;
     statQueryTime: StatsTiming;
+    statQueryFailed: StatsCounter;
+    statQuerySlow: StatsCounter;
     statQueryActive: StatsGauge;
     statWaitForActive: StatsGauge;
     statSubscriptionActive: StatsGauge;
@@ -144,6 +146,8 @@ export class Collection {
         this.statQuery = new StatsCounter(stats, STATS.query.count, [`collection:${name}`]);
         this.statQueryTime = new StatsTiming(stats, STATS.query.time, [`collection:${name}`]);
         this.statQueryActive = new StatsGauge(stats, STATS.query.active, [`collection:${name}`]);
+        this.statQueryFailed = new StatsCounter(stats, STATS.query.failed, [`collection:${name}`]);
+        this.statQuerySlow = new StatsCounter(stats, STATS.query.slow, [`collection:${name}`]);
         this.statWaitForActive = new StatsGauge(stats, STATS.waitFor.active, [`collection:${name}`]);
         this.statSubscriptionActive = new StatsGauge(stats, STATS.subscription.active, [`collection:${name}`]);
 
@@ -317,6 +321,9 @@ export class Collection {
                     return [];
                 }
                 const isFast = this.isFastQuery(q.text, q.filter, q.orderBy);
+                if (!isFast) {
+                    this.statQuerySlow.increment();
+                }
                 const traceParams: any = {
                     filter: q.filter,
                     selection: selectionToString(q.selection),
@@ -341,6 +348,9 @@ export class Collection {
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
                 return result;
+            } catch (error) {
+                this.statQueryFailed.increment();
+                throw error;
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();
