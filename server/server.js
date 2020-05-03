@@ -176,6 +176,7 @@ export default class TONQServer {
             typeDefs,
             resolvers: endPoint.resolvers,
             subscriptions: {
+                keepAlive: this.config.server.keepAlive,
                 onConnect(connectionParams: Object, _websocket: WebSocket, _context: ConnectionContext): any {
                     return {
                         accessKey: connectionParams.accessKey || connectionParams.accesskey,

@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - `qserver.query.slow` - statsd counter for slow queries 
 - `qserver.post.count` - statsd counter for node requests
 - `qserver.post.failed` - statsd counter for failed node requests
+- `Q_KEEP_ALIVE` configuration parameter specify interval in ms of keep alive messages for active subscriptions (default 60000).
 
 ### Optimized
 - array `any` filter with single field `eq` operator optimized to `<param> IN <path-to-field>` AQL
