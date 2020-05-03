@@ -47,6 +47,10 @@ You can configure Q Server with command line parameters and/or ENV variables:
     -s, --statsd-server <url>           Q_STATSD_SERVER                             StatsD server url
         --statsd-tags <tags>            Q_STATSD_TAGS                               StatsD additional comma separated tags (name=value)
 
+        --keep-alive <ms>               Q_KEEP_ALIVE                 60000          Interval in ms of keep-alive messages 
+                                                                                    for active subscriptions.
+                                                                                    Value 0 disable keep-alive.
+
 # Run
 
 ```bash
