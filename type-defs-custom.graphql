@@ -1,56 +1,120 @@
+"Request with external inbound message"
 input Request {
+    "256-bit Hash of message in base64"
     id: String
+    "Serialized message in base64"
     body: String
 }
 
 type Info {
     version: String
 }
+
+"Aggregation function used to collect aggregated value"
 enum AggregationFn {
+    "Returns count of filtered record"
     COUNT
+    "Returns the minimal value for a field in filtered records"
     MIN
+    "Returns the maximal value for a field in filtered records"
     MAX
+    "Returns a sum of values for a field in filtered records"
     SUM
+    "Returns an average value for a field in filtered records"
     AVERAGE
-    STDDEV_POPULATION
-    STDDEV_SAMPLE
-    VARIANCE_POPULATION
-    VARIANCE_SAMPLE
 }
 
+
+"Specify field and aggregation function used to collect aggregated value"
 input FieldAggregation {
+    "Dot separated path to field. Can be omitted for COUNT fn."
     field: String
+    "Aggregation function. Default value is COUNT."
     fn: AggregationFn
 }
 
 extend type Query {
     info: Info
+    "Obsolete. Use aggregation queries instead."
     getAccountsCount(accessKey: String): Float
+    "Obsolete. Use aggregation queries instead."
     getTransactionsCount(accessKey: String): Float
+    "Obsolete. Use aggregation queries instead."
     getAccountsTotalBalance(accessKey: String): String
 
     "Returns one time access key for management functions"
     getManagementAccessKey: String
 
     "Compute aggregated values for specified fields"
-    aggregateBlockSignatures(filter: BlockSignaturesFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateBlockSignatures(
+        "Specify filter for records to aggregate"
+        filter: BlockSignaturesFilter,
+        "Specify list of fields to collect aggregated values"
+        fields: [FieldAggregation],
+        "Specify access key if required"
+        accessKey: String
+    ): [String]
+
     "Compute aggregated values for specified fields"
-    aggregateBlocks(filter: BlockFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateBlocks(
+        "Specify filter for records to aggregate"
+        filter: BlockFilter,
+        "Specify list of fields to collect aggregated values"
+        fields: [FieldAggregation],
+        "Specify access key if required"
+        accessKey: String
+    ): [String]
+
     "Compute aggregated values for specified fields"
-    aggregateTransactions(filter: TransactionFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateTransactions(
+        "Specify filter for records to aggregate"
+        filter: TransactionFilter,
+        "Specify list of fields to collect aggregated values"
+        fields: [FieldAggregation],
+        "Specify access key if required"
+        accessKey: String
+    ): [String]
+
     "Compute aggregated values for specified fields"
-    aggregateMessages(filter: MessageFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateMessages(
+        "Specify filter for records to aggregate"
+        filter: MessageFilter,
+        "Specify list of fields to collect aggregated values"
+        fields: [FieldAggregation],
+        "Specify access key if required"
+        accessKey: String
+    ): [String]
+
     "Compute aggregated values for specified fields"
-    aggregateAccounts(filter: AccountFilter, fields: [FieldAggregation], accessKey: String): [String]
+    aggregateAccounts(
+        "Specify filter for records to aggregate"
+        filter: AccountFilter,
+        "Specify list of fields to collect aggregated values"
+        fields: [FieldAggregation],
+        "Specify access key if required"
+        accessKey: String
+    ): [String]
 }
 
 input AccessKey {
+    "User defined access key"
     key: String
+    """
+    Additional restrictions to specified accounts.
+    User will see only subset of a blockchain related to specified accounts.
+    If omitted or is an empty array then user has no restrictions.
+    """
     restrictToAccounts: [String]
 }
 
 type Mutation {
-    postRequests(requests: [Request], accessKey: String): [String]
+    "Post external inbound message to blockchain node."
+    postRequests(
+        "List of message requests"
+        requests: [Request],
+        "Access key if required"
+        accessKey: String
+    ): [String]
 
     "Register GraphQL services access keys. Returns number of actually registered keys"
     registerAccessKeys(

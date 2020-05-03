@@ -21,12 +21,13 @@ import { Database } from 'arangojs';
 import { Collection} from "./arango-collection";
 import { Auth } from "./auth";
 import type { QConfig, QDbConfig } from './config'
-import { ensureProtocol } from './config';
+import { ensureProtocol, STATS } from './config';
 import type { QLog } from './logs';
 import QLogs from './logs'
 import type { QType } from './db-types';
 import { Account, Block, BlockSignatures, Message, Transaction } from './resolvers-generated';
 import { Tracer } from "opentracing";
+import { StatsCounter } from "./tracer";
 import type {IStats} from './tracer';
 import {wrap} from "./utils";
 
@@ -40,6 +41,8 @@ export default class Arango {
 
     auth: Auth;
     tracer: Tracer;
+    statPostCount: StatsCounter;
+    statPostFailed: StatsCounter;
 
     transactions: Collection;
     messages: Collection;
@@ -65,6 +68,9 @@ export default class Arango {
         this.serverAddress = config.database.server;
         this.databaseName = config.database.name;
         this.tracer = tracer;
+
+        this.statPostCount = new StatsCounter(stats, STATS.post.count, []);
+        this.statPostFailed = new StatsCounter(stats, STATS.post.failed, []);
 
         const createDb = (config: QDbConfig): Database => {
             const db = new Database({

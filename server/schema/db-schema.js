@@ -32,6 +32,7 @@ import {
     u64,
     u8,
     u8enum,
+    unixTime,
     withDoc
 } from "./db-schema-types";
 
@@ -164,8 +165,11 @@ const Account: TypeDef = {
     tick: bool(docs.account.tick),
     tock: bool(docs.account.tock),
     code: string(docs.account.code),
+    code_hash: string(docs.account.code_hash),
     data: string(docs.account.data),
+    data_hash: string(docs.account.data_hash),
     library: string(docs.account.library),
+    library_hash: string(docs.account.library_hash),
     proof: string(docs.account.proof),
     boc: string(docs.account.boc),
 };
@@ -178,18 +182,22 @@ const Message: TypeDef = {
     block_id: required(string(docs.message.block_id)),
     block: join('Block', 'block_id', 'id'),
     body: string(docs.message.body),
+    body_hash: string(docs.message.body_hash),
     split_depth: u8(docs.message.split_depth),
     tick: bool(docs.message.tick),
     tock: bool(docs.message.tock),
     code: string(docs.message.code),
+    code_hash: string(docs.message.code_hash),
     data: string(docs.message.data),
+    data_hash: string(docs.message.data_hash),
     library: string(docs.message.library),
+    library_hash: string(docs.message.library_hash),
     src: string(docs.message.src),
     dst: string(docs.message.dst),
     src_workchain_id: i32(docs.message.src_workchain_id),
     dst_workchain_id: i32(docs.message.dst_workchain_id),
     created_lt: u64(docs.message.created_lt),
-    created_at: u32(docs.message.created_at),
+    created_at: unixTime(docs.message.created_at),
     ihr_disabled: bool(docs.message.ihr_disabled),
     ihr_fee: grams(docs.message.ihr_fee),
     fwd_fee: grams(docs.message.fwd_fee),
@@ -302,8 +310,9 @@ const Transaction: TypeDef = {
 const BlockSignatures: TypeDef = {
     _doc: docs.blockSignatures._doc,
     _: { collection: 'blocks_signatures' },
-    gen_utime: u32(docs.blockSignatures.gen_utime),
+    gen_utime: unixTime(docs.blockSignatures.gen_utime),
     seq_no: u32(docs.blockSignatures.seq_no),
+    shard: string(docs.blockSignatures.shard),
     workchain_id: i32(docs.blockSignatures.workchain_id),
     proof: string(docs.blockSignatures.proof),
     validator_list_hash_short: u32(docs.blockSignatures.validator_list_hash_short),
@@ -383,7 +392,7 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
     next_catchain_seqno: u32(docs.shardDescr.next_catchain_seqno),
     next_validator_shard: string(docs.shardDescr.next_validator_shard),
     min_ref_mc_seqno: u32(docs.shardDescr.min_ref_mc_seqno),
-    gen_utime: u32(docs.shardDescr.gen_utime),
+    gen_utime: unixTime(docs.shardDescr.gen_utime),
     split_type: splitType(docs.shardDescr.split_type),
     split: u32(docs.shardDescr.split),
     fees_collected: grams(docs.shardDescr.fees_collected),
@@ -438,8 +447,8 @@ const MsgForwardPrices: TypeDef = {
 const msgForwardPrices = (doc?: string) => ref({ MsgForwardPrices }, doc);
 
 const ValidatorSet: TypeDef = {
-    utime_since: u32(),
-    utime_until: u32(),
+    utime_since: unixTime(),
+    utime_until: unixTime(),
     total: u16(),
     total_weight: u64(),
     list: arrayOf({
@@ -472,7 +481,7 @@ const Block: TypeDef = {
     want_split: bool(docs.block.want_split),
     seq_no: u32(docs.block.seq_no),
     after_merge: bool(docs.block.after_merge),
-    gen_utime: i32(docs.block.gen_utime),
+    gen_utime: unixTime(docs.block.gen_utime),
     gen_catchain_seqno: u32(docs.block.gen_catchain_seqno),
     flags: u16(docs.block.flags),
     master_ref: extBlkRef(docs.block.master_ref),
@@ -539,8 +548,8 @@ const Block: TypeDef = {
         old_depth: u16(docs.block.state_update.old_depth)
     },
     master: {
-        min_shard_gen_utime: u32(docs.block.master.min_shard_gen_utime),
-        max_shard_gen_utime: u32(docs.block.master.max_shard_gen_utime),
+        min_shard_gen_utime: unixTime(docs.block.master.min_shard_gen_utime),
+        max_shard_gen_utime: unixTime(docs.block.master.max_shard_gen_utime),
         shard_hashes: arrayOf({
             workchain_id: i32(docs.block.master.shard_hashes.workchain_id),
             shard: string(docs.block.master.shard_hashes.shard),
@@ -634,7 +643,7 @@ const Block: TypeDef = {
                 max_stake_factor: u32()
             },
             p18: arrayOf({
-                utime_since: u32(),
+                utime_since: unixTime(),
                 bit_price_ps: string(),
                 cell_price_ps: string(),
                 mc_bit_price_ps: string(),

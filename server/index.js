@@ -53,6 +53,7 @@ type ProgramOptions = {
     statsdServer: string,
     statsdTags: string,
     mamAccessKeys: string,
+    keepAlive: string,
 }
 
 program
@@ -105,6 +106,9 @@ program
     .option('--statsd-tags <tags>', 'additional statsd tags (comma separated name=value pairs)',
         process.env.Q_STATSD_TAGS || '')
 
+    .option('--keep-alive <ms>', 'additional statsd tags (comma separated name=value pairs)',
+        process.env.Q_KEEP_ALIVE || '60000')
+
     .parse(process.argv);
 
 const options: ProgramOptions = program;
@@ -127,6 +131,7 @@ const config: QConfig = {
         host: options.host,
         port: Number.parseInt(options.port),
         rpcPort: options.rpcPort,
+        keepAlive: Number.parseInt(options.keepAlive),
     },
     requests: {
         mode: options.requestsMode,

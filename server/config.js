@@ -35,6 +35,7 @@ export type QConfig = {
         host: string,
         port: number,
         rpcPort: string,
+        keepAlive: number,
     },
     requests: {
         mode: 'kafka' | 'rest',
@@ -101,7 +102,9 @@ const INDEXES: {
         'account_addr, orig_status, end_status',
         'now, account_addr, lt',
     ],
-    blocks_signatures: [],
+    blocks_signatures: [
+        'signatures[*].node_id, gen_utime',
+    ],
 };
 
 export type IndexInfo = {
@@ -137,10 +140,16 @@ export const STATS = {
     doc: {
         count: 'doc.count',
     },
+    post: {
+        count: 'post.count',
+        failed: 'post.failed',
+    },
     query: {
         count: 'query.count',
         time: 'query.time',
         active: 'query.active',
+        failed: 'query.failed',
+        slow: 'query.slow',
     },
     subscription: {
         active: 'subscription.active',

@@ -43,7 +43,7 @@ export type GraphQLRequestContextEx = GraphQLRequestContext & {
     db: Arango,
 }
 
-// Query
+//------------------------------------------------------------- Query
 
 function info(): Info {
     const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
@@ -101,7 +101,9 @@ async function getManagementAccessKey(_parent, args, context: GraphQLRequestCont
     return context.auth.getManagementAccessKey();
 }
 
-// Mutation
+
+//------------------------------------------------------------- Mutation
+
 
 async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx, _span: Span): Promise<void> {
     const config = context.config.requests;
@@ -209,8 +211,10 @@ async function postRequests(
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }
+            context.db.statPostCount.increment();
             context.db.log.debug('postRequests', 'POSTED', args, context.remoteAddress);
         } catch (error) {
+            context.db.statPostFailed.increment();
             context.db.log.debug('postRequests', 'FAILED', args, context.remoteAddress);
             throw error;
         }

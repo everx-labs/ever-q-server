@@ -172,9 +172,11 @@ export default class TONQServer {
             .map(x => fs.readFileSync(x, 'utf-8'))
             .join('\n');
         const config: ApolloServerExpressConfig = {
+            debug: false,
             typeDefs,
             resolvers: endPoint.resolvers,
             subscriptions: {
+                keepAlive: this.config.server.keepAlive,
                 onConnect(connectionParams: Object, _websocket: WebSocket, _context: ConnectionContext): any {
                     return {
                         accessKey: connectionParams.accessKey || connectionParams.accesskey,
