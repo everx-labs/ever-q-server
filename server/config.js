@@ -124,6 +124,7 @@ export type DbInfo = {
 }
 
 export const BLOCKCHAIN_DB: DbInfo = {
+    lastUpdateTime: 0,
     name: 'blockchain',
     collections: {}
 };

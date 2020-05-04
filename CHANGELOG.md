@@ -1,6 +1,10 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.26.1 – May 4, 2020
+### Fixed
+- Aggregates on nested array fields failed with `value.substr is not function`. 
+
 ## 0.26.0 – May 2, 2020
 ### New
 - companion fields `*_string` for fields that holds unix time values

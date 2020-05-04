@@ -25,7 +25,7 @@ import { DocUpsertHandler, DocSubscription } from "./arango-listeners";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
 import { BLOCKCHAIN_DB, STATS } from './config';
-import type { QConfig } from "./config";
+import type { CollectionInfo, QConfig } from "./config";
 import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
 import { parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
@@ -99,6 +99,7 @@ const accessGranted: AccessRights = {
 export class Collection {
     name: string;
     docType: QType;
+    info: CollectionInfo;
 
     log: QLog;
     auth: Auth;
@@ -133,6 +134,7 @@ export class Collection {
     ) {
         this.name = name;
         this.docType = docType;
+        this.info = BLOCKCHAIN_DB.collections[name];
 
         this.log = logs.create(name);
         this.auth = auth;
@@ -286,18 +288,17 @@ export class Collection {
         };
     }
 
-    isFastQuery(
+    async isFastQuery(
         text: string,
         filter: any,
         orderBy?: OrderBy[]
-    ): boolean {
+    ): Promise<boolean> {
         const existingStat = this.queryStats.get(text);
         if (existingStat !== undefined) {
             return existingStat.isFast;
         }
-        const collectionInfo = BLOCKCHAIN_DB.collections[this.name];
         const stat = {
-            isFast: isFastQuery(collectionInfo, this.docType, filter, orderBy || [], console),
+            isFast: isFastQuery(this.info, this.docType, filter, orderBy || [], console),
         };
         this.queryStats.set(text, stat);
         return stat.isFast;
@@ -320,7 +321,7 @@ export class Collection {
                     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
                     return [];
                 }
-                const isFast = this.isFastQuery(q.text, q.filter, q.orderBy);
+                const isFast = await this.isFastQuery(q.text, q.filter, q.orderBy);
                 if (!isFast) {
                     this.statQuerySlow.increment();
                 }
