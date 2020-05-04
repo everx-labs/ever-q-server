@@ -126,6 +126,9 @@ function convertNone(context: AggregationContext, value: any): any {
 }
 
 function bigIntString(context: AggregationContext, value: any): any {
+    if (typeof value === 'number') {
+        return value.toString();
+    }
     //$FlowFixMe
     return BigInt(`0x${value.substr(context.bigIntPrefix)}`).toString();
 }
