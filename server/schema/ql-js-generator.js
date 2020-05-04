@@ -675,7 +675,18 @@ function main(schemaDef: TypeDef) {
             }
             const docName = field.name === 'id' ? '_key' : field.name;
             const path = `${parentPath}.${field.name}`;
-            const docPath = `${parentDocPath}.${docName}${field.arrayDepth > 0 ? '[*]' : ''}`;
+            let docPath = `${parentDocPath}.${docName}`;
+            if (field.arrayDepth > 0) {
+                let suffix = '[*]';
+                for (let depth = 10; depth > 0; depth -= 1) {
+                    const s = `[${'*'.repeat(depth)}]`;
+                    if (docPath.includes(s)) {
+                        suffix = `[${'*'.repeat(depth + 1)}]`;
+                        break;
+                    }
+                }
+                docPath = `${docPath}${suffix}`;
+            }
             switch(field.type.category) {
             case "scalar":
                 let typeName;
