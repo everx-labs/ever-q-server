@@ -6,6 +6,7 @@ import QLogs from "../server/logs";
 test("Aggregations Fast Detector", async () => {
     const granted: AccessRights = { granted: true, restrictToAccounts: [] };
     const db = new Arango({
+        isTests: true,
         database: { server: 'http://0.0.0.0', name: 'blockchain' },
         slowDatabase: { server: 'http://0.0.0.0', name: 'blockchain' }
     }, new QLogs());

@@ -149,6 +149,7 @@ test("Generate AQL", () => {
 
 test("Enum Names", () => {
     const db = new Arango({
+        isTests: true,
         database: { server: 'http://0.0.0.0', name: 'blockchain' },
         slowDatabase: { server: 'http://0.0.0.0', name: 'blockchain' }
     }, new QLogs());
