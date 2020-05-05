@@ -103,6 +103,7 @@ export default class Arango {
                 stats,
                 this.db,
                 slowDb,
+                config.isTests || false,
             );
             this.collections.push(collection);
             this.collectionsByName.set(name, collection);

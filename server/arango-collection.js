@@ -117,6 +117,7 @@ export class Collection {
     statSubscriptionActive: StatsGauge;
     db: Database;
     slowDb: Database;
+    isTests: boolean;
 
     waitForCount: number;
     subscriptionCount: number;
@@ -134,6 +135,7 @@ export class Collection {
         stats: IStats,
         db: Database,
         slowDb: Database,
+        isTests: boolean,
     ) {
         this.name = name;
         this.docType = docType;
@@ -145,6 +147,7 @@ export class Collection {
         this.tracer = tracer;
         this.db = db;
         this.slowDb = slowDb;
+        this.isTests = isTests;
         this.waitForCount = 0;
         this.subscriptionCount = 0;
 
@@ -568,28 +571,33 @@ export class Collection {
     }
 
     async checkRefreshInfo() {
-        if (Date.now() >= this.infoRefreshTime) {
-            this.infoRefreshTime = Date.now() + INFO_REFRESH_INTERVAL;
-            const indexes = (await this.dbCollection().indexes())
-                .map(x => ({ fields: x.fields }));
-
-            const sameIndexes = (aIndexes: IndexInfo[], bIndexes: IndexInfo[]): boolean => {
-                const aRest = new Set(aIndexes.map(indexToString));
-                for (const bIndex of bIndexes) {
-                    const bIndexString = indexToString(bIndex);
-                    if (aRest.has(bIndexString)) {
-                        aRest.delete(bIndexString);
-                    } else {
-                        return false;
-                    }
-                }
-                return aRest.size === 0;
-            };
-            if (!sameIndexes(indexes, this.info.indexes)) {
-                this.log.debug('RELOAD_INDEXES', indexes);
-                this.info.indexes = indexes;
-            }
+        if (this.isTests) {
+            return;
         }
+        if (Date.now() < this.infoRefreshTime) {
+            return;
+        }
+        this.infoRefreshTime = Date.now() + INFO_REFRESH_INTERVAL;
+        const indexes = (await this.dbCollection().indexes())
+            .map(x => ({ fields: x.fields }));
+
+        const sameIndexes = (aIndexes: IndexInfo[], bIndexes: IndexInfo[]): boolean => {
+            const aRest = new Set(aIndexes.map(indexToString));
+            for (const bIndex of bIndexes) {
+                const bIndexString = indexToString(bIndex);
+                if (aRest.has(bIndexString)) {
+                    aRest.delete(bIndexString);
+                } else {
+                    return false;
+                }
+            }
+            return aRest.size === 0;
+        };
+        if (!sameIndexes(indexes, this.info.indexes)) {
+            this.log.debug('RELOAD_INDEXES', indexes);
+            this.info.indexes = indexes;
+        }
+
     }
 
     async waitForDoc(

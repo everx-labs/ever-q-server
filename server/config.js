@@ -60,6 +60,7 @@ export type QConfig = {
         tags: string[],
     },
     mamAccessKeys: Set<string>,
+    isTests?: boolean,
 }
 
 export function ensureProtocol(address: string, defaultProtocol: string): string {
