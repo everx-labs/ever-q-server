@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Aggregates on nested array fields failed with `value.substr is not function`.
 - Slow detector for `MIN` `MAX` aggregates must use a specified field as `order by` to detect fast query. 
+- Indexes reloaded from db first time on demand and then every 1 hour. 
 
 ## 0.26.0 – May 2, 2020
 ### New
