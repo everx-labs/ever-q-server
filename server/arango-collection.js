@@ -25,9 +25,9 @@ import { DocUpsertHandler, DocSubscription } from "./arango-listeners";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
 import { BLOCKCHAIN_DB, STATS } from './config';
-import type { CollectionInfo, QConfig } from "./config";
+import type { CollectionInfo, IndexInfo, QConfig } from "./config";
 import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
-import { parseSelectionSet, QParams, selectionToString } from "./db-types";
+import { indexToString, parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
 import { isFastQuery } from './slow-detector';
@@ -35,6 +35,8 @@ import type { IStats } from './tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "./tracer";
 import { createError, wrap } from "./utils";
 import EventEmitter from 'events';
+
+const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
 export type GraphQLRequestContext = {
     config: QConfig,
@@ -100,6 +102,7 @@ export class Collection {
     name: string;
     docType: QType;
     info: CollectionInfo;
+    infoRefreshTime: number;
 
     log: QLog;
     auth: Auth;
@@ -135,6 +138,7 @@ export class Collection {
         this.name = name;
         this.docType = docType;
         this.info = BLOCKCHAIN_DB.collections[name];
+        this.infoRefreshTime = Date.now();
 
         this.log = logs.create(name);
         this.auth = auth;
@@ -293,6 +297,7 @@ export class Collection {
         filter: any,
         orderBy?: OrderBy[]
     ): Promise<boolean> {
+        await this.checkRefreshInfo();
         let statKey = text;
         if (orderBy && orderBy.length > 0) {
             statKey = `${statKey}${orderBy.map(x => `${x.path} ${x.direction}`).join(' ')}`;
@@ -560,6 +565,31 @@ export class Collection {
 
     dbCollection(): DocumentCollection {
         return this.db.collection(this.name);
+    }
+
+    async checkRefreshInfo() {
+        if (Date.now() >= this.infoRefreshTime) {
+            this.infoRefreshTime = Date.now() + INFO_REFRESH_INTERVAL;
+            const indexes = (await this.dbCollection().indexes())
+                .map(x => ({ fields: x.fields }));
+
+            const sameIndexes = (aIndexes: IndexInfo[], bIndexes: IndexInfo[]): boolean => {
+                const aRest = new Set(aIndexes.map(indexToString));
+                for (const bIndex of bIndexes) {
+                    const bIndexString = indexToString(bIndex);
+                    if (aRest.has(bIndexString)) {
+                        aRest.delete(bIndexString);
+                    } else {
+                        return false;
+                    }
+                }
+                return aRest.size === 0;
+            };
+            if (!sameIndexes(indexes, this.info.indexes)) {
+                this.log.debug('RELOAD_INDEXES', indexes);
+                this.info.indexes = indexes;
+            }
+        }
     }
 
     async waitForDoc(
