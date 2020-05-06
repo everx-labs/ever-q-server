@@ -60,6 +60,7 @@ export type QConfig = {
         tags: string[],
     },
     mamAccessKeys: Set<string>,
+    isTests?: boolean,
 }
 
 export function ensureProtocol(address: string, defaultProtocol: string): string {
@@ -124,6 +125,7 @@ export type DbInfo = {
 }
 
 export const BLOCKCHAIN_DB: DbInfo = {
+    lastUpdateTime: 0,
     name: 'blockchain',
     collections: {}
 };

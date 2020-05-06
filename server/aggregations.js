@@ -126,6 +126,9 @@ function convertNone(context: AggregationContext, value: any): any {
 }
 
 function bigIntString(context: AggregationContext, value: any): any {
+    if (typeof value === 'number') {
+        return value.toString();
+    }
     //$FlowFixMe
     return BigInt(`0x${value.substr(context.bigIntPrefix)}`).toString();
 }
@@ -210,15 +213,12 @@ export class AggregationHelperFactory {
     static createQuery(
         collection: string,
         filter: string,
-        argFields: FieldAggregation[] | typeof undefined,
+        fields: FieldAggregation[],
     ): {
         text: string,
         helpers: AggregationHelper[],
     } {
         const filterSection = filter ? `FILTER ${filter}` : '';
-        const fields: FieldAggregation[] = (Array.isArray(argFields) && argFields.length > 0)
-            ? argFields
-            : [{ field: '', fn: AggregationFn.COUNT }];
         const helpers: AggregationHelper[] = fields.map((aggregation, i) => {
             return AggregationHelperFactory.create(collection, i, aggregation);
         });

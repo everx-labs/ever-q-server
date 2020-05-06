@@ -637,9 +637,9 @@ const Block: TypeDef = {
             },
             p17: {
                 _doc: docs.block.master.config.p17._doc,
-                min_stake: string(),
-                max_stake: string(),
-                min_total_stake: string(),
+                min_stake: u64(),
+                max_stake: u64(),
+                min_total_stake: u64(),
                 max_stake_factor: u32()
             },
             p18: arrayOf({

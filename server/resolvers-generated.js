@@ -221,9 +221,9 @@ const BlockMasterConfigP16 = struct({
 });
 
 const BlockMasterConfigP17 = struct({
-    min_stake: scalar,
-    max_stake: scalar,
-    min_total_stake: scalar,
+    min_stake: bigUInt1,
+    max_stake: bigUInt1,
+    min_total_stake: bigUInt1,
     max_stake_factor: scalar,
 });
 
@@ -718,6 +718,17 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.create, args);
             },
         },
+        BlockMasterConfigP17: {
+            min_stake(parent, args) {
+                return resolveBigUInt(1, parent.min_stake, args);
+            },
+            max_stake(parent, args) {
+                return resolveBigUInt(1, parent.max_stake, args);
+            },
+            min_total_stake(parent, args) {
+                return resolveBigUInt(1, parent.min_total_stake, args);
+            },
+        },
         ValidatorSetList: {
             weight(parent, args) {
                 return resolveBigUInt(1, parent.weight, args);
@@ -1046,11 +1057,11 @@ scalarFields.set('blocks.out_msg_descr.msg_env_hash', { type: 'string', path: 'd
 scalarFields.set('blocks.out_msg_descr.next_workchain', { type: 'number', path: 'doc.out_msg_descr[*].next_workchain' });
 scalarFields.set('blocks.out_msg_descr.next_addr_pfx', { type: 'uint64', path: 'doc.out_msg_descr[*].next_addr_pfx' });
 scalarFields.set('blocks.account_blocks.account_addr', { type: 'string', path: 'doc.account_blocks[*].account_addr' });
-scalarFields.set('blocks.account_blocks.transactions.lt', { type: 'uint64', path: 'doc.account_blocks[*].transactions[*].lt' });
-scalarFields.set('blocks.account_blocks.transactions.transaction_id', { type: 'string', path: 'doc.account_blocks[*].transactions[*].transaction_id' });
-scalarFields.set('blocks.account_blocks.transactions.total_fees', { type: 'uint1024', path: 'doc.account_blocks[*].transactions[*].total_fees' });
-scalarFields.set('blocks.account_blocks.transactions.total_fees_other.currency', { type: 'number', path: 'doc.account_blocks[*].transactions[*].total_fees_other[*].currency' });
-scalarFields.set('blocks.account_blocks.transactions.total_fees_other.value', { type: 'uint1024', path: 'doc.account_blocks[*].transactions[*].total_fees_other[*].value' });
+scalarFields.set('blocks.account_blocks.transactions.lt', { type: 'uint64', path: 'doc.account_blocks[*].transactions[**].lt' });
+scalarFields.set('blocks.account_blocks.transactions.transaction_id', { type: 'string', path: 'doc.account_blocks[*].transactions[**].transaction_id' });
+scalarFields.set('blocks.account_blocks.transactions.total_fees', { type: 'uint1024', path: 'doc.account_blocks[*].transactions[**].total_fees' });
+scalarFields.set('blocks.account_blocks.transactions.total_fees_other.currency', { type: 'number', path: 'doc.account_blocks[*].transactions[**].total_fees_other[***].currency' });
+scalarFields.set('blocks.account_blocks.transactions.total_fees_other.value', { type: 'uint1024', path: 'doc.account_blocks[*].transactions[**].total_fees_other[***].value' });
 scalarFields.set('blocks.account_blocks.old_hash', { type: 'string', path: 'doc.account_blocks[*].old_hash' });
 scalarFields.set('blocks.account_blocks.new_hash', { type: 'string', path: 'doc.account_blocks[*].new_hash' });
 scalarFields.set('blocks.account_blocks.tr_count', { type: 'number', path: 'doc.account_blocks[*].tr_count' });
@@ -1083,19 +1094,19 @@ scalarFields.set('blocks.master.shard_hashes.descr.min_ref_mc_seqno', { type: 'n
 scalarFields.set('blocks.master.shard_hashes.descr.gen_utime', { type: 'number', path: 'doc.master.shard_hashes[*].descr.gen_utime' });
 scalarFields.set('blocks.master.shard_hashes.descr.split', { type: 'number', path: 'doc.master.shard_hashes[*].descr.split' });
 scalarFields.set('blocks.master.shard_hashes.descr.fees_collected', { type: 'uint1024', path: 'doc.master.shard_hashes[*].descr.fees_collected' });
-scalarFields.set('blocks.master.shard_hashes.descr.fees_collected_other.currency', { type: 'number', path: 'doc.master.shard_hashes[*].descr.fees_collected_other[*].currency' });
-scalarFields.set('blocks.master.shard_hashes.descr.fees_collected_other.value', { type: 'uint1024', path: 'doc.master.shard_hashes[*].descr.fees_collected_other[*].value' });
+scalarFields.set('blocks.master.shard_hashes.descr.fees_collected_other.currency', { type: 'number', path: 'doc.master.shard_hashes[*].descr.fees_collected_other[**].currency' });
+scalarFields.set('blocks.master.shard_hashes.descr.fees_collected_other.value', { type: 'uint1024', path: 'doc.master.shard_hashes[*].descr.fees_collected_other[**].value' });
 scalarFields.set('blocks.master.shard_hashes.descr.funds_created', { type: 'uint1024', path: 'doc.master.shard_hashes[*].descr.funds_created' });
-scalarFields.set('blocks.master.shard_hashes.descr.funds_created_other.currency', { type: 'number', path: 'doc.master.shard_hashes[*].descr.funds_created_other[*].currency' });
-scalarFields.set('blocks.master.shard_hashes.descr.funds_created_other.value', { type: 'uint1024', path: 'doc.master.shard_hashes[*].descr.funds_created_other[*].value' });
+scalarFields.set('blocks.master.shard_hashes.descr.funds_created_other.currency', { type: 'number', path: 'doc.master.shard_hashes[*].descr.funds_created_other[**].currency' });
+scalarFields.set('blocks.master.shard_hashes.descr.funds_created_other.value', { type: 'uint1024', path: 'doc.master.shard_hashes[*].descr.funds_created_other[**].value' });
 scalarFields.set('blocks.master.shard_fees.workchain_id', { type: 'number', path: 'doc.master.shard_fees[*].workchain_id' });
 scalarFields.set('blocks.master.shard_fees.shard', { type: 'string', path: 'doc.master.shard_fees[*].shard' });
 scalarFields.set('blocks.master.shard_fees.fees', { type: 'uint1024', path: 'doc.master.shard_fees[*].fees' });
-scalarFields.set('blocks.master.shard_fees.fees_other.currency', { type: 'number', path: 'doc.master.shard_fees[*].fees_other[*].currency' });
-scalarFields.set('blocks.master.shard_fees.fees_other.value', { type: 'uint1024', path: 'doc.master.shard_fees[*].fees_other[*].value' });
+scalarFields.set('blocks.master.shard_fees.fees_other.currency', { type: 'number', path: 'doc.master.shard_fees[*].fees_other[**].currency' });
+scalarFields.set('blocks.master.shard_fees.fees_other.value', { type: 'uint1024', path: 'doc.master.shard_fees[*].fees_other[**].value' });
 scalarFields.set('blocks.master.shard_fees.create', { type: 'uint1024', path: 'doc.master.shard_fees[*].create' });
-scalarFields.set('blocks.master.shard_fees.create_other.currency', { type: 'number', path: 'doc.master.shard_fees[*].create_other[*].currency' });
-scalarFields.set('blocks.master.shard_fees.create_other.value', { type: 'uint1024', path: 'doc.master.shard_fees[*].create_other[*].value' });
+scalarFields.set('blocks.master.shard_fees.create_other.currency', { type: 'number', path: 'doc.master.shard_fees[*].create_other[**].currency' });
+scalarFields.set('blocks.master.shard_fees.create_other.value', { type: 'uint1024', path: 'doc.master.shard_fees[*].create_other[**].value' });
 scalarFields.set('blocks.master.recover_create_msg.msg_id', { type: 'string', path: 'doc.master.recover_create_msg.msg_id' });
 scalarFields.set('blocks.master.recover_create_msg.ihr_fee', { type: 'uint1024', path: 'doc.master.recover_create_msg.ihr_fee' });
 scalarFields.set('blocks.master.recover_create_msg.proof_created', { type: 'string', path: 'doc.master.recover_create_msg.proof_created' });
@@ -1171,9 +1182,9 @@ scalarFields.set('blocks.master.config.p15.stake_held_for', { type: 'number', pa
 scalarFields.set('blocks.master.config.p16.max_validators', { type: 'number', path: 'doc.master.config.p16.max_validators' });
 scalarFields.set('blocks.master.config.p16.max_main_validators', { type: 'number', path: 'doc.master.config.p16.max_main_validators' });
 scalarFields.set('blocks.master.config.p16.min_validators', { type: 'number', path: 'doc.master.config.p16.min_validators' });
-scalarFields.set('blocks.master.config.p17.min_stake', { type: 'string', path: 'doc.master.config.p17.min_stake' });
-scalarFields.set('blocks.master.config.p17.max_stake', { type: 'string', path: 'doc.master.config.p17.max_stake' });
-scalarFields.set('blocks.master.config.p17.min_total_stake', { type: 'string', path: 'doc.master.config.p17.min_total_stake' });
+scalarFields.set('blocks.master.config.p17.min_stake', { type: 'uint64', path: 'doc.master.config.p17.min_stake' });
+scalarFields.set('blocks.master.config.p17.max_stake', { type: 'uint64', path: 'doc.master.config.p17.max_stake' });
+scalarFields.set('blocks.master.config.p17.min_total_stake', { type: 'uint64', path: 'doc.master.config.p17.min_total_stake' });
 scalarFields.set('blocks.master.config.p17.max_stake_factor', { type: 'number', path: 'doc.master.config.p17.max_stake_factor' });
 scalarFields.set('blocks.master.config.p18.utime_since', { type: 'number', path: 'doc.master.config.p18[*].utime_since' });
 scalarFields.set('blocks.master.config.p18.bit_price_ps', { type: 'string', path: 'doc.master.config.p18[*].bit_price_ps' });

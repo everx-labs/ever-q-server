@@ -19,15 +19,15 @@
 import { Database, DocumentCollection } from "arangojs";
 import { Span, SpanContext, Tracer } from "opentracing";
 import type { TONClient } from "ton-client-js/types";
-import { AggregationHelperFactory } from "./aggregations";
+import { AggregationFn, AggregationHelperFactory } from "./aggregations";
 import type { FieldAggregation, AggregationHelper } from "./aggregations";
 import { DocUpsertHandler, DocSubscription } from "./arango-listeners";
 import type { AccessRights } from "./auth";
 import { Auth } from "./auth";
 import { BLOCKCHAIN_DB, STATS } from './config';
-import type { QConfig } from "./config";
+import type { CollectionInfo, IndexInfo, QConfig } from "./config";
 import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
-import { parseSelectionSet, QParams, selectionToString } from "./db-types";
+import { indexToString, parseSelectionSet, QParams, selectionToString } from "./db-types";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
 import { isFastQuery } from './slow-detector';
@@ -35,6 +35,8 @@ import type { IStats } from './tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "./tracer";
 import { createError, wrap } from "./utils";
 import EventEmitter from 'events';
+
+const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
 export type GraphQLRequestContext = {
     config: QConfig,
@@ -99,6 +101,8 @@ const accessGranted: AccessRights = {
 export class Collection {
     name: string;
     docType: QType;
+    info: CollectionInfo;
+    infoRefreshTime: number;
 
     log: QLog;
     auth: Auth;
@@ -113,6 +117,7 @@ export class Collection {
     statSubscriptionActive: StatsGauge;
     db: Database;
     slowDb: Database;
+    isTests: boolean;
 
     waitForCount: number;
     subscriptionCount: number;
@@ -130,15 +135,19 @@ export class Collection {
         stats: IStats,
         db: Database,
         slowDb: Database,
+        isTests: boolean,
     ) {
         this.name = name;
         this.docType = docType;
+        this.info = BLOCKCHAIN_DB.collections[name];
+        this.infoRefreshTime = Date.now();
 
         this.log = logs.create(name);
         this.auth = auth;
         this.tracer = tracer;
         this.db = db;
         this.slowDb = slowDb;
+        this.isTests = isTests;
         this.waitForCount = 0;
         this.subscriptionCount = 0;
 
@@ -286,20 +295,24 @@ export class Collection {
         };
     }
 
-    isFastQuery(
+    async isFastQuery(
         text: string,
         filter: any,
         orderBy?: OrderBy[]
-    ): boolean {
-        const existingStat = this.queryStats.get(text);
+    ): Promise<boolean> {
+        await this.checkRefreshInfo();
+        let statKey = text;
+        if (orderBy && orderBy.length > 0) {
+            statKey = `${statKey}${orderBy.map(x => `${x.path} ${x.direction}`).join(' ')}`;
+        }
+        const existingStat = this.queryStats.get(statKey);
         if (existingStat !== undefined) {
             return existingStat.isFast;
         }
-        const collectionInfo = BLOCKCHAIN_DB.collections[this.name];
         const stat = {
-            isFast: isFastQuery(collectionInfo, this.docType, filter, orderBy || [], console),
+            isFast: isFastQuery(this.info, this.docType, filter, orderBy || [], console),
         };
-        this.queryStats.set(text, stat);
+        this.queryStats.set(statKey, stat);
         return stat.isFast;
     }
 
@@ -320,7 +333,7 @@ export class Collection {
                     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
                     return [];
                 }
-                const isFast = this.isFastQuery(q.text, q.filter, q.orderBy);
+                let isFast = await this.isFastQuery(q.text, q.filter, q.orderBy);
                 if (!isFast) {
                     this.statQuerySlow.increment();
                 }
@@ -461,25 +474,53 @@ export class Collection {
 
 
     createAggregationQuery(
-        args: AggregationArgs,
+        filter: any,
+        fields: FieldAggregation[],
         accessRights: AccessRights,
     ): ?{
         text: string,
         params: { [string]: any },
         helpers: AggregationHelper[],
     } {
-        const filter = args.filter || {};
         const params = new QParams();
         const condition = this.buildConditionQL(filter, params, accessRights);
         if (condition === null) {
             return null;
         }
-        const query = AggregationHelperFactory.createQuery(this.name, condition || '', args.fields);
+        const query = AggregationHelperFactory.createQuery(this.name, condition || '', fields);
         return {
             text: query.text,
             params: params.values,
             helpers: query.helpers,
         };
+    }
+
+    async isFastAggregationQuery(
+        text: string,
+        filter: any,
+        helpers: AggregationHelper[],
+    ): Promise<boolean> {
+        for (const h: AggregationHelper of helpers) {
+            const c = h.context;
+            if (c.fn === AggregationFn.COUNT) {
+                if (!(await this.isFastQuery(text, filter))) {
+                    return false;
+                }
+            } else if (c.fn === AggregationFn.MIN || c.fn === AggregationFn.MAX) {
+                let path = c.field.path;
+                if (path.startsWith('doc.')) {
+                    path = path.substr('doc.'.length);
+                }
+                if (!(await this.isFastQuery(
+                    text,
+                    filter,
+                    [{ path, direction: 'ASC' }],
+                ))) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     aggregationResolver() {
@@ -493,12 +534,17 @@ export class Collection {
             const start = Date.now();
             try {
                 const accessRights = await requireGrantedAccess(context, args);
-                const q = this.createAggregationQuery(args, accessRights);
+                const filter = args.filter || {};
+                const fields = Array.isArray(args.fields) && args.fields.length > 0
+                    ? args.fields
+                    : [{ field: '', fn: AggregationFn.COUNT }];
+
+                const q = this.createAggregationQuery(filter, fields, accessRights);
                 if (!q) {
                     this.log.debug('AGGREGATE', args, 0, 'SKIPPED', context.remoteAddress);
                     return [];
                 }
-                const isFast = await this.isFastQuery(q.text, args.filter);
+                const isFast = await this.isFastAggregationQuery(q.text, filter, q.helpers);
                 const start = Date.now();
                 const result = await this.query(q.text, q.params, isFast, {
                     filter: args.filter,
@@ -522,6 +568,36 @@ export class Collection {
 
     dbCollection(): DocumentCollection {
         return this.db.collection(this.name);
+    }
+
+    async checkRefreshInfo() {
+        if (this.isTests) {
+            return;
+        }
+        if (Date.now() < this.infoRefreshTime) {
+            return;
+        }
+        this.infoRefreshTime = Date.now() + INFO_REFRESH_INTERVAL;
+        const indexes = (await this.dbCollection().indexes())
+            .map(x => ({ fields: x.fields }));
+
+        const sameIndexes = (aIndexes: IndexInfo[], bIndexes: IndexInfo[]): boolean => {
+            const aRest = new Set(aIndexes.map(indexToString));
+            for (const bIndex of bIndexes) {
+                const bIndexString = indexToString(bIndex);
+                if (aRest.has(bIndexString)) {
+                    aRest.delete(bIndexString);
+                } else {
+                    return false;
+                }
+            }
+            return aRest.size === 0;
+        };
+        if (!sameIndexes(indexes, this.info.indexes)) {
+            this.log.debug('RELOAD_INDEXES', indexes);
+            this.info.indexes = indexes;
+        }
+
     }
 
     async waitForDoc(
