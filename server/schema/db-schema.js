@@ -30,6 +30,7 @@ import {
     u16,
     u32,
     u64,
+    u128,
     u8,
     u8enum,
     unixTime,
@@ -637,9 +638,9 @@ const Block: TypeDef = {
             },
             p17: {
                 _doc: docs.block.master.config.p17._doc,
-                min_stake: u64(),
-                max_stake: u64(),
-                min_total_stake: u64(),
+                min_stake: u128(),
+                max_stake: u128(),
+                min_total_stake: u128(),
                 max_stake_factor: u32()
             },
             p18: arrayOf({

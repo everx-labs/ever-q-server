@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 - Indexes reloaded from db first time on demand and then every 1 hour. 
 - Config p17 stake types.
 
+## 0.26.2 – May 6, 2020
+### Fixed
+- master config p17 field sizes
+
 ## 0.26.0 – May 2, 2020
 ### New
 - companion fields `*_string` for fields that holds unix time values

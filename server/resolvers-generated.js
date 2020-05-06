@@ -221,9 +221,9 @@ const BlockMasterConfigP16 = struct({
 });
 
 const BlockMasterConfigP17 = struct({
-    min_stake: bigUInt1,
-    max_stake: bigUInt1,
-    min_total_stake: bigUInt1,
+    min_stake: bigUInt2,
+    max_stake: bigUInt2,
+    min_total_stake: bigUInt2,
     max_stake_factor: scalar,
 });
 
@@ -720,13 +720,13 @@ function createResolvers(db) {
         },
         BlockMasterConfigP17: {
             min_stake(parent, args) {
-                return resolveBigUInt(1, parent.min_stake, args);
+                return resolveBigUInt(2, parent.min_stake, args);
             },
             max_stake(parent, args) {
-                return resolveBigUInt(1, parent.max_stake, args);
+                return resolveBigUInt(2, parent.max_stake, args);
             },
             min_total_stake(parent, args) {
-                return resolveBigUInt(1, parent.min_total_stake, args);
+                return resolveBigUInt(2, parent.min_total_stake, args);
             },
         },
         ValidatorSetList: {
@@ -1182,9 +1182,9 @@ scalarFields.set('blocks.master.config.p15.stake_held_for', { type: 'number', pa
 scalarFields.set('blocks.master.config.p16.max_validators', { type: 'number', path: 'doc.master.config.p16.max_validators' });
 scalarFields.set('blocks.master.config.p16.max_main_validators', { type: 'number', path: 'doc.master.config.p16.max_main_validators' });
 scalarFields.set('blocks.master.config.p16.min_validators', { type: 'number', path: 'doc.master.config.p16.min_validators' });
-scalarFields.set('blocks.master.config.p17.min_stake', { type: 'uint64', path: 'doc.master.config.p17.min_stake' });
-scalarFields.set('blocks.master.config.p17.max_stake', { type: 'uint64', path: 'doc.master.config.p17.max_stake' });
-scalarFields.set('blocks.master.config.p17.min_total_stake', { type: 'uint64', path: 'doc.master.config.p17.min_total_stake' });
+scalarFields.set('blocks.master.config.p17.min_stake', { type: 'uint1024', path: 'doc.master.config.p17.min_stake' });
+scalarFields.set('blocks.master.config.p17.max_stake', { type: 'uint1024', path: 'doc.master.config.p17.max_stake' });
+scalarFields.set('blocks.master.config.p17.min_total_stake', { type: 'uint1024', path: 'doc.master.config.p17.min_total_stake' });
 scalarFields.set('blocks.master.config.p17.max_stake_factor', { type: 'number', path: 'doc.master.config.p17.max_stake_factor' });
 scalarFields.set('blocks.master.config.p18.utime_since', { type: 'number', path: 'doc.master.config.p18[*].utime_since' });
 scalarFields.set('blocks.master.config.p18.bit_price_ps', { type: 'string', path: 'doc.master.config.p18[*].bit_price_ps' });
