@@ -437,9 +437,9 @@ type BlockMasterConfigP16 {
 
 "Validator stake parameters"
 type BlockMasterConfigP17 {
-	min_stake: String
-	max_stake: String
-	min_total_stake: String
+	min_stake(format: BigIntFormat): String
+	max_stake(format: BigIntFormat): String
+	min_total_stake(format: BigIntFormat): String
 	max_stake_factor: Float
 }
 
