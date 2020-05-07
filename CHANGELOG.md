@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.26.3 – May 7, 2020
 ### New
+- Fields `Block.key_field` and `Block.boc`. 
 
 ## 0.26.2 – May 6, 2020
 ### Fixed

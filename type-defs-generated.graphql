@@ -716,6 +716,10 @@ type Block {
 	tr_count: Int
 	state_update: BlockStateUpdate
 	master: BlockMaster
+	"true if this block is a key block"
+	key_block: Boolean
+	"Serialized bag of cell of this block encoded with base64"
+	boc: String
 	signatures(timeout: Int): BlockSignatures
 }
 
@@ -1846,6 +1850,10 @@ input BlockFilter {
 	tr_count: IntFilter
 	state_update: BlockStateUpdateFilter
 	master: BlockMasterFilter
+	"true if this block is a key block"
+	key_block: BooleanFilter
+	"Serialized bag of cell of this block encoded with base64"
+	boc: StringFilter
 	signatures: BlockSignaturesFilter
     OR: BlockFilter
 }

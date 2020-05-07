@@ -693,6 +693,8 @@ const Block: TypeDef = {
             }, docs.block.master.config.p39._doc),
         }
     },
+    key_block: bool(docs.block.key_block),
+    boc: string(docs.block.boc),
     signatures: join({ BlockSignatures }, 'id', 'id'),
 };
 
