@@ -10,7 +10,11 @@ export function cleanError(error: any): any {
 }
 
 const QErrorCode = {
-    MESSAGE_EXPIRED: 1006,
+    MESSAGE_EXPIRED: 10001,
+    MULTIPLE_ACCESS_KEYS: 10002,
+    UNAUTHORIZED: 10003,
+    AUTH_SERVICE_UNAVAILABLE: 10004,
+    AUTH_FAILED: 10005,
 };
 
 export class QError {
@@ -31,13 +35,28 @@ export class QError {
         }
         return error;
     }
-}
 
-export function createError(code: number, message: string, source: string = 'graphql'): Error {
-    const error = new Error(message);
-    (error: any).source = source;
-    (error: any).code = code;
-    return error;
+    static multipleAccessKeys() {
+        return QError.create(
+            QErrorCode.MULTIPLE_ACCESS_KEYS,
+            'Request must use the same access key for all queries and mutations',
+        );
+    }
+
+    static unauthorized() {
+        return QError.create(QErrorCode.UNAUTHORIZED, 'Unauthorized');
+    }
+
+    static authServiceUnavailable() {
+        return QError.create(QErrorCode.AUTH_SERVICE_UNAVAILABLE, 'Auth service unavailable');
+    }
+
+    static auth(error) {
+        return QError.create(QErrorCode.AUTH_FAILED,
+            error.message || error.description,
+            { authErrorCode: error.code },
+        )
+    }
 }
 
 function isInternalServerError(error: Error): boolean {
@@ -56,7 +75,7 @@ export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Pro
         let cleaned = cleanError(err);
         log.error('FAILED', op, args, cleaned);
         if (isInternalServerError(cleaned)) {
-            cleaned = createError(500, 'Service temporary unavailable');
+            cleaned = QError.create(500, 'Service temporary unavailable');
         }
         throw cleaned;
     }

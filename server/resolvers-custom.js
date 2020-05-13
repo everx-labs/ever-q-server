@@ -15,7 +15,7 @@ import path from 'path';
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from "./auth";
 import { QTracer } from "./tracer";
-import { createError, QError } from "./utils";
+import { QError } from "./utils";
 
 function isObject(test: any): boolean {
     return typeof test === 'object' && test !== null;
