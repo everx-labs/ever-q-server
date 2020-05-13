@@ -1,4 +1,4 @@
-import type {QLog} from './logs';
+import type { QLog } from './logs';
 
 export function cleanError(error: any): any {
     if ('ArangoError' in error) {
@@ -9,6 +9,29 @@ export function cleanError(error: any): any {
     return error;
 }
 
+const QErrorCode = {
+    MESSAGE_EXPIRED: 1006,
+};
+
+export class QError {
+    static messageExpired(id: string, expiredAt: number): Error {
+        return QError.create(QErrorCode.MESSAGE_EXPIRED, `Message expired`, {
+            id,
+            expiredAt,
+            now: Date.now(),
+        });
+    }
+
+    static create(code: number, message: string, data?: any): Error {
+        const error: any = new Error(message);
+        error.source = 'graphql';
+        error.code = code;
+        if (data !== undefined) {
+            error.data = data;
+        }
+        return error;
+    }
+}
 
 export function createError(code: number, message: string, source: string = 'graphql'): Error {
     const error = new Error(message);
