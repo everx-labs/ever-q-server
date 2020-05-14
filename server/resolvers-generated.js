@@ -442,6 +442,8 @@ const Block = struct({
     tr_count: scalar,
     state_update: BlockStateUpdate,
     master: BlockMaster,
+    key_block: scalar,
+    boc: scalar,
     signatures: join('id', 'id', 'blocks_signatures', () => BlockSignatures),
 }, true);
 
@@ -1367,6 +1369,8 @@ scalarFields.set('blocks.master.config.p39.seqno', { type: 'number', path: 'doc.
 scalarFields.set('blocks.master.config.p39.valid_until', { type: 'number', path: 'doc.master.config.p39[*].valid_until' });
 scalarFields.set('blocks.master.config.p39.signature_r', { type: 'string', path: 'doc.master.config.p39[*].signature_r' });
 scalarFields.set('blocks.master.config.p39.signature_s', { type: 'string', path: 'doc.master.config.p39[*].signature_s' });
+scalarFields.set('blocks.key_block', { type: 'boolean', path: 'doc.key_block' });
+scalarFields.set('blocks.boc', { type: 'string', path: 'doc.boc' });
 scalarFields.set('transactions.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('transactions.block_id', { type: 'string', path: 'doc.block_id' });
 scalarFields.set('transactions.account_addr', { type: 'string', path: 'doc.account_addr' });

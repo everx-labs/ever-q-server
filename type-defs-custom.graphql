@@ -4,6 +4,8 @@ input Request {
     id: String
     "Serialized message in base64"
     body: String
+    "Message expiration time (unix time in ms)"
+    expireAt: Float
 }
 
 type Info {
