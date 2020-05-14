@@ -930,7 +930,7 @@ function createResolvers(db) {
                 return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
             },
             src_transaction(parent, args, context) {
-                return parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args) : null;
+                return parent.created_lt !== '00' && parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args) : null;
             },
             dst_transaction(parent, args, context) {
                 return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg', args) : null;

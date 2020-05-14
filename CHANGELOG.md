@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 ### New
 - Fields `Block.key_field` and `Block.boc`. 
 - Field `expireAt` in post requests.
+- Field `time` in `info` query.
+- `src_transaction` will wait only when `messages.created_lt` !== 0 (because there is no transaction for such messages).
 
 ### Fixed
 - master config `p20`, `p21`, `p18` fields types
