@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 - Fields `Block.key_field` and `Block.boc`. 
 - Field `expireAt` in post requests.
 
+### Fixed
+- master config `p20`, `p21`, `p18` fields types
+
 ## 0.26.2 – May 6, 2020
 ### Fixed
 - master config p17 field sizes
