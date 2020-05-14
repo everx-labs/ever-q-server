@@ -1,6 +1,5 @@
 // @flow
 
-import fs from "fs";
 import { Kafka, Producer } from "kafkajs";
 import { Span, FORMAT_TEXT_MAP } from 'opentracing';
 import type { TONContracts } from "ton-client-js/types";
@@ -11,11 +10,15 @@ import type {
 } from "./arango-collection";
 import { Auth } from "./auth";
 import { ensureProtocol } from "./config";
-import path from 'path';
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from "./auth";
 import { QTracer } from "./tracer";
 import { QError } from "./utils";
+
+import fs from 'fs'
+import path from 'path'
+
+const {version} = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'));
 
 function isObject(test: any): boolean {
     return typeof test === 'object' && test !== null;
@@ -48,9 +51,9 @@ export type GraphQLRequestContextEx = GraphQLRequestContext & {
 //------------------------------------------------------------- Query
 
 function info(): Info {
-    const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
     return {
-        version: pkg.version,
+        version,
+        time: Date.now(),
     };
 }
 

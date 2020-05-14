@@ -8,8 +8,12 @@ input Request {
     expireAt: Float
 }
 
+" GraphQL Server info"
 type Info {
+    " Server version "
     version: String
+    " Server unix time in ms"
+    time: Float
 }
 
 "Aggregation function used to collect aggregated value"
