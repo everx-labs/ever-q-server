@@ -593,6 +593,7 @@ export class Collection {
         if (!sameIndexes(indexes, this.info.indexes)) {
             this.log.debug('RELOAD_INDEXES', indexes);
             this.info.indexes = indexes;
+            this.queryStats.clear();
         }
 
     }
