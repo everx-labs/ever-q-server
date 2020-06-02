@@ -28,7 +28,7 @@ async function testServerRequired(): Promise<TONQServer> {
     return testServer;
 }
 
-export async function testServerQuery(query: string, variables?: { [string]: any }): any {
+export async function testServerQuery(query: string, variables?: { [string]: any }): Promise<any> {
     await testServerRequired();
     const response = await fetch(`http://${testConfig.server.host}:${testConfig.server.port}/graphql`, {
         method: 'POST',
