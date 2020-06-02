@@ -1,6 +1,30 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.0 – Jun 3, 2020
+### New
+- `when` arg to join fields – ability to include joined objects into result set only if some conditions met.
+   
+   In following example we return `dst_transaction` only for messages with `value` greater than zero:
+  ```graphql
+  query { 
+      messages { 
+          dst_transaction(timeout: 0, when: { value: { gt: "0" } }) {
+              id 
+          } 
+          value
+          dst
+      }
+  }
+  ```
+- Unit test infrastructure is now suitable for TDD. It starts q-server and performs graphql queries during tests. 
+  
+  ⚠️ Important to CI: you must run tests in environment correctly configured to start q-server connected to valid Arangodb
+  with enough for tests set of data. You can configure q-server using env variables due to README.
+
+### Fixed
+- Unix time strings now correctly show unix seconds.
+
 ## 0.26.3 – May 7, 2020
 ### New
 - Fields `Block.key_field` and `Block.boc`. 

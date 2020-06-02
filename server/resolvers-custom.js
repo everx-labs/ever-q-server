@@ -47,7 +47,6 @@ export type GraphQLRequestContextEx = GraphQLRequestContext & {
 //------------------------------------------------------------- Query
 
 function info(): Info {
-    const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
     return {
         version,
         time: Date.now(),

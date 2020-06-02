@@ -40,10 +40,9 @@ test('when conditions for joins', async () => {
     }
     `);
     for (const message of data.messages) {
-        if (message.value && BigInt(message.value) > 0n) {
+        if (message.value && BigInt(message.value) > BigInt(0)) {
             expect(message.dst_transaction).toBeTruthy();
         } else if (message.dst) {
-            console.log('>>>', message);
             expect(message.dst_transaction).toBeNull();
         }
     }

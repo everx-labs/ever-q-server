@@ -52,3 +52,5 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
     return responseJson.data;
 }
+
+test('Init', () => {});

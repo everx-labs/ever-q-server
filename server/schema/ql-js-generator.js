@@ -662,7 +662,7 @@ function main(schemaDef: TypeDef) {
         });
         stringFormattedFields.forEach((field) => {
             js.writeLn(`            ${field.name}_string(parent, args) {`);
-            js.writeLn(`                return ${field.formatter}(parent.${field.name});`);
+            js.writeLn(`                return ${field.formatter || ''}(parent.${field.name});`);
             js.writeLn(`            },`);
         });
         enumFields.forEach((field) => {
