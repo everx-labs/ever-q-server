@@ -13,6 +13,7 @@ import { ensureProtocol } from "./config";
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from "./auth";
 import { QTracer } from "./tracer";
+import { QError } from "./utils";
 import {version} from '../package.json';
 
 function isObject(test: any): boolean {
@@ -36,6 +37,7 @@ type Info = {
 type Request = {
     id: string,
     body: string,
+    expireAt: number,
 }
 
 export type GraphQLRequestContextEx = GraphQLRequestContext & {
@@ -45,8 +47,10 @@ export type GraphQLRequestContextEx = GraphQLRequestContext & {
 //------------------------------------------------------------- Query
 
 function info(): Info {
+    const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
     return {
         version,
+        time: Date.now(),
     };
 }
 
@@ -150,6 +154,7 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
         return newProducer;
 
     });
+
     const messages = requests.map((request) => {
         const traceInfo = {};
         context.db.tracer.inject(span, FORMAT_TEXT_MAP, traceInfo);
@@ -203,6 +208,12 @@ async function postRequests(
         span.setTag('params', requests);
         const accessRights = await requireGrantedAccess(context, args);
         await checkPostRestrictions(context.client.contracts, requests, accessRights);
+
+        const expired: ?Request = requests.find(x => x.expireAt && (Date.now() > x.expireAt));
+        if (expired) {
+            throw QError.messageExpired(expired.id, expired.expireAt);
+        }
+
         try {
             if (context.config.requests.mode === 'rest') {
                 await postRequestsUsingRest(requests, context, span);
