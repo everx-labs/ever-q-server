@@ -5,6 +5,7 @@ import path from 'path';
 import Arango from "./arango";
 import { Collection, mamAccessRequired } from "./arango-collection";
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
+import {version} from '../package.json';
 
 type Info = {
     version: string,
@@ -40,9 +41,8 @@ type CollectionSummary = {
 // Query
 
 function info(): Info {
-    const pkg = JSON.parse((fs.readFileSync(path.resolve(__dirname, '..', '..', 'package.json')): any));
     return {
-        version: pkg.version,
+        version,
     };
 }
 

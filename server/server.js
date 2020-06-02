@@ -167,6 +167,10 @@ export default class TONQServer {
     }
 
 
+    async stop() {
+        this.logs.stop();
+    }
+
     addEndPoint(endPoint: EndPoint) {
         const typeDefs = endPoint.typeDefFileNames
             .map(x => fs.readFileSync(x, 'utf-8'))

@@ -1,10 +1,23 @@
 // @flow
-import { Def } from "ton-labs-dev-ops/dist/src/schema";
-import type { IntSizeType, TypeDef } from "ton-labs-dev-ops/src/schema";
+import {Def} from "ton-labs-dev-ops/dist/src/schema";
+import type {IntSizeType, TypeDef} from "ton-labs-dev-ops/src/schema";
 
-const { ref, arrayOf } = Def;
+const {ref, arrayOf} = Def;
 
-export const join = (refDef: (string | { [string]: TypeDef }), on: string, refOn: string, preCondition?: string): TypeDef => {
+const ToStringFormatter = {
+    unixMillisecondsToString: 'unixMillisecondsToString',
+    unixSecondsToString: 'unixSecondsToString',
+
+}
+
+export type ToStringFormatterType = $Values<typeof ToStringFormatter>;
+
+export const join = (
+    refDef: (string | { [string]: TypeDef }),
+    on: string,
+    refOn: string,
+    preCondition?: string,
+): TypeDef => {
     return {
         ...ref(refDef),
         _: {
@@ -12,24 +25,30 @@ export const join = (refDef: (string | { [string]: TypeDef }), on: string, refOn
                 on,
                 refOn,
                 preCondition: (preCondition || ''),
-            }
-        }
+            },
+        },
     }
 };
 
 export const withDoc = (def: TypeDef, doc?: string) => ({
     ...def,
-    ...(doc ? { _doc: doc } : {})
+    ...(doc ? {_doc: doc} : {}),
 });
 
 export const required = (def: TypeDef) => def;
 
 const uint = (size: IntSizeType, doc?: string) => withDoc({
-    _int: { unsigned: true, size }
+    _int: {
+        unsigned: true,
+        size,
+    },
 }, doc);
 
 const int = (size: IntSizeType, doc?: string) => withDoc({
-    _int: { unsigned: false, size }
+    _int: {
+        unsigned: false,
+        size,
+    },
 }, doc);
 
 export const i8 = (doc?: string) => int(8, doc);
@@ -40,12 +59,19 @@ export const u32 = (doc?: string) => uint(32, doc);
 export const u64 = (doc?: string) => uint(64, doc);
 export const u128 = (doc?: string) => uint(128, doc);
 const u256 = (doc?: string) => uint(256, doc);
-export const unixTime = (doc?: string) => withDoc({
-    _int: { unsigned: true, size: 32 },
+
+export const u32WithFormatter = (formatter: ToStringFormatterType, doc?: string) => withDoc({
+    _int: {
+        unsigned: true,
+        size: 32,
+    },
     _: {
-        isUnixTime: true,
-    }
+        formatter,
+    },
 }, doc);
+
+export const unixMilliseconds = (doc?: string) => u32WithFormatter(ToStringFormatter.unixMillisecondsToString, doc);
+export const unixSeconds = (doc?: string) => u32WithFormatter(ToStringFormatter.unixSecondsToString, doc);
 
 export const grams = u128;
 
@@ -67,9 +93,9 @@ export function u8enum(name: string, values: IntEnumValues) {
             _: {
                 enum: {
                     name,
-                    values
-                }
-            }
+                    values,
+                },
+            },
         }, effectiveDoc);
     }
 }
@@ -79,4 +105,4 @@ export const OtherCurrency: TypeDef = {
     value: u256(),
 };
 
-export const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf(ref({ OtherCurrency }), doc);
+export const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf(ref({OtherCurrency}), doc);
