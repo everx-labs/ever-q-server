@@ -21,7 +21,7 @@ import {parseIndex} from "./db-types";
 
 export const QRequestsMode = {
     kafka: 'kafka',
-    rest: 'rest,',
+    rest: 'rest',
 };
 
 export type QDbConfig = {
