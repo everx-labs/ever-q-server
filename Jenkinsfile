@@ -221,19 +221,20 @@ pipeline {
     post {
         always {
             script {
-                DiscordURL = credentials('DiscordURL')
-				currentBuild.description = C_TEXT
-                string DiscordFooter = "Build duration is " + currentBuild.durationString
-                DiscordTitle = "Job ${JOB_NAME} from GitHub " + C_PROJECT
-                DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
-                + "Build number ${BUILD_NUMBER}" + "\n" \
-                + "Build: **" + G_buildstatus + "**" + "\n" \
-                + "Build Image: **" + G_MakeImage + "**" + "\n" \
-                + "Unit Tests: **" + G_UnitTestImage + "**" + "\n" \
-                + "Integration Tests: **" + G_IntegTestImage + "**" + "\n" \
-                + "Push Image: **" + G_PushImage + "**" + "\n" \
-                + "Tag Image As Latest: **" + G_PushImageLatest + "**"
-                discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
+				withCredentials ([ string (credentialsId: 'DiscordURL', variable: 'DiscordURL') ]) {
+					currentBuild.description = C_TEXT
+					string DiscordFooter = "Build duration is " + currentBuild.durationString
+					DiscordTitle = "Job ${JOB_NAME} from GitHub " + C_PROJECT
+					DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
+					+ "Build number ${BUILD_NUMBER}" + "\n" \
+					+ "Build: **" + G_buildstatus + "**" + "\n" \
+					+ "Build Image: **" + G_MakeImage + "**" + "\n" \
+					+ "Unit Tests: **" + G_UnitTestImage + "**" + "\n" \
+					+ "Integration Tests: **" + G_IntegTestImage + "**" + "\n" \
+					+ "Push Image: **" + G_PushImage + "**" + "\n" \
+					+ "Tag Image As Latest: **" + G_PushImageLatest + "**"
+					discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
+				}
             }
         }
 
