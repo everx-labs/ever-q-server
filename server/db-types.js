@@ -315,7 +315,7 @@ function createScalar(): QType {
     };
 }
 
-export function resolveUnixTimeString(value: any): string {
+export function unixMillisecondsToString(value: any): string {
     if (value === null || value === undefined) {
         return value;
     }
@@ -335,6 +335,13 @@ export function resolveUnixTimeString(value: any): string {
         ':' + pad(d.getUTCMinutes()) +
         ':' + pad(d.getUTCSeconds()) +
         '.' + (d.getUTCMilliseconds() / 1000).toFixed(3).slice(2, 5);
+}
+
+export function unixSecondsToString(value: any): string {
+    if (value === null || value === undefined) {
+        return value;
+    }
+    return unixMillisecondsToString(value * 1000);
 }
 
 const BigNumberFormat = {

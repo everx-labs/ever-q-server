@@ -9,7 +9,8 @@ const {
     joinArray,
     enumName,
     createEnumNameResolver,
-    resolveUnixTimeString,
+    unixMillisecondsToString,
+    unixSecondsToString,
 } = require('./db-types.js');
 const OtherCurrency = struct({
     currency: scalar,
@@ -708,7 +709,7 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.funds_created, args);
             },
             gen_utime_string(parent, args) {
-                return resolveUnixTimeString(parent.gen_utime);
+                return unixSecondsToString(parent.gen_utime);
             },
             split_type_name: createEnumNameResolver('split_type', { None: 0, Split: 2, Merge: 3 }),
         },
@@ -753,7 +754,7 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.mc_cell_price_ps, args);
             },
             utime_since_string(parent, args) {
-                return resolveUnixTimeString(parent.utime_since);
+                return unixSecondsToString(parent.utime_since);
             },
         },
         GasLimitsPrices: {
@@ -806,10 +807,10 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.total_weight, args);
             },
             utime_since_string(parent, args) {
-                return resolveUnixTimeString(parent.utime_since);
+                return unixSecondsToString(parent.utime_since);
             },
             utime_until_string(parent, args) {
-                return resolveUnixTimeString(parent.utime_until);
+                return unixSecondsToString(parent.utime_until);
             },
         },
         BlockSignatures: {
@@ -817,13 +818,16 @@ function createResolvers(db) {
                 return parent._key;
             },
             block(parent, args, context) {
+                if (args.when && !BlockSignatures.test(null, parent, args.when)) {
+                    return null;
+                }
                 return context.db.blocks.waitForDoc(parent._key, '_key', args);
             },
             sig_weight(parent, args) {
                 return resolveBigUInt(1, parent.sig_weight, args);
             },
             gen_utime_string(parent, args) {
-                return resolveUnixTimeString(parent.gen_utime);
+                return unixSecondsToString(parent.gen_utime);
             },
         },
         Block: {
@@ -831,6 +835,9 @@ function createResolvers(db) {
                 return parent._key;
             },
             signatures(parent, args, context) {
+                if (args.when && !Block.test(null, parent, args.when)) {
+                    return null;
+                }
                 return context.db.blocks_signatures.waitForDoc(parent._key, '_key', args);
             },
             start_lt(parent, args) {
@@ -840,7 +847,7 @@ function createResolvers(db) {
                 return resolveBigUInt(1, parent.end_lt, args);
             },
             gen_utime_string(parent, args) {
-                return resolveUnixTimeString(parent.gen_utime);
+                return unixSecondsToString(parent.gen_utime);
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
@@ -900,12 +907,21 @@ function createResolvers(db) {
                 return parent._key;
             },
             block(parent, args, context) {
+                if (args.when && !Transaction.test(null, parent, args.when)) {
+                    return null;
+                }
                 return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
             },
             in_message(parent, args, context) {
+                if (args.when && !Transaction.test(null, parent, args.when)) {
+                    return null;
+                }
                 return context.db.messages.waitForDoc(parent.in_msg, '_key', args);
             },
             out_messages(parent, args, context) {
+                if (args.when && !Transaction.test(null, parent, args.when)) {
+                    return null;
+                }
                 return context.db.messages.waitForDocs(parent.out_msgs, '_key', args);
             },
             lt(parent, args) {
@@ -927,13 +943,28 @@ function createResolvers(db) {
                 return parent._key;
             },
             block(parent, args, context) {
+                if (args.when && !Message.test(null, parent, args.when)) {
+                    return null;
+                }
                 return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
             },
             src_transaction(parent, args, context) {
-                return parent.created_lt !== '00' && parent.msg_type !== 1 ? context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args) : null;
+                if (!(parent.created_lt !== '00' && parent.msg_type !== 1)) {
+                    return null;
+                }
+                if (args.when && !Message.test(null, parent, args.when)) {
+                    return null;
+                }
+                return context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args);
             },
             dst_transaction(parent, args, context) {
-                return parent.msg_type !== 2 ? context.db.transactions.waitForDoc(parent._key, 'in_msg', args) : null;
+                if (!(parent.msg_type !== 2)) {
+                    return null;
+                }
+                if (args.when && !Message.test(null, parent, args.when)) {
+                    return null;
+                }
+                return context.db.transactions.waitForDoc(parent._key, 'in_msg', args);
             },
             created_lt(parent, args) {
                 return resolveBigUInt(1, parent.created_lt, args);
@@ -951,7 +982,7 @@ function createResolvers(db) {
                 return resolveBigUInt(2, parent.value, args);
             },
             created_at_string(parent, args) {
-                return resolveUnixTimeString(parent.created_at);
+                return unixSecondsToString(parent.created_at);
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),

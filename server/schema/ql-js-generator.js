@@ -3,6 +3,7 @@
 import { makeFieldTypeName, Writer } from 'ton-labs-dev-ops/dist/src/gen.js';
 import type { SchemaDoc, SchemaMember, SchemaType, TypeDef } from 'ton-labs-dev-ops/src/schema.js';
 import { parseTypeDef } from 'ton-labs-dev-ops/dist/src/schema.js';
+import type {ToStringFormatterType} from './db-schema-types';
 
 const DbTypeCategory = {
     unresolved: 'unresolved',
@@ -39,7 +40,7 @@ type DbField = {
     arrayDepth: number,
     join?: DbJoin,
     enumDef?: IntEnumDef,
-    isUnixTime: boolean,
+    formatter?: ToStringFormatterType,
     doc: string,
 }
 
@@ -147,7 +148,6 @@ function main(schemaDef: TypeDef) {
             arrayDepth: 0,
             type: scalarTypes.string,
             doc: getDocMD(schemaField),
-            isUnixTime: false,
         };
         while (schemaType.array) {
             field.arrayDepth += 1;
@@ -163,8 +163,8 @@ function main(schemaDef: TypeDef) {
         if (join) {
             field.join = join;
         }
-        if (ex && ex.isUnixTime) {
-            field.isUnixTime = true;
+        if (ex && ex.formatter) {
+            field.formatter = ex.formatter;
         }
         if (schemaType.union || schemaType.struct) {
             field.type = unresolvedType(makeFieldTypeName(typeName, schemaField.name));
@@ -239,7 +239,6 @@ function main(schemaDef: TypeDef) {
                 name: 'id',
                 arrayDepth: 0,
                 type: scalarTypes.string,
-                isUnixTime: false,
                 doc: '',
             });
         }
@@ -366,7 +365,7 @@ function main(schemaDef: TypeDef) {
                 if (isBigInt(field.type)) {
                     params = '(format: BigIntFormat)';
                 } else if (field.join) {
-                    params = '(timeout: Int)';
+                    params = `(timeout: Int, when: ${type.name}Filter)`;
                 }
 
                 ql.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
@@ -374,7 +373,7 @@ function main(schemaDef: TypeDef) {
                 if (enumDef) {
                     ql.writeLn(`\t${field.name}_name: ${enumDef.name}Enum`);
                 }
-                if (field.isUnixTime) {
+                if (field.formatter) {
                     ql.writeLn(`\t${field.name}_string: String`);
                 }
             });
@@ -606,7 +605,7 @@ function main(schemaDef: TypeDef) {
     function genJSCustomResolvers(type: DbType) {
         const joinFields = type.fields.filter(x => !!x.join);
         const bigUIntFields = type.fields.filter((x: DbField) => isBigInt(x.type));
-        const unixTimeFields = type.fields.filter((x: DbField) => x.isUnixTime);
+        const stringFormattedFields = type.fields.filter((x: DbField) => x.formatter);
         const enumFields = type.fields.filter(x => x.enumDef);
         const customResolverRequired = type.collection
             || joinFields.length > 0
@@ -637,12 +636,19 @@ function main(schemaDef: TypeDef) {
                 throw 'Joined type is not a collection.';
             }
             js.writeLn(`            ${field.name}(parent, args, context) {`);
-            const pre = join.preCondition ? `${join.preCondition} ? ` : '';
-            const post = join.preCondition ? ` : null` : '';
+            if (join.preCondition) {
+                js.writeLn(`                if (!(${join.preCondition})) {`);
+                js.writeLn(`                    return null;`);
+                js.writeLn(`                }`);
+            }
+            js.writeLn(`                if (args.when && !${type.name}.test(null, parent, args.when)) {`);
+            js.writeLn(`                    return null;`);
+            js.writeLn(`                }`);
+
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return ${pre}context.db.${collection}.waitForDoc(parent.${on}, '${refOn}', args)${post};`);
+                js.writeLn(`                return context.db.${collection}.waitForDoc(parent.${on}, '${refOn}', args);`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return ${pre}context.db.${collection}.waitForDocs(parent.${on}, '${refOn}', args)${post};`);
+                js.writeLn(`                return context.db.${collection}.waitForDocs(parent.${on}, '${refOn}', args);`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }
@@ -654,9 +660,9 @@ function main(schemaDef: TypeDef) {
             js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
             js.writeLn(`            },`);
         });
-        unixTimeFields.forEach((field) => {
+        stringFormattedFields.forEach((field) => {
             js.writeLn(`            ${field.name}_string(parent, args) {`);
-            js.writeLn(`                return resolveUnixTimeString(parent.${field.name});`);
+            js.writeLn(`                return ${field.formatter || ''}(parent.${field.name});`);
             js.writeLn(`            },`);
         });
         enumFields.forEach((field) => {
@@ -760,7 +766,8 @@ function main(schemaDef: TypeDef) {
             joinArray,
             enumName,
             createEnumNameResolver,
-            resolveUnixTimeString,
+            unixMillisecondsToString,
+            unixSecondsToString,
         } = require('./db-types.js');
         `);
         const jsArrayFilters = new Set<string>();

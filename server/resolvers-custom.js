@@ -13,12 +13,8 @@ import { ensureProtocol } from "./config";
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from "./auth";
 import { QTracer } from "./tracer";
-import { QError } from "./utils";
-
-import fs from 'fs'
-import path from 'path'
-
-const {version} = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'));
+import {packageJson, QError} from "./utils";
+const {version} = packageJson();
 
 function isObject(test: any): boolean {
     return typeof test === 'object' && test !== null;

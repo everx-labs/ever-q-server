@@ -652,7 +652,7 @@ type BlockSignatures {
 	sig_weight(format: BigIntFormat): String
 	"Array of signatures from block's validators"
 	signatures: [BlockSignaturesSignatures]
-	block(timeout: Int): Block
+	block(timeout: Int, when: BlockSignaturesFilter): Block
 }
 
 "This is Block"
@@ -720,7 +720,7 @@ type Block {
 	key_block: Boolean
 	"Serialized bag of cell of this block encoded with base64"
 	boc: String
-	signatures(timeout: Int): BlockSignatures
+	signatures(timeout: Int, when: BlockFilter): BlockSignatures
 }
 
 type TransactionStorage {
@@ -860,7 +860,7 @@ type Transaction {
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	block_id: String
-	block(timeout: Int): Block
+	block(timeout: Int, when: TransactionFilter): Block
 	account_addr: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
@@ -890,9 +890,9 @@ type Transaction {
 	end_status: Int
 	end_status_name: AccountStatusEnum
 	in_msg: String
-	in_message(timeout: Int): Message
+	in_message(timeout: Int, when: TransactionFilter): Message
 	out_msgs: [String]
-	out_messages(timeout: Int): [Message]
+	out_messages(timeout: Int, when: TransactionFilter): [Message]
 	"Total amount of fees that entails account state change and used in Merkle update"
 	total_fees(format: BigIntFormat): String
 	"Same as above, but reserved for non gram coins that may appear in the blockchain"
@@ -949,7 +949,7 @@ type Message {
 	status_name: MessageProcessingStatusEnum
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	block_id: String
-	block(timeout: Int): Block
+	block(timeout: Int, when: MessageFilter): Block
 	"Bag of cells with the message body encoded as base64."
 	body: String
 	"`body` field root hash."
@@ -1004,8 +1004,8 @@ type Message {
 	proof: String
 	"A bag of cells with the message structure encoded as base64."
 	boc: String
-	src_transaction(timeout: Int): Transaction
-	dst_transaction(timeout: Int): Transaction
+	src_transaction(timeout: Int, when: MessageFilter): Transaction
+	dst_transaction(timeout: Int, when: MessageFilter): Transaction
 }
 
 """

@@ -8,7 +8,7 @@
 		"babel": "babel server --out-dir dist/server --source-maps inline",
 		"gen": "node dist/server/schema/db-schema-generator.js",
 		"flow": "flow",
-		"test": "jest",
+		"test": "jest -i --forceExit --detectOpenHandles",
 		"start": "node dist/server/index.js",
 		"update indexes": "node dist/server/update-indexes.js",
 		"npm install": "npm install"
