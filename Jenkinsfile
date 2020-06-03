@@ -20,7 +20,7 @@ C_AUTHOR = "NotSet"
 
 
 // Deploy channel
-DiscordURL = "https://discordapp.com/api/webhooks/496992026932543489/4exQIw18D4U_4T0H76bS3Voui4SyD7yCQzLP9IRQHKpwGRJK1-IFnyZLyYzDmcBKFTJw"
+// DiscordURL = "https://discordapp.com/api/webhooks/496992026932543489/4exQIw18D4U_4T0H76bS3Voui4SyD7yCQzLP9IRQHKpwGRJK1-IFnyZLyYzDmcBKFTJw"
 
 pipeline {
     agent none
@@ -221,7 +221,8 @@ pipeline {
     post {
         always {
             script {
-                currentBuild.description = C_TEXT
+                DiscordURL = credentials('DiscordURL')
+				currentBuild.description = C_TEXT
                 string DiscordFooter = "Build duration is " + currentBuild.durationString
                 DiscordTitle = "Job ${JOB_NAME} from GitHub " + C_PROJECT
                 DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
