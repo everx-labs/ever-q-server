@@ -144,7 +144,11 @@ pipeline {
 								"""){
 									// sh "npm install jest && npm run test"
 									sh """
-										echo 'Q_DATABASE_SERVER: ${Q_DATABASE_SERVER}'
+										pwd
+										ls -la
+										cd /home/node
+										pwd
+										ls -la
 										npm install jest
 										npm run test
 									"""
