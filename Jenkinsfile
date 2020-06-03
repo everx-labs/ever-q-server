@@ -143,15 +143,20 @@ pipeline {
 									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
 								"""){
 									// sh "npm install jest && npm run test"
-									sh """
-										pwd
-										ls -la
-										cd /home/node
-										pwd
-										ls -la
-										npm install jest
-										npm run test
-									"""
+									// sh """
+									// 	pwd
+									// 	ls -la
+									// 	cd /home/node
+									// 	pwd
+									// 	ls -la
+									// 	npm install jest
+									// 	npm run test
+									// """
+									dir ('/home/node') {
+										sh "pwd"
+										sh "npm install jest"
+										sh "npm run test"
+									}
 								}
 							}
 
