@@ -18,8 +18,8 @@ C_HASH = "NotSet"
 C_TEXT = "NotSet"
 C_AUTHOR = "NotSet"
 
-CINET_Q_DATABASE_SERVER = "cinet_arango_address"
-CINET_Q_DATABASE_AUTH = "cinet_arango_auth"
+// CINET_Q_DATABASE_SERVER = "cinet_arango_address"
+// CINET_Q_DATABASE_AUTH = "cinet_arango_auth"
 
 
 // Deploy channel
@@ -128,7 +128,15 @@ pipeline {
 					steps {
 						script {
 							// sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
-							sh "docker run -i --rm --entrypoint='' -u root -e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}' -e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}' ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+
+							withCredentials ([
+								string(credentialsId: 'cinet_arango_address', variable: 'CINET_Q_DATABASE_SERVER'), 
+								string(credentialsId: 'cinet_arango_auth', variable: 'CINET_Q_DATABASE_AUTH')
+							]) {
+								sh "docker run -i --rm --entrypoint='' -u root -e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}' -e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}' ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+								// some block
+							}
+
 						}
 					}
 					post {
