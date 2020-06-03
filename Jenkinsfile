@@ -137,6 +137,7 @@ pipeline {
 								// some block
 								// docker.image(G_gqlimage).inside("""
 								builtImage.inside("""
+									--entrypoint=''
 									-u root
 									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
 									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
