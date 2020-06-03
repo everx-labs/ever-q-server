@@ -2,8 +2,8 @@ G_promoted_version = "master"
 G_promoted_tag = "latest"
 
 G_giturl = "https://github.com/tonlabs/ton-q-server.git"
-G_gitcred = "LaninSSHgit"
-G_dockerCred = 'dockerhubLanin'
+G_gitcred = "TonJenSSH"
+G_dockerCred = 'TonJenDockerHub'
 G_container = "alanin/container:latest"
 G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
@@ -17,6 +17,10 @@ C_COMMITER = "NotSet"
 C_HASH = "NotSet"
 C_TEXT = "NotSet"
 C_AUTHOR = "NotSet"
+
+CINET_Q_DATABASE_SERVER = "cinet_arango_address"
+CINET_Q_DATABASE_AUTH = "cinet_arango_auth"
+
 
 // Deploy channel
 DiscordURL = "https://discordapp.com/api/webhooks/496992026932543489/4exQIw18D4U_4T0H76bS3Voui4SyD7yCQzLP9IRQHKpwGRJK1-IFnyZLyYzDmcBKFTJw"
@@ -123,7 +127,8 @@ pipeline {
 				stage ('Unit Tests') {
 					steps {
 						script {
-							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+							// sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+							sh "docker run -i --rm --entrypoint='' -u root -e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}' -e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}' ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
 						}
 					}
 					post {
