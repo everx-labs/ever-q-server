@@ -1,6 +1,7 @@
 import {unixSecondsToString} from '../server/db-types';
+import {packageJson} from '../server/utils';
 import {testServerQuery} from './init-tests';
-import {version} from '../package.json';
+const {version} = packageJson();
 
 test('version', async () => {
     const info = await testServerQuery('query{info{version}}');

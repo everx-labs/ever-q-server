@@ -1,4 +1,15 @@
 import type { QLog } from './logs';
+import fs from 'fs';
+import path from 'path';
+
+export function packageJson(): any {
+    let testPath = path.resolve(__dirname);
+    const packagePath = () => path.resolve(testPath, 'package.json');
+    while (testPath && !fs.existsSync(packagePath())) {
+        testPath = path.dirname(testPath);
+    }
+    return JSON.parse(fs.readFileSync(packagePath(), 'utf8'));
+}
 
 export function cleanError(error: any): any {
     if ('ArangoError' in error) {

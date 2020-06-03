@@ -13,8 +13,8 @@ import { ensureProtocol } from "./config";
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from "./auth";
 import { QTracer } from "./tracer";
-import { QError } from "./utils";
-import {version} from '../package.json';
+import {packageJson, QError} from "./utils";
+const {version} = packageJson();
 
 function isObject(test: any): boolean {
     return typeof test === 'object' && test !== null;
