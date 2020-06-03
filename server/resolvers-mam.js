@@ -1,11 +1,10 @@
 // @flow
 
-import fs from "fs";
-import path from 'path';
 import Arango from "./arango";
 import { Collection, mamAccessRequired } from "./arango-collection";
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
-import {version} from '../package.json';
+import {packageJson} from './utils';
+const {version} = packageJson();
 
 type Info = {
     version: string,

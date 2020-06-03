@@ -2,8 +2,8 @@ G_promoted_version = "master"
 G_promoted_tag = "latest"
 
 G_giturl = "https://github.com/tonlabs/ton-q-server.git"
-G_gitcred = "LaninSSHgit"
-G_dockerCred = 'dockerhubLanin'
+G_gitcred = "TonJenSSH"
+G_dockerCred = 'TonJenDockerHub'
 G_container = "alanin/container:latest"
 G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
@@ -18,8 +18,6 @@ C_HASH = "NotSet"
 C_TEXT = "NotSet"
 C_AUTHOR = "NotSet"
 
-// Deploy channel
-DiscordURL = "https://discordapp.com/api/webhooks/496992026932543489/4exQIw18D4U_4T0H76bS3Voui4SyD7yCQzLP9IRQHKpwGRJK1-IFnyZLyYzDmcBKFTJw"
 
 pipeline {
     agent none
@@ -123,7 +121,27 @@ pipeline {
 				stage ('Unit Tests') {
 					steps {
 						script {
-							sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+							withCredentials ([
+								string(credentialsId: 'cinet_arango_address', variable: 'Q_DATABASE_SERVER'), 
+								string(credentialsId: 'cinet_arango_auth', variable: 'Q_DATABASE_AUTH')
+							]) {
+								builtImage.inside ("""
+									--entrypoint=''
+									-u root
+									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
+									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
+								""") {
+									sh (
+										label: 'Run unit tests',
+										script: """
+											cd /home/node
+											npm install jest
+											npm run test
+										"""
+									)
+								}
+							}
+
 						}
 					}
 					post {
@@ -200,18 +218,20 @@ pipeline {
     post {
         always {
             script {
-                currentBuild.description = C_TEXT
-                string DiscordFooter = "Build duration is " + currentBuild.durationString
-                DiscordTitle = "Job ${JOB_NAME} from GitHub " + C_PROJECT
-                DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
-                + "Build number ${BUILD_NUMBER}" + "\n" \
-                + "Build: **" + G_buildstatus + "**" + "\n" \
-                + "Build Image: **" + G_MakeImage + "**" + "\n" \
-                + "Unit Tests: **" + G_UnitTestImage + "**" + "\n" \
-                + "Integration Tests: **" + G_IntegTestImage + "**" + "\n" \
-                + "Push Image: **" + G_PushImage + "**" + "\n" \
-                + "Tag Image As Latest: **" + G_PushImageLatest + "**"
-                discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
+				withCredentials ([ string (credentialsId: 'DiscordURL', variable: 'DiscordURL') ]) {
+					currentBuild.description = C_TEXT
+					string DiscordFooter = "Build duration is " + currentBuild.durationString
+					DiscordTitle = "Job ${JOB_NAME} from GitHub " + C_PROJECT
+					DiscordDescription = C_COMMITER + " pushed commit " + C_HASH + " by " + C_AUTHOR + " with a message '" + C_TEXT + "'" + "\n" \
+					+ "Build number ${BUILD_NUMBER}" + "\n" \
+					+ "Build: **" + G_buildstatus + "**" + "\n" \
+					+ "Build Image: **" + G_MakeImage + "**" + "\n" \
+					+ "Unit Tests: **" + G_UnitTestImage + "**" + "\n" \
+					+ "Integration Tests: **" + G_IntegTestImage + "**" + "\n" \
+					+ "Push Image: **" + G_PushImage + "**" + "\n" \
+					+ "Tag Image As Latest: **" + G_PushImageLatest + "**"
+					discordSend description: DiscordDescription, footer: DiscordFooter, link: RUN_DISPLAY_URL, successful: currentBuild.resultIsBetterOrEqualTo('SUCCESS'), title: DiscordTitle, webhookURL: DiscordURL
+				}
             }
         }
 
