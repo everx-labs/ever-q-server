@@ -18,9 +18,6 @@ C_HASH = "NotSet"
 C_TEXT = "NotSet"
 C_AUTHOR = "NotSet"
 
-// CINET_Q_DATABASE_SERVER = "cinet_arango_address"
-// CINET_Q_DATABASE_AUTH = "cinet_arango_auth"
-
 
 // Deploy channel
 DiscordURL = "https://discordapp.com/api/webhooks/496992026932543489/4exQIw18D4U_4T0H76bS3Voui4SyD7yCQzLP9IRQHKpwGRJK1-IFnyZLyYzDmcBKFTJw"
@@ -127,36 +124,24 @@ pipeline {
 				stage ('Unit Tests') {
 					steps {
 						script {
-							// sh "docker run -i --rm --entrypoint='' -u root ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
-
 							withCredentials ([
 								string(credentialsId: 'cinet_arango_address', variable: 'Q_DATABASE_SERVER'), 
 								string(credentialsId: 'cinet_arango_auth', variable: 'Q_DATABASE_AUTH')
 							]) {
-								// sh "docker run -i --rm --entrypoint='' -u root -e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}' -e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}' ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
-								// some block
-								// docker.image(G_gqlimage).inside("""
-								builtImage.inside("""
+								builtImage.inside ("""
 									--entrypoint=''
 									-u root
 									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
 									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
-								"""){
-									// sh "npm install jest && npm run test"
-									// sh """
-									// 	pwd
-									// 	ls -la
-									// 	cd /home/node
-									// 	pwd
-									// 	ls -la
-									// 	npm install jest
-									// 	npm run test
-									// """
-									dir ('/home/node') {
-										sh "pwd"
-										sh "npm install jest"
-										sh "npm run test"
-									}
+								""") {
+									sh (
+										label: 'Run unit tests',
+										script: """
+											cd /home/node
+											npm install jest
+											npm run test
+										"""
+									)
 								}
 							}
 
