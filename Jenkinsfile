@@ -19,9 +19,6 @@ C_TEXT = "NotSet"
 C_AUTHOR = "NotSet"
 
 
-// Deploy channel
-// DiscordURL = "https://discordapp.com/api/webhooks/496992026932543489/4exQIw18D4U_4T0H76bS3Voui4SyD7yCQzLP9IRQHKpwGRJK1-IFnyZLyYzDmcBKFTJw"
-
 pipeline {
     agent none
 
