@@ -120,7 +120,7 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
 
 function getIp(): string {
     const ipv4 = (Object.values(os.networkInterfaces()): any)
-        .flatMap(x => x)
+        .reduce((acc, x) => acc.concat(x), [])
         .find(x => x.family === 'IPv4' && !x.internal);
     return ipv4 && ipv4.address;
 }
