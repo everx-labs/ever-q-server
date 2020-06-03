@@ -133,8 +133,21 @@ pipeline {
 								string(credentialsId: 'cinet_arango_address', variable: 'CINET_Q_DATABASE_SERVER'), 
 								string(credentialsId: 'cinet_arango_auth', variable: 'CINET_Q_DATABASE_AUTH')
 							]) {
-								sh "docker run -i --rm --entrypoint='' -u root -e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}' -e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}' ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
+								// sh "docker run -i --rm --entrypoint='' -u root -e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}' -e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}' ${G_gqlimage} /bin/bash -c 'npm install jest && npm run test'"
 								// some block
+								// docker.image(G_gqlimage).inside("""
+								builtImage.inside("""
+									-u root
+									-e 'Q_DATABASE_SERVER=${CINET_Q_DATABASE_SERVER}'
+									-e 'Q_DATABASE_AUTH=${CINET_Q_DATABASE_AUTH}'
+								"""){
+									// sh "npm install jest && npm run test"
+									sh """
+										echo 'Q_DATABASE_SERVER: ${Q_DATABASE_SERVER}'
+										npm install jest
+										npm run test
+									"""
+								}
 							}
 
 						}
