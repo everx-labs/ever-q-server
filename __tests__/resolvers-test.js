@@ -56,6 +56,45 @@ test("BigUInt", () => {
     expect(resolveBigUInt(2, '1010000000000000000')).toEqual('0x10000000000000000');
 });
 
+test("Negative BigUInt", () => {
+    expect(convertBigUInt(1, -0x1)).toEqual('-fe');
+    expect(convertBigUInt(1, -0x100)).toEqual('-deff');
+    expect(convertBigUInt(1, -0x1000000000)).toEqual('-6efffffffff');
+    expect(convertBigUInt(1, -256)).toEqual('-deff');
+    expect(convertBigUInt(1, '-256')).toEqual('-deff');
+    expect(convertBigUInt(1, '-0x256')).toEqual('-dda9');
+    expect(convertBigUInt(1, '-0x3100')).toEqual('-cceff');
+    expect(convertBigUInt(1, '-3100')).toEqual('-d3e3');
+
+
+    expect(convertBigUInt(1, -478177959234)).toEqual('-690aa5f62bd'); //0x6F55A09D42
+    expect(convertBigUInt(1, '-9223372036854775807')).toEqual('-08000000000000000'); //0X7FFFFFFFFFFFFFFF
+    expect(convertBigUInt(1, '-0X7FFFFFFFFFFFFFFF')).toEqual('-08000000000000000');
+    expect(convertBigUInt(1, '-18446744073709551615')).toEqual('-00000000000000000');
+    expect(convertBigUInt(1, -Number.MAX_SAFE_INTEGER)).toEqual('-2e0000000000000');
+    // noinspection JSAnnotator
+    expect(convertBigUInt(1, -0xffffffffffffffffn)).toEqual('-00000000000000000');
+
+    expect(convertBigUInt(2, -0x1)).toEqual('-ffe');
+    expect(convertBigUInt(2, -0x100)).toEqual('-fdeff');
+    expect(convertBigUInt(2, -0x1000000000)).toEqual('-f6efffffffff');
+    expect(convertBigUInt(2, -256)).toEqual('-fdeff');
+    expect(convertBigUInt(2, '-0x3100')).toEqual('-fcceff');
+    expect(convertBigUInt(2, '-3100')).toEqual('-fd3e3');
+    expect(convertBigUInt(2, '-0x10000000000000000')).toEqual('-efeffffffffffffffff');
+
+    expect(resolveBigUInt(1, '-fe')).toEqual('-0x1');
+    expect(resolveBigUInt(1, '-deff')).toEqual('-0x100');
+    expect(resolveBigUInt(1, '-6efffffffff')).toEqual('-0x1000000000');
+    expect(resolveBigUInt(1, '-cceff')).toEqual('-0x3100');
+
+    expect(resolveBigUInt(2, '-ffe')).toEqual('-0x1');
+    expect(resolveBigUInt(2, '-fdeff')).toEqual('-0x100');
+    expect(resolveBigUInt(2, '-f6efffffffff')).toEqual('-0x1000000000');
+    expect(resolveBigUInt(2, '-fcceff')).toEqual('-0x3100');
+    expect(resolveBigUInt(2, '-efeffffffffffffffff')).toEqual('-0x10000000000000000');
+});
+
 test("Filter test", () => {
     expect(Account.test(null, {
         "id": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",

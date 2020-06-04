@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## 0.27.0 – Jun 3, 2020
 ### New
+- support for signed numbers encoded with strings. 
 - `when` arg to join fields – ability to include joined objects into result set only if some conditions met.
    
    In following example we return `dst_transaction` only for messages with `value` greater than zero:
