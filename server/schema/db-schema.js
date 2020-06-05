@@ -304,6 +304,8 @@ const Transaction: TypeDef = {
     installed: bool(docs.transaction.installed),
     proof: string(docs.transaction.proof),
     boc: string(docs.transaction.boc),
+    balance_delta: grams(docs.transaction.balance_delta),
+    balance_delta_other: otherCurrencyCollection(docs.transaction.balance_delta),
 };
 
 // BLOCK SIGNATURES
