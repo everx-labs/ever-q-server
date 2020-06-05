@@ -559,6 +559,8 @@ const Transaction = struct({
     installed: scalar,
     proof: scalar,
     boc: scalar,
+    balance_delta: bigUInt2,
+    balance_delta_other: OtherCurrencyArray,
 }, true);
 
 const Message = struct({
@@ -932,6 +934,9 @@ function createResolvers(db) {
             },
             total_fees(parent, args) {
                 return resolveBigUInt(2, parent.total_fees, args);
+            },
+            balance_delta(parent, args) {
+                return resolveBigUInt(2, parent.balance_delta, args);
             },
             tr_type_name: createEnumNameResolver('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
@@ -1468,6 +1473,9 @@ scalarFields.set('transactions.prepare_transaction', { type: 'string', path: 'do
 scalarFields.set('transactions.installed', { type: 'boolean', path: 'doc.installed' });
 scalarFields.set('transactions.proof', { type: 'string', path: 'doc.proof' });
 scalarFields.set('transactions.boc', { type: 'string', path: 'doc.boc' });
+scalarFields.set('transactions.balance_delta', { type: 'uint1024', path: 'doc.balance_delta' });
+scalarFields.set('transactions.balance_delta_other.currency', { type: 'number', path: 'doc.balance_delta_other[*].currency' });
+scalarFields.set('transactions.balance_delta_other.value', { type: 'uint1024', path: 'doc.balance_delta_other[*].value' });
 scalarFields.set('messages.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('messages.block_id', { type: 'string', path: 'doc.block_id' });
 scalarFields.set('messages.body', { type: 'string', path: 'doc.body' });

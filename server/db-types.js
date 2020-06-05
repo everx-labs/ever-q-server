@@ -17,8 +17,8 @@
 // @flow
 
 
-import type { AccessRights } from "./auth";
-import type { IndexInfo } from "./config";
+import type {AccessRights} from "./auth";
+import type {IndexInfo} from "./config";
 
 declare function BigInt(a: any): any;
 
@@ -140,7 +140,7 @@ function qlFields(
     path: string,
     filter: any,
     fieldTypes: { [string]: QType },
-    qlField: (field: any, path: string, filterKey: string, filterValue: any) => string
+    qlField: (field: any, path: string, filterKey: string, filterValue: any) => string,
 ): string {
     const conditions: string[] = [];
     Object.entries(filter).forEach(([filterKey, filterValue]) => {
@@ -167,7 +167,7 @@ function testFields(
     value: any,
     filter: any,
     fieldTypes: { [string]: QType },
-    testField: (fieldType: any, value: any, filterKey: string, filterValue: any) => boolean
+    testField: (fieldType: any, value: any, filterKey: string, filterValue: any) => boolean,
 ): boolean {
     const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
@@ -286,7 +286,7 @@ const scalarNotIn: QType = {
     },
     test(parent, value, filter) {
         return !filter.includes(value);
-    }
+    },
 };
 
 const scalarOps = {
@@ -349,26 +349,48 @@ const BigNumberFormat = {
     DEC: 'DEC',
 };
 
+function invertedHex(hex: string): string {
+    return Array.from(hex)
+        .map(c => (Number.parseInt(c, 16) ^ 0xf).toString(16))
+        .join('');
+}
+
 export function resolveBigUInt(prefixLength: number, value: any, args?: { format?: 'HEX' | 'DEC' }): string {
     if (value === null || value === undefined) {
         return value;
     }
-    const hex = (typeof value === 'number')
-        ? `0x${value.toString(16)}`
-        : `0x${value.toString().substr(prefixLength)}`;
+    let neg;
+    let hex;
+    if (typeof value === 'number') {
+        neg = value < 0;
+        hex = `0x${(neg ? -value : value).toString(16)}`;
+    } else {
+        const s = value.toString().trim();
+        neg = s.startsWith('-');
+        hex = `0x${neg ? invertedHex(s.substr(prefixLength + 1)) : s.substr(prefixLength)}`;
+    }
     const format = (args && args.format) || BigNumberFormat.HEX;
-    return (format === BigNumberFormat.HEX) ? hex : BigInt(hex).toString();
+    return `${neg ? '-' : ''}${(format === BigNumberFormat.HEX) ? hex : BigInt(hex).toString()}`;
 }
 
 export function convertBigUInt(prefixLength: number, value: any): string {
     if (value === null || value === undefined) {
         return value;
     }
-    const hex = BigInt(value).toString(16);
+    let big;
+    if (typeof value === 'string') {
+        const s = value.trim();
+        big = s.startsWith('-') ? -BigInt(s.substr(1)) : BigInt(s);
+    } else {
+        big = BigInt(value);
+    }
+    const neg = big < BigInt(0);
+    const hex = (neg ? -big : big).toString(16);
     const len = (hex.length - 1).toString(16);
     const missingZeros = prefixLength - len.length;
     const prefix = missingZeros > 0 ? `${'0'.repeat(missingZeros)}${len}` : len;
-    return `${prefix}${hex}`;
+    const result = `${prefix}${hex}`;
+    return neg ? `-${invertedHex(result)}` : result;
 }
 
 function createBigUInt(prefixLength: number): QType {
@@ -440,7 +462,7 @@ export function struct(fields: { [string]: QType }, isCollection?: boolean): QTy
                 }
             }
             return false;
-        }
+        },
     }
 }
 
@@ -523,7 +545,7 @@ export function array(resolveItemType: () => QType): QType {
                 const itemType = resolved || (resolved = resolveItemType());
                 const succeededIndex = value.findIndex(x => itemType.test(parent, x, filter));
                 return succeededIndex >= 0;
-            }
+            },
         },
     };
     return {
@@ -539,7 +561,7 @@ export function array(resolveItemType: () => QType): QType {
             return testFields(value, filter, ops, (op, value, filterKey, filterValue) => {
                 return op.test(parent, value, filterValue);
             });
-        }
+        },
     }
 }
 
@@ -613,11 +635,16 @@ export function join(onField: string, refField: string, refCollection: string, r
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
             return refType.test(parent, value, filter);
-        }
+        },
     };
 }
 
-export function joinArray(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
+export function joinArray(
+    onField: string,
+    refField: string,
+    refCollection: string,
+    resolveRefType: () => QType,
+): QType {
     let resolved: ?QType = null;
     return {
         ql(params, path, filter) {
@@ -639,12 +666,12 @@ export function joinArray(onField: string, refField: string, refCollection: stri
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
             return refType.test(parent, value, filter);
-        }
+        },
     };
 }
 
 export type {
-    QType
+    QType,
 }
 
 export type FieldSelection = {
@@ -746,7 +773,7 @@ export function indexToString(index: IndexInfo): string {
 
 export function parseIndex(s: string): IndexInfo {
     return {
-        fields: s.split(',').map(x => x.trim()).filter(x => x)
+        fields: s.split(',').map(x => x.trim()).filter(x => x),
     }
 }
 

@@ -915,6 +915,8 @@ type Transaction {
 	installed: Boolean
 	proof: String
 	boc: String
+	balance_delta(format: BigIntFormat): String
+	balance_delta_other: [OtherCurrency]
 }
 
 """
@@ -2138,6 +2140,8 @@ input TransactionFilter {
 	installed: BooleanFilter
 	proof: StringFilter
 	boc: StringFilter
+	balance_delta: StringFilter
+	balance_delta_other: OtherCurrencyArrayFilter
     OR: TransactionFilter
 }
 
