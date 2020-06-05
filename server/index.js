@@ -16,157 +16,49 @@
 
 // @flow
 
+import {createConfig, defaultOptions, resolveOptions} from './config';
 import type { QConfig } from "./config";
 import TONQServer from './server';
 import QLogs from './logs';
 
-import os from 'os';
-
 const program = require('commander');
-
-function getIp(): string {
-    const ipv4 = (Object.values(os.networkInterfaces()): any)
-        .flatMap(x => x)
-        .find(x => x.family === 'IPv4' && !x.internal);
-    return ipv4 && ipv4.address;
-}
-
-type ProgramOptions = {
-    requestsMode: 'kafka' | 'rest',
-    requestsServer: string,
-    requestsTopic: string,
-    dbServer: string,
-    dbName: string,
-    dbAuth: string,
-    dbMaxSockets: string,
-    slowDbServer: string,
-    slowDbName: string,
-    slowDbAuth: string,
-    slowDbMaxSockets: string,
-    host: string,
-    port: string,
-    rpcPort: string,
-    jaegerEndpoint: string,
-    traceService: string,
-    traceTags: string,
-    authEndpoint: string,
-    statsdServer: string,
-    statsdTags: string,
-    mamAccessKeys: string,
-    keepAlive: string,
-}
+const commandLineDefaults = resolveOptions({}, process.env, defaultOptions);
 
 program
-    .option('-h, --host <host>', 'listening address',
-        process.env.Q_SERVER_HOST || getIp())
-    .option('-p, --port <port>', 'listening port',
-        process.env.Q_SERVER_PORT || '4000')
-    .option('--rpc-port <port>', 'listening rpc port',
-        process.env.Q_SERVER_RPC_PORT || '')
+    .option('-h, --host <host>', 'listening address', commandLineDefaults.host)
+    .option('-p, --port <port>', 'listening port', commandLineDefaults.port)
+    .option('--rpc-port <port>', 'listening rpc port', commandLineDefaults.rpcPort)
 
-    .option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)',
-        process.env.Q_REQUESTS_MODE || 'kafka')
-    .option('-r, --requests-server <url>', 'Requests server url',
-        process.env.Q_REQUESTS_SERVER || 'kafka:9092')
-    .option('-t, --requests-topic <name>', 'Requests topic name',
-        process.env.Q_REQUESTS_TOPIC || 'requests')
+    .option('-m, --requests-mode <mode>', 'Requests mode (kafka | rest)', commandLineDefaults.requestsMode)
+    .option('-r, --requests-server <url>', 'Requests server url', commandLineDefaults.requestsServer)
+    .option('-t, --requests-topic <name>', 'Requests topic name', commandLineDefaults.requestsTopic)
 
-    .option('-d, --db-server <address>', 'database server:port',
-        process.env.Q_DATABASE_SERVER || 'arangodb:8529')
-    .option('-n, --db-name <name>', 'database name',
-        process.env.Q_DATABASE_NAME || 'blockchain')
-    .option('-a, --db-auth <name>', 'database auth in form "user:password',
-        process.env.Q_DATABASE_AUTH || '')
-    .option('--db-max-sockets <number>', 'database max sockets',
-        process.env.Q_DATABASE_MAX_SOCKETS || '100')
+    .option('-d, --db-server <address>', 'database server:port', commandLineDefaults.dbServer)
+    .option('-n, --db-name <name>', 'database name', commandLineDefaults.dbName)
+    .option('-a, --db-auth <name>', 'database auth in form "user:password', commandLineDefaults.dbAuth)
+    .option('--db-max-sockets <number>', 'database max sockets', commandLineDefaults.dbMaxSockets)
 
-    .option('--slow-db-server <address>', 'slow queries database server:port',
-        process.env.Q_SLOW_DATABASE_SERVER || '')
-    .option('--slow-db-name <name>', 'slow database name',
-        process.env.Q_SLOW_DATABASE_NAME || '')
-    .option('--slow-db-auth <name>', 'slow database auth in form "user:password',
-        process.env.Q_SLOW_DATABASE_AUTH || '')
-    .option('--slow-db-max-sockets <number>', 'slow database max sockets',
-        process.env.Q_SLOW_DATABASE_MAX_SOCKETS || '3')
+    .option('--slow-db-server <address>', 'slow queries database server:port', commandLineDefaults.slowDbServer)
+    .option('--slow-db-name <name>', 'slow database name', commandLineDefaults.slowDbName)
+    .option('--slow-db-auth <name>', 'slow database auth in form "user:password', commandLineDefaults.slowDbAuth)
+    .option('--slow-db-max-sockets <number>', 'slow database max sockets', commandLineDefaults.slowDbMaxSockets)
 
-    .option('--auth-endpoint <url>', 'auth endpoint',
-        process.env.Q_AUTH_ENDPOINT || '')
-    .option('--mam-access-keys <keys>', 'Access keys used to authorize mam endpoint access',
-        process.env.Q_MAM_ACCESS_KEYS || '')
+    .option('--auth-endpoint <url>', 'auth endpoint', commandLineDefaults.authEndpoint)
+    .option('--mam-access-keys <keys>', 'Access keys used to authorize mam endpoint access', commandLineDefaults.mamAccessKeys)
 
-    .option('-j, --jaeger-endpoint <url>', 'jaeger endpoint',
-        process.env.Q_JAEGER_ENDPOINT || '')
-    .option('--trace-service <name>', 'trace service name',
-        process.env.Q_TRACE_SERVICE || 'Q Server')
-    .option('--trace-tags <tags>', 'additional trace tags (comma separated name=value pairs)',
-        process.env.Q_TRACE_TAGS || '')
+    .option('-j, --jaeger-endpoint <url>', 'jaeger endpoint', commandLineDefaults.jaegerEndpoint)
+    .option('--trace-service <name>', 'trace service name', commandLineDefaults.traceService)
+    .option('--trace-tags <tags>', 'additional trace tags (comma separated name=value pairs)', commandLineDefaults.traceTags)
 
-    .option('-s, --statsd-server <url>', 'statsd server (host:port)',
-        process.env.Q_STATSD_SERVER || '')
-    .option('--statsd-tags <tags>', 'additional statsd tags (comma separated name=value pairs)',
-        process.env.Q_STATSD_TAGS || '')
+    .option('-s, --statsd-server <url>', 'statsd server (host:port)', commandLineDefaults.statsdServer)
+    .option('--statsd-tags <tags>', 'additional statsd tags (comma separated name=value pairs)', commandLineDefaults.statsdTags)
 
-    .option('--keep-alive <ms>', 'additional statsd tags (comma separated name=value pairs)',
-        process.env.Q_KEEP_ALIVE || '60000')
+    .option('--keep-alive <ms>', 'additional statsd tags (comma separated name=value pairs)', commandLineDefaults.keepAlive)
 
     .parse(process.argv);
 
-const options: ProgramOptions = program;
 
-function parseTags(s: string): { [string]: string } {
-    const tags: { [string]: string } = {};
-    s.split(',').forEach((t) => {
-        const i = t.indexOf('=');
-        if (i >= 0) {
-            tags[t.substr(0, i)] = t.substr(i + 1);
-        } else {
-            tags[t] = '';
-        }
-    });
-    return tags;
-
-}
-const config: QConfig = {
-    server: {
-        host: options.host,
-        port: Number.parseInt(options.port),
-        rpcPort: options.rpcPort,
-        keepAlive: Number.parseInt(options.keepAlive),
-    },
-    requests: {
-        mode: options.requestsMode,
-        server: options.requestsServer,
-        topic: options.requestsTopic,
-    },
-    database: {
-        server: options.dbServer,
-        name: options.dbName,
-        auth: options.dbAuth,
-        maxSockets: Number(options.dbMaxSockets),
-    },
-    slowDatabase: {
-        server: options.slowDbServer || options.dbServer,
-        name: options.slowDbName || options.dbName,
-        auth: options.slowDbAuth || options.dbAuth,
-        maxSockets: Number(options.slowDbMaxSockets),
-    },
-    listener: {
-        restartTimeout: 1000
-    },
-    authorization: {
-        endpoint: options.authEndpoint,
-    },
-    jaeger: {
-        endpoint: options.jaegerEndpoint,
-        service: options.traceService,
-        tags: parseTags(options.traceTags),
-    },
-    statsd: {
-        server: options.statsdServer,
-        tags: (options.statsdTags || '').split(',').map(x => x.trim()).filter(x => x),
-    },
-    mamAccessKeys: new Set((options.mamAccessKeys || '').split(',')),
-};
+const config: QConfig = createConfig(program, process.env, defaultOptions);
 
 const logs = new QLogs();
 const configLog = logs.create('config');

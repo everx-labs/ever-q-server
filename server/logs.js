@@ -41,14 +41,32 @@ function format(name: string, args: string[]) {
 }
 
 export default class QLogs {
+    static stopped: boolean;
+    static error(...args: any) {
+        if (QLogs.stopped) {
+            return;
+        }
+        console.error(...args);
+    }
+    static debug(...args: any) {
+        if (QLogs.stopped) {
+            return;
+        }
+        console.debug(...args);
+    }
 	create(name: string): QLog {
-		return {
+	    return {
 			error(...args) {
-				console.error(format(name, args));
+				QLogs.error(...args);
 			},
 			debug(...args) {
-				console.debug(format(name, args));
+				QLogs.debug(format(name, args));
 			}
-		}
+		};
 	}
+	stop() {
+        QLogs.stopped = true;
+    }
 }
+
+QLogs.stopped = false;
