@@ -1,6 +1,12 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.1 – Jun 16, 2020
+
+### Optimized
+- Queries like `{ signatures: { any: { node_id: { in: ["1", "2"] } } } }` generates
+  optimized AQL like `(doc.signatures[*].node_id IN @v1) OR (doc.signatures[*].node_id IN @v2)`.
+
 ## 0.27.0 – Jun 3, 2020
 ### New
 - Support for signed numbers encoded with strings.
