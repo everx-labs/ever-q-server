@@ -502,18 +502,35 @@ function isFieldPath(test: string): boolean {
 }
 
 function tryOptimizeArrayAny(path: string, itemQl: string, params: QParams): ?string {
-    const paramName = `@v${params.count}`;
-    const suffix = ` == ${paramName}`;
-    if (itemQl === `CURRENT${suffix}`) {
-        return `${paramName} IN ${path}[*]`;
-    }
-    if (itemQl.startsWith('CURRENT.') && itemQl.endsWith(suffix)) {
-        const fieldPath = itemQl.slice('CURRENT.'.length, -suffix.length);
-        if (isFieldPath(fieldPath)) {
-            return `${paramName} IN ${path}[*].${fieldPath}`;
+    function tryOptimize(ql: string, paramIndex: number): ?string {
+        const paramName = `@v${paramIndex + 1}`;
+        const suffix = ` == ${paramName}`;
+        if (ql === `CURRENT${suffix}`) {
+            return `${paramName} IN ${path}[*]`;
         }
+        if (ql.startsWith('CURRENT.') && ql.endsWith(suffix)) {
+            const fieldPath = ql.slice('CURRENT.'.length, -suffix.length);
+            if (isFieldPath(fieldPath)) {
+                return `${paramName} IN ${path}[*].${fieldPath}`;
+            }
+        }
+        return null;
     }
-    return null;
+
+    if (!itemQl.startsWith('(') || !itemQl.endsWith(')')) {
+        return tryOptimize(itemQl, params.count - 1);
+    }
+    const qlParts = itemQl.slice(1, -1).split(') OR (');
+    if (qlParts.length === 1) {
+        return tryOptimize(itemQl, params.count - 1);
+    }
+    const optimizedParts = qlParts
+        .map((x, i) => tryOptimize(x, params.count - qlParts.length + i))
+        .filter(x => x !== null);
+    if (optimizedParts.length !== qlParts.length) {
+        return null;
+    }
+    return `(${optimizedParts.join(') OR (')})`;
 }
 
 export function array(resolveItemType: () => QType): QType {

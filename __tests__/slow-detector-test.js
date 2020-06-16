@@ -1,17 +1,26 @@
-import type { CollectionInfo } from "../server/config";
-import { BLOCKCHAIN_DB } from "../server/config";
-import { isFastQuery } from "../server/slow-detector";
-import { parseOrderBy } from "../server/db-types";
+import type {CollectionInfo} from "../server/config";
+import {BLOCKCHAIN_DB} from "../server/config";
+import {isFastQuery} from "../server/slow-detector";
+import {parseOrderBy} from "../server/db-types";
 import {
     Transaction,
     Account,
     Message,
     Block,
+    BlockSignatures,
 } from "../server/resolvers-generated";
 
 
 test('Slow Detector', () => {
     const log = console;
+
+    const block_signatures: CollectionInfo = BLOCKCHAIN_DB.collections.blocks_signatures;
+    expect(isFastQuery(block_signatures, BlockSignatures,
+        { signatures: { any: { node_id: { in: ["1", "2"] } } } },
+        [],
+        log,
+    )).toBeTruthy();
+
     const accounts: CollectionInfo = BLOCKCHAIN_DB.collections.accounts;
     expect(isFastQuery(accounts, Account,
         { id: { eq: '1' } },
