@@ -711,6 +711,7 @@ type Block {
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
 	rand_seed: String
+	create_by: String
 	out_msg_descr: [OutMsg]
 	account_blocks: [BlockAccountBlocks]
 	tr_count: Int
@@ -1847,6 +1848,7 @@ input BlockFilter {
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter
 	rand_seed: StringFilter
+	create_by: StringFilter
 	out_msg_descr: OutMsgArrayFilter
 	account_blocks: BlockAccountBlocksArrayFilter
 	tr_count: IntFilter
