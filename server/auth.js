@@ -14,12 +14,12 @@ export type AccessRights = {
     restrictToAccounts: string[],
 }
 
-const grantedAccess: AccessRights = Object.freeze({
+export const grantedAccess: AccessRights = Object.freeze({
     granted: true,
     restrictToAccounts: [],
 });
 
-const deniedAccess: AccessRights = Object.freeze({
+export const deniedAccess: AccessRights = Object.freeze({
     granted: false,
     restrictToAccounts: [],
 });

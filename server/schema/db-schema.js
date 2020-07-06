@@ -526,6 +526,7 @@ const Block: TypeDef = {
     },
     in_msg_descr: arrayOf(inMsg(docs.block.in_msg_descr)),
     rand_seed: string(docs.block.rand_seed),
+    created_by: string(docs.block.created_by),
     out_msg_descr: arrayOf(outMsg(docs.block.out_msg_descr)),
     account_blocks: arrayOf({
         account_addr: string(docs.block.account_blocks.account_addr),

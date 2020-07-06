@@ -1,13 +1,11 @@
-import Arango from "../server/arango";
-import QLogs from "../server/logs";
 import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../server/db-types";
 import {
-    BlockSignatures,
     Transaction,
     Account,
     Message,
     createResolvers
 } from "../server/resolvers-generated";
+import {createTestArango} from './init-tests';
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, null)).toBeNull();
@@ -126,13 +124,9 @@ test("Filter test", () => {
 
 
 test("Enum Names", () => {
-    const db = new Arango({
-        isTests: true,
-        database: { server: 'http://0.0.0.0', name: 'blockchain' },
-        slowDatabase: { server: 'http://0.0.0.0', name: 'blockchain' }
-    }, new QLogs());
-    const params = new QParams();
+    const db = createTestArango();
     const resolvers = createResolvers(db);
+    const params = new QParams();
     const m1 = {
         msg_type: 1,
     };
@@ -143,12 +137,12 @@ test("Enum Names", () => {
     expect(m2.msg_type_name).toEqual('ExtIn');
     expect(resolvers.Message.msg_type_name({ msg_type: 0 })).toEqual('Internal');
 
-    let ql = Message.ql(params, 'doc', { msg_type_name: { eq: "ExtIn" } });
+    let ql = Message.filterCondition(params, 'doc', { msg_type_name: { eq: "ExtIn" } });
     expect(ql).toEqual(`doc.msg_type == @v1`);
     expect(params.values.v1).toEqual(1);
 
     params.clear();
-    ql = Message.ql(params, 'doc', { msg_type_name: { eq: "Internal" } });
+    ql = Message.filterCondition(params, 'doc', { msg_type_name: { eq: "Internal" } });
     expect(ql).toEqual(`doc.msg_type == @v1`);
     expect(params.values.v1).toEqual(0);
 
@@ -156,7 +150,7 @@ test("Enum Names", () => {
     expect(Message.test(null, { msg_type: 0 }, { msg_type_name: { eq: "Internal" } })).toBeTruthy();
 
     params.clear();
-    ql = Message.ql(params, 'doc', { msg_type_name: { in: ["Internal"] } });
+    ql = Message.filterCondition(params, 'doc', { msg_type_name: { in: ["Internal"] } });
     expect(ql).toEqual(`doc.msg_type == @v1`);
     expect(params.values.v1).toEqual(0);
 
