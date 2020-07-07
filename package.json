@@ -36,8 +36,8 @@
 		"opentracing": "0.14.4",
 		"subscriptions-transport-ws": "0.9.16",
 		"node-statsd": "0.1.1",
-		"ton-client-js": "0.21.21",
-		"ton-client-node-js": "0.21.0",
+		"ton-client-js": "^0",
+		"ton-client-node-js": "^0",
 		"ws": "7.2.3"
 	},
 	"devDependencies": {
