@@ -131,16 +131,18 @@ pipeline {
 									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
 									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
 								""") {
-									sh (
-										label: 'Run unit tests',
-										script: """
-											cd /home/node
-											npm install
-											npm run test
-											rm -drf node_modules
-											npm i --production
-										"""
-									)
+								    sshagent (credentials: [G_gitcred]) {
+                                        sh (
+                                            label: 'Run unit tests',
+                                            script: """
+                                                cd /home/node
+                                                npm install
+                                                npm run test
+                                                rm -drf node_modules
+                                                npm i --production
+                                            """
+                                        )
+                                    }
 								}
 							}
 
