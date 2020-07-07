@@ -135,7 +135,8 @@ pipeline {
                                         sh (
                                             label: 'Run unit tests',
                                             script: """
-                                                cd /home/node
+                                                mkdir -p ~/.ssh;
+                                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts                                                cd /home/node
                                                 npm install
                                                 npm run test
                                                 rm -drf node_modules
