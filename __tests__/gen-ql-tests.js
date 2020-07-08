@@ -65,6 +65,13 @@ test("reduced RETURN", () => {
         }
     `));
 
+    expect(queryText(db.transactions, 'out_messages { id }')).toEqual(normalized(`
+        FOR doc IN transactions LIMIT 50 RETURN {
+            _key: doc._key,
+            out_msgs: doc.out_msgs
+        }
+    `));
+
     expect(queryText(db.messages, 'msg_type_name msg_type')).toEqual(normalized(`
         FOR doc IN messages LIMIT 50 RETURN {
             _key: doc._key,

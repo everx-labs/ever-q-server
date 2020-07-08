@@ -868,8 +868,11 @@ export function joinArray(
                     RETURN 1
                 ) ${all ? `== LENGTH(${on_path})` : '> 0'})`;
         },
-        returnExpression(_path: string, _def: GField): QReturnExpression {
-            throw NOT_IMPLEMENTED;
+        returnExpression(path: string, _def: GField): QReturnExpression {
+            return {
+                name: onField,
+                expression: `${path}.${onField}`,
+            };
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
