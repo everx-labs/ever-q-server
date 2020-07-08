@@ -1,8 +1,19 @@
 import {grantedAccess} from '../server/auth';
 import {QParams} from "../server/db-types";
 import {Account, BlockSignatures, Message, Transaction} from "../server/resolvers-generated";
-import {createTestArango} from './init-tests';
+import {createTestArango, testServerQuery} from './init-tests';
 import {gql} from 'apollo-server';
+
+test('multi query', async () => {
+    const data = await testServerQuery(`
+    query { 
+        info { time }
+        blocks { id }
+        b:blocks { id }
+    }
+    `);
+    expect(data.blocks.length).toBeGreaterThan(0);
+});
 
 function selectionInfo(r) {
     const parsed = gql([`{${r}}`]);

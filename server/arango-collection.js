@@ -344,7 +344,7 @@ export class Collection {
             const start = Date.now();
             try {
                 const accessRights = await requireGrantedAccess(context, args);
-                const q = this.createDatabaseQuery(args, info.operation.selectionSet, accessRights);
+                const q = this.createDatabaseQuery(args, info.fieldNodes[0].selectionSet, accessRights);
                 if (!q) {
                     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
                     return [];
