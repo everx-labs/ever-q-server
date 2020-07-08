@@ -122,7 +122,7 @@ pipeline {
 					steps {
 						script {
 							withCredentials ([
-								string(credentialsId: 'cinet_arango_address', variable: 'Q_DATABASE_SERVER'), 
+								string(credentialsId: 'cinet_arango_address', variable: 'Q_DATABASE_SERVER'),
 								string(credentialsId: 'cinet_arango_auth', variable: 'Q_DATABASE_AUTH')
 							]) {
 								builtImage.inside ("""
@@ -131,14 +131,20 @@ pipeline {
 									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
 									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
 								""") {
-									sh (
-										label: 'Run unit tests',
-										script: """
-											cd /home/node
-											npm install jest
-											npm run test
-										"""
-									)
+								    sshagent (credentials: [G_gitcred]) {
+                                        sh (
+                                            label: 'Run unit tests',
+                                            script: """
+                                                mkdir -p ~/.ssh;
+                                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+                                                cd /home/node
+                                                npm install
+                                                npm run test
+                                                rm -drf node_modules
+                                                npm i --production
+                                            """
+                                        )
+                                    }
 								}
 							}
 
@@ -179,7 +185,7 @@ pipeline {
 									name: 'TEST_ONLY',
 									value: true
 								]
-							] 
+							]
 
 							build job: "Infrastructure/startup-edition-node/master", parameters: params
 						}

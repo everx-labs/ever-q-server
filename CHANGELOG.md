@@ -1,6 +1,15 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.2 – Jul 8, 2020
+
+### New
+- Field `created_by` in `blocks`.
+
+  
+### Optimized
+- Query builder generates reduced `RETURN` section according to the result set requested by user.
+
 ## 0.27.1 – Jun 16, 2020
 
 ### Optimized

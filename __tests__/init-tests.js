@@ -1,11 +1,12 @@
 import fetch from 'node-fetch';
+import Arango from '../server/arango';
 import {createConfig, defaultOptions} from '../server/config';
 import QLogs from '../server/logs';
 import TONQServer from '../server/server';
 
 const testConfig = createConfig({}, process.env, {
     ...defaultOptions,
-    dbServer: 'localhost:8081',
+    dbServer: 'localhost:8901',
 });
 let testServer: ?TONQServer = null
 
@@ -53,4 +54,19 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     return responseJson.data;
 }
 
-test('Init', () => {});
+export function createTestArango(): Arango {
+    return new Arango({
+        isTests: true,
+        database: {
+            server: 'http://0.0.0.0',
+            name: 'blockchain',
+        },
+        slowDatabase: {
+            server: 'http://0.0.0.0',
+            name: 'blockchain',
+        },
+    }, new QLogs());
+}
+
+test('Init', () => {
+});

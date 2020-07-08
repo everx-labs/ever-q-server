@@ -19,8 +19,33 @@
 
 import type {AccessRights} from "./auth";
 import type {IndexInfo} from "./config";
+import {scalarTypes} from "./schema/db-schema-types";
+import type {DbField, DbSchema, DbType} from "./schema/db-schema-types";
 
 declare function BigInt(a: any): any;
+
+const NOT_IMPLEMENTED = new Error('Not Implemented');
+
+export type GName = {
+    kind: 'Name',
+    value: string,
+};
+
+export type GField = {
+    kind: 'Field',
+    alias: string,
+    name: GName,
+    arguments: GDefinition[],
+    directives: GDefinition[],
+    selectionSet: typeof undefined | GSelectionSet,
+};
+
+export type GDefinition = GField;
+
+export type GSelectionSet = {
+    kind: 'SelectionSet',
+    selections: GDefinition[],
+};
 
 export type QFieldExplanation = {
     operations: Set<string>,
@@ -102,11 +127,18 @@ export class QParams {
     }
 }
 
+type QReturnExpression = {
+    name: string,
+    expression: string,
+};
+
 /**
  * Abstract interface for objects that acts as a helpers to perform queries over documents
  * using query filters.
  */
 type QType = {
+    fields?: { [string]: QType },
+
     /**
      * Generates an Arango QL condition for specified field based on specified filter.
      * The condition must be a string expression that evaluates to boolean.
@@ -115,7 +147,16 @@ type QType = {
      * @param {any} filter Filter that will be applied to this field
      * @return {string} Arango QL condition text
      */
-    ql: (params: QParams, path: string, filter: any) => string,
+    filterCondition: (params: QParams, path: string, filter: any) => string,
+
+    /**
+     * Generates AQL expression for return section.
+     *
+     * @param {string} path
+     * @param {GDefinition} def
+     */
+    returnExpression: (path: string, def: GDefinition) => QReturnExpression,
+
     /**
      * Tests value in document from Arango DB against specified filter.
      *
@@ -133,25 +174,58 @@ type QType = {
  * @param {string} path Path to document field.
  * @param {object} filter A filter object specified by user.
  * @param {object} fieldTypes A map of available values for filter fields to helpers.
- * @param {function} qlField Function that generates condition for a concrete field.
+ * @param {function} filterConditionForField Function that generates condition for a concrete field.
  * @return {string} AQL condition
  */
-function qlFields(
+function filterConditionForFields(
     path: string,
     filter: any,
     fieldTypes: { [string]: QType },
-    qlField: (field: any, path: string, filterKey: string, filterValue: any) => string,
+    filterConditionForField: (field: any, path: string, filterKey: string, filterValue: any) => string,
 ): string {
     const conditions: string[] = [];
     Object.entries(filter).forEach(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
         if (fieldType) {
-            conditions.push(qlField(fieldType, path, filterKey, filterValue))
+            conditions.push(filterConditionForField(fieldType, path, filterKey, filterValue))
         } else {
             throw new Error(`Invalid filter field: ${filterKey}`);
         }
     });
-    return qlCombine(conditions, 'AND', 'false');
+    return combineFilterConditions(conditions, 'AND', 'false');
+}
+
+export function collectReturnExpressions(
+    expressions: Map<string, string>,
+    path: string,
+    fields: GDefinition[],
+    fieldTypes: { [string]: QType },
+) {
+    fields.forEach((fieldDef: GField) => {
+        const name = fieldDef.name && fieldDef.name.value || '';
+        if (name === '') {
+            throw new Error(`Invalid selection field: ${fieldDef.kind}`);
+        }
+
+        if (name === '__typename') {
+            return;
+        }
+
+        const fieldType = fieldTypes[name];
+        if (!fieldType) {
+            throw new Error(`Invalid selection field: ${name}`);
+        }
+        const returned = fieldType.returnExpression(path, fieldDef);
+        expressions.set(returned.name, returned.expression);
+    });
+}
+
+export function combineReturnExpressions(expressions: Map<string, string>): string {
+    const fields = [];
+    for (const [key, value] of expressions) {
+        fields.push(`${key}: ${value}`);
+    }
+    return `{ ${fields.join(', ')} }`;
 }
 
 /**
@@ -179,7 +253,7 @@ function testFields(
     return !failed;
 }
 
-function qlOp(params: QParams, path: string, op: string, filter: any): string {
+function filterConditionOp(params: QParams, path: string, op: string, filter: any): string {
     params.explainScalarOperation(path, op);
     const paramName = params.add(filter);
 
@@ -196,7 +270,7 @@ function qlOp(params: QParams, path: string, op: string, filter: any): string {
     return `${fixedPath} ${op} ${fixedValue}`;
 }
 
-function qlCombine(conditions: string[], op: string, defaultConditions: string): string {
+function combineFilterConditions(conditions: string[], op: string, defaultConditions: string): string {
     if (conditions.length === 0) {
         return defaultConditions;
     }
@@ -206,9 +280,9 @@ function qlCombine(conditions: string[], op: string, defaultConditions: string):
     return '(' + conditions.join(`) ${op} (`) + ')';
 }
 
-function qlIn(params: QParams, path: string, filter: any): string {
-    const conditions = filter.map(value => qlOp(params, path, '==', value));
-    return qlCombine(conditions, 'OR', 'false');
+function filterConditionForIn(params: QParams, path: string, filter: any): string {
+    const conditions = filter.map(value => filterConditionOp(params, path, '==', value));
+    return combineFilterConditions(conditions, 'OR', 'false');
 }
 
 //------------------------------------------------------------- Scalars
@@ -218,8 +292,11 @@ function undefinedToNull(v: any): any {
 }
 
 const scalarEq: QType = {
-    ql(params: QParams, path, filter) {
-        return qlOp(params, path, '==', filter);
+    filterCondition(params: QParams, path, filter) {
+        return filterConditionOp(params, path, '==', filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return value === filter;
@@ -227,8 +304,11 @@ const scalarEq: QType = {
 };
 
 const scalarNe: QType = {
-    ql(params, path, filter) {
-        return qlOp(params, path, '!=', filter);
+    filterCondition(params, path, filter) {
+        return filterConditionOp(params, path, '!=', filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return value !== filter;
@@ -236,8 +316,11 @@ const scalarNe: QType = {
 };
 
 const scalarLt: QType = {
-    ql(params, path, filter) {
-        return qlOp(params, path, '<', filter);
+    filterCondition(params, path, filter) {
+        return filterConditionOp(params, path, '<', filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return value < filter;
@@ -245,8 +328,11 @@ const scalarLt: QType = {
 };
 
 const scalarLe: QType = {
-    ql(params, path, filter) {
-        return qlOp(params, path, '<=', filter);
+    filterCondition(params, path, filter) {
+        return filterConditionOp(params, path, '<=', filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return value <= filter;
@@ -254,8 +340,11 @@ const scalarLe: QType = {
 };
 
 const scalarGt: QType = {
-    ql(params, path, filter) {
-        return qlOp(params, path, '>', filter);
+    filterCondition(params, path, filter) {
+        return filterConditionOp(params, path, '>', filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return value > filter;
@@ -263,8 +352,11 @@ const scalarGt: QType = {
 };
 
 const scalarGe: QType = {
-    ql(params, path, filter) {
-        return qlOp(params, path, '>=', filter);
+    filterCondition(params, path, filter) {
+        return filterConditionOp(params, path, '>=', filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return value >= filter;
@@ -272,8 +364,11 @@ const scalarGe: QType = {
 };
 
 const scalarIn: QType = {
-    ql(params, path, filter) {
-        return qlIn(params, path, filter);
+    filterCondition(params, path, filter) {
+        return filterConditionForIn(params, path, filter);
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return filter.includes(value);
@@ -281,8 +376,11 @@ const scalarIn: QType = {
 };
 
 const scalarNotIn: QType = {
-    ql(params, path, filter) {
-        return `NOT (${qlIn(params, path, filter)})`;
+    filterCondition(params, path, filter) {
+        return `NOT (${filterConditionForIn(params, path, filter)})`;
+    },
+    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+        throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
         return !filter.includes(value);
@@ -302,10 +400,20 @@ const scalarOps = {
 
 function createScalar(): QType {
     return {
-        ql(params, path, filter) {
-            return qlFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
-                return op.ql(params, path, filterValue);
+        filterCondition(params, path, filter) {
+            return filterConditionForFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
+                return op.filterCondition(params, path, filterValue);
             });
+        },
+        returnExpression(path: string, def: GDefinition): QReturnExpression {
+            let name = def.name.value;
+            if (name === 'id' && path === 'doc') {
+                name = '_key';
+            }
+            return {
+                name,
+                expression: `${path}.${name}`,
+            };
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
@@ -395,13 +503,20 @@ export function convertBigUInt(prefixLength: number, value: any): string {
 
 function createBigUInt(prefixLength: number): QType {
     return {
-        ql(params, path, filter) {
-            return qlFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
+        filterCondition(params, path, filter) {
+            return filterConditionForFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
                 const converted = (op === scalarOps.in || op === scalarOps.notIn)
                     ? filterValue.map(x => convertBigUInt(prefixLength, x))
                     : convertBigUInt(prefixLength, filterValue);
-                return op.ql(params, path, converted);
+                return op.filterCondition(params, path, converted);
             });
+        },
+        returnExpression(path: string, def: GDefinition): QReturnExpression {
+            const name = def.name.value;
+            return {
+                name,
+                expression: `${path}.${name}`,
+            };
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
@@ -439,14 +554,28 @@ export function splitOr(filter: any): any[] {
 
 export function struct(fields: { [string]: QType }, isCollection?: boolean): QType {
     return {
-        ql(params, path, filter) {
+        fields,
+        filterCondition(params, path, filter) {
             const orOperands = splitOr(filter).map((operand) => {
-                return qlFields(path, operand, fields, (fieldType, path, filterKey, filterValue) => {
+                return filterConditionForFields(path, operand, fields, (fieldType, path, filterKey, filterValue) => {
                     const fieldName = isCollection && (filterKey === 'id') ? '_key' : filterKey;
-                    return fieldType.ql(params, combinePath(path, fieldName), filterValue);
+                    return fieldType.filterCondition(params, combinePath(path, fieldName), filterValue);
                 });
             });
             return (orOperands.length > 1) ? `(${orOperands.join(') OR (')})` : orOperands[0];
+        },
+        returnExpression(path: string, def: GDefinition): QReturnExpression {
+            const expressions = new Map();
+            collectReturnExpressions(
+                expressions,
+                `${path}.${def.name.value}`,
+                (def.selectionSet && def.selectionSet.selections) || [],
+                fields,
+            );
+            return {
+                name: def.name.value,
+                expression: combineReturnExpressions(expressions),
+            };
         },
         test(parent, value, filter) {
             if (!value) {
@@ -468,18 +597,18 @@ export function struct(fields: { [string]: QType }, isCollection?: boolean): QTy
 
 // Arrays
 
-function getItemQL(itemType: QType, params: QParams, path: string, filter: any): string {
-    let itemQl: string;
+function getItemFilterCondition(itemType: QType, params: QParams, path: string, filter: any): string {
+    let itemFilterCondition: string;
     const explanation = params.explanation;
     if (explanation) {
         const saveParentPath = explanation.parentPath;
         explanation.parentPath = `${explanation.parentPath}${path}[*]`;
-        itemQl = itemType.ql(params, 'CURRENT', filter);
+        itemFilterCondition = itemType.filterCondition(params, 'CURRENT', filter);
         explanation.parentPath = saveParentPath;
     } else {
-        itemQl = itemType.ql(params, 'CURRENT', filter);
+        itemFilterCondition = itemType.filterCondition(params, 'CURRENT', filter);
     }
-    return itemQl;
+    return itemFilterCondition;
 }
 
 function isValidFieldPathChar(c: string): boolean {
@@ -501,15 +630,15 @@ function isFieldPath(test: string): boolean {
     return true;
 }
 
-function tryOptimizeArrayAny(path: string, itemQl: string, params: QParams): ?string {
-    function tryOptimize(ql: string, paramIndex: number): ?string {
+function tryOptimizeArrayAny(path: string, itemFilterCondition: string, params: QParams): ?string {
+    function tryOptimize(filterCondition: string, paramIndex: number): ?string {
         const paramName = `@v${paramIndex + 1}`;
         const suffix = ` == ${paramName}`;
-        if (ql === `CURRENT${suffix}`) {
+        if (filterCondition === `CURRENT${suffix}`) {
             return `${paramName} IN ${path}[*]`;
         }
-        if (ql.startsWith('CURRENT.') && ql.endsWith(suffix)) {
-            const fieldPath = ql.slice('CURRENT.'.length, -suffix.length);
+        if (filterCondition.startsWith('CURRENT.') && filterCondition.endsWith(suffix)) {
+            const fieldPath = filterCondition.slice('CURRENT.'.length, -suffix.length);
             if (isFieldPath(fieldPath)) {
                 return `${paramName} IN ${path}[*].${fieldPath}`;
             }
@@ -517,17 +646,17 @@ function tryOptimizeArrayAny(path: string, itemQl: string, params: QParams): ?st
         return null;
     }
 
-    if (!itemQl.startsWith('(') || !itemQl.endsWith(')')) {
-        return tryOptimize(itemQl, params.count - 1);
+    if (!itemFilterCondition.startsWith('(') || !itemFilterCondition.endsWith(')')) {
+        return tryOptimize(itemFilterCondition, params.count - 1);
     }
-    const qlParts = itemQl.slice(1, -1).split(') OR (');
-    if (qlParts.length === 1) {
-        return tryOptimize(itemQl, params.count - 1);
+    const filterConditionParts = itemFilterCondition.slice(1, -1).split(') OR (');
+    if (filterConditionParts.length === 1) {
+        return tryOptimize(itemFilterCondition, params.count - 1);
     }
-    const optimizedParts = qlParts
-        .map((x, i) => tryOptimize(x, params.count - qlParts.length + i))
+    const optimizedParts = filterConditionParts
+        .map((x, i) => tryOptimize(x, params.count - filterConditionParts.length + i))
         .filter(x => x !== null);
-    if (optimizedParts.length !== qlParts.length) {
+    if (optimizedParts.length !== filterConditionParts.length) {
         return null;
     }
     return `(${optimizedParts.join(') OR (')})`;
@@ -537,10 +666,13 @@ export function array(resolveItemType: () => QType): QType {
     let resolved: ?QType = null;
     const ops = {
         all: {
-            ql(params, path, filter) {
+            filterCondition(params, path, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const itemQl = getItemQL(itemType, params, path, filter);
-                return `LENGTH(${path}[* FILTER ${itemQl}]) == LENGTH(${path})`;
+                const itemFilterCondition = getItemFilterCondition(itemType, params, path, filter);
+                return `LENGTH(${path}[* FILTER ${itemFilterCondition}]) == LENGTH(${path})`;
+            },
+            returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+                throw NOT_IMPLEMENTED;
             },
             test(parent, value, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
@@ -549,14 +681,17 @@ export function array(resolveItemType: () => QType): QType {
             },
         },
         any: {
-            ql(params, path, filter) {
+            filterCondition(params, path, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const itemQl = getItemQL(itemType, params, path, filter);
-                const optimizedQl = tryOptimizeArrayAny(path, itemQl, params);
-                if (optimizedQl) {
-                    return optimizedQl;
+                const itemFilterCondition = getItemFilterCondition(itemType, params, path, filter);
+                const optimizedFilterCondition = tryOptimizeArrayAny(path, itemFilterCondition, params);
+                if (optimizedFilterCondition) {
+                    return optimizedFilterCondition;
                 }
-                return `LENGTH(${path}[* FILTER ${itemQl}]) > 0`;
+                return `LENGTH(${path}[* FILTER ${itemFilterCondition}]) > 0`;
+            },
+            returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+                throw NOT_IMPLEMENTED;
             },
             test(parent, value, filter) {
                 const itemType = resolved || (resolved = resolveItemType());
@@ -566,10 +701,30 @@ export function array(resolveItemType: () => QType): QType {
         },
     };
     return {
-        ql(params, path, filter) {
-            return qlFields(path, filter, ops, (op, path, filterKey, filterValue) => {
-                return op.ql(params, path, filterValue);
+        filterCondition(params, path, filter) {
+            return filterConditionForFields(path, filter, ops, (op, path, filterKey, filterValue) => {
+                return op.filterCondition(params, path, filterValue);
             });
+        },
+        returnExpression(path: string, def: GDefinition): QReturnExpression {
+            const name = def.name.value;
+            const itemSelections = def.selectionSet && def.selectionSet.selections;
+            let expression;
+            if (itemSelections && itemSelections.length > 0) {
+                const itemType = resolved || (resolved = resolveItemType());
+                const fieldPath = `${path}.${name}`;
+                const alias = fieldPath.split('.').join('__');
+                const expressions = new Map();
+                collectReturnExpressions(expressions, alias, itemSelections, itemType.fields || {});
+                const itemExpression = combineReturnExpressions(expressions);
+                expression = `( FOR ${alias} IN ${fieldPath} || [] RETURN ${itemExpression} )`;
+            } else {
+                expression = `${path}.${name}`;
+            }
+            return {
+                name,
+                expression,
+            }
         },
         test(parent, value, filter) {
             if (!value) {
@@ -602,14 +757,20 @@ export function enumName(onField: string, values: { [string]: number }): QType {
     };
 
     return {
-        ql(params, path, filter) {
+        filterCondition(params, path, filter) {
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
-            return qlFields(on_path, filter, scalarOps, (op, path, filterKey, filterValue) => {
+            return filterConditionForFields(on_path, filter, scalarOps, (op, path, filterKey, filterValue) => {
                 const resolved = (op === scalarOps.in || op === scalarOps.notIn)
                     ? filterValue.map(resolveValue)
                     : resolveValue(filterValue);
-                return op.ql(params, path, resolved);
+                return op.filterCondition(params, path, resolved);
             });
+        },
+        returnExpression(path: string, _def: GField): QReturnExpression {
+            return {
+                name: onField,
+                expression: `${path}.${onField}`,
+            };
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
@@ -631,23 +792,50 @@ export function createEnumNameResolver(onField: string, values: { [string]: numb
     };
 }
 
+//------------------------------------------------------------- String Companions
+
+export function stringCompanion(onField: string): QType {
+    return {
+        filterCondition(_params, _path, _filter) {
+            return 'false';
+        },
+        returnExpression(path: string, _def: GField) {
+            return {
+                name: onField,
+                expression: `${path}.${onField}`,
+            };
+        },
+        test(_parent, _value, _filter) {
+            return false;
+        },
+    };
+}
+
+
 //------------------------------------------------------------- Joins
 
 export function join(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
     let resolved: ?QType = null;
     return {
-        ql(params, path, filter) {
+        filterCondition(params, path, filter) {
             const refType = resolved || (resolved = resolveRefType());
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
-            const refQl = refType.ql(params, alias, filter);
+            const refFilterCondition = refType.filterCondition(params, alias, filter);
             return `
                 LENGTH(
                     FOR ${alias} IN ${refCollection}
-                    FILTER (${alias}._key == ${on_path}) AND (${refQl})
+                    FILTER (${alias}._key == ${on_path}) AND (${refFilterCondition})
                     LIMIT 1
                     RETURN 1
                 ) > 0`;
+        },
+        returnExpression(path: string, _def: GField): QReturnExpression {
+            const name = onField === 'id' ? '_key' : onField;
+            return {
+                name,
+                expression: `${path}.${name}`,
+            };
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -664,21 +852,27 @@ export function joinArray(
 ): QType {
     let resolved: ?QType = null;
     return {
-        ql(params, path, filter) {
+        filterCondition(params, path, filter) {
             const refType = resolved || (resolved = resolveRefType());
             const refFilter = filter.all || filter.any;
             const all = !!filter.all;
             const on_path = path.split('.').slice(0, -1).concat(onField).join('.');
             const alias = `${on_path.replace('.', '_')}`;
-            const refQl = refType.ql(params, alias, refFilter);
+            const refFilterCondition = refType.filterCondition(params, alias, refFilter);
             return `
                 (LENGTH(${on_path}) > 0)
                 AND (LENGTH(
                     FOR ${alias} IN ${refCollection}
-                    FILTER (${alias}._key IN ${on_path}) AND (${refQl})
+                    FILTER (${alias}._key IN ${on_path}) AND (${refFilterCondition})
                     ${!all ? 'LIMIT 1' : ''}
                     RETURN 1
                 ) ${all ? `== LENGTH(${on_path})` : '> 0'})`;
+        },
+        returnExpression(path: string, _def: GField): QReturnExpression {
+            return {
+                name: onField,
+                expression: `${path}.${onField}`,
+            };
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -696,7 +890,7 @@ export type FieldSelection = {
     selection: FieldSelection[],
 }
 
-export function parseSelectionSet(selectionSet: any, returnFieldSelection: string): FieldSelection[] {
+export function parseSelectionSet(selectionSet: ?GSelectionSet, returnFieldSelection: string): FieldSelection[] {
     const fields: FieldSelection[] = [];
     const selections = selectionSet && selectionSet.selections;
     if (selections) {
@@ -812,3 +1006,64 @@ export function parseOrderBy(s: string): OrderBy[] {
 }
 
 
+export function createScalarFields(schema: DbSchema): Map<string, { type: string, path: string }> {
+    const scalarFields = new Map<string, { type: string, path: string }>();
+
+    function addForDbType(type: DbType, parentPath, parentDocPath: string) {
+        type.fields.forEach((field: DbField) => {
+            if (field.join || field.enumDef) {
+                return;
+            }
+            const docName = field.name === 'id' ? '_key' : field.name;
+            const path = `${parentPath}.${field.name}`;
+            let docPath = `${parentDocPath}.${docName}`;
+            if (field.arrayDepth > 0) {
+                let suffix = '[*]';
+                for (let depth = 10; depth > 0; depth -= 1) {
+                    const s = `[${'*'.repeat(depth)}]`;
+                    if (docPath.includes(s)) {
+                        suffix = `[${'*'.repeat(depth + 1)}]`;
+                        break;
+                    }
+                }
+                docPath = `${docPath}${suffix}`;
+            }
+            switch (field.type.category) {
+            case "scalar":
+                let typeName;
+                if (field.type === scalarTypes.boolean) {
+                    typeName = 'boolean';
+                } else if (field.type === scalarTypes.float) {
+                    typeName = 'number';
+                } else if (field.type === scalarTypes.int) {
+                    typeName = 'number';
+                } else if (field.type === scalarTypes.uint64) {
+                    typeName = 'uint64';
+                } else if (field.type === scalarTypes.uint1024) {
+                    typeName = 'uint1024';
+                } else {
+                    typeName = 'string';
+                }
+                scalarFields.set(
+                    path,
+                    {
+                        type: typeName,
+                        path: docPath,
+                    },
+                );
+                break;
+            case "struct":
+            case "union":
+                addForDbType(field.type, path, docPath);
+                break;
+            }
+        });
+    }
+
+
+    schema.types.forEach((type) => {
+        addForDbType(type, '', '');
+    });
+
+    return scalarFields;
+}

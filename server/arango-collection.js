@@ -1,39 +1,46 @@
 /*
- * Copyright 2018-2020 TON DEV SOLUTIONS LTD.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.  You may obtain a copy of the
- * License at:
- *
- * http://www.ton.dev/licenses
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
+* Copyright 2018-2020 TON DEV SOLUTIONS LTD.
+*
+* Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
+* this file except in compliance with the License.  You may obtain a copy of the
+* License at:
+*
+* http://www.ton.dev/licenses
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific TON DEV software governing permissions and
+* limitations under the License.
+*/
 
 // @flow
 
-import { Database, DocumentCollection } from "arangojs";
-import { Span, SpanContext, Tracer } from "opentracing";
-import type { TONClient } from "ton-client-js/types";
-import { AggregationFn, AggregationHelperFactory } from "./aggregations";
-import type { FieldAggregation, AggregationHelper } from "./aggregations";
-import { DocUpsertHandler, DocSubscription } from "./arango-listeners";
-import type { AccessRights } from "./auth";
-import { Auth } from "./auth";
-import { BLOCKCHAIN_DB, STATS } from './config';
-import type { CollectionInfo, IndexInfo, QConfig } from "./config";
-import type { DatabaseQuery, OrderBy, QType, QueryStat } from "./db-types";
-import { indexToString, parseSelectionSet, QParams, selectionToString } from "./db-types";
-import type { QLog } from "./logs";
+import {Database, DocumentCollection} from "arangojs";
+import {Span, SpanContext, Tracer} from "opentracing";
+import type {TONClient} from "ton-client-js/types";
+import {AggregationFn, AggregationHelperFactory} from "./aggregations";
+import type {FieldAggregation, AggregationHelper} from "./aggregations";
+import {DocUpsertHandler, DocSubscription} from "./arango-listeners";
+import type {AccessRights} from "./auth";
+import {Auth} from "./auth";
+import {BLOCKCHAIN_DB, STATS} from './config';
+import type {CollectionInfo, IndexInfo, QConfig} from "./config";
+import type {DatabaseQuery, GDefinition, OrderBy, QType, QueryStat} from "./db-types";
+import {
+    collectReturnExpressions,
+    combineReturnExpressions,
+    indexToString,
+    parseSelectionSet,
+    QParams,
+    selectionToString,
+} from "./db-types";
+import type {QLog} from "./logs";
 import QLogs from "./logs";
-import { isFastQuery } from './slow-detector';
-import type { IStats } from './tracer';
-import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "./tracer";
-import { QError, wrap } from "./utils";
+import {isFastQuery} from './slow-detector';
+import type {IStats} from './tracer';
+import {QTracer, StatsCounter, StatsGauge, StatsTiming} from "./tracer";
+import {QError, wrap} from "./utils";
 import EventEmitter from 'events';
 
 const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
@@ -217,13 +224,13 @@ export class Collection {
         }
     }
 
-    buildConditionQL(
+    buildFilterCondition(
         filter: any,
         params: QParams,
         accessRights: AccessRights,
     ): ?string {
         const primaryCondition = Object.keys(filter).length > 0
-            ? this.docType.ql(params, 'doc', filter)
+            ? this.docType.filterCondition(params, 'doc', filter)
             : '';
         const additionalCondition = this.getAdditionalCondition(accessRights, params);
         if (primaryCondition === 'false' || additionalCondition === 'false') {
@@ -233,6 +240,18 @@ export class Collection {
             ? `(${primaryCondition}) AND (${additionalCondition})`
             : (primaryCondition || additionalCondition);
 
+    }
+
+    buildReturnExpression(selections: GDefinition[]): string {
+        const expressions = new Map();
+        expressions.set('_key', 'doc._key');
+        const docSelections = selections[0].selectionSet && selections[0].selectionSet.selections;
+        const fields = this.docType.fields;
+        if (docSelections && fields) {
+            collectReturnExpressions(expressions, 'doc', docSelections, fields);
+        }
+        expressions.delete('id');
+        return combineReturnExpressions(expressions);
     }
 
     createDatabaseQuery(
@@ -248,7 +267,7 @@ export class Collection {
     ): ?DatabaseQuery {
         const filter = args.filter || {};
         const params = new QParams();
-        const condition = this.buildConditionQL(filter, params, accessRights);
+        const condition = this.buildFilterCondition(filter, params, accessRights);
         if (condition === null) {
             return null;
         }
@@ -271,13 +290,13 @@ export class Collection {
         const sortSection = orderByText !== '' ? `SORT ${orderByText}` : '';
         const limitText = Math.min(limit, 50);
         const limitSection = `LIMIT ${limitText}`;
-
+        const returnExpression = this.buildReturnExpression(selectionInfo.selections);
         const text = `
             FOR doc IN ${this.name}
             ${filterSection}
             ${sortSection}
             ${limitSection}
-            RETURN doc`;
+            RETURN ${returnExpression}`;
 
         return {
             filter,
@@ -295,7 +314,7 @@ export class Collection {
     async isFastQuery(
         text: string,
         filter: any,
-        orderBy?: OrderBy[]
+        orderBy?: OrderBy[],
     ): Promise<boolean> {
         await this.checkRefreshInfo();
         let statKey = text;
@@ -480,7 +499,7 @@ export class Collection {
         helpers: AggregationHelper[],
     } {
         const params = new QParams();
-        const condition = this.buildConditionQL(filter, params, accessRights);
+        const condition = this.buildFilterCondition(filter, params, accessRights);
         if (condition === null) {
             return null;
         }
@@ -511,7 +530,12 @@ export class Collection {
                 if (!(await this.isFastQuery(
                     text,
                     filter,
-                    [{ path, direction: 'ASC' }],
+                    [
+                        {
+                            path,
+                            direction: 'ASC',
+                        },
+                    ],
                 ))) {
                     return false;
                 }
@@ -534,7 +558,12 @@ export class Collection {
                 const filter = args.filter || {};
                 const fields = Array.isArray(args.fields) && args.fields.length > 0
                     ? args.fields
-                    : [{ field: '', fn: AggregationFn.COUNT }];
+                    : [
+                        {
+                            field: '',
+                            fn: AggregationFn.COUNT,
+                        },
+                    ];
 
                 const q = this.createAggregationQuery(filter, fields, accessRights);
                 if (!q) {
@@ -575,8 +604,7 @@ export class Collection {
             return;
         }
         this.infoRefreshTime = Date.now() + INFO_REFRESH_INTERVAL;
-        const indexes = (await this.dbCollection().indexes())
-            .map(x => ({ fields: x.fields }));
+        const actualIndexes = await this.dbCollection().indexes();
 
         const sameIndexes = (aIndexes: IndexInfo[], bIndexes: IndexInfo[]): boolean => {
             const aRest = new Set(aIndexes.map(indexToString));
@@ -590,9 +618,9 @@ export class Collection {
             }
             return aRest.size === 0;
         };
-        if (!sameIndexes(indexes, this.info.indexes)) {
-            this.log.debug('RELOAD_INDEXES', indexes);
-            this.info.indexes = indexes;
+        if (!sameIndexes(actualIndexes, this.info.indexes)) {
+            this.log.debug('RELOAD_INDEXES', actualIndexes);
+            this.info.indexes = actualIndexes.map(x => ({fields: x.fields}));
             this.queryStats.clear();
         }
 
@@ -608,14 +636,14 @@ export class Collection {
         }
         const queryParams = fieldPath.endsWith('[*]')
             ? {
-                filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
+                filter: {[fieldPath.slice(0, -3)]: {any: {eq: fieldValue}}},
                 text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
-                params: { v: fieldValue },
+                params: {v: fieldValue},
             }
             : {
-                filter: { id: { eq: fieldValue } },
+                filter: {id: {eq: fieldValue}},
                 text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
-                params: { v: fieldValue },
+                params: {v: fieldValue},
             };
 
         const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);

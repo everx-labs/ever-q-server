@@ -150,7 +150,7 @@ function isFastQueryOrOperand(
     const params = new QParams({
         explain: true,
     });
-    type.ql(params, '', filter);
+    type.filterCondition(params, '', filter);
     if (!params.explanation) {
         return false;
     }

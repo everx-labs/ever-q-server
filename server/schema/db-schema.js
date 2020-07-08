@@ -16,9 +16,9 @@
 
 //@flow
 
-import { Def } from 'ton-labs-dev-ops/dist/src/schema';
+import { Def } from './schema.js';
 
-import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
+import type { TypeDef } from './schema.js';
 import {
     grams,
     i32,
@@ -526,6 +526,7 @@ const Block: TypeDef = {
     },
     in_msg_descr: arrayOf(inMsg(docs.block.in_msg_descr)),
     rand_seed: string(docs.block.rand_seed),
+    created_by: string(docs.block.created_by),
     out_msg_descr: arrayOf(outMsg(docs.block.out_msg_descr)),
     account_blocks: arrayOf({
         account_addr: string(docs.block.account_blocks.account_addr),
