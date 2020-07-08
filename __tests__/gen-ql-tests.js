@@ -33,7 +33,7 @@ test("reduced RETURN", () => {
         ).text,
     );
 
-    expect(queryText(db.accounts, 'id balance')).toEqual(normalized(`
+    expect(queryText(db.accounts, 'id balance __typename')).toEqual(normalized(`
         FOR doc IN accounts LIMIT 50 RETURN {
             _key: doc._key,
             balance: doc.balance

@@ -206,6 +206,11 @@ export function collectReturnExpressions(
         if (name === '') {
             throw new Error(`Invalid selection field: ${fieldDef.kind}`);
         }
+
+        if (name === '__typename') {
+            return;
+        }
+
         const fieldType = fieldTypes[name];
         if (!fieldType) {
             throw new Error(`Invalid selection field: ${name}`);
