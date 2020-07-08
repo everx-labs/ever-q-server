@@ -1,7 +1,7 @@
 //@flow
 
-import {Writer} from 'ton-labs-dev-ops/dist/src/gen.js';
-import type {TypeDef} from 'ton-labs-dev-ops/src/schema.js';
+import {Writer} from './gen.js';
+import type {TypeDef} from './schema.js';
 import type {DbField, DbType, IntEnumDef} from './db-schema-types';
 import {
     DbTypeCategory,

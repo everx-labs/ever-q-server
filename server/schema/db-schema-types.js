@@ -1,13 +1,13 @@
 // @flow
-import {makeFieldTypeName} from "ton-labs-dev-ops/dist/src/gen";
-import {Def, parseTypeDef} from "ton-labs-dev-ops/dist/src/schema";
+import {makeFieldTypeName} from "./gen.js";
+import {Def, parseTypeDef} from "./schema.js";
 import type {
     IntSizeType,
     SchemaDoc,
     SchemaMember,
     SchemaType,
     TypeDef
-} from "ton-labs-dev-ops/src/schema";
+} from "./schema.js";
 
 const { ref, arrayOf } = Def;
 

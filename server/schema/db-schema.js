@@ -16,9 +16,9 @@
 
 //@flow
 
-import { Def } from 'ton-labs-dev-ops/dist/src/schema';
+import { Def } from './schema.js';
 
-import type { TypeDef } from 'ton-labs-dev-ops/src/schema';
+import type { TypeDef } from './schema.js';
 import {
     grams,
     i32,
