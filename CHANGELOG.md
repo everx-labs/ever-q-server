@@ -1,7 +1,7 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
-## 0.27.2 – Juд 6, 2020
+## 0.27.2 – Jul 8, 2020
 
 ### New
 - Field `created_by` in `blocks`.
