@@ -565,16 +565,17 @@ export function struct(fields: { [string]: QType }, isCollection?: boolean): QTy
             return (orOperands.length > 1) ? `(${orOperands.join(') OR (')})` : orOperands[0];
         },
         returnExpression(path: string, def: GDefinition): QReturnExpression {
+            const name = def.name.value;
             const expressions = new Map();
             collectReturnExpressions(
                 expressions,
-                `${path}.${def.name.value}`,
+                `${path}.${name}`,
                 (def.selectionSet && def.selectionSet.selections) || [],
                 fields,
             );
             return {
-                name: def.name.value,
-                expression: combineReturnExpressions(expressions),
+                name,
+                expression: `( ${path}.${name} && ${combineReturnExpressions(expressions)} )`,
             };
         },
         test(parent, value, filter) {
@@ -717,7 +718,7 @@ export function array(resolveItemType: () => QType): QType {
                 const expressions = new Map();
                 collectReturnExpressions(expressions, alias, itemSelections, itemType.fields || {});
                 const itemExpression = combineReturnExpressions(expressions);
-                expression = `( FOR ${alias} IN ${fieldPath} || [] RETURN ${itemExpression} )`;
+                expression = `( ${fieldPath} && ( FOR ${alias} IN ${fieldPath} || [] RETURN ${itemExpression} ) )`;
             } else {
                 expression = `${path}.${name}`;
             }

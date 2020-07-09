@@ -4,6 +4,8 @@ import {createConfig, defaultOptions} from '../server/config';
 import QLogs from '../server/logs';
 import TONQServer from '../server/server';
 
+jest.setTimeout(100000);
+
 const testConfig = createConfig({}, process.env, {
     ...defaultOptions,
     dbServer: 'localhost:8901',

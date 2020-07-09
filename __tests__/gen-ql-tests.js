@@ -1,22 +1,53 @@
 import {grantedAccess} from '../server/auth';
 import {QParams} from "../server/db-types";
 import {Account, BlockSignatures, Message, Transaction} from "../server/resolvers-generated";
-import {createTestArango} from './init-tests';
+import {createTestArango, testServerQuery} from './init-tests';
 import {gql} from 'apollo-server';
 
+test('remove nulls', async () => {
+    const data = await testServerQuery(`query { blocks { id master { min_shard_gen_utime } } }`);
+    expect(data.blocks.length).toBeGreaterThan(0);
+
+    let block = (await testServerQuery(`
+        query {
+            blocks(filter: { workchain_id: { eq: 0 } }) { 
+                master { min_shard_gen_utime } 
+            } 
+        }
+    `)).blocks[0];
+    expect(block).toEqual({ master: null });
+
+    block = (await testServerQuery(`
+        query {
+            blocks(filter: { workchain_id: { eq: 0 } }) { 
+                master {
+                    shard_hashes {
+                      workchain_id
+                      shard
+                      descr {seq_no}
+                    }
+                } 
+            } 
+        }
+    `)).blocks[0];
+    expect(block).toEqual({ master: null });
+});
+
+test('multi query', async () => {
+    const data = await testServerQuery(`
+    query { 
+        info { time }
+        blocks { id }
+        b:blocks { id }
+    }
+    `);
+    expect(data.blocks.length).toBeGreaterThan(0);
+});
+
 function selectionInfo(r) {
-    const parsed = gql([`{${r}}`]);
-    return {
-        selections: [
-            {
-                selectionSet:
-                    parsed.definitions[0].selectionSet,
-
-            },
-        ],
-
-
-    };
+    const operation = gql([`query { collection { ${r} } }`]).definitions[0];
+    const collection = operation.selectionSet.selections[0];
+    return collection.selectionSet;
 }
 
 function normalized(s) {
@@ -27,7 +58,7 @@ test("reduced RETURN", () => {
     const db = createTestArango();
     const queryText = (collection, result) => normalized(
         collection.createDatabaseQuery(
-            {filter: {}},
+            { filter: {} },
             selectionInfo(result),
             grantedAccess,
         ).text,
@@ -43,18 +74,18 @@ test("reduced RETURN", () => {
     expect(queryText(db.blocks, 'value_flow { imported }')).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
-            value_flow: {
+            value_flow: ( doc.value_flow && {
                 imported: doc.value_flow.imported 
-            }
+            } )
         }
     `));
 
     expect(queryText(db.blocks, 'in_msg_descr { msg_type }')).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
-            in_msg_descr: (
+            in_msg_descr: ( doc.in_msg_descr && (
                 FOR doc__in_msg_descr IN doc.in_msg_descr || [] RETURN { msg_type: doc__in_msg_descr.msg_type } 
-            )
+            ) )
         }
     `));
 
@@ -92,12 +123,12 @@ test("Generate Array AQL", () => {
     const params = new QParams();
 
     params.clear();
-    let ql = BlockSignatures.filterCondition(params, 'doc', {signatures: {any: {node_id: {eq: "1"}}}});
+    let ql = BlockSignatures.filterCondition(params, 'doc', { signatures: { any: { node_id: { eq: "1" } } } });
     expect(ql).toEqual(`@v1 IN doc.signatures[*].node_id`);
     expect(params.values.v1).toEqual('1');
 
     params.clear();
-    ql = BlockSignatures.filterCondition(params, 'doc', {signatures: {any: {node_id: {ne: "1"}}}});
+    ql = BlockSignatures.filterCondition(params, 'doc', { signatures: { any: { node_id: { ne: "1" } } } });
     expect(ql).toEqual(`LENGTH(doc.signatures[* FILTER CURRENT.node_id != @v1]) > 0`);
     expect(params.values.v1).toEqual('1');
 });
@@ -114,7 +145,7 @@ test("Generate AQL", () => {
         },
         signatures: {
             any: {
-                node_id: {in: ["3", "4"]},
+                node_id: { in: ["3", "4"] },
             },
         },
     });
@@ -126,27 +157,27 @@ test("Generate AQL", () => {
     expect(params.values.v4).toEqual('4');
 
     params.clear();
-    ql = Transaction.filterCondition(params, 'doc', {in_msg: {ne: "1"}});
+    ql = Transaction.filterCondition(params, 'doc', { in_msg: { ne: "1" } });
     expect(ql).toEqual(`doc.in_msg != @v1`);
     expect(params.values.v1).toEqual('1');
 
     params.clear();
-    ql = Transaction.filterCondition(params, 'doc', {out_msgs: {any: {ne: "1"}}});
+    ql = Transaction.filterCondition(params, 'doc', { out_msgs: { any: { ne: "1" } } });
     expect(ql).toEqual(`LENGTH(doc.out_msgs[* FILTER CURRENT != @v1]) > 0`);
     expect(params.values.v1).toEqual('1');
 
     params.clear();
-    ql = Transaction.filterCondition(params, 'doc', {out_msgs: {any: {eq: "1"}}});
+    ql = Transaction.filterCondition(params, 'doc', { out_msgs: { any: { eq: "1" } } });
     expect(ql).toEqual(`@v1 IN doc.out_msgs[*]`);
     expect(params.values.v1).toEqual('1');
 
     params.clear();
-    ql = Account.filterCondition(params, 'doc', {id: {gt: 'fff'}});
+    ql = Account.filterCondition(params, 'doc', { id: { gt: 'fff' } });
     expect(ql).toEqual(`TO_STRING(doc._key) > @v1`);
     expect(params.values.v1).toEqual('fff');
 
     params.clear();
-    ql = Account.filterCondition(params, 'doc', {id: {eq: 'fff'}});
+    ql = Account.filterCondition(params, 'doc', { id: { eq: 'fff' } });
     expect(ql).toEqual(`doc._key == @v1`);
     expect(params.values.v1).toEqual('fff');
 
@@ -156,8 +187,8 @@ test("Generate AQL", () => {
             params,
             'doc',
             {
-                id: {gt: 'fff'},
-                last_paid: {ge: 20},
+                id: { gt: 'fff' },
+                last_paid: { ge: 20 },
             },
         );
     expect(ql).toEqual(`(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)`);
@@ -166,11 +197,11 @@ test("Generate AQL", () => {
 
     params.clear();
     ql = Message.filterCondition(params, 'doc', {
-        src: {eq: '1'},
-        dst: {eq: '2'},
+        src: { eq: '1' },
+        dst: { eq: '2' },
         OR: {
-            src: {eq: '2'},
-            dst: {eq: '1'},
+            src: { eq: '2' },
+            dst: { eq: '1' },
         },
     });
     expect(ql).toEqual(`((doc.src == @v1) AND (doc.dst == @v2)) OR ((doc.src == @v3) AND (doc.dst == @v4))`);
