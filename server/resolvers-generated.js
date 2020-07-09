@@ -8,6 +8,7 @@ const {
     join,
     joinArray,
     enumName,
+    stringCompanion,
     createEnumNameResolver,
     unixMillisecondsToString,
     unixSecondsToString,
@@ -121,6 +122,7 @@ const BlockMasterShardHashesDescr = struct({
     next_validator_shard: scalar,
     min_ref_mc_seqno: scalar,
     gen_utime: scalar,
+    gen_utime_string: stringCompanion('gen_utime'),
     split_type: scalar,
     split_type_name: enumName('split_type', { None: 0, Split: 2, Merge: 3 }),
     split: scalar,
@@ -230,6 +232,7 @@ const BlockMasterConfigP17 = struct({
 
 const BlockMasterConfigP18 = struct({
     utime_since: scalar,
+    utime_since_string: stringCompanion('utime_since'),
     bit_price_ps: bigUInt1,
     cell_price_ps: bigUInt1,
     mc_bit_price_ps: bigUInt1,
@@ -310,7 +313,9 @@ const ValidatorSetList = struct({
 const ValidatorSetListArray = array(() => ValidatorSetList);
 const ValidatorSet = struct({
     utime_since: scalar,
+    utime_since_string: stringCompanion('utime_since'),
     utime_until: scalar,
+    utime_until_string: stringCompanion('utime_until'),
     total: scalar,
     total_weight: bigUInt1,
     list: ValidatorSetListArray,
@@ -372,7 +377,9 @@ const BlockMasterShardFeesArray = array(() => BlockMasterShardFees);
 const BlockMasterPrevBlkSignaturesArray = array(() => BlockMasterPrevBlkSignatures);
 const BlockMaster = struct({
     min_shard_gen_utime: scalar,
+    min_shard_gen_utime_string: stringCompanion('min_shard_gen_utime'),
     max_shard_gen_utime: scalar,
+    max_shard_gen_utime_string: stringCompanion('max_shard_gen_utime'),
     shard_hashes: BlockMasterShardHashesArray,
     shard_fees: BlockMasterShardFeesArray,
     recover_create_msg: InMsg,
@@ -391,6 +398,7 @@ const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
 const BlockSignatures = struct({
     id: scalar,
     gen_utime: scalar,
+    gen_utime_string: stringCompanion('gen_utime'),
     seq_no: scalar,
     shard: scalar,
     workchain_id: scalar,
@@ -414,6 +422,7 @@ const Block = struct({
     seq_no: scalar,
     after_merge: scalar,
     gen_utime: scalar,
+    gen_utime_string: stringCompanion('gen_utime'),
     gen_catchain_seqno: scalar,
     flags: scalar,
     master_ref: ExtBlkRef,
@@ -438,6 +447,7 @@ const Block = struct({
     value_flow: BlockValueFlow,
     in_msg_descr: InMsgArray,
     rand_seed: scalar,
+    created_by: scalar,
     out_msg_descr: OutMsgArray,
     account_blocks: BlockAccountBlocksArray,
     tr_count: scalar,
@@ -588,6 +598,7 @@ const Message = struct({
     dst_workchain_id: scalar,
     created_lt: bigUInt1,
     created_at: scalar,
+    created_at_string: stringCompanion('created_at'),
     ihr_disabled: scalar,
     ihr_fee: bigUInt2,
     fwd_fee: bigUInt2,
@@ -1119,6 +1130,7 @@ scalarFields.set('blocks.in_msg_descr.transit_fee', { type: 'uint1024', path: 'd
 scalarFields.set('blocks.in_msg_descr.transaction_id', { type: 'string', path: 'doc.in_msg_descr[*].transaction_id' });
 scalarFields.set('blocks.in_msg_descr.proof_delivered', { type: 'string', path: 'doc.in_msg_descr[*].proof_delivered' });
 scalarFields.set('blocks.rand_seed', { type: 'string', path: 'doc.rand_seed' });
+scalarFields.set('blocks.created_by', { type: 'string', path: 'doc.created_by' });
 scalarFields.set('blocks.out_msg_descr.msg_id', { type: 'string', path: 'doc.out_msg_descr[*].msg_id' });
 scalarFields.set('blocks.out_msg_descr.transaction_id', { type: 'string', path: 'doc.out_msg_descr[*].transaction_id' });
 scalarFields.set('blocks.out_msg_descr.out_msg.msg_id', { type: 'string', path: 'doc.out_msg_descr[*].out_msg.msg_id' });

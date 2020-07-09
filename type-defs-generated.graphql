@@ -711,6 +711,8 @@ type Block {
 	value_flow: BlockValueFlow
 	in_msg_descr: [InMsg]
 	rand_seed: String
+	"Public key of the collator who produced this block."
+	created_by: String
 	out_msg_descr: [OutMsg]
 	account_blocks: [BlockAccountBlocks]
 	tr_count: Int
@@ -1847,6 +1849,8 @@ input BlockFilter {
 	value_flow: BlockValueFlowFilter
 	in_msg_descr: InMsgArrayFilter
 	rand_seed: StringFilter
+	"Public key of the collator who produced this block."
+	created_by: StringFilter
 	out_msg_descr: OutMsgArrayFilter
 	account_blocks: BlockAccountBlocksArrayFilter
 	tr_count: IntFilter
