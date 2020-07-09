@@ -718,7 +718,7 @@ export function array(resolveItemType: () => QType): QType {
                 const expressions = new Map();
                 collectReturnExpressions(expressions, alias, itemSelections, itemType.fields || {});
                 const itemExpression = combineReturnExpressions(expressions);
-                expression = `( ${fieldPath} && ( FOR ${alias} IN ${fieldPath} RETURN ${itemExpression} ) )`;
+                expression = `( ${fieldPath} && ( FOR ${alias} IN ${fieldPath} || [] RETURN ${itemExpression} ) )`;
             } else {
                 expression = `${path}.${name}`;
             }

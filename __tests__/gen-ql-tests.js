@@ -8,10 +8,25 @@ test('remove nulls', async () => {
     const data = await testServerQuery(`query { blocks { id master { min_shard_gen_utime } } }`);
     expect(data.blocks.length).toBeGreaterThan(0);
 
-    const block = (await testServerQuery(`
+    let block = (await testServerQuery(`
         query {
             blocks(filter: { workchain_id: { eq: 0 } }) { 
                 master { min_shard_gen_utime } 
+            } 
+        }
+    `)).blocks[0];
+    expect(block).toEqual({ master: null });
+
+    block = (await testServerQuery(`
+        query {
+            blocks(filter: { workchain_id: { eq: 0 } }) { 
+                master {
+                    shard_hashes {
+                      workchain_id
+                      shard
+                      descr {seq_no}
+                    }
+                } 
             } 
         }
     `)).blocks[0];
@@ -69,7 +84,7 @@ test("reduced RETURN", () => {
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             in_msg_descr: ( doc.in_msg_descr && (
-                FOR doc__in_msg_descr IN doc.in_msg_descr RETURN { msg_type: doc__in_msg_descr.msg_type } 
+                FOR doc__in_msg_descr IN doc.in_msg_descr || [] RETURN { msg_type: doc__in_msg_descr.msg_type } 
             ) )
         }
     `));
