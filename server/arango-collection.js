@@ -175,6 +175,20 @@ export class Collection {
     onDocumentInsertOrUpdate(doc: any) {
         this.statDoc.increment();
         this.docInsertOrUpdate.emit('doc', doc);
+
+        const isExternalInboundFinalizedMessage = this.name === 'messages'
+            && doc._key
+            && doc.msg_type === 1
+            && doc.status === 5
+        if (isExternalInboundFinalizedMessage) {
+            const span = this.tracer.startSpan('messageDbNotification', {
+                childOf: QTracer.messageRootSpanContext(doc._key),
+            });
+            span.addTags({
+                messageId: doc._key,
+            });
+            span.finish();
+        }
     }
 
     subscriptionResolver() {

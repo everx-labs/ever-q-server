@@ -213,6 +213,17 @@ async function postRequests(
             throw QError.messageExpired(expired.id, expired.expireAt);
         }
 
+        const messageTraceSpans = requests.map((request) => {
+            const messageId = Buffer.from(request.id, 'base64').toString('hex');
+            const postSpan = tracer.startSpan('postRequest', {
+                childOf: QTracer.messageRootSpanContext(messageId),
+            });
+            postSpan.addTags({
+                messageId,
+                messageSize: Math.ceil(request.body.length*3/4),
+            })
+            return postSpan;
+        });
         try {
             if (context.config.requests.mode === 'rest') {
                 await postRequestsUsingRest(requests, context, span);
@@ -225,6 +236,9 @@ async function postRequests(
             context.db.statPostFailed.increment();
             context.db.log.debug('postRequests', 'FAILED', args, context.remoteAddress);
             throw error;
+        }
+        finally {
+            messageTraceSpans.forEach(x => x.finish());
         }
         return requests.map(x => x.id);
     }, context.parentSpan);
