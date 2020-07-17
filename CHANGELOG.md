@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.3 – Jul 16, 2020
+
+### New
+- Add message tracing at: 1) post request 2) db notification / message has inserted
+
 ## 0.27.2 – Jul 8, 2020
 
 ### New

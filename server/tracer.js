@@ -6,7 +6,10 @@ import { tracer as noopTracer } from "opentracing/lib/noop";
 import StatsD from 'node-statsd';
 import { Tracer, Tags, FORMAT_TEXT_MAP, FORMAT_BINARY, Span, SpanContext } from "opentracing";
 
-import { initTracerFromEnv as initJaegerTracer } from 'jaeger-client';
+import {
+    initTracerFromEnv as initJaegerTracer,
+    SpanContext as JaegerSpanContext,
+} from 'jaeger-client';
 import { cleanError, toLog } from "./utils";
 
 export interface IStats {
@@ -233,6 +236,15 @@ export class QTracer {
                 },
             },
         });
+    }
+
+    static messageRootSpanContext(messageId: string): ?SpanContext {
+        if (!messageId) {
+            return null;
+        }
+        const traceId = messageId.substr(0, 16);
+        const spanId = messageId.substr(16, 16);
+        return JaegerSpanContext.fromString(`${traceId}:${spanId}:0:1`);
     }
 
     static extractParentSpan(tracer: Tracer, req: any): any {
