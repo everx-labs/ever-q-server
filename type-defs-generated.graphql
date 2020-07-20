@@ -1140,6 +1140,8 @@ type Account {
 	proof: String
 	"Bag of cells with the account struct encoded as base64."
 	boc: String
+	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
+	state_hash: String
 }
 
 input OtherCurrencyFilter {
@@ -2401,6 +2403,8 @@ input AccountFilter {
 	proof: StringFilter
 	"Bag of cells with the account struct encoded as base64."
 	boc: StringFilter
+	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
+	state_hash: StringFilter
     OR: AccountFilter
 }
 

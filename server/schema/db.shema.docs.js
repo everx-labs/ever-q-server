@@ -94,6 +94,7 @@ If present, accumulates the storage payments that could not be exacted from the 
         library_hash: `\`library\` field root hash.`,
         proof: `Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64.`,
         boc: `Bag of cells with the account struct encoded as base64.`,
+        state_hash: `Contains the representation hash of an instance of \`StateInit\` when an account is frozen.`,
     },
     message: {
         _doc: `# Message type

@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.4 – Jul 20, 2020
+
+### New
+- Field `state_hash` in `accounts` collection
+
 ## 0.27.3 – Jul 16, 2020
 
 ### New
