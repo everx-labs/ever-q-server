@@ -173,6 +173,7 @@ const Account: TypeDef = {
     library_hash: string(docs.account.library_hash),
     proof: string(docs.account.proof),
     boc: string(docs.account.boc),
+    state_hash: string(docs.account.state_hash),
 };
 
 const Message: TypeDef = {

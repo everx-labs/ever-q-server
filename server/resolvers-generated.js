@@ -634,6 +634,7 @@ const Account = struct({
     library_hash: scalar,
     proof: scalar,
     boc: scalar,
+    state_hash: scalar,
 }, true);
 
 function createResolvers(db) {
@@ -1537,6 +1538,7 @@ scalarFields.set('accounts.library', { type: 'string', path: 'doc.library' });
 scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_hash' });
 scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
 scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
+scalarFields.set('accounts.state_hash', { type: 'string', path: 'doc.state_hash' });
 module.exports = {
     scalarFields,
     createResolvers,
