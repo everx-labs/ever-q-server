@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.27.4",
+	"version": "0.27.5",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "server/index.js",
 	"repository": "git@github.com:tonlabs/ton-q-server.git",
@@ -24,7 +24,7 @@
 	"dependencies": {
 		"apollo-server": "2.11.0",
 		"apollo-server-express": "2.11.0",
-		"arangochair": "git@github.com:tonlabs/arangochair.git",
+		"arangochair": "https://github.com/tonlabs/arangochair.git",
 		"arangojs": "6.14.0",
 		"commander": "5.0.0",
 		"express": "4.17.1",
