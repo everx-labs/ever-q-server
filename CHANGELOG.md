@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.5 – Jul 23, 2020
+
+### Fix
+- Slow detector must detects queries like `FILTER workchain_id == -1 SORT seq_no DESC` as a fast query. 
+
 ## 0.27.4 – Jul 20, 2020
 
 ### New

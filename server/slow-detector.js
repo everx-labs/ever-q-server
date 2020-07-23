@@ -1,8 +1,8 @@
 // @flow
 
 
-import type { CollectionInfo, IndexInfo } from "./config";
-import { indexToString, orderByToString, QParams, splitOr } from "./db-types";
+import type {CollectionInfo, IndexInfo} from "./config";
+import {indexToString, orderByToString, QParams, splitOr} from "./db-types";
 import type {OrderBy, QFieldExplanation, QType} from "./db-types";
 import type {QLog} from './logs';
 
@@ -185,26 +185,14 @@ function isFastQueryOrOperand(
     }
 
     if (orderBy.length > 0) {
-        if (fields.size === 0) {
-            if (!orderByCanUseAnyIndex(orderBy, fields, indexes)) {
-                if (log) {
-                    logSlowReason(
-                        'Order by can\'t use any selected index',
-                        log, filter, orderBy, fields, collection, indexes,
-                    );
-                }
-                return false;
+        if (!orderByCanUseAnyIndex(orderBy, fields, indexes)) {
+            if (log) {
+                logSlowReason(
+                    'Order by can\'t use any selected index',
+                    log, filter, orderBy, fields, collection, indexes,
+                );
             }
-        } else {
-            if (!orderByCanUseAllIndexes(orderBy, fields, indexes)) {
-                if (log) {
-                    logSlowReason(
-                        'Order by can\'t use all selected indexes',
-                        log, filter, orderBy, fields, collection, indexes,
-                    );
-                }
-                return false;
-            }
+            return false;
         }
     }
 
