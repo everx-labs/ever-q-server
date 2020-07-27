@@ -69,6 +69,9 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
 
     Metric                Type     Tags             Description
     --------------------  -------  ---------------  -------------------------------------------------------------
+    qserver.start         counter  collection=name  Incremented for each start.
+                                                    Contains the `version` tag.
+
     qserver.doc.count     counter  collection=name  Incremented for each db event (document insert/update)
 
     qserver.post.count    counter                   Incremented for each node request
