@@ -19,26 +19,27 @@ import fs from 'fs';
 import express from 'express';
 import http from 'http';
 
-import {ApolloServer, ApolloServerExpressConfig} from 'apollo-server-express';
-import {ConnectionContext} from 'subscriptions-transport-ws';
-import type {TONClient} from "ton-client-js/types";
-import {TONClient as TONClientNodeJs} from 'ton-client-node-js';
+import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
+import { ConnectionContext } from 'subscriptions-transport-ws';
+import type { TONClient } from 'ton-client-js/types';
+import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
 import Arango from './arango';
-import type {GraphQLRequestContext} from "./arango-collection";
-import {QRpcServer} from './q-rpc-server';
+import type { GraphQLRequestContext } from './arango-collection';
+import { STATS } from './config';
+import { QRpcServer } from './q-rpc-server';
 
-import {createResolvers} from './resolvers-generated';
-import {attachCustomResolvers} from "./resolvers-custom";
-import {resolversMam} from "./resolvers-mam";
+import { createResolvers } from './resolvers-generated';
+import { attachCustomResolvers } from './resolvers-custom';
+import { resolversMam } from './resolvers-mam';
 
-import type {QConfig} from './config';
+import type { QConfig } from './config';
 import QLogs from './logs';
-import type {QLog} from './logs';
-import type {IStats} from './tracer';
-import {QStats, QTracer} from "./tracer";
-import {Tracer} from "opentracing";
-import {Auth} from './auth';
-import {QError} from "./utils";
+import type { QLog } from './logs';
+import type { IStats } from './tracer';
+import { QStats, QTracer, StatsCounter } from './tracer';
+import { Tracer } from 'opentracing';
+import { Auth } from './auth';
+import { packageJson, QError } from './utils';
 
 type QOptions = {
     config: QConfig,
@@ -148,9 +149,9 @@ export default class TONQServer {
 
 
     async start() {
-        this.client = await TONClientNodeJs.create({servers: ['']});
+        this.client = await TONClientNodeJs.create({ servers: [''] });
         await this.db.start();
-        const {host, port} = this.config.server;
+        const { host, port } = this.config.server;
         this.server.listen({
             host,
             port,
@@ -160,6 +161,10 @@ export default class TONQServer {
             });
         });
         this.server.setTimeout(2147483647);
+
+        const version = packageJson().version;
+        const startCounter = new StatsCounter(this.stats, STATS.start, [`version=${version}`]);
+        startCounter.increment()
 
         if (this.rpcServer.port) {
             this.rpcServer.start();
@@ -188,7 +193,7 @@ export default class TONQServer {
                     }
                 },
             },
-            context: ({req, connection}) => {
+            context: ({ req, connection }) => {
                 return {
                     db: this.db,
                     tracer: this.tracer,

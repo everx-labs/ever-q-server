@@ -307,6 +307,7 @@ Object.entries(INDEXES).forEach(([name, indexes]) => {
 });
 
 export const STATS = {
+    start: 'start',
     prefix: 'qserver.',
     doc: {
         count: 'doc.count',
