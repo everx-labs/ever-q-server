@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.6 – Jul 27, 2020
+
+### New
+- StatsD counter `qserver.start` with additional tag `{version=package.json.version}`. 
+
 ## 0.27.5 – Jul 23, 2020
 
 ### Fix
