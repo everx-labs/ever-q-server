@@ -24,6 +24,7 @@ import { ConnectionContext } from 'subscriptions-transport-ws';
 import type { TONClient } from 'ton-client-js/types';
 import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
 import Arango from './arango';
+import { RequestController, RequestEvent } from './arango-collection';
 import type { GraphQLRequestContext } from './arango-collection';
 import { STATS } from './config';
 import { QRpcServer } from './q-rpc-server';
@@ -187,13 +188,38 @@ export default class TONQServer {
             resolvers: endPoint.resolvers,
             subscriptions: {
                 keepAlive: this.config.server.keepAlive,
-                onConnect(connectionParams: Object, _websocket: WebSocket, _context: ConnectionContext): any {
+                onDisconnect(_webSocket: WebSocket, context: ConnectionContext) {
+                    if (context.activeRequests) {
+                        context.activeRequests.forEach(x => x.emitClose());
+                        context.activeRequests = [];
+                    }
+                },
+                onConnect(connectionParams: Object, _webSocket: WebSocket, context: ConnectionContext): any {
+                    const activeRequests = [];
+                    context.activeRequests = activeRequests;
                     return {
+                        activeRequests,
                         accessKey: connectionParams.accessKey || connectionParams.accesskey,
                     }
                 },
             },
             context: ({ req, connection }) => {
+                const request = new RequestController();
+                if (req && req.on) {
+                    req.on('close', () => {
+                        request.emitClose();
+                    });
+                }
+                if (connection && connection.context) {
+                    const activeRequests = connection.context.activeRequests;
+                    activeRequests.push(request);
+                    request.events.on(RequestEvent.FINISH, () => {
+                        const index = activeRequests.indexOf(request);
+                        if (index >= 0) {
+                            activeRequests.splice(index, 1);
+                        }
+                    });
+                }
                 return {
                     db: this.db,
                     tracer: this.tracer,
@@ -205,6 +231,9 @@ export default class TONQServer {
                     remoteAddress: (req && req.socket && req.socket.remoteAddress) || '',
                     accessKey: Auth.extractAccessKey(req, connection),
                     parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
+                    req,
+                    connection,
+                    request,
                 };
             },
             plugins: [
