@@ -835,7 +835,7 @@ function createResolvers(db) {
                 if (args.when && !BlockSignatures.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.blocks.waitForDoc(parent._key, '_key', args);
+                return context.db.blocks.waitForDoc(parent._key, '_key', args, context);
             },
             sig_weight(parent, args) {
                 return resolveBigUInt(1, parent.sig_weight, args);
@@ -852,7 +852,7 @@ function createResolvers(db) {
                 if (args.when && !Block.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.blocks_signatures.waitForDoc(parent._key, '_key', args);
+                return context.db.blocks_signatures.waitForDoc(parent._key, '_key', args, context);
             },
             start_lt(parent, args) {
                 return resolveBigUInt(1, parent.start_lt, args);
@@ -924,19 +924,19 @@ function createResolvers(db) {
                 if (args.when && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
+                return context.db.blocks.waitForDoc(parent.block_id, '_key', args, context);
             },
             in_message(parent, args, context) {
                 if (args.when && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.messages.waitForDoc(parent.in_msg, '_key', args);
+                return context.db.messages.waitForDoc(parent.in_msg, '_key', args, context);
             },
             out_messages(parent, args, context) {
                 if (args.when && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.messages.waitForDocs(parent.out_msgs, '_key', args);
+                return context.db.messages.waitForDocs(parent.out_msgs, '_key', args, context);
             },
             lt(parent, args) {
                 return resolveBigUInt(1, parent.lt, args);
@@ -963,7 +963,7 @@ function createResolvers(db) {
                 if (args.when && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.blocks.waitForDoc(parent.block_id, '_key', args);
+                return context.db.blocks.waitForDoc(parent.block_id, '_key', args, context);
             },
             src_transaction(parent, args, context) {
                 if (!(parent.created_lt !== '00' && parent.msg_type !== 1)) {
@@ -972,7 +972,7 @@ function createResolvers(db) {
                 if (args.when && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args);
+                return context.db.transactions.waitForDoc(parent._key, 'out_msgs[*]', args, context);
             },
             dst_transaction(parent, args, context) {
                 if (!(parent.msg_type !== 2)) {
@@ -981,7 +981,7 @@ function createResolvers(db) {
                 if (args.when && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.db.transactions.waitForDoc(parent._key, 'in_msg', args);
+                return context.db.transactions.waitForDoc(parent._key, 'in_msg', args, context);
             },
             created_lt(parent, args) {
                 return resolveBigUInt(1, parent.created_lt, args);

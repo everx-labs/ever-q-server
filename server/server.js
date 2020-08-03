@@ -164,7 +164,7 @@ export default class TONQServer {
         this.server.setTimeout(2147483647);
 
         const version = packageJson().version;
-        const startCounter = new StatsCounter(this.stats, STATS.start, [`version=${version}`]);
+        const startCounter = new StatsCounter(this.stats, STATS.start, [`version:${version}`]);
         startCounter.increment()
 
         if (this.rpcServer.port) {
