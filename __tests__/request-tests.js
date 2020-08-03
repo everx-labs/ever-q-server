@@ -32,12 +32,12 @@ test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (use
     const q2 = new TestQuery({ useWebSockets });
     q1.sendQuery();
     q2.sendQuery();
-    await sleep(200);
+    await sleep(1000);
     expect(server.db.blocks.waitForCount).toEqual(2);
     q1.abort();
-    await sleep(100);
+    await sleep(500);
     expect(server.db.blocks.waitForCount).toEqual(1);
     q2.abort();
-    await sleep(100);
+    await sleep(500);
     expect(server.db.blocks.waitForCount).toEqual(0);
 });
