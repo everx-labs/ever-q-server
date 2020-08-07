@@ -16,17 +16,17 @@
 
 // @flow
 
-import {Database, DocumentCollection} from "arangojs";
-import {Span, SpanContext, Tracer} from "opentracing";
-import type {TONClient} from "ton-client-js/types";
-import {AggregationFn, AggregationHelperFactory} from "./aggregations";
-import type {FieldAggregation, AggregationHelper} from "./aggregations";
-import {DocUpsertHandler, DocSubscription} from "./arango-listeners";
-import type {AccessRights} from "./auth";
-import {Auth} from "./auth";
-import {BLOCKCHAIN_DB, STATS} from './config';
-import type {CollectionInfo, IndexInfo, QConfig} from "./config";
-import type {DatabaseQuery, GDefinition, OrderBy, QType, QueryStat} from "./db-types";
+import { Database, DocumentCollection } from 'arangojs';
+import { Span, SpanContext, Tracer } from 'opentracing';
+import type { TONClient } from 'ton-client-js/types';
+import { AggregationFn, AggregationHelperFactory } from './aggregations';
+import type { FieldAggregation, AggregationHelper } from './aggregations';
+import { DocUpsertHandler, DocSubscription } from './arango-listeners';
+import type { AccessRights } from './auth';
+import { Auth } from './auth';
+import { BLOCKCHAIN_DB, STATS } from './config';
+import type { CollectionInfo, IndexInfo, QConfig } from './config';
+import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from './db-types';
 import {
     collectReturnExpressions,
     combineReturnExpressions,
@@ -34,18 +34,41 @@ import {
     parseSelectionSet,
     QParams,
     selectionToString,
-} from "./db-types";
-import type {QLog} from "./logs";
-import QLogs from "./logs";
-import {isFastQuery} from './slow-detector';
-import type {IStats} from './tracer';
-import {QTracer, StatsCounter, StatsGauge, StatsTiming} from "./tracer";
-import {QError, wrap} from "./utils";
+} from './db-types';
+import type { QLog } from './logs';
+import QLogs from './logs';
+import { isFastQuery } from './slow-detector';
+import type { IStats } from './tracer';
+import { QTracer, StatsCounter, StatsGauge, StatsTiming } from './tracer';
+import { QError, wrap } from './utils';
 import EventEmitter from 'events';
 
 const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
+export const RequestEvent = {
+    CLOSE: 'close',
+    FINISH: 'finish',
+};
+
+export class RequestController {
+    events: EventEmitter;
+
+    constructor() {
+        this.events = new EventEmitter();
+    }
+
+    emitClose() {
+        this.events.emit(RequestEvent.CLOSE);
+    }
+
+    finish() {
+        this.events.emit(RequestEvent.FINISH);
+        this.events.removeAllListeners();
+    }
+}
+
 export type GraphQLRequestContext = {
+    request: RequestController,
     config: QConfig,
     auth: Auth,
     tracer: Tracer,
@@ -381,8 +404,8 @@ export class Collection {
                 }
                 const start = Date.now();
                 const result = q.timeout > 0
-                    ? await this.queryWaitFor(q, isFast, traceParams, context.parentSpan)
-                    : await this.query(q.text, q.params, isFast, traceParams, context.parentSpan);
+                    ? await this.queryWaitFor(q, isFast, traceParams, context)
+                    : await this.query(q.text, q.params, isFast, traceParams, context);
                 this.log.debug(
                     'QUERY',
                     args,
@@ -396,6 +419,7 @@ export class Collection {
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();
+                context.request.finish();
             }
         });
     }
@@ -405,17 +429,22 @@ export class Collection {
         params: { [string]: any },
         isFast: boolean,
         traceParams: any,
-        parentSpan?: (Span | SpanContext),
+        context: GraphQLRequestContext,
     ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.query`, async (span: Span) => {
             if (traceParams) {
                 span.setTag('params', traceParams);
             }
-            return this.queryDatabase(text, params, isFast);
-        }, parentSpan);
+            return this.queryDatabase(text, params, isFast, context);
+        }, context.parentSpan);
     }
 
-    async queryDatabase(text: string, params: { [string]: any }, isFast: boolean): Promise<any> {
+    async queryDatabase(
+        text: string,
+        params: { [string]: any },
+        isFast: boolean,
+        context: GraphQLRequestContext,
+    ): Promise<any> {
         const db = isFast ? this.db : this.slowDb;
         const cursor = await db.query(text, params);
         return cursor.all();
@@ -426,7 +455,7 @@ export class Collection {
         q: DatabaseQuery,
         isFast: boolean,
         traceParams: any,
-        parentSpan?: (Span | SpanContext),
+        context: GraphQLRequestContext,
     ): Promise<any> {
         return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
             if (traceParams) {
@@ -435,15 +464,25 @@ export class Collection {
             let waitFor: ?((doc: any) => void) = null;
             let forceTimerId: ?TimeoutID = null;
             let resolvedBy: ?string = null;
+            let resolveOnClose = () => {
+            };
+            const resolveBy = (reason: string, resolve: (result: any) => void, result: any) => {
+                if (!resolvedBy) {
+                    resolvedBy = reason;
+                    resolve(result);
+                }
+            };
+            context.request.events.on(RequestEvent.CLOSE, () => {
+                resolveBy('close', resolveOnClose, []);
+            });
             try {
                 const onQuery = new Promise((resolve, reject) => {
                     const check = () => {
-                        this.queryDatabase(q.text, q.params, isFast).then((docs) => {
+                        this.queryDatabase(q.text, q.params, isFast, context).then((docs) => {
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = null;
-                                    resolvedBy = 'query';
-                                    resolve(docs);
+                                    resolveBy('query', resolve, docs);
                                 } else {
                                     forceTimerId = setTimeout(check, 5_000);
                                 }
@@ -459,10 +498,7 @@ export class Collection {
                             return;
                         }
                         if (this.docType.test(null, doc, q.filter)) {
-                            if (!resolvedBy) {
-                                resolvedBy = 'listener';
-                                resolve([doc]);
-                            }
+                            resolveBy('listener', resolve, [doc]);
                         }
                     };
                     this.waitForCount += 1;
@@ -470,17 +506,16 @@ export class Collection {
                     this.statWaitForActive.increment();
                 });
                 const onTimeout = new Promise((resolve) => {
-                    setTimeout(() => {
-                        if (!resolvedBy) {
-                            resolvedBy = 'timeout';
-                            resolve([]);
-                        }
-                    }, q.timeout);
+                    setTimeout(() => resolveBy('timeout', resolve, []), q.timeout);
+                });
+                const onClose = new Promise((resolve) => {
+                    resolveOnClose = resolve;
                 });
                 const result = await Promise.race([
                     onQuery,
                     onChangesFeed,
                     onTimeout,
+                    onClose,
                 ]);
                 span.setTag('resolved', resolvedBy);
                 return result;
@@ -496,7 +531,7 @@ export class Collection {
                     forceTimerId = null;
                 }
             }
-        }, parentSpan);
+        }, context.parentSpan);
     }
 
     //--------------------------------------------------------- Aggregates
@@ -588,7 +623,7 @@ export class Collection {
                 const result = await this.query(q.text, q.params, isFast, {
                     filter: args.filter,
                     aggregate: args.fields,
-                }, context.parentSpan);
+                }, context);
                 this.log.debug(
                     'AGGREGATE',
                     args,
@@ -633,7 +668,7 @@ export class Collection {
         };
         if (!sameIndexes(actualIndexes, this.info.indexes)) {
             this.log.debug('RELOAD_INDEXES', actualIndexes);
-            this.info.indexes = actualIndexes.map(x => ({fields: x.fields}));
+            this.info.indexes = actualIndexes.map(x => ({ fields: x.fields }));
             this.queryStats.clear();
         }
 
@@ -643,39 +678,49 @@ export class Collection {
         fieldValue: any,
         fieldPath: string,
         args: { timeout?: number },
+        context: GraphQLRequestContext,
     ): Promise<any> {
         if (!fieldValue) {
             return Promise.resolve(null);
         }
         const queryParams = fieldPath.endsWith('[*]')
             ? {
-                filter: {[fieldPath.slice(0, -3)]: {any: {eq: fieldValue}}},
+                filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
                 text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
-                params: {v: fieldValue},
+                params: { v: fieldValue },
             }
             : {
-                filter: {id: {eq: fieldValue}},
+                filter: { id: { eq: fieldValue } },
                 text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
-                params: {v: fieldValue},
+                params: { v: fieldValue },
             };
 
         const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);
         if (timeout === 0) {
-            const docs = await this.queryDatabase(queryParams.text, queryParams.params, true);
+            const docs = await this.queryDatabase(
+                queryParams.text,
+                queryParams.params,
+                true,
+                context,
+            );
             return docs[0];
         }
 
         const docs = await this.queryWaitFor({
-            filter: queryParams.filter,
-            selection: [],
-            orderBy: [],
-            limit: 1,
-            timeout,
-            operationId: null,
-            text: queryParams.text,
-            params: queryParams.params,
-            accessRights: accessGranted,
-        }, true, null, null);
+                filter: queryParams.filter,
+                selection: [],
+                orderBy: [],
+                limit: 1,
+                timeout,
+                operationId: null,
+                text: queryParams.text,
+                params: queryParams.params,
+                accessRights: accessGranted,
+            },
+            true,
+            null,
+            context,
+        );
         return docs[0];
     }
 
@@ -683,11 +728,12 @@ export class Collection {
         fieldValues: string[],
         fieldPath: string,
         args: { timeout?: number },
+        context: GraphQLRequestContext,
     ): Promise<any[]> {
         if (!fieldValues || fieldValues.length === 0) {
             return Promise.resolve([]);
         }
-        return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath, args)));
+        return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath, args, context)));
     }
 
     finishOperations(operationIds: Set<string>): number {
