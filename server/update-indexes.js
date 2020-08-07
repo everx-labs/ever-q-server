@@ -1,52 +1,79 @@
 const { Database } = require('arangojs');
 const { BLOCKCHAIN_DB } = require('./config');
+const program = require('commander');
+const fetch = require('node-fetch');
 
 function sameFields(a, b) {
     return a.join(',').toLowerCase() === b.join(',').toLowerCase();
 }
 
+async function detectRedirect(url) {
+    try {
+        const response = await fetch(url);
+        return new URL(response.url).origin;
+    } catch {
+        return url;
+    }
+}
+
 async function updateCollection(collection, db) {
-    const existingIndexes = await db.collection(collection.name).indexes();
-    existingIndexes.forEach((existing) => {
+    const dbCollection = db.collection(collection.name);
+    const existingIndexes = await dbCollection.indexes();
+    for (const existing of existingIndexes) {
         if (!collection.indexes.find(x => sameFields(x.fields, existing.fields))) {
             console.log(`${collection.name}: remove index [${existing.id}] on [${existing.fields.join(',')}]`);
-            db.collection(collection.name).dropIndex(existing.id)
+            await dbCollection.dropIndex(existing.id);
         }
-    });
-    collection.indexes.forEach((required) => {
+    }
+    for (const required of collection.indexes) {
         if (!existingIndexes.find(x => sameFields(x.fields, required.fields))) {
             console.log(`${collection.name}: create index on [${required.fields.join(',')}]`);
-            db.collection(collection.name).createPersistentIndex(required.fields);
+            await dbCollection.createPersistentIndex(required.fields);
         }
-    });
+    }
 }
 
 async function updateDb(config) {
     const db = new Database({
-        url: config.server,
+        url: await detectRedirect(config.server),
+
     });
-    db.useDatabase(config.name);
     if (config.auth) {
-        const authParts = config.auth.split(':');
-        db.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
+        const [user, password] = config.auth.split(':');
+        db.useBasicAuth(user, password);
     }
+    db.useDatabase(config.name);
     for (const collection of [...Object.values(BLOCKCHAIN_DB.collections)]) {
         await updateCollection(collection, db);
     }
+    await db.close();
 }
 
-const configs = [
-    {
-        server: 'http://localhost:8081',
-        name: BLOCKCHAIN_DB.name,
-    }
-];
+function update(servers, options) {
+    (async () => {
+        let hasErrors = false;
+        for (const server of [].concat(servers)) {
+            console.log(`Update ${server}`);
+            try {
+                await updateDb({
+                    server,
+                    name: BLOCKCHAIN_DB.name,
+                    auth: options.auth,
+                });
+            } catch (error) {
+                console.error(error.message);
+                hasErrors = true;
+            }
+        }
+        process.exit(hasErrors ? 1 : 0);
+    })();
+}
 
-(async () => {
-    console.log('>>>', process.argv);
-    for (const config of configs) {
-        await updateDb(config);
-    }
-})();
+program
+    .arguments('[servers...]')
+    .option('-a, --auth <user:password>', 'user:password', '')
+    .action(update)
+    .parse(process.argv);
+
 
 
