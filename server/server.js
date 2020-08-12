@@ -211,6 +211,9 @@ export default class TONQServer {
                     });
                 }
                 if (connection && connection.context) {
+                    if (!connection.context.activeRequests) {
+                        connection.context.activeRequests = [];
+                    }
                     const activeRequests = connection.context.activeRequests;
                     activeRequests.push(request);
                     request.events.on(RequestEvent.FINISH, () => {
