@@ -18,18 +18,18 @@
 
 import arangochair from 'arangochair';
 import { Database } from 'arangojs';
-import { Collection} from "./arango-collection";
-import { Auth } from "./auth";
+import { Collection } from './arango-collection';
+import { Auth } from './auth';
 import type { QConfig, QDbConfig } from './config'
 import { ensureProtocol, STATS } from './config';
 import type { QLog } from './logs';
 import QLogs from './logs'
 import type { QType } from './db-types';
 import { Account, Block, BlockSignatures, Message, Transaction } from './resolvers-generated';
-import { Tracer } from "opentracing";
-import { StatsCounter } from "./tracer";
-import type {IStats} from './tracer';
-import {wrap} from "./utils";
+import { Tracer } from 'opentracing';
+import { StatsCounter } from './tracer';
+import type { IStats } from './tracer';
+import { wrap } from './utils';
 
 
 export default class Arango {
@@ -155,6 +155,10 @@ export default class Arango {
         }
     }
 
+
+    dropCachedDbInfo() {
+        this.collections.forEach((x: Collection) => x.dropCachedDbInfo());
+    }
 
     async query(query: any, bindVars: any) {
         return wrap(this.log, 'QUERY', { query, bindVars }, async () => {

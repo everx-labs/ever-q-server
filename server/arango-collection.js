@@ -193,6 +193,10 @@ export class Collection {
         this.maxQueueSize = 0;
     }
 
+    dropCachedDbInfo() {
+        this.infoRefreshTime = Date.now();
+    }
+
     // Subscriptions
 
     onDocumentInsertOrUpdate(doc: any) {
