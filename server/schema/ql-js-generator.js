@@ -366,9 +366,9 @@ function main(schemaDef: TypeDef) {
             js.writeLn(`                }`);
 
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.db.${collection}.waitForDoc(parent.${on}, '${refOn}', args);`);
+                js.writeLn(`                return context.db.${collection}.waitForDoc(parent.${on}, '${refOn}', args, context);`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.db.${collection}.waitForDocs(parent.${on}, '${refOn}', args);`);
+                js.writeLn(`                return context.db.${collection}.waitForDocs(parent.${on}, '${refOn}', args, context);`);
             } else {
                 throw 'Joins on a nested arrays does not supported.';
             }

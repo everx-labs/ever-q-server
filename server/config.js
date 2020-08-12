@@ -16,8 +16,8 @@
 
 // @flow
 
-import os from "os";
-import {parseIndex} from "./db-types";
+import os from 'os';
+import { parseIndex } from './db-types';
 
 export const QRequestsMode = {
     kafka: 'kafka',
@@ -236,53 +236,13 @@ export function createConfig(options: $Shape<ProgramOptions>, env: ProgramEnv, d
     };
 }
 
-const INDEXES: {
-    [string]: string[],
-} = {
-    blocks: [
-        'seq_no, gen_utime',
-        'gen_utime',
-        'workchain_id, shard, seq_no',
-        'workchain_id, seq_no',
-        'workchain_id, gen_utime',
-        'master.min_shard_gen_utime',
-    ],
-    accounts: [
-        'last_trans_lt',
-        'balance',
-    ],
-    messages: [
-        'block_id',
-        'value, created_at',
-        'src, value, created_at',
-        'dst, value, created_at',
-        'src, created_at',
-        'dst, created_at',
-        'src, dst, created_at, _key',
-        'created_lt',
-        'created_at',
-    ],
-    transactions: [
-        'block_id',
-        'in_msg',
-        'out_msgs[*]',
-        'account_addr, now',
-        'now',
-        'lt',
-        'account_addr, orig_status, end_status',
-        'now, account_addr, lt',
-    ],
-    blocks_signatures: [
-        'signatures[*].node_id, gen_utime',
-    ],
-};
-
 export type IndexInfo = {
     fields: string[],
+    type?: string,
 }
 
 export type CollectionInfo = {
-    name: string,
+    name?: string,
     indexes: IndexInfo[],
 };
 
@@ -293,17 +253,81 @@ export type DbInfo = {
     }
 }
 
-export const BLOCKCHAIN_DB: DbInfo = {
-    lastUpdateTime: 0,
+function sortedIndex(fields: string[]): IndexInfo {
+    return {
+        type: 'persistent',
+        fields,
+    };
+}
+
+const BLOCKCHAIN: {
+    name: string,
+    collections: {
+        [string]: CollectionInfo,
+    }
+} = {
     name: 'blockchain',
-    collections: {},
+    collections: {
+        blocks: {
+            indexes: [
+                sortedIndex(['seq_no', 'gen_utime']),
+                sortedIndex(['gen_utime']),
+                sortedIndex(['workchain_id', 'shard', 'seq_no']),
+                sortedIndex(['workchain_id', 'shard', 'gen_utime']),
+                sortedIndex(['workchain_id', 'seq_no']),
+                sortedIndex(['workchain_id', 'gen_utime']),
+                sortedIndex(['master.min_shard_gen_utime']),
+                sortedIndex(['prev_ref.root_hash', '_key']),
+                sortedIndex(['prev_alt_ref.root_hash', '_key']),
+            ],
+        },
+        accounts: {
+            indexes: [
+                sortedIndex(['last_trans_lt']),
+                sortedIndex(['balance']),
+            ],
+        },
+        messages: {
+            indexes: [
+                sortedIndex(['block_id']),
+                sortedIndex(['value', 'created_at']),
+                sortedIndex(['src', 'value', 'created_at']),
+                sortedIndex(['dst', 'value', 'created_at']),
+                sortedIndex(['src', 'created_at']),
+                sortedIndex(['dst', 'created_at']),
+                sortedIndex(['created_lt']),
+                sortedIndex(['created_at']),
+            ],
+        },
+        transactions: {
+            indexes: [
+                sortedIndex(['block_id']),
+                sortedIndex(['in_msg']),
+                sortedIndex(['out_msgs[*]']),
+                sortedIndex(['account_addr', 'now']),
+                sortedIndex(['now']),
+                sortedIndex(['lt']),
+                sortedIndex(['account_addr', 'orig_status', 'end_status']),
+                sortedIndex(['now', 'account_addr', 'lt']),
+            ],
+        },
+        blocks_signatures: {
+            indexes: [
+                sortedIndex(['signatures[*].node_id', 'gen_utime']),
+            ],
+        },
+    },
 };
 
-Object.entries(INDEXES).forEach(([name, indexes]) => {
-    BLOCKCHAIN_DB.collections[name] = {
-        name,
-        indexes: ['_key', ...(indexes: any)].map(parseIndex),
-    }
+export const BLOCKCHAIN_DB: DbInfo = {
+    ...BLOCKCHAIN,
+    lastUpdateTime: 0,
+};
+
+Object.entries(BLOCKCHAIN.collections).forEach(([name, collectionMixed]) => {
+    const collection = ((collectionMixed: any): CollectionInfo);
+    collection.name = name;
+    collection.indexes.push({ fields: ['_key'] });
 });
 
 export const STATS = {

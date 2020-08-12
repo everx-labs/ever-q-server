@@ -200,7 +200,7 @@ test('Slow Detector', () => {
         },
         parseOrderBy('created_at'),
         log,
-    )).toBeTruthy();
+    )).toBeFalsy();
     expect(isFastQuery(messages, Message,
         {
             status: {eq: 5},
