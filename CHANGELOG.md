@@ -1,6 +1,15 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.27.8 – Aug 12, 2020
+
+### New
+- `mam` mutation `dropCachedDbInfo` to reset cached indexes.
+ 
+### Fix
+- Update indexes retries if index creation has failed on the timeout.
+- Basic Debian image updated from "Stretch" to "Buster" to meet dependencies.
+
 ## 0.27.7 – Jul 31, 2020
 
 ### Fix

@@ -1,4 +1,4 @@
-FROM node:10.11.0-stretch
+FROM node:10.22.0-buster
 WORKDIR /home/node
 USER node
 ADD . /home/node

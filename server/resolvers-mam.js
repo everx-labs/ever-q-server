@@ -88,6 +88,12 @@ async function getCollections(_parent: any, args: any, context: GraphQLRequestCo
     return collections;
 }
 
+async function dropCachedDbInfo(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<Boolean> {
+    mamAccessRequired(context, args);
+    context.db.dropCachedDbInfo();
+    return true;
+}
+
 // Mutation
 
 export const resolversMam = {
@@ -96,4 +102,7 @@ export const resolversMam = {
         getCollections,
         stat
     },
+    Mutation: {
+        dropCachedDbInfo,
+    }
 };

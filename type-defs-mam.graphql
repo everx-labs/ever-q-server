@@ -41,6 +41,10 @@ type Query {
     stat(accessKey: String): Stat
 }
 
+type Mutation {
+    dropCachedDbInfo(accessKey: String): Boolean
+}
+
 enum ChangeLogOp {
     CLEAR
     ON

@@ -28,7 +28,19 @@ async function updateCollection(collection, db) {
     for (const required of collection.indexes) {
         if (!existingIndexes.find(x => sameFields(x.fields, required.fields))) {
             console.log(`${collection.name}: create index on [${required.fields.join(',')}]`);
-            await dbCollection.createPersistentIndex(required.fields);
+            let indexCreated = false;
+            while (!indexCreated) {
+                try {
+                    await dbCollection.createPersistentIndex(required.fields);
+                    indexCreated = true;
+                } catch(error) {
+                    if (error.message.toLowerCase().indexOf('timeout') >= 0) {
+                        console.log(`Index creation failed: ${error.message}. Retrying...`);
+                    } else {
+                        throw error;
+                    }
+                }
+            }
         }
     }
 }
