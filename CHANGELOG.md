@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.0 – Aug 15, 2020
+
+### New
+- Request broker that supports new gate-node arch (hot-dbs, cold-cache, cold-dbs).
+ 
 ## 0.27.8 – Aug 12, 2020
 
 ### New
