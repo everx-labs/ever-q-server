@@ -5,7 +5,7 @@ import type { AccessRights } from "./auth";
 import { selectFields } from "./db-types";
 import type { FieldSelection, QType } from "./db-types";
 
-export class DocUpsertHandler {
+export class QDataListener {
     docType: QType;
     filter: any;
     authFilter: ?((doc: any) => boolean);
@@ -17,7 +17,7 @@ export class DocUpsertHandler {
         filter: any,
     ) {
         this.docType = docType;
-        this.authFilter = DocUpsertHandler.getAuthFilter(collectionName, accessRights);
+        this.authFilter = QDataListener.getAuthFilter(collectionName, accessRights);
         this.filter = filter;
     }
 
@@ -47,7 +47,7 @@ export class DocUpsertHandler {
 }
 
 //$FlowFixMe
-export class DocSubscription extends DocUpsertHandler implements AsyncIterator<any> {
+export class QDataSubscription extends QDataListener implements AsyncIterator<any> {
     collectionName: string;
     selection: FieldSelection[];
     pullQueue: ((value: any) => void)[];

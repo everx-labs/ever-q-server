@@ -18,7 +18,7 @@
 
 import arangochair from 'arangochair';
 import { Database } from 'arangojs';
-import { Collection } from './arango-collection';
+import { QCollection } from './collection';
 import { Auth } from './auth';
 import type { QConfig, QDbConfig } from './config'
 import { ensureProtocol, STATS } from './config';
@@ -32,7 +32,7 @@ import type { IStats } from './tracer';
 import { wrap } from './utils';
 
 
-export default class Arango {
+export default class QDatabase {
     config: QConfig;
     log: QLog;
     serverAddress: string;
@@ -44,14 +44,14 @@ export default class Arango {
     statPostCount: StatsCounter;
     statPostFailed: StatsCounter;
 
-    transactions: Collection;
-    messages: Collection;
-    accounts: Collection;
-    blocks: Collection;
-    blocks_signatures: Collection;
+    transactions: QCollection;
+    messages: QCollection;
+    accounts: QCollection;
+    blocks: QCollection;
+    blocks_signatures: QCollection;
 
-    collections: Collection[];
-    collectionsByName: Map<string, Collection>;
+    collections: QCollection[];
+    collectionsByName: Map<string, QCollection>;
 
     listener: any;
 
@@ -94,7 +94,7 @@ export default class Arango {
         this.collectionsByName = new Map();
 
         const addCollection = (name: string, docType: QType) => {
-            const collection = new Collection(
+            const collection = new QCollection(
                 name,
                 docType,
                 logs,
@@ -149,7 +149,7 @@ export default class Arango {
     }
 
     onDocumentInsertOrUpdate(name: string, doc: any) {
-        const collection: (Collection | typeof undefined) = this.collectionsByName.get(name);
+        const collection: (QCollection | typeof undefined) = this.collectionsByName.get(name);
         if (collection) {
             collection.onDocumentInsertOrUpdate(doc);
         }
@@ -157,7 +157,7 @@ export default class Arango {
 
 
     dropCachedDbInfo() {
-        this.collections.forEach((x: Collection) => x.dropCachedDbInfo());
+        this.collections.forEach((x: QCollection) => x.dropCachedDbInfo());
     }
 
     async query(query: any, bindVars: any) {

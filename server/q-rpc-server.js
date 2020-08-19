@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
-import Arango from './arango';
-import type {GraphQLRequestContext} from './arango-collection';
-import {Collection} from './arango-collection';
+import QDatabase from './database';
+import type {GraphQLRequestContext} from './collection';
+import {QCollection} from './collection';
 import {Auth} from './auth';
 import type {FieldSelection, OrderBy} from './db-types';
 
@@ -45,13 +45,13 @@ type RpcConnection = {
 }
 
 export class QRpcServer {
-    db: Arango;
+    db: QDatabase;
     auth: Auth;
     resolvers: Map<string, () => Promise>;
     port: number;
 
     constructor(options: {
-        db: Arango,
+        db: QDatabase,
         auth: Auth,
         port?: number,
     }) {
@@ -123,7 +123,7 @@ export class QRpcServer {
         }
     }
 
-    async query(connection: RpcConnection, collection: Collection, params: QueryParams) {
+    async query(connection: RpcConnection, collection: QCollection, params: QueryParams) {
         const resolver: (
             parent: any,
             args: any,

@@ -1,4 +1,31 @@
+import { parseDbConfig } from '../server/config';
 import { QTracer } from '../server/tracer';
+test("Db Config", () => {
+    expect(parseDbConfig('arango', 3)).toMatchObject({
+        server: 'https://arango:8059',
+        auth: '',
+        name: 'blockchain',
+        maxSockets: 3,
+    })
+    expect(parseDbConfig('arango:8059', 3)).toMatchObject({
+        server: 'https://arango:8059',
+        auth: '',
+        name: 'blockchain',
+        maxSockets: 3,
+    })
+    expect(parseDbConfig('http://arango:8059', 3)).toMatchObject({
+        server: 'http://arango:8059',
+        auth: '',
+        name: 'blockchain',
+        maxSockets: 3,
+    })
+    expect(parseDbConfig('http://u:p@arango:8059?name=bc&maxSockets=6', 3)).toMatchObject({
+        server: 'http://arango:8059',
+        auth: 'u:p',
+        name: 'bc',
+        maxSockets: 6,
+    })
+});
 
 test("Jaeger Config", () => {
     expect(QTracer.getJaegerConfig({

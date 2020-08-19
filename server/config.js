@@ -17,7 +17,6 @@
 // @flow
 
 import os from 'os';
-import { parseIndex } from './db-types';
 
 export const QRequestsMode = {
     kafka: 'kafka',
@@ -29,6 +28,16 @@ export type QDbConfig = {
     name: string,
     auth: string,
     maxSockets: number,
+};
+
+export type QColdCacheConfig = {
+
+};
+
+export type QDataConfig = {
+    cold: QDbConfig[];
+    hot: QDbConfig;
+    coldCache: QColdCacheConfig;
 };
 
 export type QConfig = {
@@ -68,14 +77,27 @@ export type ProgramOptions = {
     requestsMode: 'kafka' | 'rest',
     requestsServer: string,
     requestsTopic: string,
+
+    dataAccounts: string,
+    dataHot: string,
+    dataCold: string,
+    dataColdCache: string,
+
+    slowQueriesDataAccounts: string,
+    slowQueriesDataHot: string,
+    slowQueriesDataCold: string,
+    slowQueriesDataColdCache: string,
+
     dbServer: string,
     dbName: string,
     dbAuth: string,
     dbMaxSockets: string,
+
     slowDbServer: string,
     slowDbName: string,
     slowDbAuth: string,
     slowDbMaxSockets: string,
+
     host: string,
     port: string,
     rpcPort: string,
@@ -139,6 +161,21 @@ function parseTags(s: string): { [string]: string } {
 
 }
 
+export function parseDbConfig(config: string, defMaxSockets: number): QDbConfig {
+    const lowerCased = config.toLowerCase().trim();
+    const hasProtocol = lowerCased.startsWith('http:') || lowerCased.startsWith('https:');
+    const url = new URL(hasProtocol ? config : `https://${config}`);
+    const protocol = url.protocol || 'https:';
+    const host = url.port ? url.host : `${url.host}:8059`;
+    const path = url.pathname !== '/' ? url.pathname : '';
+    return {
+        server: `${protocol}//${host}${path}`,
+        auth: url.username && `${url.username}:${url.password}`,
+        name: url.searchParams.get('name') || 'blockchain',
+        maxSockets: Number.parseInt(url.searchParams.get('maxSockets') || defMaxSockets),
+    }
+}
+
 export const defaultOptions: ProgramOptions = {
     host: getIp(),
     port: '4000',
@@ -146,6 +183,17 @@ export const defaultOptions: ProgramOptions = {
     requestsMode: 'kafka',
     requestsServer: 'kafka:9092',
     requestsTopic: 'requests',
+
+    dataAccounts: 'arangodb',
+    dataHot: 'arangodb',
+    dataCold: '',
+    dataColdCache: '',
+
+    slowQueriesDataAccounts: 'arangodb',
+    slowQueriesDataHot: 'arangodb',
+    slowQueriesDataCold: '',
+    slowQueriesDataColdCache: '',
+
     dbServer: 'arangodb:8529',
     dbName: 'blockchain',
     dbAuth: '',
@@ -154,6 +202,7 @@ export const defaultOptions: ProgramOptions = {
     slowDbName: '',
     slowDbAuth: '',
     slowDbMaxSockets: '3',
+
     authEndpoint: '',
     mamAccessKeys: '',
     jaegerEndpoint: '',

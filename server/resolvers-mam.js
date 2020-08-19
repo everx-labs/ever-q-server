@@ -1,7 +1,7 @@
 // @flow
 
-import Arango from "./arango";
-import { Collection, mamAccessRequired } from "./arango-collection";
+import QDatabase from "./database";
+import { QCollection, mamAccessRequired } from "./collection";
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
 import {packageJson} from './utils';
 const {version} = packageJson();
@@ -47,10 +47,10 @@ function info(): Info {
 
 function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
     mamAccessRequired(context, args);
-    const db: Arango = context.db;
+    const db: QDatabase = context.db;
     let totalWaitForCount = 0;
     let totalSubscriptionCount = 0;
-    const collections = db.collections.map((collection: Collection) => {
+    const collections = db.collections.map((collection: QCollection) => {
         totalWaitForCount += collection.waitForCount;
         totalSubscriptionCount += collection.subscriptionCount;
         return {
@@ -71,7 +71,7 @@ function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
 
 async function getCollections(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<CollectionSummary[]> {
     mamAccessRequired(context, args);
-    const db: Arango = context.db;
+    const db: QDatabase = context.db;
     const collections: CollectionSummary[] = [];
     for (const collection of db.collections) {
         const indexes: string[] = [];

@@ -8,7 +8,7 @@ import { ApolloClient } from 'apollo-client';
 
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
-import Arango from '../server/arango';
+import QDatabase from '../server/database';
 import { createConfig, defaultOptions } from '../server/config';
 import QLogs from '../server/logs';
 import TONQServer from '../server/server';
@@ -120,8 +120,8 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
 }
 
-export function createTestArango(): Arango {
-    return new Arango({
+export function createTestArango(): QDatabase {
+    return new QDatabase({
         isTests: true,
         database: {
             server: 'http://0.0.0.0',

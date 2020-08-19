@@ -3,11 +3,11 @@
 import { Kafka, Producer } from "kafkajs";
 import { Span, FORMAT_TEXT_MAP } from 'opentracing';
 import type { TONContracts } from "ton-client-js/types";
-import Arango from "./arango";
-import { requireGrantedAccess } from "./arango-collection";
+import QDatabase from "./database";
+import { requireGrantedAccess } from "./collection";
 import type {
     GraphQLRequestContext
-} from "./arango-collection";
+} from "./collection";
 import { Auth } from "./auth";
 import { ensureProtocol } from "./config";
 import fetch from 'node-fetch';
@@ -41,7 +41,7 @@ type Request = {
 }
 
 export type GraphQLRequestContextEx = GraphQLRequestContext & {
-    db: Arango,
+    db: QDatabase,
 }
 
 //------------------------------------------------------------- Query
@@ -297,7 +297,7 @@ async function finishOperations(
     return context.db.finishOperations(operationIds);
 }
 
-export function attachCustomResolvers(db: Arango, original: any): any {
+export function attachCustomResolvers(db: QDatabase, original: any): any {
     overrideObject(original, {
         Query: {
             info,

@@ -21,7 +21,7 @@ import { Span, SpanContext, Tracer } from 'opentracing';
 import type { TONClient } from 'ton-client-js/types';
 import { AggregationFn, AggregationHelperFactory } from './aggregations';
 import type { FieldAggregation, AggregationHelper } from './aggregations';
-import { DocUpsertHandler, DocSubscription } from './arango-listeners';
+import { QDataListener, QDataSubscription } from './data-listener';
 import type { AccessRights } from './auth';
 import { Auth } from './auth';
 import { BLOCKCHAIN_DB, STATS } from './config';
@@ -125,7 +125,7 @@ const accessGranted: AccessRights = {
     restrictToAccounts: [],
 };
 
-export class Collection {
+export class QCollection {
     name: string;
     docType: QType;
     info: CollectionInfo;
@@ -222,7 +222,7 @@ export class Collection {
         return {
             subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
                 const accessRights = await requireGrantedAccess(context, args);
-                const subscription = new DocSubscription(
+                const subscription = new QDataSubscription(
                     this.name,
                     this.docType,
                     accessRights,
@@ -496,7 +496,7 @@ export class Collection {
                     check();
                 });
                 const onChangesFeed = new Promise((resolve) => {
-                    const authFilter = DocUpsertHandler.getAuthFilter(this.name, q.accessRights);
+                    const authFilter = QDataListener.getAuthFilter(this.name, q.accessRights);
                     waitFor = (doc) => {
                         if (authFilter && !authFilter(doc)) {
                             return;

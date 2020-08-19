@@ -23,9 +23,9 @@ import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import { ConnectionContext } from 'subscriptions-transport-ws';
 import type { TONClient } from 'ton-client-js/types';
 import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
-import Arango from './arango';
-import { RequestController, RequestEvent } from './arango-collection';
-import type { GraphQLRequestContext } from './arango-collection';
+import QDatabase from './database';
+import { RequestController, RequestEvent } from './collection';
+import type { GraphQLRequestContext } from './collection';
 import { STATS } from './config';
 import { QRpcServer } from './q-rpc-server';
 
@@ -105,7 +105,7 @@ export default class TONQServer {
     app: express.Application;
     server: any;
     endPoints: EndPoint[];
-    db: Arango;
+    db: QDatabase;
     tracer: Tracer;
     stats: IStats;
     client: TONClient;
@@ -126,7 +126,7 @@ export default class TONQServer {
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
-        this.db = new Arango(this.config, this.logs, this.auth, this.tracer, this.stats);
+        this.db = new QDatabase(this.config, this.logs, this.auth, this.tracer, this.stats);
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
         this.rpcServer = new QRpcServer({
