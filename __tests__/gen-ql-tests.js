@@ -1,7 +1,7 @@
-import {grantedAccess} from '../server/auth';
-import {QParams} from "../server/db-types";
-import {Account, BlockSignatures, Message, Transaction} from "../server/resolvers-generated";
-import {createTestArango, testServerQuery} from './init-tests';
+import {grantedAccess} from '../src/server/auth';
+import {QParams} from "../src/server/filter/data-types";
+import {Account, BlockSignatures, Message, Transaction} from "../src/server/graphql/resolvers-generated";
+import {createTestData, testServerQuery} from './init-tests';
 import {gql} from 'apollo-server';
 
 test('remove nulls', async () => {
@@ -55,7 +55,7 @@ function normalized(s) {
 }
 
 test("reduced RETURN", () => {
-    const db = createTestArango();
+    const data = createTestData();
     const queryText = (collection, result) => normalized(
         collection.createDatabaseQuery(
             { filter: {} },
@@ -64,14 +64,14 @@ test("reduced RETURN", () => {
         ).text,
     );
 
-    expect(queryText(db.accounts, 'id balance __typename')).toEqual(normalized(`
+    expect(queryText(data.accounts, 'id balance __typename')).toEqual(normalized(`
         FOR doc IN accounts LIMIT 50 RETURN {
             _key: doc._key,
             balance: doc.balance
         }
     `));
 
-    expect(queryText(db.blocks, 'value_flow { imported }')).toEqual(normalized(`
+    expect(queryText(data.blocks, 'value_flow { imported }')).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             value_flow: ( doc.value_flow && {
@@ -80,7 +80,7 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(db.blocks, 'in_msg_descr { msg_type }')).toEqual(normalized(`
+    expect(queryText(data.blocks, 'in_msg_descr { msg_type }')).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             in_msg_descr: ( doc.in_msg_descr && (
@@ -89,28 +89,28 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(db.transactions, 'in_message { id }')).toEqual(normalized(`
+    expect(queryText(data.transactions, 'in_message { id }')).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
             in_msg: doc.in_msg
         }
     `));
 
-    expect(queryText(db.transactions, 'out_messages { id }')).toEqual(normalized(`
+    expect(queryText(data.transactions, 'out_messages { id }')).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
             out_msgs: doc.out_msgs
         }
     `));
 
-    expect(queryText(db.messages, 'msg_type_name msg_type')).toEqual(normalized(`
+    expect(queryText(data.messages, 'msg_type_name msg_type')).toEqual(normalized(`
         FOR doc IN messages LIMIT 50 RETURN {
             _key: doc._key,
             msg_type: doc.msg_type
         }
     `));
 
-    expect(queryText(db.blocks, 'gen_utime_string')).toEqual(normalized(`
+    expect(queryText(data.blocks, 'gen_utime_string')).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             gen_utime: doc.gen_utime

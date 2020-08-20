@@ -1,14 +1,14 @@
-import { AggregationFn } from "../server/aggregations";
-import type { AccessRights } from "../server/auth";
-import {createTestArango} from './init-tests';
+import { AggregationFn } from "../src/server/data/aggregations";
+import type { AccessRights } from "../src/server/auth";
+import {createTestData} from './init-tests';
 
 test("Aggregations Fast Detector", async () => {
     const granted: AccessRights = { granted: true, restrictToAccounts: [] };
-    const db = createTestArango();
+    const data = createTestData();
 
     const isFast = async (filter, fields) => {
-        const q = db.transactions.createAggregationQuery(filter, fields, granted);
-        return db.transactions.isFastAggregationQuery(q.text, filter, q.helpers);
+        const q = data.transactions.createAggregationQuery(filter, fields, granted);
+        return data.transactions.isFastAggregationQuery(q.text, filter, q.helpers);
     }
     expect(await isFast({}, [
         { fn: AggregationFn.MIN, field: 'lt' }

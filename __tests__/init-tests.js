@@ -8,10 +8,10 @@ import { ApolloClient } from 'apollo-client';
 
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
-import QDatabase from '../server/database';
-import { createConfig, defaultOptions } from '../server/config';
-import QLogs from '../server/logs';
-import TONQServer from '../server/server';
+import QData from '../src/server/data/data';
+import { createConfig, defaultOptions } from '../src/server/config';
+import QLogs from '../src/server/logs';
+import TONQServer from '../src/server/server';
 
 jest.setTimeout(100000);
 
@@ -120,14 +120,14 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
 }
 
-export function createTestArango(): QDatabase {
-    return new QDatabase({
+export function createTestData(): QData {
+    return new QData({
         isTests: true,
-        database: {
+        data: {
             server: 'http://0.0.0.0',
             name: 'blockchain',
         },
-        slowDatabase: {
+        slowQueriesData: {
             server: 'http://0.0.0.0',
             name: 'blockchain',
         },

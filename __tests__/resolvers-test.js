@@ -1,11 +1,11 @@
-import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../server/db-types";
+import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../src/server/filter/data-types";
 import {
     Transaction,
     Account,
     Message,
     createResolvers
-} from "../server/resolvers-generated";
-import {createTestArango} from './init-tests';
+} from "../src/server/graphql/resolvers-generated";
+import {createTestData} from './init-tests';
 
 test("BigUInt", () => {
     expect(convertBigUInt(1, null)).toBeNull();
@@ -124,8 +124,8 @@ test("Filter test", () => {
 
 
 test("Enum Names", () => {
-    const db = createTestArango();
-    const resolvers = createResolvers(db);
+    const data = createTestData();
+    const resolvers = createResolvers(data);
     const params = new QParams();
     const m1 = {
         msg_type: 1,

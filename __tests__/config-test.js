@@ -1,6 +1,6 @@
-import { parseDbConfig } from '../server/config';
-import { QTracer } from '../server/tracer';
-test("Db Config", () => {
+import { parseDbConfig } from '../src/server/config';
+import { QTracer } from '../src/server/tracer';
+test("Arango Config", () => {
     expect(parseDbConfig('arango', 3)).toMatchObject({
         server: 'https://arango:8059',
         auth: '',

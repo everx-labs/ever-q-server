@@ -41,7 +41,7 @@ class TestQuery {
 
 test('Data Broker', async () => {
     const server = await testServerRequired();
-    const collection = server.db.transactions;
+    const collection = server.data.transactions;
     const q1 = new TestQuery({ useWebSockets });
     const q2 = new TestQuery({ useWebSockets });
     q1.sendQuery();

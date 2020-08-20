@@ -1,14 +1,14 @@
-import type {CollectionInfo} from "../server/config";
-import {BLOCKCHAIN_DB} from "../server/config";
-import {isFastQuery} from "../server/slow-detector";
-import {parseOrderBy} from "../server/db-types";
+import type {CollectionInfo} from "../src/server/config";
+import {BLOCKCHAIN_DB} from "../src/server/config";
+import {isFastQuery} from "../src/server/filter/slow-detector";
+import {parseOrderBy} from "../src/server/filter/data-types";
 import {
     Transaction,
     Account,
     Message,
     Block,
     BlockSignatures,
-} from "../server/resolvers-generated";
+} from "../src/server/graphql/resolvers-generated";
 
 
 test('Slow Detector', () => {

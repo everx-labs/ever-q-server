@@ -1,5 +1,5 @@
-import {unixSecondsToString} from '../server/db-types';
-import {packageJson} from '../server/utils';
+import {unixSecondsToString} from '../src/server/filter/data-types';
+import {packageJson} from '../src/server/utils';
 import {testServerQuery} from './init-tests';
 const {version} = packageJson();
 
