@@ -104,10 +104,11 @@ enum SplitTypeEnum {
     Merge
 }
 
-enum AccountTypeEnum {
+enum AccountStatusEnum {
     Uninit
     Active
     Frozen
+    NonExist
 }
 
 enum TransactionTypeEnum {
@@ -127,13 +128,6 @@ enum TransactionProcessingStatusEnum {
     Proposed
     Finalized
     Refused
-}
-
-enum AccountStatusEnum {
-    Uninit
-    Active
-    Frozen
-    NonExist
 }
 
 enum AccountStatusChangeEnum {
@@ -1045,9 +1039,10 @@ type Account {
 	- 0 – uninit
 	- 1 – active
 	- 2 – frozen
+	- 3 – nonExist
 	"""
 	acc_type: Int
-	acc_type_name: AccountTypeEnum
+	acc_type_name: AccountStatusEnum
 	"""
 	
 	Contains either the unixtime of the most recent storage payment
@@ -2264,17 +2259,6 @@ input MessageFilter {
     OR: MessageFilter
 }
 
-input AccountTypeEnumFilter {
-	eq: AccountTypeEnum
-	ne: AccountTypeEnum
-	gt: AccountTypeEnum
-	lt: AccountTypeEnum
-	ge: AccountTypeEnum
-	le: AccountTypeEnum
-	in: [AccountTypeEnum]
-	notIn: [AccountTypeEnum]
-}
-
 """
 
 # Account type
@@ -2308,9 +2292,10 @@ input AccountFilter {
 	- 0 – uninit
 	- 1 – active
 	- 2 – frozen
+	- 3 – nonExist
 	"""
 	acc_type: IntFilter
-	acc_type_name: AccountTypeEnumFilter
+	acc_type_name: AccountStatusEnumFilter
 	"""
 	
 	Contains either the unixtime of the most recent storage payment

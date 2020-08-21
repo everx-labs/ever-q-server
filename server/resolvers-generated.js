@@ -617,7 +617,7 @@ const Account = struct({
     id: scalar,
     workchain_id: scalar,
     acc_type: scalar,
-    acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2 }),
+    acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
     last_paid: scalar,
     due_payment: bigUInt2,
     last_trans_lt: bigUInt1,
@@ -1017,7 +1017,7 @@ function createResolvers(db) {
             balance(parent, args) {
                 return resolveBigUInt(2, parent.balance, args);
             },
-            acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2 }),
+            acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Query: {
             blocks_signatures: db.blocks_signatures.queryResolver(),

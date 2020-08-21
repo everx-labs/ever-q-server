@@ -61,13 +61,6 @@ const skipReason = u8enum('SkipReason', {
     noGas: 2,
 });
 
-
-const accountType = u8enum('AccountType', {
-    uninit: 0,
-    active: 1,
-    frozen: 2,
-});
-
 const messageType = u8enum('MessageType', {
     internal: 0,
     extIn: 1,
@@ -156,7 +149,7 @@ const Account: TypeDef = {
     _doc: docs.account._doc,
     _: { collection: 'accounts' },
     workchain_id: i32(docs.account.workchain_id),
-    acc_type: required(accountType(docs.account.acc_type)),
+    acc_type: required(accountStatus(docs.account.acc_type)),
     last_paid: required(u32(docs.account.last_paid)),
     due_payment: grams(docs.account.due_payment),
     last_trans_lt: required(u64(docs.account.last_trans_lt)), // index
