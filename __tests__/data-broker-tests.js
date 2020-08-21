@@ -41,32 +41,4 @@ class TestQuery {
 
 test('Data Broker', async () => {
     const server = await testServerRequired();
-    const collection = server.data.transactions;
-    const q1 = new TestQuery({ useWebSockets });
-    const q2 = new TestQuery({ useWebSockets });
-    q1.sendQuery();
-    q2.sendQuery();
-    await sleep(1000);
-    expect(collection.waitForCount).toEqual(2);
-    q1.abort();
-    await sleep(500);
-    expect(collection.waitForCount).toEqual(1);
-    q2.abort();
-    await sleep(500);
-    expect(collection.waitForCount).toEqual(0);
-
-    const client = createTestClient({ useWebSockets });
-    await client.query({
-        query: gql`
-            query {
-                transactions(limit: 1) {
-                    id
-                    in_message { id }
-                    block { id }
-                    tr_type_name
-                }
-            }
-        `,
-    });
-    client.close();
 });

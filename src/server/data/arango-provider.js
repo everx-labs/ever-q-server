@@ -6,11 +6,12 @@ import { ensureProtocol } from '../config';
 import type { QArangoConfig } from '../config';
 import type { QLog } from '../logs';
 import { dataCollectionInfo } from './data-provider';
-import type { QDataEvent, QDataProvider, QDataSegment, QDoc, QIndexInfo } from './data-provider';
+import type { QDataEvent, QDataProvider, QDataSegment, QDoc, QCollectionInfo, QIndexInfo } from './data-provider';
 
 const DATA_EVENT = 'data';
 
 type ArangoEventHandler = (err: any, status: string, headers: { [string]: any }, body: string) => void;
+
 interface ArangoListener {
     req: {
         opts: {
@@ -68,7 +69,7 @@ export class ArangoProvider implements QDataProvider {
         this.checkStartListener();
     }
 
-    getCollectionIndexes(collection): Promise<QIndexInfo[]> {
+    getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return this.arango.collection(collection).indexes();
     }
 
@@ -109,8 +110,9 @@ export class ArangoProvider implements QDataProvider {
             listener.req.opts.headers['Authorization'] = `Basic ${userPassword}`;
         }
 
-        Object.values(dataCollectionInfo).forEach((collection) => {
-            const collectionName = collection.name;
+        Object.values(dataCollectionInfo).forEach((value) => {
+            const collectionInfo = ((value: any): QCollectionInfo);
+            const collectionName = collectionInfo.name;
             listener.subscribe({ collection: collectionName });
             listener.on(name, (docJson, type) => {
                 if (type === 'insert/update' || type === 'insert' || type === 'update') {
@@ -128,6 +130,7 @@ export class ArangoProvider implements QDataProvider {
             this.log.error('FAILED', 'LISTEN', `${err}`, error);
             setTimeout(() => listener.start(), this.config.listenerRestartTimeout || 1000);
         });
+        return listener;
     }
 
     onDataEvent(event: QDataEvent, collection: string, doc: QDoc) {

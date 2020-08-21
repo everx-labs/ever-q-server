@@ -12,8 +12,9 @@ export type QDoc = {
 };
 
 
-export type QDataEvent = 'insert' | 'update';
+export type QDataEvent = 'insert/update' | 'insert' | 'update';
 export const dataEvent = {
+    UPSERT: 'insert/update',
     INSERT: 'insert',
     UPDATE: 'update',
 };
@@ -25,32 +26,11 @@ export const dataSegment = {
     MUTABLE: 'mutable',
 };
 
-type QCollectionInfo = {
+export type QCollectionInfo = {
     name: string,
     segment: QDataSegment,
+    indexes: QIndexInfo[],
 };
-export const dataCollectionInfo: { [string]: QCollectionInfo } = {
-    messages: {
-        name: 'messages',
-        segment: dataSegment.IMMUTABLE,
-    },
-    transactions: {
-        name: 'transactions',
-        segment: dataSegment.IMMUTABLE,
-    },
-    blocks: {
-        name: 'blocks',
-        segment: dataSegment.IMMUTABLE,
-    },
-    blocks_signatures: {
-        name: 'blocks_signatures',
-        segment: dataSegment.IMMUTABLE,
-    },
-    accounts: {
-        name: 'accounts',
-        segment: dataSegment.MUTABLE,
-    },
-}
 
 export interface QDataProvider {
     start(): void;
@@ -82,4 +62,70 @@ export const missingDataCache: QDataCache = {
     },
 }
 
+const INDEXES = {
+    blocks: {
+        indexes: [
+            sortedIndex(['seq_no', 'gen_utime']),
+            sortedIndex(['gen_utime']),
+            sortedIndex(['workchain_id', 'shard', 'seq_no']),
+            sortedIndex(['workchain_id', 'shard', 'gen_utime']),
+            sortedIndex(['workchain_id', 'seq_no']),
+            sortedIndex(['workchain_id', 'gen_utime']),
+            sortedIndex(['master.min_shard_gen_utime']),
+            sortedIndex(['prev_ref.root_hash', '_key']),
+            sortedIndex(['prev_alt_ref.root_hash', '_key']),
+        ],
+    },
+    accounts: {
+        indexes: [
+            sortedIndex(['last_trans_lt']),
+            sortedIndex(['balance']),
+        ],
+    },
+    messages: {
+        indexes: [
+            sortedIndex(['block_id']),
+            sortedIndex(['value', 'created_at']),
+            sortedIndex(['src', 'value', 'created_at']),
+            sortedIndex(['dst', 'value', 'created_at']),
+            sortedIndex(['src', 'created_at']),
+            sortedIndex(['dst', 'created_at']),
+            sortedIndex(['created_lt']),
+            sortedIndex(['created_at']),
+        ],
+    },
+    transactions: {
+        indexes: [
+            sortedIndex(['block_id']),
+            sortedIndex(['in_msg']),
+            sortedIndex(['out_msgs[*]']),
+            sortedIndex(['account_addr', 'now']),
+            sortedIndex(['now']),
+            sortedIndex(['lt']),
+            sortedIndex(['account_addr', 'orig_status', 'end_status']),
+            sortedIndex(['now', 'account_addr', 'lt']),
+        ],
+    },
+    blocks_signatures: {
+        indexes: [
+            sortedIndex(['signatures[*].node_id', 'gen_utime']),
+        ],
+    },
+};
 
+const col = (name, segment) => ({ name, segment, indexes: INDEXES[name].indexes.concat({ fields: ['_key'] }) });
+export const dataCollectionInfo: { [string]: QCollectionInfo } = {
+    accounts: col('accounts', dataSegment.MUTABLE),
+    messages: col('messages', dataSegment.IMMUTABLE),
+    transactions: col('transactions', dataSegment.IMMUTABLE),
+    blocks: col('blocks', dataSegment.IMMUTABLE),
+    blocks_signatures: col('blocks_signatures', dataSegment.IMMUTABLE),
+}
+
+
+function sortedIndex(fields: string[]): QIndexInfo {
+    return {
+        type: 'persistent',
+        fields,
+    };
+}

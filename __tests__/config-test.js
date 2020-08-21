@@ -1,25 +1,25 @@
-import { parseDbConfig } from '../src/server/config';
+import { parseArangoConfig } from '../src/server/config';
 import { QTracer } from '../src/server/tracer';
 test("Arango Config", () => {
-    expect(parseDbConfig('arango', 3)).toMatchObject({
+    expect(parseArangoConfig('arango', 3)).toMatchObject({
         server: 'https://arango:8059',
         auth: '',
         name: 'blockchain',
         maxSockets: 3,
     })
-    expect(parseDbConfig('arango:8059', 3)).toMatchObject({
+    expect(parseArangoConfig('arango:8059', 3)).toMatchObject({
         server: 'https://arango:8059',
         auth: '',
         name: 'blockchain',
         maxSockets: 3,
     })
-    expect(parseDbConfig('http://arango:8059', 3)).toMatchObject({
+    expect(parseArangoConfig('http://arango:8059', 3)).toMatchObject({
         server: 'http://arango:8059',
         auth: '',
         name: 'blockchain',
         maxSockets: 3,
     })
-    expect(parseDbConfig('http://u:p@arango:8059?name=bc&maxSockets=6', 3)).toMatchObject({
+    expect(parseArangoConfig('http://u:p@arango:8059?name=bc&maxSockets=6', 3)).toMatchObject({
         server: 'http://arango:8059',
         auth: 'u:p',
         name: 'bc',

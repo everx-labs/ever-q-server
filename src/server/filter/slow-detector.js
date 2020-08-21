@@ -1,8 +1,7 @@
 // @flow
 
 
-import type {CollectionInfo} from "../config";
-import type { QIndexInfo } from '../data/data-provider';
+import type { QCollectionInfo, QIndexInfo } from '../data/data-provider';
 import {indexToString, orderByToString, QParams, splitOr} from "./data-types";
 import type {OrderBy, QFieldExplanation, QType} from "./data-types";
 import type {QLog} from '../logs';
@@ -49,7 +48,7 @@ function fieldsCanUseIndex(fields: Map<string, QFieldExplanation>, index: QIndex
     return true;
 }
 
-function getUsedIndexes(fields: Map<string, QFieldExplanation>, collection: CollectionInfo): ?(QIndexInfo[]) {
+function getUsedIndexes(fields: Map<string, QFieldExplanation>, collection: QCollectionInfo): ?(QIndexInfo[]) {
     const indexes = collection.indexes.filter(x => fieldsCanUseIndex(fields, x));
     return indexes.length > 0 ? indexes : null;
 }
@@ -123,7 +122,7 @@ function logSlowReason(
     filter: any,
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
-    collection: CollectionInfo,
+    collection: QCollectionInfo,
     selectedIndexes?: QIndexInfo[],
 ) {
     const logFields: string[] = [];
@@ -142,7 +141,7 @@ function logSlowReason(
 }
 
 function isFastQueryOrOperand(
-    collection: CollectionInfo,
+    collection: QCollectionInfo,
     type: QType,
     filter: any,
     orderBy: OrderBy[],
@@ -201,7 +200,7 @@ function isFastQueryOrOperand(
 }
 
 export function isFastQuery(
-    collection: CollectionInfo,
+    collection: QCollectionInfo,
     type: QType,
     filter: any,
     orderBy: OrderBy[],

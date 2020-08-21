@@ -21,12 +21,12 @@ import type { TONClient } from 'ton-client-js/types';
 import { AggregationFn, AggregationHelperFactory } from './aggregations';
 import type { FieldAggregation, AggregationHelper } from './aggregations';
 import { QDataBroker } from './data-broker';
-import type { QIndexInfo } from './data-provider';
+import type { QCollectionInfo, QIndexInfo } from './data-provider';
 import { QDataListener, QDataSubscription } from './data-listener';
 import type { AccessRights } from '../auth';
 import { Auth } from '../auth';
-import { BLOCKCHAIN_DB, STATS } from '../config';
-import type { CollectionInfo, QConfig } from '../config';
+import { STATS } from '../config';
+import type { QConfig } from '../config';
 import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from '../filter/data-types';
 import {
     collectReturnExpressions,
@@ -140,12 +140,11 @@ export type QCollectionOptions = {
     isTests: boolean,
 };
 
-export class QCollection {
+export class QDataCollection {
     name: string;
     docType: QType;
-    info: CollectionInfo;
+    info: QCollectionInfo;
     infoRefreshTime: number;
-    segment: QDataSegment;
 
     log: QLog;
     auth: Auth;
@@ -175,9 +174,8 @@ export class QCollection {
         const name = options.name;
         this.name = name;
         this.docType = options.docType;
-        this.info = BLOCKCHAIN_DB.collections[name];
+        this.info = dataCollectionInfo[name];
         this.infoRefreshTime = Date.now();
-        this.segment = dataCollectionInfo[name].segment;
 
         this.log = options.logs.create(name);
         this.auth = options.auth;
@@ -202,8 +200,12 @@ export class QCollection {
         this.docInsertOrUpdate.setMaxListeners(0);
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
-        const listenerProvider = this.segment === dataSegment.MUTABLE ? this.broker.mutable : this.broker.immutableHot;
+        const listenerProvider = this.getHotProvider();
         listenerProvider.subscribe(this.name, doc => this.onDocumentInsertOrUpdate(doc));
+    }
+
+    getHotProvider() {
+        return this.info.segment === dataSegment.MUTABLE ? this.broker.mutable : this.broker.immutableHot;
     }
 
     dropCachedDbInfo() {
@@ -466,7 +468,7 @@ export class QCollection {
     ): Promise<any> {
         const broker = isFast ? this.broker : this.slowQueriesBroker;
         return broker.query({
-            segment: this.segment,
+            segment: this.info.segment,
             text,
             vars,
             orderBy,
@@ -659,8 +661,7 @@ export class QCollection {
     }
 
     async getIndexes(): Promise<QIndexInfo[]> {
-        const provider = this.segment === dataSegment.MUTABLE ? this.broker.mutable : this.broker.immutableHot;
-        return provider.getCollectionIndexes(this.name);
+        return this.getHotProvider().getCollectionIndexes(this.name);
     }
 
     //--------------------------------------------------------- Internals

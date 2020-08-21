@@ -1,7 +1,7 @@
 // @flow
 
 import QData from "../data/data";
-import { QCollection, mamAccessRequired } from "../data/collection";
+import { QDataCollection, mamAccessRequired } from "../data/collection";
 import { dataSegment } from '../data/data-provider';
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
 import {packageJson} from '../utils';
@@ -51,7 +51,7 @@ function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
     const data: QData = context.data;
     let totalWaitForCount = 0;
     let totalSubscriptionCount = 0;
-    const collections = data.collections.map((collection: QCollection) => {
+    const collections = data.collections.map((collection: QDataCollection) => {
         totalWaitForCount += collection.waitForCount;
         totalSubscriptionCount += collection.subscriptionCount;
         return {

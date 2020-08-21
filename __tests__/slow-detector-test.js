@@ -1,5 +1,6 @@
-import type {CollectionInfo} from "../src/server/config";
-import {BLOCKCHAIN_DB} from "../src/server/config";
+// @flow
+import { dataCollectionInfo } from '../src/server/data/data-provider';
+import type { QCollectionInfo } from '../src/server/data/data-provider';
 import {isFastQuery} from "../src/server/filter/slow-detector";
 import {parseOrderBy} from "../src/server/filter/data-types";
 import {
@@ -14,14 +15,14 @@ import {
 test('Slow Detector', () => {
     const log = console;
 
-    const block_signatures: CollectionInfo = BLOCKCHAIN_DB.collections.blocks_signatures;
+    const block_signatures: QCollectionInfo = dataCollectionInfo.blocks_signatures;
     expect(isFastQuery(block_signatures, BlockSignatures,
         {signatures: {any: {node_id: {in: ["1", "2"]}}}},
         [],
         log,
     )).toBeTruthy();
 
-    const accounts: CollectionInfo = BLOCKCHAIN_DB.collections.accounts;
+    const accounts: QCollectionInfo = dataCollectionInfo.accounts;
     expect(isFastQuery(accounts, Account,
         {id: {eq: '1'}},
         [],
@@ -41,7 +42,7 @@ test('Slow Detector', () => {
         log,
     )).toBeTruthy();
 
-    const transactions: CollectionInfo = BLOCKCHAIN_DB.collections.transactions;
+    const transactions: QCollectionInfo = dataCollectionInfo.transactions;
     expect(isFastQuery(transactions, Transaction,
         {now: {ge: 1}},
         parseOrderBy('now desc, id desc'),
@@ -115,7 +116,7 @@ test('Slow Detector', () => {
         log,
     )).toBeTruthy();
 
-    const blocks: CollectionInfo = BLOCKCHAIN_DB.collections.blocks;
+    const blocks: QCollectionInfo = dataCollectionInfo.blocks;
     expect(isFastQuery(blocks, Block,
         {
             workchain_id: {eq: -1},
@@ -178,7 +179,7 @@ test('Slow Detector', () => {
         log,
     )).toBeTruthy();
 
-    const messages: CollectionInfo = BLOCKCHAIN_DB.collections.messages;
+    const messages: QCollectionInfo = dataCollectionInfo.messages;
     expect(isFastQuery(messages, Message,
         {
             created_at: {gt: 1},

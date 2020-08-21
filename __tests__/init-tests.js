@@ -1,3 +1,4 @@
+// @flow
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { split } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
@@ -9,16 +10,22 @@ import { ApolloClient } from 'apollo-client';
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
 import QData from '../src/server/data/data';
-import { createConfig, defaultOptions } from '../src/server/config';
+import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
 import QLogs from '../src/server/logs';
 import TONQServer from '../src/server/server';
+import { QStats, QTracer } from '../src/server/tracer';
+import { Auth } from '../src/server/auth';
 
 jest.setTimeout(100000);
 
-const testConfig = createConfig({}, process.env, {
-    ...defaultOptions,
-    dbServer: 'localhost:8901',
-});
+const arangoUrl = 'http://localhost:8901';
+const testConfig = createConfig({}, process.env, overrideDefs(programOptions, {
+    dataMutable: arangoUrl,
+    dataImmutableHot: arangoUrl,
+    slowQueriesDataMutable: arangoUrl,
+    slowQueriesDataImmutableHot: arangoUrl,
+}));
+
 let testServer: ?TONQServer = null
 
 afterAll(async () => {
@@ -96,7 +103,7 @@ export async function testServerQuery(query: string, variables?: { [string]: any
             },
             body: JSON.stringify({
                 query,
-                ...(variables ? variables : {}),
+                ...((variables ? variables : {}): any),
             }),
             ...fetchOptions,
         });
@@ -120,18 +127,24 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
 }
 
+const dataConfig = {
+    dataMutable: 'http://0.0.0.0',
+    dataImmutableHot: 'http://0.0.0.0',
+    slowQueriesDataMutable: 'http://0.0.0.0',
+    slowQueriesDataImmutableHot: 'http://0.0.0.0',
+};
+
 export function createTestData(): QData {
-    return new QData({
-        isTests: true,
-        data: {
-            server: 'http://0.0.0.0',
-            name: 'blockchain',
-        },
-        slowQueriesData: {
-            server: 'http://0.0.0.0',
-            name: 'blockchain',
-        },
-    }, new QLogs());
+    return new QData(({
+            isTests: true,
+            data: parseDataConfig(dataConfig, 'data', 100),
+            slowQueriesData: parseDataConfig(dataConfig, 'slowQueriesData', 100),
+        }: any),
+        new QLogs(),
+        new Auth(testConfig),
+        QTracer.create(testConfig),
+        QStats.create('', []),
+    );
 }
 
 test('Init', () => {

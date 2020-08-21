@@ -489,7 +489,7 @@ function main(schemaDef: TypeDef) {
             createEnumNameResolver,
             unixMillisecondsToString,
             unixSecondsToString,
-        } = require('./db-types.js');
+        } = require('../filter/data-types.js');
         `);
         const jsArrayFilters = new Set<string>();
         types.forEach(type => genJSFilter(type, jsArrayFilters));

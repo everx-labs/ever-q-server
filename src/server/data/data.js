@@ -17,7 +17,7 @@
 // @flow
 
 import { ArangoProvider } from './arango-provider';
-import { QCollection } from './collection';
+import { QDataCollection } from './collection';
 import { Auth } from '../auth';
 import type { QConfig, QDataBrokerConfig, QArangoConfig } from '../config'
 import { STATS } from '../config';
@@ -63,14 +63,14 @@ export default class QData {
     statPostCount: StatsCounter;
     statPostFailed: StatsCounter;
 
-    transactions: QCollection;
-    messages: QCollection;
-    accounts: QCollection;
-    blocks: QCollection;
-    blocks_signatures: QCollection;
+    transactions: QDataCollection;
+    messages: QDataCollection;
+    accounts: QDataCollection;
+    blocks: QDataCollection;
+    blocks_signatures: QDataCollection;
 
-    collections: QCollection[];
-    collectionsByName: Map<string, QCollection>;
+    collections: QDataCollection[];
+    collectionsByName: Map<string, QDataCollection>;
 
     constructor(
         config: QConfig,
@@ -94,7 +94,7 @@ export default class QData {
         this.collectionsByName = new Map();
 
         const addCollection = (name: string, docType: QType) => {
-            const collection = new QCollection({
+            const collection = new QDataCollection({
                 name,
                 docType,
                 logs,
@@ -123,7 +123,7 @@ export default class QData {
     }
 
     dropCachedDbInfo() {
-        this.collections.forEach((x: QCollection) => x.dropCachedDbInfo());
+        this.collections.forEach((x: QDataCollection) => x.dropCachedDbInfo());
     }
 
     async query(segment: QDataSegment, text: string, vars: { [string]: any }, orderBy: OrderBy[]) {
