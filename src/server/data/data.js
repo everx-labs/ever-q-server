@@ -1,145 +1,131 @@
-/*
- * Copyright 2018-2020 TON DEV SOLUTIONS LTD.
- *
- * Licensed under the SOFTWARE EVALUATION License (the "License"); you may not use
- * this file except in compliance with the License.  You may obtain a copy of the
- * License at:
- *
- * http://www.ton.dev/licenses
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific TON DEV software governing permissions and
- * limitations under the License.
- */
-
 // @flow
 
-import { ArangoProvider } from './arango-provider';
-import { QDataCollection } from './collection';
-import { Auth } from '../auth';
-import type { QConfig, QDataBrokerConfig, QArangoConfig } from '../config'
-import { STATS } from '../config';
-import type { QLog } from '../logs';
-import QLogs from '../logs'
-import type { OrderBy, QType } from '../filter/data-types';
-import { Account, Block, BlockSignatures, Message, Transaction } from '../graphql/resolvers-generated';
-import { Tracer } from 'opentracing';
-import { StatsCounter } from '../tracer';
-import type { IStats } from '../tracer';
-import { wrap } from '../utils';
-import { QDataBroker } from './data-broker';
-import type { QDataSegment } from './data-provider';
-import { dataSegment, missingDataCache } from './data-provider';
-
-
-function createBroker(
-    brokerName: string,
-    logs: QLogs,
-    config: QDataBrokerConfig,
-): QDataBroker {
-    const arangoDb = (dbName: string, segment: QDataSegment, config: QArangoConfig): ArangoProvider => (
-        new ArangoProvider(logs.create(`${brokerName}_${dbName}`), segment, config)
-    );
-    return new QDataBroker({
-        mutable: arangoDb('mutable', dataSegment.MUTABLE, config.mutable),
-        immutableHot: arangoDb('hot', dataSegment.IMMUTABLE, config.immutableHot),
-        immutableCold: config.immutableCold.map(x => arangoDb('cold', dataSegment.IMMUTABLE, x)),
-        immutableColdCache: missingDataCache,
-    })
+export type QIndexInfo = {
+    fields: string[],
+    type?: string,
 }
 
 
-export default class QData {
-    config: QConfig;
-    log: QLog;
+export type QDoc = {
+    _key: string;
+    [string]: any;
+};
 
-    broker: QDataBroker;
-    slowQueriesBroker: QDataBroker;
 
-    auth: Auth;
-    tracer: Tracer;
-    statPostCount: StatsCounter;
-    statPostFailed: StatsCounter;
+export type QDataEvent = 'insert/update' | 'insert' | 'update';
+export const dataEvent = {
+    UPSERT: 'insert/update',
+    INSERT: 'insert',
+    UPDATE: 'update',
+};
 
-    transactions: QDataCollection;
-    messages: QDataCollection;
-    accounts: QDataCollection;
-    blocks: QDataCollection;
-    blocks_signatures: QDataCollection;
 
-    collections: QDataCollection[];
-    collectionsByName: Map<string, QDataCollection>;
+export type QDataSegment = 'immutable' | 'mutable';
+export const dataSegment = {
+    IMMUTABLE: 'immutable',
+    MUTABLE: 'mutable',
+};
 
-    constructor(
-        config: QConfig,
-        logs: QLogs,
-        auth: Auth,
-        tracer: Tracer,
-        stats: IStats,
-    ) {
-        this.config = config;
-        this.log = logs.create('data');
-        this.auth = auth;
-        this.tracer = tracer;
+export type QCollectionInfo = {
+    name: string,
+    segment: QDataSegment,
+    indexes: QIndexInfo[],
+};
 
-        this.statPostCount = new StatsCounter(stats, STATS.post.count, []);
-        this.statPostFailed = new StatsCounter(stats, STATS.post.failed, []);
+export interface QDataProvider {
+    start(): void;
 
-        this.broker = createBroker('fast', logs, config.data)
-        this.slowQueriesBroker = createBroker('slow', logs, config.slowQueriesData);
+    getCollectionIndexes(collection: string): Promise<QIndexInfo[]>;
 
-        this.collections = [];
-        this.collectionsByName = new Map();
+    query(text: string, vars: { [string]: any }): Promise<any>;
 
-        const addCollection = (name: string, docType: QType) => {
-            const collection = new QDataCollection({
-                name,
-                docType,
-                logs,
-                auth,
-                tracer,
-                stats,
-                broker: this.broker,
-                slowQueriesBroker: this.slowQueriesBroker,
-                isTests: config.isTests || false,
-            });
-            this.collections.push(collection);
-            this.collectionsByName.set(name, collection);
-            return collection;
-        };
+    subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any;
 
-        this.transactions = addCollection('transactions', Transaction);
-        this.messages = addCollection('messages', Message);
-        this.accounts = addCollection('accounts', Account);
-        this.blocks = addCollection('blocks', Block);
-        this.blocks_signatures = addCollection('blocks_signatures', BlockSignatures);
-    }
+    unsubscribe(subscription: any): void;
+}
 
-    start() {
-        this.broker.start();
-        this.slowQueriesBroker.start();
-    }
 
-    dropCachedDbInfo() {
-        this.collections.forEach((x: QDataCollection) => x.dropCachedDbInfo());
-    }
+export interface QDataCache {
+    get(key: string): Promise<any>;
 
-    async query(segment: QDataSegment, text: string, vars: { [string]: any }, orderBy: OrderBy[]) {
-        return wrap(this.log, 'QUERY', { text, vars }, async () => {
-            return this.broker.query({
-                segment,
-                text,
-                vars,
-                orderBy,
-            });
-        });
-    }
+    set(key: string, value: any): Promise<void>;
+}
 
-    async finishOperations(operationIds: Set<string>): Promise<number> {
-        let count = 0;
-        this.collections.forEach(x => (count += x.finishOperations(operationIds)));
-        return count;
-    }
+
+export const missingDataCache: QDataCache = {
+    get(_key: string): Promise<any> {
+        return Promise.resolve(null);
+    },
+
+    set(_key: string, _value: any): Promise<void> {
+        return Promise.resolve();
+    },
+}
+
+const INDEXES = {
+    blocks: {
+        indexes: [
+            sortedIndex(['seq_no', 'gen_utime']),
+            sortedIndex(['gen_utime']),
+            sortedIndex(['workchain_id', 'shard', 'seq_no']),
+            sortedIndex(['workchain_id', 'shard', 'gen_utime']),
+            sortedIndex(['workchain_id', 'seq_no']),
+            sortedIndex(['workchain_id', 'gen_utime']),
+            sortedIndex(['master.min_shard_gen_utime']),
+            sortedIndex(['prev_ref.root_hash', '_key']),
+            sortedIndex(['prev_alt_ref.root_hash', '_key']),
+        ],
+    },
+    accounts: {
+        indexes: [
+            sortedIndex(['last_trans_lt']),
+            sortedIndex(['balance']),
+        ],
+    },
+    messages: {
+        indexes: [
+            sortedIndex(['block_id']),
+            sortedIndex(['value', 'created_at']),
+            sortedIndex(['src', 'value', 'created_at']),
+            sortedIndex(['dst', 'value', 'created_at']),
+            sortedIndex(['src', 'created_at']),
+            sortedIndex(['dst', 'created_at']),
+            sortedIndex(['created_lt']),
+            sortedIndex(['created_at']),
+        ],
+    },
+    transactions: {
+        indexes: [
+            sortedIndex(['block_id']),
+            sortedIndex(['in_msg']),
+            sortedIndex(['out_msgs[*]']),
+            sortedIndex(['account_addr', 'now']),
+            sortedIndex(['now']),
+            sortedIndex(['lt']),
+            sortedIndex(['account_addr', 'orig_status', 'end_status']),
+            sortedIndex(['now', 'account_addr', 'lt']),
+        ],
+    },
+    blocks_signatures: {
+        indexes: [
+            sortedIndex(['signatures[*].node_id', 'gen_utime']),
+        ],
+    },
+};
+
+const col = (name, segment) => ({ name, segment, indexes: INDEXES[name].indexes.concat({ fields: ['_key'] }) });
+export const dataCollectionInfo: { [string]: QCollectionInfo } = {
+    accounts: col('accounts', dataSegment.MUTABLE),
+    messages: col('messages', dataSegment.IMMUTABLE),
+    transactions: col('transactions', dataSegment.IMMUTABLE),
+    blocks: col('blocks', dataSegment.IMMUTABLE),
+    blocks_signatures: col('blocks_signatures', dataSegment.IMMUTABLE),
+}
+
+
+function sortedIndex(fields: string[]): QIndexInfo {
+    return {
+        type: 'persistent',
+        fields,
+    };
 }

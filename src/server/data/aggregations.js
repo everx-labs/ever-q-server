@@ -1,6 +1,6 @@
 // @flow
 
-import type { ScalarField } from "../filter/data-types";
+import type { ScalarField } from "../filter/filters";
 import { scalarFields } from "../graphql/resolvers-generated";
 
 export const AggregationFn = {

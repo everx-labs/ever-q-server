@@ -5,8 +5,8 @@ import EventEmitter from 'events';
 import { ensureProtocol } from '../config';
 import type { QArangoConfig } from '../config';
 import type { QLog } from '../logs';
-import { dataCollectionInfo } from './data-provider';
-import type { QDataEvent, QDataProvider, QDataSegment, QDoc, QCollectionInfo, QIndexInfo } from './data-provider';
+import { dataCollectionInfo } from './data';
+import type { QDataEvent, QDataProvider, QDataSegment, QDoc, QCollectionInfo, QIndexInfo } from './data';
 
 const DATA_EVENT = 'data';
 

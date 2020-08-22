@@ -2,8 +2,8 @@
 
 import { $$asyncIterator } from "iterall";
 import type { AccessRights } from "../auth";
-import { selectFields } from "../filter/data-types";
-import type { FieldSelection, QType } from "../filter/data-types";
+import { selectFields } from "../filter/filters";
+import type { FieldSelection, QType } from "../filter/filters";
 
 export class QDataListener {
     docType: QType;

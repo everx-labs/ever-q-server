@@ -1,7 +1,7 @@
 // @flow
-import type { OrderBy } from '../filter/data-types';
-import { dataSegment } from './data-provider';
-import type { QDataProvider, QDataCache, QDoc, QDataSegment } from './data-provider';
+import type { OrderBy } from '../filter/filters';
+import { dataSegment } from './data';
+import type { QDataProvider, QDataCache, QDoc, QDataSegment } from './data';
 
 export type QDataQueryParams = {
     segment: QDataSegment;
@@ -12,47 +12,47 @@ export type QDataQueryParams = {
 
 
 export type QDataBrokerOptions = {
-    mutable: QDataProvider;
-    immutableHot: QDataProvider;
-    immutableCold: QDataProvider[];
-    immutableColdCache: QDataCache;
+    mut: QDataProvider;
+    hot: QDataProvider;
+    cold: QDataProvider[];
+    cache: QDataCache;
 }
 
 
 export class QDataBroker {
-    mutable: QDataProvider;
-    immutableHot: QDataProvider;
-    immutableCold: QDataProvider[];
-    immutableColdCache: QDataCache;
+    mut: QDataProvider;
+    hot: QDataProvider;
+    cold: QDataProvider[];
+    cache: QDataCache;
 
 
     constructor(options: QDataBrokerOptions) {
-        this.mutable = options.mutable;
-        this.immutableHot = options.immutableHot;
-        this.immutableCold = options.immutableCold;
-        this.immutableColdCache = options.immutableColdCache;
+        this.mut = options.mut;
+        this.hot = options.hot;
+        this.cold = options.cold;
+        this.cache = options.cache;
     }
 
 
     start() {
-        this.mutable.start();
-        this.immutableHot.start();
-        this.immutableCold.forEach(x => x.start());
+        this.mut.start();
+        this.hot.start();
+        this.cold.forEach(x => x.start());
     }
 
     async query(params: QDataQueryParams): Promise<any> {
         if (params.segment === dataSegment.MUTABLE) {
-            return this.mutable.query(params.text, params.vars);
+            return this.mut.query(params.text, params.vars);
         }
         return combineResults(await Promise.all([
-            this.immutableHot.query(params.text, params.vars),
-            this.queryImmutableCold(params),
+            this.hot.query(params.text, params.vars),
+            this.queryCold(params),
         ]), params.orderBy);
     }
 
 
-    async queryImmutableCold(params: QDataQueryParams): Promise<QDoc[]> {
-        if (this.immutableCold.length === 0) {
+    async queryCold(params: QDataQueryParams): Promise<QDoc[]> {
+        if (this.cold.length === 0) {
             return [];
         }
         const key = JSON.stringify({
@@ -60,11 +60,11 @@ export class QDataBroker {
             vars: params.vars,
             orderBy: params.orderBy,
         });
-        let docs = await this.immutableColdCache.get(key);
+        let docs = await this.cache.get(key);
         if (isNullOrUndefined(docs)) {
-            const results = await Promise.all(this.immutableCold.map(x => x.query(params.text, params.vars)));
+            const results = await Promise.all(this.cold.map(x => x.query(params.text, params.vars)));
             docs = combineResults(results, params.orderBy);
-            await this.immutableColdCache.set(key, docs);
+            await this.cache.set(key, docs);
         }
         return docs;
     }

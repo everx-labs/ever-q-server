@@ -1,8 +1,8 @@
 // @flow
-import { dataCollectionInfo } from '../src/server/data/data-provider';
-import type { QCollectionInfo } from '../src/server/data/data-provider';
+import { dataCollectionInfo } from '../src/server/data/data';
+import type { QCollectionInfo } from '../src/server/data/data';
 import {isFastQuery} from "../src/server/filter/slow-detector";
-import {parseOrderBy} from "../src/server/filter/data-types";
+import {parseOrderBy} from "../src/server/filter/filters";
 import {
     Transaction,
     Account,

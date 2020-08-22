@@ -24,7 +24,7 @@ import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import { ConnectionContext } from 'subscriptions-transport-ws';
 import type { TONClient } from 'ton-client-js/types';
 import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
-import QData from './data/data';
+import QBlockchainData from './data/blockchain';
 import { RequestController, RequestEvent } from './data/collection';
 import type { GraphQLRequestContext } from './data/collection';
 import { STATS } from './config';
@@ -105,7 +105,7 @@ export default class TONQServer {
     app: express.Application;
     server: any;
     endPoints: EndPoint[];
-    data: QData;
+    data: QBlockchainData;
     tracer: Tracer;
     stats: IStats;
     client: TONClient;
@@ -125,7 +125,7 @@ export default class TONQServer {
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
-        this.data = new QData(this.config, this.logs, this.auth, this.tracer, this.stats);
+        this.data = new QBlockchainData(this.config, this.logs, this.auth, this.tracer, this.stats);
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
         this.addEndPoint({

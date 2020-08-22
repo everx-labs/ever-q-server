@@ -34,10 +34,10 @@ export type QMemCachedConfig = {
 };
 
 export type QDataBrokerConfig = {
-    mutable: QArangoConfig;
-    immutableHot: QArangoConfig;
-    immutableCold: QArangoConfig[];
-    immutableColdCache: QMemCachedConfig;
+    mut: QArangoConfig;
+    hot: QArangoConfig;
+    cold: QArangoConfig[];
+    cache: QMemCachedConfig;
 };
 
 export type QConfig = {
@@ -106,10 +106,10 @@ const dataOpt = (prefix: string) => {
     const o = name => `${prefix.toLowerCase().split(' ').join('-')}-${name}`;
     const d = text => `${toPascal(prefix)} ${text}`;
 
-    opt(o('mutable'), 'arangodb', d('mutable db config url'));
-    opt(o('immutable-hot'), 'arangodb', d('immutable hot db config url'));
-    opt(o('immutable-cold'), '', d('immutable cold db config urls (comma separated)'));
-    opt(o('immutable-cold-cache'), '', d('immutable cold cache config url'));
+    opt(o('mut'), 'arangodb', d('mutable db config url'));
+    opt(o('hot'), 'arangodb', d('hot db config url'));
+    opt(o('cold'), '', d('cold db config urls (comma separated)'));
+    opt(o('cache'), '', d('cache config url'));
 }
 
 opt('host', getIp(), 'Listening address');
@@ -121,7 +121,7 @@ opt('requests-server', 'kafka:9092', 'Requests server url');
 opt('requests-topic', 'requests', 'Requests topic name');
 
 dataOpt('data');
-dataOpt('slow queries data');
+dataOpt('slow queries');
 
 opt('auth-endpoint', '', 'Auth endpoint');
 opt('mam-access-keys', '', 'Access keys used to authorize mam endpoint access');
@@ -211,6 +211,7 @@ export function resolveValues(values: any, env: any, def: ProgramOptions): any {
 
 export function createConfig(values: any, env: any, def: ProgramOptions): QConfig {
     const resolved = resolveValues(values, env, def);
+    const { data, slowQueriesData } = parseDataConfig(resolved);
     return {
         server: {
             host: resolved.host,
@@ -222,8 +223,8 @@ export function createConfig(values: any, env: any, def: ProgramOptions): QConfi
             server: resolved.requestsServer,
             topic: resolved.requestsTopic,
         },
-        data: parseDataConfig(resolved, 'data', DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS),
-        slowQueriesData: parseDataConfig(resolved, 'slowQueriesData', DEFAULT_ARANGO_MAX_SOCKETS),
+        data,
+        slowQueriesData,
         authorization: {
             endpoint: resolved.authEndpoint,
         },
@@ -265,12 +266,21 @@ function parseTags(s: string): { [string]: string } {
 }
 
 
-export function parseDataConfig(values: any, prefix: string, defMaxSockets: number): QDataBrokerConfig {
-    const opt = suffix => values[`${prefix}${suffix}`] || '';
+export function parseDataConfig(values: any): {
+    data: QDataBrokerConfig,
+    slowQueriesData: QDataBrokerConfig,
+} {
+    const parse = (prefix: string, defMaxSockets: number): QDataBrokerConfig => {
+        const opt = suffix => values[`${prefix}${suffix}`] || '';
+        return {
+            mut: parseArangoConfig(opt('Mut'), defMaxSockets),
+            hot: parseArangoConfig(opt('Hot'), defMaxSockets),
+            cold: opt('Cold').split(',').filter(x => x).map(x => parseArangoConfig(x, defMaxSockets)),
+            cache: parseMemCachedConfig(opt('Cache')),
+        }
+    };
     return {
-        mutable: parseArangoConfig(opt('Mutable'), defMaxSockets),
-        immutableHot: parseArangoConfig(opt('ImmutableHot'), defMaxSockets),
-        immutableCold: opt('ImmutableCold').split(',').filter(x => x).map(x => parseArangoConfig(x, defMaxSockets)),
-        immutableColdCache: parseMemCachedConfig(opt('ImmutableColdCache')),
-    }
+        data: parse('data', DEFAULT_ARANGO_MAX_SOCKETS),
+        slowQueriesData: parse('slowQueries', DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS),
+    };
 }

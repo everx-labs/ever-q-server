@@ -1,5 +1,5 @@
 import {grantedAccess} from '../src/server/auth';
-import {QParams} from "../src/server/filter/data-types";
+import {QParams} from "../src/server/filter/filters";
 import {Account, BlockSignatures, Message, Transaction} from "../src/server/graphql/resolvers-generated";
 import {createTestData, testServerQuery} from './init-tests';
 import {gql} from 'apollo-server';

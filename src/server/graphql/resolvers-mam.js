@@ -1,8 +1,8 @@
 // @flow
 
-import QData from "../data/data";
+import QBlockchainData from "../data/blockchain";
 import { QDataCollection, mamAccessRequired } from "../data/collection";
-import { dataSegment } from '../data/data-provider';
+import { dataSegment } from '../data/data';
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
 import {packageJson} from '../utils';
 const {version} = packageJson();
@@ -48,7 +48,7 @@ function info(): Info {
 
 function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
     mamAccessRequired(context, args);
-    const data: QData = context.data;
+    const data: QBlockchainData = context.data;
     let totalWaitForCount = 0;
     let totalSubscriptionCount = 0;
     const collections = data.collections.map((collection: QDataCollection) => {
@@ -72,7 +72,7 @@ function stat(_parent: any, args: any, context: GraphQLRequestContextEx): Stat {
 
 async function getCollections(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<CollectionSummary[]> {
     mamAccessRequired(context, args);
-    const data: QData = context.data;
+    const data: QBlockchainData = context.data;
     const collections: CollectionSummary[] = [];
     for (const collection of data.collections) {
         const indexes: string[] = [];

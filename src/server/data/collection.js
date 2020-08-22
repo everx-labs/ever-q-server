@@ -20,14 +20,14 @@ import { Span, SpanContext, Tracer } from 'opentracing';
 import type { TONClient } from 'ton-client-js/types';
 import { AggregationFn, AggregationHelperFactory } from './aggregations';
 import type { FieldAggregation, AggregationHelper } from './aggregations';
-import { QDataBroker } from './data-broker';
-import type { QCollectionInfo, QIndexInfo } from './data-provider';
-import { QDataListener, QDataSubscription } from './data-listener';
+import { QDataBroker } from './broker';
+import type { QCollectionInfo, QIndexInfo } from './data';
+import { QDataListener, QDataSubscription } from './listener';
 import type { AccessRights } from '../auth';
 import { Auth } from '../auth';
 import { STATS } from '../config';
 import type { QConfig } from '../config';
-import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from '../filter/data-types';
+import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from '../filter/filters';
 import {
     collectReturnExpressions,
     combineReturnExpressions,
@@ -35,7 +35,7 @@ import {
     parseSelectionSet,
     QParams,
     selectionToString,
-} from '../filter/data-types';
+} from '../filter/filters';
 import type { QLog } from '../logs';
 import QLogs from '../logs';
 import { isFastQuery } from '../filter/slow-detector';
@@ -43,8 +43,8 @@ import type { IStats } from '../tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from '../tracer';
 import { QError, wrap } from '../utils';
 import EventEmitter from 'events';
-import { dataCollectionInfo, dataSegment } from './data-provider';
-import type { QDataSegment } from './data-provider';
+import { dataCollectionInfo, dataSegment } from './data';
+import type { QDataSegment } from './data';
 
 const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
@@ -205,7 +205,7 @@ export class QDataCollection {
     }
 
     getHotProvider() {
-        return this.info.segment === dataSegment.MUTABLE ? this.broker.mutable : this.broker.immutableHot;
+        return this.info.segment === dataSegment.MUTABLE ? this.broker.mut : this.broker.hot;
     }
 
     dropCachedDbInfo() {

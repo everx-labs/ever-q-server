@@ -1,4 +1,4 @@
-import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../src/server/filter/data-types";
+import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../src/server/filter/filters";
 import {
     Transaction,
     Account,

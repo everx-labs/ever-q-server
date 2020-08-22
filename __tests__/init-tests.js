@@ -9,7 +9,7 @@ import { ApolloClient } from 'apollo-client';
 
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
-import QData from '../src/server/data/data';
+import QBlockchainData from '../src/server/data/blockchain';
 import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
 import QLogs from '../src/server/logs';
 import TONQServer from '../src/server/server';
@@ -20,10 +20,10 @@ jest.setTimeout(100000);
 
 const arangoUrl = 'http://localhost:8901';
 const testConfig = createConfig({}, process.env, overrideDefs(programOptions, {
-    dataMutable: arangoUrl,
-    dataImmutableHot: arangoUrl,
-    slowQueriesDataMutable: arangoUrl,
-    slowQueriesDataImmutableHot: arangoUrl,
+    dataMut: arangoUrl,
+    dataHot: arangoUrl,
+    slowQueriesMut: arangoUrl,
+    slowQueriesHot: arangoUrl,
 }));
 
 let testServer: ?TONQServer = null
@@ -128,17 +128,18 @@ export async function testServerQuery(query: string, variables?: { [string]: any
 }
 
 const dataConfig = {
-    dataMutable: 'http://0.0.0.0',
-    dataImmutableHot: 'http://0.0.0.0',
-    slowQueriesDataMutable: 'http://0.0.0.0',
-    slowQueriesDataImmutableHot: 'http://0.0.0.0',
+    dataMut: 'http://0.0.0.0',
+    dataHot: 'http://0.0.0.0',
+    slowQueriesMut: 'http://0.0.0.0',
+    slowQueriesHot: 'http://0.0.0.0',
 };
 
-export function createTestData(): QData {
-    return new QData(({
+export function createTestData(): QBlockchainData {
+    const { data, slowQueriesData } = parseDataConfig(dataConfig);
+    return new QBlockchainData(({
             isTests: true,
-            data: parseDataConfig(dataConfig, 'data', 100),
-            slowQueriesData: parseDataConfig(dataConfig, 'slowQueriesData', 100),
+            data,
+            slowQueriesData,
         }: any),
         new QLogs(),
         new Auth(testConfig),

@@ -1,9 +1,9 @@
 // @flow
 
 
-import type { QCollectionInfo, QIndexInfo } from '../data/data-provider';
-import {indexToString, orderByToString, QParams, splitOr} from "./data-types";
-import type {OrderBy, QFieldExplanation, QType} from "./data-types";
+import type { QCollectionInfo, QIndexInfo } from '../data/data';
+import {indexToString, orderByToString, QParams, splitOr} from "./filters";
+import type {OrderBy, QFieldExplanation, QType} from "./filters";
 import type {QLog} from '../logs';
 
 function setIs1(s: Set<string>, a: string): boolean {

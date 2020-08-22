@@ -3,7 +3,7 @@
 import { Kafka, Producer } from 'kafkajs';
 import { Span, FORMAT_TEXT_MAP } from 'opentracing';
 import type { TONContracts } from 'ton-client-js/types';
-import QData from '../data/data';
+import QBlockchainData from '../data/blockchain';
 import { requireGrantedAccess } from '../data/collection';
 import type {
     GraphQLRequestContext,
@@ -12,7 +12,7 @@ import { Auth } from '../auth';
 import { ensureProtocol } from '../config';
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from '../auth';
-import { dataSegment } from '../data/data-provider';
+import { dataSegment } from '../data/data';
 import { QTracer } from '../tracer';
 import { packageJson, QError } from '../utils';
 
@@ -43,7 +43,7 @@ type Request = {
 }
 
 export type GraphQLRequestContextEx = GraphQLRequestContext & {
-    data: QData,
+    data: QBlockchainData,
 }
 
 //------------------------------------------------------------- Query
@@ -312,7 +312,7 @@ async function finishOperations(
     return context.data.finishOperations(operationIds);
 }
 
-export function attachCustomResolvers(data: QData, original: any): any {
+export function attachCustomResolvers(data: QBlockchainData, original: any): any {
     overrideObject(original, {
         Query: {
             info,

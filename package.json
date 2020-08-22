@@ -7,6 +7,7 @@
 	"scripts": {
 		"babel": "babel src --out-dir dist --source-maps inline",
 		"gen": "node dist/maintanance/gen-graphql/db-schema-generator.js",
+		"options-docs": "node dist/maintanance/doc-options/index.js",
 		"flow": "flow",
 		"test": "jest -i --forceExit --detectOpenHandles",
 		"start": "node dist/server/index.js",

@@ -12,7 +12,7 @@ const {
     createEnumNameResolver,
     unixMillisecondsToString,
     unixSecondsToString,
-} = require('../filter/data-types.js');
+} = require('../filter/filters.js');
 const OtherCurrency = struct({
     currency: scalar,
     value: bigUInt2,

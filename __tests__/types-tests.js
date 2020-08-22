@@ -1,4 +1,4 @@
-import {unixSecondsToString} from '../src/server/filter/data-types';
+import {unixSecondsToString} from '../src/server/filter/filters';
 import {packageJson} from '../src/server/utils';
 import {testServerQuery} from './init-tests';
 const {version} = packageJson();
