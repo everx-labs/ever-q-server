@@ -8,8 +8,6 @@ import type { QLog } from '../logs';
 import { dataCollectionInfo } from './data';
 import type { QDataEvent, QDataProvider, QDataSegment, QDoc, QCollectionInfo, QIndexInfo } from './data';
 
-const DATA_EVENT = 'data';
-
 type ArangoEventHandler = (err: any, status: string, headers: { [string]: any }, body: string) => void;
 
 interface ArangoListener {
@@ -35,6 +33,7 @@ export class ArangoProvider implements QDataProvider {
     arango: Database;
     listener: ArangoListener;
     listenerSubscribers: EventEmitter;
+    listenerSubscribersCount: number;
     listenerStarted: boolean;
 
 
@@ -63,9 +62,11 @@ export class ArangoProvider implements QDataProvider {
         this.listenerSubscribers = new EventEmitter();
         this.listenerSubscribers.setMaxListeners(0);
         this.listenerStarted = false;
+        this.listenerSubscribersCount = 0;
     }
 
     start() {
+        this.started = true;
         this.checkStartListener();
     }
 
@@ -79,21 +80,25 @@ export class ArangoProvider implements QDataProvider {
     }
 
     async subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any {
-        this.listenerSubscribers?.on(DATA_EVENT, listener);
+        this.listenerSubscribers?.on(collection, listener);
+        this.listenerSubscribersCount += 1;
         this.checkStartListener();
-        return listener;
+        return {
+            collection,
+            listener
+        };
     }
 
 
     unsubscribe(subscription: any) {
-        this.listenerSubscribers?.removeListener(DATA_EVENT, subscription);
+        this.listenerSubscribers?.removeListener(subscription.collection, subscription.listener);
+        this.listenerSubscribersCount = Math.max(this.listenerSubscribersCount - 1, 0);
     }
 
     // Internals
 
     checkStartListener() {
-        const hasSubscribers = this.listenerSubscribers.listenerCount(DATA_EVENT) > 0;
-        if (this.started && !this.listenerStarted && hasSubscribers) {
+        if (this.started && !this.listenerStarted && this.listenerSubscribersCount > 0) {
             this.listenerStarted = true;
             this.listener.start();
         }
@@ -114,7 +119,7 @@ export class ArangoProvider implements QDataProvider {
             const collectionInfo = ((value: any): QCollectionInfo);
             const collectionName = collectionInfo.name;
             listener.subscribe({ collection: collectionName });
-            listener.on(name, (docJson, type) => {
+            listener.on(collectionName, (docJson, type) => {
                 if (type === 'insert/update' || type === 'insert' || type === 'update') {
                     this.onDataEvent(type, collectionName, docJson);
                 }

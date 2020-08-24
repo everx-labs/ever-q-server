@@ -1,5 +1,5 @@
 const { Database } = require('arangojs');
-const { BLOCKCHAIN_DB } = require('../../server/config');
+const { dataCollectionInfo } = require('../../server/data/data');
 const program = require('commander');
 const fetch = require('node-fetch');
 
@@ -55,7 +55,7 @@ async function updateDb(config) {
         arango.useBasicAuth(user, password);
     }
     arango.useDatabase(config.name);
-    for (const collection of [...Object.values(BLOCKCHAIN_DB.collections)]) {
+    for (const collection of [...Object.values(dataCollectionInfo)]) {
         await updateCollection(collection, arango);
     }
     await arango.close();
@@ -69,11 +69,11 @@ function update(servers, options) {
             try {
                 await updateDb({
                     server,
-                    name: BLOCKCHAIN_DB.name,
+                    name: 'blockchain',
                     auth: options.auth,
                 });
             } catch (error) {
-                console.error(error.message);
+                console.error(error);
                 hasErrors = true;
             }
         }

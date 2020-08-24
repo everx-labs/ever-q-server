@@ -44,7 +44,6 @@ import { QTracer, StatsCounter, StatsGauge, StatsTiming } from '../tracer';
 import { QError, wrap } from '../utils';
 import EventEmitter from 'events';
 import { dataCollectionInfo, dataSegment } from './data';
-import type { QDataSegment } from './data';
 
 const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
@@ -58,6 +57,7 @@ export class RequestController {
 
     constructor() {
         this.events = new EventEmitter();
+        this.events.setMaxListeners(6);
     }
 
     emitClose() {
@@ -167,6 +167,7 @@ export class QDataCollection {
     subscriptionCount: number;
     queryStats: Map<string, QueryStat>;
     docInsertOrUpdate: EventEmitter;
+    hotSubscription: any;
 
     maxQueueSize: number;
 
@@ -200,8 +201,15 @@ export class QDataCollection {
         this.docInsertOrUpdate.setMaxListeners(0);
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
-        const listenerProvider = this.getHotProvider();
-        listenerProvider.subscribe(this.name, doc => this.onDocumentInsertOrUpdate(doc));
+
+        this.hotSubscription = this.getHotProvider().subscribe(this.name, doc => this.onDocumentInsertOrUpdate(doc));
+    }
+
+    close() {
+        if (this.hotSubscription) {
+            this.getHotProvider().unsubscribe(this.hotSubscription);
+            this.hotSubscription = null;
+        }
     }
 
     getHotProvider() {
@@ -217,7 +225,6 @@ export class QDataCollection {
     onDocumentInsertOrUpdate(doc: any) {
         this.statDoc.increment();
         this.docInsertOrUpdate.emit('doc', doc);
-
         const isExternalInboundFinalizedMessage = this.name === 'messages'
             && doc._key
             && doc.msg_type === 1
