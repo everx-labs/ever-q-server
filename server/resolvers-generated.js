@@ -57,7 +57,7 @@ const OutMsg = struct({
     import_block_lt: bigUInt1,
     msg_env_hash: scalar,
     next_workchain: scalar,
-    next_addr_pfx: bigUInt1,
+    next_addr_pfx: scalar,
 });
 
 const OtherCurrencyArray = array(() => OtherCurrency);
@@ -670,9 +670,6 @@ function createResolvers(db) {
             import_block_lt(parent, args) {
                 return resolveBigUInt(1, parent.import_block_lt, args);
             },
-            next_addr_pfx(parent, args) {
-                return resolveBigUInt(1, parent.next_addr_pfx, args);
-            },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
         },
         BlockValueFlow: {
@@ -1171,7 +1168,7 @@ scalarFields.set('blocks.out_msg_descr.imported.proof_delivered', { type: 'strin
 scalarFields.set('blocks.out_msg_descr.import_block_lt', { type: 'uint64', path: 'doc.out_msg_descr[*].import_block_lt' });
 scalarFields.set('blocks.out_msg_descr.msg_env_hash', { type: 'string', path: 'doc.out_msg_descr[*].msg_env_hash' });
 scalarFields.set('blocks.out_msg_descr.next_workchain', { type: 'number', path: 'doc.out_msg_descr[*].next_workchain' });
-scalarFields.set('blocks.out_msg_descr.next_addr_pfx', { type: 'uint64', path: 'doc.out_msg_descr[*].next_addr_pfx' });
+scalarFields.set('blocks.out_msg_descr.next_addr_pfx', { type: 'string', path: 'doc.out_msg_descr[*].next_addr_pfx' });
 scalarFields.set('blocks.account_blocks.account_addr', { type: 'string', path: 'doc.account_blocks[*].account_addr' });
 scalarFields.set('blocks.account_blocks.transactions.lt', { type: 'uint64', path: 'doc.account_blocks[*].transactions[**].lt' });
 scalarFields.set('blocks.account_blocks.transactions.transaction_id', { type: 'string', path: 'doc.account_blocks[*].transactions[**].transaction_id' });

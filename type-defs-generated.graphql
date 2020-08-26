@@ -217,7 +217,7 @@ type OutMsg {
 	import_block_lt(format: BigIntFormat): String
 	msg_env_hash: String
 	next_workchain: Int
-	next_addr_pfx(format: BigIntFormat): String
+	next_addr_pfx: String
 }
 
 type BlockValueFlow {

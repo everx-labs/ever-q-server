@@ -368,7 +368,7 @@ const OutMsg: TypeDef = {
     import_block_lt: u64(),
     msg_env_hash: string(),
     next_workchain: i32(),
-    next_addr_pfx: u64(),
+    next_addr_pfx: string(),
 };
 
 const outMsg = (doc?: string) => ref({ OutMsg }, doc);
