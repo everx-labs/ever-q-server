@@ -75,7 +75,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**, __tests__/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, src/**, res/**, node_modules/**, __tests__/**', name: 'wholedir'
 							}
 					}
 				}
