@@ -18,7 +18,7 @@ import { Auth } from '../src/server/auth';
 
 jest.setTimeout(100000);
 
-const arangoUrl = 'http://localhost:8901';
+const arangoUrl = 'http://localhost:8081';
 const testConfig = createConfig({}, process.env, overrideDefs(programOptions, {
     dataMut: arangoUrl,
     dataHot: arangoUrl,
