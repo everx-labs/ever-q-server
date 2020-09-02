@@ -1,3 +1,4 @@
+// @flow
 import { parseArangoConfig } from '../src/server/config';
 import { QTracer } from '../src/server/tracer';
 test("Arango Config", () => {
@@ -31,13 +32,13 @@ test("Jaeger Config", () => {
     expect(QTracer.getJaegerConfig({
         endpoint: '',
         service: '',
-        tags: [],
+        tags: {},
     })).toBeNull();
 
     expect(QTracer.getJaegerConfig({
         endpoint: 'http://collector:1234',
         service: 'service',
-        tags: [],
+        tags: {},
     })).toEqual({
         serviceName: 'service',
         sampler: {
@@ -53,7 +54,7 @@ test("Jaeger Config", () => {
     expect(QTracer.getJaegerConfig({
         endpoint: 'jaeger-agent:8631',
         service: 'service',
-        tags: [],
+        tags: {},
     })).toEqual({
         serviceName: 'service',
         sampler: {

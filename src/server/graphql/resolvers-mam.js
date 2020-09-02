@@ -2,7 +2,6 @@
 
 import QBlockchainData from "../data/blockchain";
 import { QDataCollection, mamAccessRequired } from "../data/collection";
-import { dataSegment } from '../data/data';
 import type { GraphQLRequestContextEx } from "./resolvers-custom";
 import {packageJson} from '../utils';
 const {version} = packageJson();

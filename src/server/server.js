@@ -24,16 +24,19 @@ import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import { ConnectionContext } from 'subscriptions-transport-ws';
 import type { TONClient } from 'ton-client-js/types';
 import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
+import { ArangoProvider } from './data/arango-provider';
 import QBlockchainData from './data/blockchain';
+import type { QDataProviders } from './data/data';
 import { RequestController, RequestEvent } from './data/collection';
 import type { GraphQLRequestContext } from './data/collection';
 import { STATS } from './config';
+import { missingDataCache, QDataCombiner, QDataPrecachedCombiner } from './data/data-provider';
 
 import { createResolvers } from './graphql/resolvers-generated';
 import { attachCustomResolvers } from './graphql/resolvers-custom';
 import { resolversMam } from './graphql/resolvers-mam';
 
-import type { QConfig } from './config';
+import type { QArangoConfig, QConfig, QDataProvidersConfig } from './config';
 import QLogs from './logs';
 import type { QLog } from './logs';
 import type { IStats } from './tracer';
@@ -45,6 +48,7 @@ import { packageJson, QError } from './utils';
 type QOptions = {
     config: QConfig,
     logs: QLogs,
+    data?: QBlockchainData,
 }
 
 type EndPoint = {
@@ -98,6 +102,23 @@ class MemStats {
     }
 }
 
+export function createProviders(configName: string, logs: QLogs, config: QDataProvidersConfig): QDataProviders {
+    const newArangoProvider = (dbName: string, config: QArangoConfig): ArangoProvider => (
+        new ArangoProvider(logs.create(`${configName}_${dbName}`), config)
+    );
+    const mutable = newArangoProvider('mut', config.mut);
+    const hot = newArangoProvider('hot', config.hot);
+    const cold = new QDataPrecachedCombiner(
+        missingDataCache,
+        config.cold.map(x => newArangoProvider('cold', x)),
+    );
+    const immutable = new QDataCombiner([hot, cold]);
+    return {
+        mutable,
+        immutable,
+    };
+}
+
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
@@ -125,7 +146,15 @@ export default class TONQServer {
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
-        this.data = new QBlockchainData(this.config, this.logs, this.auth, this.tracer, this.stats);
+        this.data = options.data || new QBlockchainData({
+            logs: this.logs,
+            auth: this.auth,
+            tracer: this.tracer,
+            stats: this.stats,
+            providers: createProviders('fast', this.logs, this.config.data),
+            slowQueriesProviders: createProviders('slow', this.logs, this.config.slowQueriesData),
+            isTests: false,
+        });
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
         this.addEndPoint({

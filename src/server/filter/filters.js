@@ -18,7 +18,7 @@
 
 
 import type {AccessRights} from "../auth";
-import type { QIndexInfo } from '../data/data';
+import type { QIndexInfo } from '../data/data-provider';
 import {scalarTypes} from "../schema/db-schema-types";
 import type {DbField, DbSchema, DbType} from "../schema/db-schema-types";
 

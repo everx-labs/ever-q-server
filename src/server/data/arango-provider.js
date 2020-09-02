@@ -5,8 +5,7 @@ import EventEmitter from 'events';
 import { ensureProtocol } from '../config';
 import type { QArangoConfig } from '../config';
 import type { QLog } from '../logs';
-import { dataCollectionInfo } from './data';
-import type { QDataEvent, QDataProvider, QDataSegment, QDoc, QCollectionInfo, QIndexInfo } from './data';
+import type { QDataEvent, QDataProvider, QDoc, QIndexInfo } from './data-provider';
 
 type ArangoEventHandler = (err: any, status: string, headers: { [string]: any }, body: string) => void;
 
@@ -26,24 +25,19 @@ interface ArangoListener {
 
 export class ArangoProvider implements QDataProvider {
     log: QLog;
-    segment: QDataSegment;
     config: QArangoConfig;
 
     started: boolean;
     arango: Database;
+    collectionsForSubscribe: string[];
     listener: ArangoListener;
     listenerSubscribers: EventEmitter;
     listenerSubscribersCount: number;
     listenerStarted: boolean;
 
 
-    constructor(
-        log: QLog,
-        segment: QDataSegment,
-        config: QArangoConfig,
-    ) {
+    constructor(log: QLog, config: QArangoConfig) {
         this.log = log;
-        this.segment = segment;
         this.config = config;
 
         this.started = false;
@@ -58,6 +52,7 @@ export class ArangoProvider implements QDataProvider {
             const authParts = config.auth.split(':');
             this.arango.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
         }
+        this.collectionsForSubscribe = [];
         this.listener = this.createListener();
         this.listenerSubscribers = new EventEmitter();
         this.listenerSubscribers.setMaxListeners(0);
@@ -65,8 +60,9 @@ export class ArangoProvider implements QDataProvider {
         this.listenerSubscribersCount = 0;
     }
 
-    start() {
+    start(collectionsForSubscribe: string[]) {
         this.started = true;
+        this.collectionsForSubscribe = collectionsForSubscribe;
         this.checkStartListener();
     }
 
@@ -98,10 +94,20 @@ export class ArangoProvider implements QDataProvider {
     // Internals
 
     checkStartListener() {
-        if (this.started && !this.listenerStarted && this.listenerSubscribersCount > 0) {
-            this.listenerStarted = true;
-            this.listener.start();
+        if (!this.started) {
+            return;
         }
+        if (this.listenerStarted) {
+            return;
+        }
+        if (this.collectionsForSubscribe.length === 0) {
+            return;
+        }
+        if (this.listenerSubscribersCount === 0) {
+            return;
+        }
+        this.listenerStarted = true;
+        this.listener.start();
     }
 
     createListener(): ArangoListener {
@@ -115,9 +121,7 @@ export class ArangoProvider implements QDataProvider {
             listener.req.opts.headers['Authorization'] = `Basic ${userPassword}`;
         }
 
-        Object.values(dataCollectionInfo).forEach((value) => {
-            const collectionInfo = ((value: any): QCollectionInfo);
-            const collectionName = collectionInfo.name;
+        this.collectionsForSubscribe.forEach((collectionName) => {
             listener.subscribe({ collection: collectionName });
             listener.on(collectionName, (docJson, type) => {
                 if (type === 'insert/update' || type === 'insert' || type === 'update') {

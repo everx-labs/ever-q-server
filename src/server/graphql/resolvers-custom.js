@@ -12,7 +12,6 @@ import { Auth } from '../auth';
 import { ensureProtocol } from '../config';
 import fetch from 'node-fetch';
 import type { AccessKey, AccessRights } from '../auth';
-import { dataSegment } from '../data/data';
 import { QTracer } from '../tracer';
 import { packageJson, QError } from '../utils';
 
@@ -60,7 +59,7 @@ async function getAccountsCount(_parent, args, context: GraphQLRequestContextEx)
     return QTracer.trace(tracer, 'getAccountsCount', async () => {
         await requireGrantedAccess(context, args);
         const result: any = await context.data.query(
-            dataSegment.MUTABLE,
+            context.data.accounts.provider,
             `RETURN LENGTH(accounts)`,
             {},
             [],
@@ -75,7 +74,7 @@ async function getTransactionsCount(_parent, args, context: GraphQLRequestContex
     return QTracer.trace(tracer, 'getTransactionsCount', async () => {
         await requireGrantedAccess(context, args);
         const result: any = await context.data.query(
-            dataSegment.IMMUTABLE,
+            context.data.transactions.provider,
             `RETURN LENGTH(transactions)`,
             {},
             [],
@@ -96,7 +95,7 @@ async function getAccountsTotalBalance(_parent, args, context: GraphQLRequestCon
         And the total result is (hs << 24) + ls
          */
         const result: any = await context.data.query(
-            dataSegment.MUTABLE,
+            context.data.accounts.provider,
             `
             LET d = 16777216
             FOR a in accounts

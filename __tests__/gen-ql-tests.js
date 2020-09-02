@@ -1,6 +1,9 @@
+// @flow
+
 import {grantedAccess} from '../src/server/auth';
 import {QParams} from "../src/server/filter/filters";
 import {Account, BlockSignatures, Message, Transaction} from "../src/server/graphql/resolvers-generated";
+import QLogs from '../src/server/logs';
 import {createTestData, testServerQuery} from './init-tests';
 import {gql} from 'apollo-server';
 
@@ -55,13 +58,13 @@ function normalized(s) {
 }
 
 test("reduced RETURN", () => {
-    const data = createTestData();
+    const data = createTestData(new QLogs());
     const queryText = (collection, result) => normalized(
         collection.createDatabaseQuery(
             { filter: {} },
             selectionInfo(result),
             grantedAccess,
-        ).text,
+        )?.text || '',
     );
 
     expect(queryText(data.accounts, 'id balance __typename')).toEqual(normalized(`

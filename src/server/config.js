@@ -33,7 +33,7 @@ export type QMemCachedConfig = {
     server: string,
 };
 
-export type QDataBrokerConfig = {
+export type QDataProvidersConfig = {
     mut: QArangoConfig;
     hot: QArangoConfig;
     cold: QArangoConfig[];
@@ -51,8 +51,8 @@ export type QConfig = {
         server: string,
         topic: string,
     },
-    data: QDataBrokerConfig,
-    slowQueriesData: QDataBrokerConfig,
+    data: QDataProvidersConfig,
+    slowQueriesData: QDataProvidersConfig,
     authorization: {
         endpoint: string,
     },
@@ -209,7 +209,11 @@ export function resolveValues(values: any, env: any, def: ProgramOptions): any {
     return resolved;
 }
 
-export function createConfig(values: any, env: any, def: ProgramOptions): QConfig {
+export function createConfig(
+    values: any,
+    env: any,
+    def: ProgramOptions,
+): QConfig {
     const resolved = resolveValues(values, env, def);
     const { data, slowQueriesData } = parseDataConfig(resolved);
     return {
@@ -267,10 +271,10 @@ function parseTags(s: string): { [string]: string } {
 
 
 export function parseDataConfig(values: any): {
-    data: QDataBrokerConfig,
-    slowQueriesData: QDataBrokerConfig,
+    data: QDataProvidersConfig,
+    slowQueriesData: QDataProvidersConfig,
 } {
-    const parse = (prefix: string, defMaxSockets: number): QDataBrokerConfig => {
+    function parse(prefix: string, defMaxSockets: number): QDataProvidersConfig {
         const opt = suffix => values[`${prefix}${suffix}`] || '';
         return {
             mut: parseArangoConfig(opt('Mut'), defMaxSockets),
@@ -278,7 +282,8 @@ export function parseDataConfig(values: any): {
             cold: opt('Cold').split(',').filter(x => x).map(x => parseArangoConfig(x, defMaxSockets)),
             cache: parseMemCachedConfig(opt('Cache')),
         }
-    };
+    }
+
     return {
         data: parse('data', DEFAULT_ARANGO_MAX_SOCKETS),
         slowQueriesData: parse('slowQueries', DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS),

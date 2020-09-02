@@ -1,3 +1,4 @@
+// @flow
 import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../src/server/filter/filters";
 import {
     Transaction,
@@ -5,6 +6,7 @@ import {
     Message,
     createResolvers
 } from "../src/server/graphql/resolvers-generated";
+import QLogs from '../src/server/logs';
 import {createTestData} from './init-tests';
 
 test("BigUInt", () => {
@@ -25,7 +27,7 @@ test("BigUInt", () => {
     expect(convertBigUInt(1, '0X7FFFFFFFFFFFFFFF')).toEqual('f7fffffffffffffff');
     expect(convertBigUInt(1, '18446744073709551615')).toEqual('fffffffffffffffff');
     expect(convertBigUInt(1, Number.MAX_SAFE_INTEGER)).toEqual('d1fffffffffffff');
-    // noinspection JSAnnotator
+    // $FlowFixMe
     expect(convertBigUInt(1, 0xffffffffffffffffn)).toEqual('fffffffffffffffff');
 
     expect(convertBigUInt(2, null)).toBeNull();
@@ -70,7 +72,7 @@ test("Negative BigUInt", () => {
     expect(convertBigUInt(1, '-0X7FFFFFFFFFFFFFFF')).toEqual('-08000000000000000');
     expect(convertBigUInt(1, '-18446744073709551615')).toEqual('-00000000000000000');
     expect(convertBigUInt(1, -Number.MAX_SAFE_INTEGER)).toEqual('-2e0000000000000');
-    // noinspection JSAnnotator
+    // $FlowFixMe
     expect(convertBigUInt(1, -0xffffffffffffffffn)).toEqual('-00000000000000000');
 
     expect(convertBigUInt(2, -0x1)).toEqual('-ffe');
@@ -124,7 +126,7 @@ test("Filter test", () => {
 
 
 test("Enum Names", () => {
-    const data = createTestData();
+    const data = createTestData(new QLogs());
     const resolvers = createResolvers(data);
     const params = new QParams();
     const m1 = {

@@ -1,14 +1,16 @@
+// @flow
 import { AggregationFn } from "../src/server/data/aggregations";
 import type { AccessRights } from "../src/server/auth";
+import QLogs from '../src/server/logs';
 import {createTestData} from './init-tests';
 
 test("Aggregations Fast Detector", async () => {
     const granted: AccessRights = { granted: true, restrictToAccounts: [] };
-    const data = createTestData();
+    const data = createTestData(new QLogs());
 
     const isFast = async (filter, fields) => {
         const q = data.transactions.createAggregationQuery(filter, fields, granted);
-        return data.transactions.isFastAggregationQuery(q.text, filter, q.helpers);
+        return q && data.transactions.isFastAggregationQuery(q.text, filter, q.helpers);
     }
     expect(await isFast({}, [
         { fn: AggregationFn.MIN, field: 'lt' }

@@ -1,5 +1,5 @@
 const { Database } = require('arangojs');
-const { dataCollectionInfo } = require('../../server/data/data');
+const { dataCollectionInfo } = require('../../server/data/data-provider');
 const program = require('commander');
 const fetch = require('node-fetch');
 

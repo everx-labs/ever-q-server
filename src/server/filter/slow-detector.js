@@ -1,7 +1,7 @@
 // @flow
 
 
-import type { QCollectionInfo, QIndexInfo } from '../data/data';
+import type { QIndexInfo } from '../data/data-provider';
 import {indexToString, orderByToString, QParams, splitOr} from "./filters";
 import type {OrderBy, QFieldExplanation, QType} from "./filters";
 import type {QLog} from '../logs';
@@ -48,8 +48,8 @@ function fieldsCanUseIndex(fields: Map<string, QFieldExplanation>, index: QIndex
     return true;
 }
 
-function getUsedIndexes(fields: Map<string, QFieldExplanation>, collection: QCollectionInfo): ?(QIndexInfo[]) {
-    const indexes = collection.indexes.filter(x => fieldsCanUseIndex(fields, x));
+function getUsedIndexes(fields: Map<string, QFieldExplanation>, collectionIndexes: QIndexInfo[]): ?(QIndexInfo[]) {
+    const indexes = collectionIndexes.filter(x => fieldsCanUseIndex(fields, x));
     return indexes.length > 0 ? indexes : null;
 }
 
@@ -122,7 +122,8 @@ function logSlowReason(
     filter: any,
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
-    collection: QCollectionInfo,
+    collectionName: string,
+    collectionIndexes: QIndexInfo[],
     selectedIndexes?: QIndexInfo[],
 ) {
     const logFields: string[] = [];
@@ -130,18 +131,19 @@ function logSlowReason(
         logFields.push(`${name} ${Array.from(explanation.operations).join(' AND ')}`);
     }
     log.debug(message, {
-        collection: collection.name,
+        collection: collectionName,
         filter,
         orderBy: orderByToString(orderBy),
         fields: logFields,
         ...(selectedIndexes ? {selectedIndexes: selectedIndexes.map(indexToString)} : {}),
-        availableIndexes: collection.indexes.map(indexToString),
+        availableIndexes: collectionIndexes.map(indexToString),
     });
 
 }
 
 function isFastQueryOrOperand(
-    collection: QCollectionInfo,
+    collectionName: string,
+    collectionIndexes: QIndexInfo[],
     type: QType,
     filter: any,
     orderBy: OrderBy[],
@@ -167,18 +169,18 @@ function isFastQueryOrOperand(
         if (log) {
             logSlowReason(
                 'Filter operations can\'t be used in ranged queries',
-                log, filter, orderBy, fields, collection,
+                log, filter, orderBy, fields, collectionName, collectionIndexes,
             );
         }
         return false;
     }
 
-    const indexes = getUsedIndexes(fields, collection);
+    const indexes = getUsedIndexes(fields, collectionIndexes);
     if (!indexes) {
         if (log) {
             logSlowReason(
                 'Available indexes can\'t be used for filter fields',
-                log, filter, orderBy, fields, collection,
+                log, filter, orderBy, fields, collectionName, collectionIndexes
             );
         }
         return false;
@@ -189,7 +191,7 @@ function isFastQueryOrOperand(
             if (log) {
                 logSlowReason(
                     'Order by can\'t use any selected index',
-                    log, filter, orderBy, fields, collection, indexes,
+                    log, filter, orderBy, fields, collectionName, collectionIndexes, indexes,
                 );
             }
             return false;
@@ -200,7 +202,8 @@ function isFastQueryOrOperand(
 }
 
 export function isFastQuery(
-    collection: QCollectionInfo,
+    collectionName: string,
+    collectionIndexes: QIndexInfo[],
     type: QType,
     filter: any,
     orderBy: OrderBy[],
@@ -208,7 +211,7 @@ export function isFastQuery(
 ): boolean {
     const orOperands = splitOr(filter);
     for (let i = 0; i < orOperands.length; i += 1) {
-        if (!isFastQueryOrOperand(collection, type, orOperands[i], orderBy, log)) {
+        if (!isFastQueryOrOperand(collectionName, collectionIndexes, type, orOperands[i], orderBy, log)) {
             return false;
         }
     }

@@ -101,7 +101,7 @@ Q-Server can report additional tags with help of optional parameter `Q_STATSD_TA
 # Adding Indexes
 
 If you need to add or change or remove index in Arango Db you must change following files:
-- https://github.com/tonlabs/ton-q-server/blob/d491c7c0e6e11cb70d5f7f0813eef719ea6b997d/src/server/data/data.js#L65
+- https://github.com/tonlabs/ton-q-server/blob/d491c7c0e6e11cb70d5f7f0813eef719ea6b997d/src/server/data/data-provider.js#L65
 - https://github.com/tonlabs/TON-infrastructure/blob/ef4d409d9508ca5e1d815c5f21ec11f16c4b8f39/pipelines/arango/arango/initdb.d/upgrade-arango-db.js#L7
 
 # For Developers

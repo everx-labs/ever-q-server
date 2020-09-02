@@ -20,8 +20,7 @@ import { Span, SpanContext, Tracer } from 'opentracing';
 import type { TONClient } from 'ton-client-js/types';
 import { AggregationFn, AggregationHelperFactory } from './aggregations';
 import type { FieldAggregation, AggregationHelper } from './aggregations';
-import { QDataBroker } from './broker';
-import type { QCollectionInfo, QIndexInfo } from './data';
+import type { QDataProvider, QIndexInfo } from './data-provider';
 import { QDataListener, QDataSubscription } from './listener';
 import type { AccessRights } from '../auth';
 import { Auth } from '../auth';
@@ -43,9 +42,8 @@ import type { IStats } from '../tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from '../tracer';
 import { QError, wrap } from '../utils';
 import EventEmitter from 'events';
-import { dataCollectionInfo, dataSegment } from './data';
 
-const INFO_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
+const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
 export const RequestEvent = {
     CLOSE: 'close',
@@ -128,27 +126,39 @@ const accessGranted: AccessRights = {
     restrictToAccounts: [],
 };
 
+
 export type QCollectionOptions = {
     name: string,
+    mutable: boolean,
     docType: QType,
+    indexes: QIndexInfo[],
+
+    provider: QDataProvider,
+    slowQueriesProvider: QDataProvider,
     logs: QLogs,
     auth: Auth,
     tracer: Tracer,
     stats: IStats,
-    broker: QDataBroker,
-    slowQueriesBroker: QDataBroker,
+
     isTests: boolean,
 };
 
 export class QDataCollection {
     name: string;
     docType: QType;
-    info: QCollectionInfo;
-    infoRefreshTime: number;
+    mutable: boolean;
+    indexes: QIndexInfo[];
+    indexesRefreshTime: number;
 
+    // Dependencies
+    provider: QDataProvider;
+    slowQueriesProvider: QDataProvider;
     log: QLog;
     auth: Auth;
     tracer: Tracer;
+    isTests: boolean;
+
+    // Own
     statDoc: StatsCounter;
     statQuery: StatsCounter;
     statQueryTime: StatsTiming;
@@ -157,11 +167,6 @@ export class QDataCollection {
     statQueryActive: StatsGauge;
     statWaitForActive: StatsGauge;
     statSubscriptionActive: StatsGauge;
-
-    broker: QDataBroker;
-    slowQueriesBroker: QDataBroker;
-
-    isTests: boolean;
 
     waitForCount: number;
     subscriptionCount: number;
@@ -175,15 +180,17 @@ export class QDataCollection {
         const name = options.name;
         this.name = name;
         this.docType = options.docType;
-        this.info = dataCollectionInfo[name];
-        this.infoRefreshTime = Date.now();
+        this.mutable = true;
+        this.indexes = options.indexes;
+        this.indexesRefreshTime = Date.now();
 
+        this.provider = options.provider;
+        this.slowQueriesProvider = options.slowQueriesProvider;
         this.log = options.logs.create(name);
         this.auth = options.auth;
         this.tracer = options.tracer;
-        this.broker = options.broker;
-        this.slowQueriesBroker = options.slowQueriesBroker;
         this.isTests = options.isTests;
+
         this.waitForCount = 0;
         this.subscriptionCount = 0;
 
@@ -202,22 +209,18 @@ export class QDataCollection {
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
 
-        this.hotSubscription = this.getHotProvider().subscribe(this.name, doc => this.onDocumentInsertOrUpdate(doc));
+        this.hotSubscription = this.provider.subscribe(this.name, doc => this.onDocumentInsertOrUpdate(doc));
     }
 
     close() {
         if (this.hotSubscription) {
-            this.getHotProvider().unsubscribe(this.hotSubscription);
+            this.provider.unsubscribe(this.hotSubscription);
             this.hotSubscription = null;
         }
     }
 
-    getHotProvider() {
-        return this.info.segment === dataSegment.MUTABLE ? this.broker.mut : this.broker.hot;
-    }
-
     dropCachedDbInfo() {
-        this.infoRefreshTime = Date.now();
+        this.indexesRefreshTime = Date.now();
     }
 
     // Subscriptions
@@ -388,7 +391,7 @@ export class QDataCollection {
             return existingStat.isFast;
         }
         const stat = {
-            isFast: isFastQuery(this.info, this.docType, filter, orderBy || [], console),
+            isFast: isFastQuery(this.name, this.indexes, this.docType, filter, orderBy || [], console),
         };
         this.queryStats.set(statKey, stat);
         return stat.isFast;
@@ -431,7 +434,7 @@ export class QDataCollection {
                 const start = Date.now();
                 const result = q.timeout > 0
                     ? await this.queryWaitFor(q, isFast, traceParams, context)
-                    : await this.query(q.text, q.params, [], isFast, traceParams, context);
+                    : await this.query(q.text, q.params, q.orderBy, isFast, traceParams, context);
                 this.log.debug(
                     'QUERY',
                     args,
@@ -462,24 +465,19 @@ export class QDataCollection {
             if (traceParams) {
                 span.setTag('params', traceParams);
             }
-            return this.queryBroker(text, vars, orderBy, isFast, context);
+            return this.queryProvider(text, vars, orderBy, isFast, context);
         }, context.parentSpan);
     }
 
-    async queryBroker(
+    async queryProvider(
         text: string,
         vars: { [string]: any },
         orderBy: OrderBy[],
         isFast: boolean,
         context: GraphQLRequestContext,
     ): Promise<any> {
-        const broker = isFast ? this.broker : this.slowQueriesBroker;
-        return broker.query({
-            segment: this.info.segment,
-            text,
-            vars,
-            orderBy,
-        });
+        const provider = isFast ? this.provider : this.slowQueriesProvider;
+        return provider.query(text, vars, orderBy);
     }
 
 
@@ -510,7 +508,7 @@ export class QDataCollection {
             try {
                 const onQuery = new Promise((resolve, reject) => {
                     const check = () => {
-                        this.queryBroker(q.text, q.params, q.orderBy, isFast, context).then((docs) => {
+                        this.queryProvider(q.text, q.params, q.orderBy, isFast, context).then((docs) => {
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = null;
@@ -652,7 +650,7 @@ export class QDataCollection {
                 }
                 const isFast = await this.isFastAggregationQuery(q.text, filter, q.helpers);
                 const start = Date.now();
-                const result = await this.queryBroker(q.text, q.params, [], isFast, context);
+                const result = await this.queryProvider(q.text, q.params, [], isFast, context);
                 this.log.debug(
                     'AGGREGATE',
                     args,
@@ -668,7 +666,7 @@ export class QDataCollection {
     }
 
     async getIndexes(): Promise<QIndexInfo[]> {
-        return this.getHotProvider().getCollectionIndexes(this.name);
+        return this.provider.getCollectionIndexes(this.name);
     }
 
     //--------------------------------------------------------- Internals
@@ -677,10 +675,10 @@ export class QDataCollection {
         if (this.isTests) {
             return;
         }
-        if (Date.now() < this.infoRefreshTime) {
+        if (Date.now() < this.indexesRefreshTime) {
             return;
         }
-        this.infoRefreshTime = Date.now() + INFO_REFRESH_INTERVAL;
+        this.indexesRefreshTime = Date.now() + INDEXES_REFRESH_INTERVAL;
         const actualIndexes = await this.getIndexes();
 
         const sameIndexes = (aIndexes: QIndexInfo[], bIndexes: QIndexInfo[]): boolean => {
@@ -695,9 +693,9 @@ export class QDataCollection {
             }
             return aRest.size === 0;
         };
-        if (!sameIndexes(actualIndexes, this.info.indexes)) {
+        if (!sameIndexes(actualIndexes, this.indexes)) {
             this.log.debug('RELOAD_INDEXES', actualIndexes);
-            this.info.indexes = actualIndexes.map(x => ({ fields: x.fields }));
+            this.indexes = actualIndexes.map(x => ({ fields: x.fields }));
             this.queryStats.clear();
         }
 
@@ -726,7 +724,7 @@ export class QDataCollection {
 
         const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);
         if (timeout === 0) {
-            const docs = await this.queryBroker(
+            const docs = await this.queryProvider(
                 queryParams.text,
                 queryParams.params,
                 [],

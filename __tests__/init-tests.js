@@ -12,19 +12,25 @@ import WebSocket from 'ws';
 import QBlockchainData from '../src/server/data/blockchain';
 import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
 import QLogs from '../src/server/logs';
-import TONQServer from '../src/server/server';
+import TONQServer, { createProviders } from '../src/server/server';
 import { QStats, QTracer } from '../src/server/tracer';
 import { Auth } from '../src/server/auth';
 
 jest.setTimeout(100000);
 
-const arangoUrl = 'http://localhost:8081';
-const testConfig = createConfig({}, process.env, overrideDefs(programOptions, {
-    dataMut: arangoUrl,
-    dataHot: arangoUrl,
-    slowQueriesMut: arangoUrl,
-    slowQueriesHot: arangoUrl,
-}));
+const localArango = 'http://localhost:8901';
+const localDefs = {
+    dataMut: localArango,
+    dataHot: localArango,
+    slowQueriesMut: localArango,
+    slowQueriesHot: localArango,
+};
+
+export const testConfig = createConfig(
+    {},
+    process.env,
+    overrideDefs(programOptions, {}),
+);
 
 let testServer: ?TONQServer = null
 
@@ -128,24 +134,23 @@ export async function testServerQuery(query: string, variables?: { [string]: any
 }
 
 const dataConfig = {
-    dataMut: 'http://0.0.0.0',
-    dataHot: 'http://0.0.0.0',
-    slowQueriesMut: 'http://0.0.0.0',
-    slowQueriesHot: 'http://0.0.0.0',
+    dataMut: localArango,
+    dataHot: localArango,
+    slowQueriesMut: localArango,
+    slowQueriesHot: localArango,
 };
 
-export function createTestData(): QBlockchainData {
+export function createTestData(logs: QLogs): QBlockchainData {
     const { data, slowQueriesData } = parseDataConfig(dataConfig);
-    return new QBlockchainData(({
-            isTests: true,
-            data,
-            slowQueriesData,
-        }: any),
-        new QLogs(),
-        new Auth(testConfig),
-        QTracer.create(testConfig),
-        QStats.create('', []),
-    );
+    return new QBlockchainData({
+        providers: createProviders('fast', logs, data),
+        slowQueriesProviders: createProviders('slow', logs, slowQueriesData),
+        logs: new QLogs(),
+        auth: new Auth(testConfig),
+        tracer: QTracer.create(testConfig),
+        stats: QStats.create('', []),
+        isTests: true,
+    });
 }
 
 test('Init', () => {
