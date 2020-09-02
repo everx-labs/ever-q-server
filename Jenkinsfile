@@ -186,7 +186,7 @@ pipeline {
 								]
 							]
 
-							build job: "Infrastructure/startup-edition-node/master", parameters: params
+							build job: "Infrastructure/startup-edition-node/CI%2Fnode%2Fdb-request-broker", parameters: params
 						}
 					}
 					post {
