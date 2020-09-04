@@ -3,7 +3,7 @@ import { parseArangoConfig } from '../src/server/config';
 import { QTracer } from '../src/server/tracer';
 test("Arango Config", () => {
     expect(parseArangoConfig('arango', 3)).toMatchObject({
-        server: 'https://arango:8059',
+        server: 'https://arango',
         auth: '',
         name: 'blockchain',
         maxSockets: 3,
