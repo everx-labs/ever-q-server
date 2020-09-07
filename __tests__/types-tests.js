@@ -1,7 +1,10 @@
+// @flow
 import {unixSecondsToString} from '../src/server/filter/filters';
 import {packageJson} from '../src/server/utils';
 import {testServerQuery} from './init-tests';
 const {version} = packageJson();
+
+declare function BigInt(v: any): any;
 
 test('version', async () => {
     const info = await testServerQuery('query{info{version}}');

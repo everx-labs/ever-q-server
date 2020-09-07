@@ -180,7 +180,7 @@ export class QDataCollection {
         const name = options.name;
         this.name = name;
         this.docType = options.docType;
-        this.mutable = true;
+        this.mutable = options.mutable;
         this.indexes = options.indexes;
         this.indexesRefreshTime = Date.now();
 

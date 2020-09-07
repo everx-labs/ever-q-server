@@ -30,10 +30,9 @@ export class ArangoProvider implements QDataProvider {
     started: boolean;
     arango: Database;
     collectionsForSubscribe: string[];
-    listener: ArangoListener;
+    listener: ?ArangoListener;
     listenerSubscribers: EventEmitter;
     listenerSubscribersCount: number;
-    listenerStarted: boolean;
 
 
     constructor(log: QLog, config: QArangoConfig) {
@@ -53,10 +52,9 @@ export class ArangoProvider implements QDataProvider {
             this.arango.useBasicAuth(authParts[0], authParts.slice(1).join(':'));
         }
         this.collectionsForSubscribe = [];
-        this.listener = this.createListener();
+        this.listener = null;
         this.listenerSubscribers = new EventEmitter();
         this.listenerSubscribers.setMaxListeners(0);
-        this.listenerStarted = false;
         this.listenerSubscribersCount = 0;
     }
 
@@ -97,7 +95,7 @@ export class ArangoProvider implements QDataProvider {
         if (!this.started) {
             return;
         }
-        if (this.listenerStarted) {
+        if (this.listener) {
             return;
         }
         if (this.collectionsForSubscribe.length === 0) {
@@ -106,11 +104,10 @@ export class ArangoProvider implements QDataProvider {
         if (this.listenerSubscribersCount === 0) {
             return;
         }
-        this.listenerStarted = true;
-        this.listener.start();
+        this.listener = this.createAndStartListener();
     }
 
-    createListener(): ArangoListener {
+    createAndStartListener(): ArangoListener {
         const { server, name, auth } = this.config;
         const listenerUrl = `${ensureProtocol(server, 'http')}/${name}`;
 
@@ -139,6 +136,7 @@ export class ArangoProvider implements QDataProvider {
             this.log.error('FAILED', 'LISTEN', `${err}`, error);
             setTimeout(() => listener.start(), this.config.listenerRestartTimeout || 1000);
         });
+        listener.start();
         return listener;
     }
 
