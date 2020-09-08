@@ -44,7 +44,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
 
 Db config must be specified in form of URL:
 
-    `[https://][user:password@]host[:8059][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=60000]]`
+    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=60000]]`
 
 Default values:
 - protocol is `https://`;
