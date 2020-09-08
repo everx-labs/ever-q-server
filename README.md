@@ -49,7 +49,7 @@ Db config must be specified in form of URL:
 Default values:
 - protocol is `https://`;
 - auth is empty (it is means no auth);
-- port is `8059`;
+- port is `8529`;
 - path is empty;
 - name is `blockchain`;
 - maxSockets is `100` for fast queries and `3` for slow queries.

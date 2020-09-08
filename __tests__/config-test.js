@@ -8,20 +8,20 @@ test("Arango Config", () => {
         name: 'blockchain',
         maxSockets: 3,
     })
-    expect(parseArangoConfig('arango:8059', 3)).toMatchObject({
-        server: 'https://arango:8059',
+    expect(parseArangoConfig('arango:8529', 3)).toMatchObject({
+        server: 'https://arango:8529',
         auth: '',
         name: 'blockchain',
         maxSockets: 3,
     })
-    expect(parseArangoConfig('http://arango:8059', 3)).toMatchObject({
-        server: 'http://arango:8059',
+    expect(parseArangoConfig('http://arango:8529', 3)).toMatchObject({
+        server: 'http://arango:8529',
         auth: '',
         name: 'blockchain',
         maxSockets: 3,
     })
-    expect(parseArangoConfig('http://u:p@arango:8059?name=bc&maxSockets=6', 3)).toMatchObject({
-        server: 'http://arango:8059',
+    expect(parseArangoConfig('http://u:p@arango:8529?name=bc&maxSockets=6', 3)).toMatchObject({
+        server: 'http://arango:8529',
         auth: 'u:p',
         name: 'bc',
         maxSockets: 6,

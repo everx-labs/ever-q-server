@@ -170,7 +170,7 @@ export function parseArangoConfig(config: string, defMaxSockets: number): QArang
     const hasProtocol = lowerCased.startsWith('http:') || lowerCased.startsWith('https:');
     const url = new URL(hasProtocol ? config : `https://${config}`);
     const protocol = url.protocol || 'https:';
-    const host = (url.port || protocol.toLowerCase() === 'https:') ? url.host : `${url.host}:8059`;
+    const host = (url.port || protocol.toLowerCase() === 'https:') ? url.host : `${url.host}:8529`;
     const path = url.pathname !== '/' ? url.pathname : '';
     const param = name => url.searchParams.get(name) || '';
     return {
