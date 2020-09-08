@@ -175,6 +175,11 @@ test("Generate AQL", () => {
     expect(params.values.v1).toEqual('1');
 
     params.clear();
+    ql = Message.filterCondition(params, 'doc', { value: { ne: null } });
+    expect(ql).toEqual(`doc.value != @v1`);
+    expect(params.values.v1).toBeNull();
+
+    params.clear();
     ql = Account.filterCondition(params, 'doc', { id: { gt: 'fff' } });
     expect(ql).toEqual(`TO_STRING(doc._key) > @v1`);
     expect(params.values.v1).toEqual('fff');

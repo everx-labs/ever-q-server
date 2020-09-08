@@ -1,15 +1,15 @@
 // @flow
-import { convertBigUInt, QParams, resolveBigUInt, selectFields } from "../src/server/filter/filters";
+import { convertBigUInt, QParams, resolveBigUInt, selectFields } from '../src/server/filter/filters';
 import {
     Transaction,
     Account,
     Message,
-    createResolvers
-} from "../src/server/graphql/resolvers-generated";
+    createResolvers,
+} from '../src/server/graphql/resolvers-generated';
 import QLogs from '../src/server/logs';
-import {createTestData} from './init-tests';
+import { createTestData } from './init-tests';
 
-test("BigUInt", () => {
+test('BigUInt', () => {
     expect(convertBigUInt(1, null)).toBeNull();
     expect(convertBigUInt(1, undefined)).toBeUndefined();
     expect(convertBigUInt(1, 0x1)).toEqual('01');
@@ -56,7 +56,7 @@ test("BigUInt", () => {
     expect(resolveBigUInt(2, '1010000000000000000')).toEqual('0x10000000000000000');
 });
 
-test("Negative BigUInt", () => {
+test('Negative BigUInt', () => {
     expect(convertBigUInt(1, -0x1)).toEqual('-fe');
     expect(convertBigUInt(1, -0x100)).toEqual('-deff');
     expect(convertBigUInt(1, -0x1000000000)).toEqual('-6efffffffff');
@@ -95,14 +95,14 @@ test("Negative BigUInt", () => {
     expect(resolveBigUInt(2, '-efeffffffffffffffff')).toEqual('-0x10000000000000000');
 });
 
-test("Filter test", () => {
+test('Filter test', () => {
     expect(Account.test(null, {
-        "id": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
-        "_key": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2",
-        "acc_type": 3,
+        'id': '01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2',
+        '_key': '01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2',
+        'acc_type': 3,
     }, {
-        "id": { "eq": "01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2" },
-        "acc_type": { eq: 3 },
+        'id': { 'eq': '01d7acd8d454d33c95199346683ef1938d994e6432f1b8a0b11b8eea2556f3b2' },
+        'acc_type': { eq: 3 },
     })).toBeTruthy();
 
     expect(Message.test(null, {
@@ -114,18 +114,21 @@ test("Filter test", () => {
         OR: {
             src: { eq: '2' },
             dst: { eq: '1' },
-        }
+        },
     })).toBeTruthy();
 
-    expect(Transaction.test(null, { in_msg: null, }, { in_msg: { ne: null }, })).toBeFalsy();
-    expect(Transaction.test(null, { in_msg: null, }, { in_msg: { eq: null }, })).toBeTruthy();
-    expect(Transaction.test(null, {}, { in_msg: { ne: null }, })).toBeFalsy();
-    expect(Transaction.test(null, {}, { in_msg: { eq: null }, })).toBeTruthy();
+    expect(Transaction.test(null, { in_msg: null }, { in_msg: { ne: null } })).toBeFalsy();
+    expect(Transaction.test(null, { in_msg: null }, { in_msg: { eq: null } })).toBeTruthy();
+    expect(Transaction.test(null, {}, { in_msg: { ne: null } })).toBeFalsy();
+    expect(Transaction.test(null, {}, { in_msg: { eq: null } })).toBeTruthy();
+
+    expect(Message.test(null, {}, { value: { ne: null } })).toBeFalsy();
+
+
 });
 
 
-
-test("Enum Names", () => {
+test('Enum Names', () => {
     const data = createTestData(new QLogs());
     const resolvers = createResolvers(data);
     const params = new QParams();
@@ -139,27 +142,27 @@ test("Enum Names", () => {
     expect(m2.msg_type_name).toEqual('ExtIn');
     expect(resolvers.Message.msg_type_name({ msg_type: 0 })).toEqual('Internal');
 
-    let ql = Message.filterCondition(params, 'doc', { msg_type_name: { eq: "ExtIn" } });
+    let ql = Message.filterCondition(params, 'doc', { msg_type_name: { eq: 'ExtIn' } });
     expect(ql).toEqual(`doc.msg_type == @v1`);
     expect(params.values.v1).toEqual(1);
 
     params.clear();
-    ql = Message.filterCondition(params, 'doc', { msg_type_name: { eq: "Internal" } });
+    ql = Message.filterCondition(params, 'doc', { msg_type_name: { eq: 'Internal' } });
     expect(ql).toEqual(`doc.msg_type == @v1`);
     expect(params.values.v1).toEqual(0);
 
-    expect(Message.test(null, m1, { msg_type_name: { eq: "ExtIn" } })).toBeTruthy();
-    expect(Message.test(null, { msg_type: 0 }, { msg_type_name: { eq: "Internal" } })).toBeTruthy();
+    expect(Message.test(null, m1, { msg_type_name: { eq: 'ExtIn' } })).toBeTruthy();
+    expect(Message.test(null, { msg_type: 0 }, { msg_type_name: { eq: 'Internal' } })).toBeTruthy();
 
     params.clear();
-    ql = Message.filterCondition(params, 'doc', { msg_type_name: { in: ["Internal"] } });
+    ql = Message.filterCondition(params, 'doc', { msg_type_name: { in: ['Internal'] } });
     expect(ql).toEqual(`doc.msg_type == @v1`);
     expect(params.values.v1).toEqual(0);
 
-    expect(Message.test(null, m1, { msg_type_name: { in: ["ExtIn"] } })).toBeTruthy();
+    expect(Message.test(null, m1, { msg_type_name: { in: ['ExtIn'] } })).toBeTruthy();
 });
 
-test("Select Fields", () => {
+test('Select Fields', () => {
     const selected = selectFields({
         _key: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
         _id: 'blocks/eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
@@ -172,11 +175,11 @@ test("Select Fields", () => {
         master: {
             shard_hashes: [{ shard: '1' }, { shard: '2' }],
             max_shard_gen_utime: 1585298974,
-        }
+        },
     }, [
         {
             name: 'seq_no',
-            selection: []
+            selection: [],
         },
         {
             name: 'master',
@@ -186,18 +189,18 @@ test("Select Fields", () => {
                     selection: [
                         {
                             name: 'shard',
-                            selection: []
-                        }
-                    ]
-                }
-            ]
-        }
+                            selection: [],
+                        },
+                    ],
+                },
+            ],
+        },
     ]);
     expect(selected).toEqual({
         _key: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
         id: 'eefae8631f57f44900e572999abe7ed76058ae2ce2d1ef850eecc7ce09250ab3',
         seq_no: 19468,
-        master: { shard_hashes: [{ shard: '1' }, { shard: '2' }] }
+        master: { shard_hashes: [{ shard: '1' }, { shard: '2' }] },
     })
 });
 

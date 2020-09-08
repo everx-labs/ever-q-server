@@ -523,7 +523,7 @@ function createBigUInt(prefixLength: number): QType {
                 const converted = (op === scalarOps.in || op === scalarOps.notIn)
                     ? filterValue.map(x => convertBigUInt(prefixLength, x))
                     : convertBigUInt(prefixLength, filterValue);
-                return op.test(parent, value, converted);
+                return op.test(parent, undefinedToNull(value), converted);
             });
         },
     };
