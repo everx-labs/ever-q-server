@@ -2,15 +2,16 @@
 	"name": "ton-q-server",
 	"version": "0.28.0",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
-	"main": "server/index.js",
+	"main": "index.js",
 	"repository": "git@github.com:tonlabs/ton-q-server.git",
 	"scripts": {
-		"babel": "babel server --out-dir dist/server --source-maps inline",
-		"gen": "node dist/server/schema/db-schema-generator.js",
+		"babel": "babel src --out-dir dist --source-maps inline",
+		"gen": "node dist/maintanance/gen-graphql/db-schema-generator.js",
+		"options-docs": "node dist/maintanance/doc-options/index.js",
 		"flow": "flow",
 		"test": "jest -i --forceExit --detectOpenHandles",
 		"start": "node dist/server/index.js",
-		"update indexes": "node dist/server/update-indexes.js",
+		"update indexes": "node dist/maintanance/arango-update/index.js",
 		"npm install": "npm install"
 	},
 	"keywords": [],
@@ -18,7 +19,7 @@
 	"license": "ISC",
 	"husky": {
 		"hooks": {
-			"pre-commit": "npm run babel && npm run gen && npm run babel && git add dist/server server/resolvers-generated.js type-defs-generated.graphql"
+			"pre-commit": "npm run babel && npm run gen && npm run babel && git add dist src/server/graphql/resolvers-generated.js res/type-defs-generated.graphql"
 		}
 	},
 	"dependencies": {

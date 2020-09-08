@@ -18,39 +18,44 @@ npm install
 
 You can configure Q Server with command line parameters and/or ENV variables:
 
-    Option                              ENV                          Default        Description
-    ----------------------------------  ---------------------------  -------------  -----------------------------------
-    -h, --host <host>                   Q_SERVER_HOST                getIp()        Listening address
-    -p, --port <port>                   Q_SERVER_PORT                4000           Listening port
+    Option                        ENV                   Default        Description
+    ----------------------------  --------------------  -------------  ---------------------------------------------------------
+    --host <value>                Q_HOST                192.168.1.137  Listening address
+    --port <value>                Q_PORT                4000           Listening port
+    --keep-alive <value>          Q_KEEP_ALIVE          60000          GraphQL keep alive ms
+    --requests-mode <value>       Q_REQUESTS_MODE       kafka          Requests mode (kafka | rest)
+    --requests-server <value>     Q_REQUESTS_SERVER     kafka:9092     Requests server url
+    --requests-topic <value>      Q_REQUESTS_TOPIC      requests       Requests topic name
+    --data-mut <value>            Q_DATA_MUT            arangodb       Data mutable db config url
+    --data-hot <value>            Q_DATA_HOT            arangodb       Data hot db config url
+    --data-cold <value>           Q_DATA_COLD                          Data cold db config urls (comma separated)
+    --data-cache <value>          Q_DATA_CACHE                         Data cache config url
+    --slow-queries-mut <value>    Q_SLOW_QUERIES_MUT    arangodb       Slow queries mutable db config url
+    --slow-queries-hot <value>    Q_SLOW_QUERIES_HOT    arangodb       Slow queries hot db config url
+    --slow-queries-cold <value>   Q_SLOW_QUERIES_COLD                  Slow queries cold db config urls (comma separated)
+    --slow-queries-cache <value>  Q_SLOW_QUERIES_CACHE                 Slow queries cache config url
+    --auth-endpoint <value>       Q_AUTH_ENDPOINT                      Auth endpoint
+    --mam-access-keys <value>     Q_MAM_ACCESS_KEYS                    Access keys used to authorize mam endpoint access
+    --jaeger-endpoint <value>     Q_JAEGER_ENDPOINT                    Jaeger endpoint
+    --trace-service <value>       Q_TRACE_SERVICE       Q Server       Trace service name
+    --trace-tags <value>          Q_TRACE_TAGS                         Additional trace tags (comma separated name=value pairs)
+    --statsd-server <value>       Q_STATSD_SERVER                      StatsD server (host:port)
+    --statsd-tags <value>         Q_STATSD_TAGS                        Additional StatsD tags (comma separated name=value pairs)
 
-    -m, --requests-mode <mode>          Q_REQUESTS_MODE              kafka          Requests mode (kafka | rest)
-    -r, --requests-server <url>         Q_REQUESTS_SERVER            kafka:9092     Requests server url
-    -t, --requests-topic <name>         Q_REQUESTS_TOPIC             requests       Requests topic name
+Db config must be specified in form of URL:
 
-    -d, --db-server <address>           Q_DATABASE_SERVER            arangodb:8529  Database server:port
-    -n, --db-name <name>                Q_DATABASE_NAME              blockchain     Database name
-    -a, --db-auth <name>                Q_DATABASE_AUTH                             Database auth in form user:password
-        --db-max-sockets <number>       Q_DATABASE_MAX_SOCKETS       100            Database auth in form user:password
+    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=60000]]`
 
-        --slow-db-server <address>      Q_SLOW_DATABASE_SERVER       arangodb:8529  Slow database server:port
-        --slow-db-name <name>           Q_SLOW_DATABASE_NAME         blockchain     Slow database name
-        --slow-db-auth <name>           Q_SLOW_DATABASE_AUTH                        Slow database auth in form user:password
-        --slow-db-max-sockets <number>  Q_SLOW_DATABASE_MAX_SOCKETS  3              Slow database auth in form user:password
-
-    -j, --jaeger-endpoint <url>         Q_JAEGER_ENDPOINT                           Jaeger collector url
-        --trace-service <name>          Q_TRACE_SERVICE              Q Server       Service name assigned to spans
-        --trace-tags <tags>             Q_TRACE_TAGS                                Additional comma separated tags (name=value)
-
-        --auth-endpoint <url>           Q_AUTH_ENDPOINT                             Auth server API url
-        --mam-access-keys <keys>        Q_MAM_ACCESS_KEYS                           Access keys used to authorize mam endpoint access
-
-    -s, --statsd-server <url>           Q_STATSD_SERVER                             StatsD server url
-        --statsd-tags <tags>            Q_STATSD_TAGS                               StatsD additional comma separated tags (name=value)
-
-        --keep-alive <ms>               Q_KEEP_ALIVE                 60000          Interval in ms of keep-alive messages 
-                                                                                    for active subscriptions.
-                                                                                    Value 0 disable keep-alive.
-
+Default values:
+- protocol is `https://`;
+- auth is empty (it is means no auth);
+- port is `8529`;
+- path is empty;
+- name is `blockchain`;
+- maxSockets is `100` for fast queries and `3` for slow queries.
+- listenerRestartTimeout is `60000` for fast queries and `3` for slow queries.
+    
+    
 # Run
 
 ```bash
@@ -93,6 +98,12 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
 
 Q-Server can report additional tags with help of optional parameter `Q_STATSD_TAGS`. 
  
+# Adding Indexes
+
+If you need to add or change or remove index in Arango Db you must change following files:
+- https://github.com/tonlabs/ton-q-server/blob/d491c7c0e6e11cb70d5f7f0813eef719ea6b997d/src/server/data/data-provider.js#L65
+- https://github.com/tonlabs/TON-infrastructure/blob/ef4d409d9508ca5e1d815c5f21ec11f16c4b8f39/pipelines/arango/arango/initdb.d/upgrade-arango-db.js#L7
+
 # For Developers
 
 IMPORTANT!!!
