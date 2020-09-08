@@ -25,7 +25,7 @@ const program = require('commander');
 
 Object.values(programOptions).forEach((value) => {
     const option = ((value: any): ProgramOption);
-    program.option(option.option, option.description, option.def);
+    program.option(option.option, option.description);
 });
 
 

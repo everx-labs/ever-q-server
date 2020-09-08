@@ -98,7 +98,7 @@ const opt = (option: string, def: string, description: string) => {
         option: `--${option} <value>`,
         env,
         def,
-        description,
+        description: `${description}${def && ` (default: "${def}")`}`,
     }
 };
 
