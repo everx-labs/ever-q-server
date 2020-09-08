@@ -122,14 +122,13 @@ pipeline {
 					steps {
 						script {
 							withCredentials ([
-								string(credentialsId: 'cinet_arango_address', variable: 'Q_DATABASE_SERVER'),
-								string(credentialsId: 'cinet_arango_auth', variable: 'Q_DATABASE_AUTH')
+								string(credentialsId: 'cinet_arango_uri', variable: 'Q_DATABASE_URI'),
 							]) {
 								builtImage.inside ("""
 									--entrypoint=''
 									-u root
-									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
-									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
+									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
+									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
 								""") {
 								    sshagent (credentials: [G_gitcred]) {
                                         sh (
@@ -187,7 +186,7 @@ pipeline {
 								]
 							]
 
-							build job: "Infrastructure/startup-edition-node/master", parameters: params
+							build job: "Infrastructure/startup-edition-node/CI%2Fnode%2Fdb-request-broker", parameters: params
 						}
 					}
 					post {
