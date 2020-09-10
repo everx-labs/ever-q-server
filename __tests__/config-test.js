@@ -1,16 +1,44 @@
-import { QTracer } from '../server/tracer';
+// @flow
+import { parseArangoConfig } from '../src/server/config';
+import { QTracer } from '../src/server/tracer';
+test("Arango Config", () => {
+    expect(parseArangoConfig('arango', 3)).toMatchObject({
+        server: 'https://arango',
+        auth: '',
+        name: 'blockchain',
+        maxSockets: 3,
+    })
+    expect(parseArangoConfig('arango:8529', 3)).toMatchObject({
+        server: 'https://arango:8529',
+        auth: '',
+        name: 'blockchain',
+        maxSockets: 3,
+    })
+    expect(parseArangoConfig('http://arango:8529', 3)).toMatchObject({
+        server: 'http://arango:8529',
+        auth: '',
+        name: 'blockchain',
+        maxSockets: 3,
+    })
+    expect(parseArangoConfig('http://u:p@arango:8529?name=bc&maxSockets=6', 3)).toMatchObject({
+        server: 'http://arango:8529',
+        auth: 'u:p',
+        name: 'bc',
+        maxSockets: 6,
+    })
+});
 
 test("Jaeger Config", () => {
     expect(QTracer.getJaegerConfig({
         endpoint: '',
         service: '',
-        tags: [],
+        tags: {},
     })).toBeNull();
 
     expect(QTracer.getJaegerConfig({
         endpoint: 'http://collector:1234',
         service: 'service',
-        tags: [],
+        tags: {},
     })).toEqual({
         serviceName: 'service',
         sampler: {
@@ -26,7 +54,7 @@ test("Jaeger Config", () => {
     expect(QTracer.getJaegerConfig({
         endpoint: 'jaeger-agent:8631',
         service: 'service',
-        tags: [],
+        tags: {},
     })).toEqual({
         serviceName: 'service',
         sampler: {

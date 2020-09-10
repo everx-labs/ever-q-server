@@ -1,15 +1,24 @@
+// @flow
+import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
 import { createTestClient, testServerRequired } from './init-tests';
 
 const sleep = async (ms) => new Promise(x => setTimeout(x, ms));
 
 class TestQuery {
+    abortController: AbortController;
+    client: ApolloClient;
+
     constructor(options) {
         this.abortController = new AbortController();
         this.client = createTestClient(options);
     }
 
     sendQuery() {
+        // Wait for non existing transaction.
+        // We are using here Date.now as a nonexisting transaction id
+        // to prevent apollo optimization on joining same requests.
+        //
         this.client.query({
             query: gql`
                 query {
@@ -41,7 +50,7 @@ class TestQuery {
 
 test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (useWebSockets) => {
     const server = await testServerRequired();
-    const collection = server.db.transactions;
+    const collection = server.data.transactions;
     const q1 = new TestQuery({ useWebSockets });
     const q2 = new TestQuery({ useWebSockets });
     q1.sendQuery();

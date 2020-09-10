@@ -75,7 +75,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, server/**, node_modules/**, __tests__/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, src/**, res/**, node_modules/**, __tests__/**', name: 'wholedir'
 							}
 					}
 				}
@@ -122,14 +122,13 @@ pipeline {
 					steps {
 						script {
 							withCredentials ([
-								string(credentialsId: 'cinet_arango_address', variable: 'Q_DATABASE_SERVER'),
-								string(credentialsId: 'cinet_arango_auth', variable: 'Q_DATABASE_AUTH')
+								string(credentialsId: 'cinet_arango_uri', variable: 'Q_DATABASE_URI'),
 							]) {
 								builtImage.inside ("""
 									--entrypoint=''
 									-u root
-									-e 'Q_DATABASE_SERVER=${Q_DATABASE_SERVER}'
-									-e 'Q_DATABASE_AUTH=${Q_DATABASE_AUTH}'
+									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
+									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
 								""") {
 								    sshagent (credentials: [G_gitcred]) {
                                         sh (
@@ -208,7 +207,8 @@ pipeline {
 
 							docker.withRegistry('', "${G_dockerCred}") {
 								builtImage.push(RELEASE_VERSION)
-								builtImage.push("${G_promoted_tag}")
+                                /* Don't update latest tag because of braking changes
+								builtImage.push("${G_promoted_tag}") */
 							}
 						}
 					}
