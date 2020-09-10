@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 ### Fix
 - False execution of subscriptions that had `some_big_int_field: { ne: null }` in filter.
  
+## 0.27.9 – Aug 21, 2020
+
+### Fix
+- `acc_type` field in Account expanded with `NonExist` status
+
 ## 0.27.8 – Aug 12, 2020
 
 ### New
