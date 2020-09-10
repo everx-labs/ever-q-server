@@ -186,7 +186,7 @@ pipeline {
 								]
 							]
 
-							build job: "Infrastructure/startup-edition-node/CI%2Fnode%2Fdb-request-broker", parameters: params
+							build job: "Infrastructure/startup-edition-node/master", parameters: params
 						}
 					}
 					post {
@@ -207,7 +207,8 @@ pipeline {
 
 							docker.withRegistry('', "${G_dockerCred}") {
 								builtImage.push(RELEASE_VERSION)
-								builtImage.push("${G_promoted_tag}")
+                                /* Don't update latest tag because of braking changes
+								builtImage.push("${G_promoted_tag}") */
 							}
 						}
 					}

@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ### New
 - Request broker that supports new gate-node arch (hot-dbs, cold-cache, cold-dbs).
+
+### Fix
+- False execution of subscriptions that had `some_big_int_field: { ne: null }` in filter.
  
 ## 0.27.8 – Aug 12, 2020
 
