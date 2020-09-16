@@ -441,6 +441,9 @@ export class QDataCollection {
                     (Date.now() - start) / 1000,
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
+                if (result.length > q.limit) {
+                    result.splice(q.limit);
+                }
                 return result;
             } catch (error) {
                 this.statQueryFailed.increment();

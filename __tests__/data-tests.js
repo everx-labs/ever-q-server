@@ -3,7 +3,21 @@ import gql from 'graphql-tag';
 import { QDataCombiner, QDataPrecachedCombiner } from '../src/server/data/data-provider';
 import QLogs from '../src/server/logs';
 import TONQServer from '../src/server/server';
-import { createTestClient, MockCache, testConfig, mock, createTestData } from './init-tests';
+import { createTestClient, MockCache, testConfig, mock, createTestData, createLocalArangoTestData } from './init-tests';
+
+test('Data without id', async () => {
+    const server = new TONQServer({
+        config: testConfig,
+        logs: new QLogs(),
+        data: createLocalArangoTestData(new QLogs()),
+    });
+    await server.start();
+    const client = createTestClient({ useWebSockets: true });
+    let messages = (await client.query({
+        query: gql`query { messages(filter: { value: {ne: null, lt: "1000000000000000000"}} limit: 1){value created_at created_lt} }`,
+    })).data.messages;
+    expect(messages.length).toEqual(1);
+});
 
 test('Data Broker', async () => {
     const mut = mock([
@@ -67,5 +81,11 @@ test('Data Broker', async () => {
     expect(cache.getCount).toEqual(2);
     expect(cache.setCount).toEqual(1);
 
+    transactions = (await client.query({
+        query: gql`query { transactions(orderBy:{path:"id"} limit: 1) { id lt } }`,
+    })).data.transactions;
+    expect(transactions.length).toEqual(1);
+
     server.stop();
 });
+
