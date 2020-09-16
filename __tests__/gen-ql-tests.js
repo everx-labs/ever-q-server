@@ -4,7 +4,7 @@ import {grantedAccess} from '../src/server/auth';
 import {QParams} from "../src/server/filter/filters";
 import {Account, BlockSignatures, Message, Transaction} from "../src/server/graphql/resolvers-generated";
 import QLogs from '../src/server/logs';
-import {createTestData, testServerQuery} from './init-tests';
+import {createLocalArangoTestData, testServerQuery} from './init-tests';
 import {gql} from 'apollo-server';
 
 test('remove nulls', async () => {
@@ -58,7 +58,7 @@ function normalized(s) {
 }
 
 test("reduced RETURN", () => {
-    const data = createTestData(new QLogs());
+    const data = createLocalArangoTestData(new QLogs());
     const queryText = (collection, result) => normalized(
         collection.createDatabaseQuery(
             { filter: {} },

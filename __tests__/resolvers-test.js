@@ -7,7 +7,7 @@ import {
     createResolvers,
 } from '../src/server/graphql/resolvers-generated';
 import QLogs from '../src/server/logs';
-import { createTestData } from './init-tests';
+import { createLocalArangoTestData } from './init-tests';
 
 test('BigUInt', () => {
     expect(convertBigUInt(1, null)).toBeNull();
@@ -129,7 +129,7 @@ test('Filter test', () => {
 
 
 test('Enum Names', () => {
-    const data = createTestData(new QLogs());
+    const data = createLocalArangoTestData(new QLogs());
     const resolvers = createResolvers(data);
     const params = new QParams();
     const m1 = {

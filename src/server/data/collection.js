@@ -657,7 +657,7 @@ export class QDataCollection {
                     (Date.now() - start) / 1000,
                     isFast ? 'FAST' : 'SLOW', context.remoteAddress,
                 );
-                return AggregationHelperFactory.convertResults(result[0], q.helpers);
+                return AggregationHelperFactory.convertResults(result, q.helpers);
             } finally {
                 this.statQueryTime.report(Date.now() - start);
                 this.statQueryActive.decrement();

@@ -1,7 +1,9 @@
 // @flow
 
-import type { ScalarField } from "../filter/filters";
-import { scalarFields } from "../graphql/resolvers-generated";
+import type { ScalarField } from '../filter/filters';
+import { scalarFields } from '../graphql/resolvers-generated';
+
+declare function BigInt(value: any): any;
 
 export const AggregationFn = {
     COUNT: 'COUNT',
@@ -76,7 +78,7 @@ function simple(context: AggregationContext): AggregationQueryParts {
     const fn = context.fn;
     return queryParts(context, context.isArray
         ? `${fn}(${fn}(${context.field.path}))`
-        : `${fn}(${context.field.path})`
+        : `${fn}(${context.field.path})`,
     );
 }
 
@@ -119,13 +121,53 @@ function bigIntAvg(context: AggregationContext): AggregationQueryParts {
     );
 }
 
-// Result converters
+// Converters
 
-function convertNone(context: AggregationContext, value: any): any {
-    return value;
+function reduce(context: AggregationContext, values: any[], fn: AggregationFnType): any {
+    let reduced = values[0];
+    for (let i = 1; i < values.length; i += 1) {
+        const value = values[i];
+        if (fn === 'MIN') {
+            if (value < reduced) {
+                reduced = value;
+            }
+        } else if (fn === 'MAX') {
+            if (value > reduced) {
+                reduced = value;
+            }
+        } else {
+            reduced += value;
+        }
+    }
+    if (fn === 'AVERAGE') {
+        if (context.bigIntPrefix > 0) {
+            reduced = reduced / BigInt(values.length);
+        } else {
+            reduced = Math.trunc(reduced / values.length);
+        }
+    }
+    return reduced;
 }
 
-function bigIntString(context: AggregationContext, value: any): any {
+function reducer(
+    convert: (context: AggregationContext, value: any) => any,
+    convertBack: (context: AggregationContext, value: any) => any,
+    fn: AggregationFnType,
+): (context: AggregationContext, values: any[]) => any {
+    return (context: AggregationContext, values: any[]) => {
+        if (values.length === 0) {
+            return undefined;
+        }
+        let reduced = reduce(context, values.map(x => convert(context, x)), fn);
+        return convertBack(context, reduced);
+    }
+}
+
+function noConversion(context: AggregationContext, x) {
+    return x;
+}
+
+function bigIntStringToDecimalString(context: AggregationContext, value: any): any {
     if (typeof value === 'number') {
         return value.toString();
     }
@@ -134,21 +176,20 @@ function bigIntString(context: AggregationContext, value: any): any {
 }
 
 //$FlowFixMe
-function bigIntFromParts(parts: { a: number, b: number }): BigInt {
+function bigIntPartsToBigInt(context: AggregationContext, parts: { a: number, b: number }): BigInt {
     const h = BigInt(`0x${Math.round(parts.a).toString(16)}00000000`);
     const l = BigInt(Math.round(parts.b));
     return h + l;
 }
 
-function bigIntParts(context: AggregationContext, value: any): any {
-    return bigIntFromParts(value).toString();
+function toString(context: AggregationContext, value: any): any {
+    return value.toString();
 }
 
-function bigIntPartsAvg(context: AggregationContext, value: any): any {
-    const sum = bigIntFromParts(value);
+function bigIntPartsToBigIntAvg(context: AggregationContext, value: any): any {
+    const sum = bigIntPartsToBigInt(context, value);
     const count = Number(value.c || 0);
-    const avg = count > 0 ? (sum / BigInt(Math.round(count))) : sum;
-    return avg.toString();
+    return count > 0 ? (sum / BigInt(Math.round(count))) : sum;
 }
 
 export class AggregationHelperFactory {
@@ -163,11 +204,12 @@ export class AggregationHelperFactory {
             isArray: field.path.includes('[*]'),
         };
 
+        // Case of count
         if (context.fn === AggregationFn.COUNT) {
             return {
                 context,
                 buildQuery: count,
-                convertResult: convertNone,
+                convertResult: (context, values) => reduce(context, values, 'SUM'),
             };
         }
 
@@ -175,34 +217,29 @@ export class AggregationHelperFactory {
             throw new Error(`[${aggregation.field}] can't be aggregated`);
         }
 
-        if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+        // Case of number fields or min/max fn
+        if (field.type === 'number' || fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
             return {
                 context,
                 buildQuery: simple,
                 convertResult: context.bigIntPrefix > 0
-                    ? bigIntString
-                    : convertNone,
-            };
-        }
-
-        if (field.type === 'number') {
-            return {
-                context,
-                buildQuery: simple,
-                convertResult: convertNone,
+                    // big integers
+                    ? reducer(noConversion, bigIntStringToDecimalString, fn)
+                    // numbers and strings
+                    : reducer(noConversion, noConversion, fn),
             };
         }
 
         if (context.bigIntPrefix > 0) {
             return (context.fn === AggregationFn.AVERAGE)
-                ? {
+                ? { // big integer average
                     context,
                     buildQuery: bigIntAvg,
-                    convertResult: bigIntPartsAvg,
-                } : {
+                    convertResult: reducer(bigIntPartsToBigIntAvg, toString, fn),
+                } : { // big integer sum
                     context,
                     buildQuery: bigIntSum,
-                    convertResult: bigIntParts,
+                    convertResult: reducer(bigIntPartsToBigInt, toString, fn),
                 }
 
         }
@@ -249,13 +286,10 @@ export class AggregationHelperFactory {
         };
     }
 
-    static convertResults(results: any[], helpers: AggregationHelper[]): any[] {
-        return results.map((x, i) => {
-            if (x === undefined || x === null) {
-                return x;
-            }
-            const helper = helpers[i];
-            return helper.convertResult(helper.context, x);
+    static convertResults(results: any[][], helpers: AggregationHelper[]): any[] {
+        return helpers.map((helper, i) => {
+            const values = results.map(x => x[i]).filter(x => x !== undefined);
+            return helper.convertResult(helper.context, values);
         });
 
     }
