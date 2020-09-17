@@ -17,6 +17,7 @@ test('Data without id', async () => {
         query: gql`query { messages(filter: { value: {ne: null, lt: "1000000000000000000"}} limit: 1){value created_at created_lt} }`,
     })).data.messages;
     expect(messages.length).toEqual(1);
+    server.stop();
 });
 
 test('Data Broker', async () => {

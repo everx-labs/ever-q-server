@@ -20,15 +20,6 @@ import { Auth } from '../src/server/auth';
 
 jest.setTimeout(100000);
 
-const localArango = 'http://localhost:8901';
-const localDefs = {
-    dataMut: localArango,
-    dataHot: localArango,
-    dataCold: localArango,
-    slowQueriesMut: localArango,
-    slowQueriesHot: localArango,
-};
-
 export const testConfig = createConfig(
     {},
     process.env,
@@ -136,16 +127,21 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
 }
 
-const dataConfig = {
-    dataMut: localArango,
-    dataHot: localArango,
-    dataCold: localArango,
-    slowQueriesMut: localArango,
-    slowQueriesHot: localArango,
-};
-
 export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
-    const { data, slowQueriesData } = parseDataConfig(dataConfig);
+    const dataMut = process.env.Q_DATA_MUT || 'http://localhost:8901';
+    const dataHot = process.env.Q_DATA_HOT || dataMut;
+    const dataCold = process.env.Q_DATA_COLD || dataHot;
+    const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT || dataMut;
+    const slowQueriesHot = process.env.Q_SLOW_QUERIES_HOT || slowQueriesMut;
+    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD || slowQueriesHot;
+    const { data, slowQueriesData } = parseDataConfig({
+        dataMut,
+        dataHot,
+        dataCold,
+        slowQueriesMut,
+        slowQueriesHot,
+        slowQueriesCold,
+    });
     return new QBlockchainData({
         providers: createProviders('fast', logs, data),
         slowQueriesProviders: createProviders('slow', logs, slowQueriesData),
