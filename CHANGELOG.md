@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.1 – Sep 15, 2020
+
+### Fix
+- Aggregation functions worked wrong on partitioned data.
+ 
 ## 0.28.0 – Aug 15, 2020
 
 ### New

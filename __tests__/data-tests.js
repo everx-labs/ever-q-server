@@ -1,83 +1,24 @@
 // @flow
 import gql from 'graphql-tag';
-import { Auth } from '../src/server/auth';
-import QBlockchainData, { INDEXES } from '../src/server/data/blockchain';
-import type { QDataProviders } from '../src/server/data/data';
 import { QDataCombiner, QDataPrecachedCombiner } from '../src/server/data/data-provider';
-import type { QDataCache, QDataEvent, QDataProvider, QIndexInfo } from '../src/server/data/data-provider';
 import QLogs from '../src/server/logs';
 import TONQServer from '../src/server/server';
-import { QStats, QTracer } from '../src/server/tracer';
-import { createTestClient, testConfig } from './init-tests';
+import { createTestClient, MockCache, testConfig, mock, createTestData, createLocalArangoTestData } from './init-tests';
 
-class MockProvider implements QDataProvider {
-    data: any;
-    queryCount: number;
-
-    constructor(data: any) {
-        this.data = data;
-        this.queryCount = 0;
-    }
-
-    start(): void {
-    }
-
-    getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
-        return Promise.resolve(INDEXES[collection].indexes);
-    }
-
-    query(text: string, vars: { [string]: any }): Promise<any> {
-        this.queryCount += 1;
-        return this.data;
-    }
-
-    subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any {
-
-    }
-
-    unsubscribe(subscription: any): void {
-
-    }
-}
-
-class MockCache implements QDataCache {
-    data: Map<string, any>;
-    getCount: number;
-    setCount: number;
-
-    constructor() {
-        this.data = new Map();
-        this.getCount = 0;
-        this.setCount = 0;
-    }
-
-    get(key: string): Promise<any> {
-        this.getCount += 1;
-        return Promise.resolve(this.data.get(key));
-    }
-
-    set(key: string, value: any): Promise<void> {
-        this.setCount += 1;
-        this.data.set(key, value);
-        return Promise.resolve();
-    }
-}
-
-function mock(data): MockProvider {
-    return new MockProvider(data);
-}
-
-function createTestData(providers: QDataProviders): QBlockchainData {
-    return new QBlockchainData({
-        providers,
-        slowQueriesProviders: providers,
+test('Data without id', async () => {
+    const server = new TONQServer({
+        config: testConfig,
         logs: new QLogs(),
-        auth: new Auth(testConfig),
-        tracer: QTracer.create(testConfig),
-        stats: QStats.create('', []),
-        isTests: true,
+        data: createLocalArangoTestData(new QLogs()),
     });
-}
+    await server.start();
+    const client = createTestClient({ useWebSockets: true });
+    let messages = (await client.query({
+        query: gql`query { messages(filter: { value: {ne: null, lt: "1000000000000000000"}} limit: 1){value created_at created_lt} }`,
+    })).data.messages;
+    expect(messages.length).toEqual(1);
+    server.stop();
+});
 
 test('Data Broker', async () => {
     const mut = mock([
@@ -141,5 +82,11 @@ test('Data Broker', async () => {
     expect(cache.getCount).toEqual(2);
     expect(cache.setCount).toEqual(1);
 
+    transactions = (await client.query({
+        query: gql`query { transactions(orderBy:{path:"id"} limit: 1) { id lt } }`,
+    })).data.transactions;
+    expect(transactions.length).toEqual(1);
+
     server.stop();
 });
+

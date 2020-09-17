@@ -9,22 +9,16 @@ import { ApolloClient } from 'apollo-client';
 
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
-import QBlockchainData from '../src/server/data/blockchain';
+import QBlockchainData, { INDEXES } from '../src/server/data/blockchain';
 import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
+import type { QDataProviders } from '../src/server/data/data';
+import type { QDataCache, QDataEvent, QDataProvider, QIndexInfo } from '../src/server/data/data-provider';
 import QLogs from '../src/server/logs';
 import TONQServer, { createProviders } from '../src/server/server';
 import { QStats, QTracer } from '../src/server/tracer';
 import { Auth } from '../src/server/auth';
 
 jest.setTimeout(100000);
-
-const localArango = 'http://localhost:8901';
-const localDefs = {
-    dataMut: localArango,
-    dataHot: localArango,
-    slowQueriesMut: localArango,
-    slowQueriesHot: localArango,
-};
 
 export const testConfig = createConfig(
     {},
@@ -133,15 +127,21 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
 }
 
-const dataConfig = {
-    dataMut: localArango,
-    dataHot: localArango,
-    slowQueriesMut: localArango,
-    slowQueriesHot: localArango,
-};
-
-export function createTestData(logs: QLogs): QBlockchainData {
-    const { data, slowQueriesData } = parseDataConfig(dataConfig);
+export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
+    const dataMut = process.env.Q_DATA_MUT || 'http://localhost:8901';
+    const dataHot = process.env.Q_DATA_HOT || dataMut;
+    const dataCold = process.env.Q_DATA_COLD || dataHot;
+    const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT || dataMut;
+    const slowQueriesHot = process.env.Q_SLOW_QUERIES_HOT || slowQueriesMut;
+    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD || slowQueriesHot;
+    const { data, slowQueriesData } = parseDataConfig({
+        dataMut,
+        dataHot,
+        dataCold,
+        slowQueriesMut,
+        slowQueriesHot,
+        slowQueriesCold,
+    });
     return new QBlockchainData({
         providers: createProviders('fast', logs, data),
         slowQueriesProviders: createProviders('slow', logs, slowQueriesData),
@@ -152,6 +152,76 @@ export function createTestData(logs: QLogs): QBlockchainData {
         isTests: true,
     });
 }
+
+export class MockProvider implements QDataProvider {
+    data: any;
+    queryCount: number;
+
+    constructor(data: any) {
+        this.data = data;
+        this.queryCount = 0;
+    }
+
+    start(): void {
+    }
+
+    getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
+        return Promise.resolve(INDEXES[collection].indexes);
+    }
+
+    query(text: string, vars: { [string]: any }): Promise<any> {
+        this.queryCount += 1;
+        return this.data;
+    }
+
+    subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any {
+
+    }
+
+    unsubscribe(subscription: any): void {
+
+    }
+}
+
+export class MockCache implements QDataCache {
+    data: Map<string, any>;
+    getCount: number;
+    setCount: number;
+
+    constructor() {
+        this.data = new Map();
+        this.getCount = 0;
+        this.setCount = 0;
+    }
+
+    get(key: string): Promise<any> {
+        this.getCount += 1;
+        return Promise.resolve(this.data.get(key));
+    }
+
+    set(key: string, value: any): Promise<void> {
+        this.setCount += 1;
+        this.data.set(key, value);
+        return Promise.resolve();
+    }
+}
+
+export function mock(data: any): MockProvider {
+    return new MockProvider(data);
+}
+
+export function createTestData(providers: QDataProviders): QBlockchainData {
+    return new QBlockchainData({
+        providers,
+        slowQueriesProviders: providers,
+        logs: new QLogs(),
+        auth: new Auth(testConfig),
+        tracer: QTracer.create(testConfig),
+        stats: QStats.create('', []),
+        isTests: true,
+    });
+}
+
 
 test('Init', () => {
 });
