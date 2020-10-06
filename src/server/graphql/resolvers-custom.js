@@ -177,9 +177,10 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
             ? Buffer.from(JSON.stringify(traceInfo), 'utf8')
             : Buffer.from([]);
         const key = Buffer.concat([keyBuffer, traceBuffer]);
+        const value = Buffer.from(request.body, 'base64');
         return {
             key,
-            value: Buffer.from(request.body, 'base64'),
+            value,
         };
     });
     await producer.send({
@@ -193,6 +194,13 @@ async function checkPostRestrictions(
     requests: Request[],
     accessRights: AccessRights,
 ) {
+    requests.forEach((request) => {
+        const size = Math.ceil(request.body.length * 3 / 4);
+        if (size > 60000) {
+            throw new Error(`Message size ${size} is too large`);
+        }
+    });
+
     if (accessRights.restrictToAccounts.length === 0) {
         return;
     }
