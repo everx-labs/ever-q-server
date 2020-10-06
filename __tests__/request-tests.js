@@ -79,3 +79,24 @@ test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (use
     });
     client.close();
 });
+
+test('Large requests', async () => {
+    const server = await testServerRequired();
+    const client = createTestClient({});
+    const large = Buffer.alloc(65000, 0);
+    try {
+        await client.mutate({
+            mutation: gql`
+                mutation {
+                    postRequests(requests: [{
+                        id: "1",
+                        body: "${large.toString('base64')}",
+                    }])
+                }
+            `,
+        });
+    } catch (error) {
+        expect(error.message.includes('is too large')).toBeTruthy();
+    }
+    client.close();
+});

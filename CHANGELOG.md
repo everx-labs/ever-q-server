@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.2 – Oct 6, 2020
+
+### New
+- Size limit for external messages (60000).
+ 
 ## 0.28.1 – Sep 15, 2020
 
 ### Fix
