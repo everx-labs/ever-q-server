@@ -55,7 +55,7 @@ export class RequestController {
 
     constructor() {
         this.events = new EventEmitter();
-        this.events.setMaxListeners(6);
+        this.events.setMaxListeners(0);
     }
 
     emitClose() {
