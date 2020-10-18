@@ -124,7 +124,6 @@ test('Many concurrent requests over web socket', async () => {
     process.stderr.write = originalStdoutWrite;
     expect(output.includes('MaxListenersExceededWarning')).toBeFalsy();
     client.close();
-    server.stop();
 });
 
 test('Large requests', async () => {
