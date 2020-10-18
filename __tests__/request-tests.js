@@ -80,6 +80,53 @@ test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (use
     client.close();
 });
 
+test('Many concurrent requests over web socket', async () => {
+    const server = await testServerRequired();
+    const client = createTestClient({ useWebSockets: true });
+    let output = '';
+
+    const originalStdoutWrite = process.stderr.write.bind(process.stderr);
+
+    process.stderr.write = (chunk, encoding, callback) => {
+        if (typeof chunk === 'string') {
+            output += chunk;
+        }
+
+        return originalStdoutWrite(chunk, encoding, callback);
+    };
+    await client.query({
+        query: gql`
+            query {
+                transactions(limit:1){
+                    in_message{
+                        dst_transaction{
+                            in_message{
+                                dst_transaction{
+                                    in_message{
+                                        dst_transaction{
+                                            in_message{
+                                                dst_transaction{
+                                                    id
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        `,
+    });
+
+    process.stderr.write = originalStdoutWrite;
+    expect(output.includes('MaxListenersExceededWarning')).toBeFalsy();
+    client.close();
+    server.stop();
+});
+
 test('Large requests', async () => {
     const server = await testServerRequired();
     const client = createTestClient({});

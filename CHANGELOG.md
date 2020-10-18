@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.3 – Oct 18, 2020
+
+### Fix
+- MaxListenersExceededWarning in case when more than 6 joined objects in result.
+ 
 ## 0.28.2 – Oct 6, 2020
 
 ### New
