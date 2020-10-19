@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.28.3",
+	"version": "0.28.4",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "index.js",
 	"repository": "git@github.com:tonlabs/ton-q-server.git",
@@ -41,6 +41,7 @@
 		"iterall": "1.3.0",
 		"jaeger-client": "3.18.0",
 		"kafkajs": "1.12.0",
+		"memjs": "1.2.2",
 		"node-fetch": "2.6.0",
 		"opentracing": "0.14.4",
 		"subscriptions-transport-ws": "0.9.17",

@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.4 – Oct 19, 2020
+
+### New
+- MemcachedClient: by using memjs library
+ 
 ## 0.28.3 – Oct 18, 2020
 
 ### Fix
