@@ -31,7 +31,7 @@ import { RequestController, RequestEvent } from './data/collection';
 import type { GraphQLRequestContext } from './data/collection';
 import { STATS } from './config';
 import { missingDataCache, QDataCombiner, QDataPrecachedCombiner } from './data/data-provider';
-import { MemjsDataCache } from './data/memjs-datacache';
+import { isCacheEnabled, MemjsDataCache } from './data/memjs-datacache';
 
 import { createResolvers } from './graphql/resolvers-generated';
 import { attachCustomResolvers } from './graphql/resolvers-custom';
@@ -110,7 +110,7 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
     const mutable = newArangoProvider('mut', config.mut);
     const hot = newArangoProvider('hot', config.hot);
     const cold = new QDataPrecachedCombiner(
-        config.cache ? new MemjsDataCache(logs.create(`${configName}_cache`), config.cache) : missingDataCache,
+        isCacheEnabled(config.cache) ? new MemjsDataCache(logs.create(`${configName}_cache`), config.cache) : missingDataCache,
         config.cold.map(x => newArangoProvider('cold', x)),
     );
     const immutable = new QDataCombiner([hot, cold]);

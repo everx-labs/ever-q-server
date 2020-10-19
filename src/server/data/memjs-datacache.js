@@ -58,3 +58,7 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 }
+
+export function isCacheEnabled(config: QMemCachedConfig) {
+    return config.server !== '';
+}
