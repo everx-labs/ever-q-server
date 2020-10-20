@@ -79,7 +79,7 @@ export class ArangoProvider implements QDataProvider {
         this.checkStartListener();
         return {
             collection,
-            listener
+            listener,
         };
     }
 

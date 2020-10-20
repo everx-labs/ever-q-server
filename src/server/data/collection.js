@@ -255,7 +255,17 @@ export class QDataCollection {
                     parseSelectionSet(info.operation.selectionSet, this.name),
                 );
                 const eventListener = (doc) => {
-                    subscription.pushDocument(doc);
+                    try {
+                        subscription.pushDocument(doc);
+                    } catch (error) {
+                        this.log.error(
+                            Date.now(),
+                            this.name,
+                            'SUBSCRIPTION\tFAILED',
+                            JSON.stringify(args.filter),
+                            error.toString(),
+                        );
+                    }
                 };
                 this.docInsertOrUpdate.on('doc', eventListener);
                 this.subscriptionCount += 1;
@@ -530,8 +540,18 @@ export class QDataCollection {
                         if (authFilter && !authFilter(doc)) {
                             return;
                         }
-                        if (this.docType.test(null, doc, q.filter)) {
-                            resolveBy('listener', resolve, [doc]);
+                        try {
+                            if (this.docType.test(null, doc, q.filter)) {
+                                resolveBy('listener', resolve, [doc]);
+                            }
+                        } catch (error) {
+                            this.log.error(
+                                Date.now(),
+                                this.name,
+                                'QUERY\tFAILED',
+                                JSON.stringify(q.filter),
+                                error.toString(),
+                            );
                         }
                     };
                     this.waitForCount += 1;
@@ -737,7 +757,8 @@ export class QDataCollection {
             return docs[0];
         }
 
-        const docs = await this.queryWaitFor({
+        const docs = await this.queryWaitFor(
+            {
                 filter: queryParams.filter,
                 selection: [],
                 orderBy: [],

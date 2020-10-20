@@ -87,7 +87,7 @@ test('Many concurrent requests over web socket', async () => {
 
     const originalStdoutWrite = process.stderr.write.bind(process.stderr);
 
-    process.stderr.write = (chunk, encoding, callback) => {
+    (process.stderr: any).write = (chunk, encoding, callback) => {
         if (typeof chunk === 'string') {
             output += chunk;
         }
@@ -121,14 +121,14 @@ test('Many concurrent requests over web socket', async () => {
         `,
     });
 
-    process.stderr.write = originalStdoutWrite;
+    (process.stderr: any).write = originalStdoutWrite;
     expect(output.includes('MaxListenersExceededWarning')).toBeFalsy();
     client.close();
 });
 
 test('Large requests', async () => {
     const server = await testServerRequired();
-    const client = createTestClient({});
+    const client = createTestClient({ useWebSockets: false });
     const large = Buffer.alloc(65000, 0);
     try {
         await client.mutate({

@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.5 – Oct 20, 2020
+
+### Fixed
+- crash when subscription filter is invalid. 
+ 
 ## 0.28.4 – Oct 19, 2020
 
 ### New

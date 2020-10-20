@@ -1,9 +1,9 @@
 // @flow
 
-import { $$asyncIterator } from "iterall";
-import type { AccessRights } from "../auth";
-import { selectFields } from "../filter/filters";
-import type { FieldSelection, QType } from "../filter/filters";
+import { $$asyncIterator } from 'iterall';
+import type { AccessRights } from '../auth';
+import { selectFields } from '../filter/filters';
+import type { FieldSelection, QType } from '../filter/filters';
 
 export class QDataListener {
     docType: QType;
