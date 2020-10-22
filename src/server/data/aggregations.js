@@ -288,7 +288,7 @@ export class AggregationHelperFactory {
 
     static convertResults(results: any[][], helpers: AggregationHelper[]): any[] {
         return helpers.map((helper, i) => {
-            const values = results.map(x => x[i]).filter(x => x !== undefined);
+            const values = results.map(x => x[i]).filter(x => x !== undefined && x !== null);
             return helper.convertResult(helper.context, values);
         });
 
