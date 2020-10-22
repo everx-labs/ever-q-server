@@ -122,13 +122,16 @@ pipeline {
 					steps {
 						script {
 							withCredentials ([
-								string(credentialsId: 'cinet_arango_uri', variable: 'Q_DATABASE_URI'),
+								string(credentialsId: 'cinet_arango_uri_tmpl', variable: 'Q_DATABASE_URI'),
 							]) {
 								builtImage.inside ("""
 									--entrypoint=''
 									-u root
-									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
-									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
+									-e 'Q_DATA_MUT=${Q_DATABASE_URI}/arango-mut'
+									-e 'Q_DATA_HOT=${Q_DATABASE_URI}/arango-hot'
+									-e 'Q_DATA_COLD=${Q_DATABASE_URI}/arango-col'
+									-e 'Q_SLOW_QUERIES_HOT=${Q_DATABASE_URI}/arangoni-hot'
+									-e 'Q_SLOW_QUERIES_MUT=${Q_DATABASE_URI}/arangoni-hot'
 								""") {
 								    sshagent (credentials: [G_gitcred]) {
                                         sh (
