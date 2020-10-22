@@ -129,6 +129,9 @@ pipeline {
 									-u root
 									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
 									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
+									-e 'Q_DATA_COLD=${Q_DATABASE_URI}'
+									-e 'Q_SLOW_QUERIES_HOT=${Q_DATABASE_URI}'
+									-e 'Q_SLOW_QUERIES_MUT=${Q_DATABASE_URI}'
 								""") {
 								    sshagent (credentials: [G_gitcred]) {
                                         sh (

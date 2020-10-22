@@ -5,7 +5,7 @@ import QLogs from '../src/server/logs';
 import TONQServer from '../src/server/server';
 import { createTestClient, MockCache, testConfig, mock, createTestData, createLocalArangoTestData } from './init-tests';
 
-test('Data without id', async () => {
+test('Query without id should be filtered by limit', async () => {
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
@@ -14,9 +14,10 @@ test('Data without id', async () => {
     await server.start();
     const client = createTestClient({ useWebSockets: true });
     let messages = (await client.query({
-        query: gql`query { messages(filter: { value: {ne: null, lt: "1000000000000000000"}} limit: 1){value created_at created_lt} }`,
-    })).data.messages;
-    expect(messages.length).toEqual(1);
+        query: gql`query { messages(limit: 1){value created_at created_lt} }`,
+    }));
+console.log(messages)
+    expect(messages.data.messages.length).toEqual(1);
     server.stop();
 });
 

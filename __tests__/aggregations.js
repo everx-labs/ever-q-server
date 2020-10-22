@@ -64,8 +64,7 @@ test('Partitioned Data', async () => {
     let messages = (await client.query({
         query: gql`query { messages(filter: { value: {ne: null, lt: "1000000000000000000"}} limit: 10){id value created_at created_lt} }`,
     })).data.messages;
-    messages = messages.concat(messages);
-    const aggregated = (await client.query({
+    let aggregated = (await client.query({
         query: gql`${`query { aggregateMessages(
             filter: {id: {in: ["${messages.map(x => x.id).join('","')}"]}}
             fields: [
@@ -87,6 +86,11 @@ test('Partitioned Data', async () => {
             ]) 
         }`}`,
     })).data.aggregateMessages;
+    // If we run on test evn where hot and cold are point to the same arango.
+    // we must take in account that aggregation works on two similar set of data.
+    if (Number(aggregated[0]) > messages.length) {
+        messages = messages.concat(messages);
+    }
     expect(aggregated.length).toEqual(15);
     expect(Number(aggregated[0])).toEqual(messages.length);
 
@@ -116,5 +120,37 @@ test('Partitioned Data', async () => {
     expect(aggregated[13]).toEqual(ids.min);
     expect(aggregated[14]).toEqual(ids.max);
 
+    // nulls
+    aggregated = (await client.query({
+        query: gql`${`query { aggregateMessages(
+            filter: {id: {in: ["1"]}}
+            fields: [
+                {field: "value", fn: COUNT}
+                {field: "value", fn: MIN}
+            ]) 
+        }`}`,
+    })).data.aggregateMessages;
+
+    server.stop();
+});
+
+test('Partitioned data with null', async () => {
+    const server = new TONQServer({
+        config: testConfig,
+        logs: new QLogs(),
+        data: createLocalArangoTestData(new QLogs()),
+    });
+    await server.start();
+    const client = createTestClient({ useWebSockets: true });
+    const aggregated = (await client.query({
+        query: gql`${`query { aggregateMessages(
+            filter: {id: {in: ["1"]}}
+            fields: [
+                {field: "value", fn: COUNT}
+                {field: "value", fn: MIN}
+            ]) 
+        }`}`,
+    })).data.aggregateMessages;
+    expect(aggregated[1]).toBeNull();
     server.stop();
 });
