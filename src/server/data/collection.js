@@ -182,9 +182,10 @@ export class QDataCollection {
         this.docType = options.docType;
         this.mutable = options.mutable;
         this.indexes = options.indexes;
-        this.indexesRefreshTime = Date.now();
 
         this.provider = options.provider;
+        this.dropCachedDbInfo();
+
         this.slowQueriesProvider = options.slowQueriesProvider;
         this.log = options.logs.create(name);
         this.auth = options.auth;
@@ -221,6 +222,7 @@ export class QDataCollection {
 
     dropCachedDbInfo() {
         this.indexesRefreshTime = Date.now();
+        this.provider.isHotUpdate = true;
     }
 
     // Subscriptions
@@ -698,6 +700,12 @@ export class QDataCollection {
         if (this.isTests) {
             return;
         }
+        if (this.provider.isHotUpdate) {
+            const fingerprint = await this.provider.loadFingerprint(this.provider.getCollectionsForSubscribe());
+            this.log.debug('RELOAD_FINGERPRINT', fingerprint);
+            this.provider.hotUpdate({fingerprint});
+            this.provider.isHotUpdate = false;
+        }
         if (Date.now() < this.indexesRefreshTime) {
             return;
         }
@@ -801,4 +809,3 @@ export class QDataCollection {
     }
 
 }
-

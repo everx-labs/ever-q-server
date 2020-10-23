@@ -1,6 +1,7 @@
 // @flow
 
 import type { OrderBy } from '../filter/filters';
+import { hash } from '../utils';
 
 export type QIndexInfo = {
     fields: string[],
@@ -27,6 +28,14 @@ export interface QDataProvider {
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]>;
 
+    getCollectionsForSubscribe(): string[];
+
+    loadFingerprint(collections: string[]): Promise<any>;
+
+    isHotUpdate: boolean;
+
+    hotUpdate(any): void;
+
     query(text: string, vars: { [string]: any }, orderBy: OrderBy[]): Promise<any>;
 
     subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any;
@@ -43,9 +52,11 @@ export interface QDataCache {
 
 export class QDataCombiner implements QDataProvider {
     providers: QDataProvider[];
+    isHotUpdate: boolean;
 
     constructor(providers: QDataProvider[]) {
         this.providers = providers;
+        this.isHotUpdate = false;
     }
 
     start(collectionsForSubscribe: string[]): void {
@@ -54,6 +65,24 @@ export class QDataCombiner implements QDataProvider {
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return this.providers[0].getCollectionIndexes(collection);
+    }
+
+    getCollectionsForSubscribe(): string[] {
+        return this.providers[0].getCollectionsForSubscribe();
+    }
+
+    async loadFingerprint(collections: string[]): Promise<any> {
+        /**
+         * Do not build fingerprint from a `hot` database (index=0), because it is a mutated storage.
+         * We make fingerprints about the size of collections only on immutable storages like `cold` (index>0).
+         * The updated fingerprint will change the cache key and the old keys will be removed using by DataCache itself.
+         */
+        return await Promise.all(this.providers.filter((_, i) => i !== 0)
+                                               .map(provider => provider.loadFingerprint(collections)));
+    }
+
+    hotUpdate(obj: any): void {
+        this.providers.forEach(provider => provider.hotUpdate(obj));
     }
 
     async query(text: string, vars: { [string]: any }, orderBy: OrderBy[]): Promise<any> {
@@ -72,18 +101,36 @@ export class QDataCombiner implements QDataProvider {
 
 export class QDataPrecachedCombiner extends QDataCombiner {
     cache: QDataCache;
+    networkName: string;
+    cacheKeyPrefix: string;
+    configHash: string;
 
-    constructor(cache: QDataCache, providers: QDataProvider[]) {
+    constructor(cache: QDataCache, providers: QDataProvider[], networkName: string, cacheKeyPrefix: string) {
         super(providers);
         this.cache = cache;
+        this.networkName = networkName;
+        this.cacheKeyPrefix = cacheKeyPrefix;
+        this.configHash = '';
+    }
+
+    hotUpdate(obj: any): void {
+        if (obj && 'fingerprint' in obj) {
+            this.configHash = hash(this.networkName, JSON.stringify(obj.fingerprint));
+        }
+        this.providers.forEach(provider => provider.hotUpdate(obj));
+    }
+
+    cacheKey(aql: string): string {
+        return this.cacheKeyPrefix + hash(this.configHash, aql);
+    }
+
+    async loadFingerprint(collections: string[]): Promise<any> {
+        return await Promise.all(this.providers.map(x => x.loadFingerprint(collections)))
     }
 
     async query(text: string, vars: { [string]: any }, orderBy: OrderBy[]): Promise<any> {
-        const key = JSON.stringify({
-            text: text,
-            vars: vars,
-            orderBy: orderBy,
-        });
+        const aql = JSON.stringify({ text, vars, orderBy });
+        const key = this.cacheKey(aql);
         let docs = await this.cache.get(key);
         if (isNullOrUndefined(docs)) {
             docs = await super.query(text, vars, orderBy);
@@ -156,7 +203,7 @@ function compareValues(a: any, b: any): number {
 }
 
 
-function isNullOrUndefined(v: any) {
+function isNullOrUndefined(v: any): boolean {
     return v === null || typeof v === 'undefined';
 }
 
@@ -173,4 +220,3 @@ export const missingDataCache: QDataCache = {
         return Promise.resolve();
     },
 }
-

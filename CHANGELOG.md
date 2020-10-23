@@ -1,6 +1,12 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.6 – Oct 24, 2020
+
+### New
+- MemcachedClient: use hashedKey constructed from fingerprint of cold collection sizes
+- MemcachedClient: hotUpdate fingerprint on mutator `dropCachedDbInfo`
+ 
 ## 0.28.5 – Oct 20, 2020
 
 ### Fixed

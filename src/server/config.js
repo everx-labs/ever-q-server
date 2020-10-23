@@ -67,6 +67,8 @@ export type QConfig = {
     },
     mamAccessKeys: Set<string>,
     isTests?: boolean,
+    networkName: string,
+    cacheKeyPrefix: string,
 }
 
 export type ProgramOption = {
@@ -132,6 +134,10 @@ opt('trace-tags', '', 'Additional trace tags (comma separated name=value pairs)'
 
 opt('statsd-server', '', 'StatsD server (host:port)');
 opt('statsd-tags', '', 'Additional StatsD tags (comma separated name=value pairs)');
+
+opt('network-name', 'cinet.tonlabs.io', 'Define the name of the network q-server is working with');
+
+opt('cache-key-prefix', 'Q_', 'Prefix string to identify q-server keys in datacache');
 
 // Stats Schema
 
@@ -215,7 +221,7 @@ export function createConfig(
     def: ProgramOptions,
 ): QConfig {
     const resolved = resolveValues(values, env, def);
-    const { data, slowQueriesData } = parseDataConfig(resolved);
+    const { data, slowQueriesData, networkName, cacheKeyPrefix } = parseDataConfig(resolved);
     return {
         server: {
             host: resolved.host,
@@ -242,6 +248,8 @@ export function createConfig(
             server: resolved.statsdServer,
             tags: (resolved.statsdTags || '').split(',').map(x => x.trim()).filter(x => x),
         },
+        networkName,
+        cacheKeyPrefix,
     };
 }
 
@@ -273,9 +281,11 @@ function parseTags(s: string): { [string]: string } {
 export function parseDataConfig(values: any): {
     data: QDataProvidersConfig,
     slowQueriesData: QDataProvidersConfig,
+    networkName: string,
+    cacheKeyPrefix: string,
 } {
     function parse(prefix: string, defMaxSockets: number): QDataProvidersConfig {
-        const opt = suffix => values[`${prefix}${suffix}`] || '';
+        const opt = (suffix: string): string => values[`${prefix}${suffix}`] || '';
         return {
             mut: parseArangoConfig(opt('Mut'), defMaxSockets),
             hot: parseArangoConfig(opt('Hot'), defMaxSockets),
@@ -284,8 +294,12 @@ export function parseDataConfig(values: any): {
         }
     }
 
+    const { networkName, cacheKeyPrefix } = values;
+
     return {
         data: parse('data', DEFAULT_ARANGO_MAX_SOCKETS),
         slowQueriesData: parse('slowQueries', DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS),
+        networkName,
+        cacheKeyPrefix,
     };
 }

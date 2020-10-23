@@ -1,6 +1,5 @@
 // @flow
 
-import { createHash } from 'crypto'
 import { Client as MemcachedClient } from 'memjs'
 import type { QMemCachedConfig } from '../config';
 import type { QLog } from '../logs';
@@ -23,8 +22,7 @@ export class MemjsDataCache implements QDataCache {
         })
     }
 
-    get(key: string): Promise<any> {
-        const hashedKey = createHash('md5').update(key).digest("hex");
+    async get(hashedKey: string): Promise<any> {
         return new Promise((resolve, reject) => {
             this.memcached.get(hashedKey, (err, data) => {
                 if (!err) {
@@ -33,7 +31,7 @@ export class MemjsDataCache implements QDataCache {
                         this.log.debug('GET', hashedKey)
                         resolve(value)
                     } catch (e) {
-                        this.log.error('FAILED', 'MEMCACHED', 'GET', hashedKey, e.message, data.toString()), 
+                        this.log.error('FAILED', 'MEMCACHED', 'GET', hashedKey, e.message, data.toString()),
                         resolve(null);
                     }
                 } else {
@@ -44,8 +42,7 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 
-    set(key: string, value: any): Promise<void> {
-        const hashedKey = createHash('md5').update(key).digest("hex");
+    async set(hashedKey: string, value: any): Promise<void> {
         return new Promise((resolve, reject) => {
             this.memcached.set(hashedKey, JSON.stringify(value), {}, (err) => {
                 if (!err) {

@@ -143,8 +143,8 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         slowQueriesCold,
     });
     return new QBlockchainData({
-        providers: createProviders('fast', logs, data),
-        slowQueriesProviders: createProviders('slow', logs, slowQueriesData),
+        providers: createProviders('fast', logs, data, testConfig.networkName, testConfig.cacheKeyPrefix),
+        slowQueriesProviders: createProviders('slow', logs, slowQueriesData, testConfig.networkName, testConfig.cacheKeyPrefix),
         logs: new QLogs(),
         auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
@@ -155,10 +155,12 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
 
 export class MockProvider implements QDataProvider {
     data: any;
+    isHotUpdate: boolean;
     queryCount: number;
 
     constructor(data: any) {
         this.data = data;
+        this.isHotUpdate = false;
         this.queryCount = 0;
     }
 
@@ -167,6 +169,17 @@ export class MockProvider implements QDataProvider {
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return Promise.resolve(INDEXES[collection].indexes);
+    }
+
+    getCollectionsForSubscribe(): string[] {
+        return [];
+    }
+
+    async loadFingerprint(collections: string[]): Promise<any> {
+        return Promise.resolve([]);
+    }
+
+    hotUpdate(obj: any): void {
     }
 
     query(text: string, vars: { [string]: any }): Promise<any> {

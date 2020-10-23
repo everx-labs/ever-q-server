@@ -27,6 +27,8 @@ export class ArangoProvider implements QDataProvider {
     log: QLog;
     config: QArangoConfig;
 
+    isHotUpdate: boolean;
+
     started: boolean;
     arango: Database;
     collectionsForSubscribe: string[];
@@ -38,6 +40,8 @@ export class ArangoProvider implements QDataProvider {
     constructor(log: QLog, config: QArangoConfig) {
         this.log = log;
         this.config = config;
+
+        this.isHotUpdate = false;
 
         this.started = false;
         this.arango = new Database({
@@ -66,6 +70,23 @@ export class ArangoProvider implements QDataProvider {
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return this.arango.collection(collection).indexes();
+    }
+
+    getCollectionsForSubscribe(): string[] {
+        return this.collectionsForSubscribe;
+    }
+
+    async loadFingerprint(collections: string[]): Promise<any> {
+        /**
+         * Returns object with collections in keys and collection size in values.
+         * Because query returns array of values, used reduce to sum it all.
+         */
+        const results = await Promise.all(collections.map(col => this.query(`RETURN LENGTH(${col})`, {})))
+        const lengths = results.map(res => res.reduce((acc, cur) => acc + cur, 0));
+        return Object.fromEntries(collections.map((_, i) => [collections[i], lengths[i]]));
+    }
+
+    hotUpdate(obj: any): void {
     }
 
     async query(text: string, vars: { [string]: any }): Promise<any> {
