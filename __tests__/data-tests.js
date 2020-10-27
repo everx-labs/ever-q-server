@@ -39,12 +39,13 @@ test('Data Broker', async () => {
         ]),
     ];
 
+    const logs = new QLogs();
     const server = new TONQServer({
         config: testConfig,
-        logs: new QLogs(),
+        logs: logs,
         data: createTestData({
             mutable: mut,
-            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(cache, cold, testConfig.networkName, testConfig.cacheKeyPrefix)]),
+            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(logs.create('cache'), cache, cold, testConfig.networkName, testConfig.cacheKeyPrefix)]),
         }),
     });
     await server.start();

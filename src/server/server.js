@@ -109,8 +109,10 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
     );
     const mutable = newArangoProvider('mut', config.mut);
     const hot = newArangoProvider('hot', config.hot);
+    const cacheLog = logs.create(`${configName}_cache`);
     const cold = new QDataPrecachedCombiner(
-        isCacheEnabled(config.cache) ? new MemjsDataCache(logs.create(`${configName}_cache`), config.cache) : missingDataCache,
+        cacheLog,
+        isCacheEnabled(config.cache) ? new MemjsDataCache(cacheLog, config.cache) : missingDataCache,
         config.cold.map(x => newArangoProvider('cold', x)),
         networkName,
         cacheKeyPrefix,

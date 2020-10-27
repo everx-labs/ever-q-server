@@ -184,7 +184,7 @@ export class QDataCollection {
         this.indexes = options.indexes;
 
         this.provider = options.provider;
-        this.dropCachedDbInfo();
+        this.indexesRefreshTime = Date.now();
 
         this.slowQueriesProvider = options.slowQueriesProvider;
         this.log = options.logs.create(name);
@@ -222,7 +222,6 @@ export class QDataCollection {
 
     dropCachedDbInfo() {
         this.indexesRefreshTime = Date.now();
-        this.provider.isHotUpdate = true;
     }
 
     // Subscriptions
@@ -699,12 +698,6 @@ export class QDataCollection {
     async checkRefreshInfo() {
         if (this.isTests) {
             return;
-        }
-        if (this.provider.isHotUpdate) {
-            const fingerprint = await this.provider.loadFingerprint(this.provider.getCollectionsForSubscribe());
-            this.log.debug('RELOAD_FINGERPRINT', fingerprint);
-            this.provider.hotUpdate({fingerprint});
-            this.provider.isHotUpdate = false;
         }
         if (Date.now() < this.indexesRefreshTime) {
             return;

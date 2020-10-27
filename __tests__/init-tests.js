@@ -155,31 +155,30 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
 
 export class MockProvider implements QDataProvider {
     data: any;
-    isHotUpdate: boolean;
     queryCount: number;
+    hotUpdateCount: number;
 
     constructor(data: any) {
         this.data = data;
-        this.isHotUpdate = false;
         this.queryCount = 0;
+        this.hotUpdateCount = 0;
     }
 
-    start(): void {
+    async start(): Promise<any> {
+        return Promise.resolve();
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return Promise.resolve(INDEXES[collection].indexes);
     }
 
-    getCollectionsForSubscribe(): string[] {
-        return [];
+    async loadFingerprint(): Promise<any> {
+        return Promise.resolve([{data: this.data.length}]);
     }
 
-    async loadFingerprint(collections: string[]): Promise<any> {
-        return Promise.resolve([]);
-    }
-
-    hotUpdate(obj: any): void {
+    async hotUpdate(): Promise<any> {
+        this.hotUpdateCount += 1;
+        return Promise.resolve();
     }
 
     query(text: string, vars: { [string]: any }): Promise<any> {
@@ -200,19 +199,23 @@ export class MockCache implements QDataCache {
     data: Map<string, any>;
     getCount: number;
     setCount: number;
+    lastKey: string;
 
     constructor() {
         this.data = new Map();
         this.getCount = 0;
         this.setCount = 0;
+        this.lastKey = '';
     }
 
     get(key: string): Promise<any> {
+        this.lastKey = key;
         this.getCount += 1;
         return Promise.resolve(this.data.get(key));
     }
 
     set(key: string, value: any): Promise<void> {
+        this.lastKey = key;
         this.setCount += 1;
         this.data.set(key, value);
         return Promise.resolve();

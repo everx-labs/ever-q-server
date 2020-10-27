@@ -27,8 +27,6 @@ export class ArangoProvider implements QDataProvider {
     log: QLog;
     config: QArangoConfig;
 
-    isHotUpdate: boolean;
-
     started: boolean;
     arango: Database;
     collectionsForSubscribe: string[];
@@ -40,8 +38,6 @@ export class ArangoProvider implements QDataProvider {
     constructor(log: QLog, config: QArangoConfig) {
         this.log = log;
         this.config = config;
-
-        this.isHotUpdate = false;
 
         this.started = false;
         this.arango = new Database({
@@ -62,31 +58,30 @@ export class ArangoProvider implements QDataProvider {
         this.listenerSubscribersCount = 0;
     }
 
-    start(collectionsForSubscribe: string[]) {
+    async start(collectionsForSubscribe: string[]): Promise<any> {
         this.started = true;
         this.collectionsForSubscribe = collectionsForSubscribe;
         this.checkStartListener();
+        return Promise.resolve();
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return this.arango.collection(collection).indexes();
     }
 
-    getCollectionsForSubscribe(): string[] {
-        return this.collectionsForSubscribe;
-    }
-
-    async loadFingerprint(collections: string[]): Promise<any> {
+    async loadFingerprint(): Promise<any> {
         /**
-         * Returns object with collections in keys and collection size in values.
-         * Because query returns array of values, used reduce to sum it all.
+         * Returns object with collection names in keys and collection size in values.
          */
-        const results = await Promise.all(collections.map(col => this.query(`RETURN LENGTH(${col})`, {})))
-        const lengths = results.map(res => res.reduce((acc, cur) => acc + cur, 0));
-        return Object.fromEntries(collections.map((_, i) => [collections[i], lengths[i]]));
+        const collections = (await this.arango.listCollections()).map(descr => descr.name);
+        // TODO: add this when required a new version arangojs v7.x.x
+        // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
+        const results = await Promise.all(collections.map(col => this.arango.collection(col).count()))
+        return Object.fromEntries(collections.map((_, i) => [collections[i], results[i].count]));
     }
 
-    hotUpdate(obj: any): void {
+    async hotUpdate(): Promise<any> {
+        return Promise.resolve();
     }
 
     async query(text: string, vars: { [string]: any }): Promise<any> {
