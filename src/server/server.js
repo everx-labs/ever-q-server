@@ -103,15 +103,19 @@ class MemStats {
     }
 }
 
-export function createProviders(configName: string, logs: QLogs, config: QDataProvidersConfig): QDataProviders {
+export function createProviders(configName: string, logs: QLogs, config: QDataProvidersConfig, networkName: string, cacheKeyPrefix: string): QDataProviders {
     const newArangoProvider = (dbName: string, config: QArangoConfig): ArangoProvider => (
         new ArangoProvider(logs.create(`${configName}_${dbName}`), config)
     );
     const mutable = newArangoProvider('mut', config.mut);
     const hot = newArangoProvider('hot', config.hot);
+    const cacheLog = logs.create(`${configName}_cache`);
     const cold = new QDataPrecachedCombiner(
-        isCacheEnabled(config.cache) ? new MemjsDataCache(logs.create(`${configName}_cache`), config.cache) : missingDataCache,
+        cacheLog,
+        isCacheEnabled(config.cache) ? new MemjsDataCache(cacheLog, config.cache) : missingDataCache,
         config.cold.map(x => newArangoProvider('cold', x)),
+        networkName,
+        cacheKeyPrefix,
     );
     const immutable = new QDataCombiner([hot, cold]);
     return {
@@ -152,8 +156,8 @@ export default class TONQServer {
             auth: this.auth,
             tracer: this.tracer,
             stats: this.stats,
-            providers: createProviders('fast', this.logs, this.config.data),
-            slowQueriesProviders: createProviders('slow', this.logs, this.config.slowQueriesData),
+            providers: createProviders('fast', this.logs, this.config.data, this.config.networkName, this.config.cacheKeyPrefix),
+            slowQueriesProviders: createProviders('slow', this.logs, this.config.slowQueriesData, this.config.networkName, this.config.cacheKeyPrefix),
             isTests: false,
         });
         this.memStats = new MemStats(this.stats);

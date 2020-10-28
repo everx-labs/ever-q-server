@@ -99,18 +99,20 @@ export default class QData {
         return collection;
     }
 
-    start() {
+    async start() {
         const mutable = [];
         const immutable = [];
         this.collections.forEach(x => (x.mutable ? mutable : immutable).push(x.name));
-        this.providers.mutable.start(mutable);
-        this.providers.immutable.start(immutable);
-        this.slowQueriesProviders.mutable.start([]);
-        this.slowQueriesProviders.immutable.start([]);
+        await this.providers.mutable.start(mutable);
+        await this.providers.immutable.start(immutable);
+        await this.slowQueriesProviders.mutable.start([]);
+        await this.slowQueriesProviders.immutable.start([]);
+        await this.providers.immutable.hotUpdate();
     }
 
-    dropCachedDbInfo() {
+    async dropCachedDbInfo() {
         this.collections.forEach((x: QDataCollection) => x.dropCachedDbInfo());
+        await this.providers.immutable.hotUpdate();
     }
 
     async query(provider: QDataProvider, text: string, vars: { [string]: any }, orderBy: OrderBy[]) {

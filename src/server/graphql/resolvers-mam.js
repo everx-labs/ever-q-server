@@ -89,7 +89,7 @@ async function getCollections(_parent: any, args: any, context: GraphQLRequestCo
 
 async function dropCachedDbInfo(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<boolean> {
     mamAccessRequired(context, args);
-    context.data.dropCachedDbInfo();
+    await context.data.dropCachedDbInfo();
     return true;
 }
 

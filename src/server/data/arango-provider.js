@@ -58,14 +58,30 @@ export class ArangoProvider implements QDataProvider {
         this.listenerSubscribersCount = 0;
     }
 
-    start(collectionsForSubscribe: string[]) {
+    async start(collectionsForSubscribe: string[]): Promise<any> {
         this.started = true;
         this.collectionsForSubscribe = collectionsForSubscribe;
         this.checkStartListener();
+        return Promise.resolve();
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
         return this.arango.collection(collection).indexes();
+    }
+
+    async loadFingerprint(): Promise<any> {
+        /**
+         * Returns object with collection names in keys and collection size in values.
+         */
+        const collections = (await this.arango.listCollections()).map(descr => descr.name);
+        // TODO: add this when required a new version arangojs v7.x.x
+        // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
+        const results = await Promise.all(collections.map(col => this.arango.collection(col).count()))
+        return Object.fromEntries(collections.map((_, i) => [collections[i], results[i].count]));
+    }
+
+    async hotUpdate(): Promise<any> {
+        return Promise.resolve();
     }
 
     async query(text: string, vars: { [string]: any }): Promise<any> {

@@ -1,6 +1,7 @@
 import type { QLog } from './logs';
 import fs from 'fs';
 import path from 'path';
+import { createHash } from 'crypto'
 
 export function packageJson(): any {
     let testPath = path.resolve(__dirname);
@@ -164,4 +165,8 @@ export function toLog(value: any, objs?: Object[]): any {
         });
         return valueToLog
     }
+}
+
+export function hash(...keys: string[]): string {
+    return createHash('md5').update(keys.join('')).digest("hex");
 }

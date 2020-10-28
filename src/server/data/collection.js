@@ -182,9 +182,10 @@ export class QDataCollection {
         this.docType = options.docType;
         this.mutable = options.mutable;
         this.indexes = options.indexes;
-        this.indexesRefreshTime = Date.now();
 
         this.provider = options.provider;
+        this.indexesRefreshTime = Date.now();
+
         this.slowQueriesProvider = options.slowQueriesProvider;
         this.log = options.logs.create(name);
         this.auth = options.auth;
@@ -801,4 +802,3 @@ export class QDataCollection {
     }
 
 }
-
