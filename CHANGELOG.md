@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.28.7 – Nov 10, 2020
+
+### Fixed
+- Update node-fetch version to 2.6.1
+ 
 ## 0.28.6 – Oct 24, 2020
 
 ### New
