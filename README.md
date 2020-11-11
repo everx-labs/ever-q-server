@@ -104,6 +104,60 @@ If you need to add or change or remove index in Arango Db you must change follow
 - https://github.com/tonlabs/ton-q-server/blob/d491c7c0e6e11cb70d5f7f0813eef719ea6b997d/src/server/data/data-provider.js#L65
 - https://github.com/tonlabs/TON-infrastructure/blob/ef4d409d9508ca5e1d815c5f21ec11f16c4b8f39/pipelines/arango/arango/initdb.d/upgrade-arango-db.js#L7
 
+How to determine which index required to serve some slow query.
+
+Let look to SLOW query reported by q-server log.
+
+```
+messages QUERY {"filter":{"src":{"eq":"..."},"dst":{"eq":"..."},"value":{"ne":null},"OR":{"src":{"eq":"..."},"dst":{"eq":"..."},"value":{"ne":null}}},"orderBy":[{"path":"created_at","direction":"DESC"}],"limit":1}
+```
+
+First, lets extract `collection`, `filter` and `orderBy`:
+
+```
+collection: messages
+filter: {"src":{"eq":"..."},"dst":{"eq":"..."},"value":{"ne":null},"OR":{"src":{"eq":"..."},"dst":{"eq":"..."},"value":{"ne":null}}}
+orderBy:[{"path":"created_at","direction":"DESC"}]
+```
+
+Next, reduce filter and order by:
+- remove quotes;
+- remove constants (`eq:"..."` -> `eq`);
+- remove filter outer `{}`;
+- replace order by with path direction pairs;
+
+```
+collection: messages
+filter: src:{eq},dst:{eq},value:{ne},OR:{src:{eq},dst:{eq},value:{ne}}
+orderBy: created_at DESC
+```
+
+Next, separate filter by `OR` on several filters:
+
+```
+collection: messages
+filter: src:{eq},dst:{eq},value:{ne}
+filter: src:{eq},dst:{eq},value:{ne}
+orderBy: created_at DESC
+```
+
+Next, remove duplicated filters:
+
+```
+collection: messages
+filter: src:{eq},dst:{eq},value:{ne}
+orderBy: created_at DESC
+```
+
+Next, collect fields from filter and order by into index (filter fields must be placed first in any order, then fields from `orderBy` in same order as in `orderBy`:
+
+```
+collection: messages
+filter: src:{eq},dst:{eq},value:{ne}
+orderBy: created_at DESC
+index: src,dst,value,created_at
+```
+
 # For Developers
 
 IMPORTANT!!!
