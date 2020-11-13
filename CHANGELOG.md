@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.29.0 – Nov 13, 2020
+
+### New
+- `zerostates` query to access blockchain Zero State. 
+ 
 ## 0.28.7 – Nov 10, 2020
 
 ### Fixed
