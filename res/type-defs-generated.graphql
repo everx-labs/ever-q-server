@@ -354,18 +354,18 @@ type BlockMasterPrevBlkSignatures {
 }
 
 "Configuration parameter 6"
-type BlockMasterConfigP6 {
+type ConfigP6 {
 	mint_new_price: String
 	mint_add_price: String
 }
 
-type BlockMasterConfigP7 {
+type ConfigP7 {
 	currency: Float
 	value: String
 }
 
 "Global version"
-type BlockMasterConfigP8 {
+type ConfigP8 {
 	version: Float
 	capabilities: String
 }
@@ -382,12 +382,12 @@ type ConfigProposalSetup {
 }
 
 "Config voting setup"
-type BlockMasterConfigP11 {
+type ConfigP11 {
 	normal_params: ConfigProposalSetup
 	critical_params: ConfigProposalSetup
 }
 
-type BlockMasterConfigP12 {
+type ConfigP12 {
 	workchain_id: Int
 	enabled_since: Float
 	actual_min_split: Int
@@ -409,13 +409,13 @@ type BlockMasterConfigP12 {
 }
 
 "Block create fees"
-type BlockMasterConfigP14 {
+type ConfigP14 {
 	masterchain_block_fee(format: BigIntFormat): String
 	basechain_block_fee(format: BigIntFormat): String
 }
 
 "Election parameters"
-type BlockMasterConfigP15 {
+type ConfigP15 {
 	validators_elected_for: Float
 	elections_start_before: Float
 	elections_end_before: Float
@@ -423,21 +423,21 @@ type BlockMasterConfigP15 {
 }
 
 "Validators count"
-type BlockMasterConfigP16 {
+type ConfigP16 {
 	max_validators: Int
 	max_main_validators: Int
 	min_validators: Int
 }
 
 "Validator stake parameters"
-type BlockMasterConfigP17 {
+type ConfigP17 {
 	min_stake(format: BigIntFormat): String
 	max_stake(format: BigIntFormat): String
 	min_total_stake(format: BigIntFormat): String
 	max_stake_factor: Float
 }
 
-type BlockMasterConfigP18 {
+type ConfigP18 {
 	utime_since: Float
 	utime_since_string: String
 	bit_price_ps(format: BigIntFormat): String
@@ -492,7 +492,7 @@ type MsgForwardPrices {
 }
 
 "Catchain config"
-type BlockMasterConfigP28 {
+type ConfigP28 {
 	shuffle_mc_validators: Boolean
 	mc_catchain_lifetime: Float
 	shard_catchain_lifetime: Float
@@ -501,7 +501,7 @@ type BlockMasterConfigP28 {
 }
 
 "Consensus config"
-type BlockMasterConfigP29 {
+type ConfigP29 {
 	new_catchain_ids: Boolean
 	round_candidates: Float
 	next_candidate_delay_ms: Float
@@ -529,7 +529,7 @@ type ValidatorSet {
 	list: [ValidatorSetList]
 }
 
-type BlockMasterConfigP39 {
+type ConfigP39 {
 	adnl_addr: String
 	temp_public_key: String
 	seqno: Float
@@ -538,7 +538,7 @@ type BlockMasterConfigP39 {
 	signature_s: String
 }
 
-type BlockMasterConfig {
+type Config {
 	"Address of config smart contract in the masterchain"
 	p0: String
 	"Address of elector smart contract in the masterchain"
@@ -550,27 +550,27 @@ type BlockMasterConfig {
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: String
 	"Configuration parameter 6"
-	p6: BlockMasterConfigP6
+	p6: ConfigP6
 	"Configuration parameter 7"
-	p7: [BlockMasterConfigP7]
+	p7: [ConfigP7]
 	"Global version"
-	p8: BlockMasterConfigP8
+	p8: ConfigP8
 	p9: [Float]
 	p10: [Float]
 	"Config voting setup"
-	p11: BlockMasterConfigP11
+	p11: ConfigP11
 	"Array of all workchains descriptions"
-	p12: [BlockMasterConfigP12]
+	p12: [ConfigP12]
 	"Block create fees"
-	p14: BlockMasterConfigP14
+	p14: ConfigP14
 	"Election parameters"
-	p15: BlockMasterConfigP15
+	p15: ConfigP15
 	"Validators count"
-	p16: BlockMasterConfigP16
+	p16: ConfigP16
 	"Validator stake parameters"
-	p17: BlockMasterConfigP17
+	p17: ConfigP17
 	"Storage prices"
-	p18: [BlockMasterConfigP18]
+	p18: [ConfigP18]
 	"Gas limits and prices in the masterchain"
 	p20: GasLimitsPrices
 	"Gas limits and prices in workchains"
@@ -584,9 +584,9 @@ type BlockMasterConfig {
 	"Message forward prices in workchains"
 	p25: MsgForwardPrices
 	"Catchain config"
-	p28: BlockMasterConfigP28
+	p28: ConfigP28
 	"Consensus config"
-	p29: BlockMasterConfigP29
+	p29: ConfigP29
 	p31: [String]
 	"Previous validators set"
 	p32: ValidatorSet
@@ -601,7 +601,7 @@ type BlockMasterConfig {
 	"Next temprorary validators set"
 	p37: ValidatorSet
 	"Array of validator signed temprorary keys"
-	p39: [BlockMasterConfigP39]
+	p39: [ConfigP39]
 }
 
 type BlockMaster {
@@ -616,7 +616,7 @@ type BlockMaster {
 	recover_create_msg: InMsg
 	prev_blk_signatures: [BlockMasterPrevBlkSignatures]
 	config_addr: String
-	config: BlockMasterConfig
+	config: Config
 }
 
 type BlockSignaturesSignatures {
@@ -662,7 +662,7 @@ type Block {
 	status: Int
 	status_name: BlockProcessingStatusEnum
 	"uint32 global block ID"
-	global_id: Float
+	global_id: Int
 	want_split: Boolean
 	seq_no: Float
 	after_merge: Boolean
@@ -1139,6 +1139,43 @@ type Account {
 	state_hash: String
 }
 
+type ZerostateMaster {
+	validator_list_hash_short: Float
+	"Overall balance of all accounts"
+	global_balance(format: BigIntFormat): String
+	"Overall balance of all accounts in other currencies"
+	global_balance_other: [OtherCurrency]
+	config_addr: String
+	config: Config
+}
+
+type ZerostateLibraries {
+	"Library hash"
+	hash: String
+	"List of the accounts which use the library"
+	publishers: [String]
+	"Serialized bag of cell of this library encoded with base64"
+	lib: String
+}
+
+"The initial state of the workchain before first block was generated"
+type Zerostate {
+	id: String
+	"Zerostate's workchain_id"
+	workchain_id: Int
+	"uint32 global network ID"
+	global_id: Int
+	"Overall balance of all accounts of the workchain"
+	total_balance(format: BigIntFormat): String
+	"Overall balance of all accounts of the workchain in other currencies"
+	total_balance_other: [OtherCurrency]
+	master: ZerostateMaster
+	"Initial accounts state at the workchain start"
+	accounts: [Account]
+	"Initial libraries at the workchain start"
+	libraries: [ZerostateLibraries]
+}
+
 input OtherCurrencyFilter {
 	currency: FloatFilter
 	value: StringFilter
@@ -1395,23 +1432,23 @@ input BlockMasterPrevBlkSignaturesFilter {
 }
 
 "Configuration parameter 6"
-input BlockMasterConfigP6Filter {
+input ConfigP6Filter {
 	mint_new_price: StringFilter
 	mint_add_price: StringFilter
-    OR: BlockMasterConfigP6Filter
+    OR: ConfigP6Filter
 }
 
-input BlockMasterConfigP7Filter {
+input ConfigP7Filter {
 	currency: FloatFilter
 	value: StringFilter
-    OR: BlockMasterConfigP7Filter
+    OR: ConfigP7Filter
 }
 
 "Global version"
-input BlockMasterConfigP8Filter {
+input ConfigP8Filter {
 	version: FloatFilter
 	capabilities: StringFilter
-    OR: BlockMasterConfigP8Filter
+    OR: ConfigP8Filter
 }
 
 input ConfigProposalSetupFilter {
@@ -1427,13 +1464,13 @@ input ConfigProposalSetupFilter {
 }
 
 "Config voting setup"
-input BlockMasterConfigP11Filter {
+input ConfigP11Filter {
 	normal_params: ConfigProposalSetupFilter
 	critical_params: ConfigProposalSetupFilter
-    OR: BlockMasterConfigP11Filter
+    OR: ConfigP11Filter
 }
 
-input BlockMasterConfigP12Filter {
+input ConfigP12Filter {
 	workchain_id: IntFilter
 	enabled_since: FloatFilter
 	actual_min_split: IntFilter
@@ -1452,49 +1489,49 @@ input BlockMasterConfigP12Filter {
 	max_addr_len: IntFilter
 	addr_len_step: IntFilter
 	workchain_type_id: FloatFilter
-    OR: BlockMasterConfigP12Filter
+    OR: ConfigP12Filter
 }
 
 "Block create fees"
-input BlockMasterConfigP14Filter {
+input ConfigP14Filter {
 	masterchain_block_fee: StringFilter
 	basechain_block_fee: StringFilter
-    OR: BlockMasterConfigP14Filter
+    OR: ConfigP14Filter
 }
 
 "Election parameters"
-input BlockMasterConfigP15Filter {
+input ConfigP15Filter {
 	validators_elected_for: FloatFilter
 	elections_start_before: FloatFilter
 	elections_end_before: FloatFilter
 	stake_held_for: FloatFilter
-    OR: BlockMasterConfigP15Filter
+    OR: ConfigP15Filter
 }
 
 "Validators count"
-input BlockMasterConfigP16Filter {
+input ConfigP16Filter {
 	max_validators: IntFilter
 	max_main_validators: IntFilter
 	min_validators: IntFilter
-    OR: BlockMasterConfigP16Filter
+    OR: ConfigP16Filter
 }
 
 "Validator stake parameters"
-input BlockMasterConfigP17Filter {
+input ConfigP17Filter {
 	min_stake: StringFilter
 	max_stake: StringFilter
 	min_total_stake: StringFilter
 	max_stake_factor: FloatFilter
-    OR: BlockMasterConfigP17Filter
+    OR: ConfigP17Filter
 }
 
-input BlockMasterConfigP18Filter {
+input ConfigP18Filter {
 	utime_since: FloatFilter
 	bit_price_ps: StringFilter
 	cell_price_ps: StringFilter
 	mc_bit_price_ps: StringFilter
 	mc_cell_price_ps: StringFilter
-    OR: BlockMasterConfigP18Filter
+    OR: ConfigP18Filter
 }
 
 input GasLimitsPricesFilter {
@@ -1549,17 +1586,17 @@ input MsgForwardPricesFilter {
 }
 
 "Catchain config"
-input BlockMasterConfigP28Filter {
+input ConfigP28Filter {
 	shuffle_mc_validators: BooleanFilter
 	mc_catchain_lifetime: FloatFilter
 	shard_catchain_lifetime: FloatFilter
 	shard_validators_lifetime: FloatFilter
 	shard_validators_num: FloatFilter
-    OR: BlockMasterConfigP28Filter
+    OR: ConfigP28Filter
 }
 
 "Consensus config"
-input BlockMasterConfigP29Filter {
+input ConfigP29Filter {
 	new_catchain_ids: BooleanFilter
 	round_candidates: FloatFilter
 	next_candidate_delay_ms: FloatFilter
@@ -1569,7 +1606,7 @@ input BlockMasterConfigP29Filter {
 	catchain_max_deps: FloatFilter
 	max_block_bytes: FloatFilter
 	max_collated_bytes: FloatFilter
-    OR: BlockMasterConfigP29Filter
+    OR: ConfigP29Filter
 }
 
 input ValidatorSetListFilter {
@@ -1593,19 +1630,19 @@ input ValidatorSetFilter {
     OR: ValidatorSetFilter
 }
 
-input BlockMasterConfigP39Filter {
+input ConfigP39Filter {
 	adnl_addr: StringFilter
 	temp_public_key: StringFilter
 	seqno: FloatFilter
 	valid_until: FloatFilter
 	signature_r: StringFilter
 	signature_s: StringFilter
-    OR: BlockMasterConfigP39Filter
+    OR: ConfigP39Filter
 }
 
-input BlockMasterConfigP7ArrayFilter {
-	any: BlockMasterConfigP7Filter
-	all: BlockMasterConfigP7Filter
+input ConfigP7ArrayFilter {
+	any: ConfigP7Filter
+	all: ConfigP7Filter
 }
 
 input FloatArrayFilter {
@@ -1613,14 +1650,14 @@ input FloatArrayFilter {
 	all: FloatFilter
 }
 
-input BlockMasterConfigP12ArrayFilter {
-	any: BlockMasterConfigP12Filter
-	all: BlockMasterConfigP12Filter
+input ConfigP12ArrayFilter {
+	any: ConfigP12Filter
+	all: ConfigP12Filter
 }
 
-input BlockMasterConfigP18ArrayFilter {
-	any: BlockMasterConfigP18Filter
-	all: BlockMasterConfigP18Filter
+input ConfigP18ArrayFilter {
+	any: ConfigP18Filter
+	all: ConfigP18Filter
 }
 
 input StringArrayFilter {
@@ -1628,12 +1665,12 @@ input StringArrayFilter {
 	all: StringFilter
 }
 
-input BlockMasterConfigP39ArrayFilter {
-	any: BlockMasterConfigP39Filter
-	all: BlockMasterConfigP39Filter
+input ConfigP39ArrayFilter {
+	any: ConfigP39Filter
+	all: ConfigP39Filter
 }
 
-input BlockMasterConfigFilter {
+input ConfigFilter {
 	"Address of config smart contract in the masterchain"
 	p0: StringFilter
 	"Address of elector smart contract in the masterchain"
@@ -1645,27 +1682,27 @@ input BlockMasterConfigFilter {
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: StringFilter
 	"Configuration parameter 6"
-	p6: BlockMasterConfigP6Filter
+	p6: ConfigP6Filter
 	"Configuration parameter 7"
-	p7: BlockMasterConfigP7ArrayFilter
+	p7: ConfigP7ArrayFilter
 	"Global version"
-	p8: BlockMasterConfigP8Filter
+	p8: ConfigP8Filter
 	p9: FloatArrayFilter
 	p10: FloatArrayFilter
 	"Config voting setup"
-	p11: BlockMasterConfigP11Filter
+	p11: ConfigP11Filter
 	"Array of all workchains descriptions"
-	p12: BlockMasterConfigP12ArrayFilter
+	p12: ConfigP12ArrayFilter
 	"Block create fees"
-	p14: BlockMasterConfigP14Filter
+	p14: ConfigP14Filter
 	"Election parameters"
-	p15: BlockMasterConfigP15Filter
+	p15: ConfigP15Filter
 	"Validators count"
-	p16: BlockMasterConfigP16Filter
+	p16: ConfigP16Filter
 	"Validator stake parameters"
-	p17: BlockMasterConfigP17Filter
+	p17: ConfigP17Filter
 	"Storage prices"
-	p18: BlockMasterConfigP18ArrayFilter
+	p18: ConfigP18ArrayFilter
 	"Gas limits and prices in the masterchain"
 	p20: GasLimitsPricesFilter
 	"Gas limits and prices in workchains"
@@ -1679,9 +1716,9 @@ input BlockMasterConfigFilter {
 	"Message forward prices in workchains"
 	p25: MsgForwardPricesFilter
 	"Catchain config"
-	p28: BlockMasterConfigP28Filter
+	p28: ConfigP28Filter
 	"Consensus config"
-	p29: BlockMasterConfigP29Filter
+	p29: ConfigP29Filter
 	p31: StringArrayFilter
 	"Previous validators set"
 	p32: ValidatorSetFilter
@@ -1696,8 +1733,8 @@ input BlockMasterConfigFilter {
 	"Next temprorary validators set"
 	p37: ValidatorSetFilter
 	"Array of validator signed temprorary keys"
-	p39: BlockMasterConfigP39ArrayFilter
-    OR: BlockMasterConfigFilter
+	p39: ConfigP39ArrayFilter
+    OR: ConfigFilter
 }
 
 input BlockMasterShardHashesArrayFilter {
@@ -1725,7 +1762,7 @@ input BlockMasterFilter {
 	recover_create_msg: InMsgFilter
 	prev_blk_signatures: BlockMasterPrevBlkSignaturesArrayFilter
 	config_addr: StringFilter
-	config: BlockMasterConfigFilter
+	config: ConfigFilter
     OR: BlockMasterFilter
 }
 
@@ -1804,7 +1841,7 @@ input BlockFilter {
 	status: IntFilter
 	status_name: BlockProcessingStatusEnumFilter
 	"uint32 global block ID"
-	global_id: FloatFilter
+	global_id: IntFilter
 	want_split: BooleanFilter
 	seq_no: FloatFilter
 	after_merge: BooleanFilter
@@ -2393,6 +2430,56 @@ input AccountFilter {
     OR: AccountFilter
 }
 
+input ZerostateMasterFilter {
+	validator_list_hash_short: FloatFilter
+	"Overall balance of all accounts"
+	global_balance: StringFilter
+	"Overall balance of all accounts in other currencies"
+	global_balance_other: OtherCurrencyArrayFilter
+	config_addr: StringFilter
+	config: ConfigFilter
+    OR: ZerostateMasterFilter
+}
+
+input ZerostateLibrariesFilter {
+	"Library hash"
+	hash: StringFilter
+	"List of the accounts which use the library"
+	publishers: StringArrayFilter
+	"Serialized bag of cell of this library encoded with base64"
+	lib: StringFilter
+    OR: ZerostateLibrariesFilter
+}
+
+input AccountArrayFilter {
+	any: AccountFilter
+	all: AccountFilter
+}
+
+input ZerostateLibrariesArrayFilter {
+	any: ZerostateLibrariesFilter
+	all: ZerostateLibrariesFilter
+}
+
+"The initial state of the workchain before first block was generated"
+input ZerostateFilter {
+	id: StringFilter
+	"Zerostate's workchain_id"
+	workchain_id: IntFilter
+	"uint32 global network ID"
+	global_id: IntFilter
+	"Overall balance of all accounts of the workchain"
+	total_balance: StringFilter
+	"Overall balance of all accounts of the workchain in other currencies"
+	total_balance_other: OtherCurrencyArrayFilter
+	master: ZerostateMasterFilter
+	"Initial accounts state at the workchain start"
+	accounts: AccountArrayFilter
+	"Initial libraries at the workchain start"
+	libraries: ZerostateLibrariesArrayFilter
+    OR: ZerostateFilter
+}
+
 "Specify sort order direction"
 enum QueryOrderByDirection {
     "Documents will be sorted in ascended order (e.g. from A to Z)"
@@ -2422,6 +2509,7 @@ type Query {
 	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Transaction]
 	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Message]
 	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Account]
+	zerostates(filter: ZerostateFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Zerostate]
 }
 
 type Subscription {
@@ -2430,4 +2518,5 @@ type Subscription {
 	transactions(filter: TransactionFilter, accessKey: String): Transaction
 	messages(filter: MessageFilter, accessKey: String): Message
 	accounts(filter: AccountFilter, accessKey: String): Account
+	zerostates(filter: ZerostateFilter, accessKey: String): Zerostate
 }

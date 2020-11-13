@@ -153,17 +153,17 @@ const BlockMasterPrevBlkSignatures = struct({
     s: scalar,
 });
 
-const BlockMasterConfigP6 = struct({
+const ConfigP6 = struct({
     mint_new_price: scalar,
     mint_add_price: scalar,
 });
 
-const BlockMasterConfigP7 = struct({
+const ConfigP7 = struct({
     currency: scalar,
     value: scalar,
 });
 
-const BlockMasterConfigP8 = struct({
+const ConfigP8 = struct({
     version: scalar,
     capabilities: scalar,
 });
@@ -179,12 +179,12 @@ const ConfigProposalSetup = struct({
     cell_price: scalar,
 });
 
-const BlockMasterConfigP11 = struct({
+const ConfigP11 = struct({
     normal_params: ConfigProposalSetup,
     critical_params: ConfigProposalSetup,
 });
 
-const BlockMasterConfigP12 = struct({
+const ConfigP12 = struct({
     workchain_id: scalar,
     enabled_since: scalar,
     actual_min_split: scalar,
@@ -205,32 +205,32 @@ const BlockMasterConfigP12 = struct({
     workchain_type_id: scalar,
 });
 
-const BlockMasterConfigP14 = struct({
+const ConfigP14 = struct({
     masterchain_block_fee: bigUInt2,
     basechain_block_fee: bigUInt2,
 });
 
-const BlockMasterConfigP15 = struct({
+const ConfigP15 = struct({
     validators_elected_for: scalar,
     elections_start_before: scalar,
     elections_end_before: scalar,
     stake_held_for: scalar,
 });
 
-const BlockMasterConfigP16 = struct({
+const ConfigP16 = struct({
     max_validators: scalar,
     max_main_validators: scalar,
     min_validators: scalar,
 });
 
-const BlockMasterConfigP17 = struct({
+const ConfigP17 = struct({
     min_stake: bigUInt2,
     max_stake: bigUInt2,
     min_total_stake: bigUInt2,
     max_stake_factor: scalar,
 });
 
-const BlockMasterConfigP18 = struct({
+const ConfigP18 = struct({
     utime_since: scalar,
     utime_since_string: stringCompanion('utime_since'),
     bit_price_ps: bigUInt1,
@@ -284,7 +284,7 @@ const MsgForwardPrices = struct({
     next_frac: scalar,
 });
 
-const BlockMasterConfigP28 = struct({
+const ConfigP28 = struct({
     shuffle_mc_validators: scalar,
     mc_catchain_lifetime: scalar,
     shard_catchain_lifetime: scalar,
@@ -292,7 +292,7 @@ const BlockMasterConfigP28 = struct({
     shard_validators_num: scalar,
 });
 
-const BlockMasterConfigP29 = struct({
+const ConfigP29 = struct({
     new_catchain_ids: scalar,
     round_candidates: scalar,
     next_candidate_delay_ms: scalar,
@@ -321,7 +321,7 @@ const ValidatorSet = struct({
     list: ValidatorSetListArray,
 });
 
-const BlockMasterConfigP39 = struct({
+const ConfigP39 = struct({
     adnl_addr: scalar,
     temp_public_key: scalar,
     seqno: scalar,
@@ -330,38 +330,38 @@ const BlockMasterConfigP39 = struct({
     signature_s: scalar,
 });
 
-const BlockMasterConfigP7Array = array(() => BlockMasterConfigP7);
+const ConfigP7Array = array(() => ConfigP7);
 const FloatArray = array(() => scalar);
-const BlockMasterConfigP12Array = array(() => BlockMasterConfigP12);
-const BlockMasterConfigP18Array = array(() => BlockMasterConfigP18);
+const ConfigP12Array = array(() => ConfigP12);
+const ConfigP18Array = array(() => ConfigP18);
 const StringArray = array(() => scalar);
-const BlockMasterConfigP39Array = array(() => BlockMasterConfigP39);
-const BlockMasterConfig = struct({
+const ConfigP39Array = array(() => ConfigP39);
+const Config = struct({
     p0: scalar,
     p1: scalar,
     p2: scalar,
     p3: scalar,
     p4: scalar,
-    p6: BlockMasterConfigP6,
-    p7: BlockMasterConfigP7Array,
-    p8: BlockMasterConfigP8,
+    p6: ConfigP6,
+    p7: ConfigP7Array,
+    p8: ConfigP8,
     p9: FloatArray,
     p10: FloatArray,
-    p11: BlockMasterConfigP11,
-    p12: BlockMasterConfigP12Array,
-    p14: BlockMasterConfigP14,
-    p15: BlockMasterConfigP15,
-    p16: BlockMasterConfigP16,
-    p17: BlockMasterConfigP17,
-    p18: BlockMasterConfigP18Array,
+    p11: ConfigP11,
+    p12: ConfigP12Array,
+    p14: ConfigP14,
+    p15: ConfigP15,
+    p16: ConfigP16,
+    p17: ConfigP17,
+    p18: ConfigP18Array,
     p20: GasLimitsPrices,
     p21: GasLimitsPrices,
     p22: BlockLimits,
     p23: BlockLimits,
     p24: MsgForwardPrices,
     p25: MsgForwardPrices,
-    p28: BlockMasterConfigP28,
-    p29: BlockMasterConfigP29,
+    p28: ConfigP28,
+    p29: ConfigP29,
     p31: StringArray,
     p32: ValidatorSet,
     p33: ValidatorSet,
@@ -369,7 +369,7 @@ const BlockMasterConfig = struct({
     p35: ValidatorSet,
     p36: ValidatorSet,
     p37: ValidatorSet,
-    p39: BlockMasterConfigP39Array,
+    p39: ConfigP39Array,
 });
 
 const BlockMasterShardHashesArray = array(() => BlockMasterShardHashes);
@@ -385,7 +385,7 @@ const BlockMaster = struct({
     recover_create_msg: InMsg,
     prev_blk_signatures: BlockMasterPrevBlkSignaturesArray,
     config_addr: scalar,
-    config: BlockMasterConfig,
+    config: Config,
 });
 
 const BlockSignaturesSignatures = struct({
@@ -637,6 +637,33 @@ const Account = struct({
     state_hash: scalar,
 }, true);
 
+const ZerostateMaster = struct({
+    validator_list_hash_short: scalar,
+    global_balance: bigUInt2,
+    global_balance_other: OtherCurrencyArray,
+    config_addr: scalar,
+    config: Config,
+});
+
+const ZerostateLibraries = struct({
+    hash: scalar,
+    publishers: StringArray,
+    lib: scalar,
+});
+
+const AccountArray = array(() => Account);
+const ZerostateLibrariesArray = array(() => ZerostateLibraries);
+const Zerostate = struct({
+    id: scalar,
+    workchain_id: scalar,
+    global_id: scalar,
+    total_balance: bigUInt2,
+    total_balance_other: OtherCurrencyArray,
+    master: ZerostateMaster,
+    accounts: AccountArray,
+    libraries: ZerostateLibrariesArray,
+}, true);
+
 function createResolvers(data) {
     return {
         OtherCurrency: {
@@ -735,7 +762,7 @@ function createResolvers(data) {
                 return resolveBigUInt(2, parent.create, args);
             },
         },
-        BlockMasterConfigP14: {
+        ConfigP14: {
             masterchain_block_fee(parent, args) {
                 return resolveBigUInt(2, parent.masterchain_block_fee, args);
             },
@@ -743,7 +770,7 @@ function createResolvers(data) {
                 return resolveBigUInt(2, parent.basechain_block_fee, args);
             },
         },
-        BlockMasterConfigP17: {
+        ConfigP17: {
             min_stake(parent, args) {
                 return resolveBigUInt(2, parent.min_stake, args);
             },
@@ -754,7 +781,7 @@ function createResolvers(data) {
                 return resolveBigUInt(2, parent.min_total_stake, args);
             },
         },
-        BlockMasterConfigP18: {
+        ConfigP18: {
             bit_price_ps(parent, args) {
                 return resolveBigUInt(1, parent.bit_price_ps, args);
             },
@@ -1019,12 +1046,26 @@ function createResolvers(data) {
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
+        ZerostateMaster: {
+            global_balance(parent, args) {
+                return resolveBigUInt(2, parent.global_balance, args);
+            },
+        },
+        Zerostate: {
+            id(parent) {
+                return parent._key;
+            },
+            total_balance(parent, args) {
+                return resolveBigUInt(2, parent.total_balance, args);
+            },
+        },
         Query: {
             blocks_signatures: data.blocks_signatures.queryResolver(),
             blocks: data.blocks.queryResolver(),
             transactions: data.transactions.queryResolver(),
             messages: data.messages.queryResolver(),
             accounts: data.accounts.queryResolver(),
+            zerostates: data.zerostates.queryResolver(),
         },
         Subscription: {
             blocks_signatures: data.blocks_signatures.subscriptionResolver(),
@@ -1032,6 +1073,7 @@ function createResolvers(data) {
             transactions: data.transactions.subscriptionResolver(),
             messages: data.messages.subscriptionResolver(),
             accounts: data.accounts.subscriptionResolver(),
+            zerostates: data.zerostates.subscriptionResolver(),
         }
     }
 }
@@ -1539,6 +1581,216 @@ scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_h
 scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
 scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
 scalarFields.set('accounts.state_hash', { type: 'string', path: 'doc.state_hash' });
+scalarFields.set('zerostates.id', { type: 'string', path: 'doc._key' });
+scalarFields.set('zerostates.workchain_id', { type: 'number', path: 'doc.workchain_id' });
+scalarFields.set('zerostates.global_id', { type: 'number', path: 'doc.global_id' });
+scalarFields.set('zerostates.total_balance', { type: 'uint1024', path: 'doc.total_balance' });
+scalarFields.set('zerostates.total_balance_other.currency', { type: 'number', path: 'doc.total_balance_other[*].currency' });
+scalarFields.set('zerostates.total_balance_other.value', { type: 'uint1024', path: 'doc.total_balance_other[*].value' });
+scalarFields.set('zerostates.master.validator_list_hash_short', { type: 'number', path: 'doc.master.validator_list_hash_short' });
+scalarFields.set('zerostates.master.global_balance', { type: 'uint1024', path: 'doc.master.global_balance' });
+scalarFields.set('zerostates.master.global_balance_other.currency', { type: 'number', path: 'doc.master.global_balance_other[*].currency' });
+scalarFields.set('zerostates.master.global_balance_other.value', { type: 'uint1024', path: 'doc.master.global_balance_other[*].value' });
+scalarFields.set('zerostates.master.config_addr', { type: 'string', path: 'doc.master.config_addr' });
+scalarFields.set('zerostates.master.config.p0', { type: 'string', path: 'doc.master.config.p0' });
+scalarFields.set('zerostates.master.config.p1', { type: 'string', path: 'doc.master.config.p1' });
+scalarFields.set('zerostates.master.config.p2', { type: 'string', path: 'doc.master.config.p2' });
+scalarFields.set('zerostates.master.config.p3', { type: 'string', path: 'doc.master.config.p3' });
+scalarFields.set('zerostates.master.config.p4', { type: 'string', path: 'doc.master.config.p4' });
+scalarFields.set('zerostates.master.config.p6.mint_new_price', { type: 'string', path: 'doc.master.config.p6.mint_new_price' });
+scalarFields.set('zerostates.master.config.p6.mint_add_price', { type: 'string', path: 'doc.master.config.p6.mint_add_price' });
+scalarFields.set('zerostates.master.config.p7.currency', { type: 'number', path: 'doc.master.config.p7[*].currency' });
+scalarFields.set('zerostates.master.config.p7.value', { type: 'string', path: 'doc.master.config.p7[*].value' });
+scalarFields.set('zerostates.master.config.p8.version', { type: 'number', path: 'doc.master.config.p8.version' });
+scalarFields.set('zerostates.master.config.p8.capabilities', { type: 'string', path: 'doc.master.config.p8.capabilities' });
+scalarFields.set('zerostates.master.config.p9', { type: 'number', path: 'doc.master.config.p9[*]' });
+scalarFields.set('zerostates.master.config.p10', { type: 'number', path: 'doc.master.config.p10[*]' });
+scalarFields.set('zerostates.master.config.p11.normal_params.min_tot_rounds', { type: 'number', path: 'doc.master.config.p11.normal_params.min_tot_rounds' });
+scalarFields.set('zerostates.master.config.p11.normal_params.max_tot_rounds', { type: 'number', path: 'doc.master.config.p11.normal_params.max_tot_rounds' });
+scalarFields.set('zerostates.master.config.p11.normal_params.min_wins', { type: 'number', path: 'doc.master.config.p11.normal_params.min_wins' });
+scalarFields.set('zerostates.master.config.p11.normal_params.max_losses', { type: 'number', path: 'doc.master.config.p11.normal_params.max_losses' });
+scalarFields.set('zerostates.master.config.p11.normal_params.min_store_sec', { type: 'number', path: 'doc.master.config.p11.normal_params.min_store_sec' });
+scalarFields.set('zerostates.master.config.p11.normal_params.max_store_sec', { type: 'number', path: 'doc.master.config.p11.normal_params.max_store_sec' });
+scalarFields.set('zerostates.master.config.p11.normal_params.bit_price', { type: 'number', path: 'doc.master.config.p11.normal_params.bit_price' });
+scalarFields.set('zerostates.master.config.p11.normal_params.cell_price', { type: 'number', path: 'doc.master.config.p11.normal_params.cell_price' });
+scalarFields.set('zerostates.master.config.p11.critical_params.min_tot_rounds', { type: 'number', path: 'doc.master.config.p11.critical_params.min_tot_rounds' });
+scalarFields.set('zerostates.master.config.p11.critical_params.max_tot_rounds', { type: 'number', path: 'doc.master.config.p11.critical_params.max_tot_rounds' });
+scalarFields.set('zerostates.master.config.p11.critical_params.min_wins', { type: 'number', path: 'doc.master.config.p11.critical_params.min_wins' });
+scalarFields.set('zerostates.master.config.p11.critical_params.max_losses', { type: 'number', path: 'doc.master.config.p11.critical_params.max_losses' });
+scalarFields.set('zerostates.master.config.p11.critical_params.min_store_sec', { type: 'number', path: 'doc.master.config.p11.critical_params.min_store_sec' });
+scalarFields.set('zerostates.master.config.p11.critical_params.max_store_sec', { type: 'number', path: 'doc.master.config.p11.critical_params.max_store_sec' });
+scalarFields.set('zerostates.master.config.p11.critical_params.bit_price', { type: 'number', path: 'doc.master.config.p11.critical_params.bit_price' });
+scalarFields.set('zerostates.master.config.p11.critical_params.cell_price', { type: 'number', path: 'doc.master.config.p11.critical_params.cell_price' });
+scalarFields.set('zerostates.master.config.p12.workchain_id', { type: 'number', path: 'doc.master.config.p12[*].workchain_id' });
+scalarFields.set('zerostates.master.config.p12.enabled_since', { type: 'number', path: 'doc.master.config.p12[*].enabled_since' });
+scalarFields.set('zerostates.master.config.p12.actual_min_split', { type: 'number', path: 'doc.master.config.p12[*].actual_min_split' });
+scalarFields.set('zerostates.master.config.p12.min_split', { type: 'number', path: 'doc.master.config.p12[*].min_split' });
+scalarFields.set('zerostates.master.config.p12.max_split', { type: 'number', path: 'doc.master.config.p12[*].max_split' });
+scalarFields.set('zerostates.master.config.p12.active', { type: 'boolean', path: 'doc.master.config.p12[*].active' });
+scalarFields.set('zerostates.master.config.p12.accept_msgs', { type: 'boolean', path: 'doc.master.config.p12[*].accept_msgs' });
+scalarFields.set('zerostates.master.config.p12.flags', { type: 'number', path: 'doc.master.config.p12[*].flags' });
+scalarFields.set('zerostates.master.config.p12.zerostate_root_hash', { type: 'string', path: 'doc.master.config.p12[*].zerostate_root_hash' });
+scalarFields.set('zerostates.master.config.p12.zerostate_file_hash', { type: 'string', path: 'doc.master.config.p12[*].zerostate_file_hash' });
+scalarFields.set('zerostates.master.config.p12.version', { type: 'number', path: 'doc.master.config.p12[*].version' });
+scalarFields.set('zerostates.master.config.p12.basic', { type: 'boolean', path: 'doc.master.config.p12[*].basic' });
+scalarFields.set('zerostates.master.config.p12.vm_version', { type: 'number', path: 'doc.master.config.p12[*].vm_version' });
+scalarFields.set('zerostates.master.config.p12.vm_mode', { type: 'string', path: 'doc.master.config.p12[*].vm_mode' });
+scalarFields.set('zerostates.master.config.p12.min_addr_len', { type: 'number', path: 'doc.master.config.p12[*].min_addr_len' });
+scalarFields.set('zerostates.master.config.p12.max_addr_len', { type: 'number', path: 'doc.master.config.p12[*].max_addr_len' });
+scalarFields.set('zerostates.master.config.p12.addr_len_step', { type: 'number', path: 'doc.master.config.p12[*].addr_len_step' });
+scalarFields.set('zerostates.master.config.p12.workchain_type_id', { type: 'number', path: 'doc.master.config.p12[*].workchain_type_id' });
+scalarFields.set('zerostates.master.config.p14.masterchain_block_fee', { type: 'uint1024', path: 'doc.master.config.p14.masterchain_block_fee' });
+scalarFields.set('zerostates.master.config.p14.basechain_block_fee', { type: 'uint1024', path: 'doc.master.config.p14.basechain_block_fee' });
+scalarFields.set('zerostates.master.config.p15.validators_elected_for', { type: 'number', path: 'doc.master.config.p15.validators_elected_for' });
+scalarFields.set('zerostates.master.config.p15.elections_start_before', { type: 'number', path: 'doc.master.config.p15.elections_start_before' });
+scalarFields.set('zerostates.master.config.p15.elections_end_before', { type: 'number', path: 'doc.master.config.p15.elections_end_before' });
+scalarFields.set('zerostates.master.config.p15.stake_held_for', { type: 'number', path: 'doc.master.config.p15.stake_held_for' });
+scalarFields.set('zerostates.master.config.p16.max_validators', { type: 'number', path: 'doc.master.config.p16.max_validators' });
+scalarFields.set('zerostates.master.config.p16.max_main_validators', { type: 'number', path: 'doc.master.config.p16.max_main_validators' });
+scalarFields.set('zerostates.master.config.p16.min_validators', { type: 'number', path: 'doc.master.config.p16.min_validators' });
+scalarFields.set('zerostates.master.config.p17.min_stake', { type: 'uint1024', path: 'doc.master.config.p17.min_stake' });
+scalarFields.set('zerostates.master.config.p17.max_stake', { type: 'uint1024', path: 'doc.master.config.p17.max_stake' });
+scalarFields.set('zerostates.master.config.p17.min_total_stake', { type: 'uint1024', path: 'doc.master.config.p17.min_total_stake' });
+scalarFields.set('zerostates.master.config.p17.max_stake_factor', { type: 'number', path: 'doc.master.config.p17.max_stake_factor' });
+scalarFields.set('zerostates.master.config.p18.utime_since', { type: 'number', path: 'doc.master.config.p18[*].utime_since' });
+scalarFields.set('zerostates.master.config.p18.bit_price_ps', { type: 'uint64', path: 'doc.master.config.p18[*].bit_price_ps' });
+scalarFields.set('zerostates.master.config.p18.cell_price_ps', { type: 'uint64', path: 'doc.master.config.p18[*].cell_price_ps' });
+scalarFields.set('zerostates.master.config.p18.mc_bit_price_ps', { type: 'uint64', path: 'doc.master.config.p18[*].mc_bit_price_ps' });
+scalarFields.set('zerostates.master.config.p18.mc_cell_price_ps', { type: 'uint64', path: 'doc.master.config.p18[*].mc_cell_price_ps' });
+scalarFields.set('zerostates.master.config.p20.gas_price', { type: 'uint64', path: 'doc.master.config.p20.gas_price' });
+scalarFields.set('zerostates.master.config.p20.gas_limit', { type: 'uint64', path: 'doc.master.config.p20.gas_limit' });
+scalarFields.set('zerostates.master.config.p20.special_gas_limit', { type: 'uint64', path: 'doc.master.config.p20.special_gas_limit' });
+scalarFields.set('zerostates.master.config.p20.gas_credit', { type: 'uint64', path: 'doc.master.config.p20.gas_credit' });
+scalarFields.set('zerostates.master.config.p20.block_gas_limit', { type: 'uint64', path: 'doc.master.config.p20.block_gas_limit' });
+scalarFields.set('zerostates.master.config.p20.freeze_due_limit', { type: 'uint64', path: 'doc.master.config.p20.freeze_due_limit' });
+scalarFields.set('zerostates.master.config.p20.delete_due_limit', { type: 'uint64', path: 'doc.master.config.p20.delete_due_limit' });
+scalarFields.set('zerostates.master.config.p20.flat_gas_limit', { type: 'uint64', path: 'doc.master.config.p20.flat_gas_limit' });
+scalarFields.set('zerostates.master.config.p20.flat_gas_price', { type: 'uint64', path: 'doc.master.config.p20.flat_gas_price' });
+scalarFields.set('zerostates.master.config.p21.gas_price', { type: 'uint64', path: 'doc.master.config.p21.gas_price' });
+scalarFields.set('zerostates.master.config.p21.gas_limit', { type: 'uint64', path: 'doc.master.config.p21.gas_limit' });
+scalarFields.set('zerostates.master.config.p21.special_gas_limit', { type: 'uint64', path: 'doc.master.config.p21.special_gas_limit' });
+scalarFields.set('zerostates.master.config.p21.gas_credit', { type: 'uint64', path: 'doc.master.config.p21.gas_credit' });
+scalarFields.set('zerostates.master.config.p21.block_gas_limit', { type: 'uint64', path: 'doc.master.config.p21.block_gas_limit' });
+scalarFields.set('zerostates.master.config.p21.freeze_due_limit', { type: 'uint64', path: 'doc.master.config.p21.freeze_due_limit' });
+scalarFields.set('zerostates.master.config.p21.delete_due_limit', { type: 'uint64', path: 'doc.master.config.p21.delete_due_limit' });
+scalarFields.set('zerostates.master.config.p21.flat_gas_limit', { type: 'uint64', path: 'doc.master.config.p21.flat_gas_limit' });
+scalarFields.set('zerostates.master.config.p21.flat_gas_price', { type: 'uint64', path: 'doc.master.config.p21.flat_gas_price' });
+scalarFields.set('zerostates.master.config.p22.bytes.underload', { type: 'number', path: 'doc.master.config.p22.bytes.underload' });
+scalarFields.set('zerostates.master.config.p22.bytes.soft_limit', { type: 'number', path: 'doc.master.config.p22.bytes.soft_limit' });
+scalarFields.set('zerostates.master.config.p22.bytes.hard_limit', { type: 'number', path: 'doc.master.config.p22.bytes.hard_limit' });
+scalarFields.set('zerostates.master.config.p22.gas.underload', { type: 'number', path: 'doc.master.config.p22.gas.underload' });
+scalarFields.set('zerostates.master.config.p22.gas.soft_limit', { type: 'number', path: 'doc.master.config.p22.gas.soft_limit' });
+scalarFields.set('zerostates.master.config.p22.gas.hard_limit', { type: 'number', path: 'doc.master.config.p22.gas.hard_limit' });
+scalarFields.set('zerostates.master.config.p22.lt_delta.underload', { type: 'number', path: 'doc.master.config.p22.lt_delta.underload' });
+scalarFields.set('zerostates.master.config.p22.lt_delta.soft_limit', { type: 'number', path: 'doc.master.config.p22.lt_delta.soft_limit' });
+scalarFields.set('zerostates.master.config.p22.lt_delta.hard_limit', { type: 'number', path: 'doc.master.config.p22.lt_delta.hard_limit' });
+scalarFields.set('zerostates.master.config.p23.bytes.underload', { type: 'number', path: 'doc.master.config.p23.bytes.underload' });
+scalarFields.set('zerostates.master.config.p23.bytes.soft_limit', { type: 'number', path: 'doc.master.config.p23.bytes.soft_limit' });
+scalarFields.set('zerostates.master.config.p23.bytes.hard_limit', { type: 'number', path: 'doc.master.config.p23.bytes.hard_limit' });
+scalarFields.set('zerostates.master.config.p23.gas.underload', { type: 'number', path: 'doc.master.config.p23.gas.underload' });
+scalarFields.set('zerostates.master.config.p23.gas.soft_limit', { type: 'number', path: 'doc.master.config.p23.gas.soft_limit' });
+scalarFields.set('zerostates.master.config.p23.gas.hard_limit', { type: 'number', path: 'doc.master.config.p23.gas.hard_limit' });
+scalarFields.set('zerostates.master.config.p23.lt_delta.underload', { type: 'number', path: 'doc.master.config.p23.lt_delta.underload' });
+scalarFields.set('zerostates.master.config.p23.lt_delta.soft_limit', { type: 'number', path: 'doc.master.config.p23.lt_delta.soft_limit' });
+scalarFields.set('zerostates.master.config.p23.lt_delta.hard_limit', { type: 'number', path: 'doc.master.config.p23.lt_delta.hard_limit' });
+scalarFields.set('zerostates.master.config.p24.lump_price', { type: 'uint64', path: 'doc.master.config.p24.lump_price' });
+scalarFields.set('zerostates.master.config.p24.bit_price', { type: 'uint64', path: 'doc.master.config.p24.bit_price' });
+scalarFields.set('zerostates.master.config.p24.cell_price', { type: 'uint64', path: 'doc.master.config.p24.cell_price' });
+scalarFields.set('zerostates.master.config.p24.ihr_price_factor', { type: 'number', path: 'doc.master.config.p24.ihr_price_factor' });
+scalarFields.set('zerostates.master.config.p24.first_frac', { type: 'number', path: 'doc.master.config.p24.first_frac' });
+scalarFields.set('zerostates.master.config.p24.next_frac', { type: 'number', path: 'doc.master.config.p24.next_frac' });
+scalarFields.set('zerostates.master.config.p25.lump_price', { type: 'uint64', path: 'doc.master.config.p25.lump_price' });
+scalarFields.set('zerostates.master.config.p25.bit_price', { type: 'uint64', path: 'doc.master.config.p25.bit_price' });
+scalarFields.set('zerostates.master.config.p25.cell_price', { type: 'uint64', path: 'doc.master.config.p25.cell_price' });
+scalarFields.set('zerostates.master.config.p25.ihr_price_factor', { type: 'number', path: 'doc.master.config.p25.ihr_price_factor' });
+scalarFields.set('zerostates.master.config.p25.first_frac', { type: 'number', path: 'doc.master.config.p25.first_frac' });
+scalarFields.set('zerostates.master.config.p25.next_frac', { type: 'number', path: 'doc.master.config.p25.next_frac' });
+scalarFields.set('zerostates.master.config.p28.shuffle_mc_validators', { type: 'boolean', path: 'doc.master.config.p28.shuffle_mc_validators' });
+scalarFields.set('zerostates.master.config.p28.mc_catchain_lifetime', { type: 'number', path: 'doc.master.config.p28.mc_catchain_lifetime' });
+scalarFields.set('zerostates.master.config.p28.shard_catchain_lifetime', { type: 'number', path: 'doc.master.config.p28.shard_catchain_lifetime' });
+scalarFields.set('zerostates.master.config.p28.shard_validators_lifetime', { type: 'number', path: 'doc.master.config.p28.shard_validators_lifetime' });
+scalarFields.set('zerostates.master.config.p28.shard_validators_num', { type: 'number', path: 'doc.master.config.p28.shard_validators_num' });
+scalarFields.set('zerostates.master.config.p29.new_catchain_ids', { type: 'boolean', path: 'doc.master.config.p29.new_catchain_ids' });
+scalarFields.set('zerostates.master.config.p29.round_candidates', { type: 'number', path: 'doc.master.config.p29.round_candidates' });
+scalarFields.set('zerostates.master.config.p29.next_candidate_delay_ms', { type: 'number', path: 'doc.master.config.p29.next_candidate_delay_ms' });
+scalarFields.set('zerostates.master.config.p29.consensus_timeout_ms', { type: 'number', path: 'doc.master.config.p29.consensus_timeout_ms' });
+scalarFields.set('zerostates.master.config.p29.fast_attempts', { type: 'number', path: 'doc.master.config.p29.fast_attempts' });
+scalarFields.set('zerostates.master.config.p29.attempt_duration', { type: 'number', path: 'doc.master.config.p29.attempt_duration' });
+scalarFields.set('zerostates.master.config.p29.catchain_max_deps', { type: 'number', path: 'doc.master.config.p29.catchain_max_deps' });
+scalarFields.set('zerostates.master.config.p29.max_block_bytes', { type: 'number', path: 'doc.master.config.p29.max_block_bytes' });
+scalarFields.set('zerostates.master.config.p29.max_collated_bytes', { type: 'number', path: 'doc.master.config.p29.max_collated_bytes' });
+scalarFields.set('zerostates.master.config.p31', { type: 'string', path: 'doc.master.config.p31[*]' });
+scalarFields.set('zerostates.master.config.p32.utime_since', { type: 'number', path: 'doc.master.config.p32.utime_since' });
+scalarFields.set('zerostates.master.config.p32.utime_until', { type: 'number', path: 'doc.master.config.p32.utime_until' });
+scalarFields.set('zerostates.master.config.p32.total', { type: 'number', path: 'doc.master.config.p32.total' });
+scalarFields.set('zerostates.master.config.p32.total_weight', { type: 'uint64', path: 'doc.master.config.p32.total_weight' });
+scalarFields.set('zerostates.master.config.p32.list.public_key', { type: 'string', path: 'doc.master.config.p32.list[*].public_key' });
+scalarFields.set('zerostates.master.config.p32.list.weight', { type: 'uint64', path: 'doc.master.config.p32.list[*].weight' });
+scalarFields.set('zerostates.master.config.p32.list.adnl_addr', { type: 'string', path: 'doc.master.config.p32.list[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p33.utime_since', { type: 'number', path: 'doc.master.config.p33.utime_since' });
+scalarFields.set('zerostates.master.config.p33.utime_until', { type: 'number', path: 'doc.master.config.p33.utime_until' });
+scalarFields.set('zerostates.master.config.p33.total', { type: 'number', path: 'doc.master.config.p33.total' });
+scalarFields.set('zerostates.master.config.p33.total_weight', { type: 'uint64', path: 'doc.master.config.p33.total_weight' });
+scalarFields.set('zerostates.master.config.p33.list.public_key', { type: 'string', path: 'doc.master.config.p33.list[*].public_key' });
+scalarFields.set('zerostates.master.config.p33.list.weight', { type: 'uint64', path: 'doc.master.config.p33.list[*].weight' });
+scalarFields.set('zerostates.master.config.p33.list.adnl_addr', { type: 'string', path: 'doc.master.config.p33.list[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p34.utime_since', { type: 'number', path: 'doc.master.config.p34.utime_since' });
+scalarFields.set('zerostates.master.config.p34.utime_until', { type: 'number', path: 'doc.master.config.p34.utime_until' });
+scalarFields.set('zerostates.master.config.p34.total', { type: 'number', path: 'doc.master.config.p34.total' });
+scalarFields.set('zerostates.master.config.p34.total_weight', { type: 'uint64', path: 'doc.master.config.p34.total_weight' });
+scalarFields.set('zerostates.master.config.p34.list.public_key', { type: 'string', path: 'doc.master.config.p34.list[*].public_key' });
+scalarFields.set('zerostates.master.config.p34.list.weight', { type: 'uint64', path: 'doc.master.config.p34.list[*].weight' });
+scalarFields.set('zerostates.master.config.p34.list.adnl_addr', { type: 'string', path: 'doc.master.config.p34.list[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p35.utime_since', { type: 'number', path: 'doc.master.config.p35.utime_since' });
+scalarFields.set('zerostates.master.config.p35.utime_until', { type: 'number', path: 'doc.master.config.p35.utime_until' });
+scalarFields.set('zerostates.master.config.p35.total', { type: 'number', path: 'doc.master.config.p35.total' });
+scalarFields.set('zerostates.master.config.p35.total_weight', { type: 'uint64', path: 'doc.master.config.p35.total_weight' });
+scalarFields.set('zerostates.master.config.p35.list.public_key', { type: 'string', path: 'doc.master.config.p35.list[*].public_key' });
+scalarFields.set('zerostates.master.config.p35.list.weight', { type: 'uint64', path: 'doc.master.config.p35.list[*].weight' });
+scalarFields.set('zerostates.master.config.p35.list.adnl_addr', { type: 'string', path: 'doc.master.config.p35.list[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p36.utime_since', { type: 'number', path: 'doc.master.config.p36.utime_since' });
+scalarFields.set('zerostates.master.config.p36.utime_until', { type: 'number', path: 'doc.master.config.p36.utime_until' });
+scalarFields.set('zerostates.master.config.p36.total', { type: 'number', path: 'doc.master.config.p36.total' });
+scalarFields.set('zerostates.master.config.p36.total_weight', { type: 'uint64', path: 'doc.master.config.p36.total_weight' });
+scalarFields.set('zerostates.master.config.p36.list.public_key', { type: 'string', path: 'doc.master.config.p36.list[*].public_key' });
+scalarFields.set('zerostates.master.config.p36.list.weight', { type: 'uint64', path: 'doc.master.config.p36.list[*].weight' });
+scalarFields.set('zerostates.master.config.p36.list.adnl_addr', { type: 'string', path: 'doc.master.config.p36.list[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p37.utime_since', { type: 'number', path: 'doc.master.config.p37.utime_since' });
+scalarFields.set('zerostates.master.config.p37.utime_until', { type: 'number', path: 'doc.master.config.p37.utime_until' });
+scalarFields.set('zerostates.master.config.p37.total', { type: 'number', path: 'doc.master.config.p37.total' });
+scalarFields.set('zerostates.master.config.p37.total_weight', { type: 'uint64', path: 'doc.master.config.p37.total_weight' });
+scalarFields.set('zerostates.master.config.p37.list.public_key', { type: 'string', path: 'doc.master.config.p37.list[*].public_key' });
+scalarFields.set('zerostates.master.config.p37.list.weight', { type: 'uint64', path: 'doc.master.config.p37.list[*].weight' });
+scalarFields.set('zerostates.master.config.p37.list.adnl_addr', { type: 'string', path: 'doc.master.config.p37.list[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p39.adnl_addr', { type: 'string', path: 'doc.master.config.p39[*].adnl_addr' });
+scalarFields.set('zerostates.master.config.p39.temp_public_key', { type: 'string', path: 'doc.master.config.p39[*].temp_public_key' });
+scalarFields.set('zerostates.master.config.p39.seqno', { type: 'number', path: 'doc.master.config.p39[*].seqno' });
+scalarFields.set('zerostates.master.config.p39.valid_until', { type: 'number', path: 'doc.master.config.p39[*].valid_until' });
+scalarFields.set('zerostates.master.config.p39.signature_r', { type: 'string', path: 'doc.master.config.p39[*].signature_r' });
+scalarFields.set('zerostates.master.config.p39.signature_s', { type: 'string', path: 'doc.master.config.p39[*].signature_s' });
+scalarFields.set('zerostates.accounts.id', { type: 'string', path: 'doc.accounts[*]._key' });
+scalarFields.set('zerostates.accounts.workchain_id', { type: 'number', path: 'doc.accounts[*].workchain_id' });
+scalarFields.set('zerostates.accounts.last_paid', { type: 'number', path: 'doc.accounts[*].last_paid' });
+scalarFields.set('zerostates.accounts.due_payment', { type: 'uint1024', path: 'doc.accounts[*].due_payment' });
+scalarFields.set('zerostates.accounts.last_trans_lt', { type: 'uint64', path: 'doc.accounts[*].last_trans_lt' });
+scalarFields.set('zerostates.accounts.balance', { type: 'uint1024', path: 'doc.accounts[*].balance' });
+scalarFields.set('zerostates.accounts.balance_other.currency', { type: 'number', path: 'doc.accounts[*].balance_other[**].currency' });
+scalarFields.set('zerostates.accounts.balance_other.value', { type: 'uint1024', path: 'doc.accounts[*].balance_other[**].value' });
+scalarFields.set('zerostates.accounts.split_depth', { type: 'number', path: 'doc.accounts[*].split_depth' });
+scalarFields.set('zerostates.accounts.tick', { type: 'boolean', path: 'doc.accounts[*].tick' });
+scalarFields.set('zerostates.accounts.tock', { type: 'boolean', path: 'doc.accounts[*].tock' });
+scalarFields.set('zerostates.accounts.code', { type: 'string', path: 'doc.accounts[*].code' });
+scalarFields.set('zerostates.accounts.code_hash', { type: 'string', path: 'doc.accounts[*].code_hash' });
+scalarFields.set('zerostates.accounts.data', { type: 'string', path: 'doc.accounts[*].data' });
+scalarFields.set('zerostates.accounts.data_hash', { type: 'string', path: 'doc.accounts[*].data_hash' });
+scalarFields.set('zerostates.accounts.library', { type: 'string', path: 'doc.accounts[*].library' });
+scalarFields.set('zerostates.accounts.library_hash', { type: 'string', path: 'doc.accounts[*].library_hash' });
+scalarFields.set('zerostates.accounts.proof', { type: 'string', path: 'doc.accounts[*].proof' });
+scalarFields.set('zerostates.accounts.boc', { type: 'string', path: 'doc.accounts[*].boc' });
+scalarFields.set('zerostates.accounts.state_hash', { type: 'string', path: 'doc.accounts[*].state_hash' });
+scalarFields.set('zerostates.libraries.hash', { type: 'string', path: 'doc.libraries[*].hash' });
+scalarFields.set('zerostates.libraries.publishers', { type: 'string', path: 'doc.libraries[*].publishers[**]' });
+scalarFields.set('zerostates.libraries.lib', { type: 'string', path: 'doc.libraries[*].lib' });
 module.exports = {
     scalarFields,
     createResolvers,
@@ -1555,29 +1807,29 @@ module.exports = {
     BlockMasterShardHashes,
     BlockMasterShardFees,
     BlockMasterPrevBlkSignatures,
-    BlockMasterConfigP6,
-    BlockMasterConfigP7,
-    BlockMasterConfigP8,
+    ConfigP6,
+    ConfigP7,
+    ConfigP8,
     ConfigProposalSetup,
-    BlockMasterConfigP11,
-    BlockMasterConfigP12,
-    BlockMasterConfigP14,
-    BlockMasterConfigP15,
-    BlockMasterConfigP16,
-    BlockMasterConfigP17,
-    BlockMasterConfigP18,
+    ConfigP11,
+    ConfigP12,
+    ConfigP14,
+    ConfigP15,
+    ConfigP16,
+    ConfigP17,
+    ConfigP18,
     GasLimitsPrices,
     BlockLimitsBytes,
     BlockLimitsGas,
     BlockLimitsLtDelta,
     BlockLimits,
     MsgForwardPrices,
-    BlockMasterConfigP28,
-    BlockMasterConfigP29,
+    ConfigP28,
+    ConfigP29,
     ValidatorSetList,
     ValidatorSet,
-    BlockMasterConfigP39,
-    BlockMasterConfig,
+    ConfigP39,
+    Config,
     BlockMaster,
     BlockSignaturesSignatures,
     BlockSignatures,
@@ -1591,4 +1843,7 @@ module.exports = {
     Transaction,
     Message,
     Account,
+    ZerostateMaster,
+    ZerostateLibraries,
+    Zerostate,
 };

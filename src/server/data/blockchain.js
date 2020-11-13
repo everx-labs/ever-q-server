@@ -19,7 +19,14 @@
 import type { QDataOptions } from './data';
 import QData from './data';
 import { QDataCollection } from './collection';
-import { Account, Block, BlockSignatures, Message, Transaction } from '../graphql/resolvers-generated';
+import {
+    Account,
+    Block,
+    BlockSignatures,
+    Message,
+    Transaction,
+    Zerostate,
+} from '../graphql/resolvers-generated';
 import { sortedIndex } from './data-provider';
 
 export const INDEXES = {
@@ -71,6 +78,9 @@ export const INDEXES = {
             sortedIndex(['signatures[*].node_id', 'gen_utime']),
         ],
     },
+    zerostates: {
+        indexes: [],
+    },
 };
 
 
@@ -85,6 +95,7 @@ export default class QBlockchainData extends QData {
     accounts: QDataCollection;
     blocks: QDataCollection;
     blocks_signatures: QDataCollection;
+    zerostates: QDataCollection;
 
     constructor(options: QDataOptions) {
         super(options);
@@ -96,5 +107,6 @@ export default class QBlockchainData extends QData {
         this.messages = add('messages', Message, false);
         this.blocks = add('blocks', Block, false);
         this.blocks_signatures = add('blocks_signatures', BlockSignatures, false);
+        this.zerostates = add('zerostates', Zerostate, true);
     }
 }
