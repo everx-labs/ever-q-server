@@ -107,6 +107,6 @@ export default class QBlockchainData extends QData {
         this.messages = add('messages', Message, false);
         this.blocks = add('blocks', Block, false);
         this.blocks_signatures = add('blocks_signatures', BlockSignatures, false);
-        this.zerostates = add('zerostates', Zerostate, true);
+        this.zerostates = add('zerostates', Zerostate, false);
     }
 }
