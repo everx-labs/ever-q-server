@@ -500,6 +500,27 @@ Logical time is a component of the TON Blockchain that also plays an important r
             r: `'R' part of signature`,
             s: `'s' part of signature`,
         }
+    },
+
+    zerostate: {
+        _doc: `The initial state of the workchain before first block was generated`,
+        global_id: `uint32 global network ID`,
+        workchain_id: `Zerostate's workchain_id`,
+        accounts: `Initial accounts state at the workchain start`,
+        total_balance: `Overall balance of all accounts of the workchain`,
+        total_balance_other: `Overall balance of all accounts of the workchain in other currencies`,
+        master: {
+            global_balance: `Overall balance of all accounts`,
+            global_balance_other: `Overall balance of all accounts in other currencies`,
+            validator_list_hash_short: ``,
+        },
+        boc: 'Serialized bag of cell of this zerostate encoded with base64',
+        libraries: {
+            _doc: `Initial libraries at the workchain start`,
+            hash: `Library hash`,
+            publishers: `List of the accounts which use the library`,
+            lib: `Serialized bag of cell of this library encoded with base64`,
+        }
     }
 
 };
