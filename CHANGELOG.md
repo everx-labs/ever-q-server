@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.29.1 – Nov 13, 2020
+
+### Fixed
+- `zerostates` uses immutable database
+
 ## 0.29.0 – Nov 13, 2020
 
 ### New
