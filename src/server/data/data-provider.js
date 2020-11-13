@@ -173,7 +173,8 @@ function getValue(value: any, path: string[], pathIndex: number): any {
     if (isNullOrUndefined(value) || pathIndex >= path.length) {
         return value;
     }
-    const name = path[pathIndex] === 'id' ? '_key' : path[pathIndex];
+    const isCollection = pathIndex === 0;
+    const name = isCollection && path[pathIndex] === 'id' ? '_key' : path[pathIndex];
     return getValue(value[name], path, pathIndex + 1);
 }
 

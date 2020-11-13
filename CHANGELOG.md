@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.29.2 – Nov 13, 2020
+
+### New
+- `ZerostateAccount` schema info
+
 ## 0.29.1 – Nov 13, 2020
 
 ### Fixed

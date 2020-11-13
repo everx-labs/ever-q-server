@@ -406,8 +406,9 @@ function createScalar(): QType {
             });
         },
         returnExpression(path: string, def: GDefinition): QReturnExpression {
+            const isCollection = path === 'doc';
             let name = def.name.value;
-            if (name === 'id' && path === 'doc') {
+            if (isCollection && name === 'id') {
                 name = '_key';
             }
             return {
@@ -1015,7 +1016,7 @@ export function createScalarFields(schema: DbSchema): Map<string, { type: string
             if (field.join || field.enumDef) {
                 return;
             }
-            const docName = field.name === 'id' ? '_key' : field.name;
+            const docName = type.collection && field.name === 'id' ? '_key' : field.name;
             const path = `${parentPath}.${field.name}`;
             let docPath = `${parentDocPath}.${docName}`;
             if (field.arrayDepth > 0) {
