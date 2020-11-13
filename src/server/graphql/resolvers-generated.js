@@ -666,6 +666,7 @@ const ZerostateAccounts = struct({
     proof: scalar,
     boc: scalar,
     state_hash: scalar,
+    id: scalar,
 });
 
 const ZerostateLibraries = struct({
@@ -1822,6 +1823,7 @@ scalarFields.set('zerostates.accounts.library_hash', { type: 'string', path: 'do
 scalarFields.set('zerostates.accounts.proof', { type: 'string', path: 'doc.accounts[*].proof' });
 scalarFields.set('zerostates.accounts.boc', { type: 'string', path: 'doc.accounts[*].boc' });
 scalarFields.set('zerostates.accounts.state_hash', { type: 'string', path: 'doc.accounts[*].state_hash' });
+scalarFields.set('zerostates.accounts.id', { type: 'string', path: 'doc.accounts[*].id' });
 scalarFields.set('zerostates.libraries.hash', { type: 'string', path: 'doc.libraries[*].hash' });
 scalarFields.set('zerostates.libraries.publishers', { type: 'string', path: 'doc.libraries[*].publishers[**]' });
 scalarFields.set('zerostates.libraries.lib', { type: 'string', path: 'doc.libraries[*].lib' });

@@ -1264,6 +1264,7 @@ type ZerostateAccounts {
 	boc: String
 	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
 	state_hash: String
+	id: String
 }
 
 type ZerostateLibraries {
@@ -2673,6 +2674,7 @@ input ZerostateAccountsFilter {
 	boc: StringFilter
 	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
 	state_hash: StringFilter
+	id: StringFilter
     OR: ZerostateAccountsFilter
 }
 

@@ -145,9 +145,7 @@ const splitType = u8enum('SplitType', {
     merge: 3,
 });
 
-const Account: TypeDef = {
-    _doc: docs.account._doc,
-    _: { collection: 'accounts' },
+const AccountBase: TypeDef = {
     workchain_id: i32(docs.account.workchain_id),
     acc_type: required(accountStatus(docs.account.acc_type)),
     last_paid: required(u32(docs.account.last_paid)),
@@ -169,7 +167,11 @@ const Account: TypeDef = {
     state_hash: string(docs.account.state_hash),
 };
 
-const account = () => ref({ Account });
+const Account: TypeDef = {
+    ...AccountBase,
+    _doc: docs.account._doc,
+    _: { collection: 'accounts' },
+};
 
 const Message: TypeDef = {
     _doc: docs.message._doc,
@@ -717,25 +719,8 @@ const Zerostate: TypeDef = {
         config: config(),
     },
     accounts: arrayOf({
-        workchain_id: i32(docs.account.workchain_id),
-        acc_type: required(accountStatus(docs.account.acc_type)),
-        last_paid: required(u32(docs.account.last_paid)),
-        due_payment: grams(docs.account.due_payment),
-        last_trans_lt: required(u64(docs.account.last_trans_lt)), // index
-        balance: required(grams(docs.account.balance)), // index
-        balance_other: otherCurrencyCollection(docs.account.balance_other),
-        split_depth: u8(docs.account.split_depth),
-        tick: bool(docs.account.tick),
-        tock: bool(docs.account.tock),
-        code: string(docs.account.code),
-        code_hash: string(docs.account.code_hash),
-        data: string(docs.account.data),
-        data_hash: string(docs.account.data_hash),
-        library: string(docs.account.library),
-        library_hash: string(docs.account.library_hash),
-        proof: string(docs.account.proof),
-        boc: string(docs.account.boc),
-        state_hash: string(docs.account.state_hash),
+        ...AccountBase,
+        id: string(),
     }, docs.zerostate.accounts),
     libraries: arrayOf(
         {

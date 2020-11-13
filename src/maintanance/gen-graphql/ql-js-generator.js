@@ -399,7 +399,7 @@ function main(schemaDef: TypeDef) {
             if (field.join || field.enumDef) {
                 return;
             }
-            const docName = field.name === 'id' ? '_key' : field.name;
+            const docName = (type.collection && field.name === 'id') ? '_key' : field.name;
             const path = `${parentPath}.${field.name}`;
             let docPath = `${parentDocPath}.${docName}`;
             if (field.arrayDepth > 0) {
