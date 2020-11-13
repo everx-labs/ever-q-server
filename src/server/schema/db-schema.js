@@ -34,8 +34,8 @@ import {
     u8,
     u8enum,
     unixSeconds,
-    withDoc
-} from "./db-schema-types";
+    withDoc,
+} from './db-schema-types';
 
 import { docs } from './db.shema.docs';
 
@@ -331,7 +331,7 @@ const ExtBlkRef: TypeDef = {
     end_lt: u64(),
     seq_no: u32(),
     root_hash: string(),
-    file_hash: string()
+    file_hash: string(),
 };
 
 const extBlkRef = (doc?: string) => ref({ ExtBlkRef }, doc);
@@ -355,7 +355,7 @@ const InMsg: TypeDef = {
     out_msg: msgEnvelope(),
     transit_fee: grams(),
     transaction_id: string(),
-    proof_delivered: string()
+    proof_delivered: string(),
 };
 
 const inMsg = (doc?: string) => ref({ InMsg }, doc);
@@ -542,7 +542,7 @@ const Config: TypeDef = {
         min_stake: u128(),
         max_stake: u128(),
         min_total_stake: u128(),
-        max_stake_factor: u32()
+        max_stake_factor: u32(),
     },
     p18: arrayOf({
         utime_since: unixSeconds(),
@@ -575,7 +575,7 @@ const Config: TypeDef = {
         attempt_duration: u32(),
         catchain_max_deps: u32(),
         max_block_bytes: u32(),
-        max_collated_bytes: u32()
+        max_collated_bytes: u32(),
     },
     p31: arrayOf(string(), docs.block.master.config.p31._doc),
     p32: validatorSet(docs.block.master.config.p32),
@@ -650,17 +650,18 @@ const Block: TypeDef = {
     out_msg_descr: arrayOf(outMsg(docs.block.out_msg_descr)),
     account_blocks: arrayOf({
         account_addr: string(docs.block.account_blocks.account_addr),
-        transactions: arrayOf({
+        transactions: arrayOf(
+            {
                 lt: u64(), // TODO: doc
                 transaction_id: string(), // TODO: doc
                 total_fees: grams(), // TODO: doc
                 total_fees_other: otherCurrencyCollection(), // TODO: doc
             },
-            docs.block.account_blocks.transactions
+            docs.block.account_blocks.transactions,
         ),
         old_hash: string(docs.block.account_blocks.state_update.old_hash),
         new_hash: string(docs.block.account_blocks.state_update.new_hash),
-        tr_count: i32(docs.block.account_blocks.tr_count)
+        tr_count: i32(docs.block.account_blocks.tr_count),
     }),
     tr_count: i32(), // TODO: doc
     state_update: {
@@ -669,7 +670,7 @@ const Block: TypeDef = {
         new_depth: u16(docs.block.state_update.new_depth),
         old: string(docs.block.state_update.old),
         old_hash: string(docs.block.state_update.old_hash),
-        old_depth: u16(docs.block.state_update.old_depth)
+        old_depth: u16(docs.block.state_update.old_depth),
     },
     master: {
         min_shard_gen_utime: unixSeconds(docs.block.master.min_shard_gen_utime),
@@ -715,13 +716,34 @@ const Zerostate: TypeDef = {
         config_addr: string(),
         config: config(),
     },
-    accounts: arrayOf(account(), docs.zerostate.accounts),
-    libraries: arrayOf({
+    accounts: arrayOf({
+        workchain_id: i32(docs.account.workchain_id),
+        acc_type: required(accountStatus(docs.account.acc_type)),
+        last_paid: required(u32(docs.account.last_paid)),
+        due_payment: grams(docs.account.due_payment),
+        last_trans_lt: required(u64(docs.account.last_trans_lt)), // index
+        balance: required(grams(docs.account.balance)), // index
+        balance_other: otherCurrencyCollection(docs.account.balance_other),
+        split_depth: u8(docs.account.split_depth),
+        tick: bool(docs.account.tick),
+        tock: bool(docs.account.tock),
+        code: string(docs.account.code),
+        code_hash: string(docs.account.code_hash),
+        data: string(docs.account.data),
+        data_hash: string(docs.account.data_hash),
+        library: string(docs.account.library),
+        library_hash: string(docs.account.library_hash),
+        proof: string(docs.account.proof),
+        boc: string(docs.account.boc),
+        state_hash: string(docs.account.state_hash),
+    }, docs.zerostate.accounts),
+    libraries: arrayOf(
+        {
             hash: string(docs.zerostate.libraries.hash),
             publishers: arrayOf(string(), docs.zerostate.libraries.publishers),
             lib: string(docs.zerostate.libraries.lib),
         },
-        docs.zerostate.libraries._doc
+        docs.zerostate.libraries._doc,
     ),
 };
 
@@ -747,8 +769,8 @@ const schema: TypeDef = {
             ConfigProposalSetup,
             Config,
             Zerostate,
-        }
-    }
+        },
+    },
 };
 
 export default schema;

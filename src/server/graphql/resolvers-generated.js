@@ -645,13 +645,36 @@ const ZerostateMaster = struct({
     config: Config,
 });
 
+const ZerostateAccounts = struct({
+    workchain_id: scalar,
+    acc_type: scalar,
+    acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    last_paid: scalar,
+    due_payment: bigUInt2,
+    last_trans_lt: bigUInt1,
+    balance: bigUInt2,
+    balance_other: OtherCurrencyArray,
+    split_depth: scalar,
+    tick: scalar,
+    tock: scalar,
+    code: scalar,
+    code_hash: scalar,
+    data: scalar,
+    data_hash: scalar,
+    library: scalar,
+    library_hash: scalar,
+    proof: scalar,
+    boc: scalar,
+    state_hash: scalar,
+});
+
 const ZerostateLibraries = struct({
     hash: scalar,
     publishers: StringArray,
     lib: scalar,
 });
 
-const AccountArray = array(() => Account);
+const ZerostateAccountsArray = array(() => ZerostateAccounts);
 const ZerostateLibrariesArray = array(() => ZerostateLibraries);
 const Zerostate = struct({
     id: scalar,
@@ -660,7 +683,7 @@ const Zerostate = struct({
     total_balance: bigUInt2,
     total_balance_other: OtherCurrencyArray,
     master: ZerostateMaster,
-    accounts: AccountArray,
+    accounts: ZerostateAccountsArray,
     libraries: ZerostateLibrariesArray,
 }, true);
 
@@ -1050,6 +1073,18 @@ function createResolvers(data) {
             global_balance(parent, args) {
                 return resolveBigUInt(2, parent.global_balance, args);
             },
+        },
+        ZerostateAccounts: {
+            due_payment(parent, args) {
+                return resolveBigUInt(2, parent.due_payment, args);
+            },
+            last_trans_lt(parent, args) {
+                return resolveBigUInt(1, parent.last_trans_lt, args);
+            },
+            balance(parent, args) {
+                return resolveBigUInt(2, parent.balance, args);
+            },
+            acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Zerostate: {
             id(parent) {
@@ -1768,7 +1803,6 @@ scalarFields.set('zerostates.master.config.p39.seqno', { type: 'number', path: '
 scalarFields.set('zerostates.master.config.p39.valid_until', { type: 'number', path: 'doc.master.config.p39[*].valid_until' });
 scalarFields.set('zerostates.master.config.p39.signature_r', { type: 'string', path: 'doc.master.config.p39[*].signature_r' });
 scalarFields.set('zerostates.master.config.p39.signature_s', { type: 'string', path: 'doc.master.config.p39[*].signature_s' });
-scalarFields.set('zerostates.accounts.id', { type: 'string', path: 'doc.accounts[*]._key' });
 scalarFields.set('zerostates.accounts.workchain_id', { type: 'number', path: 'doc.accounts[*].workchain_id' });
 scalarFields.set('zerostates.accounts.last_paid', { type: 'number', path: 'doc.accounts[*].last_paid' });
 scalarFields.set('zerostates.accounts.due_payment', { type: 'uint1024', path: 'doc.accounts[*].due_payment' });
@@ -1844,6 +1878,7 @@ module.exports = {
     Message,
     Account,
     ZerostateMaster,
+    ZerostateAccounts,
     ZerostateLibraries,
     Zerostate,
 };
