@@ -210,8 +210,7 @@ pipeline {
 
 							docker.withRegistry('', "${G_dockerCred}") {
 								builtImage.push(RELEASE_VERSION)
-                                /* Don't update latest tag because of braking changes
-								builtImage.push("${G_promoted_tag}") */
+								builtImage.push("${G_promoted_tag}")
 							}
 						}
 					}
