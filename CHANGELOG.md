@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.30.0 – Dec 15, 2020
+
+### New
+- `info.endpoints` field returning list of alternative endpoints
+
 ## 0.29.2 – Nov 13, 2020
 
 ### New

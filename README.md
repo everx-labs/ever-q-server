@@ -20,6 +20,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
 
     Option                        ENV                   Default        Description
     ----------------------------  --------------------  -------------  ---------------------------------------------------------
+    --endpoints <value>           Q_ENDPOINTS                          Alternative endpoints of q-server (comma separated addresses)
     --host <value>                Q_HOST                192.168.1.137  Listening address
     --port <value>                Q_PORT                4000           Listening port
     --keep-alive <value>          Q_KEEP_ALIVE          60000          GraphQL keep alive ms
