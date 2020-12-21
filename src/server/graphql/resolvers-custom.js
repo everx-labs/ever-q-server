@@ -33,6 +33,8 @@ function overrideObject(original: any, overrides: any) {
 
 type Info = {
     version: string,
+    time: number,
+    endpoints: string[],
 }
 
 type Request = {
@@ -47,10 +49,11 @@ export type GraphQLRequestContextEx = GraphQLRequestContext & {
 
 //------------------------------------------------------------- Query
 
-function info(): Info {
+function info(_parent, _args, context: GraphQLRequestContextEx): Info {
     return {
         version,
         time: Date.now(),
+        endpoints: context.config.endpoints,
     };
 }
 

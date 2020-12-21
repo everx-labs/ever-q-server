@@ -14,6 +14,8 @@ type Info {
     version: String
     " Server unix time in ms"
     time: Float
+    " Alternative endpoints of q-server"
+    endpoints: [String]
 }
 
 "Aggregation function used to collect aggregated value"

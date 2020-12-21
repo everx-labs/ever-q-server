@@ -69,6 +69,7 @@ export type QConfig = {
     isTests?: boolean,
     networkName: string,
     cacheKeyPrefix: string,
+    endpoints: string[],
 }
 
 export type ProgramOption = {
@@ -138,6 +139,8 @@ opt('statsd-tags', '', 'Additional StatsD tags (comma separated name=value pairs
 opt('network-name', 'cinet.tonlabs.io', 'Define the name of the network q-server is working with');
 
 opt('cache-key-prefix', 'Q_', 'Prefix string to identify q-server keys in datacache');
+
+opt('endpoints', '', 'Alternative endpoints of q-server (comma separated addresses)');
 
 // Stats Schema
 
@@ -250,6 +253,7 @@ export function createConfig(
         },
         networkName,
         cacheKeyPrefix,
+        endpoints: (resolved.endpoints || '').split(',').map(x => x.trim()).filter(x => x)
     };
 }
 
