@@ -1,8 +1,8 @@
 //@flow
 
-import {Writer} from './gen.js';
-import type {TypeDef} from '../../server/schema/schema.js';
-import type {DbField, DbType, IntEnumDef} from '../../server/schema/db-schema-types';
+import { Writer } from './gen.js';
+import type { TypeDef } from '../../server/schema/schema.js';
+import type { DbField, DbType, IntEnumDef } from '../../server/schema/db-schema-types';
 import {
     DbTypeCategory,
     isBigInt, parseDbSchema,
@@ -11,8 +11,21 @@ import {
     toEnumStyle,
 } from '../../server/schema/db-schema-types';
 
+function compareFields(a: DbField, b: DbField): number {
+    if (a.name === "id") {
+        return b.name === "id" ? 0 : -1;
+    }
+    if (b.name === "id") {
+        return 1;
+    }
+    return (a.name === b.name) ? 0 : (a.name < b.name ? -1 : 1);
+}
+
 function main(schemaDef: TypeDef) {
-    const { types: dbTypes, enumTypes} = parseDbSchema(schemaDef);
+    const { types: dbTypes, enumTypes } = parseDbSchema(schemaDef);
+    dbTypes.forEach((dbType: DbType) => {
+        dbType.fields.sort(compareFields);
+    });
 
 // Generators
 
@@ -413,7 +426,7 @@ function main(schemaDef: TypeDef) {
                 }
                 docPath = `${docPath}${suffix}`;
             }
-            switch(field.type.category) {
+            switch (field.type.category) {
             case "scalar":
                 let typeName;
                 if (field.type === scalarTypes.boolean) {
