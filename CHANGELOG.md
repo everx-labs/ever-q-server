@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.31.0 – Jan 12, 2021
+
+### New
+- Fields are sorted alphabetically in the schema.
+
 ## 0.30.0 – Dec 15, 2020
 
 ### New
