@@ -27,6 +27,7 @@ const QErrorCode = {
     UNAUTHORIZED: 10003,
     AUTH_SERVICE_UNAVAILABLE: 10004,
     AUTH_FAILED: 10005,
+    QUERY_TERMINATED_ON_TIMEOUT: 10006,
 };
 
 export class QError {
@@ -34,6 +35,12 @@ export class QError {
         return QError.create(QErrorCode.MESSAGE_EXPIRED, `Message expired`, {
             id,
             expiredAt,
+            now: Date.now(),
+        });
+    }
+
+    static queryTerminatedOnTimeout(): Error {
+        return QError.create(QErrorCode.QUERY_TERMINATED_ON_TIMEOUT, `Query terminated on timeout`, {
             now: Date.now(),
         });
     }

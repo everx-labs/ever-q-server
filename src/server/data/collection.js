@@ -23,7 +23,7 @@ import type { FieldAggregation, AggregationHelper } from './aggregations';
 import type { QDataProvider, QIndexInfo } from './data-provider';
 import { QDataListener, QDataSubscription } from './listener';
 import type { AccessRights } from '../auth';
-import { Auth } from '../auth';
+import { Auth, grantedAccess } from '../auth';
 import { STATS } from '../config';
 import type { QConfig } from '../config';
 import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from '../filter/filters';
@@ -37,7 +37,7 @@ import {
 } from '../filter/filters';
 import type { QLog } from '../logs';
 import QLogs from '../logs';
-import { isFastQuery } from '../filter/slow-detector';
+import { explainSlowReason, isFastQuery } from '../filter/slow-detector';
 import type { IStats } from '../tracer';
 import { QTracer, StatsCounter, StatsGauge, StatsTiming } from '../tracer';
 import { QError, wrap } from '../utils';
@@ -408,6 +408,26 @@ export class QDataCollection {
         return stat.isFast;
     }
 
+    explainQueryResolver() {
+        return async (
+            parent: any,
+            args: any,
+            _context: GraphQLRequestContext,
+            _info: any,
+        ) => {
+            await this.checkRefreshInfo();
+            const q = this.createDatabaseQuery(args, {}, grantedAccess);
+            if (!q) {
+                return { isFast: true };
+            }
+            const slowReason = await explainSlowReason(this.name, this.indexes, this.docType, q.filter, q.orderBy);
+            return {
+                isFast: slowReason === null,
+                ...(slowReason ? { slowReason } : {}),
+            };
+        };
+    }
+
     queryResolver() {
         return async (
             parent: any,
@@ -418,9 +438,10 @@ export class QDataCollection {
             this.statQuery.increment();
             this.statQueryActive.increment();
             const start = Date.now();
+            let q: ?DatabaseQuery = null;
             try {
                 const accessRights = await requireGrantedAccess(context, args);
-                const q = this.createDatabaseQuery(args, info.fieldNodes[0].selectionSet, accessRights);
+                q = this.createDatabaseQuery(args, info.fieldNodes[0].selectionSet, accessRights);
                 if (!q) {
                     this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
                     return [];
@@ -442,6 +463,11 @@ export class QDataCollection {
                 if (q.timeout > 0) {
                     traceParams.timeout = q.timeout;
                 }
+                this.log.debug(
+                    'BEFORE_QUERY',
+                    args,
+                    isFast ? 'FAST' : 'SLOW', context.remoteAddress,
+                );
                 const start = Date.now();
                 const result = q.timeout > 0
                     ? await this.queryWaitFor(q, isFast, traceParams, context)
@@ -458,6 +484,21 @@ export class QDataCollection {
                 return result;
             } catch (error) {
                 this.statQueryFailed.increment();
+                if (q) {
+                    const slowReason = explainSlowReason(
+                        this.name,
+                        this.indexes,
+                        this.docType,
+                        q.filter,
+                        q.orderBy);
+                    if (slowReason) {
+                        error.message += `. Query was detected as a slow. ${slowReason.summary}. See error data for details.`;
+                        error.data = {
+                            ...error.data,
+                            slowReason,
+                        }
+                    }
+                }
                 throw error;
             } finally {
                 this.statQueryTime.report(Date.now() - start);
@@ -475,12 +516,13 @@ export class QDataCollection {
         traceParams: any,
         context: GraphQLRequestContext,
     ): Promise<any> {
-        return QTracer.trace(this.tracer, `${this.name}.query`, async (span: Span) => {
+        const impl = async (span: Span) => {
             if (traceParams) {
                 span.setTag('params', traceParams);
             }
             return this.queryProvider(text, vars, orderBy, isFast, context);
-        }, context.parentSpan);
+        };
+        return QTracer.trace(this.tracer, `${this.name}.query`, impl, context.parentSpan);
     }
 
     async queryProvider(
@@ -501,13 +543,14 @@ export class QDataCollection {
         traceParams: any,
         context: GraphQLRequestContext,
     ): Promise<any> {
-        return QTracer.trace(this.tracer, `${this.name}.waitFor`, async (span: Span) => {
+        const impl = async (span: Span) => {
             if (traceParams) {
                 span.setTag('params', traceParams);
             }
             let waitFor: ?((doc: any) => void) = null;
             let forceTimerId: ?TimeoutID = null;
             let resolvedBy: ?string = null;
+            let hasDbResponse = false;
             let resolveOnClose = () => {
             };
             const resolveBy = (reason: string, resolve: (result: any) => void, result: any) => {
@@ -523,6 +566,7 @@ export class QDataCollection {
                 const onQuery = new Promise((resolve, reject) => {
                     const check = () => {
                         this.queryProvider(q.text, q.params, q.orderBy, isFast, context).then((docs) => {
+                            hasDbResponse = true;
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = null;
@@ -559,8 +603,14 @@ export class QDataCollection {
                     this.docInsertOrUpdate.on('doc', waitFor);
                     this.statWaitForActive.increment();
                 });
-                const onTimeout = new Promise((resolve) => {
-                    setTimeout(() => resolveBy('timeout', resolve, []), q.timeout);
+                const onTimeout = new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (hasDbResponse) {
+                            resolveBy('timeout', resolve, []);
+                        } else {
+                            reject(QError.queryTerminatedOnTimeout());
+                        }
+                    }, q.timeout);
                 });
                 const onClose = new Promise((resolve) => {
                     resolveOnClose = resolve;
@@ -585,7 +635,8 @@ export class QDataCollection {
                     forceTimerId = null;
                 }
             }
-        }, context.parentSpan);
+        };
+        return QTracer.trace(this.tracer, `${this.name}.waitFor`, impl, context.parentSpan);
     }
 
     //--------------------------------------------------------- Aggregates

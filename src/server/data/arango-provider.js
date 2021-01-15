@@ -6,6 +6,7 @@ import { ensureProtocol } from '../config';
 import type { QArangoConfig } from '../config';
 import type { QLog } from '../logs';
 import type { QDataEvent, QDataProvider, QDoc, QIndexInfo } from './data-provider';
+import url from 'url';
 
 type ArangoEventHandler = (err: any, status: string, headers: { [string]: any }, body: string) => void;
 
@@ -125,9 +126,15 @@ export class ArangoProvider implements QDataProvider {
 
     createAndStartListener(): ArangoListener {
         const { server, name, auth } = this.config;
-        const listenerUrl = `${ensureProtocol(server, 'http')}/${name}`;
+        const dbUrl = ensureProtocol(server, 'http');
+        const listenerUrl = `${dbUrl}/${name}`;
 
         const listener = new arangochair(listenerUrl);
+        const parsedDbUrl = url.parse(dbUrl);
+
+        const pathPrefix = parsedDbUrl.path !== "/" ? (parsedDbUrl.path || "") : "";
+        listener._loggerStatePath = `${pathPrefix}/_db/${name}/_api/replication/logger-state`;
+        listener._loggerFollowPath = `${pathPrefix}/_db/${name}/_api/replication/logger-follow`;
 
         if (this.config.auth) {
             const userPassword = Buffer.from(auth).toString('base64');
