@@ -174,7 +174,7 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
 
-export function parseArangoConfig(config: string, defMaxSockets: number): QArangoConfig {
+function parseArangoEndpoint(config: string, defMaxSockets: number): QArangoConfig {
     const lowerCased = config.toLowerCase().trim();
     const hasProtocol = lowerCased.startsWith('http:') || lowerCased.startsWith('https:');
     const url = new URL(hasProtocol ? config : `https://${config}`);
@@ -189,6 +189,18 @@ export function parseArangoConfig(config: string, defMaxSockets: number): QArang
         maxSockets: Number.parseInt(param('maxSockets')) || defMaxSockets,
         listenerRestartTimeout: Number.parseInt(param('listenerRestartTimeout')) || DEFAULT_LISTENER_RESTART_TIMEOUT,
     }
+}
+
+function parseArangoEndpointList(config: string, defMaxSockets: number): QArangoConfig[] {
+    return config
+        .split(",")
+        .filter(x => x.trim() !== "")
+        .map(x => parseArangoEndpoint(x, defMaxSockets));
+}
+
+export function parseArangoConfig(config: string, defMaxSockets: number): QArangoConfig {
+    return parseArangoEndpointList(config, defMaxSockets)[0]
+        || parseArangoEndpoint('', defMaxSockets);
 }
 
 export function parseMemCachedConfig(config: string): QMemCachedConfig {
@@ -293,7 +305,7 @@ export function parseDataConfig(values: any): {
         return {
             mut: parseArangoConfig(opt('Mut'), defMaxSockets),
             hot: parseArangoConfig(opt('Hot'), defMaxSockets),
-            cold: opt('Cold').split(',').filter(x => x).map(x => parseArangoConfig(x, defMaxSockets)),
+            cold: parseArangoEndpointList(opt('Cold'), defMaxSockets),
             cache: parseMemCachedConfig(opt('Cache')),
         }
     }
