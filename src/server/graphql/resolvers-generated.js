@@ -164,7 +164,7 @@ const ConfigP7 = struct({
 });
 
 const ConfigP8 = struct({
-    capabilities: scalar,
+    capabilities: bigUInt1,
     version: scalar,
 });
 
@@ -786,6 +786,11 @@ function createResolvers(data) {
                 return resolveBigUInt(2, parent.fees, args);
             },
         },
+        ConfigP8: {
+            capabilities(parent, args) {
+                return resolveBigUInt(1, parent.capabilities, args);
+            },
+        },
         ConfigP14: {
             basechain_block_fee(parent, args) {
                 return resolveBigUInt(2, parent.basechain_block_fee, args);
@@ -1339,7 +1344,7 @@ scalarFields.set('blocks.master.config.p6.mint_add_price', { type: 'string', pat
 scalarFields.set('blocks.master.config.p6.mint_new_price', { type: 'string', path: 'doc.master.config.p6.mint_new_price' });
 scalarFields.set('blocks.master.config.p7.currency', { type: 'number', path: 'doc.master.config.p7[*].currency' });
 scalarFields.set('blocks.master.config.p7.value', { type: 'string', path: 'doc.master.config.p7[*].value' });
-scalarFields.set('blocks.master.config.p8.capabilities', { type: 'string', path: 'doc.master.config.p8.capabilities' });
+scalarFields.set('blocks.master.config.p8.capabilities', { type: 'uint64', path: 'doc.master.config.p8.capabilities' });
 scalarFields.set('blocks.master.config.p8.version', { type: 'number', path: 'doc.master.config.p8.version' });
 scalarFields.set('blocks.master.config.p9', { type: 'number', path: 'doc.master.config.p9[*]' });
 scalarFields.set('blocks.master.config_addr', { type: 'string', path: 'doc.master.config_addr' });
@@ -1815,7 +1820,7 @@ scalarFields.set('zerostates.master.config.p6.mint_add_price', { type: 'string',
 scalarFields.set('zerostates.master.config.p6.mint_new_price', { type: 'string', path: 'doc.master.config.p6.mint_new_price' });
 scalarFields.set('zerostates.master.config.p7.currency', { type: 'number', path: 'doc.master.config.p7[*].currency' });
 scalarFields.set('zerostates.master.config.p7.value', { type: 'string', path: 'doc.master.config.p7[*].value' });
-scalarFields.set('zerostates.master.config.p8.capabilities', { type: 'string', path: 'doc.master.config.p8.capabilities' });
+scalarFields.set('zerostates.master.config.p8.capabilities', { type: 'uint64', path: 'doc.master.config.p8.capabilities' });
 scalarFields.set('zerostates.master.config.p8.version', { type: 'number', path: 'doc.master.config.p8.version' });
 scalarFields.set('zerostates.master.config.p9', { type: 'number', path: 'doc.master.config.p9[*]' });
 scalarFields.set('zerostates.master.config_addr', { type: 'string', path: 'doc.master.config_addr' });
