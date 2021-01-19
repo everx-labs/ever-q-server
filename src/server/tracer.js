@@ -31,6 +31,10 @@ export interface IStats {
 function dummy(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]) {
 }
 
+function logStatsError(error: any) {
+    console.log(`StatsD send failed: ${error.message}`);
+}
+
 const dummyStats: IStats = {
     configuredTags: [],
     increment: dummy,
@@ -47,9 +51,51 @@ export class QStats {
             return dummyStats;
         }
         const hostPort = server.split(':');
-        const stats = new StatsD(hostPort[0], hostPort[1], STATS.prefix);
-        stats['configuredTags'] = configuredTags;
-        return stats;
+        let stats: ?IStats = null;
+        const withStats = (f: (stats: IStats) => void) => {
+            try {
+                f(stats || (() => {
+                    const newStats = new StatsD(hostPort[0], hostPort[1], STATS.prefix);
+                    newStats.socket.on("error", (err) => {
+                        logStatsError(err);
+                        stats = null;
+                    });
+                    stats = newStats;
+                    return newStats;
+                })());
+            } catch (e) {
+                logStatsError(e);
+                stats = null;
+            }
+
+        };
+
+        return {
+            increment(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void {
+                withStats(stats => stats.increment(stat, value, sampleRate, tags));
+            },
+
+            decrement(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void {
+                withStats(stats => stats.decrement(stat, value, sampleRate, tags));
+            },
+
+            histogram(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
+                withStats(stats => stats.histogram(stat, value, sampleRate, tags));
+            },
+
+            gauge(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
+                withStats(stats => stats.gauge(stat, value, sampleRate, tags));
+            },
+
+            set(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
+                withStats(stats => stats.set(stat, value, sampleRate, tags));
+            },
+
+            timing(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
+                withStats(stats => stats.timing(stat, value, sampleRate, tags));
+            },
+            configuredTags,
+        };
     }
 
     static combineTags(stats: IStats, tags: string[]): string[] {

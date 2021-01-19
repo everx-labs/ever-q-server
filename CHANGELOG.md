@@ -10,11 +10,14 @@ All notable changes to this project will be documented in this file.
 - `explainQuery*` queries that examines the provided query parameters and returns the conclusion –
   is this query fast or potentially slow. In case when the query is marked as a slow, the
   additional information provided about reasons why this query is slow.
-  
+    
 ### Fixed
 - If query timeout triggers before the db have been responded then the client have received
   successful result with the empty result set.
   Now in this situation the client will receive error "request terminated due to timeout".
+- Q-Server crashes if statsd endpoint is inaccessible.
+- Now StatsD socket recreates on statsd sending error.
+- Tailing comma is ignored in ArangoDB configuration string.
 
 ## 0.30.0 – Dec 15, 2020
 
