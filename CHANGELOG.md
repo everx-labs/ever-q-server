@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 ## 0.31.0 – Jan 12, 2021
 
 ### New
-- Fields in the schema are sorted in alphabetical order
+- Fields in the schema are sorted in alphabetical order.
+- When the server responded with the timeout termination error, in addition to the error message 
+  server attaches the reason why this query detected as a slow.
+- `explainQuery*` queries that examines the provided query parameters and returns the conclusion –
+  is this query fast or potentially slow. In case when the query is marked as a slow, the
+  additional information provided about reasons why this query is slow.
+  
+### Fixed
+- If query timeout triggers before the db have been responded then the client have received
+  successful result with the empty result set.
+  Now in this situation the client will receive error "request terminated due to timeout".
 
 ## 0.30.0 – Dec 15, 2020
 

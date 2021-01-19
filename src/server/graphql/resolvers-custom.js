@@ -335,6 +335,11 @@ export function attachCustomResolvers(data: QBlockchainData, original: any): any
             aggregateTransactions: data.transactions.aggregationResolver(),
             aggregateMessages: data.messages.aggregationResolver(),
             aggregateAccounts: data.accounts.aggregationResolver(),
+            explainQueryBlockSignatures: data.blocks_signatures.explainQueryResolver(),
+            explainQueryBlocks: data.blocks.explainQueryResolver(),
+            explainQueryTransactions: data.transactions.explainQueryResolver(),
+            explainQueryMessages: data.messages.explainQueryResolver(),
+            explainQueryAccounts: data.accounts.explainQueryResolver(),
         },
         Mutation: {
             postRequests,
