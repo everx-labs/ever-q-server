@@ -492,7 +492,7 @@ const Config: TypeDef = {
     p8: {
         _doc: docs.block.master.config.p8._doc,
         version: u32(),
-        capabilities: string(),
+        capabilities: u64(),
     },
     p9: arrayOf(u32(), docs.block.master.config.p9._doc),
     p10: arrayOf(u32(), docs.block.master.config.p10._doc),

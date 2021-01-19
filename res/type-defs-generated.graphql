@@ -366,7 +366,7 @@ type ConfigP7 {
 
 "Global version"
 type ConfigP8 {
-	capabilities: String
+	capabilities(format: BigIntFormat): String
 	version: Float
 }
 
