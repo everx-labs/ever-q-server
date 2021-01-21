@@ -178,3 +178,33 @@ npm run gen
 npm run babel
 ```
 Yes, you need too run babel twice :(.
+
+# Tests
+
+By default tests connects to Arango on http://localhost:8901
+
+```bash
+$ tondev info
+TON Labs Dev Tools 0.17.7
+
+default network/blockchain:
+
+  Used version: latest
+  Bound to host port: 8080
+  Arango DB is bound to host port: 8901
+  Docker image: tonlabs/local-node:latest
+  Docker container: tonlabs-local-node-g9d running
+
+$ tondev start
+$ npm run test
+```
+
+You can change default behaviour with env:
+```bash
+export Q_DATA_MUT=http://localhost:8529
+export Q_DATA_HOT=${Q_DATA_MUT}
+export Q_DATA_COLD=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_MUT=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_HOT=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_COLD=${Q_DATA_MUT}
+```
