@@ -14,8 +14,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Before: if query timeout was triggered before the db responded, the client would receive
   a successful result with an empty result set.
-  Now: in this situation the client will receive error "request terminated due to timeout".
-- Before: Q-Server crashed if statsd endpoint was unavailable.
+  Now: in this situation the client will receive error "request terminated due to timeout".  
+- Before: Q-Server crashed if statsd endpoint was unavailable.     
   Now: StatsD socket recreates on statsd sending error.
 - Tailing comma is ignored in ArangoDB configuration string.
 
