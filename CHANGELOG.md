@@ -5,24 +5,24 @@ All notable changes to this project will be documented in this file.
 
 ### New
 - Fields in the schema are sorted in alphabetical order.
-- When the server responded with the timeout termination error, in addition to the error message 
-  server attaches the reason why this query detected as a slow.
-- `explainQuery*` queries that examines the provided query parameters and returns the conclusion –
-  is this query fast or potentially slow. In case when the query is marked as a slow, the
-  additional information provided about reasons why this query is slow.
+- When the server responds with the timeout termination error, in addition to the error message 
+  server attaches the reason why this query was detected as a slow.
+- `explainQuery*` queries that examine the provided query parameters and return the conclusion –
+  is this query fast or potentially slow. In case when the query is marked as slow, the
+  additional information is provided about the reasons why this query is slow.
     
 ### Fixed
-- If query timeout triggers before the db have been responded then the client have received
-  successful result with the empty result set.
-  Now in this situation the client will receive error "request terminated due to timeout".
-- Q-Server crashes if statsd endpoint is inaccessible.
-- Now StatsD socket recreates on statsd sending error.
+- Before: if query timeout was triggered before the db responded, the client would receive
+  a successful result with an empty result set.
+  Now: in this situation the client will receive error "request terminated due to timeout".
+- Before: Q-Server crashed if statsd endpoint was unavailable.
+  Now: StatsD socket recreates on statsd sending error.
 - Tailing comma is ignored in ArangoDB configuration string.
 
 ## 0.30.0 – Dec 15, 2020
 
 ### New
-- `info.endpoints` field returning list of alternative endpoints
+- `info.endpoints` field returns list of alternative endpoints
 
 ## 0.29.2 – Nov 13, 2020
 
