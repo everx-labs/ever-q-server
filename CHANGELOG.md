@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.31.1 – Jan 27, 2021
+    
+### Fixed
+- `id notIn` was detected as a fast. 
+
 ## 0.31.0 – Jan 12, 2021
 
 ### New
