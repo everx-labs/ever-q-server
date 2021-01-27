@@ -280,8 +280,8 @@ function combineFilterConditions(conditions: string[], op: string, defaultCondit
     return '(' + conditions.join(`) ${op} (`) + ')';
 }
 
-function filterConditionForIn(params: QParams, path: string, filter: any): string {
-    const conditions = filter.map(value => filterConditionOp(params, path, '==', value));
+function filterConditionForIn(params: QParams, path: string, filter: any, op: string): string {
+    const conditions = filter.map(value => filterConditionOp(params, path, op, value));
     return combineFilterConditions(conditions, 'OR', 'false');
 }
 
@@ -365,7 +365,7 @@ const scalarGe: QType = {
 
 const scalarIn: QType = {
     filterCondition(params, path, filter) {
-        return filterConditionForIn(params, path, filter);
+        return filterConditionForIn(params, path, filter, "==");
     },
     returnExpression(_path: string, _def: GDefinition): QReturnExpression {
         throw NOT_IMPLEMENTED;
@@ -377,7 +377,7 @@ const scalarIn: QType = {
 
 const scalarNotIn: QType = {
     filterCondition(params, path, filter) {
-        return `NOT (${filterConditionForIn(params, path, filter)})`;
+        return `NOT (${filterConditionForIn(params, path, filter, "!=")})`;
     },
     returnExpression(_path: string, _def: GDefinition): QReturnExpression {
         throw NOT_IMPLEMENTED;

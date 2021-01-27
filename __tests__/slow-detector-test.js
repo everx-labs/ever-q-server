@@ -41,6 +41,11 @@ test('Slow Detector', () => {
     expect(isFast({ id: { eq: '1' }, balance: { gt: '0' } })).toBeTruthy();
 
     setCollection('transactions', Transaction);
+    expect(isFast({
+        id: { notIn: ['1'] },
+        workchain_id: { eq: 0 },
+        now: { ge: 1610237274 }
+    }, 'now')).toBeFalsy();
     expect(isFast({ now: { ge: 1 } }, 'now desc, id desc')).toBeTruthy();
     expect(isFast({ account_addr: { eq: '1' } }, 'lt desc')).toBeFalsy();
     expect(isFast({ block_id: { eq: '1' } })).toBeTruthy();
@@ -62,7 +67,10 @@ test('Slow Detector', () => {
     setCollection('blocks', Block);
     expect(isFast({ workchain_id: { eq: -1 } }, 'seq_no desc')).toBeTruthy();
     expect(isFast({ seq_no: { eq: 70000 }, workchain_id: { eq: -1 } })).toBeTruthy();
-    expect(isFast({ seq_no: { in: [2798482, 2798483, 2798484] }, workchain_id: { eq: -1 } }, 'seq_no desc')).toBeTruthy();
+    expect(isFast({
+        seq_no: { in: [2798482, 2798483, 2798484] },
+        workchain_id: { eq: -1 }
+    }, 'seq_no desc')).toBeTruthy();
     expect(isFast({
         workchain_id: { eq: -1 },
         shard: { eq: '8000000000000000' },
