@@ -253,8 +253,8 @@ function testFields(
     return !failed;
 }
 
-function filterConditionOp(params: QParams, path: string, op: string, filter: any): string {
-    params.explainScalarOperation(path, op);
+function filterConditionOp(params: QParams, path: string, op: string, filter: any, explainOp?: string): string {
+    params.explainScalarOperation(path, explainOp || op);
     const paramName = params.add(filter);
 
     /*
@@ -264,8 +264,9 @@ function filterConditionOp(params: QParams, path: string, op: string, filter: an
      * Will return:
      * ```["fe03318161937ebb3682f69ac9f97beafbc4b9ee6e1f86d59e1bf8d27ab84867"]```
      */
-    const isKeyOrderedComparision = (path === '_key' || path.endsWith('._key')) && op !== '==' && op !== '!=';
-    const fixedPath = isKeyOrderedComparision ? `TO_STRING(${path})` : path;
+
+    const isKeyOrderedComparison = (path === '_key' || path.endsWith('._key')) && op !== '==' && op !== '!=';
+    const fixedPath = isKeyOrderedComparison ? `TO_STRING(${path})` : path;
     const fixedValue = `@${paramName}`;
     return `${fixedPath} ${op} ${fixedValue}`;
 }
@@ -280,8 +281,8 @@ function combineFilterConditions(conditions: string[], op: string, defaultCondit
     return '(' + conditions.join(`) ${op} (`) + ')';
 }
 
-function filterConditionForIn(params: QParams, path: string, filter: any, op: string): string {
-    const conditions = filter.map(value => filterConditionOp(params, path, op, value));
+function filterConditionForIn(params: QParams, path: string, filter: any, explainOp?: string): string {
+    const conditions = filter.map(value => filterConditionOp(params, path, "==", value, explainOp));
     return combineFilterConditions(conditions, 'OR', 'false');
 }
 
@@ -365,7 +366,7 @@ const scalarGe: QType = {
 
 const scalarIn: QType = {
     filterCondition(params, path, filter) {
-        return filterConditionForIn(params, path, filter, "==");
+        return filterConditionForIn(params, path, filter);
     },
     returnExpression(_path: string, _def: GDefinition): QReturnExpression {
         throw NOT_IMPLEMENTED;

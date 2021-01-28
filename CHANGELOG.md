@@ -1,6 +1,11 @@
 # Release Notes
 All notable changes to this project will be documented in this file.
 
+## 0.31.2 – Jan 28, 2021
+    
+### Fixed
+- `notIn` with more than two elements generates wrong AQL condition. 
+
 ## 0.31.1 – Jan 27, 2021
     
 ### Fixed
