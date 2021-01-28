@@ -160,6 +160,12 @@ test("Generate AQL", () => {
     expect(params.values.v4).toEqual('4');
 
     params.clear();
+    ql = Transaction.filterCondition(params, 'doc', { id: { notIn: ["1", "2"] } });
+    expect(ql).toEqual(`NOT ((doc._key == @v1) OR (doc._key == @v2))`);
+    expect(params.values.v1).toEqual('1');
+    expect(params.values.v2).toEqual('2');
+
+    params.clear();
     ql = Transaction.filterCondition(params, 'doc', { in_msg: { ne: "1" } });
     expect(ql).toEqual(`doc.in_msg != @v1`);
     expect(params.values.v1).toEqual('1');
