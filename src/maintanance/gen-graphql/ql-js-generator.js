@@ -237,6 +237,9 @@ function main(schemaDef: TypeDef) {
         if (field.type === scalarTypes.uint1024) {
             return 'bigUInt2';
         }
+        if (field.type === scalarTypes.string && field.lowerFilter) {
+            return 'stringLowerFilter';
+        }
         return 'scalar';
     }
 
@@ -492,6 +495,7 @@ function main(schemaDef: TypeDef) {
             scalar,
             bigUInt1,
             bigUInt2,
+            stringLowerFilter,
             resolveBigUInt,
             struct,
             array,

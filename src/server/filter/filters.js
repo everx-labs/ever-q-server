@@ -17,10 +17,10 @@
 // @flow
 
 
-import type {AccessRights} from "../auth";
+import type { AccessRights } from "../auth";
 import type { QIndexInfo } from '../data/data-provider';
-import {scalarTypes} from "../schema/db-schema-types";
-import type {DbField, DbSchema, DbType} from "../schema/db-schema-types";
+import { scalarTypes } from "../schema/db-schema-types";
+import type { DbField, DbSchema, DbType } from "../schema/db-schema-types";
 
 declare function BigInt(a: any): any;
 
@@ -399,11 +399,21 @@ const scalarOps = {
     notIn: scalarNotIn,
 };
 
-function createScalar(): QType {
+function convertFilterValue(value, op, converter?: (value: any) => any): string {
+    if (converter) {
+        return (op === scalarOps.in || op === scalarOps.notIn)
+            ? value.map(x => converter(x))
+            : converter(value);
+    }
+    return value;
+}
+
+function createScalar(filterValueConverter?: (value: any) => any): QType {
     return {
         filterCondition(params, path, filter) {
             return filterConditionForFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
-                return op.filterCondition(params, path, filterValue);
+                const converted = convertFilterValue(filterValue, op, filterValueConverter);
+                return op.filterCondition(params, path, converted);
             });
         },
         returnExpression(path: string, def: GDefinition): QReturnExpression {
@@ -419,7 +429,8 @@ function createScalar(): QType {
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
-                return op.test(parent, undefinedToNull(value), filterValue);
+                const converted = convertFilterValue(filterValue, op, filterValueConverter);
+                return op.test(parent, undefinedToNull(value), converted);
             });
         },
     };
@@ -503,37 +514,10 @@ export function convertBigUInt(prefixLength: number, value: any): string {
     return neg ? `-${invertedHex(result)}` : result;
 }
 
-function createBigUInt(prefixLength: number): QType {
-    return {
-        filterCondition(params, path, filter) {
-            return filterConditionForFields(path, filter, scalarOps, (op, path, filterKey, filterValue) => {
-                const converted = (op === scalarOps.in || op === scalarOps.notIn)
-                    ? filterValue.map(x => convertBigUInt(prefixLength, x))
-                    : convertBigUInt(prefixLength, filterValue);
-                return op.filterCondition(params, path, converted);
-            });
-        },
-        returnExpression(path: string, def: GDefinition): QReturnExpression {
-            const name = def.name.value;
-            return {
-                name,
-                expression: `${path}.${name}`,
-            };
-        },
-        test(parent, value, filter) {
-            return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
-                const converted = (op === scalarOps.in || op === scalarOps.notIn)
-                    ? filterValue.map(x => convertBigUInt(prefixLength, x))
-                    : convertBigUInt(prefixLength, filterValue);
-                return op.test(parent, undefinedToNull(value), converted);
-            });
-        },
-    };
-}
-
 export const scalar: QType = createScalar();
-export const bigUInt1: QType = createBigUInt(1);
-export const bigUInt2: QType = createBigUInt(2);
+export const stringLowerFilter: QType = createScalar(x => x ? x.toString().toLowerCase() : x);
+export const bigUInt1: QType = createScalar(x => convertBigUInt(1, x));
+export const bigUInt2: QType = createScalar(x => convertBigUInt(2, x));
 
 //------------------------------------------------------------- Structs
 

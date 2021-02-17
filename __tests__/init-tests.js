@@ -12,7 +12,12 @@ import WebSocket from 'ws';
 import QBlockchainData, { INDEXES } from '../src/server/data/blockchain';
 import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
 import type { QDataProviders } from '../src/server/data/data';
-import type { QDataCache, QDataEvent, QDataProvider, QIndexInfo } from '../src/server/data/data-provider';
+import type {
+    QDataCache,
+    QDataEvent,
+    QDataProvider,
+    QIndexInfo
+} from '../src/server/data/data-provider';
 import QLogs from '../src/server/logs';
 import TONQServer, { createProviders } from '../src/server/server';
 import { QStats, QTracer } from '../src/server/tracer';
@@ -103,7 +108,7 @@ export async function testServerQuery(query: string, variables?: { [string]: any
             },
             body: JSON.stringify({
                 query,
-                ...((variables ? variables : {}): any),
+                variables: variables || {},
             }),
             ...fetchOptions,
         });
@@ -173,7 +178,7 @@ export class MockProvider implements QDataProvider {
     }
 
     async loadFingerprint(): Promise<any> {
-        return Promise.resolve([{data: this.data.length}]);
+        return Promise.resolve([{ data: this.data.length }]);
     }
 
     async hotUpdate(): Promise<any> {

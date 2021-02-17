@@ -167,6 +167,7 @@ export class QDataCollection {
     statQueryActive: StatsGauge;
     statWaitForActive: StatsGauge;
     statSubscriptionActive: StatsGauge;
+    statSubscription: StatsCounter;
 
     waitForCount: number;
     subscriptionCount: number;
@@ -203,6 +204,7 @@ export class QDataCollection {
         this.statQueryFailed = new StatsCounter(stats, STATS.query.failed, [`collection:${name}`]);
         this.statQuerySlow = new StatsCounter(stats, STATS.query.slow, [`collection:${name}`]);
         this.statWaitForActive = new StatsGauge(stats, STATS.waitFor.active, [`collection:${name}`]);
+        this.statSubscription = new StatsCounter(stats, STATS.subscription.count, [`collection:${name}`]);
         this.statSubscriptionActive = new StatsGauge(stats, STATS.subscription.active, [`collection:${name}`]);
 
         this.docInsertOrUpdate = new EventEmitter();
@@ -248,6 +250,7 @@ export class QDataCollection {
         return {
             subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
                 const accessRights = await requireGrantedAccess(context, args);
+                this.statSubscription.increment();
                 const subscription = new QDataSubscription(
                     this.name,
                     this.docType,

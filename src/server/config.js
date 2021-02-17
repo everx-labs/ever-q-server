@@ -162,6 +162,7 @@ export const STATS = {
         slow: 'query.slow',
     },
     subscription: {
+        count: 'subscription.count',
         active: 'subscription.active',
     },
     waitFor: {
