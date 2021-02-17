@@ -35,6 +35,7 @@ import {
     u8enum,
     unixSeconds,
     withDoc,
+    stringWithLowerFilter,
 } from './db-schema-types';
 
 import { docs } from './db.shema.docs';
@@ -157,14 +158,14 @@ const AccountBase: TypeDef = {
     tick: bool(docs.account.tick),
     tock: bool(docs.account.tock),
     code: string(docs.account.code),
-    code_hash: string(docs.account.code_hash),
+    code_hash: stringWithLowerFilter(docs.account.code_hash),
     data: string(docs.account.data),
-    data_hash: string(docs.account.data_hash),
+    data_hash: stringWithLowerFilter(docs.account.data_hash),
     library: string(docs.account.library),
-    library_hash: string(docs.account.library_hash),
+    library_hash: stringWithLowerFilter(docs.account.library_hash),
     proof: string(docs.account.proof),
     boc: string(docs.account.boc),
-    state_hash: string(docs.account.state_hash),
+    state_hash: stringWithLowerFilter(docs.account.state_hash),
 };
 
 const Account: TypeDef = {
@@ -178,21 +179,21 @@ const Message: TypeDef = {
     _: { collection: 'messages' },
     msg_type: required(messageType(docs.message.msg_type)),
     status: required(messageProcessingStatus(docs.message.status)),
-    block_id: required(string(docs.message.block_id)),
+    block_id: required(stringWithLowerFilter(docs.message.block_id)),
     block: join('Block', 'block_id', 'id'),
     body: string(docs.message.body),
-    body_hash: string(docs.message.body_hash),
+    body_hash: stringWithLowerFilter(docs.message.body_hash),
     split_depth: u8(docs.message.split_depth),
     tick: bool(docs.message.tick),
     tock: bool(docs.message.tock),
     code: string(docs.message.code),
-    code_hash: string(docs.message.code_hash),
+    code_hash: stringWithLowerFilter(docs.message.code_hash),
     data: string(docs.message.data),
-    data_hash: string(docs.message.data_hash),
+    data_hash: stringWithLowerFilter(docs.message.data_hash),
     library: string(docs.message.library),
-    library_hash: string(docs.message.library_hash),
-    src: string(docs.message.src),
-    dst: string(docs.message.dst),
+    library_hash: stringWithLowerFilter(docs.message.library_hash),
+    src: stringWithLowerFilter(docs.message.src),
+    dst: stringWithLowerFilter(docs.message.dst),
     src_workchain_id: i32(docs.message.src_workchain_id),
     dst_workchain_id: i32(docs.message.dst_workchain_id),
     created_lt: u64(docs.message.created_lt),
@@ -217,25 +218,25 @@ const Transaction: TypeDef = {
     _: { collection: 'transactions' },
     tr_type: required(transactionType(docs.transaction.tr_type)),
     status: required(transactionProcessingStatus(docs.transaction.status)),
-    block_id: string(docs.transaction.block_id),
+    block_id: stringWithLowerFilter(docs.transaction.block_id),
     block: join('Block', 'block_id', 'id'),
-    account_addr: string(docs.transaction.account_addr),
+    account_addr: stringWithLowerFilter(docs.transaction.account_addr),
     workchain_id: i32(docs.transaction.workchain_id),
     lt: u64(docs.transaction.lt),
-    prev_trans_hash: string(docs.transaction.prev_trans_hash),
+    prev_trans_hash: stringWithLowerFilter(docs.transaction.prev_trans_hash),
     prev_trans_lt: u64(docs.transaction.prev_trans_lt),
     now: u32(docs.transaction.now),
     outmsg_cnt: i32(docs.transaction.outmsg_cnt),
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
-    in_msg: string(docs.transaction.in_msg),
+    in_msg: stringWithLowerFilter(docs.transaction.in_msg),
     in_message: join({ Message }, 'in_msg', 'id'),
-    out_msgs: arrayOf(string(docs.transaction.out_msgs)),
+    out_msgs: arrayOf(stringWithLowerFilter(docs.transaction.out_msgs)),
     out_messages: arrayOf(join({ Message }, 'out_msgs', 'id')),
     total_fees: grams(docs.transaction.total_fees),
     total_fees_other: otherCurrencyCollection(docs.transaction.total_fees_other),
-    old_hash: string(docs.transaction.old_hash),
-    new_hash: string(docs.transaction.new_hash),
+    old_hash: stringWithLowerFilter(docs.transaction.old_hash),
+    new_hash: stringWithLowerFilter(docs.transaction.new_hash),
     credit_first: bool(docs.transaction.credit_first),
     storage: {
         storage_fees_collected: grams(docs.transaction.storage.storage_fees_collected),
@@ -261,8 +262,8 @@ const Transaction: TypeDef = {
         exit_code: i32(docs.transaction.compute.exit_code),
         exit_arg: i32(docs.transaction.compute.exit_arg),
         vm_steps: u32(docs.transaction.compute.vm_steps),
-        vm_init_state_hash: string(docs.transaction.compute.vm_init_state_hash),
-        vm_final_state_hash: string(docs.transaction.compute.vm_final_state_hash),
+        vm_init_state_hash: stringWithLowerFilter(docs.transaction.compute.vm_init_state_hash),
+        vm_final_state_hash: stringWithLowerFilter(docs.transaction.compute.vm_final_state_hash),
     },
     action: {
         success: bool(docs.transaction.action.success),
@@ -277,7 +278,7 @@ const Transaction: TypeDef = {
         spec_actions: i32(docs.transaction.action.spec_actions),
         skipped_actions: i32(docs.transaction.action.skipped_actions),
         msgs_created: i32(docs.transaction.action.msgs_created),
-        action_list_hash: string(docs.transaction.action.action_list_hash),
+        action_list_hash: stringWithLowerFilter(docs.transaction.action.action_list_hash),
         total_msg_size_cells: u32(docs.transaction.action.total_msg_size_cells),
         total_msg_size_bits: u32(docs.transaction.action.total_msg_size_bits),
     },
@@ -295,10 +296,10 @@ const Transaction: TypeDef = {
     split_info: {
         cur_shard_pfx_len: u8(docs.transaction.split_info.cur_shard_pfx_len),
         acc_split_depth: u8(docs.transaction.split_info.acc_split_depth),
-        this_addr: string(docs.transaction.split_info.this_addr),
-        sibling_addr: string(docs.transaction.split_info.sibling_addr),
+        this_addr: stringWithLowerFilter(docs.transaction.split_info.this_addr),
+        sibling_addr: stringWithLowerFilter(docs.transaction.split_info.sibling_addr),
     },
-    prepare_transaction: string(docs.transaction.prepare_transaction),
+    prepare_transaction: stringWithLowerFilter(docs.transaction.prepare_transaction),
     installed: bool(docs.transaction.installed),
     proof: string(docs.transaction.proof),
     boc: string(docs.transaction.boc),
@@ -320,9 +321,9 @@ const BlockSignatures: TypeDef = {
     catchain_seqno: u32(docs.blockSignatures.catchain_seqno),
     sig_weight: u64(docs.blockSignatures.sig_weight),
     signatures: arrayOf({
-        node_id: string(),
-        r: string(docs.blockSignatures.signatures.r),
-        s: string(docs.blockSignatures.signatures.s),
+        node_id: stringWithLowerFilter(),
+        r: stringWithLowerFilter(docs.blockSignatures.signatures.r),
+        s: stringWithLowerFilter(docs.blockSignatures.signatures.s),
     }, docs.blockSignatures.signatures._doc),
     block: join('Block', 'id', 'id'),
 };
@@ -332,16 +333,16 @@ const BlockSignatures: TypeDef = {
 const ExtBlkRef: TypeDef = {
     end_lt: u64(),
     seq_no: u32(),
-    root_hash: string(),
-    file_hash: string(),
+    root_hash: stringWithLowerFilter(),
+    file_hash: stringWithLowerFilter(),
 };
 
 const extBlkRef = (doc?: string) => ref({ ExtBlkRef }, doc);
 
 const MsgEnvelope: TypeDef = {
-    msg_id: string(),
-    next_addr: string(),
-    cur_addr: string(),
+    msg_id: stringWithLowerFilter(),
+    next_addr: stringWithLowerFilter(),
+    cur_addr: stringWithLowerFilter(),
     fwd_fee_remaining: grams(),
 };
 
@@ -349,14 +350,14 @@ const msgEnvelope = () => ref({ MsgEnvelope });
 
 const InMsg: TypeDef = {
     msg_type: required(inMsgType()),
-    msg_id: string(),
+    msg_id: stringWithLowerFilter(),
     ihr_fee: grams(),
     proof_created: string(),
     in_msg: msgEnvelope(),
     fwd_fee: grams(),
     out_msg: msgEnvelope(),
     transit_fee: grams(),
-    transaction_id: string(),
+    transaction_id: stringWithLowerFilter(),
     proof_delivered: string(),
 };
 
@@ -364,13 +365,13 @@ const inMsg = (doc?: string) => ref({ InMsg }, doc);
 
 const OutMsg: TypeDef = {
     msg_type: required(outMsgType()),
-    msg_id: string(),
-    transaction_id: string(),
+    msg_id: stringWithLowerFilter(),
+    transaction_id: stringWithLowerFilter(),
     out_msg: msgEnvelope(),
     reimport: inMsg(),
     imported: inMsg(),
     import_block_lt: u64(),
-    msg_env_hash: string(),
+    msg_env_hash: stringWithLowerFilter(),
     next_workchain: i32(),
     next_addr_pfx: u64(),
 };
@@ -382,8 +383,8 @@ const shardDescr = (doc?: string): TypeDef => withDoc({
     reg_mc_seqno: u32(docs.shardDescr.reg_mc_seqno),
     start_lt: u64(docs.shardDescr.start_lt),
     end_lt: u64(docs.shardDescr.end_lt),
-    root_hash: string(docs.shardDescr.root_hash),
-    file_hash: string(docs.shardDescr.file_hash),
+    root_hash: stringWithLowerFilter(docs.shardDescr.root_hash),
+    file_hash: stringWithLowerFilter(docs.shardDescr.file_hash),
     before_split: bool(docs.shardDescr.before_split),
     before_merge: bool(docs.shardDescr.before_merge),
     want_split: bool(docs.shardDescr.want_split),
@@ -453,7 +454,7 @@ const ValidatorSet: TypeDef = {
     total: u16(),
     total_weight: u64(),
     list: arrayOf({
-        public_key: string(),
+        public_key: stringWithLowerFilter(),
         weight: u64(),
         adnl_addr: string(),
     }),
@@ -651,27 +652,27 @@ const Block: TypeDef = {
     created_by: string(docs.block.created_by),
     out_msg_descr: arrayOf(outMsg(docs.block.out_msg_descr)),
     account_blocks: arrayOf({
-        account_addr: string(docs.block.account_blocks.account_addr),
+        account_addr: stringWithLowerFilter(docs.block.account_blocks.account_addr),
         transactions: arrayOf(
             {
                 lt: u64(), // TODO: doc
-                transaction_id: string(), // TODO: doc
+                transaction_id: stringWithLowerFilter(), // TODO: doc
                 total_fees: grams(), // TODO: doc
                 total_fees_other: otherCurrencyCollection(), // TODO: doc
             },
             docs.block.account_blocks.transactions,
         ),
-        old_hash: string(docs.block.account_blocks.state_update.old_hash),
-        new_hash: string(docs.block.account_blocks.state_update.new_hash),
+        old_hash: stringWithLowerFilter(docs.block.account_blocks.state_update.old_hash),
+        new_hash: stringWithLowerFilter(docs.block.account_blocks.state_update.new_hash),
         tr_count: i32(docs.block.account_blocks.tr_count),
     }),
     tr_count: i32(), // TODO: doc
     state_update: {
         new: string(docs.block.state_update.new),
-        new_hash: string(docs.block.state_update.new_hash),
+        new_hash: stringWithLowerFilter(docs.block.state_update.new_hash),
         new_depth: u16(docs.block.state_update.new_depth),
         old: string(docs.block.state_update.old),
-        old_hash: string(docs.block.state_update.old_hash),
+        old_hash: stringWithLowerFilter(docs.block.state_update.old_hash),
         old_depth: u16(docs.block.state_update.old_depth),
     },
     master: {
@@ -692,11 +693,11 @@ const Block: TypeDef = {
         }),
         recover_create_msg: inMsg(docs.block.master.recover_create_msg),
         prev_blk_signatures: arrayOf({
-            node_id: string(docs.block.master.prev_blk_signatures.node_id),
-            r: string(docs.block.master.prev_blk_signatures.r),
-            s: string(docs.block.master.prev_blk_signatures.s),
+            node_id: stringWithLowerFilter(docs.block.master.prev_blk_signatures.node_id),
+            r: stringWithLowerFilter(docs.block.master.prev_blk_signatures.r),
+            s: stringWithLowerFilter(docs.block.master.prev_blk_signatures.s),
         }),
-        config_addr: string(),
+        config_addr: stringWithLowerFilter(),
         config: config(),
     },
     key_block: bool(docs.block.key_block),
@@ -715,16 +716,16 @@ const Zerostate: TypeDef = {
         validator_list_hash_short: u32(docs.zerostate.master.validator_list_hash_short),
         global_balance: grams(docs.zerostate.master.global_balance),
         global_balance_other: otherCurrencyCollection(docs.zerostate.master.global_balance_other),
-        config_addr: string(),
+        config_addr: stringWithLowerFilter(),
         config: config(),
     },
     accounts: arrayOf({
         ...AccountBase,
-        id: string(),
+        id: stringWithLowerFilter(),
     }, docs.zerostate.accounts),
     libraries: arrayOf(
         {
-            hash: string(docs.zerostate.libraries.hash),
+            hash: stringWithLowerFilter(docs.zerostate.libraries.hash),
             publishers: arrayOf(string(), docs.zerostate.libraries.publishers),
             lib: string(docs.zerostate.libraries.lib),
         },

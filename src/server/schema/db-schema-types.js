@@ -77,6 +77,14 @@ export const u32WithFormatter = (formatter: ToStringFormatterType, doc?: string)
     },
 }, doc);
 
+export const stringWithLowerFilter = (doc?: string) => withDoc({
+    _string: {
+    },
+    _: {
+        lowerFilter: true,
+    },
+}, doc);
+
 export const unixSeconds = (doc?: string) => u32WithFormatter(ToStringFormatter.unixSecondsToString, doc);
 
 export const grams = u128;
@@ -144,6 +152,7 @@ export type DbField = {
     join?: DbJoin,
     enumDef?: IntEnumDef,
     formatter?: ToStringFormatterType,
+    lowerFilter?: boolean,
     doc: string,
 }
 
@@ -270,6 +279,9 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             field.type = scalarTypes.float;
         } else if (schemaType.string) {
             field.type = scalarTypes.string;
+            if (ex && ex.lowerFilter) {
+                field.lowerFilter = true;
+            }
         } else {
             field.type = scalarTypes.string;
             console.log('Invalid field type: ', JSON.stringify(schemaType));

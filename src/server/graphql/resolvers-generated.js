@@ -2,6 +2,7 @@ const {
     scalar,
     bigUInt1,
     bigUInt2,
+    stringLowerFilter,
     resolveBigUInt,
     struct,
     array,
@@ -20,44 +21,44 @@ const OtherCurrency = struct({
 
 const ExtBlkRef = struct({
     end_lt: bigUInt1,
-    file_hash: scalar,
-    root_hash: scalar,
+    file_hash: stringLowerFilter,
+    root_hash: stringLowerFilter,
     seq_no: scalar,
 });
 
 const MsgEnvelope = struct({
-    cur_addr: scalar,
+    cur_addr: stringLowerFilter,
     fwd_fee_remaining: bigUInt2,
-    msg_id: scalar,
-    next_addr: scalar,
+    msg_id: stringLowerFilter,
+    next_addr: stringLowerFilter,
 });
 
 const InMsg = struct({
     fwd_fee: bigUInt2,
     ihr_fee: bigUInt2,
     in_msg: MsgEnvelope,
-    msg_id: scalar,
+    msg_id: stringLowerFilter,
     msg_type: scalar,
     msg_type_name: enumName('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
     out_msg: MsgEnvelope,
     proof_created: scalar,
     proof_delivered: scalar,
-    transaction_id: scalar,
+    transaction_id: stringLowerFilter,
     transit_fee: bigUInt2,
 });
 
 const OutMsg = struct({
     import_block_lt: bigUInt1,
     imported: InMsg,
-    msg_env_hash: scalar,
-    msg_id: scalar,
+    msg_env_hash: stringLowerFilter,
+    msg_id: stringLowerFilter,
     msg_type: scalar,
     msg_type_name: enumName('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
     next_addr_pfx: bigUInt1,
     next_workchain: scalar,
     out_msg: MsgEnvelope,
     reimport: InMsg,
-    transaction_id: scalar,
+    transaction_id: stringLowerFilter,
 });
 
 const OtherCurrencyArray = array(() => OtherCurrency);
@@ -84,14 +85,14 @@ const BlockAccountBlocksTransactions = struct({
     lt: bigUInt1,
     total_fees: bigUInt2,
     total_fees_other: OtherCurrencyArray,
-    transaction_id: scalar,
+    transaction_id: stringLowerFilter,
 });
 
 const BlockAccountBlocksTransactionsArray = array(() => BlockAccountBlocksTransactions);
 const BlockAccountBlocks = struct({
-    account_addr: scalar,
-    new_hash: scalar,
-    old_hash: scalar,
+    account_addr: stringLowerFilter,
+    new_hash: stringLowerFilter,
+    old_hash: stringLowerFilter,
     tr_count: scalar,
     transactions: BlockAccountBlocksTransactionsArray,
 });
@@ -99,10 +100,10 @@ const BlockAccountBlocks = struct({
 const BlockStateUpdate = struct({
     new: scalar,
     new_depth: scalar,
-    new_hash: scalar,
+    new_hash: stringLowerFilter,
     old: scalar,
     old_depth: scalar,
-    old_hash: scalar,
+    old_hash: stringLowerFilter,
 });
 
 const BlockMasterShardHashesDescr = struct({
@@ -111,7 +112,7 @@ const BlockMasterShardHashesDescr = struct({
     end_lt: bigUInt1,
     fees_collected: bigUInt2,
     fees_collected_other: OtherCurrencyArray,
-    file_hash: scalar,
+    file_hash: stringLowerFilter,
     flags: scalar,
     funds_created: bigUInt2,
     funds_created_other: OtherCurrencyArray,
@@ -122,7 +123,7 @@ const BlockMasterShardHashesDescr = struct({
     next_validator_shard: scalar,
     nx_cc_updated: scalar,
     reg_mc_seqno: scalar,
-    root_hash: scalar,
+    root_hash: stringLowerFilter,
     seq_no: scalar,
     split: scalar,
     split_type: scalar,
@@ -148,9 +149,9 @@ const BlockMasterShardFees = struct({
 });
 
 const BlockMasterPrevBlkSignatures = struct({
-    node_id: scalar,
-    r: scalar,
-    s: scalar,
+    node_id: stringLowerFilter,
+    r: stringLowerFilter,
+    s: stringLowerFilter,
 });
 
 const ConfigP6 = struct({
@@ -306,7 +307,7 @@ const ConfigP29 = struct({
 
 const ValidatorSetList = struct({
     adnl_addr: scalar,
-    public_key: scalar,
+    public_key: stringLowerFilter,
     weight: bigUInt1,
 });
 
@@ -377,7 +378,7 @@ const BlockMasterShardFeesArray = array(() => BlockMasterShardFees);
 const BlockMasterShardHashesArray = array(() => BlockMasterShardHashes);
 const BlockMaster = struct({
     config: Config,
-    config_addr: scalar,
+    config_addr: stringLowerFilter,
     max_shard_gen_utime: scalar,
     max_shard_gen_utime_string: stringCompanion('max_shard_gen_utime'),
     min_shard_gen_utime: scalar,
@@ -389,9 +390,9 @@ const BlockMaster = struct({
 });
 
 const BlockSignaturesSignatures = struct({
-    node_id: scalar,
-    r: scalar,
-    s: scalar,
+    node_id: stringLowerFilter,
+    r: stringLowerFilter,
+    s: stringLowerFilter,
 });
 
 const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
@@ -486,13 +487,13 @@ const TransactionCompute = struct({
     skipped_reason: scalar,
     skipped_reason_name: enumName('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
     success: scalar,
-    vm_final_state_hash: scalar,
-    vm_init_state_hash: scalar,
+    vm_final_state_hash: stringLowerFilter,
+    vm_init_state_hash: stringLowerFilter,
     vm_steps: scalar,
 });
 
 const TransactionAction = struct({
-    action_list_hash: scalar,
+    action_list_hash: stringLowerFilter,
     msgs_created: scalar,
     no_funds: scalar,
     result_arg: scalar,
@@ -523,20 +524,20 @@ const TransactionBounce = struct({
 const TransactionSplitInfo = struct({
     acc_split_depth: scalar,
     cur_shard_pfx_len: scalar,
-    sibling_addr: scalar,
-    this_addr: scalar,
+    sibling_addr: stringLowerFilter,
+    this_addr: stringLowerFilter,
 });
 
 const MessageArray = array(() => Message);
 const Transaction = struct({
     id: scalar,
     aborted: scalar,
-    account_addr: scalar,
+    account_addr: stringLowerFilter,
     action: TransactionAction,
     balance_delta: bigUInt2,
     balance_delta_other: OtherCurrencyArray,
     block: join('block_id', 'id', 'blocks', () => Block),
-    block_id: scalar,
+    block_id: stringLowerFilter,
     boc: scalar,
     bounce: TransactionBounce,
     compute: TransactionCompute,
@@ -546,19 +547,19 @@ const Transaction = struct({
     end_status: scalar,
     end_status_name: enumName('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
     in_message: join('in_msg', 'id', 'messages', () => Message),
-    in_msg: scalar,
+    in_msg: stringLowerFilter,
     installed: scalar,
     lt: bigUInt1,
-    new_hash: scalar,
+    new_hash: stringLowerFilter,
     now: scalar,
-    old_hash: scalar,
+    old_hash: stringLowerFilter,
     orig_status: scalar,
     orig_status_name: enumName('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
     out_messages: joinArray('out_msgs', 'id', 'messages', () => Message),
     out_msgs: StringArray,
     outmsg_cnt: scalar,
-    prepare_transaction: scalar,
-    prev_trans_hash: scalar,
+    prepare_transaction: stringLowerFilter,
+    prev_trans_hash: stringLowerFilter,
     prev_trans_lt: bigUInt1,
     proof: scalar,
     split_info: TransactionSplitInfo,
@@ -576,20 +577,20 @@ const Transaction = struct({
 const Message = struct({
     id: scalar,
     block: join('block_id', 'id', 'blocks', () => Block),
-    block_id: scalar,
+    block_id: stringLowerFilter,
     boc: scalar,
     body: scalar,
-    body_hash: scalar,
+    body_hash: stringLowerFilter,
     bounce: scalar,
     bounced: scalar,
     code: scalar,
-    code_hash: scalar,
+    code_hash: stringLowerFilter,
     created_at: scalar,
     created_at_string: stringCompanion('created_at'),
     created_lt: bigUInt1,
     data: scalar,
-    data_hash: scalar,
-    dst: scalar,
+    data_hash: stringLowerFilter,
+    dst: stringLowerFilter,
     dst_transaction: join('id', 'in_msg', 'transactions', () => Transaction),
     dst_workchain_id: scalar,
     fwd_fee: bigUInt2,
@@ -597,12 +598,12 @@ const Message = struct({
     ihr_fee: bigUInt2,
     import_fee: bigUInt2,
     library: scalar,
-    library_hash: scalar,
+    library_hash: stringLowerFilter,
     msg_type: scalar,
     msg_type_name: enumName('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
     proof: scalar,
     split_depth: scalar,
-    src: scalar,
+    src: stringLowerFilter,
     src_transaction: join('id', 'out_msgs[*]', 'transactions', () => Transaction),
     src_workchain_id: scalar,
     status: scalar,
@@ -621,17 +622,17 @@ const Account = struct({
     balance_other: OtherCurrencyArray,
     boc: scalar,
     code: scalar,
-    code_hash: scalar,
+    code_hash: stringLowerFilter,
     data: scalar,
-    data_hash: scalar,
+    data_hash: stringLowerFilter,
     due_payment: bigUInt2,
     last_paid: scalar,
     last_trans_lt: bigUInt1,
     library: scalar,
-    library_hash: scalar,
+    library_hash: stringLowerFilter,
     proof: scalar,
     split_depth: scalar,
-    state_hash: scalar,
+    state_hash: stringLowerFilter,
     tick: scalar,
     tock: scalar,
     workchain_id: scalar,
@@ -639,38 +640,38 @@ const Account = struct({
 
 const ZerostateMaster = struct({
     config: Config,
-    config_addr: scalar,
+    config_addr: stringLowerFilter,
     global_balance: bigUInt2,
     global_balance_other: OtherCurrencyArray,
     validator_list_hash_short: scalar,
 });
 
 const ZerostateAccounts = struct({
-    id: scalar,
+    id: stringLowerFilter,
     acc_type: scalar,
     acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
     balance: bigUInt2,
     balance_other: OtherCurrencyArray,
     boc: scalar,
     code: scalar,
-    code_hash: scalar,
+    code_hash: stringLowerFilter,
     data: scalar,
-    data_hash: scalar,
+    data_hash: stringLowerFilter,
     due_payment: bigUInt2,
     last_paid: scalar,
     last_trans_lt: bigUInt1,
     library: scalar,
-    library_hash: scalar,
+    library_hash: stringLowerFilter,
     proof: scalar,
     split_depth: scalar,
-    state_hash: scalar,
+    state_hash: stringLowerFilter,
     tick: scalar,
     tock: scalar,
     workchain_id: scalar,
 });
 
 const ZerostateLibraries = struct({
-    hash: scalar,
+    hash: stringLowerFilter,
     lib: scalar,
     publishers: StringArray,
 });
