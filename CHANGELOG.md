@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.33.0 – Feb 25, 2021
+
+### New
+
+- `bits`, `cells` and `public_cells` fileds in `accounts` collection representating account used storage
+  statistics for storage fee calculation.
+
 ## 0.32.0 – Feb 16, 2021
 
 ### New
