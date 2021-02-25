@@ -40,9 +40,9 @@ query{
 }
 \`\`\`     
                 `,
-        bits: 'Contains summ of all account cells used bits. Used in storage fee calculation',
-        cells: 'Contains account cells amount. Used in storage fee calculation',
-        public_cells: 'Contains account public cells amount. Used in storage fee calculation.',
+        bits: 'Contains sum of all the bits used by the cells of the account. Used in storage fee calculation',
+        cells: 'Contains number of the cells of the account. Used in storage fee calculation',
+        public_cells: 'Contains the number of public cells of the account. Used in storage fee calculation.',
         due_payment: `
 If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 \`\`\`
