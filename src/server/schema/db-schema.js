@@ -150,6 +150,9 @@ const AccountBase: TypeDef = {
     workchain_id: i32(docs.account.workchain_id),
     acc_type: required(accountStatus(docs.account.acc_type)),
     last_paid: required(u32(docs.account.last_paid)),
+    bits: u64(docs.account.bits),
+    cells: u64(docs.account.cells),
+    public_cells: u64(docs.account.public_cells),
     due_payment: grams(docs.account.due_payment),
     last_trans_lt: required(u64(docs.account.last_trans_lt)), // index
     balance: required(grams(docs.account.balance)), // index

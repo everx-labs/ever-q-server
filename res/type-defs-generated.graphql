@@ -1054,8 +1054,12 @@ type Account {
 	"""
 	balance(format: BigIntFormat): String
 	balance_other: [OtherCurrency]
+	"Contains summ of all account cells used bits. Used in storage fee calculation"
+	bits(format: BigIntFormat): String
 	"Bag of cells with the account struct encoded as base64."
 	boc: String
+	"Contains account cells amount. Used in storage fee calculation"
+	cells(format: BigIntFormat): String
 	"""
 	If present, contains smart-contract code encoded with in base64.
 	```  
@@ -1115,6 +1119,8 @@ type Account {
 	library_hash: String
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: String
+	"Contains account public cells amount. Used in storage fee calculation."
+	public_cells(format: BigIntFormat): String
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: Int
 	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
@@ -1182,8 +1188,12 @@ type ZerostateAccounts {
 	"""
 	balance(format: BigIntFormat): String
 	balance_other: [OtherCurrency]
+	"Contains summ of all account cells used bits. Used in storage fee calculation"
+	bits(format: BigIntFormat): String
 	"Bag of cells with the account struct encoded as base64."
 	boc: String
+	"Contains account cells amount. Used in storage fee calculation"
+	cells(format: BigIntFormat): String
 	"""
 	If present, contains smart-contract code encoded with in base64.
 	```  
@@ -1243,6 +1253,8 @@ type ZerostateAccounts {
 	library_hash: String
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: String
+	"Contains account public cells amount. Used in storage fee calculation."
+	public_cells(format: BigIntFormat): String
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: Int
 	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
@@ -2462,8 +2474,12 @@ input AccountFilter {
 	"""
 	balance: StringFilter
 	balance_other: OtherCurrencyArrayFilter
+	"Contains summ of all account cells used bits. Used in storage fee calculation"
+	bits: StringFilter
 	"Bag of cells with the account struct encoded as base64."
 	boc: StringFilter
+	"Contains account cells amount. Used in storage fee calculation"
+	cells: StringFilter
 	"""
 	If present, contains smart-contract code encoded with in base64.
 	```  
@@ -2523,6 +2539,8 @@ input AccountFilter {
 	library_hash: StringFilter
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: StringFilter
+	"Contains account public cells amount. Used in storage fee calculation."
+	public_cells: StringFilter
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: IntFilter
 	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
@@ -2592,8 +2610,12 @@ input ZerostateAccountsFilter {
 	"""
 	balance: StringFilter
 	balance_other: OtherCurrencyArrayFilter
+	"Contains summ of all account cells used bits. Used in storage fee calculation"
+	bits: StringFilter
 	"Bag of cells with the account struct encoded as base64."
 	boc: StringFilter
+	"Contains account cells amount. Used in storage fee calculation"
+	cells: StringFilter
 	"""
 	If present, contains smart-contract code encoded with in base64.
 	```  
@@ -2653,6 +2675,8 @@ input ZerostateAccountsFilter {
 	library_hash: StringFilter
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: StringFilter
+	"Contains account public cells amount. Used in storage fee calculation."
+	public_cells: StringFilter
 	"Is present and non-zero only in instances of large smart contracts."
 	split_depth: IntFilter
 	"Contains the representation hash of an instance of `StateInit` when an account is frozen."
