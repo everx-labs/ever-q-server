@@ -620,7 +620,9 @@ const Account = struct({
     acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
     balance: bigUInt2,
     balance_other: OtherCurrencyArray,
+    bits: bigUInt1,
     boc: scalar,
+    cells: bigUInt1,
     code: scalar,
     code_hash: stringLowerFilter,
     data: scalar,
@@ -631,6 +633,7 @@ const Account = struct({
     library: scalar,
     library_hash: stringLowerFilter,
     proof: scalar,
+    public_cells: bigUInt1,
     split_depth: scalar,
     state_hash: stringLowerFilter,
     tick: scalar,
@@ -652,7 +655,9 @@ const ZerostateAccounts = struct({
     acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
     balance: bigUInt2,
     balance_other: OtherCurrencyArray,
+    bits: bigUInt1,
     boc: scalar,
+    cells: bigUInt1,
     code: scalar,
     code_hash: stringLowerFilter,
     data: scalar,
@@ -663,6 +668,7 @@ const ZerostateAccounts = struct({
     library: scalar,
     library_hash: stringLowerFilter,
     proof: scalar,
+    public_cells: bigUInt1,
     split_depth: scalar,
     state_hash: stringLowerFilter,
     tick: scalar,
@@ -1068,11 +1074,20 @@ function createResolvers(data) {
             balance(parent, args) {
                 return resolveBigUInt(2, parent.balance, args);
             },
+            bits(parent, args) {
+                return resolveBigUInt(1, parent.bits, args);
+            },
+            cells(parent, args) {
+                return resolveBigUInt(1, parent.cells, args);
+            },
             due_payment(parent, args) {
                 return resolveBigUInt(2, parent.due_payment, args);
             },
             last_trans_lt(parent, args) {
                 return resolveBigUInt(1, parent.last_trans_lt, args);
+            },
+            public_cells(parent, args) {
+                return resolveBigUInt(1, parent.public_cells, args);
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
@@ -1085,11 +1100,20 @@ function createResolvers(data) {
             balance(parent, args) {
                 return resolveBigUInt(2, parent.balance, args);
             },
+            bits(parent, args) {
+                return resolveBigUInt(1, parent.bits, args);
+            },
+            cells(parent, args) {
+                return resolveBigUInt(1, parent.cells, args);
+            },
             due_payment(parent, args) {
                 return resolveBigUInt(2, parent.due_payment, args);
             },
             last_trans_lt(parent, args) {
                 return resolveBigUInt(1, parent.last_trans_lt, args);
+            },
+            public_cells(parent, args) {
+                return resolveBigUInt(1, parent.public_cells, args);
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
@@ -1607,7 +1631,9 @@ scalarFields.set('accounts.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('accounts.balance', { type: 'uint1024', path: 'doc.balance' });
 scalarFields.set('accounts.balance_other.currency', { type: 'number', path: 'doc.balance_other[*].currency' });
 scalarFields.set('accounts.balance_other.value', { type: 'uint1024', path: 'doc.balance_other[*].value' });
+scalarFields.set('accounts.bits', { type: 'uint64', path: 'doc.bits' });
 scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
+scalarFields.set('accounts.cells', { type: 'uint64', path: 'doc.cells' });
 scalarFields.set('accounts.code', { type: 'string', path: 'doc.code' });
 scalarFields.set('accounts.code_hash', { type: 'string', path: 'doc.code_hash' });
 scalarFields.set('accounts.data', { type: 'string', path: 'doc.data' });
@@ -1618,6 +1644,7 @@ scalarFields.set('accounts.last_trans_lt', { type: 'uint64', path: 'doc.last_tra
 scalarFields.set('accounts.library', { type: 'string', path: 'doc.library' });
 scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_hash' });
 scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
+scalarFields.set('accounts.public_cells', { type: 'uint64', path: 'doc.public_cells' });
 scalarFields.set('accounts.split_depth', { type: 'number', path: 'doc.split_depth' });
 scalarFields.set('accounts.state_hash', { type: 'string', path: 'doc.state_hash' });
 scalarFields.set('accounts.tick', { type: 'boolean', path: 'doc.tick' });
@@ -1628,7 +1655,9 @@ scalarFields.set('zerostates.accounts.id', { type: 'string', path: 'doc.accounts
 scalarFields.set('zerostates.accounts.balance', { type: 'uint1024', path: 'doc.accounts[*].balance' });
 scalarFields.set('zerostates.accounts.balance_other.currency', { type: 'number', path: 'doc.accounts[*].balance_other[**].currency' });
 scalarFields.set('zerostates.accounts.balance_other.value', { type: 'uint1024', path: 'doc.accounts[*].balance_other[**].value' });
+scalarFields.set('zerostates.accounts.bits', { type: 'uint64', path: 'doc.accounts[*].bits' });
 scalarFields.set('zerostates.accounts.boc', { type: 'string', path: 'doc.accounts[*].boc' });
+scalarFields.set('zerostates.accounts.cells', { type: 'uint64', path: 'doc.accounts[*].cells' });
 scalarFields.set('zerostates.accounts.code', { type: 'string', path: 'doc.accounts[*].code' });
 scalarFields.set('zerostates.accounts.code_hash', { type: 'string', path: 'doc.accounts[*].code_hash' });
 scalarFields.set('zerostates.accounts.data', { type: 'string', path: 'doc.accounts[*].data' });
@@ -1639,6 +1668,7 @@ scalarFields.set('zerostates.accounts.last_trans_lt', { type: 'uint64', path: 'd
 scalarFields.set('zerostates.accounts.library', { type: 'string', path: 'doc.accounts[*].library' });
 scalarFields.set('zerostates.accounts.library_hash', { type: 'string', path: 'doc.accounts[*].library_hash' });
 scalarFields.set('zerostates.accounts.proof', { type: 'string', path: 'doc.accounts[*].proof' });
+scalarFields.set('zerostates.accounts.public_cells', { type: 'uint64', path: 'doc.accounts[*].public_cells' });
 scalarFields.set('zerostates.accounts.split_depth', { type: 'number', path: 'doc.accounts[*].split_depth' });
 scalarFields.set('zerostates.accounts.state_hash', { type: 'string', path: 'doc.accounts[*].state_hash' });
 scalarFields.set('zerostates.accounts.tick', { type: 'boolean', path: 'doc.accounts[*].tick' });
