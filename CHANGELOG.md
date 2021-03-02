@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.34.0 – Mar 2, 2021
+
+### New
+
+- `boc` field in `zerostate` collection.
+
 ## 0.33.0 – Feb 25, 2021
 
 ### New
