@@ -687,6 +687,7 @@ const ZerostateLibrariesArray = array(() => ZerostateLibraries);
 const Zerostate = struct({
     id: scalar,
     accounts: ZerostateAccountsArray,
+    boc: scalar,
     global_id: scalar,
     libraries: ZerostateLibrariesArray,
     master: ZerostateMaster,
@@ -1674,6 +1675,7 @@ scalarFields.set('zerostates.accounts.state_hash', { type: 'string', path: 'doc.
 scalarFields.set('zerostates.accounts.tick', { type: 'boolean', path: 'doc.accounts[*].tick' });
 scalarFields.set('zerostates.accounts.tock', { type: 'boolean', path: 'doc.accounts[*].tock' });
 scalarFields.set('zerostates.accounts.workchain_id', { type: 'number', path: 'doc.accounts[*].workchain_id' });
+scalarFields.set('zerostates.boc', { type: 'string', path: 'doc.boc' });
 scalarFields.set('zerostates.global_id', { type: 'number', path: 'doc.global_id' });
 scalarFields.set('zerostates.libraries.hash', { type: 'string', path: 'doc.libraries[*].hash' });
 scalarFields.set('zerostates.libraries.lib', { type: 'string', path: 'doc.libraries[*].lib' });
