@@ -734,6 +734,7 @@ const Zerostate: TypeDef = {
         },
         docs.zerostate.libraries._doc,
     ),
+    boc: string(docs.zerostate.boc),
 };
 
 //Root scheme declaration

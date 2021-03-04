@@ -523,7 +523,8 @@ Logical time is a component of the TON Blockchain that also plays an important r
             hash: `Library hash`,
             publishers: `List of the accounts which use the library`,
             lib: `Serialized bag of cell of this library encoded with base64`,
-        }
+        },
+        boc: `A bag of cells with the zerostate structure encoded as base64.`,
     }
 
 };
