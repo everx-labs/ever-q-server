@@ -552,6 +552,7 @@ const Transaction = struct({
     lt: bigUInt1,
     new_hash: stringLowerFilter,
     now: scalar,
+    now_string: stringCompanion('now'),
     old_hash: stringLowerFilter,
     orig_status: scalar,
     orig_status_name: enumName('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
@@ -1013,6 +1014,9 @@ function createResolvers(data) {
             },
             total_fees(parent, args) {
                 return resolveBigUInt(2, parent.total_fees, args);
+            },
+            now_string(parent, args) {
+                return unixSecondsToString(parent.now);
             },
             end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
             orig_status_name: createEnumNameResolver('orig_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),

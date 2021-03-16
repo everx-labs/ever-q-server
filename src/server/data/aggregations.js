@@ -83,15 +83,33 @@ function simple(context: AggregationContext): AggregationQueryParts {
 }
 
 function bigIntToNum(hex: any): string {
-    return `TO_NUMBER(CONCAT("0x", ${(hex: any)}))`
+    return `TO_NUMBER(CONCAT("0x", ${hex}))`
+}
+
+function negBigIntToNum(hex: any): string {
+    return `-(EXP2(LENGTH(${hex}) * 4) - 1 - ${bigIntToNum(hex)})`
 }
 
 function bigIntHiPart(path: string, prefix: number): string {
-    return bigIntToNum(`SUBSTRING(${path}, ${prefix}, LENGTH(${path}) - ${prefix + 8})`);
+    return `SUBSTRING(${path}, ${prefix}, LENGTH(${path}) - ${prefix + 8})`;
 }
 
 function bigIntLoPart(path: string, prefix: number): string {
-    return bigIntToNum(`RIGHT(SUBSTRING(${path}, ${prefix}), 8)`);
+    return `RIGHT(SUBSTRING(${path}, ${prefix}), 8)`;
+}
+
+function signedBigIntPart(path: string, prefix: number, part: (path: string, prefix: number) => string): string {
+    return `SUBSTRING(${path}, 0, 1) == "-"
+    ? ${negBigIntToNum(part(path, prefix + 1))}
+    : ${bigIntToNum(part(path, prefix))}`;
+}
+
+function signedBigIntHiPart(path: string, prefix: number): string {
+    return signedBigIntPart(path, prefix, bigIntHiPart);
+}
+
+function signedBigIntLoPart(path: string, prefix: number): string {
+    return signedBigIntPart(path, prefix, bigIntLoPart);
 }
 
 function bigIntSumExpr(part: (path: string, prefix: number) => string, context: AggregationContext) {
@@ -105,16 +123,16 @@ function bigIntSumExpr(part: (path: string, prefix: number) => string, context: 
 function bigIntSum(context: AggregationContext): AggregationQueryParts {
     return queryParts(
         context,
-        bigIntSumExpr(bigIntHiPart, context),
-        bigIntSumExpr(bigIntLoPart, context),
+        bigIntSumExpr(signedBigIntHiPart, context),
+        bigIntSumExpr(signedBigIntLoPart, context),
     );
 }
 
 function bigIntAvg(context: AggregationContext): AggregationQueryParts {
     return queryParts(
         context,
-        bigIntSumExpr(bigIntHiPart, context),
-        bigIntSumExpr(bigIntLoPart, context),
+        bigIntSumExpr(signedBigIntHiPart, context),
+        bigIntSumExpr(signedBigIntLoPart, context),
         context.isArray
             ? `SUM(COUNT(${context.field.path}))`
             : `COUNT(doc)`,
@@ -172,12 +190,16 @@ function bigIntStringToDecimalString(context: AggregationContext, value: any): a
         return value.toString();
     }
     //$FlowFixMe
-    return BigInt(`0x${value.substr(context.bigIntPrefix)}`).toString();
+    return value.substr(0, 1) == "-"
+        ? BigInt(`-0x${value.substr(context.bigIntPrefix + 1)}`).toString()
+        : BigInt(`0x${value.substr(context.bigIntPrefix)}`).toString();
 }
 
 //$FlowFixMe
 function bigIntPartsToBigInt(context: AggregationContext, parts: { a: number, b: number }): BigInt {
-    const h = BigInt(`0x${Math.round(parts.a).toString(16)}00000000`);
+    const h = parts.a >= 0
+        ? BigInt(`0x${Math.round(parts.a).toString(16)}00000000`)
+        : -BigInt(`0x${Math.round(Math.abs(parts.a)).toString(16)}00000000`);
     const l = BigInt(Math.round(parts.b));
     return h + l;
 }
