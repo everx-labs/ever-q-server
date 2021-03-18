@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## 0.34.1 – Mar 11, 2021
+
+### Fixed
+
+- Aggregation of fields with negative values.
+
 ## 0.34.0 – Mar 2, 2021
 
 ### New

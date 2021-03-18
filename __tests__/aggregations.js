@@ -48,7 +48,7 @@ function aggregate(items, getValue) {
         }
     }
     const avg = typeof sum !== 'string'
-        ? Math.trunc(sum / items.length)
+        ? sum / BigInt(items.length)
         : sum;
     return { sum, min, max, avg };
 }
@@ -95,41 +95,30 @@ test('Partitioned Data', async () => {
     expect(Number(aggregated[0])).toEqual(messages.length);
 
     // BigInt(2)
-    const values = aggregate(messages, m => Number(m.value));
-    expect(Number(aggregated[1])).toEqual(values.min);
-    expect(Number(aggregated[2])).toEqual(values.max);
-    expect(Number(aggregated[3])).toEqual(values.sum);
-    expect(Number(aggregated[4])).toEqual(values.avg);
+    const values = aggregate(messages, m => BigInt(m.value));
+    expect(BigInt(aggregated[1])).toEqual(values.min);
+    expect(BigInt(aggregated[2])).toEqual(values.max);
+    expect(BigInt(aggregated[3])).toEqual(values.sum);
+    expect(BigInt(aggregated[4])).toEqual(values.avg);
 
     // BigInt(1)
-    const lts = aggregate(messages, m => Number(m.created_lt));
-    expect(Number(aggregated[5])).toEqual(lts.min);
-    expect(Number(aggregated[6])).toEqual(lts.max);
-    expect(Number(aggregated[7])).toEqual(lts.sum);
-    expect(Number(aggregated[8])).toEqual(lts.avg);
+    const lts = aggregate(messages, m => BigInt(m.created_lt));
+    expect(BigInt(aggregated[5])).toEqual(lts.min);
+    expect(BigInt(aggregated[6])).toEqual(lts.max);
+    expect(BigInt(aggregated[7])).toEqual(lts.sum);
+    expect(BigInt(aggregated[8])).toEqual(lts.avg);
 
     // Number
-    const ats = aggregate(messages, m => Number(m.created_at));
-    expect(Number(aggregated[9])).toEqual(ats.min);
-    expect(Number(aggregated[10])).toEqual(ats.max);
-    expect(Number(aggregated[11])).toEqual(ats.sum);
-    expect(Number(aggregated[12])).toEqual(ats.avg);
+    const ats = aggregate(messages, m => BigInt(m.created_at));
+    expect(BigInt(aggregated[9])).toEqual(ats.min);
+    expect(BigInt(aggregated[10])).toEqual(ats.max);
+    expect(BigInt(aggregated[11])).toEqual(ats.sum);
+    expect(BigInt(aggregated[12])).toEqual(ats.avg);
 
     // String
     const ids = aggregate(messages, m => m.id);
     expect(aggregated[13]).toEqual(ids.min);
     expect(aggregated[14]).toEqual(ids.max);
-
-    // nulls
-    aggregated = (await client.query({
-        query: gql`${`query { aggregateMessages(
-            filter: {id: {in: ["1"]}}
-            fields: [
-                {field: "value", fn: COUNT}
-                {field: "value", fn: MIN}
-            ]) 
-        }`}`,
-    })).data.aggregateMessages;
 
     server.stop();
 });
@@ -154,3 +143,29 @@ test('Partitioned data with null', async () => {
     expect(aggregated[1]).toBeNull();
     server.stop();
 });
+
+test('Balance delta sum', async () => {
+    const server = new TONQServer({
+        config: testConfig,
+        logs: new QLogs(),
+        data: createLocalArangoTestData(new QLogs()),
+    });
+    await server.start();
+    const client = createTestClient({ useWebSockets: true });
+    let account = (await client.query({
+        query: gql`query { accounts(filter: { workchain_id: { eq: 0 }} limit: 1){id balance} }`,
+    })).data.accounts[0];
+
+    const aggregated = (await client.query({
+        query: gql`${`query { aggregateTransactions(
+            filter: {account_addr: {eq: "${account.id}"}}
+            fields: [
+                {field: "balance_delta", fn: SUM}
+            ]) 
+        }`}`,
+    })).data.aggregateTransactions;
+
+    expect(BigInt(aggregated[0])).toEqual(BigInt(account.balance));
+
+    server.stop();
+})

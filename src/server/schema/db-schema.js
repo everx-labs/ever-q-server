@@ -228,7 +228,7 @@ const Transaction: TypeDef = {
     lt: u64(docs.transaction.lt),
     prev_trans_hash: stringWithLowerFilter(docs.transaction.prev_trans_hash),
     prev_trans_lt: u64(docs.transaction.prev_trans_lt),
-    now: u32(docs.transaction.now),
+    now: unixSeconds(docs.transaction.now),
     outmsg_cnt: i32(docs.transaction.outmsg_cnt),
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
