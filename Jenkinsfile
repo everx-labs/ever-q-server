@@ -127,9 +127,10 @@ pipeline {
 								builtImage.inside ("""
 									--entrypoint=''
 									-u root
+									-e 'Q_REQUESTS_MODE=rest'
+									-e 'Q_REQUESTS_SERVER=localhost'
 									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
 									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
-									-e 'Q_DATA_COLD=${Q_DATABASE_URI}'
 									-e 'Q_SLOW_QUERIES_HOT=${Q_DATABASE_URI}'
 									-e 'Q_SLOW_QUERIES_MUT=${Q_DATABASE_URI}'
 								""") {
