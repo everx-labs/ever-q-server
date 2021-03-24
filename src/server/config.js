@@ -123,7 +123,7 @@ opt('keep-alive', '60000', 'GraphQL keep alive ms');
 opt('requests-mode', 'kafka', 'Requests mode (kafka | rest)');
 opt('requests-server', 'kafka:9092', 'Requests server url');
 opt('requests-topic', 'requests', 'Requests topic name');
-opt('requests-max-size', '16000', 'Maximum request message size in bytes');
+opt('requests-max-size', '16383', 'Maximum request message size in bytes');
 
 dataOpt('data');
 dataOpt('slow queries');
