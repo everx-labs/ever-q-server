@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.35.0] 2021-03-23
+
+### New
+
+- `requests-max-size` config parameter sets limit of request message in bytes.
+
 ## 0.34.1 – Mar 11, 2021
 
 ### Fixed

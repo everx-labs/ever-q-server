@@ -15,6 +15,8 @@
  */
 
 // @flow
+import { TonClient } from '@tonclient/core';
+import { libNode } from "@tonclient/lib-node";
 import fs from 'fs';
 import express from 'express';
 import http from 'http';
@@ -22,8 +24,6 @@ import path from 'path';
 
 import { ApolloServer, ApolloServerExpressConfig } from 'apollo-server-express';
 import { ConnectionContext } from 'subscriptions-transport-ws';
-import type { TONClient } from 'ton-client-js/types';
-import { TONClient as TONClientNodeJs } from 'ton-client-node-js';
 import { ArangoProvider } from './data/arango-provider';
 import QBlockchainData from './data/blockchain';
 import type { QDataProviders } from './data/data';
@@ -134,7 +134,7 @@ export default class TONQServer {
     data: QBlockchainData;
     tracer: Tracer;
     stats: IStats;
-    client: TONClient;
+    client: TonClient;
     auth: Auth;
     memStats: MemStats;
     shared: Map<string, any>;
@@ -178,7 +178,8 @@ export default class TONQServer {
 
 
     async start() {
-        this.client = await TONClientNodeJs.create({ servers: [''] });
+        TonClient.useBinaryLibrary(libNode);
+        this.client = new TonClient();
         await this.data.start();
         const { host, port } = this.config.server;
         this.server.listen({

@@ -483,7 +483,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
             }
         },
         key_block: 'true if this block is a key block',
-        boc: 'Serialized bag of cell of this block encoded with base64',
+        boc: 'Serialized bag of cells of this block encoded with base64',
         balance_delta: 'Account balance change after transaction',
     },
 
@@ -517,14 +517,13 @@ Logical time is a component of the TON Blockchain that also plays an important r
             global_balance_other: `Overall balance of all accounts in other currencies`,
             validator_list_hash_short: ``,
         },
-        boc: 'Serialized bag of cell of this zerostate encoded with base64',
+        boc: 'Serialized bag of cells of this zerostate encoded with base64',
         libraries: {
             _doc: `Initial libraries at the workchain start`,
             hash: `Library hash`,
             publishers: `List of the accounts which use the library`,
-            lib: `Serialized bag of cell of this library encoded with base64`,
+            lib: `Serialized bag of cells of this library encoded with base64`,
         },
-        boc: `A bag of cells with the zerostate structure encoded as base64.`,
     }
 
 };

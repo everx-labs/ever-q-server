@@ -6,6 +6,8 @@ import QLogs from '../src/server/logs';
 import TONQServer from '../src/server/server';
 import { createLocalArangoTestData, createTestClient, testConfig } from './init-tests';
 
+declare function BigInt(value: any): any;
+
 test('Aggregations Fast Detector', async () => {
     const granted: AccessRights = { granted: true, restrictToAccounts: [] };
     const data = createLocalArangoTestData(new QLogs());
@@ -165,7 +167,7 @@ test('Balance delta sum', async () => {
         }`}`,
     })).data.aggregateTransactions;
 
-    expect(BigInt(aggregated[0])).toEqual(BigInt(account.balance));
+    expect(BigInt(aggregated[0]).toString()).toEqual(BigInt(account.balance).toString());
 
     server.stop();
 })
