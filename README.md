@@ -30,6 +30,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
     --requests-mode <value>       Q_REQUESTS_MODE       kafka          Requests mode (kafka | rest)
     --requests-server <value>     Q_REQUESTS_SERVER     kafka:9092     Requests server url
     --requests-topic <value>      Q_REQUESTS_TOPIC      requests       Requests topic name
+    --requests-max-size <value>   Q_REQUESTS_MAX_SIZE   16000          Maximum request message size in bytes
     --data-mut <value>            Q_DATA_MUT            arangodb       Data mutable db config url
     --data-hot <value>            Q_DATA_HOT            arangodb       Data hot db config url
     --data-cold <value>           Q_DATA_COLD                          Data cold db config urls (comma separated)

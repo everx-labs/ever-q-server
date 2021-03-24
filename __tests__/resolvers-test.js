@@ -8,6 +8,7 @@ import {
 } from '../src/server/graphql/resolvers-generated';
 import QLogs from '../src/server/logs';
 import { createLocalArangoTestData } from './init-tests';
+declare function BigInt(a: any): any;
 
 test('BigUInt', () => {
     expect(convertBigUInt(1, null)).toBeNull();
@@ -28,7 +29,7 @@ test('BigUInt', () => {
     expect(convertBigUInt(1, '18446744073709551615')).toEqual('fffffffffffffffff');
     expect(convertBigUInt(1, Number.MAX_SAFE_INTEGER)).toEqual('d1fffffffffffff');
     // $FlowFixMe
-    expect(convertBigUInt(1, 0xffffffffffffffffn)).toEqual('fffffffffffffffff');
+    expect(convertBigUInt(1, BigInt("0xffffffffffffffff"))).toEqual('fffffffffffffffff');
 
     expect(convertBigUInt(2, null)).toBeNull();
     expect(convertBigUInt(2, undefined)).toBeUndefined();
@@ -73,7 +74,7 @@ test('Negative BigUInt', () => {
     expect(convertBigUInt(1, '-18446744073709551615')).toEqual('-00000000000000000');
     expect(convertBigUInt(1, -Number.MAX_SAFE_INTEGER)).toEqual('-2e0000000000000');
     // $FlowFixMe
-    expect(convertBigUInt(1, -0xffffffffffffffffn)).toEqual('-00000000000000000');
+    expect(convertBigUInt(1, -BigInt("0xffffffffffffffff"))).toEqual('-00000000000000000');
 
     expect(convertBigUInt(2, -0x1)).toEqual('-ffe');
     expect(convertBigUInt(2, -0x100)).toEqual('-fdeff');

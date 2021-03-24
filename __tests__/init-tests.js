@@ -9,6 +9,7 @@ import { ApolloClient } from 'apollo-client';
 
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
+import type { QConfig } from "../src/server/config";
 import QBlockchainData, { INDEXES } from '../src/server/data/blockchain';
 import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
 import type { QDataProviders } from '../src/server/data/data';
@@ -86,12 +87,15 @@ export function createTestClient(options: { useWebSockets: boolean }): ApolloCli
     return client;
 }
 
-export async function testServerRequired(): Promise<TONQServer> {
+export async function testServerRequired(override?: any): Promise<TONQServer> {
     if (testServer) {
         return testServer;
     }
     testServer = new TONQServer({
-        config: testConfig,
+        config: {
+            ...testConfig,
+            ...override,
+        },
         logs: new QLogs(),
     });
     await testServer.start();
@@ -132,13 +136,21 @@ export async function testServerQuery(query: string, variables?: { [string]: any
     }
 }
 
+export async function testServerStop() {
+    const server = testServer;
+    testServer = null;
+    if (server) {
+        await server.stop();
+    }
+}
+
 export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
     const dataMut = process.env.Q_DATA_MUT || 'http://localhost:8901';
     const dataHot = process.env.Q_DATA_HOT || dataMut;
-    const dataCold = process.env.Q_DATA_COLD || dataHot;
+    const dataCold = process.env.Q_DATA_COLD || "";
     const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT || dataMut;
     const slowQueriesHot = process.env.Q_SLOW_QUERIES_HOT || slowQueriesMut;
-    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD || slowQueriesHot;
+    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD || "";
     const { data, slowQueriesData } = parseDataConfig({
         dataMut,
         dataHot,

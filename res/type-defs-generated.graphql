@@ -1294,7 +1294,7 @@ type Zerostate {
 	id: String
 	"Initial accounts state at the workchain start"
 	accounts: [ZerostateAccounts]
-	"A bag of cells with the zerostate structure encoded as base64."
+	"Serialized bag of cell of this zerostate encoded with base64"
 	boc: String
 	"uint32 global network ID"
 	global_id: Int
@@ -2730,7 +2730,7 @@ input ZerostateFilter {
 	id: StringFilter
 	"Initial accounts state at the workchain start"
 	accounts: ZerostateAccountsArrayFilter
-	"A bag of cells with the zerostate structure encoded as base64."
+	"Serialized bag of cell of this zerostate encoded with base64"
 	boc: StringFilter
 	"uint32 global network ID"
 	global_id: IntFilter
