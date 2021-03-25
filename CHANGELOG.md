@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- `requests-max-size` config parameter sets limit of request message in bytes.
+- `requests-max-size` config parameter sets limit of request message size in bytes. Default value is 16384 bytes.
 
 ## 0.34.1 – Mar 11, 2021
 
