@@ -1,8 +1,9 @@
 // @flow
 
+import { TonClient } from "@tonclient/core";
 import { Kafka, Producer } from 'kafkajs';
 import { Span, FORMAT_TEXT_MAP } from 'opentracing';
-import type { TONContracts } from 'ton-client-js/types';
+import type { QConfig } from "../config";
 import QBlockchainData from '../data/blockchain';
 import { requireGrantedAccess } from '../data/collection';
 import type {
@@ -16,6 +17,8 @@ import { QTracer } from '../tracer';
 import { packageJson, QError } from '../utils';
 
 const { version } = packageJson();
+
+declare function BigInt(a: any): any;
 
 function isObject(test: any): boolean {
     return typeof test === 'object' && test !== null;
@@ -111,7 +114,6 @@ async function getAccountsTotalBalance(_parent, args, context: GraphQLRequestCon
             {},
             []);
         const parts = (result: { hs: number, ls: number }[])[0];
-        //$FlowFixMe
         return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
     }, QTracer.getParentSpan(tracer, context))
 }
@@ -193,14 +195,15 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
 }
 
 async function checkPostRestrictions(
-    contracts: TONContracts,
+    config: QConfig,
+    client: TonClient,
     requests: Request[],
     accessRights: AccessRights,
 ) {
     requests.forEach((request) => {
         const size = Math.ceil(request.body.length * 3 / 4);
-        if (size > 60000) {
-            throw new Error(`Message size ${size} is too large`);
+        if (size > config.requests.maxSize) {
+            throw new Error(`Message size ${size} is too large. Maximum size is ${config.requests.maxSize} bytes.`);
         }
     });
 
@@ -209,9 +212,9 @@ async function checkPostRestrictions(
     }
     const accounts = new Set(accessRights.restrictToAccounts);
     for (const request: Request of requests) {
-        const message = await contracts.parseMessage({
-            bocBase64: request.body,
-        });
+        const message = (await client.boc.parse_message({
+            boc: request.body,
+        })).parsed;
         if (!accounts.has(message.dst)) {
             throw Auth.unauthorizedError();
         }
@@ -232,7 +235,7 @@ async function postRequests(
     return QTracer.trace(tracer, 'postRequests', async (span: Span) => {
         span.setTag('params', requests);
         const accessRights = await requireGrantedAccess(context, args);
-        await checkPostRestrictions(context.client.contracts, requests, accessRights);
+        await checkPostRestrictions(context.config, context.client, requests, accessRights);
 
         const expired: ?Request = requests.find(x => x.expireAt && (Date.now() > x.expireAt));
         if (expired) {

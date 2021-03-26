@@ -70,15 +70,19 @@ export class ArangoProvider implements QDataProvider {
         return this.arango.collection(collection).indexes();
     }
 
+    /**
+     * Returns object with collection names in keys and collection size in values.
+     */
     async loadFingerprint(): Promise<any> {
-        /**
-         * Returns object with collection names in keys and collection size in values.
-         */
-        const collections = (await this.arango.listCollections()).map(descr => descr.name);
+        const collectionNames = (await this.arango.listCollections()).map(descr => descr.name);
         // TODO: add this when required a new version arangojs v7.x.x
         // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
-        const results = await Promise.all(collections.map(col => this.arango.collection(col).count()))
-        return Object.fromEntries(collections.map((_, i) => [collections[i], results[i].count]));
+        const results = await Promise.all(collectionNames.map(col => this.arango.collection(col).count()));
+        const fingerprint: any = {};
+        collectionNames.forEach((collectionName, i) => {
+            fingerprint[collectionName] = results[i].count;
+        });
+        return fingerprint;
     }
 
     async hotUpdate(): Promise<any> {
@@ -91,8 +95,10 @@ export class ArangoProvider implements QDataProvider {
     }
 
     async subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any {
-        this.listenerSubscribers?.on(collection, listener);
-        this.listenerSubscribersCount += 1;
+        if (this.listenerSubscribers) {
+            this.listenerSubscribers.on(collection, listener);
+            this.listenerSubscribersCount += 1;
+        }
         this.checkStartListener();
         return {
             collection,
@@ -102,8 +108,10 @@ export class ArangoProvider implements QDataProvider {
 
 
     unsubscribe(subscription: any) {
-        this.listenerSubscribers?.removeListener(subscription.collection, subscription.listener);
-        this.listenerSubscribersCount = Math.max(this.listenerSubscribersCount - 1, 0);
+        if (this.listenerSubscribers) {
+            this.listenerSubscribers.removeListener(subscription.collection, subscription.listener);
+            this.listenerSubscribersCount = Math.max(this.listenerSubscribersCount - 1, 0);
+        }
     }
 
     // Internals
@@ -164,7 +172,9 @@ export class ArangoProvider implements QDataProvider {
     }
 
     onDataEvent(event: QDataEvent, collection: string, doc: QDoc) {
-        this.listenerSubscribers?.emit(collection, doc, event);
+        if (this.listenerSubscribers) {
+            this.listenerSubscribers.emit(collection, doc, event);
+        }
     }
 
 }

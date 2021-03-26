@@ -656,7 +656,7 @@ type Block {
 	after_merge: Boolean
 	after_split: Boolean
 	before_split: Boolean
-	"Serialized bag of cell of this block encoded with base64"
+	"Serialized bag of cells of this block encoded with base64"
 	boc: String
 	"Public key of the collator who produced this block."
 	created_by: String
@@ -1283,7 +1283,7 @@ type ZerostateAccounts {
 type ZerostateLibraries {
 	"Library hash"
 	hash: String
-	"Serialized bag of cell of this library encoded with base64"
+	"Serialized bag of cells of this library encoded with base64"
 	lib: String
 	"List of the accounts which use the library"
 	publishers: [String]
@@ -1294,7 +1294,7 @@ type Zerostate {
 	id: String
 	"Initial accounts state at the workchain start"
 	accounts: [ZerostateAccounts]
-	"A bag of cells with the zerostate structure encoded as base64."
+	"Serialized bag of cells of this zerostate encoded with base64"
 	boc: String
 	"uint32 global network ID"
 	global_id: Int
@@ -1968,7 +1968,7 @@ input BlockFilter {
 	after_merge: BooleanFilter
 	after_split: BooleanFilter
 	before_split: BooleanFilter
-	"Serialized bag of cell of this block encoded with base64"
+	"Serialized bag of cells of this block encoded with base64"
 	boc: StringFilter
 	"Public key of the collator who produced this block."
 	created_by: StringFilter
@@ -2708,7 +2708,7 @@ input ZerostateAccountsFilter {
 input ZerostateLibrariesFilter {
 	"Library hash"
 	hash: StringFilter
-	"Serialized bag of cell of this library encoded with base64"
+	"Serialized bag of cells of this library encoded with base64"
 	lib: StringFilter
 	"List of the accounts which use the library"
 	publishers: StringArrayFilter
@@ -2730,7 +2730,7 @@ input ZerostateFilter {
 	id: StringFilter
 	"Initial accounts state at the workchain start"
 	accounts: ZerostateAccountsArrayFilter
-	"A bag of cells with the zerostate structure encoded as base64."
+	"Serialized bag of cells of this zerostate encoded with base64"
 	boc: StringFilter
 	"uint32 global network ID"
 	global_id: IntFilter

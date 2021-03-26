@@ -190,7 +190,7 @@ function bigIntStringToDecimalString(context: AggregationContext, value: any): a
         return value.toString();
     }
     //$FlowFixMe
-    return value.substr(0, 1) == "-"
+    return value.substr(0, 1) === "-"
         ? BigInt(`-0x${value.substr(context.bigIntPrefix + 1)}`).toString()
         : BigInt(`0x${value.substr(context.bigIntPrefix)}`).toString();
 }

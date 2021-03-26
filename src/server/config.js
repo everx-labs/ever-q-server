@@ -50,6 +50,7 @@ export type QConfig = {
         mode: 'kafka' | 'rest',
         server: string,
         topic: string,
+        maxSize: number,
     },
     data: QDataProvidersConfig,
     slowQueriesData: QDataProvidersConfig,
@@ -122,6 +123,7 @@ opt('keep-alive', '60000', 'GraphQL keep alive ms');
 opt('requests-mode', 'kafka', 'Requests mode (kafka | rest)');
 opt('requests-server', 'kafka:9092', 'Requests server url');
 opt('requests-topic', 'requests', 'Requests topic name');
+opt('requests-max-size', '16383', 'Maximum request message size in bytes');
 
 dataOpt('data');
 dataOpt('slow queries');
@@ -248,6 +250,7 @@ export function createConfig(
             mode: resolved.requestsMode,
             server: resolved.requestsServer,
             topic: resolved.requestsTopic,
+            maxSize: Number.parseInt(resolved.requestsMaxSize),
         },
         data,
         slowQueriesData,

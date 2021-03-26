@@ -1,7 +1,18 @@
 // @flow
 import { ApolloClient } from 'apollo-client';
 import gql from 'graphql-tag';
-import { createTestClient, testServerRequired } from './init-tests';
+import { createTestClient, testServerRequired, testServerStop } from './init-tests';
+
+declare class AbortController {
+    constructor(): void;
+    +signal: AbortSignal;
+    abort(): void;
+}
+
+declare class AbortSignal extends EventTarget {
+    +aborted: boolean;
+    onabort: (event: any) => mixed;
+}
 
 const sleep = async (ms) => new Promise(x => setTimeout(x, ms));
 
@@ -81,7 +92,7 @@ test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (use
 });
 
 test('Many concurrent requests over web socket', async () => {
-    const server = await testServerRequired();
+    await testServerRequired();
     const client = createTestClient({ useWebSockets: true });
     let output = '';
 
@@ -126,23 +137,59 @@ test('Many concurrent requests over web socket', async () => {
     client.close();
 });
 
-test('Large requests', async () => {
-    const server = await testServerRequired();
+function randomRequest(size): { id: string, body: string } {
+    return {
+        id: Buffer.alloc(32, 1).toString("base64"),
+        body: Buffer.alloc(size, 0).toString("base64"),
+    };
+}
+
+async function postRequest(request: { id: string, body: string }) {
     const client = createTestClient({ useWebSockets: false });
-    const large = Buffer.alloc(65000, 0);
     try {
         await client.mutate({
             mutation: gql`
                 mutation {
                     postRequests(requests: [{
-                        id: "1",
-                        body: "${large.toString('base64')}",
+                        id: "${request.id}",
+                        body: "${request.body}",
                     }])
                 }
             `,
         });
+    } finally {
+        client.close();
+    }
+}
+
+// test('Post request', async () => {
+//     await testServerRequired();
+//     await postRequest({
+//         id: "X8fNRUjvDIE7YYWyiaYSiY8riTVMVhRAe8xS4TIh7D0=",
+//         body: "te6ccgECGgEABE4AAueIAWvSSB+FpeP/GXY6O9z/b5XCq8vsZBywv5jQrTEylDNKEZON8KQCfFvWCWAiZaOGVMo6QlyxxHcGznXVWQ6lRQ+VkM259UMewx84HquhMG2GeLnmU2hIEjKRTpii21bFbADAAAAXf3VmAs/////2i1Xz+AYBAQHAAgIDzyAFAwEB3gQAA9AgAEHZVtFzLVx3VYSkhxqQoK+i23IW/OOwUxzeepyrqoWS0LQCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgH8/38h7UTQINdJwgGf0//TAPQF+Gp/+GH4Zvhijhv0BW34anABgED0DvK91wv/+GJw+GNw+GZ/+GHi0wABjhKBAgDXGCD5AVj4QiD4ZfkQ8qjeI/hC+EUgbpIwcN668uBlIdM/0x80MfgjIQG+8rkh+QAg+EqBAQD0DiCRMd6zCwBO8uBm+AAh+EoiAVUByMs/WYEBAPRD+GojBF8E0x8B8AH4R26S8jzeAgEgEg0CAVgRDgEJuOiY/FAPAf74QW6OEu1E0NP/0wD0Bfhqf/hh+Gb4Yt7RcG1vAvhKgQEA9IaVAdcLP3+TcHBw4pEgjjcjIyNvAm8iyCLPC/8hzws/MTEBbyIhpANZgCD0Q28CNCL4SoEBAPR8lQHXCz9/k3BwcOICNTMx6F8DyIIQd0TH4oIQgAAAALHPCx8hEACibyICyx/0AMiCWGAAAAAAAAAAAAAAAADPC2aBA5gizzEBuZZxz0AhzxeVcc9BIc3iIMlx+wBbMMD/jhL4QsjL//hGzwsA+EoB9ADJ7VTef/hnAMW5Fqvn/wgt0cbdqJoEGuk4QDP6f/pgHoC/DU//DD8M3wxRw36Arb8NTgAwCB6B3le64X//DE4fDG4fDM//DDxb3wjSXkZybj8M3F8AGj8IWRl//wjZ4WAfCUA+gBk9qo//DPACASAVEwHXuxXvk1+EFujhLtRNDT/9MA9AX4an/4Yfhm+GLe+kDXDX+V1NHQ03/f1wwAldTR0NIA39EiIiJzyHHPCwEizwoAc89AJM8WI/oCgGnPQHLPQCDJIvsAXwX4SoEBAPSGlQHXCz9/k3BwcOKRIIFACSji34IyIBu5/4SiMBIQGBAQD0WzAx+GreIvhKgQEA9HyVAdcLP3+TcHBw4gI1MzHoXwNfA/hCyMv/+EbPCwD4SgH0AMntVH/4ZwIBIBcWAMe45GGHXwgt0cJdqJoaf/pgHoC/DU//DD8M3wxb2po/CF8IpA3SRg4b115cDL8AHwhZGX//CNnhYB8JQD6AGT2qnwHkH2CEGh2j3ap+AEYfCFkZf/8I2eFgHwlAPoAZPaqP/wzwAgLaGRgALa+ELIy//4Rs8LAPhKAfQAye1U+A/yAIAHWnAhxwCdItBz1yHXCwDAAZCQ4uAh1w0fkvI84VMRwACQ4MEDIoIQ/////byxkvI84AHwAfhHbpLyPN6A==",
+//     });
+// });
+
+test('Post extra large request with default limit', async () => {
+    await testServerStop();
+    await testServerRequired();
+    try {
+        await postRequest(randomRequest(65000));
     } catch (error) {
         expect(error.message.includes('is too large')).toBeTruthy();
     }
-    client.close();
+});
+
+test('Post extra large request with configured limit', async () => {
+    await testServerStop();
+    await testServerRequired({
+        requests: {
+            maxSize: 8000,
+        }
+    });
+    try {
+        await postRequest(randomRequest(10000));
+    } catch (error) {
+        expect(error.message.includes('is too large')).toBeTruthy();
+    }
 });

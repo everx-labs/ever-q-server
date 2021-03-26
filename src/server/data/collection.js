@@ -17,7 +17,7 @@
 // @flow
 
 import { Span, SpanContext, Tracer } from 'opentracing';
-import type { TONClient } from 'ton-client-js/types';
+import { TonClient } from '@tonclient/core';
 import { AggregationFn, AggregationHelperFactory } from './aggregations';
 import type { FieldAggregation, AggregationHelper } from './aggregations';
 import type { QDataProvider, QIndexInfo } from './data-provider';
@@ -74,7 +74,7 @@ export type GraphQLRequestContext = {
     auth: Auth,
     tracer: Tracer,
     stats: IStats,
-    client: TONClient,
+    client: TonClient,
 
     remoteAddress?: string,
     accessKey: string,

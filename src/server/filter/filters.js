@@ -401,9 +401,10 @@ const scalarOps = {
 
 function convertFilterValue(value, op, converter?: (value: any) => any): string {
     if (converter) {
+        const conv = converter;
         return (op === scalarOps.in || op === scalarOps.notIn)
-            ? value.map(x => converter(x))
-            : converter(value);
+            ? value.map(x => conv(x))
+            : conv(value);
     }
     return value;
 }
