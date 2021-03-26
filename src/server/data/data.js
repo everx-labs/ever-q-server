@@ -16,7 +16,8 @@
 
 // @flow
 
-import { QDataCollection } from './collection';
+import type { QDataScopeType } from "./collection";
+import { QDataCollection, QDataScope } from './collection';
 import { Auth } from '../auth';
 import { STATS } from '../config';
 import type { QLog } from '../logs';
@@ -31,6 +32,7 @@ import type { QDataProvider, QIndexInfo } from './data-provider';
 export type QDataProviders = {
     mutable: QDataProvider,
     immutable: QDataProvider,
+    counterparties: QDataProvider,
 }
 
 export type QDataOptions = {
@@ -80,14 +82,14 @@ export default class QData {
         this.collectionsByName = new Map();
     }
 
-    addCollection(name: string, docType: QType, mutable: boolean, indexes: QIndexInfo[]) {
+    addCollection(name: string, docType: QType, scope: QDataScopeType, indexes: QIndexInfo[]) {
         const collection = new QDataCollection({
             name,
             docType,
-            mutable,
+            scope,
             indexes,
-            provider: mutable ? this.providers.mutable : this.providers.immutable,
-            slowQueriesProvider: mutable ? this.providers.mutable : this.slowQueriesProviders.immutable,
+            provider: this.providers[scope],
+            slowQueriesProvider: this.slowQueriesProviders[scope],
             logs: this.logs,
             auth: this.auth,
             tracer: this.tracer,
@@ -100,13 +102,13 @@ export default class QData {
     }
 
     async start() {
-        const mutable = [];
-        const immutable = [];
-        this.collections.forEach(x => (x.mutable ? mutable : immutable).push(x.name));
-        await this.providers.mutable.start(mutable);
-        await this.providers.immutable.start(immutable);
-        await this.slowQueriesProviders.mutable.start([]);
-        await this.slowQueriesProviders.immutable.start([]);
+        for (const scope of Object.keys(QDataScope)) {
+            const collectionsForSubscribe = this.collections
+                .filter(x => x.scope === scope)
+                .map(x => x.name);
+            await this.providers[scope].start(collectionsForSubscribe);
+            await this.slowQueriesProviders[scope].start([]);
+        }
         await this.providers.immutable.hotUpdate();
     }
 

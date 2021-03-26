@@ -32,9 +32,10 @@ import type { GraphQLRequestContext } from './data/collection';
 import { STATS } from './config';
 import { missingDataCache, QDataCombiner, QDataPrecachedCombiner } from './data/data-provider';
 import { isCacheEnabled, MemjsDataCache } from './data/memjs-datacache';
+import { counterpartiesResolvers } from "./graphql/resolvers-counterparties";
 
 import { createResolvers } from './graphql/resolvers-generated';
-import { attachCustomResolvers } from './graphql/resolvers-custom';
+import { customResolvers } from './graphql/resolvers-custom';
 import { resolversMam } from './graphql/resolvers-mam';
 
 import type { QArangoConfig, QConfig, QDataProvidersConfig } from './config';
@@ -118,10 +119,26 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
         cacheKeyPrefix,
     );
     const immutable = new QDataCombiner([hot, cold]);
+    const counterparties = newArangoProvider('counterparties', config.counterparties);
     return {
         mutable,
         immutable,
+        counterparties,
     };
+}
+
+function isObject(test: any): boolean {
+    return typeof test === 'object' && test !== null;
+}
+
+function overrideObject(original: any, overrides: any) {
+    Object.entries(overrides).forEach(([name, overrideValue]) => {
+        if ((name in original) && isObject(overrideValue) && isObject(original[name])) {
+            overrideObject(original[name], overrideValue);
+        } else {
+            original[name] = overrideValue;
+        }
+    });
 }
 
 export default class TONQServer {
@@ -168,9 +185,12 @@ export default class TONQServer {
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
         });
+        const resolvers = createResolvers(this.data);
+        overrideObject(resolvers, customResolvers(this.data));
+        overrideObject(resolvers, counterpartiesResolvers(this.data));
         this.addEndPoint({
             path: '/graphql',
-            resolvers: attachCustomResolvers(this.data, createResolvers(this.data)),
+            resolvers,
             typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
             supportSubscriptions: true,
         });

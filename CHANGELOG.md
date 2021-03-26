@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.36.0] 2021-03-29
+
+### New
+
+- `counterpaties` query.
+
 ## [0.35.0] 2021-03-23
 
 ### New
@@ -25,7 +31,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- `bits`, `cells` and `public_cells` fileds in `accounts` collection representing account used storage
+- `bits`, `cells` and `public_cells` fields in `accounts` collection representing account used storage
   statistics for storage fee calculation.
 
 ## 0.32.0 – Feb 16, 2021

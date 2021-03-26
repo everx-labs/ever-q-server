@@ -53,6 +53,19 @@ type QueryExplanation {
     slowReason: SlowReason
 }
 
+"""
+Counterparty
+"""
+type Counterparty {
+	account: String
+	counterparty: String
+	last_message_at: Float
+	last_message_id: String
+	last_message_is_reverse: Boolean
+	last_message_value(format: BigIntFormat): String
+    cursor: String
+}
+
 extend type Query {
     info: Info
     "Obsolete. Use aggregation queries instead."
@@ -127,6 +140,18 @@ extend type Query {
 	explainQueryAccounts(filter: AccountFilter, orderBy: [QueryOrderBy]): QueryExplanation
     "Determine if specified zerostates query is fast or slow"
 	explainQueryZerostates(filter: ZerostateFilter, orderBy: [QueryOrderBy]): QueryExplanation
+
+    "Returns account counterparties"
+    counterparties(
+        "Account address"
+        account: String!,
+        "Portion size"
+        first: Int,
+        "Starting cursor"
+        after: String,
+        "Specify access key if required"
+        accessKey: String
+    ): [Counterparty]
 }
 
 input AccessKey {

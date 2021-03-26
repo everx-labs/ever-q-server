@@ -1,0 +1,26 @@
+"""
+Counterparty
+"""
+type Counterparty {
+	account: String
+	counterparty: String
+	last_message_at: Float
+	last_message_id: String
+	last_message_is_reverse: Boolean
+	last_message_value(format: BigIntFormat): String
+    cursor: String
+}
+
+extend type Query {
+    "Returns account counterparties"
+    counterparties(
+        "Account address"
+        account: String!,
+        "Portion size"
+        first: Int,
+        "Starting cursor"
+        after: String,
+        "Specify access key if required"
+        accessKey: String
+    ): [Counterparty]
+}

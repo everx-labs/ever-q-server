@@ -127,9 +127,17 @@ const accessGranted: AccessRights = {
 };
 
 
+export type QDataScopeType = "mutable" | "immutable" | "counterparties";
+
+export const QDataScope = {
+    mutable: "mutable",
+    immutable: "immutable",
+    counterparties: "counterparties",
+}
+
 export type QCollectionOptions = {
     name: string,
-    mutable: boolean,
+    scope: QDataScopeType,
     docType: QType,
     indexes: QIndexInfo[],
 
@@ -146,7 +154,7 @@ export type QCollectionOptions = {
 export class QDataCollection {
     name: string;
     docType: QType;
-    mutable: boolean;
+    scope: QDataScopeType;
     indexes: QIndexInfo[];
     indexesRefreshTime: number;
 
@@ -181,7 +189,7 @@ export class QDataCollection {
         const name = options.name;
         this.name = name;
         this.docType = options.docType;
-        this.mutable = options.mutable;
+        this.scope = options.scope;
         this.indexes = options.indexes;
 
         this.provider = options.provider;

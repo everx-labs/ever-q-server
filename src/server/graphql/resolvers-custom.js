@@ -20,19 +20,6 @@ const { version } = packageJson();
 
 declare function BigInt(a: any): any;
 
-function isObject(test: any): boolean {
-    return typeof test === 'object' && test !== null;
-}
-
-function overrideObject(original: any, overrides: any) {
-    Object.entries(overrides).forEach(([name, overrideValue]) => {
-        if ((name in original) && isObject(overrideValue) && isObject(original[name])) {
-            overrideObject(original[name], overrideValue);
-        } else {
-            original[name] = overrideValue;
-        }
-    });
-}
 
 type Info = {
     version: string,
@@ -325,8 +312,8 @@ async function finishOperations(
     return context.data.finishOperations(operationIds);
 }
 
-export function attachCustomResolvers(data: QBlockchainData, original: any): any {
-    overrideObject(original, {
+export function customResolvers(data: QBlockchainData): any {
+    return {
         Query: {
             info,
             getAccountsCount,
@@ -350,6 +337,5 @@ export function attachCustomResolvers(data: QBlockchainData, original: any): any
             revokeAccessKeys,
             finishOperations,
         },
-    });
-    return original;
+    };
 }
