@@ -4,7 +4,7 @@ import QBlockchainData from '../data/blockchain';
 import { requireGrantedAccess } from '../data/collection';
 import { bigUInt2, resolveBigUInt, stringLowerFilter, struct, scalar } from "../filter/filters";
 import { QTracer } from '../tracer';
-import type { GraphQLRequestContextEx } from "./resolvers-custom";
+import type { GraphQLRequestContextEx } from "./context";
 
 //------------------------------------------------------------- Counterparties
 
@@ -48,7 +48,7 @@ async function counterparties(_parent, args, context: GraphQLRequestContextEx): 
     }, QTracer.getParentSpan(tracer, context))
 }
 
-export function counterpartiesResolvers(_data: QBlockchainData): any {
+export function counterpartiesResolvers(data: QBlockchainData): any {
     return {
         Counterparty: {
             last_message_value(parent, args) {
@@ -58,5 +58,8 @@ export function counterpartiesResolvers(_data: QBlockchainData): any {
         Query: {
             counterparties,
         },
+        Subscription: {
+            counterparties: data.counterparties.subscriptionResolver(),
+        }
     };
 }

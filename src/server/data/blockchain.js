@@ -16,7 +16,7 @@
 
 // @flow
 
-import { Counterparty } from "../graphql/resolvers-counterparties";
+import { Counterparty } from "../graphql/counterparties";
 import type { QDataOptions } from './data';
 import QData from './data';
 import { QDataCollection, QDataScope } from './collection';

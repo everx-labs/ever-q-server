@@ -32,13 +32,18 @@ import type { GraphQLRequestContext } from './data/collection';
 import { STATS } from './config';
 import { missingDataCache, QDataCombiner, QDataPrecachedCombiner } from './data/data-provider';
 import { isCacheEnabled, MemjsDataCache } from './data/memjs-datacache';
-import { counterpartiesResolvers } from "./graphql/resolvers-counterparties";
+import { aggregatesResolvers } from "./graphql/aggregates";
+import { counterpartiesResolvers } from "./graphql/counterparties";
+import { explainResolvers } from "./graphql/explain";
+import { infoResolvers } from "./graphql/info";
+import { postRequestsResolvers } from "./graphql/post-requests";
 
 import { createResolvers } from './graphql/resolvers-generated';
-import { customResolvers } from './graphql/resolvers-custom';
-import { resolversMam } from './graphql/resolvers-mam';
+import { accessResolvers } from './graphql/access';
+import { mam } from './graphql/mam';
 
 import type { QArangoConfig, QConfig, QDataProvidersConfig } from './config';
+import { totalsResolvers } from "./graphql/totals";
 import QLogs from './logs';
 import type { QLog } from './logs';
 import type { IStats } from './tracer';
@@ -181,17 +186,28 @@ export default class TONQServer {
         this.memStats.start();
         this.addEndPoint({
             path: '/graphql/mam',
-            resolvers: resolversMam,
+            resolvers: mam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
         });
         const resolvers = createResolvers(this.data);
-        overrideObject(resolvers, customResolvers(this.data));
-        overrideObject(resolvers, counterpartiesResolvers(this.data));
+        [
+            infoResolvers,
+            totalsResolvers,
+            aggregatesResolvers(this.data),
+            explainResolvers(this.data),
+            postRequestsResolvers,
+            accessResolvers,
+            counterpartiesResolvers(this.data),
+        ].forEach(x => overrideObject(resolvers, x));
         this.addEndPoint({
             path: '/graphql',
             resolvers,
-            typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
+            typeDefFileNames: [
+                'type-defs-generated.graphql',
+                'type-defs-custom.graphql',
+                'type-defs-counterparties.graphql',
+            ],
             supportSubscriptions: true,
         });
     }
