@@ -11,6 +11,15 @@ type Counterparty {
     cursor: String
 }
 
+input CounterpartyFilter {
+	account: StringFilter
+	counterparty: StringFilter
+	last_message_at: FloatFilter
+	last_message_id: StringFilter
+	last_message_is_reverse: BooleanFilter
+	last_message_value: StringFilter
+}
+
 extend type Query {
     "Returns account counterparties"
     counterparties(
@@ -23,4 +32,8 @@ extend type Query {
         "Specify access key if required"
         accessKey: String
     ): [Counterparty]
+}
+
+extend type Subscription  {
+    counterparties(filter: CounterpartyFilter, accessKey: String): Counterparty
 }
