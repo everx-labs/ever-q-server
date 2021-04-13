@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - `counterpaties` query that allows to retrieve account counterparties, i.e. accounts that the account interacted with, sorted by last interaction (internal message between accounts) time
+- `counterparties` subscription thay allows to get updates in counterparties list.
 - `data-counterparties` configuration parameter specifies endpoint to the database 
   with counterparties collection. 
 
