@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - `counterpaties` query.
+- `data-counterparties` configuration parameter specifies endpoint to the database 
+  with counterparties collection. 
 
 ## [0.35.0] 2021-03-23
 
