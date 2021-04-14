@@ -1,0 +1,6 @@
+"use strict";
+
+var _blockchain = _interopRequireDefault(require("../data/blockchain"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9zZXJ2ZXIvZ3JhcGhxbC9jb250ZXh0LmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBRUEiLCJzb3VyY2VzQ29udGVudCI6WyIvLyBAZmxvd1xuXG5pbXBvcnQgUUJsb2NrY2hhaW5EYXRhIGZyb20gXCIuLi9kYXRhL2Jsb2NrY2hhaW5cIjtcbmltcG9ydCB0eXBlIHsgR3JhcGhRTFJlcXVlc3RDb250ZXh0IH0gZnJvbSBcIi4uL2RhdGEvY29sbGVjdGlvblwiO1xuXG5leHBvcnQgdHlwZSBHcmFwaFFMUmVxdWVzdENvbnRleHRFeCA9IEdyYXBoUUxSZXF1ZXN0Q29udGV4dCAmIHtcbiAgICBkYXRhOiBRQmxvY2tjaGFpbkRhdGEsXG59XG5cblxuIl19

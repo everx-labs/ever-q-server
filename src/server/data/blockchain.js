@@ -16,9 +16,10 @@
 
 // @flow
 
+import { Counterparty } from "../graphql/counterparties";
 import type { QDataOptions } from './data';
 import QData from './data';
-import { QDataCollection } from './collection';
+import { QDataCollection, QDataScope } from './collection';
 import {
     Account,
     Block,
@@ -81,6 +82,9 @@ export const INDEXES = {
     zerostates: {
         indexes: [],
     },
+    counterparties: {
+        indexes: [],
+    },
 };
 
 
@@ -96,17 +100,19 @@ export default class QBlockchainData extends QData {
     blocks: QDataCollection;
     blocks_signatures: QDataCollection;
     zerostates: QDataCollection;
+    counterparties: QDataCollection;
 
     constructor(options: QDataOptions) {
         super(options);
         const add = (name, type, mutable) => {
             return this.addCollection(name, type, mutable, INDEXES[name].indexes);
         };
-        this.accounts = add('accounts', Account, true);
-        this.transactions = add('transactions', Transaction, false);
-        this.messages = add('messages', Message, false);
-        this.blocks = add('blocks', Block, false);
-        this.blocks_signatures = add('blocks_signatures', BlockSignatures, false);
-        this.zerostates = add('zerostates', Zerostate, false);
+        this.accounts = add('accounts', Account, QDataScope.mutable);
+        this.transactions = add('transactions', Transaction, QDataScope.immutable);
+        this.messages = add('messages', Message, QDataScope.immutable);
+        this.blocks = add('blocks', Block, QDataScope.immutable);
+        this.blocks_signatures = add('blocks_signatures', BlockSignatures, QDataScope.immutable);
+        this.zerostates = add('zerostates', Zerostate, QDataScope.immutable);
+        this.counterparties = add('counterparties', Counterparty, QDataScope.counterparties);
     }
 }

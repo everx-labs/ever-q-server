@@ -38,6 +38,7 @@ export type QDataProvidersConfig = {
     hot: QArangoConfig;
     cold: QArangoConfig[];
     cache: QMemCachedConfig;
+    counterparties: QArangoConfig;
 };
 
 export type QConfig = {
@@ -114,6 +115,7 @@ const dataOpt = (prefix: string) => {
     opt(o('hot'), 'arangodb', d('hot db config url'));
     opt(o('cold'), '', d('cold db config urls (comma separated)'));
     opt(o('cache'), '', d('cache config url'));
+    opt(o('counterparties'), '', d('counterparties db config url'));
 }
 
 opt('host', getIp(), 'Listening address');
@@ -306,11 +308,20 @@ export function parseDataConfig(values: any): {
 } {
     function parse(prefix: string, defMaxSockets: number): QDataProvidersConfig {
         const opt = (suffix: string): string => values[`${prefix}${suffix}`] || '';
+        const mut = parseArangoConfig(opt('Mut'), defMaxSockets);
+        const hot = parseArangoConfig(opt('Hot'), defMaxSockets);
+        const cold = parseArangoEndpointList(opt('Cold'), defMaxSockets);
+        const cache = parseMemCachedConfig(opt('Cache'));
+        const counterpartiesOpt = opt('Counterparties');
+        const counterparties = counterpartiesOpt
+            ? parseArangoConfig(counterpartiesOpt, defMaxSockets)
+            : mut;
         return {
-            mut: parseArangoConfig(opt('Mut'), defMaxSockets),
-            hot: parseArangoConfig(opt('Hot'), defMaxSockets),
-            cold: parseArangoEndpointList(opt('Cold'), defMaxSockets),
-            cache: parseMemCachedConfig(opt('Cache')),
+            mut,
+            hot,
+            cold,
+            cache,
+            counterparties,
         }
     }
 

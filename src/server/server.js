@@ -32,12 +32,18 @@ import type { GraphQLRequestContext } from './data/collection';
 import { STATS } from './config';
 import { missingDataCache, QDataCombiner, QDataPrecachedCombiner } from './data/data-provider';
 import { isCacheEnabled, MemjsDataCache } from './data/memjs-datacache';
+import { aggregatesResolvers } from "./graphql/aggregates";
+import { counterpartiesResolvers } from "./graphql/counterparties";
+import { explainResolvers } from "./graphql/explain";
+import { infoResolvers } from "./graphql/info";
+import { postRequestsResolvers } from "./graphql/post-requests";
 
 import { createResolvers } from './graphql/resolvers-generated';
-import { attachCustomResolvers } from './graphql/resolvers-custom';
-import { resolversMam } from './graphql/resolvers-mam';
+import { accessResolvers } from './graphql/access';
+import { mam } from './graphql/mam';
 
 import type { QArangoConfig, QConfig, QDataProvidersConfig } from './config';
+import { totalsResolvers } from "./graphql/totals";
 import QLogs from './logs';
 import type { QLog } from './logs';
 import type { IStats } from './tracer';
@@ -118,10 +124,26 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
         cacheKeyPrefix,
     );
     const immutable = new QDataCombiner([hot, cold]);
+    const counterparties = newArangoProvider('counterparties', config.counterparties);
     return {
         mutable,
         immutable,
+        counterparties,
     };
+}
+
+function isObject(test: any): boolean {
+    return typeof test === 'object' && test !== null;
+}
+
+function overrideObject(original: any, overrides: any) {
+    Object.entries(overrides).forEach(([name, overrideValue]) => {
+        if ((name in original) && isObject(overrideValue) && isObject(original[name])) {
+            overrideObject(original[name], overrideValue);
+        } else {
+            original[name] = overrideValue;
+        }
+    });
 }
 
 export default class TONQServer {
@@ -164,14 +186,28 @@ export default class TONQServer {
         this.memStats.start();
         this.addEndPoint({
             path: '/graphql/mam',
-            resolvers: resolversMam,
+            resolvers: mam,
             typeDefFileNames: ['type-defs-mam.graphql'],
             supportSubscriptions: false,
         });
+        const resolvers = createResolvers(this.data);
+        [
+            infoResolvers,
+            totalsResolvers,
+            aggregatesResolvers(this.data),
+            explainResolvers(this.data),
+            postRequestsResolvers,
+            accessResolvers,
+            counterpartiesResolvers(this.data),
+        ].forEach(x => overrideObject(resolvers, x));
         this.addEndPoint({
             path: '/graphql',
-            resolvers: attachCustomResolvers(this.data, createResolvers(this.data)),
-            typeDefFileNames: ['type-defs-generated.graphql', 'type-defs-custom.graphql'],
+            resolvers,
+            typeDefFileNames: [
+                'type-defs-generated.graphql',
+                'type-defs-custom.graphql',
+                'type-defs-counterparties.graphql',
+            ],
             supportSubscriptions: true,
         });
     }

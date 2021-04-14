@@ -95,7 +95,8 @@ describe('DataCache', () => {
             logs,
             data: createTestData({
                 mutable,
-                immutable
+                immutable,
+                counterparties: mutable,
             }),
         });
     });

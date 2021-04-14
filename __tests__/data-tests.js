@@ -46,6 +46,7 @@ test('Data Broker', async () => {
         data: createTestData({
             mutable: mut,
             immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(logs.create('cache'), cache, cold, testConfig.networkName, testConfig.cacheKeyPrefix)]),
+            counterparties: mut,
         }),
     });
     await server.start();

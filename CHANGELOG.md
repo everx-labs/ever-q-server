@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.36.0] 2021-04-13
+
+### New
+
+- `counterpaties` query that allows to retrieve account counterparties, i.e. accounts that the account interacted with, sorted by last interaction (internal message between accounts) time
+- `counterparties` subscription thay allows to get updates in counterparties list.
+- `data-counterparties` configuration parameter specifies endpoint to the database 
+  with counterparties collection. 
+
 ## [0.35.0] 2021-03-23
 
 ### New
@@ -25,7 +34,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- `bits`, `cells` and `public_cells` fileds in `accounts` collection representing account used storage
+- `bits`, `cells` and `public_cells` fields in `accounts` collection representing account used storage
   statistics for storage fee calculation.
 
 ## 0.32.0 – Feb 16, 2021
