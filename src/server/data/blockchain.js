@@ -120,26 +120,30 @@ export default class QBlockchainData extends QData {
         this.lastBlockTime = null;
         this.lastBlockTimeUpdateTime = null;
         this.blocks.docInsertOrUpdate.on("doc", async (block) => {
-            if (block.gen_utime) {
-                this.lastBlockTime = block.gen_utime;
-                this.lastBlockTimeUpdateTime = Date.now();
-            }
+            this.updateLastBlockTimeFromGenUTime(block.gen_utime);
         });
     }
 
+    updateLastBlockTimeFromGenUTime(genUTime?: ?number) {
+        if (genUTime) {
+            const time = genUTime * 1000;
+            if (!this.lastBlockTime || time > this.lastBlockTime) {
+                this.lastBlockTime = time;
+                this.lastBlockTimeUpdateTime = Date.now();
+            }
+        }
+    }
 
     async getLastBlockTime(): Promise<number> {
         const isRefreshRequired =
-            this.lastBlockTime === null
-            || this.lastBlockTimeUpdateTime === null
-            || (Date.now() - (this.lastBlockTimeUpdateTime || 0)) > 60000
+            (this.lastBlockTime === null || this.lastBlockTimeUpdateTime === null)
+            || (Date.now() - (this.lastBlockTimeUpdateTime || 0)) > 30000
         if (isRefreshRequired) {
             const result = await this.blocks.provider.query(
-                "FOR b IN blocks COLLECT AGGREGATE m = MAX(b.gen_utime) RETURN { maxTime: m }",
+                "FOR b IN blocks COLLECT AGGREGATE m = MAX(b.gen_utime) RETURN { maxGenUTime: m }",
                 {}, []
             );
-            this.lastBlockTime = result[0].maxTime;
-            this.lastBlockTimeUpdateTime = Date.now();
+            this.updateLastBlockTimeFromGenUTime(result[0].maxGenUTime);
         }
         return this.lastBlockTime || 0;
     }
