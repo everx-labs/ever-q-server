@@ -14,7 +14,7 @@ type Info {
     version: String
     " Server unix time in ms"
     time: Float
-    " Server unix time in sec"
+    " Last block time in ms (maximum value of blocks.gen_utime * 1000)"
     lastBlockTime: Float,
     " Alternative endpoints of q-server"
     endpoints: [String]
