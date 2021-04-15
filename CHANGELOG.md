@@ -3,12 +3,19 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.37.0] 2021-04-15
+
+### New
+
+- `lastBlockTime` field of `info` query returns `MAX(blocks.gen_utime)`.
+  This value is updated in realtime.
+  
 ## [0.36.0] 2021-04-13
 
 ### New
 
 - `counterpaties` query that allows to retrieve account counterparties, i.e. accounts that the account interacted with, sorted by last interaction (internal message between accounts) time
-- `counterparties` subscription thay allows to get updates in counterparties list.
+- `counterparties` subscription that allows to get updates in counterparties list.
 - `data-counterparties` configuration parameter specifies endpoint to the database 
   with counterparties collection. 
 
