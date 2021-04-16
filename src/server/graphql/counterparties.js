@@ -29,13 +29,13 @@ async function counterparties(_parent, args, context: GraphQLRequestContextEx): 
         if (args.after) {
             const after = args.after.split("/");
             text += " AND (" +
-                "doc.last_message_at > @after_0" +
-                " OR doc.last_message_at == @after_0 AND doc.counterparty > @after_1" +
+                "doc.last_message_at < @after_0" +
+                " OR doc.last_message_at == @after_0 AND doc.counterparty < @after_1" +
                 ")";
             vars.after_0 = Number.parseInt(after[0]);
             vars.after_1 = after[1];
         }
-        text += " SORT doc.last_message_at, doc.counterparty LIMIT @first RETURN doc";
+        text += " SORT doc.last_message_at DESC, doc.counterparty DESC LIMIT @first RETURN doc";
 
         const result: any = await context.data.query(
             context.data.counterparties.provider,
