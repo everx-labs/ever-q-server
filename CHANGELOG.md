@@ -9,7 +9,12 @@ All notable changes to this project will be documented in this file.
 
 - `lastBlockTime` field of `info` query returns `MAX(blocks.gen_utime)`.
   This value is updated in realtime.
-  
+
+### Fixed
+
+- counterparties sort order was ascending.
+
+
 ## [0.36.0] 2021-04-13
 
 ### New
