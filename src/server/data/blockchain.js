@@ -102,6 +102,9 @@ export default class QBlockchainData extends QData {
     zerostates: QDataCollection;
     counterparties: QDataCollection;
 
+    lastBlockTime: ?number;
+    lastBlockTimeUpdateTime: ?number;
+
     constructor(options: QDataOptions) {
         super(options);
         const add = (name, type, mutable) => {
@@ -114,5 +117,34 @@ export default class QBlockchainData extends QData {
         this.blocks_signatures = add('blocks_signatures', BlockSignatures, QDataScope.immutable);
         this.zerostates = add('zerostates', Zerostate, QDataScope.immutable);
         this.counterparties = add('counterparties', Counterparty, QDataScope.counterparties);
+        this.lastBlockTime = null;
+        this.lastBlockTimeUpdateTime = null;
+        this.blocks.docInsertOrUpdate.on("doc", async (block) => {
+            this.updateLastBlockTimeFromGenUTime(block.gen_utime);
+        });
+    }
+
+    updateLastBlockTimeFromGenUTime(genUTime?: ?number) {
+        if (genUTime) {
+            const time = genUTime * 1000;
+            if (!this.lastBlockTime || time > this.lastBlockTime) {
+                this.lastBlockTime = time;
+                this.lastBlockTimeUpdateTime = Date.now();
+            }
+        }
+    }
+
+    async getLastBlockTime(): Promise<number> {
+        const isRefreshRequired =
+            (this.lastBlockTime === null || this.lastBlockTimeUpdateTime === null)
+            || (Date.now() - (this.lastBlockTimeUpdateTime || 0)) > 30000
+        if (isRefreshRequired) {
+            const result = await this.blocks.provider.query(
+                "FOR b IN blocks COLLECT AGGREGATE m = MAX(b.gen_utime) RETURN { maxGenUTime: m }",
+                {}, []
+            );
+            this.updateLastBlockTimeFromGenUTime(result[0].maxGenUTime);
+        }
+        return this.lastBlockTime || 0;
     }
 }
