@@ -270,7 +270,21 @@ function main(schemaDef: TypeDef) {
             const join = field.join;
             if (join) {
                 const suffix = field.arrayDepth > 0 ? 'Array' : '';
-                typeDeclaration = `join${suffix}('${join.on}', '${join.refOn}', '${field.type.collection || ''}', () => ${field.type.name})`;
+                const params = [
+                    `'${join.on}'`,
+                    `'${join.refOn}'`,
+                    `'${field.type.collection || ''}'`,
+                ];
+                if (field.arrayDepth === 0) {
+                    const extraFields = join.preCondition
+                        .split(" ")
+                        .map(x => x.trim())
+                        .filter(x => x.startsWith("parent."))
+                        .map(x => x.substr(7));
+                    params.push(extraFields.length > 0 ? `['${extraFields.join("', '")}']` : "[]");
+                }
+                params.push(`() => ${field.type.name}`);
+                typeDeclaration = `join${suffix}(${params.join(", ")})`;
             } else if (field.arrayDepth > 0) {
                 typeDeclaration =
                     field.type.name +

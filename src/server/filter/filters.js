@@ -155,7 +155,7 @@ type QType = {
      * @param {string} path
      * @param {GDefinition} def
      */
-    returnExpression: (path: string, def: GDefinition) => QReturnExpression,
+    returnExpressions: (path: string, def: GDefinition) => QReturnExpression[],
 
     /**
      * Tests value in document from Arango DB against specified filter.
@@ -215,8 +215,9 @@ export function collectReturnExpressions(
         if (!fieldType) {
             throw new Error(`Invalid selection field: ${name}`);
         }
-        const returned = fieldType.returnExpression(path, fieldDef);
-        expressions.set(returned.name, returned.expression);
+        for (const returned of fieldType.returnExpressions(path, fieldDef)) {
+            expressions.set(returned.name, returned.expression);
+        }
     });
 }
 
@@ -296,7 +297,7 @@ const scalarEq: QType = {
     filterCondition(params: QParams, path, filter) {
         return filterConditionOp(params, path, '==', filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -308,7 +309,7 @@ const scalarNe: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, '!=', filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -320,7 +321,7 @@ const scalarLt: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, '<', filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -332,7 +333,7 @@ const scalarLe: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, '<=', filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -344,7 +345,7 @@ const scalarGt: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, '>', filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -356,7 +357,7 @@ const scalarGe: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, '>=', filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -368,7 +369,7 @@ const scalarIn: QType = {
     filterCondition(params, path, filter) {
         return filterConditionForIn(params, path, filter);
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -380,7 +381,7 @@ const scalarNotIn: QType = {
     filterCondition(params, path, filter) {
         return `NOT (${filterConditionForIn(params, path, filter, "!=")})`;
     },
-    returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(parent, value, filter) {
@@ -417,16 +418,16 @@ function createScalar(filterValueConverter?: (value: any) => any): QType {
                 return op.filterCondition(params, path, converted);
             });
         },
-        returnExpression(path: string, def: GDefinition): QReturnExpression {
+        returnExpressions(path: string, def: GDefinition): QReturnExpression[] {
             const isCollection = path === 'doc';
             let name = def.name.value;
             if (isCollection && name === 'id') {
                 name = '_key';
             }
-            return {
+            return [{
                 name,
                 expression: `${path}.${name}`,
-            };
+            }];
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
@@ -551,7 +552,7 @@ export function struct(fields: { [string]: QType }, isCollection?: boolean): QTy
             });
             return (orOperands.length > 1) ? `(${orOperands.join(') OR (')})` : orOperands[0];
         },
-        returnExpression(path: string, def: GDefinition): QReturnExpression {
+        returnExpressions(path: string, def: GDefinition): QReturnExpression[] {
             const name = def.name.value;
             const expressions = new Map();
             collectReturnExpressions(
@@ -560,10 +561,10 @@ export function struct(fields: { [string]: QType }, isCollection?: boolean): QTy
                 (def.selectionSet && def.selectionSet.selections) || [],
                 fields,
             );
-            return {
+            return [{
                 name,
                 expression: `( ${path}.${name} && ${combineReturnExpressions(expressions)} )`,
-            };
+            }];
         },
         test(parent, value, filter) {
             if (!value) {
@@ -659,7 +660,7 @@ export function array(resolveItemType: () => QType): QType {
                 const itemFilterCondition = getItemFilterCondition(itemType, params, path, filter);
                 return `LENGTH(${path}[* FILTER ${itemFilterCondition}]) == LENGTH(${path})`;
             },
-            returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+            returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
                 throw NOT_IMPLEMENTED;
             },
             test(parent, value, filter) {
@@ -678,7 +679,7 @@ export function array(resolveItemType: () => QType): QType {
                 }
                 return `LENGTH(${path}[* FILTER ${itemFilterCondition}]) > 0`;
             },
-            returnExpression(_path: string, _def: GDefinition): QReturnExpression {
+            returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
                 throw NOT_IMPLEMENTED;
             },
             test(parent, value, filter) {
@@ -694,7 +695,7 @@ export function array(resolveItemType: () => QType): QType {
                 return op.filterCondition(params, path, filterValue);
             });
         },
-        returnExpression(path: string, def: GDefinition): QReturnExpression {
+        returnExpressions(path: string, def: GDefinition): QReturnExpression[] {
             const name = def.name.value;
             const itemSelections = def.selectionSet && def.selectionSet.selections;
             let expression;
@@ -709,10 +710,10 @@ export function array(resolveItemType: () => QType): QType {
             } else {
                 expression = `${path}.${name}`;
             }
-            return {
+            return [{
                 name,
                 expression,
-            }
+            }];
         },
         test(parent, value, filter) {
             if (!value) {
@@ -754,11 +755,11 @@ export function enumName(onField: string, values: { [string]: number }): QType {
                 return op.filterCondition(params, path, resolved);
             });
         },
-        returnExpression(path: string, _def: GField): QReturnExpression {
-            return {
+        returnExpressions(path: string, _def: GField): QReturnExpression[] {
+            return [{
                 name: onField,
                 expression: `${path}.${onField}`,
-            };
+            }];
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, filterKey, filterValue) => {
@@ -787,11 +788,11 @@ export function stringCompanion(onField: string): QType {
         filterCondition(_params, _path, _filter) {
             return 'false';
         },
-        returnExpression(path: string, _def: GField) {
-            return {
+        returnExpressions(path: string, _def: GField) {
+            return [{
                 name: onField,
                 expression: `${path}.${onField}`,
-            };
+            }];
         },
         test(_parent, _value, _filter) {
             return false;
@@ -802,8 +803,15 @@ export function stringCompanion(onField: string): QType {
 
 //------------------------------------------------------------- Joins
 
-export function join(onField: string, refField: string, refCollection: string, resolveRefType: () => QType): QType {
+export function join(
+    onField: string,
+    refField: string,
+    refCollection: string,
+    extraFields: string[],
+    resolveRefType: () => QType
+): QType {
     let resolved: ?QType = null;
+    const name = onField === 'id' ? '_key' : onField;
     return {
         filterCondition(params, path, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -818,12 +826,11 @@ export function join(onField: string, refField: string, refCollection: string, r
                     RETURN 1
                 ) > 0`;
         },
-        returnExpression(path: string, _def: GField): QReturnExpression {
-            const name = onField === 'id' ? '_key' : onField;
-            return {
+        returnExpressions(path: string, _def: GField): QReturnExpression[] {
+            return [{
                 name,
                 expression: `${path}.${name}`,
-            };
+            }, ...extraFields.map(x => ({ name: x, expression: `${path}.${x}` }))];
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -856,11 +863,11 @@ export function joinArray(
                     RETURN 1
                 ) ${all ? `== LENGTH(${on_path})` : '> 0'})`;
         },
-        returnExpression(path: string, _def: GField): QReturnExpression {
-            return {
+        returnExpressions(path: string, _def: GField): QReturnExpression[] {
+            return [{
                 name: onField,
                 expression: `${path}.${onField}`,
-            };
+            }];
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());

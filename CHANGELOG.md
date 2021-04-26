@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.38.0] 2021-04-26
+
+### New 
+- Join account fields:o `messages.src_account`, `messages.dst_account`, `transaction.account`.
+
+### Fixed
+
+- Joins with preconditions were not requests precondition fields from arango.
+  So some requests taken a long time to resolve null joins.
+
 ## [0.37.0] 2021-04-19
 
 ### New
