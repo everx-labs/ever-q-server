@@ -10,8 +10,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Joins with preconditions doesn't request precondition fields from arango.
-  So some requests taken a long time to resolve null joins.
+- Some queries taken a long time for execution. For example `messages` query with 
+  `dst_transaction` for the external outbound message if `msg_type` wasn't included into result set.   
 
 ## [0.37.0] 2021-04-19
 
