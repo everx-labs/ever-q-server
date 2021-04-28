@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.38.0] 2021-04-26
+
+### New 
+- Now you can retrieve account's code_hash from messages and transactions in the result set of fields: joined account fields were added to messages and transactions: `messages.src_account`, `messages.dst_account`, `transaction.account`.  Remember, you can not filter by fields of joined objects.
+
+### Fixed
+
+- Some queries took a long time for execution. For example `messages` query with 
+  `dst_transaction` for the external outbound message if `msg_type` wasn't included into the result set.   
+
 ## [0.37.0] 2021-04-19
 
 ### New

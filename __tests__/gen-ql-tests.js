@@ -1,11 +1,17 @@
 // @flow
 
-import {grantedAccess} from '../src/server/auth';
-import {QParams} from "../src/server/filter/filters";
-import {Account, BlockSignatures, Message, Transaction} from "../src/server/graphql/resolvers-generated";
+import { grantedAccess } from '../src/server/auth';
+import { QParams } from "../src/server/filter/filters";
+import type { GDefinition } from "../src/server/filter/filters";
+import {
+    Account,
+    BlockSignatures,
+    Message,
+    Transaction
+} from "../src/server/graphql/resolvers-generated";
 import QLogs from '../src/server/logs';
-import {createLocalArangoTestData, testServerQuery} from './init-tests';
-import {gql} from 'apollo-server';
+import { createLocalArangoTestData, testServerQuery } from './init-tests';
+import { gql } from 'apollo-server';
 
 test('remove nulls', async () => {
     const data = await testServerQuery(`query { blocks { id master { min_shard_gen_utime } } }`);
@@ -121,6 +127,31 @@ test("reduced RETURN", () => {
     `));
 
 });
+
+function selection(name: string, selections: GDefinition[]): GDefinition {
+    return {
+        kind: "Field",
+        name: {
+            kind: "Name",
+            value: name,
+        },
+        alias: "",
+        arguments: [],
+        directives: [],
+        selectionSet: {
+            kind: "SelectionSet",
+            selections,
+        },
+    }
+}
+
+test("Include join precondition fields", () => {
+    const e = Message.returnExpressions("doc", selection("message", [
+        selection("dst_transaction", [selection("id", [])]),
+    ]));
+    expect(e[0].expression).toEqual(`( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type } )`);
+});
+
 
 test("Generate Array AQL", () => {
     const params = new QParams();

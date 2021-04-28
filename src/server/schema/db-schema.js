@@ -213,6 +213,8 @@ const Message: TypeDef = {
     boc: string(docs.message.boc),
     src_transaction: join('Transaction', 'id', 'out_msgs[*]', 'parent.created_lt !== \'00\' && parent.msg_type !== 1'),
     dst_transaction: join('Transaction', 'id', 'in_msg', 'parent.msg_type !== 2'),
+    src_account: join('Account', 'src', 'id', 'parent.msg_type !== 1'),
+    dst_account: join('Account', 'dst', 'id', 'parent.msg_type !== 2'),
 };
 
 
@@ -224,6 +226,7 @@ const Transaction: TypeDef = {
     block_id: stringWithLowerFilter(docs.transaction.block_id),
     block: join('Block', 'block_id', 'id'),
     account_addr: stringWithLowerFilter(docs.transaction.account_addr),
+    account: join('Account', 'account_addr', 'id'),
     workchain_id: i32(docs.transaction.workchain_id),
     lt: u64(docs.transaction.lt),
     prev_trans_hash: stringWithLowerFilter(docs.transaction.prev_trans_hash),

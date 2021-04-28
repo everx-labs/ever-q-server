@@ -398,7 +398,7 @@ const BlockSignaturesSignatures = struct({
 const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
 const BlockSignatures = struct({
     id: scalar,
-    block: join('id', 'id', 'blocks', () => Block),
+    block: join('id', 'id', 'blocks', [], () => Block),
     catchain_seqno: scalar,
     gen_utime: scalar,
     gen_utime_string: stringCompanion('gen_utime'),
@@ -445,7 +445,7 @@ const Block = struct({
     rand_seed: scalar,
     seq_no: scalar,
     shard: scalar,
-    signatures: join('id', 'id', 'blocks_signatures', () => BlockSignatures),
+    signatures: join('id', 'id', 'blocks_signatures', [], () => BlockSignatures),
     start_lt: bigUInt1,
     state_update: BlockStateUpdate,
     status: scalar,
@@ -456,6 +456,33 @@ const Block = struct({
     vert_seq_no: scalar,
     want_merge: scalar,
     want_split: scalar,
+    workchain_id: scalar,
+}, true);
+
+const Account = struct({
+    id: scalar,
+    acc_type: scalar,
+    acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    balance: bigUInt2,
+    balance_other: OtherCurrencyArray,
+    bits: bigUInt1,
+    boc: scalar,
+    cells: bigUInt1,
+    code: scalar,
+    code_hash: stringLowerFilter,
+    data: scalar,
+    data_hash: stringLowerFilter,
+    due_payment: bigUInt2,
+    last_paid: scalar,
+    last_trans_lt: bigUInt1,
+    library: scalar,
+    library_hash: stringLowerFilter,
+    proof: scalar,
+    public_cells: bigUInt1,
+    split_depth: scalar,
+    state_hash: stringLowerFilter,
+    tick: scalar,
+    tock: scalar,
     workchain_id: scalar,
 }, true);
 
@@ -532,11 +559,12 @@ const MessageArray = array(() => Message);
 const Transaction = struct({
     id: scalar,
     aborted: scalar,
+    account: join('account_addr', 'id', 'accounts', [], () => Account),
     account_addr: stringLowerFilter,
     action: TransactionAction,
     balance_delta: bigUInt2,
     balance_delta_other: OtherCurrencyArray,
-    block: join('block_id', 'id', 'blocks', () => Block),
+    block: join('block_id', 'id', 'blocks', [], () => Block),
     block_id: stringLowerFilter,
     boc: scalar,
     bounce: TransactionBounce,
@@ -546,7 +574,7 @@ const Transaction = struct({
     destroyed: scalar,
     end_status: scalar,
     end_status_name: enumName('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    in_message: join('in_msg', 'id', 'messages', () => Message),
+    in_message: join('in_msg', 'id', 'messages', [], () => Message),
     in_msg: stringLowerFilter,
     installed: scalar,
     lt: bigUInt1,
@@ -577,7 +605,7 @@ const Transaction = struct({
 
 const Message = struct({
     id: scalar,
-    block: join('block_id', 'id', 'blocks', () => Block),
+    block: join('block_id', 'id', 'blocks', [], () => Block),
     block_id: stringLowerFilter,
     boc: scalar,
     body: scalar,
@@ -592,7 +620,8 @@ const Message = struct({
     data: scalar,
     data_hash: stringLowerFilter,
     dst: stringLowerFilter,
-    dst_transaction: join('id', 'in_msg', 'transactions', () => Transaction),
+    dst_account: join('dst', 'id', 'accounts', ['msg_type'], () => Account),
+    dst_transaction: join('id', 'in_msg', 'transactions', ['msg_type'], () => Transaction),
     dst_workchain_id: scalar,
     fwd_fee: bigUInt2,
     ihr_disabled: scalar,
@@ -605,7 +634,8 @@ const Message = struct({
     proof: scalar,
     split_depth: scalar,
     src: stringLowerFilter,
-    src_transaction: join('id', 'out_msgs[*]', 'transactions', () => Transaction),
+    src_account: join('src', 'id', 'accounts', ['msg_type'], () => Account),
+    src_transaction: join('id', 'out_msgs[*]', 'transactions', ['created_lt', 'msg_type'], () => Transaction),
     src_workchain_id: scalar,
     status: scalar,
     status_name: enumName('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
@@ -613,33 +643,6 @@ const Message = struct({
     tock: scalar,
     value: bigUInt2,
     value_other: OtherCurrencyArray,
-}, true);
-
-const Account = struct({
-    id: scalar,
-    acc_type: scalar,
-    acc_type_name: enumName('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    balance: bigUInt2,
-    balance_other: OtherCurrencyArray,
-    bits: bigUInt1,
-    boc: scalar,
-    cells: bigUInt1,
-    code: scalar,
-    code_hash: stringLowerFilter,
-    data: scalar,
-    data_hash: stringLowerFilter,
-    due_payment: bigUInt2,
-    last_paid: scalar,
-    last_trans_lt: bigUInt1,
-    library: scalar,
-    library_hash: stringLowerFilter,
-    proof: scalar,
-    public_cells: bigUInt1,
-    split_depth: scalar,
-    state_hash: stringLowerFilter,
-    tick: scalar,
-    tock: scalar,
-    workchain_id: scalar,
 }, true);
 
 const ZerostateMaster = struct({
@@ -930,6 +933,30 @@ function createResolvers(data) {
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
+        Account: {
+            id(parent) {
+                return parent._key;
+            },
+            balance(parent, args) {
+                return resolveBigUInt(2, parent.balance, args);
+            },
+            bits(parent, args) {
+                return resolveBigUInt(1, parent.bits, args);
+            },
+            cells(parent, args) {
+                return resolveBigUInt(1, parent.cells, args);
+            },
+            due_payment(parent, args) {
+                return resolveBigUInt(2, parent.due_payment, args);
+            },
+            last_trans_lt(parent, args) {
+                return resolveBigUInt(1, parent.last_trans_lt, args);
+            },
+            public_cells(parent, args) {
+                return resolveBigUInt(1, parent.public_cells, args);
+            },
+            acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+        },
         TransactionStorage: {
             storage_fees_collected(parent, args) {
                 return resolveBigUInt(2, parent.storage_fees_collected, args);
@@ -985,6 +1012,12 @@ function createResolvers(data) {
             id(parent) {
                 return parent._key;
             },
+            account(parent, args, context) {
+                if (args.when && !Transaction.test(null, parent, args.when)) {
+                    return null;
+                }
+                return context.data.accounts.waitForDoc(parent.account_addr, '_key', args, context);
+            },
             block(parent, args, context) {
                 if (args.when && !Transaction.test(null, parent, args.when)) {
                     return null;
@@ -1033,6 +1066,15 @@ function createResolvers(data) {
                 }
                 return context.data.blocks.waitForDoc(parent.block_id, '_key', args, context);
             },
+            dst_account(parent, args, context) {
+                if (!(parent.msg_type !== 2)) {
+                    return null;
+                }
+                if (args.when && !Message.test(null, parent, args.when)) {
+                    return null;
+                }
+                return context.data.accounts.waitForDoc(parent.dst, '_key', args, context);
+            },
             dst_transaction(parent, args, context) {
                 if (!(parent.msg_type !== 2)) {
                     return null;
@@ -1041,6 +1083,15 @@ function createResolvers(data) {
                     return null;
                 }
                 return context.data.transactions.waitForDoc(parent._key, 'in_msg', args, context);
+            },
+            src_account(parent, args, context) {
+                if (!(parent.msg_type !== 1)) {
+                    return null;
+                }
+                if (args.when && !Message.test(null, parent, args.when)) {
+                    return null;
+                }
+                return context.data.accounts.waitForDoc(parent.src, '_key', args, context);
             },
             src_transaction(parent, args, context) {
                 if (!(parent.created_lt !== '00' && parent.msg_type !== 1)) {
@@ -1071,30 +1122,6 @@ function createResolvers(data) {
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
-        },
-        Account: {
-            id(parent) {
-                return parent._key;
-            },
-            balance(parent, args) {
-                return resolveBigUInt(2, parent.balance, args);
-            },
-            bits(parent, args) {
-                return resolveBigUInt(1, parent.bits, args);
-            },
-            cells(parent, args) {
-                return resolveBigUInt(1, parent.cells, args);
-            },
-            due_payment(parent, args) {
-                return resolveBigUInt(2, parent.due_payment, args);
-            },
-            last_trans_lt(parent, args) {
-                return resolveBigUInt(1, parent.last_trans_lt, args);
-            },
-            public_cells(parent, args) {
-                return resolveBigUInt(1, parent.public_cells, args);
-            },
-            acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         ZerostateMaster: {
             global_balance(parent, args) {
@@ -1133,17 +1160,17 @@ function createResolvers(data) {
         Query: {
             blocks_signatures: data.blocks_signatures.queryResolver(),
             blocks: data.blocks.queryResolver(),
+            accounts: data.accounts.queryResolver(),
             transactions: data.transactions.queryResolver(),
             messages: data.messages.queryResolver(),
-            accounts: data.accounts.queryResolver(),
             zerostates: data.zerostates.queryResolver(),
         },
         Subscription: {
             blocks_signatures: data.blocks_signatures.subscriptionResolver(),
             blocks: data.blocks.subscriptionResolver(),
+            accounts: data.accounts.subscriptionResolver(),
             transactions: data.transactions.subscriptionResolver(),
             messages: data.messages.subscriptionResolver(),
-            accounts: data.accounts.subscriptionResolver(),
             zerostates: data.zerostates.subscriptionResolver(),
         }
     }
@@ -1533,6 +1560,29 @@ scalarFields.set('blocks.vert_seq_no', { type: 'number', path: 'doc.vert_seq_no'
 scalarFields.set('blocks.want_merge', { type: 'boolean', path: 'doc.want_merge' });
 scalarFields.set('blocks.want_split', { type: 'boolean', path: 'doc.want_split' });
 scalarFields.set('blocks.workchain_id', { type: 'number', path: 'doc.workchain_id' });
+scalarFields.set('accounts.id', { type: 'string', path: 'doc._key' });
+scalarFields.set('accounts.balance', { type: 'uint1024', path: 'doc.balance' });
+scalarFields.set('accounts.balance_other.currency', { type: 'number', path: 'doc.balance_other[*].currency' });
+scalarFields.set('accounts.balance_other.value', { type: 'uint1024', path: 'doc.balance_other[*].value' });
+scalarFields.set('accounts.bits', { type: 'uint64', path: 'doc.bits' });
+scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
+scalarFields.set('accounts.cells', { type: 'uint64', path: 'doc.cells' });
+scalarFields.set('accounts.code', { type: 'string', path: 'doc.code' });
+scalarFields.set('accounts.code_hash', { type: 'string', path: 'doc.code_hash' });
+scalarFields.set('accounts.data', { type: 'string', path: 'doc.data' });
+scalarFields.set('accounts.data_hash', { type: 'string', path: 'doc.data_hash' });
+scalarFields.set('accounts.due_payment', { type: 'uint1024', path: 'doc.due_payment' });
+scalarFields.set('accounts.last_paid', { type: 'number', path: 'doc.last_paid' });
+scalarFields.set('accounts.last_trans_lt', { type: 'uint64', path: 'doc.last_trans_lt' });
+scalarFields.set('accounts.library', { type: 'string', path: 'doc.library' });
+scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_hash' });
+scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
+scalarFields.set('accounts.public_cells', { type: 'uint64', path: 'doc.public_cells' });
+scalarFields.set('accounts.split_depth', { type: 'number', path: 'doc.split_depth' });
+scalarFields.set('accounts.state_hash', { type: 'string', path: 'doc.state_hash' });
+scalarFields.set('accounts.tick', { type: 'boolean', path: 'doc.tick' });
+scalarFields.set('accounts.tock', { type: 'boolean', path: 'doc.tock' });
+scalarFields.set('accounts.workchain_id', { type: 'number', path: 'doc.workchain_id' });
 scalarFields.set('transactions.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('transactions.aborted', { type: 'boolean', path: 'doc.aborted' });
 scalarFields.set('transactions.account_addr', { type: 'string', path: 'doc.account_addr' });
@@ -1632,29 +1682,6 @@ scalarFields.set('messages.tock', { type: 'boolean', path: 'doc.tock' });
 scalarFields.set('messages.value', { type: 'uint1024', path: 'doc.value' });
 scalarFields.set('messages.value_other.currency', { type: 'number', path: 'doc.value_other[*].currency' });
 scalarFields.set('messages.value_other.value', { type: 'uint1024', path: 'doc.value_other[*].value' });
-scalarFields.set('accounts.id', { type: 'string', path: 'doc._key' });
-scalarFields.set('accounts.balance', { type: 'uint1024', path: 'doc.balance' });
-scalarFields.set('accounts.balance_other.currency', { type: 'number', path: 'doc.balance_other[*].currency' });
-scalarFields.set('accounts.balance_other.value', { type: 'uint1024', path: 'doc.balance_other[*].value' });
-scalarFields.set('accounts.bits', { type: 'uint64', path: 'doc.bits' });
-scalarFields.set('accounts.boc', { type: 'string', path: 'doc.boc' });
-scalarFields.set('accounts.cells', { type: 'uint64', path: 'doc.cells' });
-scalarFields.set('accounts.code', { type: 'string', path: 'doc.code' });
-scalarFields.set('accounts.code_hash', { type: 'string', path: 'doc.code_hash' });
-scalarFields.set('accounts.data', { type: 'string', path: 'doc.data' });
-scalarFields.set('accounts.data_hash', { type: 'string', path: 'doc.data_hash' });
-scalarFields.set('accounts.due_payment', { type: 'uint1024', path: 'doc.due_payment' });
-scalarFields.set('accounts.last_paid', { type: 'number', path: 'doc.last_paid' });
-scalarFields.set('accounts.last_trans_lt', { type: 'uint64', path: 'doc.last_trans_lt' });
-scalarFields.set('accounts.library', { type: 'string', path: 'doc.library' });
-scalarFields.set('accounts.library_hash', { type: 'string', path: 'doc.library_hash' });
-scalarFields.set('accounts.proof', { type: 'string', path: 'doc.proof' });
-scalarFields.set('accounts.public_cells', { type: 'uint64', path: 'doc.public_cells' });
-scalarFields.set('accounts.split_depth', { type: 'number', path: 'doc.split_depth' });
-scalarFields.set('accounts.state_hash', { type: 'string', path: 'doc.state_hash' });
-scalarFields.set('accounts.tick', { type: 'boolean', path: 'doc.tick' });
-scalarFields.set('accounts.tock', { type: 'boolean', path: 'doc.tock' });
-scalarFields.set('accounts.workchain_id', { type: 'number', path: 'doc.workchain_id' });
 scalarFields.set('zerostates.id', { type: 'string', path: 'doc._key' });
 scalarFields.set('zerostates.accounts.id', { type: 'string', path: 'doc.accounts[*].id' });
 scalarFields.set('zerostates.accounts.balance', { type: 'uint1024', path: 'doc.accounts[*].balance' });
@@ -1912,6 +1939,7 @@ module.exports = {
     BlockSignaturesSignatures,
     BlockSignatures,
     Block,
+    Account,
     TransactionStorage,
     TransactionCredit,
     TransactionCompute,
@@ -1920,7 +1948,6 @@ module.exports = {
     TransactionSplitInfo,
     Transaction,
     Message,
-    Account,
     ZerostateMaster,
     ZerostateAccounts,
     ZerostateLibraries,
