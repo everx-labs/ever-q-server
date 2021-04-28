@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ## [0.38.0] 2021-04-26
 
 ### New 
-- Join account fields: `messages.src_account`, `messages.dst_account`, `transaction.account`.
+- Now you can retrieve account's code_hash from messages and transactions in the result set of fields: joined account fields were added to messages and transactions: `messages.src_account`, `messages.dst_account`, `transaction.account`.  Remember, you can not filter by fields of joined objects.
 
 ### Fixed
 
