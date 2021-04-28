@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Some queries took a long time for execution. For example `messages` query with 
-  `dst_transaction` for the external outbound message if `msg_type` wasn't included into result set.   
+  `dst_transaction` for the external outbound message if `msg_type` wasn't included into the result set.   
 
 ## [0.37.0] 2021-04-19
 
