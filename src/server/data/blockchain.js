@@ -92,6 +92,20 @@ Object.values(INDEXES).forEach((collection: any) => {
     collection.indexes = collection.indexes.concat({ fields: ['_key'] });
 });
 
+export type CollectionLatency = {
+    maxTime: number,
+    nextUpdateTime: number,
+    latency: number,
+};
+
+export type Latency = {
+    blocks: CollectionLatency,
+    messages: CollectionLatency,
+    transactions: CollectionLatency,
+    nextUpdateTime: number,
+    latency: number,
+    lastBlockTime: number,
+};
 
 export default class QBlockchainData extends QData {
     transactions: QDataCollection;
@@ -102,8 +116,7 @@ export default class QBlockchainData extends QData {
     zerostates: QDataCollection;
     counterparties: QDataCollection;
 
-    lastBlockTime: ?number;
-    lastBlockTimeUpdateTime: ?number;
+    latency: Latency;
 
     constructor(options: QDataOptions) {
         super(options);
@@ -117,34 +130,100 @@ export default class QBlockchainData extends QData {
         this.blocks_signatures = add('blocks_signatures', BlockSignatures, QDataScope.immutable);
         this.zerostates = add('zerostates', Zerostate, QDataScope.immutable);
         this.counterparties = add('counterparties', Counterparty, QDataScope.counterparties);
-        this.lastBlockTime = null;
-        this.lastBlockTimeUpdateTime = null;
+
+        this.latency = {
+            blocks: {
+                maxTime: 0,
+                nextUpdateTime: 0,
+                latency: 0,
+            },
+            messages: {
+                maxTime: 0,
+                nextUpdateTime: 0,
+                latency: 0,
+            },
+            transactions: {
+                maxTime: 0,
+                nextUpdateTime: 0,
+                latency: 0,
+            },
+            nextUpdateTime: 0,
+            latency: 0,
+            lastBlockTime: 0,
+        }
+
         this.blocks.docInsertOrUpdate.on("doc", async (block) => {
-            this.updateLastBlockTimeFromGenUTime(block.gen_utime);
+            this.updateLatency(this.latency.blocks, block.gen_utime);
+        });
+        this.transactions.docInsertOrUpdate.on("doc", async (tr) => {
+            this.updateLatency(this.latency.transactions, tr.now);
+        });
+        this.messages.docInsertOrUpdate.on("doc", async (msg) => {
+            this.updateLatency(this.latency.transactions, msg.created_at);
         });
     }
 
-    updateLastBlockTimeFromGenUTime(genUTime?: ?number) {
-        if (genUTime) {
-            const time = genUTime * 1000;
-            if (!this.lastBlockTime || time > this.lastBlockTime) {
-                this.lastBlockTime = time;
-                this.lastBlockTimeUpdateTime = Date.now();
-            }
+    updateLatency(latency: CollectionLatency, timeInSeconds?: ?number) {
+        if (this.updateCollectionLatency(latency, timeInSeconds)) {
+            this.updateLatencySummary();
         }
     }
 
-    async getLastBlockTime(): Promise<number> {
-        const isRefreshRequired =
-            (this.lastBlockTime === null || this.lastBlockTimeUpdateTime === null)
-            || (Date.now() - (this.lastBlockTimeUpdateTime || 0)) > 30000
-        if (isRefreshRequired) {
-            const result = await this.blocks.provider.query(
-                "FOR b IN blocks COLLECT AGGREGATE m = MAX(b.gen_utime) RETURN { maxGenUTime: m }",
-                {}, []
-            );
-            this.updateLastBlockTimeFromGenUTime(result[0].maxGenUTime);
+    updateCollectionLatency(latency: CollectionLatency, timeInSeconds?: ?number): boolean {
+        if (timeInSeconds === undefined || timeInSeconds === null || timeInSeconds === 0) {
+            return false;
         }
-        return this.lastBlockTime || 0;
+        const time = timeInSeconds * 1000;
+        const now = Date.now();
+        if (time > latency.maxTime) {
+            latency.maxTime = time;
+        }
+        latency.nextUpdateTime = now + 30000; // LATENCY_UPDATE_FREQUENCY
+        latency.latency = Math.max(0, now - latency.maxTime);
+        return true;
+    }
+
+    updateLatencySummary() {
+        const { blocks, messages, transactions } = this.latency;
+        this.latency.nextUpdateTime = Math.min(
+            blocks.nextUpdateTime,
+            messages.nextUpdateTime,
+            transactions.nextUpdateTime,
+        );
+        this.latency.latency = Math.max(
+            blocks.latency,
+            messages.latency,
+            transactions.latency,
+        );
+        this.latency.lastBlockTime = blocks.maxTime;
+    }
+
+    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string): Promise<boolean> {
+        if (Date.now() <= latency.nextUpdateTime) {
+            return false;
+        }
+        const maxTime = (await collection.provider.query(
+            `FOR d IN ${collection.name} COLLECT AGGREGATE m = MAX(d.${field}) RETURN { maxTime: m }`,
+            {}, []
+        ))[0].maxTime;
+        return this.updateCollectionLatency(latency, maxTime);
+
+    }
+
+    async getLatency(): Promise<Latency> {
+        const latency = this.latency;
+        if (Date.now() > latency.nextUpdateTime) {
+            let hasUpdates = await this.updateMaxTime(latency.blocks, this.blocks, "gen_utime");
+            if (await this.updateMaxTime(latency.messages, this.messages, "created_at")) {
+                hasUpdates = true;
+            }
+            if (await this.updateMaxTime(latency.transactions, this.transactions, "now")) {
+                hasUpdates = true;
+            }
+            if (hasUpdates) {
+                this.updateLatencySummary();
+            }
+        }
+        return latency;
     }
 }
