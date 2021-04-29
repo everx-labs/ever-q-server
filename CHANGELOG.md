@@ -6,7 +6,11 @@ All notable changes to this project will be documented in this file.
 ## [0.39.0] 2021-04-29
 
 ### New 
-- `info` fields `blocksLatency`, `messagesLatency`, `transactionsLatency`, `latency`
+- `info` fields 
+  - `blocksLatency`, calculated as now() - max(blocks.gen_utime)
+  - `messagesLatency`, calculated as now() - max(messages.created_at)
+  - `transactionsLatency`, calculated as now() - max(tansactions.now)
+  - `latency` , calculated as max(blocks_latency, messages_latency, transactions_latency)
 
 ## [0.38.0] 2021-04-26
 
