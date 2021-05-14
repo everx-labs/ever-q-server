@@ -9,14 +9,23 @@ type Info = {
     version: string,
     time: number,
     lastBlockTime: number,
+    blocksLatency: number,
+    transactionsLatency: number,
+    messagesLatency: number,
+    latency: number,
     endpoints: string[],
 }
 
 async function info(_parent: any, _args: any, context: GraphQLRequestContextEx): Promise<Info> {
+    const latency = await context.data.getLatency();
     return {
         version,
         time: Date.now(),
-        lastBlockTime: await context.data.getLastBlockTime(),
+        lastBlockTime: latency.lastBlockTime,
+        blocksLatency: latency.blocks.latency,
+        transactionsLatency: latency.transactions.latency,
+        messagesLatency: latency.messages.latency,
+        latency: latency.latency,
         endpoints: context.config.endpoints,
     };
 }

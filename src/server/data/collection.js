@@ -237,28 +237,29 @@ export class QDataCollection {
     // Subscriptions
 
     onDocumentInsertOrUpdate(doc: any) {
-        this.statDoc.increment();
-        this.docInsertOrUpdate.emit('doc', doc);
-        const isExternalInboundFinalizedMessage = this.name === 'messages'
-            && doc._key
-            && doc.msg_type === 1
-            && doc.status === 5
-        if (isExternalInboundFinalizedMessage) {
-            const span = this.tracer.startSpan('messageDbNotification', {
-                childOf: QTracer.messageRootSpanContext(doc._key),
-            });
-            span.addTags({
-                messageId: doc._key,
-            });
-            span.finish();
-        }
+        this.statDoc.increment().then(() => {
+            this.docInsertOrUpdate.emit('doc', doc);
+            const isExternalInboundFinalizedMessage = this.name === 'messages'
+                && doc._key
+                && doc.msg_type === 1
+                && doc.status === 5
+            if (isExternalInboundFinalizedMessage) {
+                const span = this.tracer.startSpan('messageDbNotification', {
+                    childOf: QTracer.messageRootSpanContext(doc._key),
+                });
+                span.addTags({
+                    messageId: doc._key,
+                });
+                span.finish();
+            }
+        });
     }
 
     subscriptionResolver() {
         return {
             subscribe: async (_: any, args: { filter: any }, context: any, info: any) => {
                 const accessRights = await requireGrantedAccess(context, args);
-                this.statSubscription.increment();
+                await this.statSubscription.increment();
                 const subscription = new QDataSubscription(
                     this.name,
                     this.docType,
@@ -446,8 +447,8 @@ export class QDataCollection {
             context: GraphQLRequestContext,
             info: any,
         ) => wrap(this.log, 'QUERY', args, async () => {
-            this.statQuery.increment();
-            this.statQueryActive.increment();
+            await this.statQuery.increment();
+            await this.statQueryActive.increment();
             const start = Date.now();
             let q: ?DatabaseQuery = null;
             try {
@@ -459,7 +460,7 @@ export class QDataCollection {
                 }
                 let isFast = await this.isFastQuery(q.text, q.filter, q.orderBy);
                 if (!isFast) {
-                    this.statQuerySlow.increment();
+                    await this.statQuerySlow.increment();
                 }
                 const traceParams: any = {
                     filter: q.filter,
@@ -494,7 +495,7 @@ export class QDataCollection {
                 }
                 return result;
             } catch (error) {
-                this.statQueryFailed.increment();
+                await this.statQueryFailed.increment();
                 if (q) {
                     const slowReason = explainSlowReason(
                         this.name,
@@ -512,8 +513,8 @@ export class QDataCollection {
                 }
                 throw error;
             } finally {
-                this.statQueryTime.report(Date.now() - start);
-                this.statQueryActive.decrement();
+                await this.statQueryTime.report(Date.now() - start);
+                await this.statQueryActive.decrement();
                 context.request.finish();
             }
         });
@@ -612,7 +613,8 @@ export class QDataCollection {
                     };
                     this.waitForCount += 1;
                     this.docInsertOrUpdate.on('doc', waitFor);
-                    this.statWaitForActive.increment();
+                    this.statWaitForActive.increment().then(() => {
+                    });
                 });
                 const onTimeout = new Promise((resolve, reject) => {
                     setTimeout(() => {
@@ -639,7 +641,7 @@ export class QDataCollection {
                     this.waitForCount = Math.max(0, this.waitForCount - 1);
                     this.docInsertOrUpdate.removeListener('doc', waitFor);
                     waitFor = null;
-                    this.statWaitForActive.decrement();
+                    await this.statWaitForActive.decrement();
                 }
                 if (forceTimerId !== null) {
                     clearTimeout(forceTimerId);
@@ -714,8 +716,8 @@ export class QDataCollection {
             args: AggregationArgs,
             context: GraphQLRequestContext,
         ) => wrap(this.log, 'AGGREGATE', args, async () => {
-            this.statQuery.increment();
-            this.statQueryActive.increment();
+            await this.statQuery.increment();
+            await this.statQueryActive.increment();
             const start = Date.now();
             try {
                 const accessRights = await requireGrantedAccess(context, args);
@@ -745,8 +747,8 @@ export class QDataCollection {
                 );
                 return AggregationHelperFactory.convertResults(result, q.helpers);
             } finally {
-                this.statQueryTime.report(Date.now() - start);
-                this.statQueryActive.decrement();
+                await this.statQueryTime.report(Date.now() - start);
+                await this.statQueryActive.decrement();
             }
         });
     }

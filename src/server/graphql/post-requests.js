@@ -152,10 +152,10 @@ async function postRequests(
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }
-            context.data.statPostCount.increment();
+            await context.data.statPostCount.increment();
             context.data.log.debug('postRequests', 'POSTED', args, context.remoteAddress);
         } catch (error) {
-            context.data.statPostFailed.increment();
+            await context.data.statPostFailed.increment();
             context.data.log.debug('postRequests', 'FAILED', args, context.remoteAddress);
             throw error;
         } finally {
