@@ -17,8 +17,8 @@ All notable changes to this project will be documented in this file.
   
 ### Fixed
 
-- querying of the lastBlockTime and latency fields was taken a long time.
-  AQL queries used for max time was simplified (escaped from COLLECT AGGREGATE).  
+- querying of the `lastBlockTime` and latency fields took a long time over big collections during write loads.
+  AQL queries used for max time were simplified (got rid of COLLECT AGGREGATE).  
 
 ## [0.38.0] 2021-04-26
 
