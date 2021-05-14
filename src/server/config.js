@@ -66,6 +66,7 @@ export type QConfig = {
     statsd: {
         server: string,
         tags: string[],
+        resetInterval: number,
     },
     mamAccessKeys: Set<string>,
     isTests?: boolean,
@@ -139,6 +140,7 @@ opt('trace-tags', '', 'Additional trace tags (comma separated name=value pairs)'
 
 opt('statsd-server', '', 'StatsD server (host:port)');
 opt('statsd-tags', '', 'Additional StatsD tags (comma separated name=value pairs)');
+opt('statsd-reset-interval', '', 'Interval in ms between recreations of the StatsD socket');
 
 opt('network-name', 'cinet.tonlabs.io', 'Define the name of the network q-server is working with');
 
@@ -266,6 +268,7 @@ export function createConfig(
             tags: parseTags(resolved.traceTags),
         },
         statsd: {
+            resetInterval: Number.parseInt(resolved.statsdResetInterval) || 0,
             server: resolved.statsdServer,
             tags: (resolved.statsdTags || '').split(',').map(x => x.trim()).filter(x => x),
         },

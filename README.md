@@ -21,32 +21,33 @@ npm install
 You can configure Q Server with command line parameters and/or ENV variables:
 
 ```text
-    Option                         ENV                    Default        Description
-    -----------------------------  ---------------------  -------------  ---------------------------------------------------------
-    --endpoints <value>            Q_ENDPOINTS                           Alternative endpoints of q-server (comma separated addresses)
-    --host <value>                 Q_HOST                 192.168.1.137  Listening address
-    --port <value>                 Q_PORT                 4000           Listening port
-    --keep-alive <value>           Q_KEEP_ALIVE           60000          GraphQL keep alive ms
-    --requests-mode <value>        Q_REQUESTS_MODE        kafka          Requests mode (kafka | rest)
-    --requests-server <value>      Q_REQUESTS_SERVER      kafka:9092     Requests server url
-    --requests-topic <value>       Q_REQUESTS_TOPIC       requests       Requests topic name
-    --requests-max-size <value>    Q_REQUESTS_MAX_SIZE    16383          Maximum request message size in bytes
-    --data-mut <value>             Q_DATA_MUT             arangodb       Data mutable db config url
-    --data-hot <value>             Q_DATA_HOT             arangodb       Data hot db config url
-    --data-cold <value>            Q_DATA_COLD                           Data cold db config urls (comma separated)
-    --data-cache <value>           Q_DATA_CACHE                          Data cache config url
-    --data-counterparties <value>  Q_DATA_COUNTERPARTIES  <mut>          Data counterparties db config url
-    --slow-queries-mut <value>     Q_SLOW_QUERIES_MUT     arangodb       Slow queries mutable db config url
-    --slow-queries-hot <value>     Q_SLOW_QUERIES_HOT     arangodb       Slow queries hot db config url
-    --slow-queries-cold <value>    Q_SLOW_QUERIES_COLD                   Slow queries cold db config urls (comma separated)
-    --slow-queries-cache <value>   Q_SLOW_QUERIES_CACHE                  Slow queries cache config url
-    --auth-endpoint <value>        Q_AUTH_ENDPOINT                       Auth endpoint
-    --mam-access-keys <value>      Q_MAM_ACCESS_KEYS                     Access keys used to authorize mam endpoint access
-    --jaeger-endpoint <value>      Q_JAEGER_ENDPOINT                     Jaeger endpoint
-    --trace-service <value>        Q_TRACE_SERVICE        Q Server       Trace service name
-    --trace-tags <value>           Q_TRACE_TAGS                          Additional trace tags (comma separated name=value pairs)
-    --statsd-server <value>        Q_STATSD_SERVER                       StatsD server (host:port)
-    --statsd-tags <value>          Q_STATSD_TAGS                         Additional StatsD tags (comma separated name=value pairs)
+    Option                         ENV                      Default        Description
+    -----------------------------  -----------------------  -------------  ---------------------------------------------------------
+    --endpoints <array>            Q_ENDPOINTS                             Alternative endpoints of q-server (comma separated addresses)
+    --host <address>               Q_HOST                   192.168.1.137  Listening address
+    --port <number>                Q_PORT                   4000           Listening port
+    --keep-alive <number>          Q_KEEP_ALIVE             60000          GraphQL keep alive ms
+    --requests-mode <string>       Q_REQUESTS_MODE          kafka          Requests mode (kafka | rest)
+    --requests-server <address>    Q_REQUESTS_SERVER        kafka:9092     Requests server url
+    --requests-topic <string>      Q_REQUESTS_TOPIC         requests       Requests topic name
+    --requests-max-size <number>   Q_REQUESTS_MAX_SIZE      16383          Maximum request message size in bytes
+    --data-mut <url>               Q_DATA_MUT               arangodb       Data mutable db config url
+    --data-hot <url>               Q_DATA_HOT               arangodb       Data hot db config url
+    --data-cold <array>            Q_DATA_COLD                             Data cold db config urls (comma separated)
+    --data-cache <url>             Q_DATA_CACHE                            Data cache config url
+    --data-counterparties <url>    Q_DATA_COUNTERPARTIES    <mut>          Data counterparties db config url
+    --slow-queries-mut <url>       Q_SLOW_QUERIES_MUT       arangodb       Slow queries mutable db config url
+    --slow-queries-hot <url>       Q_SLOW_QUERIES_HOT       arangodb       Slow queries hot db config url
+    --slow-queries-cold <array>    Q_SLOW_QUERIES_COLD                     Slow queries cold db config urls (comma separated)
+    --slow-queries-cache <url>     Q_SLOW_QUERIES_CACHE                    Slow queries cache config url
+    --auth-endpoint <url>          Q_AUTH_ENDPOINT                         Auth endpoint
+    --mam-access-keys <string>     Q_MAM_ACCESS_KEYS                       Access keys used to authorize mam endpoint access
+    --jaeger-endpoint <url>        Q_JAEGER_ENDPOINT                       Jaeger endpoint
+    --trace-service <string>       Q_TRACE_SERVICE          Q Server       Trace service name
+    --trace-tags <array>           Q_TRACE_TAGS                            Additional trace tags (comma separated name=value pairs)
+    --statsd-server <address>      Q_STATSD_SERVER                         StatsD server (host:port)
+    --statsd-tags <array>          Q_STATSD_TAGS                           Additional StatsD tags (comma separated name=value pairs)
+    --statsd-reset-interval <ms>   Q_STATSD_RESET_INTERVAL  0              Interval between statsd reconnects. If it is zero – no reconnects.
 ```
 
 Db config must be specified in form of URL:

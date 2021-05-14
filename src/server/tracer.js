@@ -15,20 +15,25 @@ import { cleanError, toLog } from "./utils";
 export interface IStats {
     configuredTags: string[],
 
-    increment(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void,
+    increment(stat: string, value: number, tags: string[]): Promise<void>,
 
-    decrement(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void,
+    gauge(stat: string, value: number, tags: string[]): Promise<void>,
 
-    histogram(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void,
+    timing(stat: string, value: number, tags: string[]): Promise<void>,
 
-    gauge(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void,
-
-    set(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void,
-
-    timing(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void,
+    close(): void,
 }
 
-function dummy(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]) {
+type StatsCallback = (error: any, bytes: any) => void;
+
+export interface IStatsImpl {
+    increment(stat: string, value: number, tags: string[], callback: StatsCallback): void,
+
+    gauge(stat: string, value: number, tags: string[], callback: StatsCallback): void,
+
+    timing(stat: string, value: number, tags: string[], callback: StatsCallback): void,
+
+    close(): void,
 }
 
 function logStatsError(error: any) {
@@ -37,66 +42,109 @@ function logStatsError(error: any) {
 
 const dummyStats: IStats = {
     configuredTags: [],
-    increment: dummy,
-    decrement: dummy,
-    histogram: dummy,
-    gauge: dummy,
-    set: dummy,
-    timing: dummy,
+    increment(_stat: string, _value: number, _tags: string[]): Promise<any> {
+        return Promise.resolve();
+    },
+    gauge(_stat: string, _value: number, _tags: string[]): Promise<any> {
+        return Promise.resolve();
+    },
+    timing(_stat: string, _value: number, _tags: string[]): Promise<any> {
+        return Promise.resolve();
+    },
+    close() {
+    }
 };
 
 export class QStats {
-    static create(server: string, configuredTags: string[]): IStats {
-        if (!server) {
-            return dummyStats;
-        }
-        const hostPort = server.split(':');
-        let stats: ?IStats = null;
-        const withStats = (f: (stats: IStats) => void) => {
-            try {
-                f(stats || (() => {
-                    const newStats = new StatsD(hostPort[0], hostPort[1], STATS.prefix);
-                    newStats.socket.on("error", (err) => {
-                        logStatsError(err);
-                        stats = null;
-                    });
-                    stats = newStats;
-                    return newStats;
-                })());
-            } catch (e) {
-                logStatsError(e);
-                stats = null;
-            }
-
-        };
-
-        return {
-            increment(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void {
-                withStats(stats => stats.increment(stat, value, sampleRate, tags));
-            },
-
-            decrement(stat: string, value?: number, sampleRate?: number | string[], tags?: string[]): void {
-                withStats(stats => stats.decrement(stat, value, sampleRate, tags));
-            },
-
-            histogram(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
-                withStats(stats => stats.histogram(stat, value, sampleRate, tags));
-            },
-
-            gauge(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
-                withStats(stats => stats.gauge(stat, value, sampleRate, tags));
-            },
-
-            set(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
-                withStats(stats => stats.set(stat, value, sampleRate, tags));
-            },
-
-            timing(stat: string, value: number, sampleRate?: number | string[], tags?: string[]): void {
-                withStats(stats => stats.timing(stat, value, sampleRate, tags));
-            },
-            configuredTags,
-        };
+    static create(
+        server: string,
+        configuredTags: string[],
+        resetInterval: number,
+    ): IStats {
+        return server ? new QStats(server, configuredTags, resetInterval) : dummyStats;
     }
+
+    host: string;
+    port: string | typeof undefined;
+    impl: ?IStatsImpl;
+    resetInterval: number;
+    resetTime: number;
+    configuredTags: string[];
+
+    constructor(server: string, configuredTags: string[], resetInterval: number) {
+        const hostPort = server.split(':');
+        this.host = hostPort[0];
+        this.port = hostPort[1];
+        this.configuredTags = configuredTags;
+        this.resetInterval = resetInterval;
+
+        this.impl = null;
+        this.resetTime = resetInterval > 0 ? Date.now() + resetInterval : 0;
+    }
+
+    ensureImpl() {
+        const impl = this.impl;
+        if (impl) {
+            return impl;
+        }
+        const newImpl = new StatsD(this.host, this.port, STATS.prefix);
+        newImpl.socket.on("error", (err) => {
+            logStatsError(err);
+            this.dropImpl();
+        });
+        this.impl = newImpl;
+        return newImpl;
+    }
+
+    dropImpl(error?: Error) {
+        if (error) {
+            logStatsError(error);
+        }
+        if (this.impl) {
+            this.impl.close();
+            this.impl = null;
+        }
+    }
+
+    withImpl(f: (impl: IStatsImpl, callback: any) => void): Promise<void> {
+        return new Promise((resolve, _) => {
+            try {
+                if (this.resetTime > 0) {
+                    const now = Date.now();
+                    if (now > this.resetTime) {
+                        this.dropImpl();
+                        this.resetTime = now + this.resetInterval;
+                    }
+                }
+                f(this.ensureImpl(), (error, _) => {
+                    if (error) {
+                        this.dropImpl(error);
+                    }
+                    resolve();
+                });
+            } catch (error) {
+                this.dropImpl(error);
+                resolve();
+            }
+        });
+    };
+
+    increment(stat: string, value: number, tags: string[]): Promise<void> {
+        return this.withImpl((stats, callback) => stats.increment(stat, value, tags, callback));
+    }
+
+    gauge(stat: string, value: number, tags: string[]): Promise<void> {
+        return this.withImpl((stats, callback) => stats.gauge(stat, value, tags, callback));
+    }
+
+    timing(stat: string, value: number, tags: string[]): Promise<void> {
+        return this.withImpl((stats, callback) => stats.timing(stat, value, tags, callback));
+    }
+
+    close() {
+        this.dropImpl();
+    }
+
 
     static combineTags(stats: IStats, tags: string[]): string[] {
         return (stats && stats.configuredTags && stats.configuredTags.length > 0)
@@ -117,7 +165,7 @@ export class StatsCounter {
     }
 
     increment() {
-        this.stats.increment(this.name, 1, this.tags);
+        return this.stats.increment(this.name, 1, this.tags);
     }
 }
 
@@ -136,15 +184,15 @@ export class StatsGauge {
 
     set(value: number) {
         this.value = value;
-        this.stats.gauge(this.name, this.value, this.tags);
+        return this.stats.gauge(this.name, this.value, this.tags);
     }
 
     increment(delta: number = 1) {
-        this.set(this.value + delta);
+        return this.set(this.value + delta);
     }
 
     decrement(delta: number = 1) {
-        this.set(this.value - delta);
+        return this.set(this.value - delta);
     }
 }
 
@@ -160,13 +208,13 @@ export class StatsTiming {
     }
 
     report(value: number) {
-        this.stats.timing(this.name, value, this.tags);
+        return this.stats.timing(this.name, value, this.tags);
     }
 
-    start(): () => void {
+    start(): () => Promise<void> {
         const start = Date.now();
         return () => {
-            this.report(Date.now() - start);
+            return this.report(Date.now() - start);
         }
     }
 }

@@ -5,16 +5,25 @@ All notable changes to this project will be documented in this file.
 
 ## [0.39.0] 2021-04-29
 
-### New 
+### New
+
 - `info` fields 
-  - `blocksLatency`, calculated as now() - max(blocks.gen_utime)
-  - `messagesLatency`, calculated as now() - max(messages.created_at)
-  - `transactionsLatency`, calculated as now() - max(tansactions.now)
-  - `latency` , calculated as max(blocks_latency, messages_latency, transactions_latency)
+  - `blocksLatency` calculated as now() - max(blocks.gen_utime)
+  - `messagesLatency` calculated as now() - max(messages.created_at)
+  - `transactionsLatency` calculated as now() - max(transactions.now)
+  - `latency` calculated as max(blocks_latency, messages_latency, transactions_latency)
+- `statsd-reset-interval` config parameter. Q-Server will recreate statsd socket 
+  periodically if this parameter is specified. `0` means disabled recreation. 
+  
+### Fixed
+
+- querying of the lastBlockTime and latency fields was taken a long time.
+  AQL queries used for max time was simplified (escaped from COLLECT AGGREGATE).  
 
 ## [0.38.0] 2021-04-26
 
-### New 
+### New
+
 - Now you can retrieve account's code_hash from messages and transactions in the result set of fields: joined account fields were added to messages and transactions: `messages.src_account`, `messages.dst_account`, `transaction.account`.  Remember, you can not filter by fields of joined objects.
 
 ### Fixed

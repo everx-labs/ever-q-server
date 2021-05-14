@@ -80,7 +80,7 @@ class MemStats {
                 .replace('space_', '')
                 .replace('_space', '');
             const gauge = (metric: string, value: number) => {
-                this.stats.gauge(`heap.space.${spaceName}.${metric}`, value);
+                return this.stats.gauge(`heap.space.${spaceName}.${metric}`, value, []);
             };
             gauge('physical_size', space.physical_space_size);
             gauge('available_size', space.space_available_size);
@@ -168,7 +168,11 @@ export default class TONQServer {
         this.log = this.logs.create('server');
         this.shared = new Map();
         this.tracer = QTracer.create(options.config);
-        this.stats = QStats.create(options.config.statsd.server, options.config.statsd.tags);
+        this.stats = QStats.create(
+            options.config.statsd.server,
+            options.config.statsd.tags,
+            options.config.statsd.resetInterval,
+        );
         this.auth = new Auth(options.config);
         this.endPoints = [];
         this.app = express();
@@ -230,7 +234,7 @@ export default class TONQServer {
 
         const version = packageJson().version;
         const startCounter = new StatsCounter(this.stats, STATS.start, [`version:${version}`]);
-        startCounter.increment()
+        await startCounter.increment()
     }
 
 

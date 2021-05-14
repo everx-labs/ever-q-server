@@ -9,7 +9,6 @@ import { ApolloClient } from 'apollo-client';
 
 import fetch from 'node-fetch';
 import WebSocket from 'ws';
-import type { QConfig } from "../src/server/config";
 import QBlockchainData, { INDEXES } from '../src/server/data/blockchain';
 import { createConfig, overrideDefs, parseDataConfig, programOptions } from '../src/server/config';
 import type { QDataProviders } from '../src/server/data/data';
@@ -165,7 +164,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         logs: new QLogs(),
         auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
-        stats: QStats.create('', []),
+        stats: QStats.create('', [], 0),
         isTests: true,
     });
 }
@@ -250,7 +249,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         logs: new QLogs(),
         auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
-        stats: QStats.create('', []),
+        stats: QStats.create('', [], 0),
         isTests: true,
     });
 }
