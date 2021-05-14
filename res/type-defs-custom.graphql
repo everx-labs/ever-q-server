@@ -20,7 +20,7 @@ type Info {
     messagesLatency: Float,
     " Transactions latency in ms (server time - max of transactions.now * 1000)"
     transactionsLatency: Float,
-    " Overall latency"
+    " Overall latency (maximum value of blocksLatency, messagesLatency and transactionsLatency)"
     latency: Float,
     " Last block time in ms (maximum value of blocks.gen_utime * 1000)"
     lastBlockTime: Float,
