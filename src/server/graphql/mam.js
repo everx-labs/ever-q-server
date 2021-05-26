@@ -2,8 +2,9 @@
 
 import { QDataCollection, mamAccessRequired } from "../data/collection";
 import type { GraphQLRequestContextEx } from "./context";
-import {packageJson} from '../utils';
-const {version} = packageJson();
+import { packageJson } from '../utils';
+
+const { version } = packageJson();
 
 type Info = {
     version: string,
@@ -92,6 +93,18 @@ async function dropCachedDbInfo(_parent: any, args: any, context: GraphQLRequest
     return true;
 }
 
+async function updateConfig(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<boolean> {
+    mamAccessRequired(context, args);
+    const config = args.config;
+    if (config) {
+        const { debugLatency } = config;
+        if (debugLatency !== undefined) {
+            context.data.updateDebugLatency(debugLatency);
+        }
+    }
+    return true;
+}
+
 // Mutation
 
 export const mam = {
@@ -102,5 +115,6 @@ export const mam = {
     },
     Mutation: {
         dropCachedDbInfo,
+        updateConfig
     }
 };

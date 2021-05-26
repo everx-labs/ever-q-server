@@ -25,7 +25,7 @@ async function info(_parent: any, _args: any, context: GraphQLRequestContextEx):
         blocksLatency: latency.blocks.latency,
         transactionsLatency: latency.transactions.latency,
         messagesLatency: latency.messages.latency,
-        latency: latency.latency,
+        latency: context.data.debugLatency === 0 ? latency.latency : context.data.debugLatency,
         endpoints: context.config.endpoints,
     };
 }
