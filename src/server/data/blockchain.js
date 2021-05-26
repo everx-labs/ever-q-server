@@ -202,10 +202,11 @@ export default class QBlockchainData extends QData {
         if (Date.now() <= latency.nextUpdateTime) {
             return false;
         }
-        const maxTime = (await collection.provider.query(
+        const result = (await collection.provider.query(
             `FOR d IN ${collection.name} SORT d.${field} LIMIT 1 RETURN { maxTime: d.${field} }`,
             {}, [{ path: field, direction: "DESC" }]
-        ))[0].maxTime;
+        ));
+        const maxTime = (result && result.length > 0 && result[0]) ? (result[0].maxTime || 0) : 0;
         return this.updateCollectionLatency(latency, maxTime);
 
     }
