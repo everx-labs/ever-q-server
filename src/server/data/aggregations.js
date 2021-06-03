@@ -239,11 +239,12 @@ export class AggregationHelperFactory {
             throw new Error(`[${aggregation.field}] can't be aggregated`);
         }
 
+        const isMinOrMax = fn === AggregationFn.MIN || fn === AggregationFn.MAX;
         // Case of number fields or min/max fn
-        if (field.type === 'number' || fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
+        if (field.type === 'number' || isMinOrMax) {
             return {
                 context,
-                buildQuery: simple,
+                buildQuery: isMinOrMax ? minOrMax : simple,
                 convertResult: context.bigIntPrefix > 0
                     // big integers
                     ? reducer(noConversion, bigIntStringToDecimalString, fn)
