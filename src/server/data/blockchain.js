@@ -159,7 +159,7 @@ export default class QBlockchainData extends QData {
             this.updateLatency(this.latency.transactions, tr.now);
         });
         this.messages.docInsertOrUpdate.on("doc", async (msg) => {
-            this.updateLatency(this.latency.transactions, msg.created_at);
+            this.updateLatency(this.latency.messages, msg.created_at);
         });
     }
 
@@ -203,7 +203,7 @@ export default class QBlockchainData extends QData {
             return false;
         }
         const result = (await collection.provider.query(
-            `FOR d IN ${collection.name} SORT d.${field} LIMIT 1 RETURN { maxTime: d.${field} }`,
+            `FOR d IN ${collection.name} SORT d.${field} DESC LIMIT 1 RETURN { maxTime: d.${field} }`,
             {}, [{ path: field, direction: "DESC" }]
         ));
         const maxTime = (result && result.length > 0 && result[0]) ? (result[0].maxTime || 0) : 0;
