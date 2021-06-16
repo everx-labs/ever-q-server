@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.39.2] 2021-06-16
+
+### Fixed
+
+- info query returned incorrect latency  
+
 ## [0.39.1] 2021-05-26
 
 ### Fixed
