@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.39.3] 2021-06-18
+
+### Fixed
+
+- incorrect result sort order when sorting by two or more fields.   
+
 ## [0.39.2] 2021-06-16
 
 ### Fixed
