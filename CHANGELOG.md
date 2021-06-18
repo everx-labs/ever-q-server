@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- incorrect result sort order when sorting by two or more fields.   
+- incorrect sort order result when sorting by two or more fields.   
 
 ## [0.39.2] 2021-06-16
 
