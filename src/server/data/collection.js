@@ -349,12 +349,29 @@ export class QDataCollection {
 
     }
 
-    buildReturnExpression(selections: GDefinition[]): string {
+    buildReturnExpression(selections: GDefinition[], orderBy: OrderBy[]): string {
         const expressions = new Map();
         expressions.set("_key", "doc._key");
         const fields = this.docType.fields;
-        if (selections && fields) {
-            collectReturnExpressions(expressions, "doc", selections, fields);
+        if (fields) {
+            if (selections) {
+                collectReturnExpressions(expressions, "doc", selections, fields);
+            }
+            if (orderBy.length > 0) {
+                const orderBySelectionSet = {
+                    kind: "SelectionSet",
+                    selections: [],
+                };
+                for (const item of orderBy) {
+                    mergeFieldWithSelectionSet(item.path, orderBySelectionSet);
+                }
+                collectReturnExpressions(
+                    expressions,
+                    "doc",
+                    orderBySelectionSet.selections,
+                    fields,
+                );
+            }
         }
         expressions.delete("id");
         return combineReturnExpressions(expressions);
@@ -379,9 +396,6 @@ export class QDataCollection {
         }
         const filterSection = condition ? `FILTER ${condition}` : "";
         const orderBy: OrderBy[] = args.orderBy || [];
-        for (const orderItem of orderBy) {
-            mergeFieldWithSelectionSet(orderItem.path, selectionInfo);
-        }
         const selection = selectionInfo.selections
             ? parseSelectionSet(selectionInfo, this.name)
             : selectionInfo;
@@ -399,7 +413,7 @@ export class QDataCollection {
         const sortSection = orderByText !== "" ? `SORT ${orderByText}` : "";
         const limitText = Math.min(limit, 50);
         const limitSection = `LIMIT ${limitText}`;
-        const returnExpression = this.buildReturnExpression(selectionInfo.selections);
+        const returnExpression = this.buildReturnExpression(selectionInfo.selections, orderBy);
         const text = `
             FOR doc IN ${this.name}
             ${filterSection}
