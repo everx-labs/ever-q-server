@@ -128,7 +128,7 @@ export default class QBlockchainData extends QData {
         this.messages = add('messages', Message, QDataScope.immutable);
         this.blocks = add('blocks', Block, QDataScope.immutable);
         this.blocks_signatures = add('blocks_signatures', BlockSignatures, QDataScope.immutable);
-        this.zerostates = add('zerostates', Zerostate, QDataScope.immutable);
+        this.zerostates = add('zerostates', Zerostate, QDataScope.mutable);
         this.counterparties = add('counterparties', Counterparty, QDataScope.counterparties);
 
         this.latency = {

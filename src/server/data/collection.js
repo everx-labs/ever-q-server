@@ -399,7 +399,7 @@ export class QDataCollection {
         const selection = selectionInfo.selections
             ? parseSelectionSet(selectionInfo, this.name)
             : selectionInfo;
-        const limit: number = args.limit || 50;
+        const limit: number = Math.min(args.limit || 50, 50);
         const timeout = Number(args.timeout) || 0;
         const orderByText = orderBy
             .map((field) => {
@@ -411,8 +411,7 @@ export class QDataCollection {
             .join(", ");
 
         const sortSection = orderByText !== "" ? `SORT ${orderByText}` : "";
-        const limitText = Math.min(limit, 50);
-        const limitSection = `LIMIT ${limitText}`;
+        const limitSection = `LIMIT ${limit}`;
         const returnExpression = this.buildReturnExpression(selectionInfo.selections, orderBy);
         const text = `
             FOR doc IN ${this.name}
