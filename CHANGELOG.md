@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Incorrect sort order result when sorting fields isn't included into the result set.
+- Incorrect sort order result when sorting fields are not included into the result set.
 - Query returned more than `limit` records (and exceeded records were sorted wrong).
 
 ## [0.39.3] 2021-06-18
