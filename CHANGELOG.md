@@ -8,12 +8,12 @@ All notable changes to this project will be documented in this file.
 
 - `slow-queries` config parameter allows specifying how to handle slow queries (see README for
   details).
-- **IMPORTANT!** `zerostates` collection must be resided in `mut` database (where the `accounts` is resided).
+- **IMPORTANT!** `zerostates` collection must reside in `mut` database (where the `accounts` reside).
 
 ### Fixed
 
-- incorrect sort order result when sorting fields isn't included into the result set.
-- query returned more than `limit` records (and exceeded records sorted wrong).
+- Incorrect sort order result when sorting fields isn't included into the result set.
+- Query returned more than `limit` records (and exceeded records were sorted wrong).
 
 ## [0.39.3] 2021-06-18
 
