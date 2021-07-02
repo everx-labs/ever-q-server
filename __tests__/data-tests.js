@@ -109,6 +109,51 @@ test("Data Broker", async () => {
     server.stop();
 });
 
+test("Limit of combined data", async () => {
+    const mut = mock([
+        { _key: "a1", balance: "2" },
+        { _key: "a2", balance: "1" },
+    ]);
+    const withLt = (prefix, count, id, lt) => {
+        const data = [];
+        for (let i = 0; i < count; i += 1) {
+            data.push({ _key: `${prefix}${id + i}`, lt: lt + 1 });
+        }
+        return data;
+    };
+    const cache = new MockCache();
+    const hot = mock(withLt("t", 100, 0, 0));
+    const cold = [
+        mock(withLt("t", 100, 100, 100)),
+        mock(withLt("t", 100, 200, 200)),
+    ];
+
+    const logs = new QLogs();
+    const server = new TONQServer({
+        config: testConfig,
+        logs: logs,
+        data: createTestData({
+            mutable: mut,
+            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(
+                logs.create("cache"),
+                cache,
+                cold,
+                testConfig.networkName,
+                testConfig.cacheKeyPrefix,
+            )]),
+            counterparties: mut,
+        }),
+    });
+    await server.start();
+    const client = createTestClient({ useWebSockets: true });
+    let transactions = (await client.query({
+        query: gql`query { transactions(orderBy:{path:"id"} limit:100) { id lt } }`,
+    })).data.transactions;
+
+    expect(transactions.length).toEqual(50);
+    server.stop();
+});
+
 test("Combiner", async () => {
     const results = [
         {

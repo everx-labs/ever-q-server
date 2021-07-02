@@ -16,38 +16,38 @@
 
 // @flow
 
-import { Span, SpanContext, Tracer } from 'opentracing';
-import { TonClient } from '@tonclient/core';
-import { AggregationFn, AggregationHelperFactory } from './aggregations';
-import type { FieldAggregation, AggregationHelper } from './aggregations';
-import type { QDataProvider, QIndexInfo } from './data-provider';
-import { QDataListener, QDataSubscription } from './listener';
-import type { AccessRights } from '../auth';
-import { Auth, grantedAccess } from '../auth';
-import { STATS } from '../config';
-import type { QConfig } from '../config';
-import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from '../filter/filters';
+import { Span, SpanContext, Tracer } from "opentracing";
+import { TonClient } from "@tonclient/core";
+import { AggregationFn, AggregationHelperFactory } from "./aggregations";
+import type { FieldAggregation, AggregationHelper } from "./aggregations";
+import type { QDataProvider, QIndexInfo } from "./data-provider";
+import { QDataListener, QDataSubscription } from "./listener";
+import type { AccessRights } from "../auth";
+import { Auth, grantedAccess } from "../auth";
+import { slowQueries, STATS } from "../config";
+import type { QConfig } from "../config";
+import type { DatabaseQuery, GDefinition, OrderBy, QType, QueryStat } from "../filter/filters";
 import {
     collectReturnExpressions,
     combineReturnExpressions,
-    indexToString,
+    indexToString, mergeFieldWithSelectionSet,
     parseSelectionSet,
     QParams,
     selectionToString,
-} from '../filter/filters';
-import type { QLog } from '../logs';
-import QLogs from '../logs';
-import { explainSlowReason, isFastQuery } from '../filter/slow-detector';
-import type { IStats } from '../tracer';
-import { QTracer, StatsCounter, StatsGauge, StatsTiming } from '../tracer';
-import { QError, wrap } from '../utils';
-import EventEmitter from 'events';
+} from "../filter/filters";
+import type { QLog } from "../logs";
+import QLogs from "../logs";
+import { explainSlowReason, isFastQuery } from "../filter/slow-detector";
+import type { IStats } from "../tracer";
+import { QTracer, StatsCounter, StatsGauge, StatsTiming } from "../tracer";
+import { QError, wrap } from "../utils";
+import EventEmitter from "events";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
 export const RequestEvent = {
-    CLOSE: 'close',
-    FINISH: 'finish',
+    CLOSE: "close",
+    FINISH: "finish",
 };
 
 export class RequestController {
@@ -107,7 +107,10 @@ function checkUsedAccessKey(
     return accessKey;
 }
 
-export async function requireGrantedAccess(context: GraphQLRequestContext, args: any): Promise<AccessRights> {
+export async function requireGrantedAccess(
+    context: GraphQLRequestContext,
+    args: any,
+): Promise<AccessRights> {
     const accessKey = context.accessKey || args.accessKey;
     context.usedAccessKey = checkUsedAccessKey(context.usedAccessKey, accessKey, context);
     return context.auth.requireGrantedAccess(accessKey);
@@ -133,7 +136,7 @@ export const QDataScope = {
     mutable: "mutable",
     immutable: "immutable",
     counterparties: "counterparties",
-}
+};
 
 export type QCollectionOptions = {
     name: string,
@@ -211,16 +214,31 @@ export class QDataCollection {
         this.statQueryActive = new StatsGauge(stats, STATS.query.active, [`collection:${name}`]);
         this.statQueryFailed = new StatsCounter(stats, STATS.query.failed, [`collection:${name}`]);
         this.statQuerySlow = new StatsCounter(stats, STATS.query.slow, [`collection:${name}`]);
-        this.statWaitForActive = new StatsGauge(stats, STATS.waitFor.active, [`collection:${name}`]);
-        this.statSubscription = new StatsCounter(stats, STATS.subscription.count, [`collection:${name}`]);
-        this.statSubscriptionActive = new StatsGauge(stats, STATS.subscription.active, [`collection:${name}`]);
+        this.statWaitForActive = new StatsGauge(
+            stats,
+            STATS.waitFor.active,
+            [`collection:${name}`],
+        );
+        this.statSubscription = new StatsCounter(
+            stats,
+            STATS.subscription.count,
+            [`collection:${name}`],
+        );
+        this.statSubscriptionActive = new StatsGauge(
+            stats,
+            STATS.subscription.active,
+            [`collection:${name}`],
+        );
 
         this.docInsertOrUpdate = new EventEmitter();
         this.docInsertOrUpdate.setMaxListeners(0);
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
 
-        this.hotSubscription = this.provider.subscribe(this.name, doc => this.onDocumentInsertOrUpdate(doc));
+        this.hotSubscription = this.provider.subscribe(
+            this.name,
+            doc => this.onDocumentInsertOrUpdate(doc),
+        );
     }
 
     close() {
@@ -238,13 +256,13 @@ export class QDataCollection {
 
     onDocumentInsertOrUpdate(doc: any) {
         this.statDoc.increment().then(() => {
-            this.docInsertOrUpdate.emit('doc', doc);
-            const isExternalInboundFinalizedMessage = this.name === 'messages'
+            this.docInsertOrUpdate.emit("doc", doc);
+            const isExternalInboundFinalizedMessage = this.name === "messages"
                 && doc._key
                 && doc.msg_type === 1
-                && doc.status === 5
+                && doc.status === 5;
             if (isExternalInboundFinalizedMessage) {
-                const span = this.tracer.startSpan('messageDbNotification', {
+                const span = this.tracer.startSpan("messageDbNotification", {
                     childOf: QTracer.messageRootSpanContext(doc._key),
                 });
                 span.addTags({
@@ -274,21 +292,21 @@ export class QDataCollection {
                         this.log.error(
                             Date.now(),
                             this.name,
-                            'SUBSCRIPTION\tFAILED',
+                            "SUBSCRIPTION\tFAILED",
                             JSON.stringify(args.filter),
                             error.toString(),
                         );
                     }
                 };
-                this.docInsertOrUpdate.on('doc', eventListener);
+                this.docInsertOrUpdate.on("doc", eventListener);
                 this.subscriptionCount += 1;
                 subscription.onClose = () => {
-                    this.docInsertOrUpdate.removeListener('doc', eventListener);
+                    this.docInsertOrUpdate.removeListener("doc", eventListener);
                     this.subscriptionCount = Math.max(0, this.subscriptionCount - 1);
                 };
                 return subscription;
             },
-        }
+        };
     }
 
     // Queries
@@ -296,20 +314,20 @@ export class QDataCollection {
     getAdditionalCondition(accessRights: AccessRights, params: QParams) {
         const accounts = accessRights.restrictToAccounts;
         if (accounts.length === 0) {
-            return '';
+            return "";
         }
         const condition = accounts.length === 1
             ? `== @${params.add(accounts[0])}`
-            : `IN [${accounts.map(x => `@${params.add(x)}`).join(',')}]`;
+            : `IN [${accounts.map(x => `@${params.add(x)}`).join(",")}]`;
         switch (this.name) {
-        case 'accounts':
+        case "accounts":
             return `doc._key ${condition}`;
-        case 'transactions':
+        case "transactions":
             return `doc.account_addr ${condition}`;
-        case 'messages':
+        case "messages":
             return `(doc.src ${condition}) OR (doc.dst ${condition})`;
         default:
-            return '';
+            return "";
         }
     }
 
@@ -319,10 +337,10 @@ export class QDataCollection {
         accessRights: AccessRights,
     ): ?string {
         const primaryCondition = Object.keys(filter).length > 0
-            ? this.docType.filterCondition(params, 'doc', filter)
-            : '';
+            ? this.docType.filterCondition(params, "doc", filter)
+            : "";
         const additionalCondition = this.getAdditionalCondition(accessRights, params);
-        if (primaryCondition === 'false' || additionalCondition === 'false') {
+        if (primaryCondition === "false" || additionalCondition === "false") {
             return null;
         }
         return (primaryCondition && additionalCondition)
@@ -331,14 +349,31 @@ export class QDataCollection {
 
     }
 
-    buildReturnExpression(selections: GDefinition[]): string {
+    buildReturnExpression(selections: GDefinition[], orderBy: OrderBy[]): string {
         const expressions = new Map();
-        expressions.set('_key', 'doc._key');
+        expressions.set("_key", "doc._key");
         const fields = this.docType.fields;
-        if (selections && fields) {
-            collectReturnExpressions(expressions, 'doc', selections, fields);
+        if (fields) {
+            if (selections) {
+                collectReturnExpressions(expressions, "doc", selections, fields);
+            }
+            if (orderBy.length > 0) {
+                const orderBySelectionSet = {
+                    kind: "SelectionSet",
+                    selections: [],
+                };
+                for (const item of orderBy) {
+                    mergeFieldWithSelectionSet(item.path, orderBySelectionSet);
+                }
+                collectReturnExpressions(
+                    expressions,
+                    "doc",
+                    orderBySelectionSet.selections,
+                    fields,
+                );
+            }
         }
-        expressions.delete('id');
+        expressions.delete("id");
         return combineReturnExpressions(expressions);
     }
 
@@ -359,26 +394,25 @@ export class QDataCollection {
         if (condition === null) {
             return null;
         }
-        const filterSection = condition ? `FILTER ${condition}` : '';
+        const filterSection = condition ? `FILTER ${condition}` : "";
+        const orderBy: OrderBy[] = args.orderBy || [];
         const selection = selectionInfo.selections
             ? parseSelectionSet(selectionInfo, this.name)
             : selectionInfo;
-        const orderBy: OrderBy[] = args.orderBy || [];
-        const limit: number = args.limit || 50;
+        const limit: number = Math.min(args.limit || 50, 50);
         const timeout = Number(args.timeout) || 0;
         const orderByText = orderBy
             .map((field) => {
-                const direction = (field.direction && field.direction.toLowerCase() === 'desc')
-                    ? ' DESC'
-                    : '';
-                return `doc.${field.path.replace(/\bid\b/gi, '_key')}${direction}`;
+                const direction = (field.direction && field.direction.toLowerCase() === "desc")
+                    ? " DESC"
+                    : "";
+                return `doc.${field.path.replace(/\bid\b/gi, "_key")}${direction}`;
             })
-            .join(', ');
+            .join(", ");
 
-        const sortSection = orderByText !== '' ? `SORT ${orderByText}` : '';
-        const limitText = Math.min(limit, 50);
-        const limitSection = `LIMIT ${limitText}`;
-        const returnExpression = this.buildReturnExpression(selectionInfo.selections);
+        const sortSection = orderByText !== "" ? `SORT ${orderByText}` : "";
+        const limitSection = `LIMIT ${limit}`;
+        const returnExpression = this.buildReturnExpression(selectionInfo.selections, orderBy);
         const text = `
             FOR doc IN ${this.name}
             ${filterSection}
@@ -407,16 +441,22 @@ export class QDataCollection {
         await this.checkRefreshInfo();
         let statKey = text;
         if (orderBy && orderBy.length > 0) {
-            statKey = `${statKey}${orderBy.map(x => `${x.path} ${x.direction}`).join(' ')}`;
+            statKey = `${statKey}${orderBy.map(x => `${x.path} ${x.direction}`).join(" ")}`;
         }
-        const existingStat = this.queryStats.get(statKey);
-        if (existingStat !== undefined) {
-            return existingStat.isFast;
+        let stat = this.queryStats.get(statKey);
+        if (stat === undefined) {
+            stat = {
+                isFast: isFastQuery(
+                    this.name,
+                    this.indexes,
+                    this.docType,
+                    filter,
+                    orderBy || [],
+                    console,
+                ),
+            };
+            this.queryStats.set(statKey, stat);
         }
-        const stat = {
-            isFast: isFastQuery(this.name, this.indexes, this.docType, filter, orderBy || [], console),
-        };
-        this.queryStats.set(statKey, stat);
         return stat.isFast;
     }
 
@@ -432,7 +472,13 @@ export class QDataCollection {
             if (!q) {
                 return { isFast: true };
             }
-            const slowReason = await explainSlowReason(this.name, this.indexes, this.docType, q.filter, q.orderBy);
+            const slowReason = await explainSlowReason(
+                this.name,
+                this.indexes,
+                this.docType,
+                q.filter,
+                q.orderBy,
+            );
             return {
                 isFast: slowReason === null,
                 ...(slowReason ? { slowReason } : {}),
@@ -446,7 +492,7 @@ export class QDataCollection {
             args: any,
             context: GraphQLRequestContext,
             info: any,
-        ) => wrap(this.log, 'QUERY', args, async () => {
+        ) => wrap(this.log, "QUERY", args, async () => {
             await this.statQuery.increment();
             await this.statQueryActive.increment();
             const start = Date.now();
@@ -455,10 +501,14 @@ export class QDataCollection {
                 const accessRights = await requireGrantedAccess(context, args);
                 q = this.createDatabaseQuery(args, info.fieldNodes[0].selectionSet, accessRights);
                 if (!q) {
-                    this.log.debug('QUERY', args, 0, 'SKIPPED', context.remoteAddress);
+                    this.log.debug("QUERY", args, 0, "SKIPPED", context.remoteAddress);
                     return [];
                 }
-                let isFast = await this.isFastQuery(q.text, q.filter, q.orderBy);
+                const isFast = await checkIsFast(context.config, () => this.isFastQuery(
+                    ((q: any): DatabaseQuery).text,
+                    ((q: any): DatabaseQuery).filter,
+                    ((q: any): DatabaseQuery).orderBy,
+                ));
                 if (!isFast) {
                     await this.statQuerySlow.increment();
                 }
@@ -476,19 +526,19 @@ export class QDataCollection {
                     traceParams.timeout = q.timeout;
                 }
                 this.log.debug(
-                    'BEFORE_QUERY',
+                    "BEFORE_QUERY",
                     args,
-                    isFast ? 'FAST' : 'SLOW', context.remoteAddress,
+                    isFast ? "FAST" : "SLOW", context.remoteAddress,
                 );
                 const start = Date.now();
                 const result = q.timeout > 0
                     ? await this.queryWaitFor(q, isFast, traceParams, context)
                     : await this.query(q.text, q.params, q.orderBy, isFast, traceParams, context);
                 this.log.debug(
-                    'QUERY',
+                    "QUERY",
                     args,
                     (Date.now() - start) / 1000,
-                    isFast ? 'FAST' : 'SLOW', context.remoteAddress,
+                    isFast ? "FAST" : "SLOW", context.remoteAddress,
                 );
                 if (result.length > q.limit) {
                     result.splice(q.limit);
@@ -502,13 +552,14 @@ export class QDataCollection {
                         this.indexes,
                         this.docType,
                         q.filter,
-                        q.orderBy);
+                        q.orderBy,
+                    );
                     if (slowReason) {
                         error.message += `. Query was detected as a slow. ${slowReason.summary}. See error data for details.`;
                         error.data = {
                             ...error.data,
                             slowReason,
-                        }
+                        };
                     }
                 }
                 throw error;
@@ -530,7 +581,7 @@ export class QDataCollection {
     ): Promise<any> {
         const impl = async (span: Span) => {
             if (traceParams) {
-                span.setTag('params', traceParams);
+                span.setTag("params", traceParams);
             }
             return this.queryProvider(text, vars, orderBy, isFast, context);
         };
@@ -557,7 +608,7 @@ export class QDataCollection {
     ): Promise<any> {
         const impl = async (span: Span) => {
             if (traceParams) {
-                span.setTag('params', traceParams);
+                span.setTag("params", traceParams);
             }
             let waitFor: ?((doc: any) => void) = null;
             let forceTimerId: ?TimeoutID = null;
@@ -572,17 +623,23 @@ export class QDataCollection {
                 }
             };
             context.request.events.on(RequestEvent.CLOSE, () => {
-                resolveBy('close', resolveOnClose, []);
+                resolveBy("close", resolveOnClose, []);
             });
             try {
                 const onQuery = new Promise((resolve, reject) => {
                     const check = () => {
-                        this.queryProvider(q.text, q.params, q.orderBy, isFast, context).then((docs) => {
+                        this.queryProvider(
+                            q.text,
+                            q.params,
+                            q.orderBy,
+                            isFast,
+                            context,
+                        ).then((docs) => {
                             hasDbResponse = true;
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = null;
-                                    resolveBy('query', resolve, docs);
+                                    resolveBy("query", resolve, docs);
                                 } else {
                                     forceTimerId = setTimeout(check, 5_000);
                                 }
@@ -599,27 +656,27 @@ export class QDataCollection {
                         }
                         try {
                             if (this.docType.test(null, doc, q.filter)) {
-                                resolveBy('listener', resolve, [doc]);
+                                resolveBy("listener", resolve, [doc]);
                             }
                         } catch (error) {
                             this.log.error(
                                 Date.now(),
                                 this.name,
-                                'QUERY\tFAILED',
+                                "QUERY\tFAILED",
                                 JSON.stringify(q.filter),
                                 error.toString(),
                             );
                         }
                     };
                     this.waitForCount += 1;
-                    this.docInsertOrUpdate.on('doc', waitFor);
+                    this.docInsertOrUpdate.on("doc", waitFor);
                     this.statWaitForActive.increment().then(() => {
                     });
                 });
                 const onTimeout = new Promise((resolve, reject) => {
                     setTimeout(() => {
                         if (hasDbResponse) {
-                            resolveBy('timeout', resolve, []);
+                            resolveBy("timeout", resolve, []);
                         } else {
                             reject(QError.queryTerminatedOnTimeout());
                         }
@@ -634,12 +691,12 @@ export class QDataCollection {
                     onTimeout,
                     onClose,
                 ]);
-                span.setTag('resolved', resolvedBy);
+                span.setTag("resolved", resolvedBy);
                 return result;
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
                     this.waitForCount = Math.max(0, this.waitForCount - 1);
-                    this.docInsertOrUpdate.removeListener('doc', waitFor);
+                    this.docInsertOrUpdate.removeListener("doc", waitFor);
                     waitFor = null;
                     await this.statWaitForActive.decrement();
                 }
@@ -669,7 +726,7 @@ export class QDataCollection {
         if (condition === null) {
             return null;
         }
-        const query = AggregationHelperFactory.createQuery(this.name, condition || '', fields);
+        const query = AggregationHelperFactory.createQuery(this.name, condition || "", fields);
         return {
             text: query.text,
             params: params.values,
@@ -690,8 +747,8 @@ export class QDataCollection {
                 }
             } else if (c.fn === AggregationFn.MIN || c.fn === AggregationFn.MAX) {
                 let path = c.field.path;
-                if (path.startsWith('doc.')) {
-                    path = path.substr('doc.'.length);
+                if (path.startsWith("doc.")) {
+                    path = path.substr("doc.".length);
                 }
                 if (!(await this.isFastQuery(
                     text,
@@ -699,7 +756,7 @@ export class QDataCollection {
                     [
                         {
                             path,
-                            direction: 'ASC',
+                            direction: "ASC",
                         },
                     ],
                 ))) {
@@ -715,7 +772,7 @@ export class QDataCollection {
             parent: any,
             args: AggregationArgs,
             context: GraphQLRequestContext,
-        ) => wrap(this.log, 'AGGREGATE', args, async () => {
+        ) => wrap(this.log, "AGGREGATE", args, async () => {
             await this.statQuery.increment();
             await this.statQueryActive.increment();
             const start = Date.now();
@@ -726,24 +783,28 @@ export class QDataCollection {
                     ? args.fields
                     : [
                         {
-                            field: '',
+                            field: "",
                             fn: AggregationFn.COUNT,
                         },
                     ];
 
                 const q = this.createAggregationQuery(filter, fields, accessRights);
                 if (!q) {
-                    this.log.debug('AGGREGATE', args, 0, 'SKIPPED', context.remoteAddress);
+                    this.log.debug("AGGREGATE", args, 0, "SKIPPED", context.remoteAddress);
                     return [];
                 }
-                const isFast = await this.isFastAggregationQuery(q.text, filter, q.helpers);
+                const isFast = await checkIsFast(context.config, () => this.isFastAggregationQuery(
+                    q.text,
+                    filter,
+                    q.helpers,
+                ));
                 const start = Date.now();
                 const result = await this.queryProvider(q.text, q.params, [], isFast, context);
                 this.log.debug(
-                    'AGGREGATE',
+                    "AGGREGATE",
                     args,
                     (Date.now() - start) / 1000,
-                    isFast ? 'FAST' : 'SLOW', context.remoteAddress,
+                    isFast ? "FAST" : "SLOW", context.remoteAddress,
                 );
                 return AggregationHelperFactory.convertResults(result, q.helpers);
             } finally {
@@ -782,7 +843,7 @@ export class QDataCollection {
             return aRest.size === 0;
         };
         if (!sameIndexes(actualIndexes, this.indexes)) {
-            this.log.debug('RELOAD_INDEXES', actualIndexes);
+            this.log.debug("RELOAD_INDEXES", actualIndexes);
             this.indexes = actualIndexes.map(x => ({ fields: x.fields }));
             this.queryStats.clear();
         }
@@ -798,7 +859,7 @@ export class QDataCollection {
         if (!fieldValue) {
             return Promise.resolve(null);
         }
-        const queryParams = fieldPath.endsWith('[*]')
+        const queryParams = fieldPath.endsWith("[*]")
             ? {
                 filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
                 text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
@@ -850,7 +911,12 @@ export class QDataCollection {
         if (!fieldValues || fieldValues.length === 0) {
             return Promise.resolve([]);
         }
-        return Promise.all(fieldValues.map(value => this.waitForDoc(value, fieldPath, args, context)));
+        return Promise.all(fieldValues.map(value => this.waitForDoc(
+            value,
+            fieldPath,
+            args,
+            context,
+        )));
     }
 
     finishOperations(operationIds: Set<string>): number {
@@ -865,4 +931,15 @@ export class QDataCollection {
         return toClose.length;
     }
 
+}
+
+async function checkIsFast(config: QConfig, detector: () => Promise<boolean>): Promise<boolean> {
+    if (config.slowQueries === slowQueries.enable) {
+        return true;
+    }
+    const isFast = await detector();
+    if (!isFast && config.slowQueries === slowQueries.disable) {
+        throw new Error("Slow queries are disabled");
+    }
+    return isFast;
 }
