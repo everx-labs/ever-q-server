@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.41.0]
+
+### New
+
+- `config` config parameter allows to specify configuration via JSON-based config file
+
 ## [0.40.0] 2021-06-28
 
 ### New

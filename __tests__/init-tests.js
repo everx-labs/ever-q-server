@@ -27,6 +27,7 @@ jest.setTimeout(100000);
 
 export const testConfig = createConfig(
     {},
+    {},
     process.env,
     overrideDefs(programOptions, {}),
 );

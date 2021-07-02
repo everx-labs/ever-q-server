@@ -1,6 +1,48 @@
 // @flow
-import { parseArangoConfig } from '../src/server/config';
+import { parseArangoConfig, readConfigFile, createConfig, programOptions } from '../src/server/config';
 import { QTracer } from '../src/server/tracer';
+
+test("Config File", () => {
+    expect(readConfigFile('__tests__/configs/config-simple.json')).toMatchObject({
+        "Q_HOST": "localhost",
+        "Q_PORT": 2020,
+        "Q_DATA_MUT": "http://localhost:8081",
+        "Q_DATA_HOT": "http://localhost:8081",
+        "Q_REQUESTS_MODE": "rest",
+        "Q_REQUESTS_SERVER": "localhost"
+    });
+    expect(readConfigFile('wrong_file_name')).toMatchObject({});
+});
+
+test("Config Priority", () => {
+    // override direction: 
+    //   defaults -> OS envs -> config file -> args
+
+    const full_options = createConfig(
+        { "port": 8083 },
+        { "Q_PORT": 8082 },
+        { "Q_PORT": 8081 },
+        programOptions,
+    );
+    expect(full_options.server.port).toEqual(8083);
+
+    const no_args_options = createConfig(
+        {},
+        { "Q_PORT": 8082 },
+        { "Q_PORT": 8081 },
+        programOptions,
+    );
+    expect(no_args_options.server.port).toEqual(8082);
+
+    const only_env_options = createConfig(
+        {},
+        {},
+        { "Q_PORT": 8081 },
+        programOptions,
+    );
+    expect(only_env_options.server.port).toEqual(8081);
+});
+
 test("Arango Config", () => {
     expect(parseArangoConfig('arango', 3)).toMatchObject({
         server: 'https://arango',

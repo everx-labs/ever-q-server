@@ -16,7 +16,7 @@
 
 // @flow
 
-import { createConfig, programOptions} from './config';
+import { createConfig, programOptions, readConfigFile } from './config';
 import type { ProgramOption, QConfig } from './config';
 import TONQServer from './server';
 import QLogs from './logs';
@@ -28,11 +28,16 @@ Object.values(programOptions).forEach((value) => {
     program.option(option.option, option.description);
 });
 
-
 program.parse(process.argv);
 
+const configData = program.config ? readConfigFile(program.config) : {};
 
-const config: QConfig = createConfig(program, process.env, programOptions);
+const config: QConfig = createConfig(
+    program, // program args
+    configData, // config file
+    process.env, // os envs
+    programOptions, // defaults
+);
 
 const logs = new QLogs();
 const configLog = logs.create('config');

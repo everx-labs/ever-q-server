@@ -27,6 +27,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
     --host <address>               Q_HOST                   192.168.1.137  Listening address
     --port <number>                Q_PORT                   4000           Listening port
     --keep-alive <number>          Q_KEEP_ALIVE             60000          GraphQL keep alive ms
+    --config <path>                Q_CONFIG                                JSON config file (same as ENV)
     --requests-mode <string>       Q_REQUESTS_MODE          kafka          Requests mode (kafka | rest)
     --requests-server <address>    Q_REQUESTS_SERVER        kafka:9092     Requests server url
     --requests-topic <string>      Q_REQUESTS_TOPIC         requests       Requests topic name
@@ -232,3 +233,20 @@ export Q_SLOW_QUERIES_MUT=${Q_DATA_MUT}
 export Q_SLOW_QUERIES_HOT=${Q_DATA_MUT}
 export Q_SLOW_QUERIES_COLD=${Q_DATA_MUT}
 ```
+
+or/and via arg `--config <path to config>`
+
+```json
+{
+    "Q_DATA_MUT": "http://localhost:8529",
+    "Q_DATA_HOT": "http://localhost:8529",
+    "Q_DATA_COLD": "http://localhost:8529",
+    "Q_SLOW_QUERIES_MUT": "http://localhost:8529",
+    "Q_SLOW_QUERIES_HOT": "http://localhost:8529",
+    "Q_SLOW_QUERIES_COLD": "http://localhost:8529"
+}
+```
+
+Configuration priority is follows:
+
+    Program args > Config file > ENVs > defaults
