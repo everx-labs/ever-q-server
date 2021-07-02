@@ -16,6 +16,7 @@
 
 import os from "os";
 import { URL } from "url";
+import { readFileSync } from "fs";
 
 // Config Schema
 
@@ -51,6 +52,7 @@ export enum RequestsMode {
 }
 
 export type QConfig = {
+    config: string,
     server: {
         host: string,
         port: number,
@@ -128,6 +130,8 @@ opt("host", getIp(), "Listening address");
 opt("port", "4000", "Listening port");
 opt("keep-alive", "60000", "GraphQL keep alive ms");
 
+opt("config", "", "Path to JSON configuration file");
+
 opt("requests-mode", "kafka", "Requests mode (kafka | rest)");
 opt("requests-server", "kafka:9092", "Requests server url");
 opt("requests-topic", "requests", "Requests topic name");
@@ -188,6 +192,15 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
 
+export function readConfigFile(configFile: string): any {
+    try {
+        return JSON.parse(readFileSync(configFile).toString());
+    } catch (error) {
+        console.error("Error while reading config file:", error);
+        return {};
+    }
+}
+
 function parseArangoEndpoint(config: string, defMaxSockets: number): QArangoConfig {
     const lowerCased = config.toLowerCase().trim();
     const hasProtocol = lowerCased.startsWith("http:") || lowerCased.startsWith("https:");
@@ -235,27 +248,30 @@ export function overrideDefs(options: ProgramOptions, defs: any): ProgramOptions
     return resolved;
 }
 
-export function resolveValues(values: any, env: any, def: ProgramOptions): ProgramOptions {
+export function resolveValues(values: any, configFile: any, env: any, def: ProgramOptions): ProgramOptions {
     const resolved: ProgramOptions = {};
-    Object.entries(def).forEach(([name, value]) => {
-        resolved[name] = values[name] || env[value.env] || def[name].def;
+    Object.entries(def).forEach(([name, opt]) => {
+        resolved[name] = values[name] || configFile[opt.env] || env[opt.env] || def[name].def;
     });
     return resolved;
 }
 
 export function createConfig(
     values: any,
+    configFile: any,
     env: any,
     def: ProgramOptions,
 ): QConfig {
-    const resolved = resolveValues(values, env, def) as any;
+    const resolved = resolveValues(values, configFile, env, def) as any;
     const {
         data,
         slowQueriesData,
         networkName,
         cacheKeyPrefix,
     } = parseDataConfig(resolved);
+
     return {
+        config: resolved.config, 
         server: {
             host: resolved.host,
             port: Number.parseInt(resolved.port),
