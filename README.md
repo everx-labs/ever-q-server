@@ -27,7 +27,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
     --host <address>               Q_HOST                   192.168.1.137  Listening address
     --port <number>                Q_PORT                   4000           Listening port
     --keep-alive <number>          Q_KEEP_ALIVE             60000          GraphQL keep alive ms
-    --config <path>                Q_CONFIG                                JSON config file (same as ENV)
+    --config <path>                Q_CONFIG                                JSON config file
     --requests-mode <string>       Q_REQUESTS_MODE          kafka          Requests mode (kafka | rest)
     --requests-server <address>    Q_REQUESTS_SERVER        kafka:9092     Requests server url
     --requests-topic <string>      Q_REQUESTS_TOPIC         requests       Requests topic name
@@ -238,12 +238,44 @@ or/and via arg `--config <path to config>`
 
 ```json
 {
-    "Q_DATA_MUT": "http://localhost:8529",
-    "Q_DATA_HOT": "http://localhost:8529",
-    "Q_DATA_COLD": "http://localhost:8529",
-    "Q_SLOW_QUERIES_MUT": "http://localhost:8529",
-    "Q_SLOW_QUERIES_HOT": "http://localhost:8529",
-    "Q_SLOW_QUERIES_COLD": "http://localhost:8529"
+    "endpoints": [],
+    "server": {
+        "host": "localhost",
+        "port": 4000,
+        "keepAlive": 60000
+    },
+    "requests": {
+        "mode": "rest",
+        "server": "kafka:9092",
+        "topic": "requests",
+        "maxSize": "16383"
+    },
+    "data": {
+        "mut": "",
+        "hot": "",
+        "cold": [],
+        "cache": "",
+        "counterparties": ""
+    },
+    "slowQueries": {
+        "mode": "redirect",
+        "mut": "arangodb",
+        "hot": "arangodb",
+        "cold": [],
+        "cache": ""
+    },
+    "authEndpoint": "",
+    "mamAccessKeys": "",
+    "jaegerEndpoint": "",
+    "trace": {
+        "service": "",
+        "tags": []
+    },
+    "statsd": {
+        "server": "",
+        "tags": [],
+        "resetInterval": 0
+    }
 }
 ```
 

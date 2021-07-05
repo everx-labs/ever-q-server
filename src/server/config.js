@@ -196,7 +196,36 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
 
 export function readConfigFile(configFile: string): any {
     try {
-        return JSON.parse(readFileSync(configFile).toString());
+        const config = JSON.parse(readFileSync(configFile).toString());
+        return {
+            Q_ENDPOINTS: config.endpoints.join(','),
+            Q_HOST: config.server?.host,
+            Q_PORT: config.server?.port,
+            Q_KEEP_ALIVE: config.server?.keepAlive,
+            // Q_CONFIG -- doesn't make sense here
+            Q_REQUESTS_MODE: config.requests?.mode,
+            Q_REQUESTS_SERVER: config.requests?.server,
+            Q_REQUESTS_TOPIC: config.requests?.topic,
+            Q_REQUESTS_MAX_SIZE: config.requests?.maxSize,
+            Q_DATA_MUT: config.data?.mut,
+            Q_DATA_HOT: config.data?.hot,
+            Q_DATA_COLD: config.data?.cold.join(','),
+            Q_DATA_CACHE: config.data?.cache,
+            Q_DATA_COUNTERPARTIES: config.data?.counterparties,
+            Q_SLOW_QUERIES: config.slowQueries?.mode,
+            Q_SLOW_QUERIES_MUT: config.slowQueries?.mut,
+            Q_SLOW_QUERIES_HOT: config.slowQueries?.hot,
+            Q_SLOW_QUERIES_COLD: config.slowQueries?.cold.join(','),
+            Q_SLOW_QUERIES_CACHE: config.slowQueries?.cache,
+            Q_AUTH_ENDPOINT: config.authEndpoint,
+            Q_MAM_ACCESS_KEYS: config.mamAccessKeys,
+            Q_JAEGER_ENDPOINT: config.jaegerEndpoint,
+            Q_TRACE_SERVICE: config.trace?.service,
+            Q_TRACE_TAGS: config.trace?.tags.join(','),
+            Q_STATSD_SERVER: config.statsd?.server,
+            Q_STATSD_TAGS: config.statsd?.tags.join(','),
+            Q_STATSD_RESET_INTERVAL: config.statsd?.resetInterval,
+        };
     } catch (error) {
         console.error("Error while reading config file:", error);
         return {};

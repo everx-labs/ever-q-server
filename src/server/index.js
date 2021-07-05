@@ -30,7 +30,8 @@ Object.values(programOptions).forEach((value) => {
 
 program.parse(process.argv);
 
-const configData = program.config ? readConfigFile(program.config) : {};
+const configPath = program.config || process.env.Q_CONFIG;
+const configData = configPath ? readConfigFile(configPath) : {};
 
 const config: QConfig = createConfig(
     program, // program args
