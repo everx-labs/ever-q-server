@@ -2,13 +2,33 @@ import { createConfig, parseArangoConfig, programOptions, readConfigFile } from 
 import { QTracer } from "../server/tracer";
 
 test("Config File", () => {
-    expect(readConfigFile('src/__tests__/configs/config-simple.json')).toMatchObject({
-        "Q_HOST": "localhost",
-        "Q_PORT": 2020,
-        "Q_DATA_MUT": "http://localhost:8081",
-        "Q_DATA_HOT": "http://localhost:8081",
-        "Q_REQUESTS_MODE": "rest",
-        "Q_REQUESTS_SERVER": "localhost"
+    expect(readConfigFile("src/__tests__/configs/config-full.json")).toMatchObject({
+        Q_ENDPOINTS: "",
+        Q_HOST: "localhost",
+        Q_PORT: 4000,
+        Q_KEEP_ALIVE: 60000,
+        Q_REQUESTS_MODE: "rest",
+        Q_REQUESTS_SERVER: "localhost",
+        Q_REQUESTS_TOPIC: "requests",
+        Q_REQUESTS_MAX_SIZE: 16383,
+        Q_DATA_MUT: "",
+        Q_DATA_HOT: "",
+        Q_DATA_COLD: "",
+        Q_DATA_CACHE: "",
+        Q_DATA_COUNTERPARTIES: "",
+        Q_SLOW_QUERIES: "redirect",
+        Q_SLOW_QUERIES_MUT: "arangodb",
+        Q_SLOW_QUERIES_HOT: "arangodb",
+        Q_SLOW_QUERIES_COLD: "",
+        Q_SLOW_QUERIES_CACHE: "",
+        Q_AUTH_ENDPOINT: "",
+        Q_MAM_ACCESS_KEYS: "",
+        Q_JAEGER_ENDPOINT: "",
+        Q_TRACE_SERVICE: "",
+        Q_TRACE_TAGS: "",
+        Q_STATSD_SERVER: "",
+        Q_STATSD_TAGS: "",
+        Q_STATSD_RESET_INTERVAL: 0,
     });
     expect(readConfigFile('wrong_file_name')).toMatchObject({});
 });

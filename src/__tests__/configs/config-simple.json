@@ -1,8 +1,0 @@
-{
-    "Q_HOST": "localhost",
-    "Q_PORT": 2020,
-    "Q_DATA_MUT": "http://localhost:8081",
-    "Q_DATA_HOT": "http://localhost:8081",
-    "Q_REQUESTS_MODE": "rest",
-    "Q_REQUESTS_SERVER": "localhost"
-}
