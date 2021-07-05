@@ -74,12 +74,11 @@ test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (use
     q2.abort();
     await sleep(500);
     expect(collection.waitForCount).toEqual(0);
-
     const client = createTestClient({ useWebSockets });
-    await client.query({
+    const transactions = await client.query({
         query: gql`
             query {
-                transactions(limit: 1) {
+                transactions(orderBy: [{path: "now" direction: DESC}] limit: 1) {
                     id
                     in_message { id }
                     block { id }
@@ -88,6 +87,7 @@ test.each([true, false])('Release Aborted Requests (webSockets: %s)', async (use
             }
         `,
     });
+    expect(transactions.data.transactions.length).toBeGreaterThan(0);
     client.close();
 });
 
@@ -108,7 +108,7 @@ test('Many concurrent requests over web socket', async () => {
     await client.query({
         query: gql`
             query {
-                transactions(limit:1){
+                transactions(orderBy: [{path: "now" direction: DESC}] limit:1){
                     in_message{
                         dst_transaction{
                             in_message{

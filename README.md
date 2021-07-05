@@ -36,6 +36,10 @@ You can configure Q Server with command line parameters and/or ENV variables:
     --data-cold <array>            Q_DATA_COLD                             Data cold db config urls (comma separated)
     --data-cache <url>             Q_DATA_CACHE                            Data cache config url
     --data-counterparties <url>    Q_DATA_COUNTERPARTIES    <mut>          Data counterparties db config url
+    --slow-queries <mode>          Q_SLOW_QUERIES           redirect       Slow queries handling:
+                                                                           `enable` – process slow queries on the main database
+                                                                           `redirect` – redirect slow queries to slow-queries database
+                                                                           `disable` – fail on slow queries
     --slow-queries-mut <url>       Q_SLOW_QUERIES_MUT       arangodb       Slow queries mutable db config url
     --slow-queries-hot <url>       Q_SLOW_QUERIES_HOT       arangodb       Slow queries hot db config url
     --slow-queries-cold <array>    Q_SLOW_QUERIES_COLD                     Slow queries cold db config urls (comma separated)

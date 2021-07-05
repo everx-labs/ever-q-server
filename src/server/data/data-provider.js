@@ -128,7 +128,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
     }
 }
 
-function combineResults(results: any[][], orderBy: OrderBy[]): any[] {
+export function combineResults(results: any[][], orderBy: OrderBy[]): any[] {
     const docs = collectDistinctDocs(results);
     if (orderBy.length > 0) {
         docs.sort((a: QDoc, b: QDoc) => compareDocs(a, b, orderBy));
@@ -188,7 +188,7 @@ function compareValues(a: any, b: any): number {
     if (!bHasValue) {
         return 1;
     }
-    return a === b ? 0 : (a < b ? -1 : 0);
+    return a === b ? 0 : (a < b ? -1 : 1);
 }
 
 

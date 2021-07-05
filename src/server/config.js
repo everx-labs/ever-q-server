@@ -17,7 +17,7 @@
 
 // @flow
 
-import os from 'os';
+import os from "os";
 
 // Config Schema
 
@@ -41,6 +41,7 @@ export type QDataProvidersConfig = {
     counterparties: QArangoConfig;
 };
 
+export type SlowQueriesMode = "enable" | "redirect" | "disable";
 export type QConfig = {
     server: {
         host: string,
@@ -48,12 +49,13 @@ export type QConfig = {
         keepAlive: number,
     },
     requests: {
-        mode: 'kafka' | 'rest',
+        mode: "kafka" | "rest",
         server: string,
         topic: string,
         maxSize: number,
     },
     data: QDataProvidersConfig,
+    slowQueries: SlowQueriesMode,
     slowQueriesData: QDataProvidersConfig,
     authorization: {
         endpoint: string,
@@ -88,8 +90,14 @@ const DEFAULT_ARANGO_MAX_SOCKETS = 100;
 const DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS = 3;
 
 export const requestsMode = {
-    kafka: 'kafka',
-    rest: 'rest',
+    kafka: "kafka",
+    rest: "rest",
+};
+
+export const slowQueries = {
+    enable: "enable",
+    redirect: "redirect",
+    disable: "disable",
 };
 
 export const programOptions: ProgramOptions = {};
@@ -97,82 +105,84 @@ export const programOptions: ProgramOptions = {};
 const toPascal = s => `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}`;
 
 const opt = (option: string, def: string, description: string) => {
-    const words = option.split('-');
-    const name = `${words[0]}${words.slice(1).map(toPascal).join('')}`;
-    const env = `Q_${words.map(x => x.toUpperCase()).join('_')}`;
+    const words = option.split("-");
+    const name = `${words[0]}${words.slice(1).map(toPascal).join("")}`;
+    const env = `Q_${words.map(x => x.toUpperCase()).join("_")}`;
     programOptions[name] = {
         option: `--${option} <value>`,
         env,
         def,
         description: `${description}${def && ` (default: "${def}")`}`,
-    }
+    };
 };
 
 const dataOpt = (prefix: string) => {
-    const o = name => `${prefix.toLowerCase().split(' ').join('-')}-${name}`;
+    const o = name => `${prefix.toLowerCase().split(" ").join("-")}-${name}`;
     const d = text => `${toPascal(prefix)} ${text}`;
 
-    opt(o('mut'), 'arangodb', d('mutable db config url'));
-    opt(o('hot'), 'arangodb', d('hot db config url'));
-    opt(o('cold'), '', d('cold db config urls (comma separated)'));
-    opt(o('cache'), '', d('cache config url'));
-    opt(o('counterparties'), '', d('counterparties db config url'));
-}
+    opt(o("mut"), "arangodb", d("mutable db config url"));
+    opt(o("hot"), "arangodb", d("hot db config url"));
+    opt(o("cold"), "", d("cold db config urls (comma separated)"));
+    opt(o("cache"), "", d("cache config url"));
+    opt(o("counterparties"), "", d("counterparties db config url"));
+};
 
-opt('host', getIp(), 'Listening address');
-opt('port', '4000', 'Listening port');
-opt('keep-alive', '60000', 'GraphQL keep alive ms');
+opt("host", getIp(), "Listening address");
+opt("port", "4000", "Listening port");
+opt("keep-alive", "60000", "GraphQL keep alive ms");
 
-opt('requests-mode', 'kafka', 'Requests mode (kafka | rest)');
-opt('requests-server', 'kafka:9092', 'Requests server url');
-opt('requests-topic', 'requests', 'Requests topic name');
-opt('requests-max-size', '16383', 'Maximum request message size in bytes');
+opt("requests-mode", "kafka", "Requests mode (kafka | rest)");
+opt("requests-server", "kafka:9092", "Requests server url");
+opt("requests-topic", "requests", "Requests topic name");
+opt("requests-max-size", "16383", "Maximum request message size in bytes");
 
-dataOpt('data');
-dataOpt('slow queries');
+opt("slow-queries", "redirect", "Slow queries handling (enable | redirect | disable)");
 
-opt('auth-endpoint', '', 'Auth endpoint');
-opt('mam-access-keys', '', 'Access keys used to authorize mam endpoint access');
+dataOpt("data");
+dataOpt("slow queries");
 
-opt('jaeger-endpoint', '', 'Jaeger endpoint');
-opt('trace-service', 'Q Server', 'Trace service name');
-opt('trace-tags', '', 'Additional trace tags (comma separated name=value pairs)');
+opt("auth-endpoint", "", "Auth endpoint");
+opt("mam-access-keys", "", "Access keys used to authorize mam endpoint access");
 
-opt('statsd-server', '', 'StatsD server (host:port)');
-opt('statsd-tags', '', 'Additional StatsD tags (comma separated name=value pairs)');
-opt('statsd-reset-interval', '', 'Interval in ms between recreations of the StatsD socket');
+opt("jaeger-endpoint", "", "Jaeger endpoint");
+opt("trace-service", "Q Server", "Trace service name");
+opt("trace-tags", "", "Additional trace tags (comma separated name=value pairs)");
 
-opt('network-name', 'cinet.tonlabs.io', 'Define the name of the network q-server is working with');
+opt("statsd-server", "", "StatsD server (host:port)");
+opt("statsd-tags", "", "Additional StatsD tags (comma separated name=value pairs)");
+opt("statsd-reset-interval", "", "Interval in ms between recreations of the StatsD socket");
 
-opt('cache-key-prefix', 'Q_', 'Prefix string to identify q-server keys in datacache');
+opt("network-name", "cinet.tonlabs.io", "Define the name of the network q-server is working with");
 
-opt('endpoints', '', 'Alternative endpoints of q-server (comma separated addresses)');
+opt("cache-key-prefix", "Q_", "Prefix string to identify q-server keys in datacache");
+
+opt("endpoints", "", "Alternative endpoints of q-server (comma separated addresses)");
 
 // Stats Schema
 
 export const STATS = {
-    start: 'start',
-    prefix: 'qserver.',
+    start: "start",
+    prefix: "qserver.",
     doc: {
-        count: 'doc.count',
+        count: "doc.count",
     },
     post: {
-        count: 'post.count',
-        failed: 'post.failed',
+        count: "post.count",
+        failed: "post.failed",
     },
     query: {
-        count: 'query.count',
-        time: 'query.time',
-        active: 'query.active',
-        failed: 'query.failed',
-        slow: 'query.slow',
+        count: "query.count",
+        time: "query.time",
+        active: "query.active",
+        failed: "query.failed",
+        slow: "query.slow",
     },
     subscription: {
-        count: 'subscription.count',
-        active: 'subscription.active',
+        count: "subscription.count",
+        active: "subscription.active",
     },
     waitFor: {
-        active: 'waitfor.active',
+        active: "waitfor.active",
     },
 };
 
@@ -183,19 +193,19 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
 
 function parseArangoEndpoint(config: string, defMaxSockets: number): QArangoConfig {
     const lowerCased = config.toLowerCase().trim();
-    const hasProtocol = lowerCased.startsWith('http:') || lowerCased.startsWith('https:');
+    const hasProtocol = lowerCased.startsWith("http:") || lowerCased.startsWith("https:");
     const url = new URL(hasProtocol ? config : `https://${config}`);
-    const protocol = url.protocol || 'https:';
-    const host = (url.port || protocol.toLowerCase() === 'https:') ? url.host : `${url.host}:8529`;
-    const path = url.pathname !== '/' ? url.pathname : '';
-    const param = name => url.searchParams.get(name) || '';
+    const protocol = url.protocol || "https:";
+    const host = (url.port || protocol.toLowerCase() === "https:") ? url.host : `${url.host}:8529`;
+    const path = url.pathname !== "/" ? url.pathname : "";
+    const param = name => url.searchParams.get(name) || "";
     return {
         server: `${protocol}//${host}${path}`,
         auth: url.username && `${url.username}:${url.password}`,
-        name: param('name') || 'blockchain',
-        maxSockets: Number.parseInt(param('maxSockets')) || defMaxSockets,
-        listenerRestartTimeout: Number.parseInt(param('listenerRestartTimeout')) || DEFAULT_LISTENER_RESTART_TIMEOUT,
-    }
+        name: param("name") || "blockchain",
+        maxSockets: Number.parseInt(param("maxSockets")) || defMaxSockets,
+        listenerRestartTimeout: Number.parseInt(param("listenerRestartTimeout")) || DEFAULT_LISTENER_RESTART_TIMEOUT,
+    };
 }
 
 function parseArangoEndpointList(config: string, defMaxSockets: number): QArangoConfig[] {
@@ -207,13 +217,13 @@ function parseArangoEndpointList(config: string, defMaxSockets: number): QArango
 
 export function parseArangoConfig(config: string, defMaxSockets: number): QArangoConfig {
     return parseArangoEndpointList(config, defMaxSockets)[0]
-        || parseArangoEndpoint('', defMaxSockets);
+        || parseArangoEndpoint("", defMaxSockets);
 }
 
 export function parseMemCachedConfig(config: string): QMemCachedConfig {
     return {
         server: config,
-    }
+    };
 }
 
 export function overrideDefs(options: ProgramOptions, defs: any): ProgramOptions {
@@ -257,11 +267,12 @@ export function createConfig(
             maxSize: Number.parseInt(resolved.requestsMaxSize),
         },
         data,
+        slowQueries: resolved.slowQueries,
         slowQueriesData,
         authorization: {
             endpoint: resolved.authEndpoint,
         },
-        mamAccessKeys: new Set((resolved.mamAccessKeys || '').split(',')),
+        mamAccessKeys: new Set((resolved.mamAccessKeys || "").split(",")),
         jaeger: {
             endpoint: resolved.jaegerEndpoint,
             service: resolved.traceService,
@@ -270,11 +281,11 @@ export function createConfig(
         statsd: {
             resetInterval: Number.parseInt(resolved.statsdResetInterval) || 0,
             server: resolved.statsdServer,
-            tags: (resolved.statsdTags || '').split(',').map(x => x.trim()).filter(x => x),
+            tags: (resolved.statsdTags || "").split(",").map(x => x.trim()).filter(x => x),
         },
         networkName,
         cacheKeyPrefix,
-        endpoints: (resolved.endpoints || '').split(',').map(x => x.trim()).filter(x => x)
+        endpoints: (resolved.endpoints || "").split(",").map(x => x.trim()).filter(x => x),
     };
 }
 
@@ -283,19 +294,19 @@ export function createConfig(
 function getIp(): string {
     const ipv4 = (Object.values(os.networkInterfaces()): any)
         .reduce((acc, x) => acc.concat(x), [])
-        .find(x => x.family === 'IPv4' && !x.internal);
+        .find(x => x.family === "IPv4" && !x.internal);
     return ipv4 && ipv4.address;
 }
 
 
 function parseTags(s: string): { [string]: string } {
     const tags: { [string]: string } = {};
-    s.split(',').forEach((t) => {
-        const i = t.indexOf('=');
+    s.split(",").forEach((t) => {
+        const i = t.indexOf("=");
         if (i >= 0) {
             tags[t.substr(0, i)] = t.substr(i + 1);
         } else {
-            tags[t] = '';
+            tags[t] = "";
         }
     });
     return tags;
@@ -310,12 +321,12 @@ export function parseDataConfig(values: any): {
     cacheKeyPrefix: string,
 } {
     function parse(prefix: string, defMaxSockets: number): QDataProvidersConfig {
-        const opt = (suffix: string): string => values[`${prefix}${suffix}`] || '';
-        const mut = parseArangoConfig(opt('Mut'), defMaxSockets);
-        const hot = parseArangoConfig(opt('Hot'), defMaxSockets);
-        const cold = parseArangoEndpointList(opt('Cold'), defMaxSockets);
-        const cache = parseMemCachedConfig(opt('Cache'));
-        const counterpartiesOpt = opt('Counterparties');
+        const opt = (suffix: string): string => values[`${prefix}${suffix}`] || "";
+        const mut = parseArangoConfig(opt("Mut"), defMaxSockets);
+        const hot = parseArangoConfig(opt("Hot"), defMaxSockets);
+        const cold = parseArangoEndpointList(opt("Cold"), defMaxSockets);
+        const cache = parseMemCachedConfig(opt("Cache"));
+        const counterpartiesOpt = opt("Counterparties");
         const counterparties = counterpartiesOpt
             ? parseArangoConfig(counterpartiesOpt, defMaxSockets)
             : mut;
@@ -325,14 +336,14 @@ export function parseDataConfig(values: any): {
             cold,
             cache,
             counterparties,
-        }
+        };
     }
 
     const { networkName, cacheKeyPrefix } = values;
 
     return {
-        data: parse('data', DEFAULT_ARANGO_MAX_SOCKETS),
-        slowQueriesData: parse('slowQueries', DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS),
+        data: parse("data", DEFAULT_ARANGO_MAX_SOCKETS),
+        slowQueriesData: parse("slowQueries", DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS),
         networkName,
         cacheKeyPrefix,
     };

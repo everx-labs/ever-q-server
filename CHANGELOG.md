@@ -2,67 +2,96 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.40.0] 2021-06-28
+
+### New
+
+- `slow-queries` config parameter allows specifying how to handle slow queries (see README for
+  details).
+- **IMPORTANT!** `zerostates` collection must reside in `mut` database (where the `accounts` reside).
+
+### Fixed
+
+- Incorrect sort order result when sorting fields are not included into the result set.
+- Query returned more than `limit` records (and exceeded records were sorted wrong).
+
+## [0.39.3] 2021-06-18
+
+### Fixed
+
+- incorrect sort order result when sorting by two or more fields.
+
+## [0.39.2] 2021-06-16
+
+### Fixed
+
+- info query returned incorrect latency
 
 ## [0.39.1] 2021-05-26
 
 ### Fixed
 
-- info query failed if collections was empty  
+- info query failed if collections was empty
 
 ## [0.39.0] 2021-05-14
 
 ### New
 
-- `info` fields 
-  - `blocksLatency` calculated as now() - max(blocks.gen_utime)
-  - `messagesLatency` calculated as now() - max(messages.created_at)
-  - `transactionsLatency` calculated as now() - max(transactions.now)
-  - `latency` calculated as max(blocks_latency, messages_latency, transactions_latency)
-- `statsd-reset-interval` config parameter. Q-Server will recreate statsd socket 
-  periodically if this parameter is specified. `0` means disabled recreation. 
-  
+- `info` fields
+    - `blocksLatency` calculated as now() - max(blocks.gen_utime)
+    - `messagesLatency` calculated as now() - max(messages.created_at)
+    - `transactionsLatency` calculated as now() - max(transactions.now)
+    - `latency` calculated as max(blocks_latency, messages_latency, transactions_latency)
+- `statsd-reset-interval` config parameter. Q-Server will recreate statsd socket periodically if
+  this parameter is specified. `0` means disabled recreation.
+
 ### Fixed
 
-- querying of the `lastBlockTime` and latency fields took a long time over big collections during write loads.
-  AQL queries used for max time were simplified (got rid of COLLECT AGGREGATE).  
+- querying of the `lastBlockTime` and latency fields took a long time over big collections during
+  write loads. AQL queries used for max time were simplified (got rid of COLLECT AGGREGATE).
 
 ## [0.38.0] 2021-04-26
 
 ### New
 
-- Now you can retrieve account's code_hash from messages and transactions in the result set of fields: joined account fields were added to messages and transactions: `messages.src_account`, `messages.dst_account`, `transaction.account`.  Remember, you can not filter by fields of joined objects.
+- Now you can retrieve account's code_hash from messages and transactions in the result set of
+  fields: joined account fields were added to messages and transactions: `messages.src_account`
+  , `messages.dst_account`, `transaction.account`. Remember, you can not filter by fields of joined
+  objects.
 
 ### Fixed
 
-- Some queries took a long time for execution. For example `messages` query with 
-  `dst_transaction` for the external outbound message if `msg_type` wasn't included into the result set.   
+- Some queries took a long time for execution. For example `messages` query with
+  `dst_transaction` for the external outbound message if `msg_type` wasn't included into the result
+  set.
 
 ## [0.37.0] 2021-04-19
 
 ### New
 
-- `lastBlockTime` field of `info` query returns `MAX(blocks.gen_utime)`.
-  This value is updated in realtime.
+- `lastBlockTime` field of `info` query returns `MAX(blocks.gen_utime)`. This value is updated in
+  realtime.
 
 ### Fixed
 
 - counterparties sort order was ascending.
 
-
 ## [0.36.0] 2021-04-13
 
 ### New
 
-- `counterpaties` query that allows to retrieve account counterparties, i.e. accounts that the account interacted with, sorted by last interaction (internal message between accounts) time
+- `counterpaties` query that allows to retrieve account counterparties, i.e. accounts that the
+  account interacted with, sorted by last interaction (internal message between accounts) time
 - `counterparties` subscription that allows to get updates in counterparties list.
-- `data-counterparties` configuration parameter specifies endpoint to the database 
-  with counterparties collection. 
+- `data-counterparties` configuration parameter specifies endpoint to the database with
+  counterparties collection.
 
 ## [0.35.0] 2021-03-23
 
 ### New
 
-- `requests-max-size` config parameter sets limit of request message size in bytes. Default value is 16384 bytes.
+- `requests-max-size` config parameter sets limit of request message size in bytes. Default value is
+  16384 bytes.
 
 ## 0.34.1 – Mar 11, 2021
 
@@ -80,17 +109,16 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- `bits`, `cells` and `public_cells` fields in `accounts` collection representing account used storage
-  statistics for storage fee calculation.
+- `bits`, `cells` and `public_cells` fields in `accounts` collection representing account used
+  storage statistics for storage fee calculation.
 
 ## 0.32.0 – Feb 16, 2021
 
 ### New
 
 - `qserver.subscription.count` StatsD counter.
-- Filters for fields with a hex encoded content (id's, hashes and so on) can
-  be represented in any case. Q-Server converts filter values into lower case
-  before use.
+- Filters for fields with a hex encoded content (id's, hashes and so on) can be represented in any
+  case. Q-Server converts filter values into lower case before use.
 
 ## 0.31.2 – Jan 28, 2021
 
@@ -109,19 +137,19 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - Fields in the schema are sorted in alphabetical order.
-- When the server responds with the timeout termination error, in addition to the error message 
+- When the server responds with the timeout termination error, in addition to the error message
   server attaches the reason why this query was detected as a slow.
-- `explainQuery*` queries that examine the provided query parameters and return the conclusion –
-  is this query fast or potentially slow. In case when the query is marked as slow, the
-  additional information is provided about the reasons why this query is slow.
+- `explainQuery*` queries that examine the provided query parameters and return the conclusion – is
+  this query fast or potentially slow. In case when the query is marked as slow, the additional
+  information is provided about the reasons why this query is slow.
 
 ### Fixed
 
-- Before: if query timeout was triggered before the db responded, the client would receive
-  a successful result with an empty result set.
-  Now: in this situation the client will receive error "request terminated due to timeout".  
-- Before: Q-Server crashed if statsd endpoint was unavailable.
-  Now: StatsD socket recreates on statsd sending error.
+- Before: if query timeout was triggered before the db responded, the client would receive a
+  successful result with an empty result set. Now: in this situation the client will receive error "
+  request terminated due to timeout".
+- Before: Q-Server crashed if statsd endpoint was unavailable. Now: StatsD socket recreates on
+  statsd sending error.
 - Tailing comma is ignored in ArangoDB configuration string.
 
 ## 0.30.0 – Dec 15, 2020
@@ -223,19 +251,20 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 
-- Release resources associated with aborted GraphQL requests. 
+- Release resources associated with aborted GraphQL requests.
 
 ## 0.27.6 – Jul 27, 2020
 
 ### New
 
-- StatsD counter `qserver.start` with additional tag `{version=package.json.version}`. 
+- StatsD counter `qserver.start` with additional tag `{version=package.json.version}`.
 
 ## 0.27.5 – Jul 23, 2020
 
 ### Fix
 
-- Slow detector must detects queries like `FILTER workchain_id == -1 SORT seq_no DESC` as a fast query. 
+- Slow detector must detects queries like `FILTER workchain_id == -1 SORT seq_no DESC` as a fast
+  query.
 
 ## 0.27.4 – Jul 20, 2020
 
@@ -263,8 +292,8 @@ All notable changes to this project will be documented in this file.
 
 ### Optimized
 
-- Queries like `{ signatures: { any: { node_id: { in: ["1", "2"] } } } }` generates
-  optimized AQL like `(doc.signatures[*].node_id IN @v1) OR (doc.signatures[*].node_id IN @v2)`.
+- Queries like `{ signatures: { any: { node_id: { in: ["1", "2"] } } } }` generates optimized AQL
+  like `(doc.signatures[*].node_id IN @v1) OR (doc.signatures[*].node_id IN @v2)`.
 
 ## 0.27.0 – Jun 3, 2020
 
@@ -272,9 +301,10 @@ All notable changes to this project will be documented in this file.
 
 - Support for signed numbers encoded with strings.
 - Field `balance_delta` and `balance_delta_other` of `Transaction`.
-- `when` arg to join fields – ability to include joined objects into result set only if some conditions met.
+- `when` arg to join fields – ability to include joined objects into result set only if some
+  conditions met.
 
-   In following example we return `dst_transaction` only for messages with `value` greater than zero:
+  In following example we return `dst_transaction` only for messages with `value` greater than zero:
 
   ```graphql
   query { 
@@ -288,10 +318,12 @@ All notable changes to this project will be documented in this file.
   }
   ```
 
-- Unit test infrastructure is now suitable for TDD. It starts q-server and performs graphql queries during tests.
-  
-  ⚠️ Important to CI: you must run tests in environment correctly configured to start q-server connected to valid Arangodb
-  with enough for tests set of data. You can configure q-server using env variables due to README.
+- Unit test infrastructure is now suitable for TDD. It starts q-server and performs graphql queries
+  during tests.
+
+  ⚠️ Important to CI: you must run tests in environment correctly configured to start q-server
+  connected to valid Arangodb with enough for tests set of data. You can configure q-server using
+  env variables due to README.
 
 ### Fixed
 
@@ -304,7 +336,8 @@ All notable changes to this project will be documented in this file.
 - Fields `Block.key_field` and `Block.boc`.
 - Field `expireAt` in post requests.
 - Field `time` in `info` query.
-- `src_transaction` will wait only when `messages.created_lt` !== 0 (because there is no transaction for such messages).
+- `src_transaction` will wait only when `messages.created_lt` !== 0 (because there is no transaction
+  for such messages).
 
 ### Fixed
 
@@ -321,7 +354,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Aggregates on nested array fields failed with `value.substr is not function`.
-- Slow detector for `MIN` `MAX` aggregates must use a specified field as `order by` to detect fast query.
+- Slow detector for `MIN` `MAX` aggregates must use a specified field as `order by` to detect fast
+  query.
 - Indexes reloaded from db first time on demand and then every 1 hour.
 - Config p17 stake types.
 
@@ -330,13 +364,16 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - companion fields `*_string` for fields that holds unix time values
-- `timeout` argument (default to 40sec) to all join fields (used to wait joined document in condition of eventual consistency)
-- companion fields `*_hash` containing BOC root hash for `code`, `data` and `library` fields in accounts and messages
-- `qserver.query.failed` - statsd counter for failed queries 
-- `qserver.query.slow` - statsd counter for slow queries 
+- `timeout` argument (default to 40sec) to all join fields (used to wait joined document in
+  condition of eventual consistency)
+- companion fields `*_hash` containing BOC root hash for `code`, `data` and `library` fields in
+  accounts and messages
+- `qserver.query.failed` - statsd counter for failed queries
+- `qserver.query.slow` - statsd counter for slow queries
 - `qserver.post.count` - statsd counter for node requests
 - `qserver.post.failed` - statsd counter for failed node requests
-- `Q_KEEP_ALIVE` configuration parameter specify interval in ms of keep alive messages for active subscriptions (default 60000).
+- `Q_KEEP_ALIVE` configuration parameter specify interval in ms of keep alive messages for active
+  subscriptions (default 60000).
 
 ### Optimized
 
@@ -345,7 +382,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- fixed `seq_no` field in `BlockSignatures` (it contained shard ident before), added correct `shard` field.
+- fixed `seq_no` field in `BlockSignatures` (it contained shard ident before), added correct `shard`
+  field.
 - aggregation functions must return `null` when no data to aggregate (was `[Object object]`)
 
 ## 0.25.0 – Apr 17, 2020
@@ -363,8 +401,10 @@ All notable changes to this project will be documented in this file.
 
 - `block` join added to `Message`, `Transaction`, and `BlockSignatures`
 - `OR` combination operator in filters
-- Added new fields (`gen_utime`, `seq_no`, `workchain_id`, `proof`, `validator_list_hash_short`, `catchain_seqno`, `sig_weight`) into `BlockSignatures`
-- aggregation queries: `aggregateBlockSignatures`, `aggregateBlocks`, `aggregateTransactions`, `aggregateMessages`, `aggregateAccounts`
+- Added new fields (`gen_utime`, `seq_no`, `workchain_id`, `proof`, `validator_list_hash_short`
+  , `catchain_seqno`, `sig_weight`) into `BlockSignatures`
+- aggregation queries: `aggregateBlockSignatures`, `aggregateBlocks`, `aggregateTransactions`
+  , `aggregateMessages`, `aggregateAccounts`
 - `--statsd-tags` (`Q_STATSD_TAGS`) config parameter to specify additional tags
 
 ### Fixed
@@ -390,7 +430,8 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- supported new type of outbound message `dequeueShort` (msg_type: 7): added fields `msg_env_hash`, `next_workchain`, `next_addr_pfx`, `import_block_lt` to `OutMsg` type.
+- supported new type of outbound message `dequeueShort` (msg_type: 7): added fields `msg_env_hash`
+  , `next_workchain`, `next_addr_pfx`, `import_block_lt` to `OutMsg` type.
 
 ## 0.24.7 – Apr 8, 2020
 
@@ -401,7 +442,8 @@ StatsD support
 ### New
 
 - `--statsd-server` parameter (`Q_STATSD_SERVER` env) config option to specify StatsD server address
-- `qserver.doc.count`, `qserver.query.count`, `qserver.query.time`, `qserver.query.active` statsd metrics  
+- `qserver.doc.count`, `qserver.query.count`, `qserver.query.time`, `qserver.query.active` statsd
+  metrics
 
 ## 0.24.6 – Apr 5, 2020
 
@@ -436,13 +478,14 @@ Stability fixes
 
 ### Featured
 
-Scheme enhancements
-Security fixes
+Scheme enhancements Security fixes
 
 ### New
 
-- all big number fields can be optionally parametrized with `format` argument `HEX` (default) or `DEC`.
-- `Message` contains new joined fields `src_transaction` (from where this message was originated) and `dst_transaction` (where this message was handled).  
+- all big number fields can be optionally parametrized with `format` argument `HEX` (default)
+  or `DEC`.
+- `Message` contains new joined fields `src_transaction` (from where this message was originated)
+  and `dst_transaction` (where this message was handled).
 - `--mam-access-keys` and `MAM_ACCESS_KEYS` config to protect mam endpoint.
 - all queries and mutations inside single GraphQL request must use the same access key.
 
@@ -451,13 +494,15 @@ Security fixes
 - change type of `transaction_id` to string
 - `auth` parameter of subscription changed to `accessKey`
 - invalid `accessKey` treated by subscribe as a valid key
-- all internal errors are logged as is but converted to `Service temporary unavailable` before sending to client
+- all internal errors are logged as is but converted to `Service temporary unavailable` before
+  sending to client
 - server side stack traces are truncated before sending to client
-- waitFor 2 minute limit timeout has been removed  
+- waitFor 2 minute limit timeout has been removed
 
 ## 0.24.3 – Mar 2, 2020
 
 ### Featured
+
 Stability fixes
 
 ### New
@@ -466,7 +511,7 @@ Stability fixes
 
 ### Fixed
 
-- joined objects returned as `null` if joined object inserted in DB later than parent object.   
+- joined objects returned as `null` if joined object inserted in DB later than parent object.
 
 ## 0.24.2 – Feb 19, 2020
 
@@ -477,7 +522,8 @@ Ability to set restrictions to accounts for particular access keys
 ### New
 
 - `accessKey` optional header used instead of `authorization`.
-- keys passed to `registerAccessKeys` as structures (instead of strings) and include `restrictToAccounts` optional field
+- keys passed to `registerAccessKeys` as structures (instead of strings) and
+  include `restrictToAccounts` optional field
 
 ### Fixed
 
@@ -487,8 +533,8 @@ Ability to set restrictions to accounts for particular access keys
 
 ### New
 
-- `--trace-service` (or `Q_TRACE_SERVICE` env) specify service name that will be used in jaeger. 
-- `--trace-tags` (or `Q_TRACE_TAGS` env) specify additional tags associated with a spans. 
+- `--trace-service` (or `Q_TRACE_SERVICE` env) specify service name that will be used in jaeger.
+- `--trace-tags` (or `Q_TRACE_TAGS` env) specify additional tags associated with a spans.
 
 ## 0.24.0 - Feb 10, 2020
 
@@ -500,7 +546,8 @@ Ability to set restrictions to accounts for particular access keys
 
 - `--auth-endpoint` (or `AUTH_ENDPOINT` env) config option. Specify address of auth service.
 - `authorization` optional header added to specify access token.
-- `accessKey` optional parameter added to all GraphQL queries to specify access token in GraphQL playground.
+- `accessKey` optional parameter added to all GraphQL queries to specify access token in GraphQL
+  playground.
 - `getManagementAccessKey` query one time management access key.
 - `registerAccessKeys` mutation to register account's access keys.
 - `revokeAccessKeys` mutation to revoke account's access keys.
@@ -510,7 +557,8 @@ Ability to set restrictions to accounts for particular access keys
 ### New
 
 - OpenTracing (jaeger) support
-- workchain_id field added alongside with account address to `accounts.workchain_id`, `transactions.workchain_id`, `messages.src_workchain_id`, `messages.dst_workchain_id`
+- workchain_id field added alongside with account address to `accounts.workchain_id`
+  , `transactions.workchain_id`, `messages.src_workchain_id`, `messages.dst_workchain_id`
 - field `prev_key_block_seqno` into `blocks` collection
 
 ## 0.22.0 - January 22, 2020
