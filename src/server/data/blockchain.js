@@ -117,6 +117,7 @@ export default class QBlockchainData extends QData {
     counterparties: QDataCollection;
 
     latency: Latency;
+    debugLatency: number;
 
     constructor(options: QDataOptions) {
         super(options);
@@ -151,6 +152,7 @@ export default class QBlockchainData extends QData {
             latency: 0,
             lastBlockTime: 0,
         }
+        this.debugLatency = 0;
 
         this.blocks.docInsertOrUpdate.on("doc", async (block) => {
             this.updateLatency(this.latency.blocks, block.gen_utime);
@@ -209,6 +211,10 @@ export default class QBlockchainData extends QData {
         const maxTime = (result && result.length > 0 && result[0]) ? (result[0].maxTime || 0) : 0;
         return this.updateCollectionLatency(latency, maxTime);
 
+    }
+
+    updateDebugLatency(latency: number) {
+        this.debugLatency = latency;
     }
 
     async getLatency(): Promise<Latency> {
