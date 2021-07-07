@@ -543,6 +543,7 @@ type Config {
 	p0: String
 	"Address of elector smart contract in the masterchain"
 	p1: String
+	"Critical params"
 	p10: [Float]
 	"Config voting setup"
 	p11: ConfigP11
@@ -578,6 +579,7 @@ type Config {
 	p29: ConfigP29
 	"Address of fee collector smart contract in the masterchain"
 	p3: String
+	"Array of fundamental smart contracts addresses"
 	p31: [String]
 	"Previous validators set"
 	p32: ValidatorSet
@@ -601,6 +603,7 @@ type Config {
 	p7: [ConfigP7]
 	"Global version"
 	p8: ConfigP8
+	"Mandatory params"
 	p9: [Float]
 }
 
@@ -975,7 +978,9 @@ type Transaction {
 	account(timeout: Int, when: TransactionFilter): Account
 	account_addr: String
 	action: TransactionAction
+	"Account balance change after transaction"
 	balance_delta(format: BigIntFormat): String
+	"Account balance change after transaction"
 	balance_delta_other: [OtherCurrency]
 	block(timeout: Int, when: TransactionFilter): Block
 	block_id: String
@@ -1811,6 +1816,7 @@ input ConfigFilter {
 	p0: StringFilter
 	"Address of elector smart contract in the masterchain"
 	p1: StringFilter
+	"Critical params"
 	p10: FloatArrayFilter
 	"Config voting setup"
 	p11: ConfigP11Filter
@@ -1846,6 +1852,7 @@ input ConfigFilter {
 	p29: ConfigP29Filter
 	"Address of fee collector smart contract in the masterchain"
 	p3: StringFilter
+	"Array of fundamental smart contracts addresses"
 	p31: StringArrayFilter
 	"Previous validators set"
 	p32: ValidatorSetFilter
@@ -1869,6 +1876,7 @@ input ConfigFilter {
 	p7: ConfigP7ArrayFilter
 	"Global version"
 	p8: ConfigP8Filter
+	"Mandatory params"
 	p9: FloatArrayFilter
     OR: ConfigFilter
 }
@@ -2379,7 +2387,9 @@ input TransactionFilter {
 	account: AccountFilter
 	account_addr: StringFilter
 	action: TransactionActionFilter
+	"Account balance change after transaction"
 	balance_delta: StringFilter
+	"Account balance change after transaction"
 	balance_delta_other: OtherCurrencyArrayFilter
 	block: BlockFilter
 	block_id: StringFilter
