@@ -250,18 +250,20 @@ function main(schemaDef: TypeDef) {
 
     function genJSFiltersForArrayFields(type: DbType, jsNames: Set<string>) {
         type.fields.forEach((field) => {
-            let itemTypeName = field.type.name;
-            for (let i = 0; i < field.arrayDepth; i += 1) {
-                const filterName = `${itemTypeName}Array`;
-                preventTwice(filterName, jsNames, () => {
-                    const itemResolverName = (i === 0 && field.type.category === DbTypeCategory.scalar)
-                        ? getScalarResolverName(field)
-                        : itemTypeName;
-                    js.writeBlockLn(`
+            if (!field.join) {
+                let itemTypeName = field.type.name;
+                for (let i = 0; i < field.arrayDepth; i += 1) {
+                    const filterName = `${itemTypeName}Array`;
+                    preventTwice(filterName, jsNames, () => {
+                        const itemResolverName = (i === 0 && field.type.category === DbTypeCategory.scalar)
+                            ? getScalarResolverName(field)
+                            : itemTypeName;
+                        js.writeBlockLn(`
                 const ${filterName} = array(() => ${itemResolverName});
                 `);
-                });
-                itemTypeName += "Array";
+                    });
+                    itemTypeName += "Array";
+                }
             }
         });
     }
@@ -371,7 +373,7 @@ function main(schemaDef: TypeDef) {
         }
         js.writeLn(`        ${type.name}: {`);
         if (type.collection) {
-            js.writeLn("            id(parent) {");
+            js.writeLn("            id(parent: any) {");
             js.writeLn("                return parent._key;");
             js.writeLn("            },");
         }
@@ -390,7 +392,7 @@ function main(schemaDef: TypeDef) {
             if (!collection) {
                 throw "Joined type is not a collection.";
             }
-            js.writeLn(`            ${field.name}(parent, args, context) {`);
+            js.writeLn(`            ${field.name}(parent: any, args: any, context: GraphQLRequestContextEx) {`);
             if (join.preCondition) {
                 js.writeLn(`                if (!(${join.preCondition})) {`);
                 js.writeLn(`                    return null;`);
@@ -411,12 +413,12 @@ function main(schemaDef: TypeDef) {
         });
         bigUIntFields.forEach((field) => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
-            js.writeLn(`            ${field.name}(parent, args) {`);
+            js.writeLn(`            ${field.name}(parent: any, args: any) {`);
             js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
             js.writeLn(`            },`);
         });
         stringFormattedFields.forEach((field) => {
-            js.writeLn(`            ${field.name}_string(parent, args) {`);
+            js.writeLn(`            ${field.name}_string(parent: any) {`);
             js.writeLn(`                return ${field.formatter || ""}(parent.${field.name});`);
             js.writeLn(`            },`);
         });
@@ -510,7 +512,7 @@ function main(schemaDef: TypeDef) {
         // JS
 
         js.writeBlockLn(`
-        const {
+        import {
             scalar,
             bigUInt1,
             bigUInt2,
@@ -523,15 +525,16 @@ function main(schemaDef: TypeDef) {
             enumName,
             stringCompanion,
             createEnumNameResolver,
-            unixMillisecondsToString,
             unixSecondsToString,
-        } = require('../filter/filters.js');
+        } from "../filter/filters";
+        import QBlockchainData from "../data/blockchain";
+        import { GraphQLRequestContextEx } from "./context";
         `);
         const jsArrayFilters = new Set<string>();
         types.forEach(type => genJSFilter(type, jsArrayFilters));
 
         js.writeBlockLn(`
-        function createResolvers(data) {
+        function createResolvers(data: QBlockchainData) {
             return {
         `);
         types.forEach((type) => {
@@ -562,7 +565,7 @@ function main(schemaDef: TypeDef) {
         });
 
         js.writeBlockLn(`
-        module.exports = {
+        export {
             scalarFields,
             createResolvers,
         `);

@@ -8,7 +8,7 @@
 		"gen": "node dist/maintanance/gen-graphql/db-schema-generator.js",
 		"options-docs": "node dist/maintanance/doc-options/index.js",
 		"tsc": "tsc",
-		"test": "jest -i --forceExit --detectOpenHandles",
+		"test": "jest -i --forceExit",
 		"start": "node dist/server/index.js",
 		"update indexes": "node dist/maintanance/arango-update/index.js",
 		"npm install": "npm install"
@@ -18,7 +18,7 @@
 	"license": "ISC",
 	"husky": {
 		"hooks": {
-			"pre-commit": "npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.js res/type-defs-generated.graphql"
+			"pre-commit": "npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.ts res/type-defs-generated.graphql"
 		}
 	},
 	"dependencies": {
