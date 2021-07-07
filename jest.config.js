@@ -1,14 +1,11 @@
 module.exports = {
-	moduleFileExtensions: [
-		'js',
-	],
-	modulePathIgnorePatterns: [
-		'init.js',
-	],
-	transform: {
-		'^.+\\.js$': 'babel-jest',
-	},
-	testPathIgnorePatterns: [
-		"<rootDir>/node_modules/",
-	],
+    "roots": [
+        "<rootDir>/src",
+    ],
+    "testMatch": [
+        "**/__tests__/**/*.+(ts|tsx|js)",
+    ],
+    "transform": {
+        "^.+\\.(ts|tsx)$": "ts-jest",
+    },
 };

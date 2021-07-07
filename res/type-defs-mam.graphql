@@ -35,6 +35,10 @@ type Stat {
     collections: [CollectionStat]
 }
 
+input ConfigUpdates {
+    debugLatency: Float
+}
+
 type Query {
     info: Info
     getCollections(accessKey: String): [CollectionSummary]
@@ -43,6 +47,7 @@ type Query {
 
 type Mutation {
     dropCachedDbInfo(accessKey: String): Boolean
+    updateConfig(accessKey: String, config: ConfigUpdates): Boolean
 }
 
 enum ChangeLogOp {
