@@ -7,7 +7,7 @@
 	"scripts": {
 		"gen": "node dist/maintanance/gen-graphql/db-schema-generator.js",
 		"options-docs": "node dist/maintanance/doc-options/index.js",
-		"tsc": "tsc",
+		"tsc": "tsc --build --force",
 		"test": "jest -i --forceExit",
 		"start": "node dist/server/index.js",
 		"update indexes": "node dist/maintanance/arango-update/index.js",
