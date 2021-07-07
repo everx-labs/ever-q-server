@@ -14,26 +14,32 @@
  * limitations under the License.
  */
 
+import program from "commander";
+import type { QConfig } from "./config";
 import {
     createConfig,
-    programOptions,
+    programOptions, readConfigFile
 } from "./config";
-import type { QConfig } from "./config";
-import TONQServer from "./server";
 import QLogs from "./logs";
+import TONQServer from "./server";
 
-const program = require("commander");
 
 Object.values(programOptions).forEach((value) => {
     const option = value;
     program.option(option.option, option.description);
 });
 
-
 program.parse(process.argv);
 
+const configPath = program.config || process.env.Q_CONFIG;
+const configData = configPath ? readConfigFile(configPath) : {};
 
-const config: QConfig = createConfig(program, process.env, programOptions);
+const config: QConfig = createConfig(
+    program, // program args
+    configData, // config file
+    process.env, // os envs
+    programOptions, // defaults
+);
 
 const logs = new QLogs();
 const configLog = logs.create("config");

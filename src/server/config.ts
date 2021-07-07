@@ -16,6 +16,7 @@
 
 import os from "os";
 import { URL } from "url";
+import { readFileSync } from "fs";
 
 // Config Schema
 
@@ -51,6 +52,7 @@ export enum RequestsMode {
 }
 
 export type QConfig = {
+    config: string,
     server: {
         host: string,
         port: number,
@@ -128,6 +130,8 @@ opt("host", getIp(), "Listening address");
 opt("port", "4000", "Listening port");
 opt("keep-alive", "60000", "GraphQL keep alive ms");
 
+opt("config", "", "Path to JSON configuration file");
+
 opt("requests-mode", "kafka", "Requests mode (kafka | rest)");
 opt("requests-server", "kafka:9092", "Requests server url");
 opt("requests-topic", "requests", "Requests topic name");
@@ -188,6 +192,44 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
 
+export function readConfigFile(configFile: string): any {
+    try {
+        const config = JSON.parse(readFileSync(configFile).toString());
+        return {
+            Q_ENDPOINTS: config.endpoints.join(','),
+            Q_HOST: config.server?.host,
+            Q_PORT: config.server?.port,
+            Q_KEEP_ALIVE: config.server?.keepAlive,
+            // Q_CONFIG -- doesn't make sense here
+            Q_REQUESTS_MODE: config.requests?.mode,
+            Q_REQUESTS_SERVER: config.requests?.server,
+            Q_REQUESTS_TOPIC: config.requests?.topic,
+            Q_REQUESTS_MAX_SIZE: config.requests?.maxSize,
+            Q_DATA_MUT: config.data?.mut,
+            Q_DATA_HOT: config.data?.hot,
+            Q_DATA_COLD: config.data?.cold.join(','),
+            Q_DATA_CACHE: config.data?.cache,
+            Q_DATA_COUNTERPARTIES: config.data?.counterparties,
+            Q_SLOW_QUERIES: config.slowQueries?.mode,
+            Q_SLOW_QUERIES_MUT: config.slowQueries?.mut,
+            Q_SLOW_QUERIES_HOT: config.slowQueries?.hot,
+            Q_SLOW_QUERIES_COLD: config.slowQueries?.cold.join(','),
+            Q_SLOW_QUERIES_CACHE: config.slowQueries?.cache,
+            Q_AUTH_ENDPOINT: config.authEndpoint,
+            Q_MAM_ACCESS_KEYS: config.mamAccessKeys,
+            Q_JAEGER_ENDPOINT: config.jaegerEndpoint,
+            Q_TRACE_SERVICE: config.trace?.service,
+            Q_TRACE_TAGS: config.trace?.tags.join(','),
+            Q_STATSD_SERVER: config.statsd?.server,
+            Q_STATSD_TAGS: config.statsd?.tags.join(','),
+            Q_STATSD_RESET_INTERVAL: config.statsd?.resetInterval,
+        };
+    } catch (error) {
+        console.error("Error while reading config file:", error);
+        return {};
+    }
+}
+
 function parseArangoEndpoint(config: string, defMaxSockets: number): QArangoConfig {
     const lowerCased = config.toLowerCase().trim();
     const hasProtocol = lowerCased.startsWith("http:") || lowerCased.startsWith("https:");
@@ -235,27 +277,30 @@ export function overrideDefs(options: ProgramOptions, defs: any): ProgramOptions
     return resolved;
 }
 
-export function resolveValues(values: any, env: any, def: ProgramOptions): ProgramOptions {
+export function resolveValues(values: any, configFile: any, env: any, def: ProgramOptions): ProgramOptions {
     const resolved: ProgramOptions = {};
-    Object.entries(def).forEach(([name, value]) => {
-        resolved[name] = values[name] || env[value.env] || def[name].def;
+    Object.entries(def).forEach(([name, opt]) => {
+        resolved[name] = values[name] || configFile[opt.env] || env[opt.env] || def[name].def;
     });
     return resolved;
 }
 
 export function createConfig(
     values: any,
+    configFile: any,
     env: any,
     def: ProgramOptions,
 ): QConfig {
-    const resolved = resolveValues(values, env, def) as any;
+    const resolved = resolveValues(values, configFile, env, def) as any;
     const {
         data,
         slowQueriesData,
         networkName,
         cacheKeyPrefix,
     } = parseDataConfig(resolved);
+
     return {
+        config: resolved.config, 
         server: {
             host: resolved.host,
             port: Number.parseInt(resolved.port),
