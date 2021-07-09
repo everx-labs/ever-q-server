@@ -2,11 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.41.0]
+## [0.41.0] 2021-07-08
 
 ### New
 
-- `config` config parameter allows to specify configuration via JSON-based config file
+- `config` config parameter allows to specify configuration via JSON-based config file.
+- port all code to the type script.
+- optimizations for aggregation queries `MIN` and `MAX` – use simple sorted queries instead of `COLLECT AGGREGATE`.
 
 ## [0.40.0] 2021-06-28
 

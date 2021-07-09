@@ -1,21 +1,21 @@
-import {InMemoryCache} from "apollo-cache-inmemory";
-import {split} from "apollo-link";
-import {HttpLink} from "apollo-link-http";
-import {WebSocketLink} from "apollo-link-ws";
-import {getMainDefinition} from "apollo-utilities";
-import {SubscriptionClient} from "subscriptions-transport-ws";
-import {ApolloClient} from "apollo-client";
+import { InMemoryCache } from "apollo-cache-inmemory";
+import { split } from "apollo-link";
+import { HttpLink } from "apollo-link-http";
+import { WebSocketLink } from "apollo-link-ws";
+import { getMainDefinition } from "apollo-utilities";
+import { SubscriptionClient } from "subscriptions-transport-ws";
+import { ApolloClient } from "apollo-client";
 
 import fetch from "node-fetch";
 import WebSocket from "ws";
-import QBlockchainData, {INDEXES} from "../server/data/blockchain";
+import QBlockchainData, { INDEXES } from "../server/data/blockchain";
 import {
     createConfig,
     overrideDefs,
     parseDataConfig,
     programOptions,
 } from "../server/config";
-import type {QDataProviders} from "../server/data/data";
+import type { QDataProviders } from "../server/data/data";
 import type {
     QDataCache,
     QDataEvent,
@@ -23,12 +23,19 @@ import type {
     QIndexInfo,
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
-import TONQServer, {createProviders} from "../server/server";
+import TONQServer, { createProviders } from "../server/server";
 import {
     QStats,
     QTracer,
 } from "../server/tracer";
-import {Auth} from "../server/auth";
+import {
+    Auth,
+    grantedAccess,
+} from "../server/auth";
+import { QDataCollection } from "../server/data/collection";
+import { OrderBy } from "../server/filter/filters";
+import { gql } from "apollo-server";
+import { FieldAggregation } from "../server/data/aggregations";
 
 jest.setTimeout(100000);
 
@@ -47,6 +54,39 @@ afterAll(async () => {
         testServer = null;
     }
 });
+
+export function normalized(s: string): string {
+    return s.replace(/\s+/g, " ").trim();
+}
+
+export function selectionInfo(r: string) {
+    const operation = gql([`query { collection { ${r} } }`] as any).definitions[0];
+    const collection = (operation as any).selectionSet.selections[0];
+    return collection.selectionSet;
+}
+
+export function queryText(collection: QDataCollection, result: string, orderBy?: OrderBy[]): string {
+    return normalized(
+        collection.createDatabaseQuery(
+            {
+                filter: {},
+                orderBy,
+            },
+            selectionInfo(result),
+            grantedAccess,
+        )?.text || "",
+    );
+}
+
+export function aggregationQueryText(collection: QDataCollection, fields: FieldAggregation[]): string {
+    return normalized(
+        collection.createAggregationQuery(
+            {},
+            fields,
+            grantedAccess,
+        )?.text || "",
+    );
+}
 
 export function createTestClient(options: { useWebSockets: boolean }): ApolloClient<{}> {
     const useHttp = !options.useWebSockets;
