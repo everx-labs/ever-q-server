@@ -20,6 +20,7 @@ import {
     createConfig,
     programOptions, readConfigFile
 } from "./config";
+import type { QLog } from "./logs";
 import QLogs from "./logs";
 import TONQServer from "./server";
 
@@ -31,32 +32,81 @@ Object.values(programOptions).forEach((value) => {
 
 program.parse(process.argv);
 
-const configPath = program.config || process.env.Q_CONFIG;
-const configData = configPath ? readConfigFile(configPath) : {};
+type GlobalState = {
+    reloadLock: boolean,
+    server?: TONQServer,
+    config?: QConfig,
+    logs?: QLogs,
+    configLog?: QLog,
+    configPath?: string,
+};
 
-const config: QConfig = createConfig(
-    program, // program args
-    configData, // config file
-    process.env, // os envs
-    programOptions, // defaults
-);
+// used mainly for config reload purpose
+// helps to avoid potential closures chain
+const gs: GlobalState = {
+    reloadLock: false,
+    server: undefined,
+    config: undefined,
+    logs: undefined,
+    configLog: undefined,
+    configPath: program.config || process.env.Q_CONFIG,
+};
 
-const logs = new QLogs();
-const configLog = logs.create("config");
-configLog.debug("USE", config);
-
-const server = new TONQServer({
-    config,
-    logs,
+process.on('SIGHUP', () => {
+    /** 
+     * WARNING: while multiple simultanios SIGHUP calls 
+     * we ignore new SIGHUP signals until the last reload handler finished
+     * but since we don't wait until server start (only stop + set a promice on start)
+     * it should be quite fast most of the time
+     */
+    if (!gs.reloadLock) {
+        gs.reloadLock = true;
+        gs.configLog?.debug('RELOAD', 'CONFIG', gs.configPath);
+        (async () => {
+            gs.configLog?.debug('STOP', 'SERVER');
+            await gs.server?.stop();
+        })().then(() => {
+            main();
+            gs.reloadLock = false; 
+        });
+    }
 });
 
+
+function initGlobalState() {
+    const configData = gs.configPath
+        ? readConfigFile(gs.configPath)
+        : {};
+
+    gs.config = createConfig(
+        program, // program args
+        configData, // config file
+        process.env, // os envs
+        programOptions, // defaults
+    );
+
+    gs.logs = new QLogs();
+    gs.logs.start();
+    gs.configLog = gs.logs.create("config");
+    gs.configLog.debug("USE", gs.config);
+
+    gs.server = new TONQServer({
+        config: gs.config,
+        logs: gs.logs,
+    });
+}
+
 export function main() {
+    initGlobalState();
+
     (async () => {
-        try {
-            await server.start();
-        } catch (error) {
-            server.log.error("FAILED", "START", error);
-            process.exit(1);
+        if (gs.server) {
+            try {
+                await gs.server.start();
+            } catch (error) {
+                gs.server.log.error("FAILED", "START", error);
+                process.exit(1);
+            }
         }
     })();
 }
