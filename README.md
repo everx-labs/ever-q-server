@@ -223,6 +223,7 @@ $ tondev start
 $ npm run test
 ```
 
+## Configuration
 You can change default behavior with env:
 
 ```bash
@@ -282,3 +283,9 @@ or/and via arg `--config <path to config>`
 Configuration priority is follows:
 
     Program args > Config file > ENVs > defaults
+
+### Reload config
+
+QServer can reload config file without an actal restart by handling `SIGHUP` signal.
+
+Required at least one of `--config` or `env Q_CONFIG` to be set at server start

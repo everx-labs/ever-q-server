@@ -67,6 +67,10 @@ export default class QLogs {
         };
     }
 
+    start() {
+        QLogs.stopped = false;
+    }
+
     stop() {
         QLogs.stopped = true;
     }

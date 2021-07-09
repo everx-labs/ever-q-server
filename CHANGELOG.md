@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - `config` config parameter allows to specify configuration via JSON-based config file
+- config file reload without restart on `SIGHUP` signal
 
 ## [0.40.0] 2021-06-28
 
