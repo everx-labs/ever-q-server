@@ -22,13 +22,10 @@ import {
 import { TonClient } from "@tonclient/core";
 import {
     AggregationFn,
-    AggregationHelperFactory,
-} from "./aggregations";
-import type {
     FieldAggregation,
-    AggregationHelper,
+    AggregationQuery,
 } from "./aggregations";
-import type {
+import {
     QDataProvider,
     QIndexInfo,
 } from "./data-provider";
@@ -36,25 +33,23 @@ import {
     QDataListener,
     QDataSubscription,
 } from "./listener";
-import type { AccessRights } from "../auth";
 import {
+    AccessRights,
     Auth,
     grantedAccess,
 } from "../auth";
 import {
     SlowQueriesMode,
     STATS,
+    QConfig,
 } from "../config";
-import type { QConfig } from "../config";
-import type {
+import {
     DatabaseQuery,
     GDefinition,
     GSelectionSet,
     OrderBy,
     QType,
     QueryStat,
-} from "../filter/filters";
-import {
     collectReturnExpressions,
     combineReturnExpressions,
     indexToString,
@@ -63,14 +58,13 @@ import {
     QParams,
     selectionToString,
 } from "../filter/filters";
-import type { QLog } from "../logs";
-import QLogs from "../logs";
+import QLogs, { QLog } from "../logs";
 import {
     explainSlowReason,
     isFastQuery,
 } from "../filter/slow-detector";
-import type { IStats } from "../tracer";
 import {
+    IStats,
     QTracer,
     StatsCounter,
     StatsGauge,
@@ -758,34 +752,33 @@ export class QDataCollection {
     ): {
         text: string,
         params: { [name: string]: any },
-        helpers: AggregationHelper[],
+        queries: AggregationQuery[],
     } | null {
         const params = new QParams();
         const condition = this.buildFilterCondition(filter, params, accessRights);
         if (condition === null) {
             return null;
         }
-        const query = AggregationHelperFactory.createQuery(this.name, condition || "", fields);
+        const query = AggregationQuery.createForFields(this.name, condition || "", fields);
         return {
             text: query.text,
             params: params.values,
-            helpers: query.helpers,
+            queries: query.queries,
         };
     }
 
     async isFastAggregationQuery(
         text: string,
         filter: any,
-        helpers: AggregationHelper[],
+        queries: AggregationQuery[],
     ): Promise<boolean> {
-        for (const h of helpers) {
-            const c = h.context;
-            if (c.fn === AggregationFn.COUNT) {
+        for (const q of queries) {
+            if (q.fn === AggregationFn.COUNT) {
                 if (!(await this.isFastQuery(text, filter))) {
                     return false;
                 }
-            } else if (c.fn === AggregationFn.MIN || c.fn === AggregationFn.MAX) {
-                let path = c.field.path;
+            } else if (q.fn === AggregationFn.MIN || q.fn === AggregationFn.MAX) {
+                let path = q.path;
                 if (path.startsWith("doc.")) {
                     path = path.substr("doc.".length);
                 }
@@ -835,7 +828,7 @@ export class QDataCollection {
                 const isFast = await checkIsFast(context.config, () => this.isFastAggregationQuery(
                     q.text,
                     filter,
-                    q.helpers,
+                    q.queries,
                 ));
                 const start = Date.now();
                 const result = await this.queryProvider(q.text, q.params, [], isFast, context);
@@ -845,7 +838,7 @@ export class QDataCollection {
                     (Date.now() - start) / 1000,
                     isFast ? "FAST" : "SLOW", context.remoteAddress,
                 );
-                return AggregationHelperFactory.convertResults(result, q.helpers);
+                return AggregationQuery.reduceResults(result, q.queries);
             } finally {
                 await this.statQueryTime.report(Date.now() - start);
                 await this.statQueryActive.decrement();

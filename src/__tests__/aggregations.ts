@@ -1,14 +1,31 @@
 import gql from "graphql-tag";
-import {AggregationFn} from "../server/data/aggregations";
-import type {AccessRights} from "../server/auth";
+import { AggregationFn } from "../server/data/aggregations";
+import type { AccessRights } from "../server/auth";
 import QLogs from "../server/logs";
 import TONQServer from "../server/server";
 import {
+    aggregationQueryText,
     createLocalArangoTestData,
     createTestClient,
+    normalized,
     testConfig,
 } from "./init-tests";
-import {FieldAggregation} from "@tonclient/core";
+import { FieldAggregation } from "@tonclient/core";
+
+test("Optimized MIN, MAX", () => {
+    const data = createLocalArangoTestData(new QLogs());
+
+    expect(aggregationQueryText(data.blocks, [{
+        field: "seq_no",
+        fn: AggregationFn.MIN,
+    }])).toEqual(
+        normalized(`
+        RETURN [ 
+            (FOR doc IN blocks LET a = doc.seq_no SORT a ASC LIMIT 1 RETURN a)[0]
+        ]
+    `));
+
+});
 
 test("Aggregations Fast Detector", async () => {
     const granted: AccessRights = {
@@ -19,7 +36,7 @@ test("Aggregations Fast Detector", async () => {
 
     const isFast = async (filter: any, fields: FieldAggregation[]) => {
         const q = data.transactions.createAggregationQuery(filter, fields, granted);
-        return q && data.transactions.isFastAggregationQuery(q.text, filter, q.helpers);
+        return q && data.transactions.isFastAggregationQuery(q.text, filter, q.queries);
     };
     expect(await isFast({}, [
         {

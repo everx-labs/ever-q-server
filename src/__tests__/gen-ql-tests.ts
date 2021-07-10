@@ -1,6 +1,4 @@
-import {grantedAccess} from "../server/auth";
 import {
-    OrderBy,
     QParams,
 } from "../server/filter/filters";
 import type {GDefinition} from "../server/filter/filters";
@@ -13,10 +11,10 @@ import {
 import QLogs from "../server/logs";
 import {
     createLocalArangoTestData,
+    normalized,
+    queryText,
     testServerQuery,
 } from "./init-tests";
-import {gql} from "apollo-server";
-import {QDataCollection} from "../server/data/collection";
 
 test("remove nulls", async () => {
     const data = await testServerQuery(`query { blocks { id master { min_shard_gen_utime } } }`);
@@ -58,28 +56,8 @@ test("multi query", async () => {
     expect(data.blocks.length).toBeGreaterThan(0);
 });
 
-function selectionInfo(r: string) {
-    const operation = gql([`query { collection { ${r} } }`] as any).definitions[0];
-    const collection = (operation as any).selectionSet.selections[0];
-    return collection.selectionSet;
-}
-
-function normalized(s: string): string {
-    return s.replace(/\s+/g, " ").trim();
-}
-
 test("reduced RETURN", () => {
     const data = createLocalArangoTestData(new QLogs());
-    const queryText = (collection: QDataCollection, result: string, orderBy?: OrderBy[]) => normalized(
-        collection.createDatabaseQuery(
-            {
-                filter: {},
-                orderBy,
-            },
-            selectionInfo(result),
-            grantedAccess,
-        )?.text || "",
-    );
 
     expect(queryText(data.blocks, "seq_no", [{
         path: "gen_utime",
