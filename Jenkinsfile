@@ -1,10 +1,12 @@
+@Library('infrastructure-jenkins-shared-library') _
+
+G_node = resources.getFreeLock(/Linux[0-9]+/)
 G_promoted_version = "master"
 G_promoted_tag = "latest"
 
 G_giturl = "https://github.com/tonlabs/ton-q-server.git"
 G_gitcred = "TonJenSSH"
 G_dockerCred = 'TonJenDockerHub'
-G_container = "alanin/container:latest"
 G_gqlimage_base = "tonlabs/q-server"
 G_buildstatus = "NotSet"
 G_MakeImage = "NotSet"
@@ -17,21 +19,27 @@ C_COMMITER = "NotSet"
 C_HASH = "NotSet"
 C_TEXT = "NotSet"
 C_AUTHOR = "NotSet"
+RELEASE_VERSION = ""
 
 
 pipeline {
-    agent none
+    agent {
+        node {
+            label G_node
+        }
+    }
 
     options {
         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '10')
         disableConcurrentBuilds()
-
+        lock(G_node)
     }
+
     stages {
 		stage('build container up') {
 			agent {
 				docker {
-					image G_container
+					image 'node:14-buster'
 					args '--network proxy_nw'
 					reuseNode true
 				}
@@ -50,7 +58,8 @@ pipeline {
 							C_PROJECT = G_giturl.substring(15,G_giturl.length()-4)
 							C_GITURL = sh (script: 'echo ${GIT_URL}',returnStdout: true).trim()
 							C_GITCOMMIT = sh (script: 'echo ${GIT_COMMIT}',returnStdout: true).trim()
-							RELEASE_VERSION = sh (script: "jq -r '.version' package.json",returnStdout: true).trim()
+							RELEASE_VERSION = sh (script: "node -p \"require('./package.json').version\"",returnStdout: true).trim()
+							println(RELEASE_VERSION)
 						}
 					}
 				}
@@ -62,7 +71,12 @@ pipeline {
                                 mkdir -p ~/.ssh;
                                 ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
                             '''
-						    sh 'npm install --production'
+                            sh '''
+                                npm --versions
+                                npm ci
+                                npm run tsc
+                                npm ci --production
+                            '''
 						}
 					}
 					post {
@@ -75,7 +89,7 @@ pipeline {
 				stage ('Stashing') {
 					steps {
 						script {
-							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, src/**, res/**, node_modules/**, __tests__/**', name: 'wholedir'
+							stash excludes: '.git, Jenkinsfile, Dockerfile', includes: '*, dist/**, src/**, res/**, types/**, node_modules/**', name: 'wholedir'
 							}
 					}
 				}
@@ -141,10 +155,10 @@ pipeline {
                                                 mkdir -p ~/.ssh;
                                                 ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
                                                 cd /home/node
-                                                npm install
-                                                npm run test
-                                                rm -drf node_modules
-                                                npm i --production
+                                                npm --versions
+                                                npm ci
+                                                npm run tsc
+                                                npm test
                                             """
                                         )
                                     }
