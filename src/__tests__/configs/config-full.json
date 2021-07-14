@@ -1,0 +1,40 @@
+{
+    "endpoints": [],
+    "server": {
+        "host": "localhost",
+        "port": 4000,
+        "keepAlive": 60000
+    },
+    "requests": {
+        "mode": "rest",
+        "server": "localhost",
+        "topic": "requests",
+        "maxSize": 16383
+    },
+    "data": {
+        "mut": "",
+        "hot": "",
+        "cold": [],
+        "cache": "",
+        "counterparties": ""
+    },
+    "slowQueries": {
+        "mode": "redirect",
+        "mut": "arangodb",
+        "hot": "arangodb",
+        "cold": [],
+        "cache": ""
+    },
+    "authEndpoint": "",
+    "mamAccessKeys": "",
+    "jaegerEndpoint": "",
+    "trace": {
+        "service": "",
+        "tags": []
+    },
+    "statsd": {
+        "server": "",
+        "tags": [],
+        "resetInterval": 0
+    }
+}

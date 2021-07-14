@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.41.0] 2021-07-08
+
+### New
+
+- `config` config parameter added that allows to specify the configuration via JSON-based config file
+- config file reload without restart on `SIGHUP` signal
+- optimizations for aggregation queries `MIN` and `MAX` were made – use simple sorted queries instead of `COLLECT AGGREGATE`.
+- q-server code base was ported to TypeScript
+
 ## [0.40.0] 2021-06-28
 
 ### New
