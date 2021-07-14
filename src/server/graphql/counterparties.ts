@@ -6,11 +6,29 @@ import {
     stringLowerFilter,
     struct,
     scalar,
+    BigIntArgs,
 } from "../filter/filters";
 import { QTracer } from "../tracer";
 import type { GraphQLRequestContextEx } from "./context";
 
 //------------------------------------------------------------- Counterparties
+
+type CounterpartiesArgs = {
+    accessKey?: string | null,
+    first?: number,
+    after?: string,
+    account: string,
+}
+
+type CounterpartiesResult = {
+	account?: string,
+	counterparty?: string,
+	last_message_at?: number,
+	last_message_id?: string,
+	last_message_is_reverse?: boolean,
+	last_message_value?: string,
+    cursor?: string,
+}
 
 export const Counterparty = struct({
     account: stringLowerFilter,
@@ -21,14 +39,14 @@ export const Counterparty = struct({
     last_message_value: bigUInt2,
 }, true);
 
-async function counterparties(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<Object[]> {
+async function counterparties(_parent: unknown, args: CounterpartiesArgs, context: GraphQLRequestContextEx): Promise<CounterpartiesResult[]> {
     const tracer = context.tracer;
     return QTracer.trace(tracer, "counterparties", async () => {
         await requireGrantedAccess(context, args);
         let text = "FOR doc IN counterparties FILTER doc.account == @account";
-        const vars: any = {
+        const vars: Record<string, unknown> = {
             account: args.account,
-            first: Math.min(50, Number.parseInt(args.first || 50)),
+            first: Math.min(50, args.first ?? 50),
         };
         if (args.after) {
             const after = args.after.split("/");
@@ -41,7 +59,7 @@ async function counterparties(_parent: any, args: any, context: GraphQLRequestCo
         }
         text += " SORT doc.last_message_at DESC, doc.counterparty DESC LIMIT @first RETURN doc";
 
-        const result: any = await context.data.query(
+        const result = await context.data.query(
             context.data.counterparties.provider,
             text,
             vars,
@@ -49,16 +67,16 @@ async function counterparties(_parent: any, args: any, context: GraphQLRequestCo
                 path: "last_message_at,counterparty",
                 direction: "DESC",
             }],
-        );
-        result.forEach((x: any) => x.cursor = `${x.last_message_at}/${x.counterparty}`);
+        ) as CounterpartiesResult[];
+        result.forEach(x => x.cursor = `${x.last_message_at}/${x.counterparty}`);
         return result;
     }, QTracer.getParentSpan(tracer, context));
 }
 
-export function counterpartiesResolvers(data: QBlockchainData): any {
+export function counterpartiesResolvers(data: QBlockchainData) {
     return {
         Counterparty: {
-            last_message_value(parent: any, args: any) {
+            last_message_value(parent: CounterpartiesResult, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.last_message_value, args);
             },
         },

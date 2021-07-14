@@ -17,12 +17,12 @@
 import { toLog } from "./utils";
 
 export interface QLog {
-    error(...args: any): void,
+    error(...args: unknown[]): void,
 
-    debug(...args: any): void,
+    debug(...args: unknown[]): void,
 }
 
-function toJSON(value: any): string {
+function toJSON(value: unknown): string {
     try {
         return JSON.stringify(toLog(value));
     } catch (error) {
@@ -30,26 +30,26 @@ function toJSON(value: any): string {
     }
 }
 
-function str(arg: any): string {
+function str(arg: unknown): string {
     const s = typeof arg === "string" ? arg : toJSON(arg);
     return s.split("\n").join("\\n").split("\t").join("\\t");
 }
 
-function format(name: string, args: string[]) {
+function format(name: string, args: unknown[]) {
     return `${Date.now()}\t${name}\t${args.map(str).join("\t")}`;
 }
 
 export default class QLogs {
     static stopped: boolean;
 
-    static error(...args: any) {
+    static error(...args: unknown[]) {
         if (QLogs.stopped) {
             return;
         }
         console.error(...args);
     }
 
-    static debug(...args: any) {
+    static debug(...args: unknown[]) {
         if (QLogs.stopped) {
             return;
         }

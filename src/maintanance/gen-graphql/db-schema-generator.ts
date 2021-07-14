@@ -17,7 +17,7 @@
 import schemaDef from "../../server/schema/db-schema";
 import gen from "./ql-js-generator";
 
-const fs = require("fs");
+import fs from "fs";
 
 const {
     ql,

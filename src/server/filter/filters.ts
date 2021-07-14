@@ -15,41 +15,51 @@
  */
 
 import type { AccessRights } from "../auth";
-import type { QIndexInfo } from "../data/data-provider";
-import { scalarTypes } from "../schema/db-schema-types";
 import type {
-    DbField,
-    DbSchema,
-    DbType,
-} from "../schema/db-schema-types";
+    QDoc,
+    QIndexInfo,
+    Scalar,
+} from "../data/data-provider";
 
-declare function BigInt(a: any): any;
+import {
+    FieldNode,
+    SelectionNode,
+    SelectionSetNode,
+} from "graphql";
 
 const NOT_IMPLEMENTED = new Error("Not Implemented");
 
-export type GName = {
-    kind: "Name",
-    value: string,
-};
+interface StructFilter {
+    [name: string]: CollectionFilter,
+}
 
-export type GField = {
-    kind: "Field",
-    alias: typeof undefined | string,
-    name: GName,
-    arguments: GDefinition[],
-    directives: GDefinition[],
-    selectionSet: typeof undefined | GSelectionSet,
-};
+export type CollectionFilter = StructFilter | ScalarFilter | ArrayFilter;
 
-export type GDefinition = GField;
 
-export type GSelectionSet = {
-    kind: "SelectionSet",
-    selections: GDefinition[],
-};
+export type ScalarFilter = {
+    eq?: Scalar | null,
+    ne?: Scalar | null,
+    gt?: Scalar,
+    ge?: Scalar,
+    lt?: Scalar,
+    le?: Scalar,
+    in?: Scalar[],
+    notIn?: Scalar[],
+    OR?: CollectionFilter,
+}
+
+export type ArrayFilter = {
+    all: CollectionFilter,
+} | {
+    any: CollectionFilter,
+}
 
 export type QFieldExplanation = {
     operations: Set<string>,
+}
+
+function invalidSelection(info: string): Error {
+    return new Error(`Invalid selection field: ${info}`);
 }
 
 function combinePath(base: string, path: string): string {
@@ -57,11 +67,6 @@ function combinePath(base: string, path: string): string {
     const p = path.startsWith(".") ? path.slice(1) : path;
     const sep = p && b ? "." : "";
     return `${b}${sep}${p}`;
-}
-
-export type ScalarField = {
-    path: string,
-    type: ("number" | "uint64" | "uint1024" | "boolean" | "string"),
 }
 
 export class QExplanation {
@@ -97,7 +102,7 @@ export type QParamsOptions = {
  * Query parameters
  */
 export class QParams {
-    values: { [name: string]: any };
+    values: Record<string, unknown>;
     count: number;
     explanation: QExplanation | null;
 
@@ -114,7 +119,7 @@ export class QParams {
         this.values = {};
     }
 
-    add(value: any): string {
+    add(value: unknown): string {
         this.count += 1;
         const name = `v${this.count.toString()}`;
         this.values[name] = value;
@@ -138,7 +143,7 @@ type QReturnExpression = {
  * using query filters.
  */
 type QType = {
-    fields?: { [name: string]: QType },
+    fields?: Record<string, QType>,
 
     /**
      * Generates an Arango QL condition for specified field based on specified filter.
@@ -148,15 +153,12 @@ type QType = {
      * @param {any} filter Filter that will be applied to this field
      * @return {string} Arango QL condition text
      */
-    filterCondition: (params: QParams, path: string, filter: any) => string,
+    filterCondition: (params: QParams, path: string, filter: CollectionFilter) => string,
 
     /**
      * Generates AQL expression for return section.
-     *
-     * @param {string} path
-     * @param {GDefinition} def
      */
-    returnExpressions: (path: string, def: GDefinition) => QReturnExpression[],
+    returnExpressions: (path: string, def: SelectionNode) => QReturnExpression[],
 
     /**
      * Tests value in document from Arango DB against specified filter.
@@ -165,7 +167,7 @@ type QType = {
      * @param {any} filter Filter used to test a value
      * @return true if value matches filter
      */
-    test: (parent: any, value: any, filter: any) => boolean,
+    test: (parent: unknown, value: unknown, filter: CollectionFilter) => boolean,
 }
 
 
@@ -180,13 +182,13 @@ type QType = {
  */
 function filterConditionForFields(
     path: string,
-    filter: any,
-    fieldTypes: { [name: string]: QType },
+    filter: StructFilter,
+    fieldTypes: Record<string, QType>,
     filterConditionForField: (
-        field: any,
+        field: QType,
         path: string,
         filterKey: string,
-        filterValue: any,
+        filterValue: CollectionFilter,
     ) => string,
 ): string {
     const conditions: string[] = [];
@@ -204,22 +206,24 @@ function filterConditionForFields(
 export function collectReturnExpressions(
     expressions: Map<string, string>,
     path: string,
-    fields: GDefinition[],
-    fieldTypes: { [name: string]: QType },
+    selectionSet: SelectionSetNode | undefined,
+    fieldTypes: Record<string, QType>,
 ) {
-    fields.forEach((fieldDef: GField) => {
-        const name = fieldDef.name && fieldDef.name.value || "";
-        if (name === "") {
-            throw new Error(`Invalid selection field: ${fieldDef.kind}`);
+    if (selectionSet === undefined) {
+        return;
+    }
+    selectionSet.selections.forEach((fieldDef: SelectionNode) => {
+        if (fieldDef.kind !== "Field") {
+            throw invalidSelection(fieldDef.kind);
         }
-
+        const name = fieldDef.name.value;
         if (name === "__typename") {
             return;
         }
 
         const fieldType = fieldTypes[name];
         if (!fieldType) {
-            throw new Error(`Invalid selection field: ${name}`);
+            throw invalidSelection(name);
         }
         for (const returned of fieldType.returnExpressions(path, fieldDef)) {
             expressions.set(returned.name, returned.expression);
@@ -245,10 +249,10 @@ export function combineReturnExpressions(expressions: Map<string, string>): stri
  * @return {string} AQL condition
  */
 function testFields(
-    value: any,
-    filter: any,
-    fieldTypes: { [name: string]: QType },
-    testField: (fieldType: any, value: any, filterKey: string, filterValue: any) => boolean,
+    value: unknown,
+    filter: CollectionFilter,
+    fieldTypes: Record<string, QType>,
+    testField: (fieldType: QType, value: unknown, filterKey: string, filterValue: unknown) => boolean,
 ): boolean {
     const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
@@ -264,14 +268,14 @@ function filterConditionOp(
     params: QParams,
     path: string,
     op: string,
-    filter: any,
+    filter: CollectionFilter,
     explainOp?: string,
 ): string {
     params.explainScalarOperation(path, explainOp || op);
     const paramName = params.add(filter);
 
     /*
-     * Following TO_STRING cast required due to specific comparision of _key fields in Arango
+     * Following TO_STRING cast required due to specific comparison of _key fields in Arango
      * For example this query:
      * ```FOR doc IN accounts FILTER doc._key >= "ff" RETURN doc._key````
      * Will return:
@@ -301,16 +305,16 @@ function combineFilterConditions(
 function filterConditionForIn(
     params: QParams,
     path: string,
-    filter: any[],
+    filter: unknown[],
     explainOp?: string,
 ): string {
-    const conditions = filter.map(value => filterConditionOp(params, path, "==", value, explainOp));
+    const conditions = filter.map(value => filterConditionOp(params, path, "==", value as CollectionFilter, explainOp));
     return combineFilterConditions(conditions, "OR", "false");
 }
 
 //------------------------------------------------------------- Scalars
 
-function undefinedToNull(v: any): any {
+function undefinedToNull(v: unknown | undefined): unknown | null {
     return v !== undefined ? v : null;
 }
 
@@ -318,7 +322,7 @@ const scalarEq: QType = {
     filterCondition(params: QParams, path, filter) {
         return filterConditionOp(params, path, "==", filter);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
@@ -330,7 +334,7 @@ const scalarNe: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, "!=", filter);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
@@ -342,11 +346,11 @@ const scalarLt: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, "<", filter);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
-        return value < filter;
+        return (value as Scalar) < (filter as unknown as Scalar);
     },
 };
 
@@ -354,11 +358,11 @@ const scalarLe: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, "<=", filter);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
-        return value <= filter;
+        return (value as Scalar) <= (filter as unknown as Scalar);
     },
 };
 
@@ -366,11 +370,11 @@ const scalarGt: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, ">", filter);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
-        return value > filter;
+        return (value as Scalar) > (filter as unknown as Scalar);
     },
 };
 
@@ -378,35 +382,35 @@ const scalarGe: QType = {
     filterCondition(params, path, filter) {
         return filterConditionOp(params, path, ">=", filter);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
-        return value >= filter;
+        return (value as Scalar) >= (filter as unknown as Scalar);
     },
 };
 
 const scalarIn: QType = {
     filterCondition(params, path, filter) {
-        return filterConditionForIn(params, path, filter);
+        return filterConditionForIn(params, path, filter as unknown as unknown[]);
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
-        return filter.includes(value);
+        return (filter as unknown as unknown[]).includes(value);
     },
 };
 
 const scalarNotIn: QType = {
     filterCondition(params, path, filter) {
-        return `NOT (${filterConditionForIn(params, path, filter, "!=")})`;
+        return `NOT (${filterConditionForIn(params, path, filter as unknown as unknown[], "!=")})`;
     },
-    returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+    returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED;
     },
     test(_parent, value, filter) {
-        return !filter.includes(value);
+        return !(filter as unknown as unknown[]).includes(value);
     },
 };
 
@@ -421,30 +425,33 @@ const scalarOps = {
     notIn: scalarNotIn,
 };
 
-function convertFilterValue(value: any, op: QType, converter?: (value: any) => any): string {
+function convertFilterValue(value: unknown, op: QType, converter?: (value: unknown) => unknown): unknown {
     if (converter) {
         const conv = converter;
         return (op === scalarOps.in || op === scalarOps.notIn)
-            ? (value as any[]).map(x => conv(x))
+            ? (value as unknown[]).map(x => conv(x))
             : conv(value);
     }
     return value;
 }
 
-function createScalar(filterValueConverter?: (value: any) => any): QType {
+function createScalar(filterValueConverter?: (value: unknown) => unknown): QType {
     return {
         filterCondition(params, path, filter) {
             return filterConditionForFields(
                 path,
-                filter,
+                filter as StructFilter,
                 scalarOps,
                 (op, path, _filterKey, filterValue) => {
                     const converted = convertFilterValue(filterValue, op, filterValueConverter);
-                    return op.filterCondition(params, path, converted);
+                    return op.filterCondition(params, path, converted as CollectionFilter);
                 },
             );
         },
-        returnExpressions(path: string, def: GDefinition): QReturnExpression[] {
+        returnExpressions(path: string, def: SelectionNode): QReturnExpression[] {
+            if (def.kind !== "Field") {
+                throw invalidSelection(def.kind);
+            }
             const isCollection = path === "doc";
             let name = def.name.value;
             if (isCollection && name === "id") {
@@ -458,19 +465,21 @@ function createScalar(filterValueConverter?: (value: any) => any): QType {
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, _filterKey, filterValue) => {
                 const converted = convertFilterValue(filterValue, op, filterValueConverter);
-                return op.test(parent, undefinedToNull(value), converted);
+                return op.test(parent, undefinedToNull(value), converted as CollectionFilter);
             });
         },
     };
 }
 
-export function unixMillisecondsToString(value: any): string {
+export type NumericScalar = string | number | bigint | null | undefined;
+
+export function unixMillisecondsToString(value: NumericScalar): string | null | undefined {
     if (value === null || value === undefined) {
         return value;
     }
-    const d = new Date(value);
+    const d = new Date(typeof value === "bigint" ? Number(value) : value);
 
-    function pad(number: any) {
+    function pad(number: number | string): number | string {
         if (number < 10) {
             return "0" + number;
         }
@@ -486,11 +495,11 @@ export function unixMillisecondsToString(value: any): string {
         "." + (d.getUTCMilliseconds() / 1000).toFixed(3).slice(2, 5);
 }
 
-export function unixSecondsToString(value: any): string {
+export function unixSecondsToString(value: NumericScalar): string | null | undefined {
     if (value === null || value === undefined) {
         return value;
     }
-    return unixMillisecondsToString(value * 1000);
+    return unixMillisecondsToString(Number(value) * 1000);
 }
 
 const BigNumberFormat = {
@@ -504,11 +513,14 @@ function invertedHex(hex: string): string {
         .join("");
 }
 
+export type BigIntArgs = { format?: "HEX" | "DEC" };
+export type JoinArgs = { when?: CollectionFilter, timeout?: number };
+
 export function resolveBigUInt(
     prefixLength: number,
-    value: any,
-    args?: { format?: "HEX" | "DEC" },
-): string {
+    value: NumericScalar,
+    args?: BigIntArgs,
+): string | null | undefined {
     if (value === null || value === undefined) {
         return value;
     }
@@ -526,7 +538,7 @@ export function resolveBigUInt(
     return `${neg ? "-" : ""}${(format === BigNumberFormat.HEX) ? hex : BigInt(hex).toString()}`;
 }
 
-export function convertBigUInt(prefixLength: number, value: any): string {
+export function convertBigUInt(prefixLength: number, value: NumericScalar): string | null | undefined {
     if (value === null || value === undefined) {
         return value;
     }
@@ -547,21 +559,21 @@ export function convertBigUInt(prefixLength: number, value: any): string {
 }
 
 export const scalar: QType = createScalar();
-export const stringLowerFilter: QType = createScalar(x => x ? x.toString().toLowerCase() : x);
-export const bigUInt1: QType = createScalar(x => convertBigUInt(1, x));
-export const bigUInt2: QType = createScalar(x => convertBigUInt(2, x));
+export const stringLowerFilter: QType = createScalar(x => x ? `${x}`.toLowerCase() : x);
+export const bigUInt1: QType = createScalar(x => convertBigUInt(1, x as NumericScalar));
+export const bigUInt2: QType = createScalar(x => convertBigUInt(2, x as NumericScalar));
 
 //------------------------------------------------------------- Structs
 
-export function splitOr(filter: any): any[] {
-    const operands = [];
-    let operand = filter;
+export function splitOr(filter: CollectionFilter): CollectionFilter[] {
+    const operands: CollectionFilter[] = [];
+    let operand: CollectionFilter | null = filter;
     while (operand) {
         if ("OR" in operand) {
             const withoutOr = Object.assign({}, operand);
             delete withoutOr["OR"];
             operands.push(withoutOr);
-            operand = operand.OR;
+            operand = operand.OR ?? null;
         } else {
             operands.push(operand);
             operand = null;
@@ -577,7 +589,7 @@ export function struct(fields: { [name: string]: QType }, isCollection?: boolean
             const orOperands = splitOr(filter).map((operand) => {
                 return filterConditionForFields(
                     path,
-                    operand,
+                    operand as StructFilter,
                     fields,
                     (fieldType, path, filterKey, filterValue) => {
                         const fieldName = isCollection && (filterKey === "id") ? "_key" : filterKey;
@@ -591,13 +603,16 @@ export function struct(fields: { [name: string]: QType }, isCollection?: boolean
             });
             return (orOperands.length > 1) ? `(${orOperands.join(") OR (")})` : orOperands[0];
         },
-        returnExpressions(path: string, def: GDefinition): QReturnExpression[] {
+        returnExpressions(path: string, def: SelectionNode): QReturnExpression[] {
+            if (def.kind !== "Field") {
+                throw invalidSelection(def.kind);
+            }
             const name = def.name.value;
             const expressions = new Map();
             collectReturnExpressions(
                 expressions,
                 `${path}.${name}`,
-                (def.selectionSet && def.selectionSet.selections) || [],
+                def.selectionSet,
                 fields,
             );
             return [{
@@ -617,7 +632,7 @@ export function struct(fields: { [name: string]: QType }, isCollection?: boolean
                     fields,
                     (fieldType, value, filterKey, filterValue) => {
                         const fieldName = isCollection && (filterKey === "id") ? "_key" : filterKey;
-                        return fieldType.test(value, value[fieldName], filterValue);
+                        return fieldType.test(value, (value as { [name: string]: unknown })[fieldName], filterValue as CollectionFilter);
                     },
                 )) {
                     return true;
@@ -634,7 +649,7 @@ function getItemFilterCondition(
     itemType: QType,
     params: QParams,
     path: string,
-    filter: any,
+    filter: CollectionFilter,
 ): string {
     let itemFilterCondition: string;
     const explanation = params.explanation;
@@ -704,22 +719,22 @@ export function array(resolveItemType: () => QType): QType {
     let resolved: QType | null = null;
     const ops = {
         all: {
-            filterCondition(params: QParams, path: string, filter: any) {
+            filterCondition(params: QParams, path: string, filter: CollectionFilter) {
                 const itemType = resolved || (resolved = resolveItemType());
                 const itemFilterCondition = getItemFilterCondition(itemType, params, path, filter);
                 return `LENGTH(${path}[* FILTER ${itemFilterCondition}]) == LENGTH(${path})`;
             },
-            returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+            returnExpressions(): QReturnExpression[] {
                 throw NOT_IMPLEMENTED;
             },
-            test(parent: any, value: any, filter: any) {
+            test(parent: unknown, value: unknown, filter: CollectionFilter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const failedIndex = (value as any[]).findIndex(x => !itemType.test(parent, x, filter));
+                const failedIndex = (value as unknown[]).findIndex(x => !itemType.test(parent, x, filter));
                 return failedIndex < 0;
             },
         },
         any: {
-            filterCondition(params: QParams, path: string, filter: any) {
+            filterCondition(params: QParams, path: string, filter: CollectionFilter) {
                 const itemType = resolved || (resolved = resolveItemType());
                 const itemFilterCondition = getItemFilterCondition(itemType, params, path, filter);
                 const optimizedFilterCondition = tryOptimizeArrayAny(
@@ -732,12 +747,12 @@ export function array(resolveItemType: () => QType): QType {
                 }
                 return `LENGTH(${path}[* FILTER ${itemFilterCondition}]) > 0`;
             },
-            returnExpressions(_path: string, _def: GDefinition): QReturnExpression[] {
+            returnExpressions(): QReturnExpression[] {
                 throw NOT_IMPLEMENTED;
             },
-            test(parent: any, value: any, filter: any) {
+            test(parent: unknown, value: unknown, filter: CollectionFilter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const succeededIndex = (value as any[]).findIndex(x => itemType.test(parent, x, filter));
+                const succeededIndex = (value as unknown[]).findIndex(x => itemType.test(parent, x, filter));
                 return succeededIndex >= 0;
             },
         },
@@ -746,23 +761,25 @@ export function array(resolveItemType: () => QType): QType {
         filterCondition(params, path, filter) {
             return filterConditionForFields(
                 path,
-                filter,
+                filter as StructFilter,
                 ops,
                 (op, path, _filterKey, filterValue) => {
                     return op.filterCondition(params, path, filterValue);
                 },
             );
         },
-        returnExpressions(path: string, def: GDefinition): QReturnExpression[] {
+        returnExpressions(path: string, def: SelectionNode): QReturnExpression[] {
+            if (def.kind !== "Field") {
+                throw invalidSelection(def.kind);
+            }
             const name = def.name.value;
-            const itemSelections = def.selectionSet && def.selectionSet.selections;
             let expression;
-            if (itemSelections && itemSelections.length > 0) {
+            if (def.selectionSet !== undefined && def.selectionSet.selections.length > 0) {
                 const itemType = resolved || (resolved = resolveItemType());
                 const fieldPath = `${path}.${name}`;
                 const alias = fieldPath.split(".").join("__");
                 const expressions = new Map();
-                collectReturnExpressions(expressions, alias, itemSelections, itemType.fields || {});
+                collectReturnExpressions(expressions, alias, def.selectionSet, itemType.fields || {});
                 const itemExpression = combineReturnExpressions(expressions);
                 expression = `( ${fieldPath} && ( FOR ${alias} IN ${fieldPath} || [] RETURN ${itemExpression} ) )`;
             } else {
@@ -778,7 +795,7 @@ export function array(resolveItemType: () => QType): QType {
                 return false;
             }
             return testFields(value, filter, ops, (op, value, _filterKey, filterValue) => {
-                return op.test(parent, value, filterValue);
+                return op.test(parent, value, filterValue as CollectionFilter);
             });
         },
     };
@@ -789,14 +806,14 @@ export function array(resolveItemType: () => QType): QType {
 function createEnumNamesMap(values: { [name: string]: number }): Map<number, string> {
     const names: Map<number, string> = new Map();
     Object.entries(values).forEach(([name, value]) => {
-        names.set(Number.parseInt(value as any), name);
+        names.set(value, name);
     });
     return names;
 }
 
 export function enumName(onField: string, values: { [name: string]: number }): QType {
     const resolveValue = (name: string) => {
-        let value = values[name];
+        const value = values[name];
         if (value === undefined) {
             throw new Error(`Invalid value [${name}] for ${onField}_name`);
         }
@@ -808,17 +825,17 @@ export function enumName(onField: string, values: { [name: string]: number }): Q
             const on_path = path.split(".").slice(0, -1).concat(onField).join(".");
             return filterConditionForFields(
                 on_path,
-                filter,
+                filter as StructFilter,
                 scalarOps,
                 (op, path, _filterKey, filterValue) => {
                     const resolved = (op === scalarOps.in || op === scalarOps.notIn)
-                        ? filterValue.map(resolveValue)
-                        : resolveValue(filterValue);
-                    return op.filterCondition(params, path, resolved);
+                        ? (filterValue as string[]).map(resolveValue)
+                        : resolveValue(filterValue as string);
+                    return op.filterCondition(params, path, resolved as CollectionFilter);
                 },
             );
         },
-        returnExpressions(path: string, _def: GField): QReturnExpression[] {
+        returnExpressions(path: string): QReturnExpression[] {
             return [{
                 name: onField,
                 expression: `${path}.${onField}`,
@@ -827,9 +844,9 @@ export function enumName(onField: string, values: { [name: string]: number }): Q
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, _value, _filterKey, filterValue) => {
                 const resolved = (op === scalarOps.in || op === scalarOps.notIn)
-                    ? filterValue.map(resolveValue)
-                    : resolveValue(filterValue);
-                return op.test(parent, parent[onField], resolved);
+                    ? (filterValue as string[]).map(resolveValue)
+                    : resolveValue(filterValue as string);
+                return op.test(parent, (parent as { [name: string]: unknown })[onField], resolved as CollectionFilter);
             });
         },
     };
@@ -838,10 +855,10 @@ export function enumName(onField: string, values: { [name: string]: number }): Q
 export function createEnumNameResolver(
     onField: string,
     values: { [name: string]: number },
-): (parent: any) => string | null {
+): (parent: { [name: string]: unknown }) => string | null {
     const names = createEnumNamesMap(values);
     return (parent) => {
-        const value = parent[onField];
+        const value = parent[onField] as number;
         const name = names.get(value);
         return name !== undefined ? name : null;
     };
@@ -851,16 +868,16 @@ export function createEnumNameResolver(
 
 export function stringCompanion(onField: string): QType {
     return {
-        filterCondition(_params, _path, _filter) {
+        filterCondition() {
             return "false";
         },
-        returnExpressions(path: string, _def: GField) {
+        returnExpressions(path: string) {
             return [{
                 name: onField,
                 expression: `${path}.${onField}`,
             }];
         },
-        test(_parent, _value, _filter) {
+        test() {
             return false;
         },
     };
@@ -892,7 +909,7 @@ export function join(
                     RETURN 1
                 ) > 0`;
         },
-        returnExpressions(path: string, _def: GField): QReturnExpression[] {
+        returnExpressions(path: string): QReturnExpression[] {
             return [{
                 name,
                 expression: `${path}.${name}`,
@@ -918,8 +935,9 @@ export function joinArray(
     return {
         filterCondition(params, path, filter) {
             const refType = resolved || (resolved = resolveRefType());
-            const refFilter = filter.all || filter.any;
-            const all = !!filter.all;
+            const arrayFilter = filter as ArrayFilter;
+            const all = "all" in arrayFilter;
+            const refFilter = "all" in arrayFilter ? arrayFilter.all : arrayFilter.any;
             const on_path = path.split(".").slice(0, -1).concat(onField).join(".");
             const alias = `${on_path.replace(".", "_")}`;
             const refFilterCondition = refType.filterCondition(params, alias, refFilter);
@@ -932,7 +950,7 @@ export function joinArray(
                     RETURN 1
                 ) ${all ? `== LENGTH(${on_path})` : "> 0"})`;
         },
-        returnExpressions(path: string, _def: GField): QReturnExpression[] {
+        returnExpressions(path: string): QReturnExpression[] {
             return [{
                 name: onField,
                 expression: `${path}.${onField}`,
@@ -954,49 +972,50 @@ export type FieldSelection = {
     selection: FieldSelection[],
 }
 
-function isFieldWithName(def: GDefinition, name: string): boolean {
+function isFieldWithName(def: SelectionNode, name: string): boolean {
     return def.kind === "Field" && def.name.value.toLowerCase() === name.toLowerCase();
 }
 
-export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: GSelectionSet) {
+export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: SelectionSetNode | undefined): SelectionSetNode | undefined {
     const dotPos = fieldPath.indexOf(".");
     const name = dotPos >= 0 ? fieldPath.substr(0, dotPos) : fieldPath;
     const tail = dotPos >= 0 ? fieldPath.substr(dotPos + 1) : "";
-    let field: GField | typeof undefined = selectionSet.selections.find(x => isFieldWithName(x, name));
-    if (!field) {
-        field = {
+    const selections = selectionSet?.selections ?? [];
+    const oldField = selections.find(x => isFieldWithName(x, name)) as (FieldNode | undefined);
+    const tailSelectionSet = tail !== ""
+        ? mergeFieldWithSelectionSet(tail, oldField?.selectionSet)
+        : oldField?.selectionSet;
+    if (oldField !== undefined && tailSelectionSet === oldField?.selectionSet) {
+        return selectionSet;
+    }
+    const newField: FieldNode = {
+        ...(oldField ?? {
             kind: "Field",
-            alias: undefined,
             name: {
                 kind: "Name",
                 value: name,
             },
             arguments: [],
             directives: [],
-            selectionSet: undefined,
-        };
-        selectionSet.selections.push(field);
-    }
-    if (tail !== "") {
-        if (!field.selectionSet) {
-            field.selectionSet = {
-                kind: "SelectionSet",
-                selections: [],
-            };
-        }
-        mergeFieldWithSelectionSet(tail, selectionSet);
-    }
+        }),
+        selectionSet: tailSelectionSet,
+    };
+    return {
+        kind: "SelectionSet",
+        selections: oldField === undefined
+            ? [...selections, newField]
+            : selections.map(x => x === oldField ? newField : x),
+    };
 }
 
-export function parseSelectionSet(selectionSet: GSelectionSet | undefined, returnFieldSelection: string): FieldSelection[] {
+export function parseSelectionSet(selectionSet: SelectionSetNode | undefined, returnFieldSelection: string): FieldSelection[] {
     const fields: FieldSelection[] = [];
-    const selections = selectionSet && selectionSet.selections;
-    if (selections) {
+    const selections = selectionSet?.selections;
+    if (selections !== undefined) {
         for (const item of selections) {
-            const name = (item.name && item.name.value) || "";
-            if (name) {
+            if (item.kind === "Field") {
                 const field: FieldSelection = {
-                    name,
+                    name: item.name.value,
                     selection: parseSelectionSet(item.selectionSet, ""),
                 };
                 if (returnFieldSelection !== "" && field.name === returnFieldSelection) {
@@ -1018,14 +1037,14 @@ export function selectionToString(selection: FieldSelection[]): string {
         }).join(" ");
 }
 
-export function selectFields(doc: any, selection: FieldSelection[]): any {
+export function selectFields(doc: QDoc | unknown[], selection: FieldSelection[]): unknown {
     if (selection.length === 0) {
         return doc;
     }
     if (Array.isArray(doc)) {
-        return doc.map(x => selectFields(x, selection));
+        return doc.map(x => selectFields(x as QDoc, selection));
     }
-    const selected: any = {};
+    const selected: { [name: string]: unknown } = {};
     if (doc._key) {
         selected._key = doc._key;
         selected.id = doc._key;
@@ -1048,7 +1067,7 @@ export function selectFields(doc: any, selection: FieldSelection[]): any {
         const value = doc[item.name];
         if (value !== undefined) {
             selected[item.name] = item.selection.length > 0
-                ? selectFields(value, item.selection)
+                ? selectFields(value as QDoc, item.selection)
                 : value;
         }
     }
@@ -1061,14 +1080,14 @@ export type OrderBy = {
 }
 
 export type DatabaseQuery = {
-    filter: any,
+    filter: CollectionFilter,
     selection: FieldSelection[],
     orderBy: OrderBy[],
     limit: number,
     timeout: number,
     operationId: string | null,
     text: string,
-    params: { [name: string]: any },
+    params: { [name: string]: unknown },
     accessRights: AccessRights,
 }
 
@@ -1078,12 +1097,6 @@ export type QueryStat = {
 
 export function indexToString(index: QIndexInfo): string {
     return index.fields.join(", ");
-}
-
-export function parseIndex(s: string): QIndexInfo {
-    return {
-        fields: s.split(",").map(x => x.trim()).filter(x => x),
-    };
 }
 
 export function orderByToString(orderBy: OrderBy[]): string {
@@ -1104,64 +1117,3 @@ export function parseOrderBy(s: string): OrderBy[] {
 }
 
 
-export function createScalarFields(schema: DbSchema): Map<string, { type: string, path: string }> {
-    const scalarFields = new Map<string, { type: string, path: string }>();
-
-    function addForDbType(type: DbType, parentPath: string, parentDocPath: string) {
-        type.fields.forEach((field: DbField) => {
-            if (field.join || field.enumDef) {
-                return;
-            }
-            const docName = type.collection && field.name === "id" ? "_key" : field.name;
-            const path = `${parentPath}.${field.name}`;
-            let docPath = `${parentDocPath}.${docName}`;
-            if (field.arrayDepth > 0) {
-                let suffix = "[*]";
-                for (let depth = 10; depth > 0; depth -= 1) {
-                    const s = `[${"*".repeat(depth)}]`;
-                    if (docPath.includes(s)) {
-                        suffix = `[${"*".repeat(depth + 1)}]`;
-                        break;
-                    }
-                }
-                docPath = `${docPath}${suffix}`;
-            }
-            switch (field.type.category) {
-            case "scalar":
-                let typeName;
-                if (field.type === scalarTypes.boolean) {
-                    typeName = "boolean";
-                } else if (field.type === scalarTypes.float) {
-                    typeName = "number";
-                } else if (field.type === scalarTypes.int) {
-                    typeName = "number";
-                } else if (field.type === scalarTypes.uint64) {
-                    typeName = "uint64";
-                } else if (field.type === scalarTypes.uint1024) {
-                    typeName = "uint1024";
-                } else {
-                    typeName = "string";
-                }
-                scalarFields.set(
-                    path,
-                    {
-                        type: typeName,
-                        path: docPath,
-                    },
-                );
-                break;
-            case "struct":
-            case "union":
-                addForDbType(field.type, path, docPath);
-                break;
-            }
-        });
-    }
-
-
-    schema.types.forEach((type) => {
-        addForDbType(type, "", "");
-    });
-
-    return scalarFields;
-}

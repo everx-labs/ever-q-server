@@ -9,14 +9,17 @@ export type DbJoin = {
     collection: string,
     on: string,
     refOn: string,
-    preCondition: string,
+    preCondition?: string,
 }
+
+export type IntEnumValues = {
+    [name: string]: number
+}
+
 
 export type IntEnumDef = {
     name: string,
-    values: {
-        [name: string]: number
-    },
+    values: IntEnumValues,
 }
 
 
@@ -36,16 +39,18 @@ export type SchemaClass = {
     functions: SchemaMember<SchemaFunction>[]
 }
 
+export type EmptyRecord = Record<string, never>;
+
 export type SchemaType = {
     doc?: SchemaDoc,
     _?: SchemaEx,
-    void?: {},
-    any?: {},
+    void?: EmptyRecord,
+    any?: EmptyRecord,
     int?: { unsigned?: boolean, size?: IntSizeType },
     float?: { size?: (32 | 64) },
-    string?: {},
-    bool?: {},
-    time?: {},
+    string?: EmptyRecord,
+    bool?: EmptyRecord,
+    time?: EmptyRecord,
     array?: SchemaType,
     struct?: SchemaMember<SchemaType>[],
     union?: SchemaMember<SchemaType>[],

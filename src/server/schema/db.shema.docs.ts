@@ -43,7 +43,7 @@ query{
         cells: "Contains number of the cells of the account. Used in storage fee calculation",
         public_cells: "Contains the number of public cells of the account. Used in storage fee calculation.",
         due_payment: `
-If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 \`\`\`
 {
   accounts(filter: { due_payment: { ne: null } })
@@ -466,13 +466,13 @@ Logical time is a component of the TON Blockchain that also plays an important r
                 },
                 p31: `Array of fundamental smart contracts addresses`,
                 p32: `Previous validators set`,
-                p33: `Previous temprorary validators set`,
+                p33: `Previous temporary validators set`,
                 p34: `Current validators set`,
-                p35: `Current temprorary validators set`,
+                p35: `Current temporary validators set`,
                 p36: `Next validators set`,
-                p37: `Next temprorary validators set`,
+                p37: `Next temporary validators set`,
                 p39: {
-                    _doc: `Array of validator signed temprorary keys`,
+                    _doc: `Array of validator signed temporary keys`,
                     adnl_addr: ``,
                     temp_public_key: ``,
                     seqno: ``,
@@ -488,7 +488,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
     },
 
     blockSignatures: {
-        _doc: `Set of validator\'s signatures for the Block with correspond id`,
+        _doc: `Set of validator's signatures for the Block with correspond id`,
         gen_utime: `Signed block's gen_utime`,
         seq_no: `Signed block's seq_no`,
         shard: `Signed block's shard`,
@@ -508,7 +508,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
     zerostate: {
         _doc: `The initial state of the workchain before first block was generated`,
         global_id: `uint32 global network ID`,
-        workchain_id: `Zerostate's workchain_id`,
+        workchain_id: `Zerostate workchain_id`,
         accounts: `Initial accounts state at the workchain start`,
         total_balance: `Overall balance of all accounts of the workchain`,
         total_balance_other: `Overall balance of all accounts of the workchain in other currencies`,

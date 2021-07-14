@@ -8,6 +8,8 @@ import {
     array,
     join,
     joinArray,
+    BigIntArgs,
+    JoinArgs,
     enumName,
     stringCompanion,
     createEnumNameResolver,
@@ -703,352 +705,352 @@ const Zerostate = struct({
 function createResolvers(data: QBlockchainData) {
     return {
         OtherCurrency: {
-            value(parent: any, args: any) {
+            value(parent: { value: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.value, args);
             },
         },
         ExtBlkRef: {
-            end_lt(parent: any, args: any) {
+            end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
             },
         },
         MsgEnvelope: {
-            fwd_fee_remaining(parent: any, args: any) {
+            fwd_fee_remaining(parent: { fwd_fee_remaining: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fwd_fee_remaining, args);
             },
         },
         InMsg: {
-            fwd_fee(parent: any, args: any) {
+            fwd_fee(parent: { fwd_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fwd_fee, args);
             },
-            ihr_fee(parent: any, args: any) {
+            ihr_fee(parent: { ihr_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.ihr_fee, args);
             },
-            transit_fee(parent: any, args: any) {
+            transit_fee(parent: { transit_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.transit_fee, args);
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
         },
         OutMsg: {
-            import_block_lt(parent: any, args: any) {
+            import_block_lt(parent: { import_block_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.import_block_lt, args);
             },
-            next_addr_pfx(parent: any, args: any) {
+            next_addr_pfx(parent: { next_addr_pfx: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.next_addr_pfx, args);
             },
             msg_type_name: createEnumNameResolver('msg_type', { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
         },
         BlockValueFlow: {
-            created(parent: any, args: any) {
+            created(parent: { created: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.created, args);
             },
-            exported(parent: any, args: any) {
+            exported(parent: { exported: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.exported, args);
             },
-            fees_collected(parent: any, args: any) {
+            fees_collected(parent: { fees_collected: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fees_collected, args);
             },
-            fees_imported(parent: any, args: any) {
+            fees_imported(parent: { fees_imported: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fees_imported, args);
             },
-            from_prev_blk(parent: any, args: any) {
+            from_prev_blk(parent: { from_prev_blk: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.from_prev_blk, args);
             },
-            imported(parent: any, args: any) {
+            imported(parent: { imported: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.imported, args);
             },
-            minted(parent: any, args: any) {
+            minted(parent: { minted: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.minted, args);
             },
-            to_next_blk(parent: any, args: any) {
+            to_next_blk(parent: { to_next_blk: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.to_next_blk, args);
             },
         },
         BlockAccountBlocksTransactions: {
-            lt(parent: any, args: any) {
+            lt(parent: { lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.lt, args);
             },
-            total_fees(parent: any, args: any) {
+            total_fees(parent: { total_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_fees, args);
             },
         },
         BlockMasterShardHashesDescr: {
-            end_lt(parent: any, args: any) {
+            end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
             },
-            fees_collected(parent: any, args: any) {
+            fees_collected(parent: { fees_collected: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fees_collected, args);
             },
-            funds_created(parent: any, args: any) {
+            funds_created(parent: { funds_created: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.funds_created, args);
             },
-            start_lt(parent: any, args: any) {
+            start_lt(parent: { start_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.start_lt, args);
             },
-            gen_utime_string(parent: any) {
+            gen_utime_string(parent: { gen_utime: number }) {
                 return unixSecondsToString(parent.gen_utime);
             },
             split_type_name: createEnumNameResolver('split_type', { None: 0, Split: 2, Merge: 3 }),
         },
         BlockMasterShardFees: {
-            create(parent: any, args: any) {
+            create(parent: { create: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.create, args);
             },
-            fees(parent: any, args: any) {
+            fees(parent: { fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fees, args);
             },
         },
         ConfigP8: {
-            capabilities(parent: any, args: any) {
+            capabilities(parent: { capabilities: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.capabilities, args);
             },
         },
         ConfigP14: {
-            basechain_block_fee(parent: any, args: any) {
+            basechain_block_fee(parent: { basechain_block_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.basechain_block_fee, args);
             },
-            masterchain_block_fee(parent: any, args: any) {
+            masterchain_block_fee(parent: { masterchain_block_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.masterchain_block_fee, args);
             },
         },
         ConfigP17: {
-            max_stake(parent: any, args: any) {
+            max_stake(parent: { max_stake: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.max_stake, args);
             },
-            min_stake(parent: any, args: any) {
+            min_stake(parent: { min_stake: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.min_stake, args);
             },
-            min_total_stake(parent: any, args: any) {
+            min_total_stake(parent: { min_total_stake: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.min_total_stake, args);
             },
         },
         ConfigP18: {
-            bit_price_ps(parent: any, args: any) {
+            bit_price_ps(parent: { bit_price_ps: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.bit_price_ps, args);
             },
-            cell_price_ps(parent: any, args: any) {
+            cell_price_ps(parent: { cell_price_ps: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.cell_price_ps, args);
             },
-            mc_bit_price_ps(parent: any, args: any) {
+            mc_bit_price_ps(parent: { mc_bit_price_ps: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.mc_bit_price_ps, args);
             },
-            mc_cell_price_ps(parent: any, args: any) {
+            mc_cell_price_ps(parent: { mc_cell_price_ps: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.mc_cell_price_ps, args);
             },
-            utime_since_string(parent: any) {
+            utime_since_string(parent: { utime_since: number }) {
                 return unixSecondsToString(parent.utime_since);
             },
         },
         GasLimitsPrices: {
-            block_gas_limit(parent: any, args: any) {
+            block_gas_limit(parent: { block_gas_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.block_gas_limit, args);
             },
-            delete_due_limit(parent: any, args: any) {
+            delete_due_limit(parent: { delete_due_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.delete_due_limit, args);
             },
-            flat_gas_limit(parent: any, args: any) {
+            flat_gas_limit(parent: { flat_gas_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.flat_gas_limit, args);
             },
-            flat_gas_price(parent: any, args: any) {
+            flat_gas_price(parent: { flat_gas_price: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.flat_gas_price, args);
             },
-            freeze_due_limit(parent: any, args: any) {
+            freeze_due_limit(parent: { freeze_due_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.freeze_due_limit, args);
             },
-            gas_credit(parent: any, args: any) {
+            gas_credit(parent: { gas_credit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.gas_credit, args);
             },
-            gas_limit(parent: any, args: any) {
+            gas_limit(parent: { gas_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.gas_limit, args);
             },
-            gas_price(parent: any, args: any) {
+            gas_price(parent: { gas_price: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.gas_price, args);
             },
-            special_gas_limit(parent: any, args: any) {
+            special_gas_limit(parent: { special_gas_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.special_gas_limit, args);
             },
         },
         MsgForwardPrices: {
-            bit_price(parent: any, args: any) {
+            bit_price(parent: { bit_price: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.bit_price, args);
             },
-            cell_price(parent: any, args: any) {
+            cell_price(parent: { cell_price: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.cell_price, args);
             },
-            lump_price(parent: any, args: any) {
+            lump_price(parent: { lump_price: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.lump_price, args);
             },
         },
         ValidatorSetList: {
-            weight(parent: any, args: any) {
+            weight(parent: { weight: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.weight, args);
             },
         },
         ValidatorSet: {
-            total_weight(parent: any, args: any) {
+            total_weight(parent: { total_weight: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.total_weight, args);
             },
-            utime_since_string(parent: any) {
+            utime_since_string(parent: { utime_since: number }) {
                 return unixSecondsToString(parent.utime_since);
             },
-            utime_until_string(parent: any) {
+            utime_until_string(parent: { utime_until: number }) {
                 return unixSecondsToString(parent.utime_until);
             },
         },
         BlockSignatures: {
-            id(parent: any) {
+            id(parent: { _key: string }) {
                 return parent._key;
             },
-            block(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !BlockSignatures.test(null, parent, args.when)) {
+            block(parent: { _key: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !BlockSignatures.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.blocks.waitForDoc(parent._key, '_key', args, context);
             },
-            sig_weight(parent: any, args: any) {
+            sig_weight(parent: { sig_weight: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.sig_weight, args);
             },
-            gen_utime_string(parent: any) {
+            gen_utime_string(parent: { gen_utime: number }) {
                 return unixSecondsToString(parent.gen_utime);
             },
         },
         Block: {
-            id(parent: any) {
+            id(parent: { _key: string }) {
                 return parent._key;
             },
-            signatures(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !Block.test(null, parent, args.when)) {
+            signatures(parent: { _key: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !Block.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.blocks_signatures.waitForDoc(parent._key, '_key', args, context);
             },
-            end_lt(parent: any, args: any) {
+            end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
             },
-            start_lt(parent: any, args: any) {
+            start_lt(parent: { start_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.start_lt, args);
             },
-            gen_utime_string(parent: any) {
+            gen_utime_string(parent: { gen_utime: number }) {
                 return unixSecondsToString(parent.gen_utime);
             },
             status_name: createEnumNameResolver('status', { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
         Account: {
-            id(parent: any) {
+            id(parent: { _key: string }) {
                 return parent._key;
             },
-            balance(parent: any, args: any) {
+            balance(parent: { balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance, args);
             },
-            bits(parent: any, args: any) {
+            bits(parent: { bits: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.bits, args);
             },
-            cells(parent: any, args: any) {
+            cells(parent: { cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.cells, args);
             },
-            due_payment(parent: any, args: any) {
+            due_payment(parent: { due_payment: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.due_payment, args);
             },
-            last_trans_lt(parent: any, args: any) {
+            last_trans_lt(parent: { last_trans_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.last_trans_lt, args);
             },
-            public_cells(parent: any, args: any) {
+            public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args);
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         TransactionStorage: {
-            storage_fees_collected(parent: any, args: any) {
+            storage_fees_collected(parent: { storage_fees_collected: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.storage_fees_collected, args);
             },
-            storage_fees_due(parent: any, args: any) {
+            storage_fees_due(parent: { storage_fees_due: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.storage_fees_due, args);
             },
             status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
         },
         TransactionCredit: {
-            credit(parent: any, args: any) {
+            credit(parent: { credit: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.credit, args);
             },
-            due_fees_collected(parent: any, args: any) {
+            due_fees_collected(parent: { due_fees_collected: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.due_fees_collected, args);
             },
         },
         TransactionCompute: {
-            gas_fees(parent: any, args: any) {
+            gas_fees(parent: { gas_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.gas_fees, args);
             },
-            gas_limit(parent: any, args: any) {
+            gas_limit(parent: { gas_limit: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.gas_limit, args);
             },
-            gas_used(parent: any, args: any) {
+            gas_used(parent: { gas_used: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.gas_used, args);
             },
             compute_type_name: createEnumNameResolver('compute_type', { Skipped: 0, Vm: 1 }),
             skipped_reason_name: createEnumNameResolver('skipped_reason', { NoState: 0, BadState: 1, NoGas: 2 }),
         },
         TransactionAction: {
-            total_action_fees(parent: any, args: any) {
+            total_action_fees(parent: { total_action_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_action_fees, args);
             },
-            total_fwd_fees(parent: any, args: any) {
+            total_fwd_fees(parent: { total_fwd_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_fwd_fees, args);
             },
             status_change_name: createEnumNameResolver('status_change', { Unchanged: 0, Frozen: 1, Deleted: 2 }),
         },
         TransactionBounce: {
-            fwd_fees(parent: any, args: any) {
+            fwd_fees(parent: { fwd_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fwd_fees, args);
             },
-            msg_fees(parent: any, args: any) {
+            msg_fees(parent: { msg_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.msg_fees, args);
             },
-            req_fwd_fees(parent: any, args: any) {
+            req_fwd_fees(parent: { req_fwd_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.req_fwd_fees, args);
             },
             bounce_type_name: createEnumNameResolver('bounce_type', { NegFunds: 0, NoFunds: 1, Ok: 2 }),
         },
         Transaction: {
-            id(parent: any) {
+            id(parent: { _key: string }) {
                 return parent._key;
             },
-            account(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !Transaction.test(null, parent, args.when)) {
+            account(parent: { account_addr: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.accounts.waitForDoc(parent.account_addr, '_key', args, context);
             },
-            block(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !Transaction.test(null, parent, args.when)) {
+            block(parent: { block_id: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.blocks.waitForDoc(parent.block_id, '_key', args, context);
             },
-            in_message(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !Transaction.test(null, parent, args.when)) {
+            in_message(parent: { in_msg: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.messages.waitForDoc(parent.in_msg, '_key', args, context);
             },
-            out_messages(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !Transaction.test(null, parent, args.when)) {
+            out_messages(parent: { out_msgs: string[] }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.messages.waitForDocs(parent.out_msgs, '_key', args, context);
             },
-            balance_delta(parent: any, args: any) {
+            balance_delta(parent: { balance_delta: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance_delta, args);
             },
-            lt(parent: any, args: any) {
+            lt(parent: { lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.lt, args);
             },
-            prev_trans_lt(parent: any, args: any) {
+            prev_trans_lt(parent: { prev_trans_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.prev_trans_lt, args);
             },
-            total_fees(parent: any, args: any) {
+            total_fees(parent: { total_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_fees, args);
             },
-            now_string(parent: any) {
+            now_string(parent: { now: number }) {
                 return unixSecondsToString(parent.now);
             },
             end_status_name: createEnumNameResolver('end_status', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
@@ -1057,103 +1059,103 @@ function createResolvers(data: QBlockchainData) {
             tr_type_name: createEnumNameResolver('tr_type', { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
         },
         Message: {
-            id(parent: any) {
+            id(parent: { _key: string }) {
                 return parent._key;
             },
-            block(parent: any, args: any, context: GraphQLRequestContextEx) {
-                if (args.when && !Message.test(null, parent, args.when)) {
+            block(parent: { block_id: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.blocks.waitForDoc(parent.block_id, '_key', args, context);
             },
-            dst_account(parent: any, args: any, context: GraphQLRequestContextEx) {
+            dst_account(parent: { dst: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
                 if (!(parent.msg_type !== 2)) {
                     return null;
                 }
-                if (args.when && !Message.test(null, parent, args.when)) {
+                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.accounts.waitForDoc(parent.dst, '_key', args, context);
             },
-            dst_transaction(parent: any, args: any, context: GraphQLRequestContextEx) {
+            dst_transaction(parent: { _key: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
                 if (!(parent.msg_type !== 2)) {
                     return null;
                 }
-                if (args.when && !Message.test(null, parent, args.when)) {
+                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.transactions.waitForDoc(parent._key, 'in_msg', args, context);
             },
-            src_account(parent: any, args: any, context: GraphQLRequestContextEx) {
+            src_account(parent: { src: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
                 if (!(parent.msg_type !== 1)) {
                     return null;
                 }
-                if (args.when && !Message.test(null, parent, args.when)) {
+                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.accounts.waitForDoc(parent.src, '_key', args, context);
             },
-            src_transaction(parent: any, args: any, context: GraphQLRequestContextEx) {
+            src_transaction(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
                 if (!(parent.created_lt !== '00' && parent.msg_type !== 1)) {
                     return null;
                 }
-                if (args.when && !Message.test(null, parent, args.when)) {
+                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
                 return context.data.transactions.waitForDoc(parent._key, 'out_msgs[*]', args, context);
             },
-            created_lt(parent: any, args: any) {
+            created_lt(parent: { created_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.created_lt, args);
             },
-            fwd_fee(parent: any, args: any) {
+            fwd_fee(parent: { fwd_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fwd_fee, args);
             },
-            ihr_fee(parent: any, args: any) {
+            ihr_fee(parent: { ihr_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.ihr_fee, args);
             },
-            import_fee(parent: any, args: any) {
+            import_fee(parent: { import_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.import_fee, args);
             },
-            value(parent: any, args: any) {
+            value(parent: { value: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.value, args);
             },
-            created_at_string(parent: any) {
+            created_at_string(parent: { created_at: number }) {
                 return unixSecondsToString(parent.created_at);
             },
             msg_type_name: createEnumNameResolver('msg_type', { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver('status', { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
         },
         ZerostateMaster: {
-            global_balance(parent: any, args: any) {
+            global_balance(parent: { global_balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.global_balance, args);
             },
         },
         ZerostateAccounts: {
-            balance(parent: any, args: any) {
+            balance(parent: { balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance, args);
             },
-            bits(parent: any, args: any) {
+            bits(parent: { bits: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.bits, args);
             },
-            cells(parent: any, args: any) {
+            cells(parent: { cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.cells, args);
             },
-            due_payment(parent: any, args: any) {
+            due_payment(parent: { due_payment: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.due_payment, args);
             },
-            last_trans_lt(parent: any, args: any) {
+            last_trans_lt(parent: { last_trans_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.last_trans_lt, args);
             },
-            public_cells(parent: any, args: any) {
+            public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args);
             },
             acc_type_name: createEnumNameResolver('acc_type', { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Zerostate: {
-            id(parent: any) {
+            id(parent: { _key: string }) {
                 return parent._key;
             },
-            total_balance(parent: any, args: any) {
+            total_balance(parent: { total_balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_balance, args);
             },
         },

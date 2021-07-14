@@ -22,6 +22,19 @@ export const deniedAccess: AccessRights = Object.freeze({
     restrictToAccounts: [],
 });
 
+export type RequestWithAccessHeaders = {
+    headers?: {
+        accesskey?: string,
+        accessKey?: string,
+    }
+}
+
+type GraphQLConnection = {
+    context?: {
+        accessKey?: string,
+    }
+}
+
 export class Auth {
     config: QConfig;
 
@@ -29,9 +42,10 @@ export class Auth {
         this.config = config;
     }
 
-    static extractAccessKey(req: any, connection: any): string {
-        return (req && req.headers && (req.headers.accessKey || req.headers.accesskey))
-            || (connection && connection.context && connection.context.accessKey);
+    static extractAccessKey(req: RequestWithAccessHeaders | undefined, connection: GraphQLConnection | undefined): string {
+        return req?.headers?.accessKey ??
+            req?.headers?.accesskey ??
+            connection?.context?.accessKey ?? "";
     }
 
     static unauthorizedError(): Error {
@@ -59,7 +73,7 @@ export class Auth {
         if ((accessKey || "") === "") {
             return deniedAccess;
         }
-        const rights = await this.invokeAuth("getAccessRights", {
+        const rights: AccessRights = await this.invokeAuth("getAccessRights", {
             accessKey,
         });
         if (!rights.restrictToAccounts) {
@@ -99,7 +113,7 @@ export class Auth {
         });
     }
 
-    async invokeAuth(method: string, params: any): Promise<any> {
+    async invokeAuth<T>(method: string, params: unknown): Promise<T> {
         const res = await fetch(this.config.authorization.endpoint, {
             method: "POST",
             headers: {

@@ -16,6 +16,11 @@ type ArangoCollectionDescr = {
     name: string,
 }
 
+type Subscription = {
+    collection: string,
+    listener: (doc: QDoc, event: QDataEvent) => void
+}
+
 export class ArangoProvider implements QDataProvider {
     log: QLog;
     config: QArangoConfig;
@@ -51,7 +56,7 @@ export class ArangoProvider implements QDataProvider {
         this.listenerSubscribersCount = 0;
     }
 
-    async start(collectionsForSubscribe: string[]): Promise<any> {
+    async start(collectionsForSubscribe: string[]): Promise<void> {
         this.started = true;
         this.collectionsForSubscribe = collectionsForSubscribe;
         this.checkStartListener();
@@ -73,29 +78,29 @@ export class ArangoProvider implements QDataProvider {
     /**
      * Returns object with collection names in keys and collection size in values.
      */
-    async loadFingerprint(): Promise<any> {
+    async loadFingerprint(): Promise<unknown> {
         const collections: ArangoCollectionDescr[] = await this.arango.listCollections();
         const collectionNames = collections.map(descr => descr.name);
         // TODO: add this when required a new version arangojs v7.x.x
         // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
         const results = await Promise.all(collectionNames.map(col => this.arango.collection(col).count()));
-        const fingerprint: any = {};
+        const fingerprint: { [name: string]: number } = {};
         collectionNames.forEach((collectionName, i) => {
             fingerprint[collectionName] = results[i].count;
         });
         return fingerprint;
     }
 
-    async hotUpdate(): Promise<any> {
+    async hotUpdate(): Promise<void> {
         return Promise.resolve();
     }
 
-    async query(text: string, vars: { [name: string]: any }): Promise<any> {
+    async query(text: string, vars: { [name: string]: unknown }): Promise<QDoc[]> {
         const cursor = await this.arango.query(text, vars);
         return cursor.all();
     }
 
-    subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any {
+    subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {
         if (this.listenerSubscribers) {
             this.listenerSubscribers.on(collection, listener);
             this.listenerSubscribersCount += 1;
@@ -108,9 +113,12 @@ export class ArangoProvider implements QDataProvider {
     }
 
 
-    unsubscribe(subscription: any) {
+    unsubscribe(subscription: unknown) {
         if (this.listenerSubscribers) {
-            this.listenerSubscribers.removeListener(subscription.collection, subscription.listener);
+            this.listenerSubscribers.removeListener(
+                (subscription as Subscription).collection,
+                (subscription as Subscription).listener,
+            );
             this.listenerSubscribersCount = Math.max(this.listenerSubscribersCount - 1, 0);
         }
     }
@@ -156,18 +164,19 @@ export class ArangoProvider implements QDataProvider {
 
         this.collectionsForSubscribe.forEach((collectionName) => {
             listener.subscribe({ collection: collectionName });
-            listener.on(collectionName, (docJson: any, type: QDataEvent) => {
+            listener.on(collectionName, (docJson: QDoc, type: QDataEvent) => {
                 if (type === "insert/update" || type === "insert" || type === "update") {
                     this.onDataEvent(type, collectionName, docJson);
                 }
             });
         });
 
-        listener.on("error", (err: Error, _status: any, _headers: any, body: any) => {
-            let error = err;
+        listener.on("error", (err: Error, _status: unknown, _headers: unknown, body: string) => {
+            let error;
             try {
                 error = JSON.parse(body);
             } catch {
+                error = err;
             }
             this.log.error("FAILED", "LISTEN", `${err}`, error);
             setTimeout(() => listener.start(), this.config.listenerRestartTimeout || 1000);

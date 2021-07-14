@@ -29,7 +29,7 @@ test("Slow Detector", () => {
             INDEXES[collectionName].indexes,
             collectionType,
             filter,
-            orderBy ? parseOrderBy(orderBy) : [],
+            orderBy !== undefined ? parseOrderBy(orderBy) : [],
             log,
         );
     }

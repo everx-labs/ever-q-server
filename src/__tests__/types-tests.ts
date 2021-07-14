@@ -1,8 +1,22 @@
-import {unixSecondsToString} from "../server/filter/filters";
-import {packageJson} from "../server/utils";
-import {testServerQuery} from "./init-tests";
+import { unixSecondsToString } from "../server/filter/filters";
+import { packageJson } from "../server/utils";
+import { testServerQuery } from "./init-tests";
 
 const { version } = packageJson();
+
+type Messages = {
+    messages: {
+        id: string,
+        value: string,
+        src: string,
+        dst: string,
+        src_transaction: Record<string, unknown> | null,
+        dst_transaction: Record<string, unknown> | null,
+        created_at: number,
+        created_at_string: string,
+
+    }[]
+}
 
 test("version", async () => {
     const info = await testServerQuery("query{info{version}}");
@@ -23,14 +37,14 @@ test("time companion fields", async () => {
         }
         return unixSecondsToString(value) === string;
     };
-    const data = await testServerQuery("query { messages { created_at created_at_string } }");
+    const data = await testServerQuery<Messages>("query { messages { created_at created_at_string } }");
     for (const message of data.messages) {
         expect(isValidSeconds(message.created_at, message.created_at_string)).toBeTruthy();
     }
 });
 
 test("when conditions for joins", async () => {
-    const data = await testServerQuery(`
+    const data = await testServerQuery<Messages>(`
     query { 
         messages { 
             dst_transaction(timeout: 0, when: { value: { gt: "0" } }) {
@@ -51,12 +65,12 @@ test("when conditions for joins", async () => {
 });
 
 test("Case insensitive filters", async () => {
-    const query = async (collection: string, field: string, value: any) => {
-        return (await testServerQuery(
+    const query = async (collection: string, field: string, value: unknown) => {
+        return (await testServerQuery<Record<string, Record<string, unknown>[]>>(
             `query { ${collection}(filter:{${field}:{eq:"${value}"}}) { ${field} } }`))[collection];
     };
     const testField = async (collection: string, field: string) => {
-        const docs = (await testServerQuery(`query { ${collection} { ${field} } }`))[collection];
+        const docs = (await testServerQuery<Record<string, Record<string, unknown>[]>>(`query { ${collection} { ${field} } }`))[collection];
         const valueLower = `${docs[0][field]}`.toLowerCase();
         const docsUpper = await query(collection, field, valueLower.toUpperCase());
         const docsLower = await query(collection, field, valueLower);

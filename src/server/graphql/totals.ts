@@ -1,16 +1,18 @@
-import { requireGrantedAccess } from "../data/collection";
+import {
+    AccessArgs,
+    requireGrantedAccess,
+} from "../data/collection";
 import { QTracer } from "../tracer";
 import type { GraphQLRequestContextEx } from "./context";
-
-declare function BigInt(a: any): any;
+import { QResult } from "../data/data-provider";
 
 //------------------------------------------------------------- Query
 
-async function getAccountsCount(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<number> {
+async function getAccountsCount(_parent: Record<string, unknown>, args: AccessArgs, context: GraphQLRequestContextEx): Promise<number> {
     const tracer = context.tracer;
     return QTracer.trace(tracer, "getAccountsCount", async () => {
         await requireGrantedAccess(context, args);
-        const result: any = await context.data.query(
+        const result: QResult = await context.data.query(
             context.data.accounts.provider,
             `RETURN LENGTH(accounts)`,
             {},
@@ -21,32 +23,31 @@ async function getAccountsCount(_parent: any, args: any, context: GraphQLRequest
     }, QTracer.getParentSpan(tracer, context));
 }
 
-async function getTransactionsCount(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<number> {
+async function getTransactionsCount(_parent: Record<string, unknown>, args: AccessArgs, context: GraphQLRequestContextEx): Promise<number> {
     const tracer = context.tracer;
     return QTracer.trace(tracer, "getTransactionsCount", async () => {
         await requireGrantedAccess(context, args);
-        const result: any = await context.data.query(
+        const result = await context.data.query(
             context.data.transactions.provider,
             `RETURN LENGTH(transactions)`,
             {},
             [],
         );
-        const counts = (result as number[]);
-        return counts.length > 0 ? counts[0] : 0;
+        return result.length > 0 ? result[0] as number : 0;
     }, QTracer.getParentSpan(tracer, context));
 }
 
-async function getAccountsTotalBalance(_parent: any, args: any, context: GraphQLRequestContextEx): Promise<String> {
+async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: AccessArgs, context: GraphQLRequestContextEx): Promise<string> {
     const tracer = context.tracer;
     return QTracer.trace(tracer, "getAccountsTotalBalance", async () => {
         await requireGrantedAccess(context, args);
         /*
-        Because arango can not sum BigInt's we need to sum separately:
+        Because arango can not sum BigInt we need to sum separately:
         hs = SUM of high bits (from 24-bit and higher)
         ls = SUM of lower 24 bits
         And the total result is (hs << 24) + ls
          */
-        const result: any = await context.data.query(
+        const result = await context.data.query(
             context.data.accounts.provider,
             `
             LET d = 16777216

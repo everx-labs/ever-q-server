@@ -53,10 +53,10 @@ const gs: GlobalState = {
 };
 
 process.on('SIGHUP', () => {
-    /** 
-     * WARNING: while multiple simultanios SIGHUP calls 
+    /**
+     * WARNING: while multiple simultaneous SIGHUP calls
      * we ignore new SIGHUP signals until the last reload handler finished
-     * but since we don't wait until server start (only stop + set a promice on start)
+     * but since we don't wait until server start (only stop + set a promise on start)
      * it should be quite fast most of the time
      */
     if (!gs.reloadLock) {
@@ -67,7 +67,7 @@ process.on('SIGHUP', () => {
             await gs.server?.stop();
         })().then(() => {
             main();
-            gs.reloadLock = false; 
+            gs.reloadLock = false;
         });
     }
 });

@@ -17,12 +17,12 @@ type RevokeAccessKeysArgs = ManagementArgs & {
     keys: string[],
 }
 
-async function getManagementAccessKey(_parent: any, _args: any, context: GraphQLRequestContext): Promise<string> {
+async function getManagementAccessKey(_parent: unknown, _args: unknown, context: GraphQLRequestContext): Promise<string> {
     return context.auth.getManagementAccessKey();
 }
 
 async function registerAccessKeys(
-    _parent: any,
+    _parent: unknown,
     args: RegisterAccessKeysArgs,
     context: GraphQLRequestContext,
 ): Promise<number> {
@@ -33,7 +33,7 @@ async function registerAccessKeys(
 }
 
 async function revokeAccessKeys(
-    _parent: any,
+    _parent: unknown,
     args: RevokeAccessKeysArgs,
     context: GraphQLRequestContext,
 ): Promise<number> {
@@ -48,7 +48,7 @@ type FinishOperationsArgs = {
 }
 
 async function finishOperations(
-    _parent: any,
+    _parent: unknown,
     args: FinishOperationsArgs,
     context: GraphQLRequestContextEx,
 ): Promise<number> {

@@ -130,7 +130,7 @@ export default class QData {
         await this.providers.immutable.hotUpdate();
     }
 
-    async query(provider: QDataProvider, text: string, vars: { [name: string]: any }, orderBy: OrderBy[]) {
+    async query(provider: QDataProvider, text: string, vars: Record<string, unknown>, orderBy: OrderBy[]) {
         return wrap(this.log, "QUERY", {
             text,
             vars,

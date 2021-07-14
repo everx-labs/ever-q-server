@@ -1,7 +1,6 @@
 import {
     QParams,
 } from "../server/filter/filters";
-import type {GDefinition} from "../server/filter/filters";
 import {
     Account,
     BlockSignatures,
@@ -15,12 +14,22 @@ import {
     queryText,
     testServerQuery,
 } from "./init-tests";
+import {
+    FieldNode,
+    SelectionNode,
+} from "graphql";
 
+type Blocks = {
+    blocks: {
+        id: string,
+        master: unknown[] | null,
+    }[]
+}
 test("remove nulls", async () => {
-    const data = await testServerQuery(`query { blocks { id master { min_shard_gen_utime } } }`);
+    const data = await testServerQuery<Blocks>(`query { blocks { id master { min_shard_gen_utime } } }`);
     expect(data.blocks.length).toBeGreaterThan(0);
 
-    let block = (await testServerQuery(`
+    let block = (await testServerQuery<Blocks>(`
         query {
             blocks(filter: { workchain_id: { eq: 0 } }) { 
                 master { min_shard_gen_utime } 
@@ -29,7 +38,7 @@ test("remove nulls", async () => {
     `)).blocks[0];
     expect(block).toEqual({ master: null });
 
-    block = (await testServerQuery(`
+    block = (await testServerQuery<Blocks>(`
         query {
             blocks(filter: { workchain_id: { eq: 0 } }) { 
                 master {
@@ -46,7 +55,7 @@ test("remove nulls", async () => {
 });
 
 test("multi query", async () => {
-    const data = await testServerQuery(`
+    const data = await testServerQuery<Blocks>(`
     query { 
         info { time }
         blocks { id }
@@ -126,14 +135,13 @@ test("reduced RETURN", () => {
 
 });
 
-function selection(name: string, selections: GDefinition[]): GDefinition {
+function selection(name: string, selections: SelectionNode[]): FieldNode {
     return {
         kind: "Field",
         name: {
             kind: "Name",
             value: name,
         },
-        alias: "",
         arguments: [],
         directives: [],
         selectionSet: {

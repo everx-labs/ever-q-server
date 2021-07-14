@@ -17,7 +17,7 @@ function adjustWidths(row: string[]) {
 
 function breakWords(s: string, width: number): string[] {
     const words = s.split(" ");
-    let result = [];
+    const result = [];
     let line = "";
     words.forEach((w) => {
         if (line.length + w.length > width) {

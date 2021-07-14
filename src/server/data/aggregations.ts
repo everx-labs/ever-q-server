@@ -1,4 +1,8 @@
 import { scalarFields } from "../graphql/resolvers-generated";
+import {
+    QResult,
+    Scalar,
+} from "./data-provider";
 
 export enum AggregationFn {
     COUNT = "COUNT",
@@ -17,7 +21,7 @@ export type FieldAggregation = {
 export abstract class AggregationQuery {
     abstract getQueryText(): string;
 
-    abstract reduceResult(values: any[]): any;
+    abstract reduceResult(values: unknown[]): unknown;
 
     protected constructor(
         public fn: AggregationFn,
@@ -76,9 +80,9 @@ export abstract class AggregationQuery {
         };
     }
 
-    static reduceResults(results: any[][], queries: AggregationQuery[]): any[] {
+    static reduceResults(results: QResult[], queries: AggregationQuery[]): unknown[] {
         return queries.map((helper, i) => {
-            const values = results.map(x => x[i]).filter(x => x !== undefined && x !== null);
+            const values = results.map(x => (x as unknown[])[i]).filter(x => x !== undefined && x !== null);
             return helper.reduceResult(values);
         });
 
@@ -104,7 +108,7 @@ class CountQuery extends AggregationQuery {
 
     }
 
-    reduceResult(values: any[]): any {
+    reduceResult(values: unknown[]): unknown {
         return reduceValues(values, AggregationFn.SUM, 0);
     }
 
@@ -136,7 +140,7 @@ class MinMaxQuery extends AggregationQuery {
         `;
     }
 
-    reduceResult(values: any[]): any {
+    reduceResult(values: unknown[]): unknown {
         let reduced = reduceValues(values, this.fn, 0);
         if (reduced !== undefined && this.bigIntPrefix > 0) {
             reduced = bigIntStringToDecimalString(reduced, this.bigIntPrefix);
@@ -168,7 +172,7 @@ class NumberQuery extends AggregationQuery {
         `;
     }
 
-    reduceResult(values: any[]): any {
+    reduceResult(values: unknown[]): unknown {
         return reduceValues(values, this.fn, 0);
     }
 }
@@ -200,21 +204,26 @@ class BigIntQuery extends AggregationQuery {
         `;
     }
 
-    reduceResult(values: any[]): any {
+    reduceResult(values: BigIntParts[]): unknown {
         const converted = values.map(
             this.fn === AggregationFn.AVERAGE
                 ? bigIntAvgPartsToBigInt
                 : bigIntPartsToBigInt,
         );
-        return reduceValues(converted, this.fn, this.bigIntPrefix)?.toString();
+        const reduced = reduceValues(converted, this.fn, this.bigIntPrefix);
+        return reduced !== undefined ? (reduced as { toString(): string }).toString() : undefined;
     }
 
 }
 
+type BigIntParts = { a: number, b: number, c: number };
 
-function bigIntStringToDecimalString(value: any, bigIntPrefix: number): string | bigint {
+function bigIntStringToDecimalString(value: unknown, bigIntPrefix: number): string | bigint {
     if (typeof value === "number") {
         return value.toString();
+    }
+    if (typeof value !== "string") {
+        throw new Error(`Invalid bigint value: ${value}`);
     }
     return value.substr(0, 1) === "-"
         ? BigInt(`-0x${value.substr(bigIntPrefix + 1)}`).toString()
@@ -228,7 +237,7 @@ function isArrayPath(path: string): boolean {
 
 // Converters
 
-function reduceValues(values: any[], fn: AggregationFn, bigIntPrefix: number): any {
+function reduceValues(values: unknown[], fn: AggregationFn, bigIntPrefix: number): unknown {
     if (values.length === 0) {
         return undefined;
     }
@@ -236,28 +245,28 @@ function reduceValues(values: any[], fn: AggregationFn, bigIntPrefix: number): a
     for (let i = 1; i < values.length; i += 1) {
         const value = values[i];
         if (fn === "MIN") {
-            if (value < reduced) {
+            if ((value as Scalar) < (reduced as Scalar)) {
                 reduced = value;
             }
         } else if (fn === "MAX") {
-            if (value > reduced) {
+            if ((value as Scalar) > (reduced as Scalar)) {
                 reduced = value;
             }
         } else {
-            reduced += value;
+            (reduced as number) += (value as number);
         }
     }
     if (fn === "AVERAGE") {
         if (bigIntPrefix > 0) {
-            reduced = reduced / BigInt(values.length);
+            reduced = (reduced as bigint) / BigInt(values.length);
         } else {
-            reduced = Math.trunc(reduced / values.length);
+            reduced = Math.trunc((reduced as number) / values.length);
         }
     }
     return reduced;
 }
 
-function bigIntPartsToBigInt(parts: { a: number, b: number }): bigint {
+function bigIntPartsToBigInt(parts: BigIntParts): bigint {
     const h = parts.a >= 0
         ? BigInt(`0x${Math.round(parts.a).toString(16)}00000000`)
         : -BigInt(`0x${Math.round(Math.abs(parts.a)).toString(16)}00000000`);
@@ -265,17 +274,17 @@ function bigIntPartsToBigInt(parts: { a: number, b: number }): bigint {
     return h + l;
 }
 
-function bigIntAvgPartsToBigInt(value: any): bigint {
+function bigIntAvgPartsToBigInt(value: BigIntParts): bigint {
     const sum = bigIntPartsToBigInt(value);
     const count = Number(value.c || 0);
     return count > 0 ? (sum / BigInt(Math.round(count))) : sum;
 }
 
-function bigIntToNum(hex: any): string {
+function bigIntToNum(hex: string): string {
     return `TO_NUMBER(CONCAT("0x", ${hex}))`;
 }
 
-function negBigIntToNum(hex: any): string {
+function negBigIntToNum(hex: string): string {
     return `-(EXP2(LENGTH(${hex}) * 4) - 1 - ${bigIntToNum(hex)})`;
 }
 

@@ -14,10 +14,10 @@ type Info = {
     endpoints: string[],
 }
 
-async function info(_parent: any, _args: any, context: GraphQLRequestContextEx): Promise<Info> {
+async function info(_parent: Record<string, unknown>, _args: unknown, context: GraphQLRequestContextEx): Promise<Info> {
     const latency = await context.data.getLatency();
     return {
-        version,
+        version: version as string,
         time: Date.now(),
         lastBlockTime: latency.lastBlockTime,
         blocksLatency: latency.blocks.latency,

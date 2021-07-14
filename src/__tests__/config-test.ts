@@ -1,5 +1,6 @@
 import { createConfig, parseArangoConfig, programOptions, readConfigFile } from "../server/config";
 import { QTracer } from "../server/tracer";
+import { httpUrl } from "../server/utils";
 
 test("Config File", () => {
     expect(readConfigFile("src/__tests__/configs/config-full.json")).toMatchObject({
@@ -34,7 +35,7 @@ test("Config File", () => {
 });
 
 test("Config Priority", () => {
-    // override direction: 
+    // override direction:
     //   defaults -> OS envs -> config file -> args
 
     const full_options = createConfig(
@@ -76,14 +77,14 @@ test("Arango Config", () => {
         name: "blockchain",
         maxSockets: 3,
     });
-    expect(parseArangoConfig("http://arango:8529", 3)).toMatchObject({
-        server: "http://arango:8529",
+    expect(parseArangoConfig(httpUrl("arango:8529"), 3)).toMatchObject({
+        server: httpUrl("arango:8529"),
         auth: "",
         name: "blockchain",
         maxSockets: 3,
     });
-    expect(parseArangoConfig("http://u:p@arango:8529?name=bc&maxSockets=6", 3)).toMatchObject({
-        server: "http://arango:8529",
+    expect(parseArangoConfig(httpUrl("u:p@arango:8529?name=bc&maxSockets=6"), 3)).toMatchObject({
+        server: httpUrl("arango:8529"),
         auth: "u:p",
         name: "bc",
         maxSockets: 6,
@@ -98,7 +99,7 @@ test("Jaeger Config", () => {
     })).toBeNull();
 
     expect(QTracer.getJaegerConfig({
-        endpoint: "http://collector:1234",
+        endpoint: httpUrl("collector:1234"),
         service: "service",
         tags: {},
     })).toEqual({
@@ -108,7 +109,7 @@ test("Jaeger Config", () => {
             param: 1,
         },
         reporter: {
-            collectorEndpoint: "http://collector:1234",
+            collectorEndpoint: httpUrl("collector:1234"),
             logSpans: true,
         },
     });

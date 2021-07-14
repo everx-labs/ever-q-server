@@ -32,7 +32,7 @@ export const join = (
                 collection: "",
                 on,
                 refOn,
-                preCondition: (preCondition || ""),
+                preCondition,
             },
         },
     };
@@ -96,7 +96,7 @@ type IntEnumValues = {
 export function u8enum(name: string, values: IntEnumValues) {
     return (doc?: string): TypeDef => {
         const valuesDoc = Object.entries(values).map(([name, value]) => {
-            return `- ${(value as any)} – ${name}`;
+            return `- ${value} – ${name}`;
         }).join("\n");
         const effectiveDoc = `${doc ? `${doc}\n` : ""}${valuesDoc}`;
         return withDoc({
@@ -197,7 +197,7 @@ export function getDocMD(doc?: SchemaDoc): string {
         return doc;
     }
     if ("md" in doc) {
-        return (doc.md as any);
+        return doc.md;
     }
     return "";
 }
@@ -300,7 +300,7 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             name,
             category: schemaType.union ? DbTypeCategory.union : DbTypeCategory.struct,
             fields: [],
-            collection: schemaType._?.collection ?? "",
+            collection: schemaType._?.collection,
             doc: getDocMD(schemaType.doc),
         };
 
