@@ -1,6 +1,7 @@
 import {INDEXES} from "../server/data/blockchain";
 import {isFastQuery} from "../server/filter/slow-detector";
 import {
+    CollectionFilter,
     parseOrderBy,
     QType,
 } from "../server/filter/filters";
@@ -23,7 +24,7 @@ test("Slow Detector", () => {
         collectionType = type;
     }
 
-    function isFast(filter: any, orderBy?: string) {
+    function isFast(filter: CollectionFilter, orderBy?: string) {
         return isFastQuery(
             collectionName,
             INDEXES[collectionName].indexes,

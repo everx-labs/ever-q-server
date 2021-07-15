@@ -110,7 +110,7 @@ function main(schemaDef: TypeDef): {
             Object.keys(enumDef.values).forEach((name) => {
                 g.writeLn(`    ${toEnumStyle(name)}`);
             });
-            g.writeLn(`}`);
+            g.writeLn("}");
             g.writeLn();
         }
     }
@@ -148,7 +148,7 @@ function main(schemaDef: TypeDef): {
                     g.writeLn(`\t${field.name}_string: String`);
                 }
             });
-            g.writeLn(`}`);
+            g.writeLn("}");
         }
         g.writeLn();
     }
@@ -208,7 +208,7 @@ function main(schemaDef: TypeDef): {
             }
         });
         g.writeLn(`    OR: ${type.name}Filter`);
-        g.writeLn(`}`);
+        g.writeLn("}");
         g.writeLn();
     }
 
@@ -362,7 +362,7 @@ function main(schemaDef: TypeDef): {
         type.fields.forEach((variant) => {
             js.writeLn(`        if ('${variant.name}' in obj) {`);
             js.writeLn(`            return '${unionVariantType(type, variant)}';`);
-            js.writeLn(`        }`);
+            js.writeLn("        }");
         });
         js.writeBlockLn(`
                 return null;
@@ -440,12 +440,12 @@ function main(schemaDef: TypeDef): {
             js.writeLn(`            ${field.name}(${parentParam(...parentFields)}, args: JoinArgs, context: GraphQLRequestContextEx) {`);
             if (join.preCondition !== undefined) {
                 js.writeLn(`                if (!(${join.preCondition})) {`);
-                js.writeLn(`                    return null;`);
-                js.writeLn(`                }`);
+                js.writeLn("                    return null;");
+                js.writeLn("                }");
             }
             js.writeLn(`                if (args.when !== undefined && !${type.name}.test(null, parent, args.when)) {`);
-            js.writeLn(`                    return null;`);
-            js.writeLn(`                }`);
+            js.writeLn("                    return null;");
+            js.writeLn("                }");
 
             if (field.arrayDepth === 0) {
                 js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, '${refOn}', args, context);`);
@@ -454,18 +454,18 @@ function main(schemaDef: TypeDef): {
             } else {
                 throw "Joins on a nested arrays does not supported.";
             }
-            js.writeLn(`            },`);
+            js.writeLn("            },");
         });
         bigUIntFields.forEach((field) => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
             js.writeLn(`            ${field.name}(${parentParam(field)}, args: BigIntArgs) {`);
             js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
-            js.writeLn(`            },`);
+            js.writeLn("            },");
         });
         stringFormattedFields.forEach((field) => {
             js.writeLn(`            ${field.name}_string(${parentParam(field)}) {`);
             js.writeLn(`                return ${field.formatter ?? ""}(parent.${field.name});`);
-            js.writeLn(`            },`);
+            js.writeLn("            },");
         });
         enumFields.forEach((field) => {
             const enumDef = field.enumDef;
@@ -473,7 +473,7 @@ function main(schemaDef: TypeDef): {
                 js.writeLn(`            ${field.name}_name: createEnumNameResolver('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
             }
         });
-        js.writeLn(`        },`);
+        js.writeLn("        },");
     }
 
     function genJSScalarFields(type: DbType, parentPath: string, parentDocPath: string) {
@@ -630,7 +630,7 @@ function main(schemaDef: TypeDef): {
         console.log(Object.entries(e.values).map(([name, value]) => {
             return `    ${name}: ${value},`;
         }).join("\n"));
-        console.log(`};\n`);
+        console.log("};\n");
     }
 
     return {

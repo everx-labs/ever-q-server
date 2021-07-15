@@ -410,7 +410,7 @@ export class QDataCollection {
                 }
                 collectReturnExpressions(
                     expressions,
-                    'doc',
+                    "doc",
                     orderBySelectionSet,
                     fields,
                 );

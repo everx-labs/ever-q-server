@@ -31,7 +31,7 @@ test("Config File", () => {
         Q_STATSD_TAGS: "",
         Q_STATSD_RESET_INTERVAL: 0,
     });
-    expect(readConfigFile('wrong_file_name')).toMatchObject({});
+    expect(readConfigFile("wrong_file_name")).toMatchObject({});
 });
 
 test("Config Priority", () => {

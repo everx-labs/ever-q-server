@@ -49,7 +49,7 @@ export class QError extends Error {
     }
 
     static messageExpired(id: string, expiredAt: number): Error {
-        return QError.create(QErrorCode.MESSAGE_EXPIRED, `Message expired`, {
+        return QError.create(QErrorCode.MESSAGE_EXPIRED, "Message expired", {
             id,
             expiredAt,
             now: Date.now(),
@@ -57,7 +57,7 @@ export class QError extends Error {
     }
 
     static queryTerminatedOnTimeout(): Error {
-        return QError.create(QErrorCode.QUERY_TERMINATED_ON_TIMEOUT, `Query terminated on timeout`, {
+        return QError.create(QErrorCode.QUERY_TERMINATED_ON_TIMEOUT, "Query terminated on timeout", {
             now: Date.now(),
         });
     }

@@ -14,7 +14,7 @@ async function getAccountsCount(_parent: Record<string, unknown>, args: AccessAr
         await requireGrantedAccess(context, args);
         const result: QResult = await context.data.query(
             context.data.accounts.provider,
-            `RETURN LENGTH(accounts)`,
+            "RETURN LENGTH(accounts)",
             {},
             [],
         );
@@ -29,7 +29,7 @@ async function getTransactionsCount(_parent: Record<string, unknown>, args: Acce
         await requireGrantedAccess(context, args);
         const result = await context.data.query(
             context.data.transactions.provider,
-            `RETURN LENGTH(transactions)`,
+            "RETURN LENGTH(transactions)",
             {},
             [],
         );

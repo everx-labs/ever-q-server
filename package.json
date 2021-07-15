@@ -12,7 +12,8 @@
 		"start": "node dist/server/index.js",
 		"update indexes": "node dist/maintanance/arango-update/index.js",
 		"npm install": "npm install",
-		"eslint": "eslint . --ext .ts --ignore-pattern *.d.ts --quiet"
+		"eslint": "eslint . --ext .ts --ignore-pattern *.d.ts",
+		"eslint-fix": "eslint . --ext .ts --ignore-pattern *.d.ts --fix"
 	},
 	"keywords": [],
 	"author": "",

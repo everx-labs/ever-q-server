@@ -191,11 +191,11 @@ class BigIntQuery extends AggregationQuery {
     getQueryText(): string {
         const a = bigIntSumExpr(signedBigIntHiPart, this.path, this.bigIntPrefix);
         const b = bigIntSumExpr(signedBigIntLoPart, this.path, this.bigIntPrefix);
-        const c = isArrayPath(this.path) ? `SUM(COUNT(${this.path}))` : `COUNT(doc)`;
+        const c = isArrayPath(this.path) ? `SUM(COUNT(${this.path}))` : "COUNT(doc)";
         const collectExpr = this.fn === AggregationFn.AVERAGE
             ? `a = ${a}, b = ${b}, c = ${c}`
             : `a = ${a}, b = ${b}`;
-        const returnExpr = this.fn === AggregationFn.AVERAGE ? `{ a, b, c }` : `{ a, b }`;
+        const returnExpr = this.fn === AggregationFn.AVERAGE ? "{ a, b, c }" : "{ a, b }";
         return `
             (FOR doc IN ${this.collection}
             ${this.filter}
