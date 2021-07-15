@@ -51,8 +51,18 @@ export enum RequestsMode {
     REST = "rest",
 }
 
+export enum FilterOrConversion {
+    OR_OPERATOR = "or-operator",
+    SUB_QUERIES = "sub-queries",
+}
+
+export type FilterConfig = {
+    orConversion: FilterOrConversion,
+};
+
 export type QConfig = {
     config: string,
+    filter: FilterConfig,
     server: {
         host: string,
         port: number,
@@ -158,6 +168,8 @@ opt("network-name", "cinet.tonlabs.io", "Define the name of the network q-server
 opt("cache-key-prefix", "Q_", "Prefix string to identify q-server keys in data cache");
 
 opt("endpoints", "", "Alternative endpoints of q-server (comma separated addresses)");
+
+opt("filter-or-conversion", FilterOrConversion.SUB_QUERIES, "Filter OR conversion (or-operator | sub-queries)");
 
 // Stats Schema
 
@@ -306,6 +318,9 @@ export function createConfig(
 
     return {
         config: resolved.config as string,
+        filter: {
+            orConversion: resolved.filterOrConversion as FilterOrConversion,
+        },
         server: {
             host: resolved.host as string,
             port: Number.parseInt(resolved.port),

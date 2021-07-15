@@ -600,7 +600,7 @@ function main(schemaDef: TypeDef): {
         });
         js.writeBlockLn(`
                 }
-            }
+            };
         }
 
         `);

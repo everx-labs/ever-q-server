@@ -1096,7 +1096,7 @@ function createResolvers(data: QBlockchainData) {
                 return context.data.accounts.waitForDoc(parent.src, "_key", args, context);
             },
             src_transaction(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (!(parent.created_lt !== '00' && parent.msg_type !== 1)) {
+                if (!(parent.created_lt !== "00" && parent.msg_type !== 1)) {
                     return null;
                 }
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
@@ -1175,7 +1175,7 @@ function createResolvers(data: QBlockchainData) {
             messages: data.messages.subscriptionResolver(),
             zerostates: data.zerostates.subscriptionResolver(),
         }
-    }
+    };
 }
 
 const scalarFields = new Map();
