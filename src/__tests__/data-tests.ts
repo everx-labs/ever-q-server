@@ -32,11 +32,11 @@ test("Query without id should be filtered by limit", async () => {
 
 type Accounts = {
     accounts: { id: string }[],
-}
+};
 
 type Transactions = {
     transactions: { id: string }[],
-}
+};
 
 test("Data Broker", async () => {
     const mut = mock([

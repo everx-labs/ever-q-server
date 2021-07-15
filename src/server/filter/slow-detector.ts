@@ -181,7 +181,7 @@ export type SlowReason = {
     fields: string[],
     selectedIndexes: string[],
     availableIndexes: string[],
-}
+};
 
 export function explainSlowReason(
     _collectionName: string,

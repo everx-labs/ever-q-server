@@ -7,15 +7,15 @@ import type { GraphQLRequestContextEx } from "./context";
 type ManagementArgs = {
     account?: string,
     signedManagementAccessKey?: string,
-}
+};
 
 type RegisterAccessKeysArgs = ManagementArgs & {
     keys: AccessKey[],
-}
+};
 
 type RevokeAccessKeysArgs = ManagementArgs & {
     keys: string[],
-}
+};
 
 async function getManagementAccessKey(_parent: unknown, _args: unknown, context: GraphQLRequestContext): Promise<string> {
     return context.auth.getManagementAccessKey();
@@ -45,7 +45,7 @@ async function revokeAccessKeys(
 
 type FinishOperationsArgs = {
     operationIds?: string[],
-}
+};
 
 async function finishOperations(
     _parent: unknown,

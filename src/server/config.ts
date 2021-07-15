@@ -85,7 +85,7 @@ export type QConfig = {
     networkName: string,
     cacheKeyPrefix: string,
     endpoints: string[],
-}
+};
 
 export type ProgramOption = {
     option: string,

@@ -46,17 +46,17 @@ export type ScalarFilter = {
     in?: Scalar[],
     notIn?: Scalar[],
     OR?: CollectionFilter,
-}
+};
 
 export type ArrayFilter = {
     all: CollectionFilter,
 } | {
     any: CollectionFilter,
-}
+};
 
 export type QFieldExplanation = {
     operations: Set<string>,
-}
+};
 
 function invalidSelection(info: string): Error {
     return new Error(`Invalid selection field: ${info}`);
@@ -96,7 +96,7 @@ export class QExplanation {
 
 export type QParamsOptions = {
     explain?: boolean,
-}
+};
 
 /**
  * Query parameters
@@ -168,7 +168,7 @@ type QType = {
      * @return true if value matches filter
      */
     test: (parent: unknown, value: unknown, filter: CollectionFilter) => boolean,
-}
+};
 
 
 /**
@@ -970,7 +970,7 @@ export type {
 export type FieldSelection = {
     name: string,
     selection: FieldSelection[],
-}
+};
 
 function isFieldWithName(def: SelectionNode, name: string): boolean {
     return def.kind === "Field" && def.name.value.toLowerCase() === name.toLowerCase();
@@ -1077,7 +1077,7 @@ export function selectFields(doc: QDoc | unknown[], selection: FieldSelection[])
 export type OrderBy = {
     path: string,
     direction: string,
-}
+};
 
 export type DatabaseQuery = {
     filter: CollectionFilter,
@@ -1089,11 +1089,11 @@ export type DatabaseQuery = {
     text: string,
     params: { [name: string]: unknown },
     accessRights: AccessRights,
-}
+};
 
 export type QueryStat = {
     isFast: boolean,
-}
+};
 
 export function indexToString(index: QIndexInfo): string {
     return index.fields.join(", ");

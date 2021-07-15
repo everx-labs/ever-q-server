@@ -39,7 +39,7 @@ export type QDataProviders = {
     mutable: QDataProvider,
     immutable: QDataProvider,
     counterparties: QDataProvider,
-}
+};
 
 export type QDataOptions = {
     providers: QDataProviders,
@@ -50,7 +50,7 @@ export type QDataOptions = {
     tracer: Tracer,
     stats: IStats,
     isTests: boolean,
-}
+};
 
 export default class QData {
     // Dependencies

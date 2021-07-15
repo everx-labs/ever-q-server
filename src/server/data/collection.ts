@@ -123,13 +123,13 @@ export type GraphQLRequestContext = {
     parentSpan: (Span | SpanContext | typeof undefined),
 
     shared: Map<string, unknown>,
-}
+};
 
 export type AggregationArgs = {
     filter: CollectionFilter,
     fields?: FieldAggregation[],
     accessKey?: string,
-}
+};
 
 function checkUsedAccessKey(
     usedAccessKey: string | null,
@@ -157,7 +157,7 @@ export async function requireGrantedAccess(
 
 export type AccessArgs = {
     accessKey?: string | null
-}
+};
 
 export function mamAccessRequired(context: GraphQLRequestContext, args: AccessArgs) {
     const accessKey = args.accessKey ?? null;

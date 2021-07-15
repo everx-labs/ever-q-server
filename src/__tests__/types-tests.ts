@@ -16,7 +16,7 @@ type Messages = {
         created_at_string: string,
 
     }[]
-}
+};
 
 test("version", async () => {
     const info = await testServerQuery("query{info{version}}");

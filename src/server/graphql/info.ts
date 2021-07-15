@@ -12,7 +12,7 @@ type Info = {
     messagesLatency: number,
     latency: number,
     endpoints: string[],
-}
+};
 
 async function info(_parent: Record<string, unknown>, _args: unknown, context: GraphQLRequestContextEx): Promise<Info> {
     const latency = await context.data.getLatency();

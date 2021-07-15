@@ -134,7 +134,7 @@ export type DbType = {
     category: DbTypeCategory,
     collection?: string,
     doc: string,
-}
+};
 
 export type DbField = {
     name: string,
@@ -145,7 +145,7 @@ export type DbField = {
     formatter?: ToStringFormatter,
     lowerFilter?: boolean,
     doc: string,
-}
+};
 
 function scalarType(name: string): DbType {
     return {
@@ -205,7 +205,7 @@ export function getDocMD(doc?: SchemaDoc): string {
 export type DbSchema = {
     types: DbType[],
     enumTypes: Map<string, IntEnumDef>,
-}
+};
 
 export function parseDbSchema(schemaDef: TypeDef): DbSchema {
     const dbTypes: DbType[] = [];

@@ -12,12 +12,12 @@ import { QDoc } from "./data-provider";
 
 type QDocTransaction = {
     account_addr: string,
-}
+};
 
 type QDocMessage = {
     src: string,
     dst: string,
-}
+};
 
 export class QDataListener {
     docType: QType;
@@ -62,7 +62,7 @@ export class QDataListener {
 
 type QSubscriptionItem = {
     [collection: string]: QDoc
-}
+};
 
 export class QDataSubscription extends QDataListener implements AsyncIterator<QSubscriptionItem> {
     collectionName: string;

@@ -5,7 +5,7 @@ import type { QLog } from "../logs";
 export type QIndexInfo = {
     fields: string[],
     type?: string,
-}
+};
 
 
 export type QDoc = {

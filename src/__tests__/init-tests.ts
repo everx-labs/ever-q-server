@@ -165,7 +165,7 @@ export async function testServerRequired(override?: Record<string, unknown>): Pr
         return testServer;
     }
     const config = cloneDeep(testConfig) as QConfig;
-    assignDeep(config, override)
+    assignDeep(config, override);
     testServer = new TONQServer({
         config,
         logs: new QLogs(),

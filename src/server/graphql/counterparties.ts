@@ -18,7 +18,7 @@ type CounterpartiesArgs = {
     first?: number,
     after?: string,
     account: string,
-}
+};
 
 type CounterpartiesResult = {
 	account?: string,
@@ -28,7 +28,7 @@ type CounterpartiesResult = {
 	last_message_is_reverse?: boolean,
 	last_message_value?: string,
     cursor?: string,
-}
+};
 
 export const Counterparty = struct({
     account: stringLowerFilter,

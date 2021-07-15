@@ -24,7 +24,7 @@ type Request = {
     id: string,
     body: string,
     expireAt: number,
-}
+};
 
 type RequestInitEx = RequestInit & {
     mode: string,

@@ -13,7 +13,7 @@ export type ClassDef = {
     types?: MembersDef<TypeDef>,
     fields?: MembersDef<TypeDef>,
     functions?: MembersDef<FunctionDef>
-}
+};
 
 export type ExplicitDef = {
     _doc?: SchemaDoc,
@@ -31,11 +31,11 @@ export type ExplicitDef = {
     _union?: MembersDef<TypeDef>,
     _class?: ClassDef,
     _value?: string | number | boolean,
-}
+};
 
 export type StructDef = {
     [name: string]: TypeDef | SchemaDoc | SchemaEx | StructDef
-}
+};
 
 export type TypeDef = ExplicitDef | StructDef;
 
@@ -43,15 +43,15 @@ export type FunctionDef = {
     _doc?: SchemaDoc,
     args?: OrderedMembersDef<TypeDef>,
     result?: TypeDef,
-}
+};
 
 export type UnorderedMembersDef<M> = {
     [name: string]: M
-}
+};
 
-export type OrderedMembersDef<M> = UnorderedMembersDef<M>[]
+export type OrderedMembersDef<M> = UnorderedMembersDef<M>[];
 
-export type MembersDef<M> = OrderedMembersDef<M> | UnorderedMembersDef<M>
+export type MembersDef<M> = OrderedMembersDef<M> | UnorderedMembersDef<M>;
 
 export const Def = {
     any(doc?: SchemaDoc): ExplicitDef {
@@ -97,7 +97,7 @@ export function parseTypeDef(def: TypeDef): SchemaType {
 type ParsingType = {
     type: SchemaType,
     unresolved: { name: string, type: SchemaType }[],
-}
+};
 
 function combineName(base: string, name: string): string {
     return base !== "" ? `${base}.${name}` : name;

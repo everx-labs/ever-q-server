@@ -2778,7 +2778,7 @@ You can sort documents in result set using more than one field.
 input QueryOrderBy {
     """
     Path to field which must be used as a sort criteria.
-    If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+    If field resides deep in structure path items must be separated with dot (e.g. "foo.bar.baz").
     """
     path: String
     "Sort order direction"

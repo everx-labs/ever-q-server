@@ -264,7 +264,7 @@ type JaegerConfig = jaegerclient.TracingConfig;
 
 export type ParentSpanSource = express.Request | {
     context: unknown,
-}
+};
 
 export class QTracer {
     static config: QConfig;

@@ -10,7 +10,7 @@ const { version } = packageJson();
 
 type Info = {
     version: string,
-}
+};
 
 type ListenerStat = {
     filter: string,
@@ -18,7 +18,7 @@ type ListenerStat = {
     queueSize: number,
     eventCount: number,
     secondsActive: number,
-}
+};
 
 type CollectionStat = {
     name: string,
@@ -27,19 +27,19 @@ type CollectionStat = {
     maxQueueSize: number,
     subscriptions: ListenerStat[],
     waitFor: ListenerStat[],
-}
+};
 
 type Stat = {
     waitForCount: number,
     subscriptionCount: number,
     collections: CollectionStat[]
-}
+};
 
 type CollectionSummary = {
     name: string,
     count: number,
     indexes: string[],
-}
+};
 
 // Query
 
@@ -101,7 +101,7 @@ type UpdateConfigArgs = AccessArgs & {
     config?: {
         debugLatency?: number,
     }
-}
+};
 
 async function updateConfig(_parent: Record<string, unknown>, args: UpdateConfigArgs, context: GraphQLRequestContextEx): Promise<boolean> {
     mamAccessRequired(context, args);

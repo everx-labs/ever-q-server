@@ -242,7 +242,7 @@ function main(schemaDef: TypeDef): {
         input QueryOrderBy {
             """
             Path to field which must be used as a sort criteria.
-            If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+            If field resides deep in structure path items must be separated with dot (e.g. "foo.bar.baz").
             """
             path: String
             "Sort order direction"
@@ -314,9 +314,9 @@ function main(schemaDef: TypeDef): {
             if (join !== undefined) {
                 const suffix = field.arrayDepth > 0 ? "Array" : "";
                 const params = [
-                    `'${join.on}'`,
-                    `'${join.refOn}'`,
-                    `'${field.type.collection ?? ""}'`,
+                    `"${join.on}"`,
+                    `"${join.refOn}"`,
+                    `"${field.type.collection ?? ""}"`,
                 ];
                 if (field.arrayDepth === 0) {
                     const extraFields = (join.preCondition ?? "")
@@ -324,7 +324,7 @@ function main(schemaDef: TypeDef): {
                         .map(x => x.trim())
                         .filter(x => x.startsWith("parent."))
                         .map(x => x.substr(7));
-                    params.push(extraFields.length > 0 ? `['${extraFields.join("', '")}']` : "[]");
+                    params.push(extraFields.length > 0 ? `["${extraFields.join("\", \"")}"]` : "[]");
                 }
                 params.push(`() => ${field.type.name}`);
                 typeDeclaration = `join${suffix}(${params.join(", ")})`;
@@ -341,10 +341,10 @@ function main(schemaDef: TypeDef): {
                 js.writeLn(`    ${field.name}: ${typeDeclaration},`);
                 const enumDef = field.enumDef;
                 if (enumDef !== undefined) {
-                    js.writeLn(`    ${field.name}_name: enumName('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
+                    js.writeLn(`    ${field.name}_name: enumName("${field.name}", ${stringifyEnumValues(enumDef.values)}),`);
                 }
                 if (field.formatter !== undefined) {
-                    js.writeLn(`    ${field.name}_string: stringCompanion('${field.name}'),`);
+                    js.writeLn(`    ${field.name}_string: stringCompanion("${field.name}"),`);
                 }
             }
         });
@@ -360,8 +360,8 @@ function main(schemaDef: TypeDef): {
             __resolveType(obj, context, info) {
         `);
         type.fields.forEach((variant) => {
-            js.writeLn(`        if ('${variant.name}' in obj) {`);
-            js.writeLn(`            return '${unionVariantType(type, variant)}';`);
+            js.writeLn(`        if ("${variant.name}" in obj) {`);
+            js.writeLn(`            return "${unionVariantType(type, variant)}";`);
             js.writeLn("        }");
         });
         js.writeBlockLn(`
@@ -448,9 +448,9 @@ function main(schemaDef: TypeDef): {
             js.writeLn("                }");
 
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, '${refOn}', args, context);`);
+                js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, "${refOn}", args, context);`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.data.${collection}.waitForDocs(parent.${on}, '${refOn}', args, context);`);
+                js.writeLn(`                return context.data.${collection}.waitForDocs(parent.${on}, "${refOn}", args, context);`);
             } else {
                 throw "Joins on a nested arrays does not supported.";
             }
@@ -470,7 +470,7 @@ function main(schemaDef: TypeDef): {
         enumFields.forEach((field) => {
             const enumDef = field.enumDef;
             if (enumDef !== undefined) {
-                js.writeLn(`            ${field.name}_name: createEnumNameResolver('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
+                js.writeLn(`            ${field.name}_name: createEnumNameResolver("${field.name}", ${stringifyEnumValues(enumDef.values)}),`);
             }
         });
         js.writeLn("        },");
@@ -511,7 +511,7 @@ function main(schemaDef: TypeDef): {
                 } else {
                     typeName = "string";
                 }
-                js.writeLn(`scalarFields.set('${path}', { type: '${typeName}', path: '${docPath}' });`);
+                js.writeLn(`scalarFields.set("${path}", { type: "${typeName}", path: "${docPath}" });`);
             }
                 break;
             case "struct":

@@ -14,12 +14,12 @@ import ArangoChair from "arangochair";
 
 type ArangoCollectionDescr = {
     name: string,
-}
+};
 
 type Subscription = {
     collection: string,
     listener: (doc: QDoc, event: QDataEvent) => void
-}
+};
 
 export class ArangoProvider implements QDataProvider {
     log: QLog;

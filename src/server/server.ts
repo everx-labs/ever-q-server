@@ -86,14 +86,14 @@ type QOptions = {
     config: QConfig,
     logs: QLogs,
     data?: QBlockchainData,
-}
+};
 
 type EndPoint = {
     path: string,
     resolvers: IResolvers,
     typeDefFileNames: string[],
     supportSubscriptions: boolean,
-}
+};
 
 import v8 from "v8";
 
@@ -165,12 +165,12 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
 
 type QConnectionContext = ConnectionContext & {
     activeRequests?: RequestController[],
-}
+};
 
 type QConnectionParams = {
     accessKey?: string | null,
     accesskey?: string | null,
-}
+};
 
 export default class TONQServer {
     config: QConfig;

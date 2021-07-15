@@ -16,7 +16,7 @@ export enum AggregationFn {
 export type FieldAggregation = {
     field: string,
     fn: AggregationFn,
-}
+};
 
 export abstract class AggregationQuery {
     abstract getQueryText(): string;

@@ -5,12 +5,12 @@ import { QError } from "./utils";
 export type AccessKey = {
     key: string,
     restrictToAccounts?: string[],
-}
+};
 
 export type AccessRights = {
     granted: boolean,
     restrictToAccounts: string[],
-}
+};
 
 export const grantedAccess: AccessRights = Object.freeze({
     granted: true,
@@ -27,13 +27,13 @@ export type RequestWithAccessHeaders = {
         accesskey?: string,
         accessKey?: string,
     }
-}
+};
 
 type GraphQLConnection = {
     context?: {
         accessKey?: string,
     }
-}
+};
 
 export class Auth {
     config: QConfig;

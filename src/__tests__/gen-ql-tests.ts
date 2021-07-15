@@ -24,7 +24,7 @@ type Blocks = {
         id: string,
         master: unknown[] | null,
     }[]
-}
+};
 test("remove nulls", async () => {
     const data = await testServerQuery<Blocks>("query { blocks { id master { min_shard_gen_utime } } }");
     expect(data.blocks.length).toBeGreaterThan(0);
