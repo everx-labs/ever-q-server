@@ -577,7 +577,12 @@ export class QDataCollection {
             };
             try {
                 const accessRights = await requireGrantedAccess(context, args);
-                const query = this.createDatabaseQuery(args, info.fieldNodes[0].selectionSet, accessRights);
+                const query = this.createDatabaseQuery(
+                    args,
+                    info.fieldNodes[0].selectionSet,
+                    accessRights,
+                    context.config.filter,
+                );
                 if (query === null) {
                     this.log.debug("QUERY", args, 0, "SKIPPED", context.remoteAddress);
                     return [];
