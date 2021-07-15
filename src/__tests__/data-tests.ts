@@ -23,12 +23,20 @@ test("Query without id should be filtered by limit", async () => {
     });
     await server.start();
     const client = createTestClient({ useWebSockets: true });
-    let messages = (await client.query({
+    const messages = (await client.query({
         query: gql`query { messages(limit: 1){value created_at created_lt} }`,
     }));
     expect(messages.data.messages.length).toEqual(1);
     server.stop();
 });
+
+type Accounts = {
+    accounts: { id: string }[],
+};
+
+type Transactions = {
+    transactions: { id: string }[],
+};
 
 test("Data Broker", async () => {
     const mut = mock([
@@ -85,7 +93,7 @@ test("Data Broker", async () => {
     });
     await server.start();
     const client = createTestClient({ useWebSockets: true });
-    const accounts: any[] = (await client.query({
+    const accounts = (await client.query<Accounts>({
         query: gql`query { accounts(orderBy:{path:"id"}) { id } }`,
     })).data.accounts;
     expect(accounts.map(x => x.id).join(" ")).toEqual("a1 a2");
@@ -96,7 +104,7 @@ test("Data Broker", async () => {
     expect(cache.getCount).toEqual(0);
     expect(cache.setCount).toEqual(0);
 
-    let transactions: any[] = (await client.query({
+    let transactions = (await client.query<Transactions>({
         query: gql`query { transactions(orderBy:{path:"id"}) { id lt } }`,
     })).data.transactions;
     expect(transactions.map(x => x.id).join(" ")).toEqual("t1 t2 t3 t4");
@@ -137,7 +145,7 @@ test("Limit of combined data", async () => {
             balance: "1",
         },
     ]);
-    const withLt = (prefix: string, count: number, id: number, lt: number): any[] => {
+    const withLt = (prefix: string, count: number, id: number, lt: number): { _key: string, lt: number }[] => {
         const data = [];
         for (let i = 0; i < count; i += 1) {
             data.push({
@@ -172,7 +180,7 @@ test("Limit of combined data", async () => {
     });
     await server.start();
     const client = createTestClient({ useWebSockets: true });
-    let transactions = (await client.query({
+    const transactions = (await client.query({
         query: gql`query { transactions(orderBy:{path:"id"} limit:100) { id lt } }`,
     })).data.transactions;
 

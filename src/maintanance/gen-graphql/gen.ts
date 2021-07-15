@@ -15,7 +15,7 @@ export function multiline(s: string): string {
     if (lines.length < 2) {
         return s;
     }
-    let leadingSpacesToRemove = Math.min(...lines.filter(l => l.trim() !== "").map(leadingSpacesCount));
+    const leadingSpacesToRemove = Math.min(...lines.filter(l => l.trim() !== "").map(leadingSpacesCount));
     for (let i = 1; i < lines.length; i += 1) {
         const leadingSpaces = leadingSpacesCount(lines[i]);
         if (leadingSpaces === lines[i].length) {
@@ -40,10 +40,6 @@ export class Writer {
         this.parts = [];
     }
 
-    clear() {
-        this.parts = [];
-    }
-
     generated(): string {
         return this.parts.join("");
     }
@@ -54,10 +50,6 @@ export class Writer {
 
     writeLn(...strings: string[]) {
         this.write(...strings, "\n");
-    }
-
-    writeBlock(text: string) {
-        this.write(multiline(text));
     }
 
     writeBlockLn(text: string) {

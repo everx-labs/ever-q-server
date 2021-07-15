@@ -93,7 +93,7 @@ export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
 };
 
 
-Object.values(INDEXES).forEach((collection: any) => {
+Object.values(INDEXES).forEach((collection: { indexes: QIndexInfo[] }) => {
     collection.indexes = collection.indexes.concat({ fields: ["_key"] });
 });
 
@@ -221,8 +221,8 @@ export default class QBlockchainData extends QData {
                 path: field,
                 direction: "DESC",
             }],
-        ));
-        const maxTime = (result && result.length > 0 && result[0]) ? (result[0].maxTime || 0) : 0;
+        )) as unknown as (({ maxTime: number }[]) | undefined | null);
+        const maxTime = result?.[0]?.maxTime ?? 0;
         return this.updateCollectionLatency(latency, maxTime);
 
     }

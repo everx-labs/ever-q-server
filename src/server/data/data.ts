@@ -39,7 +39,7 @@ export type QDataProviders = {
     mutable: QDataProvider,
     immutable: QDataProvider,
     counterparties: QDataProvider,
-}
+};
 
 export type QDataOptions = {
     providers: QDataProviders,
@@ -50,7 +50,7 @@ export type QDataOptions = {
     tracer: Tracer,
     stats: IStats,
     isTests: boolean,
-}
+};
 
 export default class QData {
     // Dependencies
@@ -130,7 +130,7 @@ export default class QData {
         await this.providers.immutable.hotUpdate();
     }
 
-    async query(provider: QDataProvider, text: string, vars: { [name: string]: any }, orderBy: OrderBy[]) {
+    async query(provider: QDataProvider, text: string, vars: Record<string, unknown>, orderBy: OrderBy[]) {
         return wrap(this.log, "QUERY", {
             text,
             vars,

@@ -1,28 +1,41 @@
 import { $$asyncIterator } from "iterall";
 import type { AccessRights } from "../auth";
-import { selectFields } from "../filter/filters";
+import {
+    CollectionFilter,
+    selectFields,
+} from "../filter/filters";
 import type {
     FieldSelection,
     QType,
 } from "../filter/filters";
+import { QDoc } from "./data-provider";
+
+type QDocTransaction = {
+    account_addr: string,
+};
+
+type QDocMessage = {
+    src: string,
+    dst: string,
+};
 
 export class QDataListener {
     docType: QType;
-    filter: any;
-    authFilter: ((doc: any) => boolean) | null;
+    filter: CollectionFilter;
+    authFilter: ((doc: QDoc) => boolean) | null;
 
     constructor(
         collectionName: string,
         docType: QType,
         accessRights: AccessRights,
-        filter: any,
+        filter: CollectionFilter,
     ) {
         this.docType = docType;
         this.authFilter = QDataListener.getAuthFilter(collectionName, accessRights);
         this.filter = filter;
     }
 
-    static getAuthFilter(collectionName: string, accessRights: AccessRights): ((doc: any) => boolean) | null {
+    static getAuthFilter(collectionName: string, accessRights: AccessRights): ((doc: QDoc) => boolean) | null {
         if (accessRights.restrictToAccounts.length === 0) {
             return null;
         }
@@ -31,15 +44,15 @@ export class QDataListener {
         case "accounts":
             return (doc) => accounts.has(doc._key);
         case "transactions":
-            return (doc) => accounts.has(doc.account_addr);
+            return (doc) => accounts.has((doc as unknown as QDocTransaction).account_addr);
         case "messages":
-            return (doc) => accounts.has(doc.src) || accounts.has(doc.dst);
+            return (doc) => accounts.has((doc as unknown as QDocMessage).src) || accounts.has((doc as unknown as QDocMessage).dst);
         default:
-            return (_) => false;
+            return () => false;
         }
     }
 
-    isFiltered(doc: any): boolean {
+    isFiltered(doc: QDoc): boolean {
         if (this.authFilter && !this.authFilter(doc)) {
             return false;
         }
@@ -47,12 +60,15 @@ export class QDataListener {
     }
 }
 
-//$FlowFixMe
-export class QDataSubscription extends QDataListener implements AsyncIterator<any> {
+type QSubscriptionItem = {
+    [collection: string]: QDoc
+};
+
+export class QDataSubscription extends QDataListener implements AsyncIterator<QSubscriptionItem> {
     collectionName: string;
     selection: FieldSelection[];
-    pullQueue: ((value: any) => void)[];
-    pushQueue: any[];
+    pullQueue: ((result: IteratorResult<QSubscriptionItem>) => void)[];
+    pushQueue: QSubscriptionItem[];
     running: boolean;
     onClose: (() => void) | null;
 
@@ -60,7 +76,7 @@ export class QDataSubscription extends QDataListener implements AsyncIterator<an
         collectionName: string,
         docType: QType,
         accessRights: AccessRights,
-        filter: any,
+        filter: CollectionFilter,
         selection: FieldSelection[],
     ) {
         super(collectionName, docType, accessRights, filter);
@@ -72,10 +88,10 @@ export class QDataSubscription extends QDataListener implements AsyncIterator<an
         this.onClose = null;
     }
 
-    pushDocument(doc: any) {
+    pushDocument(doc: QDoc) {
         if (this.isFiltered(doc) && !this.isQueueOverflow()) {
             const reduced = selectFields(doc, this.selection);
-            this.pushValue({ [this.collectionName]: reduced });
+            this.pushValue({ [this.collectionName]: reduced as QDoc });
         }
     }
 
@@ -87,43 +103,44 @@ export class QDataSubscription extends QDataListener implements AsyncIterator<an
         return this.pushQueue.length + this.pullQueue.length;
     }
 
-    pushValue(value: any) {
+    pushValue(item: QSubscriptionItem) {
         if (this.pullQueue.length !== 0) {
             this.pullQueue.shift()?.(this.running
                 ? {
-                    value,
+                    value: item,
                     done: false,
                 }
                 : {
-                    value: undefined,
+                    value: item,
                     done: true,
                 },
             );
         } else {
-            this.pushQueue.push(value);
+            this.pushQueue.push(item);
         }
     }
 
-    async next(): Promise<any> {
+    async next(): Promise<IteratorResult<QSubscriptionItem>> {
         return new Promise((resolve) => {
-            if (this.pushQueue.length !== 0) {
-                resolve(this.running
+            const dequeued = this.pushQueue.shift();
+            if (dequeued !== undefined) {
+                const item: IteratorResult<QSubscriptionItem> = this.running
                     ? {
-                        value: this.pushQueue.shift(),
+                        value: dequeued,
                         done: false,
                     }
                     : {
                         value: undefined,
                         done: true,
-                    },
-                );
+                    };
+                resolve(item);
             } else {
                 this.pullQueue.push(resolve);
             }
         });
     }
 
-    async return(): Promise<any> {
+    async return(): Promise<IteratorResult<QSubscriptionItem>> {
         if (this.onClose) {
             this.onClose();
         }
@@ -134,7 +151,7 @@ export class QDataSubscription extends QDataListener implements AsyncIterator<an
         };
     }
 
-    async throw(error?: any): Promise<any> {
+    async throw(error?: Error): Promise<IteratorResult<QSubscriptionItem>> {
         if (this.onClose) {
             this.onClose();
         }
@@ -142,7 +159,6 @@ export class QDataSubscription extends QDataListener implements AsyncIterator<an
         return Promise.reject(error);
     }
 
-    //$FlowFixMe
     [$$asyncIterator]() {
         return this;
     }

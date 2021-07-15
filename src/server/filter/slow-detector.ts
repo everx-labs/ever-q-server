@@ -1,5 +1,6 @@
 import type { QIndexInfo } from "../data/data-provider";
 import {
+    CollectionFilter,
     indexToString,
     orderByToString,
     QParams,
@@ -130,7 +131,7 @@ function getSlowReason(
 function getSlowReasonForOrOperand(
     collectionIndexes: QIndexInfo[],
     type: QType,
-    filter: any,
+    filter: CollectionFilter,
     orderBy: OrderBy[],
 ): SlowReason | null {
     const params = new QParams({
@@ -180,13 +181,13 @@ export type SlowReason = {
     fields: string[],
     selectedIndexes: string[],
     availableIndexes: string[],
-}
+};
 
 export function explainSlowReason(
     _collectionName: string,
     collectionIndexes: QIndexInfo[],
     type: QType,
-    filter: any,
+    filter: CollectionFilter,
     orderBy: OrderBy[],
 ): SlowReason | null {
     const orOperands = splitOr(filter);
@@ -208,7 +209,7 @@ export function isFastQuery(
     collectionName: string,
     collectionIndexes: QIndexInfo[],
     type: QType,
-    filter: any,
+    filter: CollectionFilter,
     orderBy: OrderBy[],
     log: QLog | null,
 ): boolean {

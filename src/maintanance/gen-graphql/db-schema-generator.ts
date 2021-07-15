@@ -17,7 +17,7 @@
 import schemaDef from "../../server/schema/db-schema";
 import gen from "./ql-js-generator";
 
-const fs = require("fs");
+import fs from "fs";
 
 const {
     ql,
@@ -25,5 +25,5 @@ const {
 } = gen(schemaDef);
 
 // Please ensure that new files are added to package.json "pre-commit" command as well
-fs.writeFileSync(`./res/type-defs-generated.graphql`, ql);
-fs.writeFileSync(`./src/server/graphql/resolvers-generated.ts`, js);
+fs.writeFileSync("./res/type-defs-generated.graphql", ql);
+fs.writeFileSync("./src/server/graphql/resolvers-generated.ts", js);

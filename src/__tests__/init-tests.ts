@@ -1,12 +1,18 @@
 import { InMemoryCache } from "apollo-cache-inmemory";
-import { split } from "apollo-link";
-import { HttpLink } from "apollo-link-http";
+import {
+    DocumentNode,
+    split,
+} from "apollo-link";
+import {
+    FetchOptions,
+    HttpLink,
+} from "apollo-link-http";
 import { WebSocketLink } from "apollo-link-ws";
 import { getMainDefinition } from "apollo-utilities";
 import { SubscriptionClient } from "subscriptions-transport-ws";
 import { ApolloClient } from "apollo-client";
 
-import fetch from "node-fetch";
+import nodeFetch, { RequestInit } from "node-fetch";
 import WebSocket from "ws";
 import QBlockchainData, { INDEXES } from "../server/data/blockchain";
 import {
@@ -14,13 +20,14 @@ import {
     overrideDefs,
     parseDataConfig,
     programOptions,
+    QConfig,
 } from "../server/config";
 import type { QDataProviders } from "../server/data/data";
 import type {
     QDataCache,
-    QDataEvent,
     QDataProvider,
     QIndexInfo,
+    QResult,
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
 import TONQServer, { createProviders } from "../server/server";
@@ -33,9 +40,21 @@ import {
     grantedAccess,
 } from "../server/auth";
 import { QDataCollection } from "../server/data/collection";
-import { OrderBy } from "../server/filter/filters";
+import {
+    OrderBy,
+} from "../server/filter/filters";
 import { gql } from "apollo-server";
 import { FieldAggregation } from "../server/data/aggregations";
+import {
+    FieldNode,
+    OperationDefinitionNode,
+} from "graphql";
+import {
+    httpUrl,
+    assignDeep,
+    cloneDeep,
+} from "../server/utils";
+import fetch from "node-fetch";
 
 jest.setTimeout(100000);
 
@@ -49,7 +68,7 @@ export const testConfig = createConfig(
 let testServer: TONQServer | null = null;
 
 afterAll(async () => {
-    if (testServer) {
+    if (testServer !== null) {
         await testServer.stop();
         testServer = null;
     }
@@ -60,8 +79,8 @@ export function normalized(s: string): string {
 }
 
 export function selectionInfo(r: string) {
-    const operation = gql([`query { collection { ${r} } }`] as any).definitions[0];
-    const collection = (operation as any).selectionSet.selections[0];
+    const operation = gql(`query { collection { ${r} } }`).definitions[0] as OperationDefinitionNode;
+    const collection = operation.selectionSet.selections[0] as FieldNode;
     return collection.selectionSet;
 }
 
@@ -74,7 +93,7 @@ export function queryText(collection: QDataCollection, result: string, orderBy?:
             },
             selectionInfo(result),
             grantedAccess,
-        )?.text || "",
+        )?.text ?? "",
     );
 }
 
@@ -84,20 +103,27 @@ export function aggregationQueryText(collection: QDataCollection, fields: FieldA
             {},
             fields,
             grantedAccess,
-        )?.text || "",
+        )?.text ?? "",
     );
 }
 
-export function createTestClient(options: { useWebSockets: boolean }): ApolloClient<{}> {
+interface SubscriptionClientPrivate {
+    maxConnectTimeGenerator: {
+        duration(): number,
+        max: number,
+    }
+}
+
+export function createTestClient(options: { useWebSockets: boolean }): ApolloClient<unknown> {
     const useHttp = !options.useWebSockets;
 
     const url = `${testConfig.server.host}:${testConfig.server.port}/graphql`;
     const subscriptionClient = new SubscriptionClient(`ws://${url}`, {}, WebSocket);
-    (subscriptionClient as any).maxConnectTimeGenerator.duration = () => {
-        return (subscriptionClient as any).maxConnectTimeGenerator.max;
+    (subscriptionClient as unknown as SubscriptionClientPrivate).maxConnectTimeGenerator.duration = () => {
+        return (subscriptionClient as unknown as SubscriptionClientPrivate).maxConnectTimeGenerator.max;
     };
 
-    const isSubscription = ({ query }: any) => {
+    const isSubscription = ({ query }: { query: DocumentNode }) => {
         const definition = getMainDefinition(query);
         return (
             definition.kind === "OperationDefinition"
@@ -108,11 +134,11 @@ export function createTestClient(options: { useWebSockets: boolean }): ApolloCli
     const wsLink = new WebSocketLink(subscriptionClient);
     const httpLink = useHttp
         ? new HttpLink({
-            uri: `http://${url}`,
-            fetch: fetch as any,
+            uri: httpUrl(url),
+            fetch: nodeFetch as unknown as FetchOptions["fetch"],
         })
         : null;
-    const link = httpLink
+    const link = httpLink !== null
         ? split(isSubscription, wsLink, httpLink)
         : wsLink;
     const client = new ApolloClient({
@@ -127,45 +153,45 @@ export function createTestClient(options: { useWebSockets: boolean }): ApolloCli
             },
         },
     });
-    (client as any).close = () => {
+    (client as unknown as { close: () => void }).close = () => {
         client.stop();
         subscriptionClient.client.close();
     };
     return client;
 }
 
-export async function testServerRequired(override?: any): Promise<TONQServer> {
-    if (testServer) {
+export async function testServerRequired(override?: Record<string, unknown>): Promise<TONQServer> {
+    if (testServer !== null) {
         return testServer;
     }
+    const config = cloneDeep(testConfig) as QConfig;
+    assignDeep(config, override);
     testServer = new TONQServer({
-        config: {
-            ...testConfig,
-            ...override,
-        },
+        config,
         logs: new QLogs(),
     });
     await testServer.start();
     return testServer;
 }
 
-export async function testServerQuery(query: string, variables?: { [name: string]: any }, fetchOptions?: any): Promise<any> {
+export async function testServerQuery<T>(query: string, variables?: Record<string, unknown>, fetchOptions?: RequestInit): Promise<T> {
     await testServerRequired();
     try {
-        const response = await fetch(`http://${testConfig.server.host}:${testConfig.server.port}/graphql`, {
+        const response = await fetch(httpUrl(`${testConfig.server.host}:${testConfig.server.port}/graphql`), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 query,
-                variables: variables || {},
+                variables: variables ?? {},
             }),
             ...fetchOptions,
         });
         const responseJson = await response.json();
         const errors = responseJson.errors;
         if (errors) {
+            // noinspection ExceptionCaughtLocallyJS
             throw errors.length === 1
                 ? errors[0]
                 : {
@@ -177,7 +203,7 @@ export async function testServerQuery(query: string, variables?: { [name: string
     } catch (error) {
         if (error.name === "AbortError") {
             console.log(">>>", "Request aborted.");
-            return [];
+            return undefined as unknown as T;
         }
         throw error;
     }
@@ -186,18 +212,18 @@ export async function testServerQuery(query: string, variables?: { [name: string
 export async function testServerStop() {
     const server = testServer;
     testServer = null;
-    if (server) {
+    if (server !== null) {
         await server.stop();
     }
 }
 
 export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
-    const dataMut = process.env.Q_DATA_MUT || "http://localhost:8901";
-    const dataHot = process.env.Q_DATA_HOT || dataMut;
-    const dataCold = process.env.Q_DATA_COLD || "";
-    const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT || dataMut;
-    const slowQueriesHot = process.env.Q_SLOW_QUERIES_HOT || slowQueriesMut;
-    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD || "";
+    const dataMut = process.env.Q_DATA_MUT ?? "http://localhost:8901";
+    const dataHot = process.env.Q_DATA_HOT ?? dataMut;
+    const dataCold = process.env.Q_DATA_COLD ?? "";
+    const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT ?? dataMut;
+    const slowQueriesHot = process.env.Q_SLOW_QUERIES_HOT ?? slowQueriesMut;
+    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD ?? "";
     const {
         data,
         slowQueriesData,
@@ -220,19 +246,18 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
     });
 }
 
-export class MockProvider implements QDataProvider {
-    data: any;
+export class MockProvider<T extends QResult> implements QDataProvider {
+    data: T[];
     queryCount: number;
     hotUpdateCount: number;
 
-    constructor(data: any) {
+    constructor(data: T[]) {
         this.data = data;
         this.queryCount = 0;
         this.hotUpdateCount = 0;
     }
 
-    async start(): Promise<any> {
-        return Promise.resolve();
+    async start(): Promise<void> {
     }
 
     async stop(): Promise<void> {
@@ -242,31 +267,29 @@ export class MockProvider implements QDataProvider {
         return Promise.resolve(INDEXES[collection].indexes);
     }
 
-    async loadFingerprint(): Promise<any> {
+    async loadFingerprint(): Promise<unknown> {
         return Promise.resolve([{ data: this.data.length }]);
     }
 
-    async hotUpdate(): Promise<any> {
+    async hotUpdate(): Promise<void> {
         this.hotUpdateCount += 1;
-        return Promise.resolve();
     }
 
-    query(_text: string, _vars: { [name: string]: any }): Promise<any> {
+    async query(): Promise<QResult[]> {
         this.queryCount += 1;
         return this.data;
     }
 
-    subscribe(_collection: string, _listener: (doc: any, event: QDataEvent) => void): any {
-
+    subscribe(): unknown {
+        return {};
     }
 
-    unsubscribe(_subscription: any): void {
-
+    unsubscribe(): void {
     }
 }
 
-export class MockCache implements QDataCache {
-    data: Map<string, any>;
+export class MockCache<T> implements QDataCache {
+    data: Map<string, T>;
     getCount: number;
     setCount: number;
     lastKey: string;
@@ -278,21 +301,20 @@ export class MockCache implements QDataCache {
         this.lastKey = "";
     }
 
-    get(key: string): Promise<any> {
+    async get(key: string): Promise<T | undefined> {
         this.lastKey = key;
         this.getCount += 1;
-        return Promise.resolve(this.data.get(key));
+        return this.data.get(key);
     }
 
-    set(key: string, value: any): Promise<void> {
+    async set(key: string, value: T): Promise<void> {
         this.lastKey = key;
         this.setCount += 1;
         this.data.set(key, value);
-        return Promise.resolve();
     }
 }
 
-export function mock(data: any): MockProvider {
+export function mock<T extends QResult>(data: T[]): MockProvider<T> {
     return new MockProvider(data);
 }
 

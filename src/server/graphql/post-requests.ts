@@ -4,15 +4,18 @@ import {
     Producer,
 } from "kafkajs";
 import {
-    Span,
     FORMAT_TEXT_MAP,
+    Span,
 } from "opentracing";
 import type { QConfig } from "../config";
+import {
+    ensureProtocol,
+    RequestsMode,
+} from "../config";
 import { requireGrantedAccess } from "../data/collection";
-import { Auth } from "../auth";
-import { ensureProtocol } from "../config";
-import fetch from "node-fetch";
 import type { AccessRights } from "../auth";
+import { Auth } from "../auth";
+import fetch, { RequestInit } from "node-fetch";
 import { QTracer } from "../tracer";
 import { QError } from "../utils";
 import type { GraphQLRequestContextEx } from "./context";
@@ -21,12 +24,19 @@ type Request = {
     id: string,
     body: string,
     expireAt: number,
-}
+};
 
-async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx, _span: Span): Promise<void> {
+type RequestInitEx = RequestInit & {
+    mode: string,
+    cache: string,
+    credentials: string,
+    referrer: string,
+};
+
+async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx): Promise<void> {
     const config = context.config.requests;
     const url = `${ensureProtocol(config.server, "http")}/topics/${config.topic}`;
-    const response = await fetch(url, {
+    const request: RequestInitEx = {
         method: "POST",
         mode: "cors",
         cache: "no-cache",
@@ -42,7 +52,8 @@ async function postRequestsUsingRest(requests: Request[], context: GraphQLReques
                 value: request.body,
             })),
         }),
-    } as any);
+    };
+    const response = await fetch(url, request);
     if (response.status !== 200) {
         const message = `Post requests failed: ${await response.text()}`;
         throw new Error(message);
@@ -50,9 +61,9 @@ async function postRequestsUsingRest(requests: Request[], context: GraphQLReques
 }
 
 async function postRequestsUsingKafka(requests: Request[], context: GraphQLRequestContextEx, span: Span): Promise<void> {
-    const ensureShared = async (name: string, createValue: () => Promise<any>) => {
+    const ensureShared = async <T>(name: string, createValue: () => Promise<T>): Promise<T> => {
         if (context.shared.has(name)) {
-            return context.shared.get(name);
+            return context.shared.get(name) as T;
         }
         const value = await createValue();
         context.shared.set(name, value);
@@ -119,7 +130,7 @@ async function checkPostRestrictions(
 }
 
 async function postRequests(
-    _parent: any,
+    _parent: Record<string, unknown>,
     args: { requests: Request[], accessKey?: string },
     context: GraphQLRequestContextEx,
 ): Promise<string[]> {
@@ -151,8 +162,8 @@ async function postRequests(
             return postSpan;
         });
         try {
-            if (context.config.requests.mode === "rest") {
-                await postRequestsUsingRest(requests, context, span);
+            if (context.config.requests.mode === RequestsMode.REST) {
+                await postRequestsUsingRest(requests, context);
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }

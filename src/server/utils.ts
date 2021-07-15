@@ -3,17 +3,21 @@ import fs from "fs";
 import path from "path";
 import { createHash } from "crypto";
 
-export function packageJson(): any {
+export function packageJson(): Record<string, unknown> {
     let testPath = path.resolve(__dirname);
     const packagePath = () => path.resolve(testPath, "package.json");
-    while (testPath && !fs.existsSync(packagePath())) {
+    while (testPath !== "" && !fs.existsSync(packagePath())) {
         testPath = path.dirname(testPath);
     }
     return JSON.parse(fs.readFileSync(packagePath(), "utf8"));
 }
 
-export function cleanError(error: any): any {
-    if ("ArangoError" in error) {
+export function cleanError(error: Error & {
+    ArangoError?: Error,
+    request?: unknown,
+    response?: unknown,
+}): Error {
+    if (error.ArangoError !== undefined) {
         return error.ArangoError;
     }
     delete error.request;
@@ -33,9 +37,9 @@ enum QErrorCode {
 export class QError extends Error {
     source: string;
     code: number;
-    data?: any;
+    data?: Record<string, unknown>;
 
-    constructor(code: number, message: string, data?: any) {
+    constructor(code: number, message: string, data?: Record<string, unknown>) {
         super(message);
         this.source = "graphql";
         this.code = code;
@@ -45,7 +49,7 @@ export class QError extends Error {
     }
 
     static messageExpired(id: string, expiredAt: number): Error {
-        return QError.create(QErrorCode.MESSAGE_EXPIRED, `Message expired`, {
+        return QError.create(QErrorCode.MESSAGE_EXPIRED, "Message expired", {
             id,
             expiredAt,
             now: Date.now(),
@@ -53,12 +57,12 @@ export class QError extends Error {
     }
 
     static queryTerminatedOnTimeout(): Error {
-        return QError.create(QErrorCode.QUERY_TERMINATED_ON_TIMEOUT, `Query terminated on timeout`, {
+        return QError.create(QErrorCode.QUERY_TERMINATED_ON_TIMEOUT, "Query terminated on timeout", {
             now: Date.now(),
         });
     }
 
-    static create(code: number, message: string, data?: any): Error {
+    static create(code: number, message: string, data?: Record<string, unknown>): Error {
         return new QError(code, message, data);
     }
 
@@ -79,23 +83,24 @@ export class QError extends Error {
 
     static auth(error: QError) {
         return QError.create(QErrorCode.AUTH_FAILED,
-            error.message || (error as any).description,
+            error.message ?? (error as { description?: string }).description ?? "",
             { authErrorCode: error.code },
         );
     }
 }
 
-function isInternalServerError(error: Error): boolean {
-    if ("type" in error && (error as any).type === "system") {
+function isInternalServerError(error: Error & {
+    type?: string,
+    errno?: unknown,
+    syscall?: unknown,
+}): boolean {
+    if (error.type === "system") {
         return true;
     }
-    if ("errno" in error && "syscall" in error) {
-        return true;
-    }
-    return false;
+    return error.errno !== undefined && error.syscall !== undefined;
 }
 
-export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Promise<R>) {
+export async function wrap<R>(log: QLog, op: string, args: unknown, fetch: () => Promise<R>) {
     try {
         return await fetch();
     } catch (err) {
@@ -108,45 +113,8 @@ export async function wrap<R>(log: QLog, op: string, args: any, fetch: () => Pro
     }
 }
 
-export class RegistryMap<T> {
-    name: string;
-    items: Map<number, T>;
-    lastId: number;
-
-    constructor(name: string) {
-        this.name = name;
-        this.lastId = 0;
-        this.items = new Map();
-    }
-
-    add(item: T): number {
-        let id = this.lastId;
-        do {
-            id = id < Number.MAX_SAFE_INTEGER ? id + 1 : 1;
-        } while (this.items.has(id));
-        this.lastId = id;
-        this.items.set(id, item);
-        return id;
-    }
-
-    remove(id: number) {
-        if (!this.items.delete(id)) {
-            console.error(`Failed to remove ${this.name}: item with id [${id}] does not exists`);
-        }
-    }
-
-    entries(): [number, T][] {
-        return [...this.items.entries()];
-    }
-
-    values(): T[] {
-        return [...this.items.values()];
-    }
-}
-
-export function toLog(value: any, objs?: Object[]): any {
-    const typeOf = typeof value;
-    switch (typeOf) {
+export function toLog(value: unknown, objs?: unknown[]): unknown {
+    switch (typeof value) {
     case "undefined":
     case "boolean":
     case "number":
@@ -160,19 +128,19 @@ export function toLog(value: any, objs?: Object[]): any {
         return value;
     case "function":
         return undefined;
-    default:
+    default: {
         if (value === null) {
             return value;
         }
-        if (objs && objs.includes(value)) {
+        if (objs !== undefined && objs.includes(value)) {
             return undefined;
         }
-        const newObjs = objs ? [...objs, value] : [value];
+        const newObjs = objs !== undefined ? [...objs, value] : [value];
         if (Array.isArray(value)) {
             return value.map(x => toLog(x, newObjs));
         }
-        const valueToLog: { [name: string]: any } = {};
-        Object.entries(value).forEach(([n, v]) => {
+        const valueToLog: Record<string, unknown> = {};
+        Object.entries(value as Record<string, unknown>).forEach(([n, v]) => {
             const propertyValueToLog = toLog(v, newObjs);
             if (propertyValueToLog !== undefined) {
                 valueToLog[n] = propertyValueToLog;
@@ -180,8 +148,48 @@ export function toLog(value: any, objs?: Object[]): any {
         });
         return valueToLog;
     }
+    }
 }
 
 export function hash(...keys: string[]): string {
     return createHash("md5").update(keys.join("")).digest("hex");
 }
+
+export function httpUrl(address: string): string {
+    const http = "http";
+    return `${http}://${address}`;
+}
+
+function isObject(test: unknown): boolean {
+    return (test !== null && test !== undefined && typeof test === "object" && !Array.isArray(test));
+}
+
+export function assignDeep(target: Record<string, unknown>, source: Record<string, unknown> | undefined) {
+    if (!source) {
+        return;
+    }
+    for (const [name, value] of Object.entries(source)) {
+        if (isObject(value) && isObject(target[name])) {
+            assignDeep(target[name] as Record<string, unknown>, value as Record<string, unknown>);
+        } else {
+            target[name] = value;
+        }
+    }
+}
+
+export function cloneDeep(source: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+    if (source === undefined) {
+        return undefined;
+    }
+    const clone: Record<string, unknown> = {};
+    for (const [name, value] of Object.entries(source)) {
+        if (isObject(value)) {
+            clone[name] = cloneDeep(value as Record<string, unknown>);
+        } else {
+            clone[name] = value;
+        }
+    }
+    return clone;
+
+}
+

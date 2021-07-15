@@ -1,8 +1,11 @@
 import { STATS } from "./config";
 import type { QConfig } from "./config";
 import { tracer as noopTracer } from "opentracing/lib/noop";
-import { StatsD } from "node-statsd";
 import {
+    StatsD,
+    Callback as StatsCallback,
+} from "node-statsd";
+import opentracing, {
     Tracer,
     Tags,
     FORMAT_TEXT_MAP,
@@ -17,6 +20,13 @@ import {
     cleanError,
     toLog,
 } from "./utils";
+import express from "express";
+
+declare module "jaeger-client" {
+    class SpanContext {
+        static fromString(s: string): opentracing.SpanContext
+    }
+}
 
 export interface IStats {
     configuredTags: string[],
@@ -30,8 +40,6 @@ export interface IStats {
     close(): void,
 }
 
-type StatsCallback = (error: any, bytes: any) => void;
-
 export interface IStatsImpl {
     increment(stat: string, value: number, tags: string[], callback: StatsCallback): void,
 
@@ -42,26 +50,26 @@ export interface IStatsImpl {
     close(): void,
 }
 
-function logStatsError(error: any) {
+function logStatsError(error: Error) {
     console.log(`StatsD send failed: ${error.message}`);
 }
 
 const dummyStats: IStats = {
     configuredTags: [],
-    increment(_stat: string, _value: number, _tags: string[]): Promise<any> {
+    increment(): Promise<void> {
         return Promise.resolve();
     },
-    gauge(_stat: string, _value: number, _tags: string[]): Promise<any> {
+    gauge(): Promise<void> {
         return Promise.resolve();
     },
-    timing(_stat: string, _value: number, _tags: string[]): Promise<any> {
+    timing(): Promise<void> {
         return Promise.resolve();
     },
     close() {
     },
 };
 
-export class QStats {
+export class QStats implements IStats {
     static create(
         server: string,
         configuredTags: string[],
@@ -90,7 +98,7 @@ export class QStats {
 
     ensureImpl() {
         const impl = this.impl;
-        if (impl) {
+        if (impl !== null) {
             return impl;
         }
         const newImpl = new StatsD(this.host, this.port, STATS.prefix);
@@ -103,17 +111,17 @@ export class QStats {
     }
 
     dropImpl(error?: Error) {
-        if (error) {
+        if (error !== undefined) {
             logStatsError(error);
         }
-        if (this.impl) {
+        if (this.impl !== null) {
             this.impl.close();
             this.impl = null;
         }
     }
 
-    withImpl(f: (impl: IStatsImpl, callback: any) => void): Promise<void> {
-        return new Promise((resolve, _) => {
+    withImpl(f: (impl: IStatsImpl, callback: StatsCallback) => void): Promise<void> {
+        return new Promise((resolve) => {
             try {
                 if (this.resetTime > 0) {
                     const now = Date.now();
@@ -122,8 +130,8 @@ export class QStats {
                         this.resetTime = now + this.resetInterval;
                     }
                 }
-                f(this.ensureImpl(), (error: Error, _: any) => {
-                    if (error) {
+                f(this.ensureImpl(), (error?: Error) => {
+                    if (error !== undefined) {
                         this.dropImpl(error);
                     }
                     resolve();
@@ -153,7 +161,7 @@ export class QStats {
 
 
     static combineTags(stats: IStats, tags: string[]): string[] {
-        return (stats && stats.configuredTags && stats.configuredTags.length > 0)
+        return (stats?.configuredTags?.length ?? 0) > 0
             ? stats.configuredTags.concat(tags)
             : tags;
     }
@@ -193,11 +201,11 @@ export class StatsGauge {
         return this.stats.gauge(this.name, this.value, this.tags);
     }
 
-    increment(delta: number = 1) {
+    increment(delta = 1) {
         return this.set(this.value + delta);
     }
 
-    decrement(delta: number = 1) {
+    decrement(delta = 1) {
         return this.set(this.value - delta);
     }
 }
@@ -246,13 +254,17 @@ function parseUrl(url: string): {
     return {
         protocol: url.substring(0, protocolEnd),
         host: hostPort[0],
-        port: hostPort[1] || "",
+        port: hostPort[1] ?? "",
         path: url.substring(pathStart, pathEnd),
         query: url.substring(queryStart),
     };
 }
 
 type JaegerConfig = jaegerclient.TracingConfig;
+
+export type ParentSpanSource = express.Request | {
+    context: unknown,
+};
 
 export class QTracer {
     static config: QConfig;
@@ -264,7 +276,7 @@ export class QTracer {
     }): JaegerConfig | null {
         const endpoint = config.endpoint;
 
-        if (!endpoint) {
+        if (endpoint === "") {
             return null;
         }
 
@@ -299,16 +311,16 @@ export class QTracer {
     static create(config: QConfig): Tracer {
         QTracer.config = config;
         const jaegerConfig = QTracer.getJaegerConfig(config.jaeger);
-        if (!jaegerConfig) {
+        if (jaegerConfig === null) {
             return noopTracer as Tracer;
         }
 
         return jaegerclient.initTracerFromEnv(jaegerConfig, {
             logger: {
-                info(msg: any) {
+                info(msg: unknown) {
                     console.log("INFO ", msg);
                 },
-                error(msg: any) {
+                error(msg: unknown) {
                     console.log("ERROR", msg);
                 },
             },
@@ -317,32 +329,35 @@ export class QTracer {
     }
 
     static messageRootSpanContext(messageId: string): SpanContext | undefined {
-        if (!messageId) {
+        if (messageId === "") {
             return undefined;
         }
         const traceId = messageId.substr(0, 16);
         const spanId = messageId.substr(16, 16);
-        return (jaegerclient as any).SpanContext.fromString(`${traceId}:${spanId}:0:1`);
+        return jaegerclient.SpanContext.fromString(`${traceId}:${spanId}:0:1`);
     }
 
-    static extractParentSpan(tracer: Tracer, req: any): any {
-        let ctx_src,
-            ctx_frm;
-        if (req.headers) {
-            ctx_src = req.headers;
+    static extractParentSpan(tracer: Tracer, source: ParentSpanSource | undefined): SpanContext | null {
+        if (source === undefined) {
+            return null;
+        }
+        let ctx_src: unknown;
+        let ctx_frm: string;
+        if ("headers" in source) {
+            ctx_src = source.headers;
             ctx_frm = FORMAT_TEXT_MAP;
         } else {
-            ctx_src = req.context;
+            ctx_src = source.context;
             ctx_frm = FORMAT_BINARY;
         }
         return tracer.extract(ctx_frm, ctx_src);
     }
 
-    static getParentSpan(_tracer: Tracer, context: any): SpanContext | undefined {
-        return context.tracerParentSpan;
+    static getParentSpan(_tracer: Tracer, context: { parentSpan?: Span | SpanContext }): Span | SpanContext | undefined {
+        return context.parentSpan;
     }
 
-    static failed(_tracer: Tracer, span: Span, error: any) {
+    static failed(_tracer: Tracer, span: Span, error: Error) {
         span.log({
             event: "failed",
             payload: toLog(error),
@@ -361,7 +376,7 @@ export class QTracer {
                 .setTag(Tags.SPAN_KIND, "server");
             Object
                 .entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
-                if (name) {
+                if (name !== "") {
                     span.setTag(name, value);
                 }
             });

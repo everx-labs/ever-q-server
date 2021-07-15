@@ -23,7 +23,43 @@ function compareFields(a: DbField, b: DbField): number {
     return (a.name === b.name) ? 0 : (a.name < b.name ? -1 : 1);
 }
 
-function main(schemaDef: TypeDef) {
+function tsTypeDecl(field: DbField): string {
+    let decl;
+    if (field.type.category == DbTypeCategory.scalar) {
+        if (field.type === scalarTypes.boolean) {
+            decl = "boolean";
+        } else if (field.type === scalarTypes.float) {
+            decl = "number";
+        } else if (field.type === scalarTypes.int) {
+            decl = "number";
+        } else if (field.type === scalarTypes.uint64) {
+            decl = "string";
+        } else if (field.type === scalarTypes.uint1024) {
+            decl = "string";
+        } else {
+            decl = "string";
+        }
+    } else {
+        decl = field.type.name;
+    }
+    return decl + "[]".repeat(field.arrayDepth);
+}
+
+function parentParam(...fields: DbField[]): string {
+    return `parent: { ${fields.map(x => `${x.name === "id" ? "_key" : x.name}: ${tsTypeDecl(x)}`).join(", ")} }`;
+}
+
+const keyField: DbField = {
+    name: "_key",
+    type: scalarTypes.string,
+    arrayDepth: 0,
+    doc: "",
+};
+
+function main(schemaDef: TypeDef): {
+    ql: string,
+    js: string,
+} {
     const {
         types: dbTypes,
         enumTypes,
@@ -74,7 +110,7 @@ function main(schemaDef: TypeDef) {
             Object.keys(enumDef.values).forEach((name) => {
                 g.writeLn(`    ${toEnumStyle(name)}`);
             });
-            g.writeLn(`}`);
+            g.writeLn("}");
             g.writeLn();
         }
     }
@@ -99,20 +135,20 @@ function main(schemaDef: TypeDef) {
                 let params = "";
                 if (isBigInt(field.type)) {
                     params = "(format: BigIntFormat)";
-                } else if (field.join) {
+                } else if (field.join !== undefined) {
                     params = `(timeout: Int, when: ${type.name}Filter)`;
                 }
 
                 g.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);
                 const enumDef = field.enumDef;
-                if (enumDef) {
+                if (enumDef !== undefined) {
                     g.writeLn(`\t${field.name}_name: ${enumDef.name}Enum`);
                 }
-                if (field.formatter) {
+                if (field.formatter !== undefined) {
                     g.writeLn(`\t${field.name}_string: String`);
                 }
             });
-            g.writeLn(`}`);
+            g.writeLn("}");
         }
         g.writeLn();
     }
@@ -146,7 +182,7 @@ function main(schemaDef: TypeDef) {
     function genGFiltersForEnumNameFields(type: DbType, gNames: Set<string>) {
         type.fields.forEach((field) => {
             const enumDef = field.enumDef;
-            if (enumDef) {
+            if (enumDef !== undefined) {
                 preventTwice(`${enumDef.name}EnumFilter`, gNames, () => {
                     genGScalarTypesFilter(`${enumDef.name}Enum`);
                 });
@@ -167,12 +203,12 @@ function main(schemaDef: TypeDef) {
             const typeDeclaration = field.type.name + "Array".repeat(field.arrayDepth);
             g.writeLn(`\t${field.name}: ${typeDeclaration}Filter`);
             const enumDef = field.enumDef;
-            if (enumDef) {
+            if (enumDef !== undefined) {
                 g.writeLn(`\t${field.name}_name: ${enumDef.name}EnumFilter`);
             }
         });
         g.writeLn(`    OR: ${type.name}Filter`);
-        g.writeLn(`}`);
+        g.writeLn("}");
         g.writeLn();
     }
 
@@ -206,7 +242,7 @@ function main(schemaDef: TypeDef) {
         input QueryOrderBy {
             """
             Path to field which must be used as a sort criteria.
-            If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+            If field resides deep in structure path items must be separated with dot (e.g. "foo.bar.baz").
             """
             path: String
             "Sort order direction"
@@ -217,7 +253,7 @@ function main(schemaDef: TypeDef) {
         `);
 
         types.forEach((type: DbType) => {
-            g.writeLn(`\t${type.collection || ""}(filter: ${type.name}Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [${type.name}]`);
+            g.writeLn(`\t${type.collection ?? ""}(filter: ${type.name}Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [${type.name}]`);
         });
 
         g.writeBlockLn(`
@@ -229,7 +265,7 @@ function main(schemaDef: TypeDef) {
     function genGSubscriptions(types: DbType[]) {
         g.writeLn("type Subscription {");
         types.forEach((type) => {
-            g.writeLn(`\t${type.collection || ""}(filter: ${type.name}Filter, accessKey: String): ${type.name}`);
+            g.writeLn(`\t${type.collection ?? ""}(filter: ${type.name}Filter, accessKey: String): ${type.name}`);
         });
         g.writeLn("}");
     }
@@ -242,7 +278,7 @@ function main(schemaDef: TypeDef) {
         if (field.type === scalarTypes.uint1024) {
             return "bigUInt2";
         }
-        if (field.type === scalarTypes.string && field.lowerFilter) {
+        if (field.type === scalarTypes.string && (field.lowerFilter ?? false)) {
             return "stringLowerFilter";
         }
         return "scalar";
@@ -250,7 +286,7 @@ function main(schemaDef: TypeDef) {
 
     function genJSFiltersForArrayFields(type: DbType, jsNames: Set<string>) {
         type.fields.forEach((field) => {
-            if (!field.join) {
+            if (field.join === undefined) {
                 let itemTypeName = field.type.name;
                 for (let i = 0; i < field.arrayDepth; i += 1) {
                     const filterName = `${itemTypeName}Array`;
@@ -275,20 +311,20 @@ function main(schemaDef: TypeDef) {
         type.fields.forEach((field: DbField) => {
             let typeDeclaration: string | null = null;
             const join = field.join;
-            if (join) {
+            if (join !== undefined) {
                 const suffix = field.arrayDepth > 0 ? "Array" : "";
                 const params = [
-                    `'${join.on}'`,
-                    `'${join.refOn}'`,
-                    `'${field.type.collection || ""}'`,
+                    `"${join.on}"`,
+                    `"${join.refOn}"`,
+                    `"${field.type.collection ?? ""}"`,
                 ];
                 if (field.arrayDepth === 0) {
-                    const extraFields = join.preCondition
+                    const extraFields = (join.preCondition ?? "")
                         .split(" ")
                         .map(x => x.trim())
                         .filter(x => x.startsWith("parent."))
                         .map(x => x.substr(7));
-                    params.push(extraFields.length > 0 ? `['${extraFields.join("', '")}']` : "[]");
+                    params.push(extraFields.length > 0 ? `["${extraFields.join("\", \"")}"]` : "[]");
                 }
                 params.push(`() => ${field.type.name}`);
                 typeDeclaration = `join${suffix}(${params.join(", ")})`;
@@ -301,19 +337,19 @@ function main(schemaDef: TypeDef) {
             } else if (field.type.fields.length > 0) {
                 typeDeclaration = field.type.name;
             }
-            if (typeDeclaration) {
+            if (typeDeclaration !== null) {
                 js.writeLn(`    ${field.name}: ${typeDeclaration},`);
                 const enumDef = field.enumDef;
-                if (enumDef) {
-                    js.writeLn(`    ${field.name}_name: enumName('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
+                if (enumDef !== undefined) {
+                    js.writeLn(`    ${field.name}_name: enumName("${field.name}", ${stringifyEnumValues(enumDef.values)}),`);
                 }
-                if (field.formatter) {
-                    js.writeLn(`    ${field.name}_string: stringCompanion('${field.name}'),`);
+                if (field.formatter !== undefined) {
+                    js.writeLn(`    ${field.name}_string: stringCompanion("${field.name}"),`);
                 }
             }
         });
         js.writeBlockLn(`
-        }${type.collection ? ", true" : ""});
+        }${type.collection !== undefined ? ", true" : ""});
 
     `);
     }
@@ -324,9 +360,9 @@ function main(schemaDef: TypeDef) {
             __resolveType(obj, context, info) {
         `);
         type.fields.forEach((variant) => {
-            js.writeLn(`        if ('${variant.name}' in obj) {`);
-            js.writeLn(`            return '${unionVariantType(type, variant)}';`);
-            js.writeLn(`        }`);
+            js.writeLn(`        if ("${variant.name}" in obj) {`);
+            js.writeLn(`            return "${unionVariantType(type, variant)}";`);
+            js.writeLn("        }");
         });
         js.writeBlockLn(`
                 return null;
@@ -360,11 +396,11 @@ function main(schemaDef: TypeDef) {
      * @param type
      */
     function genJSCustomResolvers(type: DbType) {
-        const joinFields = type.fields.filter(x => !!x.join);
+        const joinFields = type.fields.filter(x => x.join !== undefined);
         const bigUIntFields = type.fields.filter((x: DbField) => isBigInt(x.type));
         const stringFormattedFields = type.fields.filter((x: DbField) => x.formatter);
         const enumFields = type.fields.filter(x => x.enumDef);
-        const customResolverRequired = type.collection
+        const customResolverRequired = type.collection !== undefined
             || joinFields.length > 0
             || bigUIntFields.length > 0
             || enumFields.length > 0;
@@ -372,71 +408,80 @@ function main(schemaDef: TypeDef) {
             return;
         }
         js.writeLn(`        ${type.name}: {`);
-        if (type.collection) {
-            js.writeLn("            id(parent: any) {");
+        if (type.collection !== undefined) {
+            js.writeLn(`            id(${parentParam(keyField)}) {`);
             js.writeLn("                return parent._key;");
             js.writeLn("            },");
         }
         joinFields.forEach((field) => {
             const join = field.join;
-            if (!join) {
+            if (join === undefined) {
                 return;
             }
             const onField = type.fields.find(x => x.name === join.on);
-            if (!onField) {
+            if (onField === undefined) {
                 throw "Join on field does not exist.";
             }
-            const on = join.on === "id" ? "_key" : (join.on || "_key");
-            const refOn = join.refOn === "id" ? "_key" : (join.refOn || "_key");
+            const on = join.on === "id" ? "_key" : (join.on ?? "_key");
+            const refOn = join.refOn === "id" ? "_key" : (join.refOn ?? "_key");
             const collection = field.type.collection;
-            if (!collection) {
+            if (collection === undefined) {
                 throw "Joined type is not a collection.";
             }
-            js.writeLn(`            ${field.name}(parent: any, args: any, context: GraphQLRequestContextEx) {`);
-            if (join.preCondition) {
+            const extraFields = (join.preCondition ?? "")
+                .split(" ")
+                .map(x => x.trim())
+                .filter(x => x.startsWith("parent."))
+                .map(x => x.substr(7))
+                .map(x => type.fields.find(y => y.name === x))
+                .filter(x => x !== undefined) as DbField[];
+            const parentFields = [onField, ...extraFields];
+
+            js.writeLn(`            ${field.name}(${parentParam(...parentFields)}, args: JoinArgs, context: GraphQLRequestContextEx) {`);
+            if (join.preCondition !== undefined) {
                 js.writeLn(`                if (!(${join.preCondition})) {`);
-                js.writeLn(`                    return null;`);
-                js.writeLn(`                }`);
+                js.writeLn("                    return null;");
+                js.writeLn("                }");
             }
-            js.writeLn(`                if (args.when && !${type.name}.test(null, parent, args.when)) {`);
-            js.writeLn(`                    return null;`);
-            js.writeLn(`                }`);
+            js.writeLn(`                if (args.when !== undefined && !${type.name}.test(null, parent, args.when)) {`);
+            js.writeLn("                    return null;");
+            js.writeLn("                }");
 
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, '${refOn}', args, context);`);
+                js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, "${refOn}", args, context);`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.data.${collection}.waitForDocs(parent.${on}, '${refOn}', args, context);`);
+                js.writeLn(`                return context.data.${collection}.waitForDocs(parent.${on}, "${refOn}", args, context);`);
             } else {
                 throw "Joins on a nested arrays does not supported.";
             }
-            js.writeLn(`            },`);
+            js.writeLn("            },");
         });
         bigUIntFields.forEach((field) => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
-            js.writeLn(`            ${field.name}(parent: any, args: any) {`);
+            js.writeLn(`            ${field.name}(${parentParam(field)}, args: BigIntArgs) {`);
             js.writeLn(`                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`);
-            js.writeLn(`            },`);
+            js.writeLn("            },");
         });
         stringFormattedFields.forEach((field) => {
-            js.writeLn(`            ${field.name}_string(parent: any) {`);
-            js.writeLn(`                return ${field.formatter || ""}(parent.${field.name});`);
-            js.writeLn(`            },`);
+            js.writeLn(`            ${field.name}_string(${parentParam(field)}) {`);
+            js.writeLn(`                return ${field.formatter ?? ""}(parent.${field.name});`);
+            js.writeLn("            },");
         });
         enumFields.forEach((field) => {
             const enumDef = field.enumDef;
-            if (enumDef) {
-                js.writeLn(`            ${field.name}_name: createEnumNameResolver('${field.name}', ${stringifyEnumValues(enumDef.values)}),`);
+            if (enumDef !== undefined) {
+                js.writeLn(`            ${field.name}_name: createEnumNameResolver("${field.name}", ${stringifyEnumValues(enumDef.values)}),`);
             }
         });
-        js.writeLn(`        },`);
+        js.writeLn("        },");
     }
 
     function genJSScalarFields(type: DbType, parentPath: string, parentDocPath: string) {
         type.fields.forEach((field: DbField) => {
-            if (field.join || field.enumDef) {
+            if (field.join !== undefined || field.enumDef !== undefined) {
                 return;
             }
-            const docName = (type.collection && field.name === "id") ? "_key" : field.name;
+            const docName = (type.collection !== undefined && field.name === "id") ? "_key" : field.name;
             const path = `${parentPath}.${field.name}`;
             let docPath = `${parentDocPath}.${docName}`;
             if (field.arrayDepth > 0) {
@@ -451,7 +496,7 @@ function main(schemaDef: TypeDef) {
                 docPath = `${docPath}${suffix}`;
             }
             switch (field.type.category) {
-            case "scalar":
+            case "scalar": {
                 let typeName;
                 if (field.type === scalarTypes.boolean) {
                     typeName = "boolean";
@@ -466,7 +511,8 @@ function main(schemaDef: TypeDef) {
                 } else {
                     typeName = "string";
                 }
-                js.writeLn(`scalarFields.set('${path}', { type: '${typeName}', path: '${docPath}' });`);
+                js.writeLn(`scalarFields.set("${path}", { type: "${typeName}", path: "${docPath}" });`);
+            }
                 break;
             case "struct":
             case "union":
@@ -505,7 +551,7 @@ function main(schemaDef: TypeDef) {
         const gArrayFilters = new Set<string>();
         types.forEach(type => genGFilter(type, gArrayFilters));
 
-        const collections = types.filter(t => !!t.collection);
+        const collections = types.filter(t => t.collection !== undefined);
         genGQueries(collections);
         genGSubscriptions(collections);
 
@@ -522,6 +568,8 @@ function main(schemaDef: TypeDef) {
             array,
             join,
             joinArray,
+            BigIntArgs,
+            JoinArgs,
             enumName,
             stringCompanion,
             createEnumNameResolver,
@@ -543,12 +591,12 @@ function main(schemaDef: TypeDef) {
         });
         js.writeLn("        Query: {");
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection || ""}: data.${type.collection || ""}.queryResolver(),`);
+            js.writeLn(`            ${type.collection ?? ""}: data.${type.collection ?? ""}.queryResolver(),`);
         });
         js.writeLn("        },");
         js.writeLn("        Subscription: {");
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection || ""}: data.${type.collection || ""}.subscriptionResolver(),`);
+            js.writeLn(`            ${type.collection ?? ""}: data.${type.collection ?? ""}.subscriptionResolver(),`);
         });
         js.writeBlockLn(`
                 }
@@ -561,7 +609,7 @@ function main(schemaDef: TypeDef) {
         const scalarFields = new Map();
         `);
         collections.forEach((type) => {
-            genJSScalarFields(type, type.collection || "", "doc");
+            genJSScalarFields(type, type.collection ?? "", "doc");
         });
 
         js.writeBlockLn(`
@@ -582,7 +630,7 @@ function main(schemaDef: TypeDef) {
         console.log(Object.entries(e.values).map(([name, value]) => {
             return `    ${name}: ${value},`;
         }).join("\n"));
-        console.log(`};\n`);
+        console.log("};\n");
     }
 
     return {

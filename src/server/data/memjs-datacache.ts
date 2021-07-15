@@ -27,8 +27,8 @@ export class MemjsDataCache implements QDataCache {
         this.memcached = new MemcachedClient(config.server, options);
     }
 
-    async get(hashedKey: string): Promise<any> {
-        return new Promise((resolve, _reject) => {
+    async get(hashedKey: string): Promise<unknown> {
+        return new Promise((resolve) => {
             this.memcached.get(hashedKey, (err, data) => {
                 if (!err) {
                     try {
@@ -47,8 +47,8 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 
-    async set(hashedKey: string, value: any): Promise<void> {
-        return new Promise((resolve, _reject) => {
+    async set(hashedKey: string, value: unknown): Promise<void> {
+        return new Promise((resolve) => {
             this.memcached.set(hashedKey, JSON.stringify(value), {}, (err) => {
                 if (!err) {
                     this.log.debug("SET", hashedKey);

@@ -147,12 +147,12 @@ test("Enum Names", () => {
     expect(resolvers.Message.msg_type_name({ msg_type: 0 })).toEqual("Internal");
 
     let ql = Message.filterCondition(params, "doc", { msg_type_name: { eq: "ExtIn" } });
-    expect(ql).toEqual(`doc.msg_type == @v1`);
+    expect(ql).toEqual("doc.msg_type == @v1");
     expect(params.values.v1).toEqual(1);
 
     params.clear();
     ql = Message.filterCondition(params, "doc", { msg_type_name: { eq: "Internal" } });
-    expect(ql).toEqual(`doc.msg_type == @v1`);
+    expect(ql).toEqual("doc.msg_type == @v1");
     expect(params.values.v1).toEqual(0);
 
     expect(Message.test(null, m1, { msg_type_name: { eq: "ExtIn" } })).toBeTruthy();
@@ -160,7 +160,7 @@ test("Enum Names", () => {
 
     params.clear();
     ql = Message.filterCondition(params, "doc", { msg_type_name: { in: ["Internal"] } });
-    expect(ql).toEqual(`doc.msg_type == @v1`);
+    expect(ql).toEqual("doc.msg_type == @v1");
     expect(params.values.v1).toEqual(0);
 
     expect(Message.test(null, m1, { msg_type_name: { in: ["ExtIn"] } })).toBeTruthy();
