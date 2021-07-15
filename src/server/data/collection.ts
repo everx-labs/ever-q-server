@@ -22,8 +22,8 @@ import {
 import { TonClient } from "@tonclient/core";
 import {
     AggregationFn,
-    FieldAggregation,
     AggregationQuery,
+    FieldAggregation,
 } from "./aggregations";
 import {
     QDataProvider,
@@ -41,24 +41,27 @@ import {
     grantedAccess,
 } from "../auth";
 import {
+    FilterConfig,
+    FilterOrConversion,
+    QConfig,
     SlowQueriesMode,
     STATS,
-    QConfig,
 } from "../config";
 import {
-    DatabaseQuery,
-    OrderBy,
-    QType,
-    QueryStat,
+    CollectionFilter,
     collectReturnExpressions,
     combineReturnExpressions,
+    DatabaseQuery,
+    FieldSelection,
     indexToString,
     mergeFieldWithSelectionSet,
+    OrderBy,
     parseSelectionSet,
     QParams,
+    QType,
+    QueryStat,
     selectionToString,
-    FieldSelection,
-    CollectionFilter,
+    splitOr,
 } from "../filter/filters";
 import QLogs, { QLog } from "../logs";
 import {
@@ -430,18 +433,9 @@ export class QDataCollection {
         },
         selectionSet: SelectionSetNode | undefined,
         accessRights: AccessRights,
+        config?: FilterConfig,
     ): DatabaseQuery | null {
-        const filter = args.filter || {};
-        const params = new QParams();
-        const condition = this.buildFilterCondition(filter, params, accessRights);
-        if (condition === null) {
-            return null;
-        }
-        const filterSection = condition ? `FILTER ${condition}` : "";
         const orderBy: OrderBy[] = args.orderBy || [];
-        const selection: FieldSelection[] = parseSelectionSet(selectionSet, this.name);
-        const limit: number = Math.min(args.limit || 50, 50);
-        const timeout = Number(args.timeout) || 0;
         const orderByText = orderBy
             .map((field) => {
                 const direction = (field.direction && field.direction.toLowerCase() === "desc")
@@ -452,14 +446,45 @@ export class QDataCollection {
             .join(", ");
 
         const sortSection = orderByText !== "" ? `SORT ${orderByText}` : "";
+        const limit: number = Math.min(args.limit || 50, 50);
         const limitSection = `LIMIT ${limit}`;
-        const returnExpression = this.buildReturnExpression(selectionSet, orderBy);
-        const text = `
-            FOR doc IN ${this.name}
-            ${filterSection}
-            ${sortSection}
-            ${limitSection}
-            RETURN ${returnExpression}`;
+
+        const params = new QParams();
+        const orConversion = config?.orConversion ?? FilterOrConversion.SUB_QUERIES;
+        const useSubQueries = orConversion === FilterOrConversion.SUB_QUERIES;
+        const filter = args.filter ?? {};
+        const subFilters = useSubQueries ? splitOr(filter) : [filter];
+
+        const texts: string[] = [];
+
+        for (const subFilter of subFilters) {
+            const condition = this.buildFilterCondition(subFilter, params, accessRights);
+            if (condition !== null) {
+                const filterSection = condition ? `FILTER ${condition}` : "";
+                const returnExpression = this.buildReturnExpression(selectionSet, orderBy);
+                texts.push(`
+                    FOR doc IN ${this.name}
+                    ${filterSection}
+                    ${sortSection}
+                    ${limitSection}
+                    RETURN ${returnExpression}
+                `);
+            }
+        }
+
+        if (texts.length === 0) {
+            return null;
+        }
+
+        const text = texts.length === 1
+            ? texts[0]
+            : `
+                FOR doc IN UNION_DISTINCT(${texts.map(x => `${x}`).join(", ")})
+                ${sortSection}
+                ${limitSection}
+                RETURN doc`;
+        const timeout = Number(args.timeout) || 0;
+        const selection: FieldSelection[] = parseSelectionSet(selectionSet, this.name);
 
         return {
             filter,
@@ -552,7 +577,12 @@ export class QDataCollection {
             };
             try {
                 const accessRights = await requireGrantedAccess(context, args);
-                const query = this.createDatabaseQuery(args, info.fieldNodes[0].selectionSet, accessRights);
+                const query = this.createDatabaseQuery(
+                    args,
+                    info.fieldNodes[0].selectionSet,
+                    accessRights,
+                    context.config.filter,
+                );
                 if (query === null) {
                     this.log.debug("QUERY", args, 0, "SKIPPED", context.remoteAddress);
                     return [];

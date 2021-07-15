@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - optimizations for queries with `OR` – use two simple sorted queries instead of using `OR` AQL operator.
+- `filter-or-conversion` option to select filter OR conversion strategy (see README).
 - ESLINT configuration and npm commands `run npm eslint` and `run npm eslint-fix`.
 
 ## [0.41.0] 2021-07-08

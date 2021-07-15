@@ -1,6 +1,4 @@
-import {
-    QParams,
-} from "../server/filter/filters";
+import { QParams } from "../server/filter/filters";
 import {
     Account,
     BlockSignatures,
@@ -12,12 +10,15 @@ import {
     createLocalArangoTestData,
     normalized,
     queryText,
+    selectionInfo,
     testServerQuery,
 } from "./init-tests";
 import {
     FieldNode,
     SelectionNode,
 } from "graphql";
+import { grantedAccess } from "../server/auth";
+import { FilterOrConversion } from "../server/config";
 
 type Blocks = {
     blocks: {
@@ -63,6 +64,115 @@ test("multi query", async () => {
     }
     `);
     expect(data.blocks.length).toBeGreaterThan(0);
+});
+
+/*
+for doc in messages
+filter
+doc.src == "-1:0000000000000000000000000000000000000000000000000000000000000000"
+or doc.dst == "-1:0000000000000000000000000000000000000000000000000000000000000000"
+sort doc.created_at
+limit 50
+return {created_at:doc.created_at, src:doc.src, dst:doc.dst, id:doc._key}
+
+for doc in UNION_DISTINCT(
+
+(
+for doc in messages
+filter
+doc.src == "0:86c4e9e0a97e48a69782206417764488b1ad56d1af24e276e42bf137352ee6f7"
+sort doc.created_at
+limit 50
+return {created_at:doc.created_at, src:doc.src, dst:doc.dst, id:doc._key}
+)
+,
+(
+for doc in messages
+filter
+doc.dst == "0:86c4e9e0a97e48a69782206417764488b1ad56d1af24e276e42bf137352ee6f7"
+sort doc.created_at
+limit 50
+return {created_at:doc.created_at, src:doc.src, dst:doc.dst, id:doc._key}
+)
+)
+
+sort doc.created_at
+limit 50
+return doc
+
+ */
+
+
+test("OR conversions", () => {
+    const data = createLocalArangoTestData(new QLogs());
+    const withOr = normalized(
+        data.messages.createDatabaseQuery(
+            {
+                filter: {
+                    src: { eq: "1" },
+                    OR: { dst: { eq: "1" } },
+                },
+                orderBy: [{
+                    path: "created_at",
+                    direction: "ASC",
+                }],
+            },
+            selectionInfo("src dst"),
+            grantedAccess,
+            {
+                orConversion: FilterOrConversion.OR_OPERATOR,
+            },
+        )?.text ?? "",
+    );
+
+    expect(withOr).toEqual(
+        normalized(`
+        FOR doc IN messages
+        FILTER (doc.src == @v1) OR (doc.dst == @v2) 
+        SORT doc.created_at
+        LIMIT 50
+        RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+    `));
+
+    const withSubQueries = normalized(
+        data.messages.createDatabaseQuery(
+            {
+                filter: {
+                    src: { eq: "1" },
+                    OR: { dst: { eq: "1" } },
+                },
+                orderBy: [{
+                    path: "created_at",
+                    direction: "ASC",
+                }],
+            },
+            selectionInfo("src dst"),
+            grantedAccess,
+            {
+                orConversion: FilterOrConversion.SUB_QUERIES,
+            },
+        )?.text ?? "",
+    );
+
+    expect(withSubQueries).toEqual(
+        normalized(`
+        FOR doc IN UNION_DISTINCT(
+            FOR doc IN messages
+            FILTER doc.src == @v1 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages
+            FILTER doc.dst == @v2 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+        )
+        SORT doc.created_at
+        LIMIT 50
+        RETURN doc
+    `));
 });
 
 test("reduced RETURN", () => {
