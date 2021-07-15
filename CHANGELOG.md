@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.42.0] 2021-07-15
+
+### New
+
+- optimizations for queries with `OR` – use two simple sorted queries instead of using `OR` AQL operator.
+- ESLINT configuration and npm commands `run npm eslint` and `run npm eslint-fix`.
+
 ## [0.41.0] 2021-07-08
 
 ### New
@@ -9,7 +16,7 @@ All notable changes to this project will be documented in this file.
 - `config` config parameter added that allows to specify the configuration via JSON-based config file
 - config file reload without restart on `SIGHUP` signal
 - optimizations for aggregation queries `MIN` and `MAX` were made – use simple sorted queries instead of `COLLECT AGGREGATE`.
-- q-server code base was ported to TypeScript
+- port q-server code base to TypeScript
 
 ## [0.40.0] 2021-06-28
 
