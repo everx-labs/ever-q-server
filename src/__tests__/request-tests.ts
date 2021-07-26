@@ -10,11 +10,15 @@ import AbortController from "node-abort-controller";
 
 const sleep = async (ms: number) => new Promise(x => setTimeout(x, ms));
 
+interface Closable {
+    close(): void
+}
+
 class TestQuery {
     abortController: AbortController;
-    client: ApolloClient<any>;
+    client: ApolloClient<unknown>;
 
-    constructor(options: any) {
+    constructor(options: { useWebSockets: boolean }) {
         this.abortController = new AbortController();
         this.client = createTestClient(options);
     }
@@ -49,7 +53,7 @@ class TestQuery {
 
     abort() {
         this.abortController.abort();
-        (this.client as any).close();
+        (this.client as unknown as Closable).close();
     }
 }
 
@@ -82,7 +86,7 @@ test.each([true, false])("Release Aborted Requests (webSockets: %s)", async (use
         `,
     });
     expect(transactions.data.transactions.length).toBeGreaterThan(0);
-    (client as any).close();
+    (client as unknown as Closable).close();
 });
 
 test("Many concurrent requests over web socket", async () => {
@@ -92,10 +96,12 @@ test("Many concurrent requests over web socket", async () => {
 
     const originalStdoutWrite = process.stderr.write.bind(process.stderr);
 
-    (process.stderr as any).write = (chunk: any, encoding: any, callback: any) => {
-        if (typeof chunk === "string") {
-            output += chunk;
-        }
+    (process.stderr as { write: unknown }).write = (
+        chunk: Parameters<typeof originalStdoutWrite>[0],
+        encoding: Parameters<typeof originalStdoutWrite>[1],
+        callback: Parameters<typeof originalStdoutWrite>[2],
+    ) => {
+        output += chunk;
 
         return originalStdoutWrite(chunk, encoding, callback);
     };
@@ -126,9 +132,9 @@ test("Many concurrent requests over web socket", async () => {
         `,
     });
 
-    (process.stderr as any).write = originalStdoutWrite;
+    (process.stderr as { write: unknown }).write = originalStdoutWrite;
     expect(output.includes("MaxListenersExceededWarning")).toBeFalsy();
-    (client as any).close();
+    (client as unknown as Closable).close();
 });
 
 function randomRequest(size: number): { id: string, body: string } {
@@ -152,7 +158,7 @@ async function postRequest(request: { id: string, body: string }) {
             `,
         });
     } finally {
-        (client as any).close();
+        (client as unknown as Closable).close();
     }
 }
 

@@ -32,7 +32,7 @@ export const join = (
                 collection: "",
                 on,
                 refOn,
-                preCondition: (preCondition || ""),
+                preCondition,
             },
         },
     };
@@ -96,7 +96,7 @@ type IntEnumValues = {
 export function u8enum(name: string, values: IntEnumValues) {
     return (doc?: string): TypeDef => {
         const valuesDoc = Object.entries(values).map(([name, value]) => {
-            return `- ${(value as any)} – ${name}`;
+            return `- ${value} – ${name}`;
         }).join("\n");
         const effectiveDoc = `${doc ? `${doc}\n` : ""}${valuesDoc}`;
         return withDoc({
@@ -134,7 +134,7 @@ export type DbType = {
     category: DbTypeCategory,
     collection?: string,
     doc: string,
-}
+};
 
 export type DbField = {
     name: string,
@@ -145,7 +145,7 @@ export type DbField = {
     formatter?: ToStringFormatter,
     lowerFilter?: boolean,
     doc: string,
-}
+};
 
 function scalarType(name: string): DbType {
     return {
@@ -197,7 +197,7 @@ export function getDocMD(doc?: SchemaDoc): string {
         return doc;
     }
     if ("md" in doc) {
-        return (doc.md as any);
+        return doc.md;
     }
     return "";
 }
@@ -205,7 +205,7 @@ export function getDocMD(doc?: SchemaDoc): string {
 export type DbSchema = {
     types: DbType[],
     enumTypes: Map<string, IntEnumDef>,
-}
+};
 
 export function parseDbSchema(schemaDef: TypeDef): DbSchema {
     const dbTypes: DbType[] = [];
@@ -300,7 +300,7 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             name,
             category: schemaType.union ? DbTypeCategory.union : DbTypeCategory.struct,
             fields: [],
-            collection: schemaType._?.collection ?? "",
+            collection: schemaType._?.collection,
             doc: getDocMD(schemaType.doc),
         };
 

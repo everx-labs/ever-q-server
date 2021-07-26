@@ -51,8 +51,18 @@ export enum RequestsMode {
     REST = "rest",
 }
 
+export enum FilterOrConversion {
+    OR_OPERATOR = "or-operator",
+    SUB_QUERIES = "sub-queries",
+}
+
+export type FilterConfig = {
+    orConversion: FilterOrConversion,
+};
+
 export type QConfig = {
     config: string,
+    filter: FilterConfig,
     server: {
         host: string,
         port: number,
@@ -85,7 +95,7 @@ export type QConfig = {
     networkName: string,
     cacheKeyPrefix: string,
     endpoints: string[],
-}
+};
 
 export type ProgramOption = {
     option: string,
@@ -93,7 +103,7 @@ export type ProgramOption = {
     def: string,
     description: string,
 };
-export type ProgramOptions = { [name: string]: ProgramOption };
+export type ProgramOptions = Record<string, ProgramOption>;
 
 const DEFAULT_LISTENER_RESTART_TIMEOUT = 1000;
 const DEFAULT_ARANGO_MAX_SOCKETS = 100;
@@ -132,12 +142,12 @@ opt("keep-alive", "60000", "GraphQL keep alive ms");
 
 opt("config", "", "Path to JSON configuration file");
 
-opt("requests-mode", "kafka", "Requests mode (kafka | rest)");
+opt("requests-mode", RequestsMode.KAFKA, "Requests mode (kafka | rest)");
 opt("requests-server", "kafka:9092", "Requests server url");
 opt("requests-topic", "requests", "Requests topic name");
 opt("requests-max-size", "16383", "Maximum request message size in bytes");
 
-opt("slow-queries", "redirect", "Slow queries handling (enable | redirect | disable)");
+opt("slow-queries", SlowQueriesMode.REDIRECT, "Slow queries handling (enable | redirect | disable)");
 
 dataOpt("data");
 dataOpt("slow queries");
@@ -158,6 +168,8 @@ opt("network-name", "cinet.tonlabs.io", "Define the name of the network q-server
 opt("cache-key-prefix", "Q_", "Prefix string to identify q-server keys in data cache");
 
 opt("endpoints", "", "Alternative endpoints of q-server (comma separated addresses)");
+
+opt("filter-or-conversion", FilterOrConversion.SUB_QUERIES, "Filter OR conversion (or-operator | sub-queries)");
 
 // Stats Schema
 
@@ -192,11 +204,11 @@ export function ensureProtocol(address: string, defaultProtocol: string): string
     return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
 }
 
-export function readConfigFile(configFile: string): any {
+export function readConfigFile(configFile: string): Record<string, unknown> {
     try {
         const config = JSON.parse(readFileSync(configFile).toString());
         return {
-            Q_ENDPOINTS: config.endpoints.join(','),
+            Q_ENDPOINTS: config.endpoints.join(","),
             Q_HOST: config.server?.host,
             Q_PORT: config.server?.port,
             Q_KEEP_ALIVE: config.server?.keepAlive,
@@ -207,21 +219,21 @@ export function readConfigFile(configFile: string): any {
             Q_REQUESTS_MAX_SIZE: config.requests?.maxSize,
             Q_DATA_MUT: config.data?.mut,
             Q_DATA_HOT: config.data?.hot,
-            Q_DATA_COLD: config.data?.cold.join(','),
+            Q_DATA_COLD: config.data?.cold.join(","),
             Q_DATA_CACHE: config.data?.cache,
             Q_DATA_COUNTERPARTIES: config.data?.counterparties,
             Q_SLOW_QUERIES: config.slowQueries?.mode,
             Q_SLOW_QUERIES_MUT: config.slowQueries?.mut,
             Q_SLOW_QUERIES_HOT: config.slowQueries?.hot,
-            Q_SLOW_QUERIES_COLD: config.slowQueries?.cold.join(','),
+            Q_SLOW_QUERIES_COLD: config.slowQueries?.cold.join(","),
             Q_SLOW_QUERIES_CACHE: config.slowQueries?.cache,
             Q_AUTH_ENDPOINT: config.authEndpoint,
             Q_MAM_ACCESS_KEYS: config.mamAccessKeys,
             Q_JAEGER_ENDPOINT: config.jaegerEndpoint,
             Q_TRACE_SERVICE: config.trace?.service,
-            Q_TRACE_TAGS: config.trace?.tags.join(','),
+            Q_TRACE_TAGS: config.trace?.tags.join(","),
             Q_STATSD_SERVER: config.statsd?.server,
-            Q_STATSD_TAGS: config.statsd?.tags.join(','),
+            Q_STATSD_TAGS: config.statsd?.tags.join(","),
             Q_STATSD_RESET_INTERVAL: config.statsd?.resetInterval,
         };
     } catch (error) {
@@ -265,33 +277,38 @@ export function parseMemCachedConfig(config: string): QMemCachedConfig {
     };
 }
 
-export function overrideDefs(options: ProgramOptions, defs: any): ProgramOptions {
+export function overrideDefs(options: ProgramOptions, defs: Record<string, unknown>): ProgramOptions {
     const resolved: ProgramOptions = {};
     Object.entries(options).forEach(([name, value]) => {
         const opt = value;
         resolved[name] = {
             ...opt,
-            def: defs[name] || opt.def,
+            def: (defs[name] ?? opt.def) as string,
         };
     });
     return resolved;
 }
 
-export function resolveValues(values: any, configFile: any, env: any, def: ProgramOptions): ProgramOptions {
-    const resolved: ProgramOptions = {};
+export function resolveValues(
+    values: Record<string, unknown>,
+    configFile: Record<string, unknown>,
+    env: Record<string, unknown>,
+    def: ProgramOptions,
+): Record<string, string> {
+    const resolved: Record<string, string> = {};
     Object.entries(def).forEach(([name, opt]) => {
-        resolved[name] = values[name] || configFile[opt.env] || env[opt.env] || def[name].def;
+        resolved[name] = `${values[name] ?? configFile[opt.env] ?? env[opt.env] ?? def[name].def}`;
     });
     return resolved;
 }
 
 export function createConfig(
-    values: any,
-    configFile: any,
-    env: any,
+    values: Record<string, unknown>,
+    configFile: Record<string, unknown>,
+    env: Record<string, unknown>,
     def: ProgramOptions,
 ): QConfig {
-    const resolved = resolveValues(values, configFile, env, def) as any;
+    const resolved = resolveValues(values, configFile, env, def);
     const {
         data,
         slowQueriesData,
@@ -300,20 +317,23 @@ export function createConfig(
     } = parseDataConfig(resolved);
 
     return {
-        config: resolved.config, 
+        config: resolved.config as string,
+        filter: {
+            orConversion: resolved.filterOrConversion as FilterOrConversion,
+        },
         server: {
-            host: resolved.host,
+            host: resolved.host as string,
             port: Number.parseInt(resolved.port),
             keepAlive: Number.parseInt(resolved.keepAlive),
         },
         requests: {
-            mode: resolved.requestsMode,
+            mode: resolved.requestsMode as RequestsMode,
             server: resolved.requestsServer,
             topic: resolved.requestsTopic,
             maxSize: Number.parseInt(resolved.requestsMaxSize),
         },
         data,
-        slowQueries: resolved.slowQueries,
+        slowQueries: resolved.slowQueries as SlowQueriesMode,
         slowQueriesData,
         authorization: {
             endpoint: resolved.authEndpoint,
@@ -338,10 +358,16 @@ export function createConfig(
 // Internals
 
 function getIp(): string {
-    const ipv4 = (Object.values(os.networkInterfaces()) as any[])
-        .reduce((acc, x) => acc.concat(x), [])
-        .find((x: any) => x.family === "IPv4" && !x.internal);
-    return ipv4 && ipv4.address;
+    for (const networkInterfaces of Object.values(os.networkInterfaces())) {
+        if (networkInterfaces !== undefined) {
+            for (const networkInterface of networkInterfaces) {
+                if (networkInterface.family === "IPv4" && !networkInterface.internal) {
+                    return networkInterface.address;
+                }
+            }
+        }
+    }
+    return "";
 }
 
 
@@ -360,14 +386,14 @@ function parseTags(s: string): { [name: string]: string } {
 }
 
 
-export function parseDataConfig(values: any): {
+export function parseDataConfig(values: Record<string, string>): {
     data: QDataProvidersConfig,
     slowQueriesData: QDataProvidersConfig,
     networkName: string,
     cacheKeyPrefix: string,
 } {
     function parse(prefix: string, defMaxSockets: number): QDataProvidersConfig {
-        const opt = (suffix: string): string => values[`${prefix}${suffix}`] || "";
+        const opt = (suffix: string): string => values[`${prefix}${suffix}`] ?? "";
         const mut = parseArangoConfig(opt("Mut"), defMaxSockets);
         const hot = parseArangoConfig(opt("Hot"), defMaxSockets);
         const cold = parseArangoEndpointList(opt("Cold"), defMaxSockets);

@@ -5,12 +5,12 @@ import type { QLog } from "../logs";
 export type QIndexInfo = {
     fields: string[],
     type?: string,
-}
+};
 
 
 export type QDoc = {
     _key: string;
-    [name: string]: any;
+    [name: string]: unknown;
 };
 
 
@@ -20,30 +20,31 @@ export enum QDataEvent {
     UPDATE = "update",
 }
 
+export type QResult = unknown[] | Record<string, unknown> | number | bigint | string | boolean;
 
 export interface QDataProvider {
-    start(collectionsForSubscribe: string[]): Promise<any>;
+    start(collectionsForSubscribe: string[]): Promise<void>;
 
     stop(): Promise<void>;
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]>;
 
-    loadFingerprint(): Promise<any>;
+    loadFingerprint(): Promise<unknown>;
 
-    hotUpdate(): Promise<any>;
+    hotUpdate(): Promise<void>;
 
-    query(text: string, vars: { [name: string]: any }, orderBy: OrderBy[]): Promise<any>;
+    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]>;
 
-    subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any;
+    subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
-    unsubscribe(subscription: any): void;
+    unsubscribe(subscription: unknown): void;
 }
 
 
 export interface QDataCache {
-    get(key: string): Promise<any>;
+    get(key: string): Promise<unknown>;
 
-    set(key: string, value: any): Promise<void>;
+    set(key: string, value: unknown): Promise<void>;
 }
 
 export class QDataCombiner implements QDataProvider {
@@ -53,7 +54,7 @@ export class QDataCombiner implements QDataProvider {
         this.providers = providers;
     }
 
-    async start(collectionsForSubscribe: string[]): Promise<any> {
+    async start(collectionsForSubscribe: string[]): Promise<void> {
         await Promise.all(this.providers.map((x, i) => x.start(i === 0 ? collectionsForSubscribe : [])));
     }
 
@@ -65,7 +66,7 @@ export class QDataCombiner implements QDataProvider {
         return this.providers[0].getCollectionIndexes(collection);
     }
 
-    async loadFingerprint(): Promise<any> {
+    async loadFingerprint(): Promise<unknown> {
         /** TODO: remove
          * Do not build fingerprint from a `hot` database (index=0).
          * We make fingerprints about the size of collections only on `cold` storages (index>0).
@@ -74,20 +75,20 @@ export class QDataCombiner implements QDataProvider {
         return await Promise.all(this.providers.map(provider => provider.loadFingerprint()));
     }
 
-    async hotUpdate(): Promise<any> {
+    async hotUpdate(): Promise<void> {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: { [name: string]: any }, orderBy: OrderBy[]): Promise<any> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]> {
         const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy)));
         return combineResults(results, orderBy);
     }
 
-    subscribe(collection: string, listener: (doc: any, event: QDataEvent) => void): any {
+    subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown {
         return this.providers[0].subscribe(collection, listener);
     }
 
-    unsubscribe(subscription: any): void {
+    unsubscribe(subscription: unknown): void {
         this.providers[0].unsubscribe(subscription);
     }
 }
@@ -108,7 +109,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         this.configHash = "";
     }
 
-    async hotUpdate(): Promise<any> {
+    async hotUpdate(): Promise<void> {
         const fingerprint = JSON.stringify(await this.loadFingerprint());
         this.log.debug("FINGERPRINT", fingerprint);
         this.configHash = hash(this.networkName, fingerprint);
@@ -119,14 +120,14 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: { [name: string]: any }, orderBy: OrderBy[]): Promise<any> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]> {
         const aql = JSON.stringify({
             text,
             vars,
             orderBy,
         });
         const key = this.cacheKey(aql);
-        let docs = await this.cache.get(key);
+        let docs = (await this.cache.get(key)) as QResult[];
         if (isNullOrUndefined(docs)) {
             docs = await super.query(text, vars, orderBy);
             await this.cache.set(key, docs);
@@ -135,21 +136,26 @@ export class QDataPrecachedCombiner extends QDataCombiner {
     }
 }
 
-export function combineResults(results: any[][], orderBy: OrderBy[]): any[] {
+export function combineResults(results: QResult[][], orderBy: OrderBy[]): QResult[] {
     const docs = collectDistinctDocs(results);
     if (orderBy.length > 0) {
-        docs.sort((a: QDoc, b: QDoc) => compareDocs(a, b, orderBy));
+        docs.sort((a: QResult, b: QResult) => compareResults(a, b, orderBy));
     }
     return docs;
 }
 
 
-function collectDistinctDocs(source: QDoc[][]): QDoc[] {
-    const distinctDocs: QDoc[] = [];
+function collectDistinctDocs(source: QResult[][]): QResult[] {
+    const distinctDocs: QResult[] = [];
     const distinctKeys = new Set();
     source.forEach((docs) => {
         docs.forEach((doc) => {
-            if (!doc._key) {
+            if (typeof doc === "string" ||
+                typeof doc === "bigint" ||
+                typeof doc === "boolean" ||
+                typeof doc === "number" ||
+                Array.isArray(doc) || !("_key" in doc)
+            ) {
                 distinctDocs.push(doc);
             } else if (!distinctKeys.has(doc._key)) {
                 distinctDocs.push(doc);
@@ -161,13 +167,13 @@ function collectDistinctDocs(source: QDoc[][]): QDoc[] {
 }
 
 
-function compareDocs(a: QDoc, b: QDoc, orderBy: OrderBy[]) {
+function compareResults(a: QResult, b: QResult, orderBy: OrderBy[]) {
     for (let i = 0; i < orderBy.length; i += 1) {
         const field = orderBy[i];
         const path = field.path.split(".");
         const aValue = getValue(a, path, 0);
         const bValue = getValue(b, path, 0);
-        let comparison = compareValues(aValue, bValue);
+        const comparison = compareValues(aValue, bValue);
         if (comparison !== 0) {
             return field.direction === "DESC" ? -comparison : comparison;
         }
@@ -176,17 +182,18 @@ function compareDocs(a: QDoc, b: QDoc, orderBy: OrderBy[]) {
 }
 
 
-function getValue(value: any, path: string[], pathIndex: number): any {
+function getValue(value: unknown, path: string[], pathIndex: number): unknown {
     if (isNullOrUndefined(value) || pathIndex >= path.length) {
         return value;
     }
     const isCollection = pathIndex === 0;
     const name = isCollection && path[pathIndex] === "id" ? "_key" : path[pathIndex];
-    return getValue(value[name], path, pathIndex + 1);
+    return getValue((value as { [name: string]: unknown })[name], path, pathIndex + 1);
 }
 
+export type Scalar = number | string | boolean | Date | bigint;
 
-function compareValues(a: any, b: any): number {
+function compareValues(a: unknown, b: unknown): number {
     const aHasValue = !isNullOrUndefined(a);
     const bHasValue = !isNullOrUndefined(b);
     if (!aHasValue) {
@@ -195,11 +202,11 @@ function compareValues(a: any, b: any): number {
     if (!bHasValue) {
         return 1;
     }
-    return a === b ? 0 : (a < b ? -1 : 1);
+    return a === b ? 0 : ((a as Scalar) < (b as Scalar) ? -1 : 1);
 }
 
 
-function isNullOrUndefined(v: any): boolean {
+function isNullOrUndefined(v: unknown): boolean {
     return v === null || typeof v === "undefined";
 }
 
@@ -211,11 +218,11 @@ export function sortedIndex(fields: string[]): QIndexInfo {
 }
 
 export const missingDataCache: QDataCache = {
-    get(_key: string): Promise<any> {
+    get(): Promise<unknown> {
         return Promise.resolve(null);
     },
 
-    set(_key: string, _value: any): Promise<void> {
+    set(): Promise<void> {
         return Promise.resolve();
     },
 };

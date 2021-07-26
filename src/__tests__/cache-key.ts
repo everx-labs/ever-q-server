@@ -1,11 +1,11 @@
-import {hash} from "../server/utils";
+import { hash } from "../server/utils";
 import TONQServer from "../server/server";
 import {
     QDataCombiner,
     QDataPrecachedCombiner,
 } from "../server/data/data-provider";
-import type {QArangoConfig} from "../server/config";
-import {ArangoProvider} from "../server/data/arango-provider";
+import type { QArangoConfig } from "../server/config";
+import { ArangoProvider } from "../server/data/arango-provider";
 import QLogs from "../server/logs";
 import {
     MockCache,
@@ -14,12 +14,12 @@ import {
     createTestData,
     MockProvider,
 } from "./init-tests";
-import {OrderBy} from "../server/filter/filters";
+import { OrderBy } from "../server/filter/filters";
 
 
 jest.mock("arangojs", () => ({
     __esModule: true,
-    Database: (jest.genMockFromModule("arangojs") as any).Database,
+    Database: (jest.genMockFromModule("arangojs") as { Database: unknown }).Database,
 }));
 
 describe("Fingerprint", () => {
@@ -47,10 +47,10 @@ describe("Fingerprint", () => {
             c: 1,
         };
         provider.arango.listCollections = jest.fn().mockResolvedValue([{ name: "a" }, { name: "b" }, { name: "c" }]);
-        (provider.arango as any).collection = jest.fn((x) => {
+        (provider.arango as { collection: unknown }).collection = jest.fn((x) => {
             return {
                 count: jest.fn(async () => {
-                    return { count: (expected as any)[x] };
+                    return { count: expected[x as keyof typeof expected] };
                 }),
             };
         });
@@ -62,9 +62,9 @@ describe("Fingerprint", () => {
 describe("DataCache", () => {
     let server: TONQServer;
     let cachedCold: QDataPrecachedCombiner;
-    let cache: MockCache;
-    let firstCold: MockProvider;
-    let secondCold: MockProvider;
+    let cache: MockCache<unknown>;
+    let firstCold: MockProvider<{ _key: string, lt: string }>;
+    let secondCold: MockProvider<{ _key: string, lt: string }>;
 
     beforeEach(async () => {
         const mutable = mock([
@@ -182,12 +182,10 @@ describe("DataCache", () => {
         await server.start();
 
         const old = cachedCold.configHash;
-        firstCold.data.push([
-            {
-                _key: "t6",
-                lt: "1",
-            },
-        ]);
+        firstCold.data.push({
+            _key: "t6",
+            lt: "1",
+        });
         await server.data.dropCachedDbInfo();
 
         expect(cachedCold.configHash).not.toEqual(old);

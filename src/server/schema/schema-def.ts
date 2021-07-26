@@ -1,6 +1,7 @@
 // Def
 
 import {
+    EmptyRecord,
     IntSizeType,
     SchemaDoc,
     SchemaEx,
@@ -12,17 +13,17 @@ export type ClassDef = {
     types?: MembersDef<TypeDef>,
     fields?: MembersDef<TypeDef>,
     functions?: MembersDef<FunctionDef>
-}
+};
 
 export type ExplicitDef = {
     _doc?: SchemaDoc,
     _?: SchemaEx,
-    _void?: {},
-    _any?: {},
+    _void?: EmptyRecord,
+    _any?: EmptyRecord,
     _ref?: string,
-    _bool?: {},
-    _time?: {},
-    _string?: {},
+    _bool?: EmptyRecord,
+    _time?: EmptyRecord,
+    _string?: EmptyRecord,
     _float?: { size?: 32 | 64 },
     _int?: { unsigned?: boolean, size?: IntSizeType },
     _array?: TypeDef,
@@ -30,11 +31,11 @@ export type ExplicitDef = {
     _union?: MembersDef<TypeDef>,
     _class?: ClassDef,
     _value?: string | number | boolean,
-}
+};
 
 export type StructDef = {
     [name: string]: TypeDef | SchemaDoc | SchemaEx | StructDef
-}
+};
 
 export type TypeDef = ExplicitDef | StructDef;
 
@@ -42,25 +43,19 @@ export type FunctionDef = {
     _doc?: SchemaDoc,
     args?: OrderedMembersDef<TypeDef>,
     result?: TypeDef,
-}
+};
 
 export type UnorderedMembersDef<M> = {
     [name: string]: M
-}
+};
 
-export type OrderedMembersDef<M> = UnorderedMembersDef<M>[]
+export type OrderedMembersDef<M> = UnorderedMembersDef<M>[];
 
-export type MembersDef<M> = OrderedMembersDef<M> | UnorderedMembersDef<M>
+export type MembersDef<M> = OrderedMembersDef<M> | UnorderedMembersDef<M>;
 
 export const Def = {
-    void_(doc?: SchemaDoc): ExplicitDef {
-        return { _void: {}, ...(doc ? { _doc: doc } : {}) };
-    },
     any(doc?: SchemaDoc): ExplicitDef {
         return { _any: {}, ...(doc ? { _doc: doc } : {}) };
-    },
-    int(doc?: SchemaDoc): ExplicitDef {
-        return { _int: {}, ...(doc ? { _doc: doc } : {}) };
     },
     float(doc?: SchemaDoc): ExplicitDef {
         return { _float: {}, ...(doc ? { _doc: doc } : {}) };
@@ -76,9 +71,6 @@ export const Def = {
     },
     arrayOf(item: TypeDef, doc?: SchemaDoc): ExplicitDef {
         return { _array: item, ...(doc ? { _doc: doc } : {}) };
-    },
-    unionOf(members: MembersDef<TypeDef>, doc?: SchemaDoc): ExplicitDef {
-        return { _union: members, ...(doc ? { _doc: doc } : {}) };
     },
     ref(nameOrType: string | { [name: string]: TypeDef }, doc?: SchemaDoc): ExplicitDef {
         const name = typeof nameOrType === "string" ? nameOrType : Object.keys(nameOrType)[0];
@@ -105,7 +97,7 @@ export function parseTypeDef(def: TypeDef): SchemaType {
 type ParsingType = {
     type: SchemaType,
     unresolved: { name: string, type: SchemaType }[],
-}
+};
 
 function combineName(base: string, name: string): string {
     return base !== "" ? `${base}.${name}` : name;
@@ -216,7 +208,7 @@ class SchemaParser {
         if (!def) {
             console.log(">>>", name, def);
         }
-        let type: any = {
+        const type: Record<string, unknown> = {
             def,
             doc: def._doc || "",
             _: def._ || {},
@@ -225,7 +217,7 @@ class SchemaParser {
         const explicit = def as ExplicitDef;
         if (scalarType) {
             Object.assign(type, def);
-            type[scalarType.substr(1)] = (def as any)[scalarType];
+            type[scalarType.substr(1)] = (def as Record<string, TypeDef>)[scalarType];
         } else if (explicit._ref) {
             Object.assign(type, this.typeRef(def));
         } else if (explicit._array) {
@@ -262,10 +254,10 @@ class SchemaParser {
         } else if (Array.isArray(def)) {
             type.struct = this.typedNamedMembers(def, name);
         } else if (typeof def === "object") {
-            const filteredDef: any = {};
-            Object.keys(def).forEach((key) => {
+            const filteredDef: UnorderedMembersDef<TypeDef | StructDef> = {};
+            Object.keys(def as StructDef).forEach((key) => {
                 if (!isReservedKey(key)) {
-                    filteredDef[key] = (def as any)[key];
+                    filteredDef[key] = (def as StructDef)[key] as (TypeDef | StructDef);
                 }
             });
             type.struct = this.typedNamedMembers(filteredDef, name);

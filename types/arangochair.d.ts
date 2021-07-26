@@ -6,7 +6,7 @@ export type ArangoSubscription = {
     keys?: string[],
 }
 
-export type ArangoEventHandler = (err: any, status: string, headers: { [name: string]: any }, body: string) => void;
+export type ArangoEventHandler = (err: Error, status: string, headers: { [name: string]: string }, body: string) => void;
 
 
 export default class ArangoChair extends EventEmitter {
@@ -14,7 +14,7 @@ export default class ArangoChair extends EventEmitter {
     _loggerFollowPath: string;
     req: {
         opts: {
-            headers: { [name: string]: any },
+            headers: { [name: string]: string },
         }
     };
 

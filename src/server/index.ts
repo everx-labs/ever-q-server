@@ -52,22 +52,22 @@ const gs: GlobalState = {
     configPath: program.config || process.env.Q_CONFIG,
 };
 
-process.on('SIGHUP', () => {
-    /** 
-     * WARNING: while multiple simultanios SIGHUP calls 
+process.on("SIGHUP", () => {
+    /**
+     * WARNING: while multiple simultaneous SIGHUP calls
      * we ignore new SIGHUP signals until the last reload handler finished
-     * but since we don't wait until server start (only stop + set a promice on start)
+     * but since we don't wait until server start (only stop + set a promise on start)
      * it should be quite fast most of the time
      */
     if (!gs.reloadLock) {
         gs.reloadLock = true;
-        gs.configLog?.debug('RELOAD', 'CONFIG', gs.configPath);
+        gs.configLog?.debug("RELOAD", "CONFIG", gs.configPath);
         (async () => {
-            gs.configLog?.debug('STOP', 'SERVER');
+            gs.configLog?.debug("STOP", "SERVER");
             await gs.server?.stop();
         })().then(() => {
             main();
-            gs.reloadLock = false; 
+            gs.reloadLock = false;
         });
     }
 });

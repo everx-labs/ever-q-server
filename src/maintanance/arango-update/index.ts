@@ -22,7 +22,7 @@ async function detectRedirect(url: string) {
 type ArangoIndex = {
     id: string,
     fields: string[],
-}
+};
 
 async function updateCollection(name: string, indexes: QIndexInfo[], arango: Database) {
     const dbCollection = arango.collection(name);

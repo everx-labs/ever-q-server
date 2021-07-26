@@ -53,6 +53,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
     --statsd-server <address>      Q_STATSD_SERVER                         StatsD server (host:port)
     --statsd-tags <array>          Q_STATSD_TAGS                           Additional StatsD tags (comma separated name=value pairs)
     --statsd-reset-interval <ms>   Q_STATSD_RESET_INTERVAL  0              Interval between statsd reconnects. If it is zero – no reconnects.
+    --filter-or-conversion <mode>  Q_FILTER_OR_CONVERSION   sub-queries    Filter OR conversion (or-operator | sub-queries)
 ```
 
 Db config must be specified in form of URL:

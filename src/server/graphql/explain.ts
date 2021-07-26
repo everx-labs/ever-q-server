@@ -1,6 +1,6 @@
 import QBlockchainData from "../data/blockchain";
 
-export function explainResolvers(data: QBlockchainData): any {
+export function explainResolvers(data: QBlockchainData) {
     return {
         Query: {
             explainQueryBlockSignatures: data.blocks_signatures.explainQueryResolver(),

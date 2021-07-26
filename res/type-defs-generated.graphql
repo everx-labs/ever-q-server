@@ -583,17 +583,17 @@ type Config {
 	p31: [String]
 	"Previous validators set"
 	p32: ValidatorSet
-	"Previous temprorary validators set"
+	"Previous temporary validators set"
 	p33: ValidatorSet
 	"Current validators set"
 	p34: ValidatorSet
-	"Current temprorary validators set"
+	"Current temporary validators set"
 	p35: ValidatorSet
 	"Next validators set"
 	p36: ValidatorSet
-	"Next temprorary validators set"
+	"Next temporary validators set"
 	p37: ValidatorSet
-	"Array of validator signed temprorary keys"
+	"Array of validator signed temporary keys"
 	p39: [ConfigP39]
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: String
@@ -799,7 +799,7 @@ type Account {
 	data_hash: String
 	"""
 	
-	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
 	  accounts(filter: { due_payment: { ne: null } })
@@ -1226,7 +1226,7 @@ type ZerostateAccounts {
 	data_hash: String
 	"""
 	
-	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
 	  accounts(filter: { due_payment: { ne: null } })
@@ -1313,7 +1313,7 @@ type Zerostate {
 	total_balance(format: BigIntFormat): String
 	"Overall balance of all accounts of the workchain in other currencies"
 	total_balance_other: [OtherCurrency]
-	"Zerostate's workchain_id"
+	"Zerostate workchain_id"
 	workchain_id: Int
 }
 
@@ -1856,17 +1856,17 @@ input ConfigFilter {
 	p31: StringArrayFilter
 	"Previous validators set"
 	p32: ValidatorSetFilter
-	"Previous temprorary validators set"
+	"Previous temporary validators set"
 	p33: ValidatorSetFilter
 	"Current validators set"
 	p34: ValidatorSetFilter
-	"Current temprorary validators set"
+	"Current temporary validators set"
 	p35: ValidatorSetFilter
 	"Next validators set"
 	p36: ValidatorSetFilter
-	"Next temprorary validators set"
+	"Next temporary validators set"
 	p37: ValidatorSetFilter
-	"Array of validator signed temprorary keys"
+	"Array of validator signed temporary keys"
 	p39: ConfigP39ArrayFilter
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: StringFilter
@@ -2130,7 +2130,7 @@ input AccountFilter {
 	data_hash: StringFilter
 	"""
 	
-	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
 	  accounts(filter: { due_payment: { ne: null } })
@@ -2658,7 +2658,7 @@ input ZerostateAccountsFilter {
 	data_hash: StringFilter
 	"""
 	
-	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nanograms; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
+	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
 	  accounts(filter: { due_payment: { ne: null } })
@@ -2757,7 +2757,7 @@ input ZerostateFilter {
 	total_balance: StringFilter
 	"Overall balance of all accounts of the workchain in other currencies"
 	total_balance_other: OtherCurrencyArrayFilter
-	"Zerostate's workchain_id"
+	"Zerostate workchain_id"
 	workchain_id: IntFilter
     OR: ZerostateFilter
 }
@@ -2778,7 +2778,7 @@ You can sort documents in result set using more than one field.
 input QueryOrderBy {
     """
     Path to field which must be used as a sort criteria.
-    If field resides deep in structure path items must be separated with dot (e.g. 'foo.bar.baz').
+    If field resides deep in structure path items must be separated with dot (e.g. "foo.bar.baz").
     """
     path: String
     "Sort order direction"

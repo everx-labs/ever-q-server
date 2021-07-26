@@ -24,6 +24,7 @@ import path from "path";
 import {
     ApolloServer,
     ApolloServerExpressConfig,
+    IResolvers,
 } from "apollo-server-express";
 import { ConnectionContext } from "subscriptions-transport-ws";
 import { ArangoProvider } from "./data/arango-provider";
@@ -69,8 +70,13 @@ import {
     StatsCounter,
 } from "./tracer";
 import { Tracer } from "opentracing";
-import { Auth } from "./auth";
 import {
+    Auth,
+    RequestWithAccessHeaders,
+} from "./auth";
+import {
+    assignDeep,
+    httpUrl,
     packageJson,
     QError,
 } from "./utils";
@@ -80,16 +86,16 @@ type QOptions = {
     config: QConfig,
     logs: QLogs,
     data?: QBlockchainData,
-}
+};
 
 type EndPoint = {
     path: string,
-    resolvers: any,
+    resolvers: IResolvers,
     typeDefFileNames: string[],
     supportSubscriptions: boolean,
-}
+};
 
-const v8 = require("v8");
+import v8 from "v8";
 
 class MemStats {
     stats: IStats;
@@ -157,35 +163,21 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
     };
 }
 
-function isObject(test: any): boolean {
-    return typeof test === "object" && test !== null;
-}
-
-function overrideObject(original: any, overrides: any) {
-    Object.entries(overrides).forEach(([name, overrideValue]) => {
-        if ((name in original) && isObject(overrideValue) && isObject(original[name])) {
-            overrideObject(original[name], overrideValue);
-        } else {
-            original[name] = overrideValue;
-        }
-    });
-}
-
 type QConnectionContext = ConnectionContext & {
     activeRequests?: RequestController[],
-}
+};
 
 type QConnectionParams = {
     accessKey?: string | null,
     accesskey?: string | null,
-}
+};
 
 export default class TONQServer {
     config: QConfig;
     logs: QLogs;
     log: QLog;
     app: express.Application;
-    server: any;
+    server: http.Server;
     endPoints: EndPoint[];
     data: QBlockchainData;
     tracer: Tracer;
@@ -193,7 +185,7 @@ export default class TONQServer {
     client: TonClient;
     auth: Auth;
     memStats: MemStats;
-    shared: Map<string, any>;
+    shared: Map<string, unknown>;
 
 
     constructor(options: QOptions) {
@@ -230,7 +222,7 @@ export default class TONQServer {
             typeDefFileNames: ["type-defs-mam.graphql"],
             supportSubscriptions: false,
         });
-        const resolvers = createResolvers(this.data);
+        const resolvers = createResolvers(this.data) as IResolvers;
         [
             infoResolvers,
             totalsResolvers,
@@ -239,7 +231,7 @@ export default class TONQServer {
             postRequestsResolvers,
             accessResolvers,
             counterpartiesResolvers(this.data),
-        ].forEach(x => overrideObject(resolvers, x));
+        ].forEach(x => assignDeep(resolvers, x));
         this.addEndPoint({
             path: "/graphql",
             resolvers,
@@ -264,7 +256,7 @@ export default class TONQServer {
             port,
         }, () => {
             this.endPoints.forEach((endPoint: EndPoint) => {
-                this.log.debug("GRAPHQL", `http://${host}:${port}${endPoint.path}`);
+                this.log.debug("GRAPHQL", httpUrl(`${host}:${port}${endPoint.path}`));
             });
         });
         this.server.setTimeout(2147483647);
@@ -302,12 +294,12 @@ export default class TONQServer {
                         context.activeRequests = [];
                     }
                 },
-                onConnect(connectionParams: QConnectionParams, _webSocket: WebSocket, context: QConnectionContext): any {
+                onConnect(connectionParams: QConnectionParams, _webSocket: WebSocket, context: QConnectionContext): Record<string, unknown> {
                     const activeRequests: RequestController[] = [];
                     context.activeRequests = activeRequests;
                     return {
                         activeRequests,
-                        accessKey: connectionParams.accessKey || connectionParams.accesskey,
+                        accessKey: connectionParams.accessKey ?? connectionParams.accesskey,
                     };
                 },
             },
@@ -316,12 +308,10 @@ export default class TONQServer {
                           connection,
                       }) => {
                 const request = new RequestController();
-                if (req && req.on) {
-                    req.on("close", () => {
-                        request.emitClose();
-                    });
-                }
-                if (connection && connection.context) {
+                req?.on?.("close", () => {
+                    request.emitClose();
+                });
+                if (connection?.context !== undefined) {
                     if (!connection.context.activeRequests) {
                         connection.context.activeRequests = [];
                     }
@@ -342,9 +332,9 @@ export default class TONQServer {
                     client: this.client,
                     config: this.config,
                     shared: this.shared,
-                    remoteAddress: (req && req.socket && req.socket.remoteAddress) || "",
-                    accessKey: Auth.extractAccessKey(req, connection),
-                    parentSpan: QTracer.extractParentSpan(this.tracer, connection ? connection : req),
+                    remoteAddress: req?.socket?.remoteAddress ?? "",
+                    accessKey: Auth.extractAccessKey(req as RequestWithAccessHeaders, connection),
+                    parentSpan: QTracer.extractParentSpan(this.tracer, connection ?? req),
                     req,
                     connection,
                     request,
@@ -352,11 +342,11 @@ export default class TONQServer {
             },
             plugins: [
                 {
-                    requestDidStart(_requestContext) {
+                    requestDidStart() {
                         return {
                             willSendResponse(ctx) {
                                 const context = ctx.context as GraphQLRequestContext;
-                                if (context.multipleAccessKeysDetected) {
+                                if (context.multipleAccessKeysDetected ?? false) {
                                     throw QError.multipleAccessKeys();
                                 }
                             },
