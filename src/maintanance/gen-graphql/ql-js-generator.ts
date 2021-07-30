@@ -437,7 +437,7 @@ function main(schemaDef: TypeDef): {
                 .filter(x => x !== undefined) as DbField[];
             const parentFields = [onField, ...extraFields];
 
-            js.writeLn(`            ${field.name}(${parentParam(...parentFields)}, args: JoinArgs, context: GraphQLRequestContextEx) {`);
+            js.writeLn(`            ${field.name}(${parentParam(...parentFields)}, args: JoinArgs, context: QRequestContext) {`);
             if (join.preCondition !== undefined) {
                 js.writeLn(`                if (!(${join.preCondition})) {`);
                 js.writeLn("                    return null;");
@@ -448,9 +448,9 @@ function main(schemaDef: TypeDef): {
             js.writeLn("                }");
 
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, "${refOn}", args, context);`);
+                js.writeLn(`                return required(context.services.data.${collection}).waitForDoc(parent.${on}, "${refOn}", args, context);`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.data.${collection}.waitForDocs(parent.${on}, "${refOn}", args, context);`);
+                js.writeLn(`                return required(context.services.data.${collection}).waitForDocs(parent.${on}, "${refOn}", args, context);`);
             } else {
                 throw "Joins on a nested arrays does not supported.";
             }
@@ -575,8 +575,9 @@ function main(schemaDef: TypeDef): {
             createEnumNameResolver,
             unixSecondsToString,
         } from "../filter/filters";
+        import {required} from "../utils";
         import QBlockchainData from "../data/blockchain";
-        import { GraphQLRequestContextEx } from "./context";
+        import { QRequestContext } from "../request";
         `);
         const jsArrayFilters = new Set<string>();
         types.forEach(type => genJSFilter(type, jsArrayFilters));
@@ -591,12 +592,12 @@ function main(schemaDef: TypeDef): {
         });
         js.writeLn("        Query: {");
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection ?? ""}: data.${type.collection ?? ""}.queryResolver(),`);
+            js.writeLn(`            ${type.collection ?? ""}: required(data.${type.collection ?? ""}).queryResolver(),`);
         });
         js.writeLn("        },");
         js.writeLn("        Subscription: {");
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection ?? ""}: data.${type.collection ?? ""}.subscriptionResolver(),`);
+            js.writeLn(`            ${type.collection ?? ""}: required(data.${type.collection ?? ""}).subscriptionResolver(),`);
         });
         js.writeBlockLn(`
                 }

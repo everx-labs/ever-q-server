@@ -18,6 +18,11 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
+	"husky": {
+		"hooks": {
+			"pre-commit": "npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.ts res/type-defs-generated.graphql"
+		}
+	},
 	"dependencies": {
 		"@tonclient/core": "^1",
 		"@tonclient/lib-node": "^1",
