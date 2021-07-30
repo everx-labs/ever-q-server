@@ -1,8 +1,11 @@
-import { programOptions } from "../../server/config";
+import { configParams } from "../../server/config";
+import {
+    ConfigParam,
+} from "../../server/config-param";
 
 const captions = ["Option", "ENV", "Default", "Description"];
 const widths = [0, 0, 0, 0];
-const rows: string[][] = Object.values(programOptions).map(x => [x.option, x.env, x.def, x.description]);
+const rows: string[][] = ConfigParam.getAll(configParams).map(x => [x.option, x.env, `${x.defaultValue}`, x.description]);
 
 const MAX_WIDTH = 80;
 

@@ -216,13 +216,3 @@ export function sortedIndex(fields: string[]): QIndexInfo {
         fields,
     };
 }
-
-export const missingDataCache: QDataCache = {
-    get(): Promise<unknown> {
-        return Promise.resolve(null);
-    },
-
-    set(): Promise<void> {
-        return Promise.resolve();
-    },
-};

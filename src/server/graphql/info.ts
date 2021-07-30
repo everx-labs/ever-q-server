@@ -1,5 +1,5 @@
 import { packageJson } from "../utils";
-import type { GraphQLRequestContextEx } from "./context";
+import { QRequestContext } from "../request";
 
 const { version } = packageJson();
 
@@ -14,8 +14,9 @@ type Info = {
     endpoints: string[],
 };
 
-async function info(_parent: Record<string, unknown>, _args: unknown, context: GraphQLRequestContextEx): Promise<Info> {
-    const latency = await context.data.getLatency();
+async function info(_parent: Record<string, unknown>, _args: unknown, context: QRequestContext): Promise<Info> {
+    const data = context.services.data;
+    const latency = await data.getLatency();
     return {
         version: version as string,
         time: Date.now(),
@@ -23,8 +24,8 @@ async function info(_parent: Record<string, unknown>, _args: unknown, context: G
         blocksLatency: latency.blocks.latency,
         transactionsLatency: latency.transactions.latency,
         messagesLatency: latency.messages.latency,
-        latency: context.data.debugLatency === 0 ? latency.latency : context.data.debugLatency,
-        endpoints: context.config.endpoints,
+        latency: data.debugLatency === 0 ? latency.latency : data.debugLatency,
+        endpoints: context.services.config.endpoints,
     };
 }
 

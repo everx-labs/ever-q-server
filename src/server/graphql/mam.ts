@@ -1,10 +1,9 @@
 import {
     QDataCollection,
-    mamAccessRequired,
-    AccessArgs,
 } from "../data/collection";
-import type { GraphQLRequestContextEx } from "./context";
 import { packageJson } from "../utils";
+import { AccessArgs } from "../auth";
+import { QRequestContext } from "../request";
 
 const { version } = packageJson();
 
@@ -49,9 +48,9 @@ function info(): Info {
     };
 }
 
-function stat(_parent: Record<string, unknown>, args: AccessArgs, context: GraphQLRequestContextEx): Stat {
-    mamAccessRequired(context, args);
-    const data = context.data;
+function stat(_parent: Record<string, unknown>, args: AccessArgs, context: QRequestContext): Stat {
+    context.mamAccessRequired(args);
+    const { data } = context.services;
     let totalWaitForCount = 0;
     let totalSubscriptionCount = 0;
     const collections = data.collections.map((collection: QDataCollection) => {
@@ -73,9 +72,9 @@ function stat(_parent: Record<string, unknown>, args: AccessArgs, context: Graph
     };
 }
 
-async function getCollections(_parent: Record<string, unknown>, args: AccessArgs, context: GraphQLRequestContextEx): Promise<CollectionSummary[]> {
-    mamAccessRequired(context, args);
-    const data = context.data;
+async function getCollections(_parent: Record<string, unknown>, args: AccessArgs, context: QRequestContext): Promise<CollectionSummary[]> {
+    context.mamAccessRequired(args);
+    const { data } = context.services;
     const collections: CollectionSummary[] = [];
     for (const collection of data.collections) {
         const indexes: string[] = [];
@@ -91,9 +90,9 @@ async function getCollections(_parent: Record<string, unknown>, args: AccessArgs
     return collections;
 }
 
-async function dropCachedDbInfo(_parent: Record<string, unknown>, args: AccessArgs, context: GraphQLRequestContextEx): Promise<boolean> {
-    mamAccessRequired(context, args);
-    await context.data.dropCachedDbInfo();
+async function dropCachedDbInfo(_parent: Record<string, unknown>, args: AccessArgs, context: QRequestContext): Promise<boolean> {
+    context.mamAccessRequired(args);
+    await context.services.data.dropCachedDbInfo();
     return true;
 }
 
@@ -103,13 +102,13 @@ type UpdateConfigArgs = AccessArgs & {
     }
 };
 
-async function updateConfig(_parent: Record<string, unknown>, args: UpdateConfigArgs, context: GraphQLRequestContextEx): Promise<boolean> {
-    mamAccessRequired(context, args);
+async function updateConfig(_parent: Record<string, unknown>, args: UpdateConfigArgs, context: QRequestContext): Promise<boolean> {
+    context.mamAccessRequired(args);
     const config = args.config;
     if (config) {
         const { debugLatency } = config;
         if (debugLatency !== undefined) {
-            context.data.updateDebugLatency(debugLatency);
+            context.services.data.updateDebugLatency(debugLatency);
         }
     }
     return true;

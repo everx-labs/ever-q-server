@@ -19,7 +19,6 @@ import type { QDataOptions } from "./data";
 import QData from "./data";
 import {
     QDataCollection,
-    QDataScope,
 } from "./collection";
 import {
     Account,
@@ -30,6 +29,7 @@ import {
     Zerostate,
 } from "../graphql/resolvers-generated";
 import {
+    QDataProvider,
     QIndexInfo,
     sortedIndex,
 } from "./data-provider";
@@ -113,29 +113,33 @@ export type Latency = {
 };
 
 export default class QBlockchainData extends QData {
-    transactions: QDataCollection;
-    messages: QDataCollection;
-    accounts: QDataCollection;
-    blocks: QDataCollection;
-    blocks_signatures: QDataCollection;
-    zerostates: QDataCollection;
-    counterparties: QDataCollection;
+    accounts?: QDataCollection;
+    blocks?: QDataCollection;
+    blocks_signatures?: QDataCollection;
+    transactions?: QDataCollection;
+    messages?: QDataCollection;
+    zerostates?: QDataCollection;
+    counterparties?: QDataCollection;
 
     latency: Latency;
     debugLatency: number;
 
     constructor(options: QDataOptions) {
         super(options);
-        const add = (name: string, type: QType, scope: QDataScope) => {
-            return this.addCollection(name, type, scope, INDEXES[name].indexes);
+        const fast = options.providers.blockchain;
+        const slow = options.slowQueriesProviders;
+        const add = (name: string, type: QType, provider?: QDataProvider, slowQueriesProvider?: QDataProvider) => {
+            return provider
+                ? this.addCollection(name, type, provider, slowQueriesProvider, INDEXES[name].indexes)
+                : undefined;
         };
-        this.accounts = add("accounts", Account, QDataScope.mutable);
-        this.transactions = add("transactions", Transaction, QDataScope.immutable);
-        this.messages = add("messages", Message, QDataScope.immutable);
-        this.blocks = add("blocks", Block, QDataScope.immutable);
-        this.blocks_signatures = add("blocks_signatures", BlockSignatures, QDataScope.immutable);
-        this.zerostates = add("zerostates", Zerostate, QDataScope.mutable);
-        this.counterparties = add("counterparties", Counterparty, QDataScope.counterparties);
+        this.accounts = add("accounts", Account, fast?.accounts, slow?.accounts);
+        this.blocks = add("blocks", Block, fast?.blocks, slow?.blocks);
+        this.blocks_signatures = add("blocks_signatures", BlockSignatures, fast?.blocks, slow?.blocks);
+        this.transactions = add("transactions", Transaction, fast?.transactions, slow?.transactions);
+        this.messages = add("messages", Message, fast?.transactions, slow?.transactions);
+        this.zerostates = add("zerostates", Zerostate, fast?.blocks, slow?.blocks);
+        this.counterparties = add("counterparties", Counterparty, options.providers.counterparties);
 
         this.latency = {
             blocks: {
@@ -159,13 +163,13 @@ export default class QBlockchainData extends QData {
         };
         this.debugLatency = 0;
 
-        this.blocks.docInsertOrUpdate.on("doc", async (block) => {
+        this.blocks?.docInsertOrUpdate.on("doc", async (block) => {
             this.updateLatency(this.latency.blocks, block.gen_utime);
         });
-        this.transactions.docInsertOrUpdate.on("doc", async (tr) => {
+        this.transactions?.docInsertOrUpdate.on("doc", async (tr) => {
             this.updateLatency(this.latency.transactions, tr.now);
         });
-        this.messages.docInsertOrUpdate.on("doc", async (msg) => {
+        this.messages?.docInsertOrUpdate.on("doc", async (msg) => {
             this.updateLatency(this.latency.messages, msg.created_at);
         });
     }
@@ -211,8 +215,8 @@ export default class QBlockchainData extends QData {
         this.latency.lastBlockTime = blocks.maxTime;
     }
 
-    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string): Promise<boolean> {
-        if (Date.now() <= latency.nextUpdateTime) {
+    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection | undefined, field: string): Promise<boolean> {
+        if (collection === undefined || Date.now() <= latency.nextUpdateTime) {
             return false;
         }
         const result = (await collection.provider.query(

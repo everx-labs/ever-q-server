@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {
     scalar,
     bigUInt1,
@@ -15,8 +17,22 @@ import {
     createEnumNameResolver,
     unixSecondsToString,
 } from "../filter/filters";
-import QBlockchainData from "../data/blockchain";
-import { GraphQLRequestContextEx } from "./context";
+import { QDataCollection } from "../data/collection";
+import { QRequestContext } from "../request";
+
+type QBlockchainData = {
+    blocks: QDataCollection,
+    blocks_signatures: QDataCollection,
+    messages: QDataCollection,
+    transactions: QDataCollection,
+    accounts: QDataCollection,
+    zerostates: QDataCollection,
+};
+
+type GraphQLRequestContextEx = QRequestContext & {
+    data: QBlockchainData
+};
+
 const OtherCurrency = struct({
     currency: scalar,
     value: bigUInt2,
@@ -42,7 +58,15 @@ const InMsg = struct({
     in_msg: MsgEnvelope,
     msg_id: stringLowerFilter,
     msg_type: scalar,
-    msg_type_name: enumName("msg_type", { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
+    msg_type_name: enumName("msg_type", {
+        External: 0,
+        Ihr: 1,
+        Immediately: 2,
+        Final: 3,
+        Transit: 4,
+        DiscardedFinal: 5,
+        DiscardedTransit: 6,
+    }),
     out_msg: MsgEnvelope,
     proof_created: scalar,
     proof_delivered: scalar,
@@ -56,7 +80,17 @@ const OutMsg = struct({
     msg_env_hash: stringLowerFilter,
     msg_id: stringLowerFilter,
     msg_type: scalar,
-    msg_type_name: enumName("msg_type", { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
+    msg_type_name: enumName("msg_type", {
+        External: 0,
+        Immediately: 1,
+        OutMsgNew: 2,
+        Transit: 3,
+        DequeueImmediately: 4,
+        Dequeue: 5,
+        TransitRequired: 6,
+        DequeueShort: 7,
+        None: -1,
+    }),
     next_addr_pfx: bigUInt1,
     next_workchain: scalar,
     out_msg: MsgEnvelope,
@@ -130,7 +164,11 @@ const BlockMasterShardHashesDescr = struct({
     seq_no: scalar,
     split: scalar,
     split_type: scalar,
-    split_type_name: enumName("split_type", { None: 0, Split: 2, Merge: 3 }),
+    split_type_name: enumName("split_type", {
+        None: 0,
+        Split: 2,
+        Merge: 3,
+    }),
     start_lt: bigUInt1,
     want_merge: scalar,
     want_split: scalar,
@@ -452,7 +490,12 @@ const Block = struct({
     start_lt: bigUInt1,
     state_update: BlockStateUpdate,
     status: scalar,
-    status_name: enumName("status", { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
+    status_name: enumName("status", {
+        Unknown: 0,
+        Proposed: 1,
+        Finalized: 2,
+        Refused: 3,
+    }),
     tr_count: scalar,
     value_flow: BlockValueFlow,
     version: scalar,
@@ -465,7 +508,12 @@ const Block = struct({
 const Account = struct({
     id: scalar,
     acc_type: scalar,
-    acc_type_name: enumName("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    acc_type_name: enumName("acc_type", {
+        Uninit: 0,
+        Active: 1,
+        Frozen: 2,
+        NonExist: 3,
+    }),
     balance: bigUInt2,
     balance_other: OtherCurrencyArray,
     bits: bigUInt1,
@@ -491,7 +539,11 @@ const Account = struct({
 
 const TransactionStorage = struct({
     status_change: scalar,
-    status_change_name: enumName("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+    status_change_name: enumName("status_change", {
+        Unchanged: 0,
+        Frozen: 1,
+        Deleted: 2,
+    }),
     storage_fees_collected: bigUInt2,
     storage_fees_due: bigUInt2,
 });
@@ -505,7 +557,10 @@ const TransactionCredit = struct({
 const TransactionCompute = struct({
     account_activated: scalar,
     compute_type: scalar,
-    compute_type_name: enumName("compute_type", { Skipped: 0, Vm: 1 }),
+    compute_type_name: enumName("compute_type", {
+        Skipped: 0,
+        Vm: 1,
+    }),
     exit_arg: scalar,
     exit_code: scalar,
     gas_credit: scalar,
@@ -515,7 +570,11 @@ const TransactionCompute = struct({
     mode: scalar,
     msg_state_used: scalar,
     skipped_reason: scalar,
-    skipped_reason_name: enumName("skipped_reason", { NoState: 0, BadState: 1, NoGas: 2 }),
+    skipped_reason_name: enumName("skipped_reason", {
+        NoState: 0,
+        BadState: 1,
+        NoGas: 2,
+    }),
     success: scalar,
     vm_final_state_hash: stringLowerFilter,
     vm_init_state_hash: stringLowerFilter,
@@ -531,7 +590,11 @@ const TransactionAction = struct({
     skipped_actions: scalar,
     spec_actions: scalar,
     status_change: scalar,
-    status_change_name: enumName("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+    status_change_name: enumName("status_change", {
+        Unchanged: 0,
+        Frozen: 1,
+        Deleted: 2,
+    }),
     success: scalar,
     tot_actions: scalar,
     total_action_fees: bigUInt2,
@@ -543,7 +606,11 @@ const TransactionAction = struct({
 
 const TransactionBounce = struct({
     bounce_type: scalar,
-    bounce_type_name: enumName("bounce_type", { NegFunds: 0, NoFunds: 1, Ok: 2 }),
+    bounce_type_name: enumName("bounce_type", {
+        NegFunds: 0,
+        NoFunds: 1,
+        Ok: 2,
+    }),
     fwd_fees: bigUInt2,
     msg_fees: bigUInt2,
     msg_size_bits: scalar,
@@ -575,7 +642,12 @@ const Transaction = struct({
     credit_first: scalar,
     destroyed: scalar,
     end_status: scalar,
-    end_status_name: enumName("end_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    end_status_name: enumName("end_status", {
+        Uninit: 0,
+        Active: 1,
+        Frozen: 2,
+        NonExist: 3,
+    }),
     in_message: join("in_msg", "id", "messages", [], () => Message),
     in_msg: stringLowerFilter,
     installed: scalar,
@@ -585,7 +657,12 @@ const Transaction = struct({
     now_string: stringCompanion("now"),
     old_hash: stringLowerFilter,
     orig_status: scalar,
-    orig_status_name: enumName("orig_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    orig_status_name: enumName("orig_status", {
+        Uninit: 0,
+        Active: 1,
+        Frozen: 2,
+        NonExist: 3,
+    }),
     out_messages: joinArray("out_msgs", "id", "messages", () => Message),
     out_msgs: StringArray,
     outmsg_cnt: scalar,
@@ -595,12 +672,27 @@ const Transaction = struct({
     proof: scalar,
     split_info: TransactionSplitInfo,
     status: scalar,
-    status_name: enumName("status", { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
+    status_name: enumName("status", {
+        Unknown: 0,
+        Preliminary: 1,
+        Proposed: 2,
+        Finalized: 3,
+        Refused: 4,
+    }),
     storage: TransactionStorage,
     total_fees: bigUInt2,
     total_fees_other: OtherCurrencyArray,
     tr_type: scalar,
-    tr_type_name: enumName("tr_type", { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
+    tr_type_name: enumName("tr_type", {
+        Ordinary: 0,
+        Storage: 1,
+        Tick: 2,
+        Tock: 3,
+        SplitPrepare: 4,
+        SplitInstall: 5,
+        MergePrepare: 6,
+        MergeInstall: 7,
+    }),
     tt: scalar,
     workchain_id: scalar,
 }, true);
@@ -632,7 +724,11 @@ const Message = struct({
     library: scalar,
     library_hash: stringLowerFilter,
     msg_type: scalar,
-    msg_type_name: enumName("msg_type", { Internal: 0, ExtIn: 1, ExtOut: 2 }),
+    msg_type_name: enumName("msg_type", {
+        Internal: 0,
+        ExtIn: 1,
+        ExtOut: 2,
+    }),
     proof: scalar,
     split_depth: scalar,
     src: stringLowerFilter,
@@ -640,7 +736,16 @@ const Message = struct({
     src_transaction: join("id", "out_msgs[*]", "transactions", ["created_lt", "msg_type"], () => Transaction),
     src_workchain_id: scalar,
     status: scalar,
-    status_name: enumName("status", { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
+    status_name: enumName("status", {
+        Unknown: 0,
+        Queued: 1,
+        Processing: 2,
+        Preliminary: 3,
+        Proposed: 4,
+        Finalized: 5,
+        Refused: 6,
+        Transiting: 7,
+    }),
     tick: scalar,
     tock: scalar,
     value: bigUInt2,
@@ -658,7 +763,12 @@ const ZerostateMaster = struct({
 const ZerostateAccounts = struct({
     id: stringLowerFilter,
     acc_type: scalar,
-    acc_type_name: enumName("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    acc_type_name: enumName("acc_type", {
+        Uninit: 0,
+        Active: 1,
+        Frozen: 2,
+        NonExist: 3,
+    }),
     balance: bigUInt2,
     balance_other: OtherCurrencyArray,
     bits: bigUInt1,
@@ -729,7 +839,15 @@ function createResolvers(data: QBlockchainData) {
             transit_fee(parent: { transit_fee: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.transit_fee, args);
             },
-            msg_type_name: createEnumNameResolver("msg_type", { External: 0, Ihr: 1, Immediately: 2, Final: 3, Transit: 4, DiscardedFinal: 5, DiscardedTransit: 6 }),
+            msg_type_name: createEnumNameResolver("msg_type", {
+                External: 0,
+                Ihr: 1,
+                Immediately: 2,
+                Final: 3,
+                Transit: 4,
+                DiscardedFinal: 5,
+                DiscardedTransit: 6,
+            }),
         },
         OutMsg: {
             import_block_lt(parent: { import_block_lt: string }, args: BigIntArgs) {
@@ -738,7 +856,17 @@ function createResolvers(data: QBlockchainData) {
             next_addr_pfx(parent: { next_addr_pfx: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.next_addr_pfx, args);
             },
-            msg_type_name: createEnumNameResolver("msg_type", { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
+            msg_type_name: createEnumNameResolver("msg_type", {
+                External: 0,
+                Immediately: 1,
+                OutMsgNew: 2,
+                Transit: 3,
+                DequeueImmediately: 4,
+                Dequeue: 5,
+                TransitRequired: 6,
+                DequeueShort: 7,
+                None: -1,
+            }),
         },
         BlockValueFlow: {
             created(parent: { created: string }, args: BigIntArgs) {
@@ -790,7 +918,11 @@ function createResolvers(data: QBlockchainData) {
             gen_utime_string(parent: { gen_utime: number }) {
                 return unixSecondsToString(parent.gen_utime);
             },
-            split_type_name: createEnumNameResolver("split_type", { None: 0, Split: 2, Merge: 3 }),
+            split_type_name: createEnumNameResolver("split_type", {
+                None: 0,
+                Split: 2,
+                Merge: 3,
+            }),
         },
         BlockMasterShardFees: {
             create(parent: { create: string }, args: BigIntArgs) {
@@ -933,7 +1065,12 @@ function createResolvers(data: QBlockchainData) {
             gen_utime_string(parent: { gen_utime: number }) {
                 return unixSecondsToString(parent.gen_utime);
             },
-            status_name: createEnumNameResolver("status", { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
+            status_name: createEnumNameResolver("status", {
+                Unknown: 0,
+                Proposed: 1,
+                Finalized: 2,
+                Refused: 3,
+            }),
         },
         Account: {
             id(parent: { _key: string }) {
@@ -957,7 +1094,12 @@ function createResolvers(data: QBlockchainData) {
             public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args);
             },
-            acc_type_name: createEnumNameResolver("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+            acc_type_name: createEnumNameResolver("acc_type", {
+                Uninit: 0,
+                Active: 1,
+                Frozen: 2,
+                NonExist: 3,
+            }),
         },
         TransactionStorage: {
             storage_fees_collected(parent: { storage_fees_collected: string }, args: BigIntArgs) {
@@ -966,7 +1108,11 @@ function createResolvers(data: QBlockchainData) {
             storage_fees_due(parent: { storage_fees_due: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.storage_fees_due, args);
             },
-            status_change_name: createEnumNameResolver("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+            status_change_name: createEnumNameResolver("status_change", {
+                Unchanged: 0,
+                Frozen: 1,
+                Deleted: 2,
+            }),
         },
         TransactionCredit: {
             credit(parent: { credit: string }, args: BigIntArgs) {
@@ -986,8 +1132,15 @@ function createResolvers(data: QBlockchainData) {
             gas_used(parent: { gas_used: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.gas_used, args);
             },
-            compute_type_name: createEnumNameResolver("compute_type", { Skipped: 0, Vm: 1 }),
-            skipped_reason_name: createEnumNameResolver("skipped_reason", { NoState: 0, BadState: 1, NoGas: 2 }),
+            compute_type_name: createEnumNameResolver("compute_type", {
+                Skipped: 0,
+                Vm: 1,
+            }),
+            skipped_reason_name: createEnumNameResolver("skipped_reason", {
+                NoState: 0,
+                BadState: 1,
+                NoGas: 2,
+            }),
         },
         TransactionAction: {
             total_action_fees(parent: { total_action_fees: string }, args: BigIntArgs) {
@@ -996,7 +1149,11 @@ function createResolvers(data: QBlockchainData) {
             total_fwd_fees(parent: { total_fwd_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_fwd_fees, args);
             },
-            status_change_name: createEnumNameResolver("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+            status_change_name: createEnumNameResolver("status_change", {
+                Unchanged: 0,
+                Frozen: 1,
+                Deleted: 2,
+            }),
         },
         TransactionBounce: {
             fwd_fees(parent: { fwd_fees: string }, args: BigIntArgs) {
@@ -1008,7 +1165,11 @@ function createResolvers(data: QBlockchainData) {
             req_fwd_fees(parent: { req_fwd_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.req_fwd_fees, args);
             },
-            bounce_type_name: createEnumNameResolver("bounce_type", { NegFunds: 0, NoFunds: 1, Ok: 2 }),
+            bounce_type_name: createEnumNameResolver("bounce_type", {
+                NegFunds: 0,
+                NoFunds: 1,
+                Ok: 2,
+            }),
         },
         Transaction: {
             id(parent: { _key: string }) {
@@ -1053,10 +1214,35 @@ function createResolvers(data: QBlockchainData) {
             now_string(parent: { now: number }) {
                 return unixSecondsToString(parent.now);
             },
-            end_status_name: createEnumNameResolver("end_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-            orig_status_name: createEnumNameResolver("orig_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-            status_name: createEnumNameResolver("status", { Unknown: 0, Preliminary: 1, Proposed: 2, Finalized: 3, Refused: 4 }),
-            tr_type_name: createEnumNameResolver("tr_type", { Ordinary: 0, Storage: 1, Tick: 2, Tock: 3, SplitPrepare: 4, SplitInstall: 5, MergePrepare: 6, MergeInstall: 7 }),
+            end_status_name: createEnumNameResolver("end_status", {
+                Uninit: 0,
+                Active: 1,
+                Frozen: 2,
+                NonExist: 3,
+            }),
+            orig_status_name: createEnumNameResolver("orig_status", {
+                Uninit: 0,
+                Active: 1,
+                Frozen: 2,
+                NonExist: 3,
+            }),
+            status_name: createEnumNameResolver("status", {
+                Unknown: 0,
+                Preliminary: 1,
+                Proposed: 2,
+                Finalized: 3,
+                Refused: 4,
+            }),
+            tr_type_name: createEnumNameResolver("tr_type", {
+                Ordinary: 0,
+                Storage: 1,
+                Tick: 2,
+                Tock: 3,
+                SplitPrepare: 4,
+                SplitInstall: 5,
+                MergePrepare: 6,
+                MergeInstall: 7,
+            }),
         },
         Message: {
             id(parent: { _key: string }) {
@@ -1122,8 +1308,21 @@ function createResolvers(data: QBlockchainData) {
             created_at_string(parent: { created_at: number }) {
                 return unixSecondsToString(parent.created_at);
             },
-            msg_type_name: createEnumNameResolver("msg_type", { Internal: 0, ExtIn: 1, ExtOut: 2 }),
-            status_name: createEnumNameResolver("status", { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
+            msg_type_name: createEnumNameResolver("msg_type", {
+                Internal: 0,
+                ExtIn: 1,
+                ExtOut: 2,
+            }),
+            status_name: createEnumNameResolver("status", {
+                Unknown: 0,
+                Queued: 1,
+                Processing: 2,
+                Preliminary: 3,
+                Proposed: 4,
+                Finalized: 5,
+                Refused: 6,
+                Transiting: 7,
+            }),
         },
         ZerostateMaster: {
             global_balance(parent: { global_balance: string }, args: BigIntArgs) {
@@ -1149,7 +1348,12 @@ function createResolvers(data: QBlockchainData) {
             public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args);
             },
-            acc_type_name: createEnumNameResolver("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+            acc_type_name: createEnumNameResolver("acc_type", {
+                Uninit: 0,
+                Active: 1,
+                Frozen: 2,
+                NonExist: 3,
+            }),
         },
         Zerostate: {
             id(parent: { _key: string }) {
@@ -1174,730 +1378,2887 @@ function createResolvers(data: QBlockchainData) {
             transactions: data.transactions.subscriptionResolver(),
             messages: data.messages.subscriptionResolver(),
             zerostates: data.zerostates.subscriptionResolver(),
-        }
+        },
     };
 }
 
 const scalarFields = new Map();
-scalarFields.set("blocks_signatures.id", { type: "string", path: "doc._key" });
-scalarFields.set("blocks_signatures.catchain_seqno", { type: "number", path: "doc.catchain_seqno" });
-scalarFields.set("blocks_signatures.gen_utime", { type: "number", path: "doc.gen_utime" });
-scalarFields.set("blocks_signatures.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("blocks_signatures.seq_no", { type: "number", path: "doc.seq_no" });
-scalarFields.set("blocks_signatures.shard", { type: "string", path: "doc.shard" });
-scalarFields.set("blocks_signatures.sig_weight", { type: "uint64", path: "doc.sig_weight" });
-scalarFields.set("blocks_signatures.signatures.node_id", { type: "string", path: "doc.signatures[*].node_id" });
-scalarFields.set("blocks_signatures.signatures.r", { type: "string", path: "doc.signatures[*].r" });
-scalarFields.set("blocks_signatures.signatures.s", { type: "string", path: "doc.signatures[*].s" });
-scalarFields.set("blocks_signatures.validator_list_hash_short", { type: "number", path: "doc.validator_list_hash_short" });
-scalarFields.set("blocks_signatures.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("blocks.id", { type: "string", path: "doc._key" });
-scalarFields.set("blocks.account_blocks.account_addr", { type: "string", path: "doc.account_blocks[*].account_addr" });
-scalarFields.set("blocks.account_blocks.new_hash", { type: "string", path: "doc.account_blocks[*].new_hash" });
-scalarFields.set("blocks.account_blocks.old_hash", { type: "string", path: "doc.account_blocks[*].old_hash" });
-scalarFields.set("blocks.account_blocks.tr_count", { type: "number", path: "doc.account_blocks[*].tr_count" });
-scalarFields.set("blocks.account_blocks.transactions.lt", { type: "uint64", path: "doc.account_blocks[*].transactions[**].lt" });
-scalarFields.set("blocks.account_blocks.transactions.total_fees", { type: "uint1024", path: "doc.account_blocks[*].transactions[**].total_fees" });
-scalarFields.set("blocks.account_blocks.transactions.total_fees_other.currency", { type: "number", path: "doc.account_blocks[*].transactions[**].total_fees_other[***].currency" });
-scalarFields.set("blocks.account_blocks.transactions.total_fees_other.value", { type: "uint1024", path: "doc.account_blocks[*].transactions[**].total_fees_other[***].value" });
-scalarFields.set("blocks.account_blocks.transactions.transaction_id", { type: "string", path: "doc.account_blocks[*].transactions[**].transaction_id" });
-scalarFields.set("blocks.after_merge", { type: "boolean", path: "doc.after_merge" });
-scalarFields.set("blocks.after_split", { type: "boolean", path: "doc.after_split" });
-scalarFields.set("blocks.before_split", { type: "boolean", path: "doc.before_split" });
-scalarFields.set("blocks.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("blocks.created_by", { type: "string", path: "doc.created_by" });
-scalarFields.set("blocks.end_lt", { type: "uint64", path: "doc.end_lt" });
-scalarFields.set("blocks.flags", { type: "number", path: "doc.flags" });
-scalarFields.set("blocks.gen_catchain_seqno", { type: "number", path: "doc.gen_catchain_seqno" });
-scalarFields.set("blocks.gen_software_capabilities", { type: "string", path: "doc.gen_software_capabilities" });
-scalarFields.set("blocks.gen_software_version", { type: "number", path: "doc.gen_software_version" });
-scalarFields.set("blocks.gen_utime", { type: "number", path: "doc.gen_utime" });
-scalarFields.set("blocks.gen_validator_list_hash_short", { type: "number", path: "doc.gen_validator_list_hash_short" });
-scalarFields.set("blocks.global_id", { type: "number", path: "doc.global_id" });
-scalarFields.set("blocks.in_msg_descr.fwd_fee", { type: "uint1024", path: "doc.in_msg_descr[*].fwd_fee" });
-scalarFields.set("blocks.in_msg_descr.ihr_fee", { type: "uint1024", path: "doc.in_msg_descr[*].ihr_fee" });
-scalarFields.set("blocks.in_msg_descr.in_msg.cur_addr", { type: "string", path: "doc.in_msg_descr[*].in_msg.cur_addr" });
-scalarFields.set("blocks.in_msg_descr.in_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.in_msg_descr[*].in_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.in_msg_descr.in_msg.msg_id", { type: "string", path: "doc.in_msg_descr[*].in_msg.msg_id" });
-scalarFields.set("blocks.in_msg_descr.in_msg.next_addr", { type: "string", path: "doc.in_msg_descr[*].in_msg.next_addr" });
-scalarFields.set("blocks.in_msg_descr.msg_id", { type: "string", path: "doc.in_msg_descr[*].msg_id" });
-scalarFields.set("blocks.in_msg_descr.out_msg.cur_addr", { type: "string", path: "doc.in_msg_descr[*].out_msg.cur_addr" });
-scalarFields.set("blocks.in_msg_descr.out_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.in_msg_descr[*].out_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.in_msg_descr.out_msg.msg_id", { type: "string", path: "doc.in_msg_descr[*].out_msg.msg_id" });
-scalarFields.set("blocks.in_msg_descr.out_msg.next_addr", { type: "string", path: "doc.in_msg_descr[*].out_msg.next_addr" });
-scalarFields.set("blocks.in_msg_descr.proof_created", { type: "string", path: "doc.in_msg_descr[*].proof_created" });
-scalarFields.set("blocks.in_msg_descr.proof_delivered", { type: "string", path: "doc.in_msg_descr[*].proof_delivered" });
-scalarFields.set("blocks.in_msg_descr.transaction_id", { type: "string", path: "doc.in_msg_descr[*].transaction_id" });
-scalarFields.set("blocks.in_msg_descr.transit_fee", { type: "uint1024", path: "doc.in_msg_descr[*].transit_fee" });
-scalarFields.set("blocks.key_block", { type: "boolean", path: "doc.key_block" });
-scalarFields.set("blocks.master.config.p0", { type: "string", path: "doc.master.config.p0" });
-scalarFields.set("blocks.master.config.p1", { type: "string", path: "doc.master.config.p1" });
-scalarFields.set("blocks.master.config.p10", { type: "number", path: "doc.master.config.p10[*]" });
-scalarFields.set("blocks.master.config.p11.critical_params.bit_price", { type: "number", path: "doc.master.config.p11.critical_params.bit_price" });
-scalarFields.set("blocks.master.config.p11.critical_params.cell_price", { type: "number", path: "doc.master.config.p11.critical_params.cell_price" });
-scalarFields.set("blocks.master.config.p11.critical_params.max_losses", { type: "number", path: "doc.master.config.p11.critical_params.max_losses" });
-scalarFields.set("blocks.master.config.p11.critical_params.max_store_sec", { type: "number", path: "doc.master.config.p11.critical_params.max_store_sec" });
-scalarFields.set("blocks.master.config.p11.critical_params.max_tot_rounds", { type: "number", path: "doc.master.config.p11.critical_params.max_tot_rounds" });
-scalarFields.set("blocks.master.config.p11.critical_params.min_store_sec", { type: "number", path: "doc.master.config.p11.critical_params.min_store_sec" });
-scalarFields.set("blocks.master.config.p11.critical_params.min_tot_rounds", { type: "number", path: "doc.master.config.p11.critical_params.min_tot_rounds" });
-scalarFields.set("blocks.master.config.p11.critical_params.min_wins", { type: "number", path: "doc.master.config.p11.critical_params.min_wins" });
-scalarFields.set("blocks.master.config.p11.normal_params.bit_price", { type: "number", path: "doc.master.config.p11.normal_params.bit_price" });
-scalarFields.set("blocks.master.config.p11.normal_params.cell_price", { type: "number", path: "doc.master.config.p11.normal_params.cell_price" });
-scalarFields.set("blocks.master.config.p11.normal_params.max_losses", { type: "number", path: "doc.master.config.p11.normal_params.max_losses" });
-scalarFields.set("blocks.master.config.p11.normal_params.max_store_sec", { type: "number", path: "doc.master.config.p11.normal_params.max_store_sec" });
-scalarFields.set("blocks.master.config.p11.normal_params.max_tot_rounds", { type: "number", path: "doc.master.config.p11.normal_params.max_tot_rounds" });
-scalarFields.set("blocks.master.config.p11.normal_params.min_store_sec", { type: "number", path: "doc.master.config.p11.normal_params.min_store_sec" });
-scalarFields.set("blocks.master.config.p11.normal_params.min_tot_rounds", { type: "number", path: "doc.master.config.p11.normal_params.min_tot_rounds" });
-scalarFields.set("blocks.master.config.p11.normal_params.min_wins", { type: "number", path: "doc.master.config.p11.normal_params.min_wins" });
-scalarFields.set("blocks.master.config.p12.accept_msgs", { type: "boolean", path: "doc.master.config.p12[*].accept_msgs" });
-scalarFields.set("blocks.master.config.p12.active", { type: "boolean", path: "doc.master.config.p12[*].active" });
-scalarFields.set("blocks.master.config.p12.actual_min_split", { type: "number", path: "doc.master.config.p12[*].actual_min_split" });
-scalarFields.set("blocks.master.config.p12.addr_len_step", { type: "number", path: "doc.master.config.p12[*].addr_len_step" });
-scalarFields.set("blocks.master.config.p12.basic", { type: "boolean", path: "doc.master.config.p12[*].basic" });
-scalarFields.set("blocks.master.config.p12.enabled_since", { type: "number", path: "doc.master.config.p12[*].enabled_since" });
-scalarFields.set("blocks.master.config.p12.flags", { type: "number", path: "doc.master.config.p12[*].flags" });
-scalarFields.set("blocks.master.config.p12.max_addr_len", { type: "number", path: "doc.master.config.p12[*].max_addr_len" });
-scalarFields.set("blocks.master.config.p12.max_split", { type: "number", path: "doc.master.config.p12[*].max_split" });
-scalarFields.set("blocks.master.config.p12.min_addr_len", { type: "number", path: "doc.master.config.p12[*].min_addr_len" });
-scalarFields.set("blocks.master.config.p12.min_split", { type: "number", path: "doc.master.config.p12[*].min_split" });
-scalarFields.set("blocks.master.config.p12.version", { type: "number", path: "doc.master.config.p12[*].version" });
-scalarFields.set("blocks.master.config.p12.vm_mode", { type: "string", path: "doc.master.config.p12[*].vm_mode" });
-scalarFields.set("blocks.master.config.p12.vm_version", { type: "number", path: "doc.master.config.p12[*].vm_version" });
-scalarFields.set("blocks.master.config.p12.workchain_id", { type: "number", path: "doc.master.config.p12[*].workchain_id" });
-scalarFields.set("blocks.master.config.p12.workchain_type_id", { type: "number", path: "doc.master.config.p12[*].workchain_type_id" });
-scalarFields.set("blocks.master.config.p12.zerostate_file_hash", { type: "string", path: "doc.master.config.p12[*].zerostate_file_hash" });
-scalarFields.set("blocks.master.config.p12.zerostate_root_hash", { type: "string", path: "doc.master.config.p12[*].zerostate_root_hash" });
-scalarFields.set("blocks.master.config.p14.basechain_block_fee", { type: "uint1024", path: "doc.master.config.p14.basechain_block_fee" });
-scalarFields.set("blocks.master.config.p14.masterchain_block_fee", { type: "uint1024", path: "doc.master.config.p14.masterchain_block_fee" });
-scalarFields.set("blocks.master.config.p15.elections_end_before", { type: "number", path: "doc.master.config.p15.elections_end_before" });
-scalarFields.set("blocks.master.config.p15.elections_start_before", { type: "number", path: "doc.master.config.p15.elections_start_before" });
-scalarFields.set("blocks.master.config.p15.stake_held_for", { type: "number", path: "doc.master.config.p15.stake_held_for" });
-scalarFields.set("blocks.master.config.p15.validators_elected_for", { type: "number", path: "doc.master.config.p15.validators_elected_for" });
-scalarFields.set("blocks.master.config.p16.max_main_validators", { type: "number", path: "doc.master.config.p16.max_main_validators" });
-scalarFields.set("blocks.master.config.p16.max_validators", { type: "number", path: "doc.master.config.p16.max_validators" });
-scalarFields.set("blocks.master.config.p16.min_validators", { type: "number", path: "doc.master.config.p16.min_validators" });
-scalarFields.set("blocks.master.config.p17.max_stake", { type: "uint1024", path: "doc.master.config.p17.max_stake" });
-scalarFields.set("blocks.master.config.p17.max_stake_factor", { type: "number", path: "doc.master.config.p17.max_stake_factor" });
-scalarFields.set("blocks.master.config.p17.min_stake", { type: "uint1024", path: "doc.master.config.p17.min_stake" });
-scalarFields.set("blocks.master.config.p17.min_total_stake", { type: "uint1024", path: "doc.master.config.p17.min_total_stake" });
-scalarFields.set("blocks.master.config.p18.bit_price_ps", { type: "uint64", path: "doc.master.config.p18[*].bit_price_ps" });
-scalarFields.set("blocks.master.config.p18.cell_price_ps", { type: "uint64", path: "doc.master.config.p18[*].cell_price_ps" });
-scalarFields.set("blocks.master.config.p18.mc_bit_price_ps", { type: "uint64", path: "doc.master.config.p18[*].mc_bit_price_ps" });
-scalarFields.set("blocks.master.config.p18.mc_cell_price_ps", { type: "uint64", path: "doc.master.config.p18[*].mc_cell_price_ps" });
-scalarFields.set("blocks.master.config.p18.utime_since", { type: "number", path: "doc.master.config.p18[*].utime_since" });
-scalarFields.set("blocks.master.config.p2", { type: "string", path: "doc.master.config.p2" });
-scalarFields.set("blocks.master.config.p20.block_gas_limit", { type: "uint64", path: "doc.master.config.p20.block_gas_limit" });
-scalarFields.set("blocks.master.config.p20.delete_due_limit", { type: "uint64", path: "doc.master.config.p20.delete_due_limit" });
-scalarFields.set("blocks.master.config.p20.flat_gas_limit", { type: "uint64", path: "doc.master.config.p20.flat_gas_limit" });
-scalarFields.set("blocks.master.config.p20.flat_gas_price", { type: "uint64", path: "doc.master.config.p20.flat_gas_price" });
-scalarFields.set("blocks.master.config.p20.freeze_due_limit", { type: "uint64", path: "doc.master.config.p20.freeze_due_limit" });
-scalarFields.set("blocks.master.config.p20.gas_credit", { type: "uint64", path: "doc.master.config.p20.gas_credit" });
-scalarFields.set("blocks.master.config.p20.gas_limit", { type: "uint64", path: "doc.master.config.p20.gas_limit" });
-scalarFields.set("blocks.master.config.p20.gas_price", { type: "uint64", path: "doc.master.config.p20.gas_price" });
-scalarFields.set("blocks.master.config.p20.special_gas_limit", { type: "uint64", path: "doc.master.config.p20.special_gas_limit" });
-scalarFields.set("blocks.master.config.p21.block_gas_limit", { type: "uint64", path: "doc.master.config.p21.block_gas_limit" });
-scalarFields.set("blocks.master.config.p21.delete_due_limit", { type: "uint64", path: "doc.master.config.p21.delete_due_limit" });
-scalarFields.set("blocks.master.config.p21.flat_gas_limit", { type: "uint64", path: "doc.master.config.p21.flat_gas_limit" });
-scalarFields.set("blocks.master.config.p21.flat_gas_price", { type: "uint64", path: "doc.master.config.p21.flat_gas_price" });
-scalarFields.set("blocks.master.config.p21.freeze_due_limit", { type: "uint64", path: "doc.master.config.p21.freeze_due_limit" });
-scalarFields.set("blocks.master.config.p21.gas_credit", { type: "uint64", path: "doc.master.config.p21.gas_credit" });
-scalarFields.set("blocks.master.config.p21.gas_limit", { type: "uint64", path: "doc.master.config.p21.gas_limit" });
-scalarFields.set("blocks.master.config.p21.gas_price", { type: "uint64", path: "doc.master.config.p21.gas_price" });
-scalarFields.set("blocks.master.config.p21.special_gas_limit", { type: "uint64", path: "doc.master.config.p21.special_gas_limit" });
-scalarFields.set("blocks.master.config.p22.bytes.hard_limit", { type: "number", path: "doc.master.config.p22.bytes.hard_limit" });
-scalarFields.set("blocks.master.config.p22.bytes.soft_limit", { type: "number", path: "doc.master.config.p22.bytes.soft_limit" });
-scalarFields.set("blocks.master.config.p22.bytes.underload", { type: "number", path: "doc.master.config.p22.bytes.underload" });
-scalarFields.set("blocks.master.config.p22.gas.hard_limit", { type: "number", path: "doc.master.config.p22.gas.hard_limit" });
-scalarFields.set("blocks.master.config.p22.gas.soft_limit", { type: "number", path: "doc.master.config.p22.gas.soft_limit" });
-scalarFields.set("blocks.master.config.p22.gas.underload", { type: "number", path: "doc.master.config.p22.gas.underload" });
-scalarFields.set("blocks.master.config.p22.lt_delta.hard_limit", { type: "number", path: "doc.master.config.p22.lt_delta.hard_limit" });
-scalarFields.set("blocks.master.config.p22.lt_delta.soft_limit", { type: "number", path: "doc.master.config.p22.lt_delta.soft_limit" });
-scalarFields.set("blocks.master.config.p22.lt_delta.underload", { type: "number", path: "doc.master.config.p22.lt_delta.underload" });
-scalarFields.set("blocks.master.config.p23.bytes.hard_limit", { type: "number", path: "doc.master.config.p23.bytes.hard_limit" });
-scalarFields.set("blocks.master.config.p23.bytes.soft_limit", { type: "number", path: "doc.master.config.p23.bytes.soft_limit" });
-scalarFields.set("blocks.master.config.p23.bytes.underload", { type: "number", path: "doc.master.config.p23.bytes.underload" });
-scalarFields.set("blocks.master.config.p23.gas.hard_limit", { type: "number", path: "doc.master.config.p23.gas.hard_limit" });
-scalarFields.set("blocks.master.config.p23.gas.soft_limit", { type: "number", path: "doc.master.config.p23.gas.soft_limit" });
-scalarFields.set("blocks.master.config.p23.gas.underload", { type: "number", path: "doc.master.config.p23.gas.underload" });
-scalarFields.set("blocks.master.config.p23.lt_delta.hard_limit", { type: "number", path: "doc.master.config.p23.lt_delta.hard_limit" });
-scalarFields.set("blocks.master.config.p23.lt_delta.soft_limit", { type: "number", path: "doc.master.config.p23.lt_delta.soft_limit" });
-scalarFields.set("blocks.master.config.p23.lt_delta.underload", { type: "number", path: "doc.master.config.p23.lt_delta.underload" });
-scalarFields.set("blocks.master.config.p24.bit_price", { type: "uint64", path: "doc.master.config.p24.bit_price" });
-scalarFields.set("blocks.master.config.p24.cell_price", { type: "uint64", path: "doc.master.config.p24.cell_price" });
-scalarFields.set("blocks.master.config.p24.first_frac", { type: "number", path: "doc.master.config.p24.first_frac" });
-scalarFields.set("blocks.master.config.p24.ihr_price_factor", { type: "number", path: "doc.master.config.p24.ihr_price_factor" });
-scalarFields.set("blocks.master.config.p24.lump_price", { type: "uint64", path: "doc.master.config.p24.lump_price" });
-scalarFields.set("blocks.master.config.p24.next_frac", { type: "number", path: "doc.master.config.p24.next_frac" });
-scalarFields.set("blocks.master.config.p25.bit_price", { type: "uint64", path: "doc.master.config.p25.bit_price" });
-scalarFields.set("blocks.master.config.p25.cell_price", { type: "uint64", path: "doc.master.config.p25.cell_price" });
-scalarFields.set("blocks.master.config.p25.first_frac", { type: "number", path: "doc.master.config.p25.first_frac" });
-scalarFields.set("blocks.master.config.p25.ihr_price_factor", { type: "number", path: "doc.master.config.p25.ihr_price_factor" });
-scalarFields.set("blocks.master.config.p25.lump_price", { type: "uint64", path: "doc.master.config.p25.lump_price" });
-scalarFields.set("blocks.master.config.p25.next_frac", { type: "number", path: "doc.master.config.p25.next_frac" });
-scalarFields.set("blocks.master.config.p28.mc_catchain_lifetime", { type: "number", path: "doc.master.config.p28.mc_catchain_lifetime" });
-scalarFields.set("blocks.master.config.p28.shard_catchain_lifetime", { type: "number", path: "doc.master.config.p28.shard_catchain_lifetime" });
-scalarFields.set("blocks.master.config.p28.shard_validators_lifetime", { type: "number", path: "doc.master.config.p28.shard_validators_lifetime" });
-scalarFields.set("blocks.master.config.p28.shard_validators_num", { type: "number", path: "doc.master.config.p28.shard_validators_num" });
-scalarFields.set("blocks.master.config.p28.shuffle_mc_validators", { type: "boolean", path: "doc.master.config.p28.shuffle_mc_validators" });
-scalarFields.set("blocks.master.config.p29.attempt_duration", { type: "number", path: "doc.master.config.p29.attempt_duration" });
-scalarFields.set("blocks.master.config.p29.catchain_max_deps", { type: "number", path: "doc.master.config.p29.catchain_max_deps" });
-scalarFields.set("blocks.master.config.p29.consensus_timeout_ms", { type: "number", path: "doc.master.config.p29.consensus_timeout_ms" });
-scalarFields.set("blocks.master.config.p29.fast_attempts", { type: "number", path: "doc.master.config.p29.fast_attempts" });
-scalarFields.set("blocks.master.config.p29.max_block_bytes", { type: "number", path: "doc.master.config.p29.max_block_bytes" });
-scalarFields.set("blocks.master.config.p29.max_collated_bytes", { type: "number", path: "doc.master.config.p29.max_collated_bytes" });
-scalarFields.set("blocks.master.config.p29.new_catchain_ids", { type: "boolean", path: "doc.master.config.p29.new_catchain_ids" });
-scalarFields.set("blocks.master.config.p29.next_candidate_delay_ms", { type: "number", path: "doc.master.config.p29.next_candidate_delay_ms" });
-scalarFields.set("blocks.master.config.p29.round_candidates", { type: "number", path: "doc.master.config.p29.round_candidates" });
-scalarFields.set("blocks.master.config.p3", { type: "string", path: "doc.master.config.p3" });
-scalarFields.set("blocks.master.config.p31", { type: "string", path: "doc.master.config.p31[*]" });
-scalarFields.set("blocks.master.config.p32.list.adnl_addr", { type: "string", path: "doc.master.config.p32.list[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p32.list.public_key", { type: "string", path: "doc.master.config.p32.list[*].public_key" });
-scalarFields.set("blocks.master.config.p32.list.weight", { type: "uint64", path: "doc.master.config.p32.list[*].weight" });
-scalarFields.set("blocks.master.config.p32.total", { type: "number", path: "doc.master.config.p32.total" });
-scalarFields.set("blocks.master.config.p32.total_weight", { type: "uint64", path: "doc.master.config.p32.total_weight" });
-scalarFields.set("blocks.master.config.p32.utime_since", { type: "number", path: "doc.master.config.p32.utime_since" });
-scalarFields.set("blocks.master.config.p32.utime_until", { type: "number", path: "doc.master.config.p32.utime_until" });
-scalarFields.set("blocks.master.config.p33.list.adnl_addr", { type: "string", path: "doc.master.config.p33.list[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p33.list.public_key", { type: "string", path: "doc.master.config.p33.list[*].public_key" });
-scalarFields.set("blocks.master.config.p33.list.weight", { type: "uint64", path: "doc.master.config.p33.list[*].weight" });
-scalarFields.set("blocks.master.config.p33.total", { type: "number", path: "doc.master.config.p33.total" });
-scalarFields.set("blocks.master.config.p33.total_weight", { type: "uint64", path: "doc.master.config.p33.total_weight" });
-scalarFields.set("blocks.master.config.p33.utime_since", { type: "number", path: "doc.master.config.p33.utime_since" });
-scalarFields.set("blocks.master.config.p33.utime_until", { type: "number", path: "doc.master.config.p33.utime_until" });
-scalarFields.set("blocks.master.config.p34.list.adnl_addr", { type: "string", path: "doc.master.config.p34.list[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p34.list.public_key", { type: "string", path: "doc.master.config.p34.list[*].public_key" });
-scalarFields.set("blocks.master.config.p34.list.weight", { type: "uint64", path: "doc.master.config.p34.list[*].weight" });
-scalarFields.set("blocks.master.config.p34.total", { type: "number", path: "doc.master.config.p34.total" });
-scalarFields.set("blocks.master.config.p34.total_weight", { type: "uint64", path: "doc.master.config.p34.total_weight" });
-scalarFields.set("blocks.master.config.p34.utime_since", { type: "number", path: "doc.master.config.p34.utime_since" });
-scalarFields.set("blocks.master.config.p34.utime_until", { type: "number", path: "doc.master.config.p34.utime_until" });
-scalarFields.set("blocks.master.config.p35.list.adnl_addr", { type: "string", path: "doc.master.config.p35.list[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p35.list.public_key", { type: "string", path: "doc.master.config.p35.list[*].public_key" });
-scalarFields.set("blocks.master.config.p35.list.weight", { type: "uint64", path: "doc.master.config.p35.list[*].weight" });
-scalarFields.set("blocks.master.config.p35.total", { type: "number", path: "doc.master.config.p35.total" });
-scalarFields.set("blocks.master.config.p35.total_weight", { type: "uint64", path: "doc.master.config.p35.total_weight" });
-scalarFields.set("blocks.master.config.p35.utime_since", { type: "number", path: "doc.master.config.p35.utime_since" });
-scalarFields.set("blocks.master.config.p35.utime_until", { type: "number", path: "doc.master.config.p35.utime_until" });
-scalarFields.set("blocks.master.config.p36.list.adnl_addr", { type: "string", path: "doc.master.config.p36.list[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p36.list.public_key", { type: "string", path: "doc.master.config.p36.list[*].public_key" });
-scalarFields.set("blocks.master.config.p36.list.weight", { type: "uint64", path: "doc.master.config.p36.list[*].weight" });
-scalarFields.set("blocks.master.config.p36.total", { type: "number", path: "doc.master.config.p36.total" });
-scalarFields.set("blocks.master.config.p36.total_weight", { type: "uint64", path: "doc.master.config.p36.total_weight" });
-scalarFields.set("blocks.master.config.p36.utime_since", { type: "number", path: "doc.master.config.p36.utime_since" });
-scalarFields.set("blocks.master.config.p36.utime_until", { type: "number", path: "doc.master.config.p36.utime_until" });
-scalarFields.set("blocks.master.config.p37.list.adnl_addr", { type: "string", path: "doc.master.config.p37.list[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p37.list.public_key", { type: "string", path: "doc.master.config.p37.list[*].public_key" });
-scalarFields.set("blocks.master.config.p37.list.weight", { type: "uint64", path: "doc.master.config.p37.list[*].weight" });
-scalarFields.set("blocks.master.config.p37.total", { type: "number", path: "doc.master.config.p37.total" });
-scalarFields.set("blocks.master.config.p37.total_weight", { type: "uint64", path: "doc.master.config.p37.total_weight" });
-scalarFields.set("blocks.master.config.p37.utime_since", { type: "number", path: "doc.master.config.p37.utime_since" });
-scalarFields.set("blocks.master.config.p37.utime_until", { type: "number", path: "doc.master.config.p37.utime_until" });
-scalarFields.set("blocks.master.config.p39.adnl_addr", { type: "string", path: "doc.master.config.p39[*].adnl_addr" });
-scalarFields.set("blocks.master.config.p39.seqno", { type: "number", path: "doc.master.config.p39[*].seqno" });
-scalarFields.set("blocks.master.config.p39.signature_r", { type: "string", path: "doc.master.config.p39[*].signature_r" });
-scalarFields.set("blocks.master.config.p39.signature_s", { type: "string", path: "doc.master.config.p39[*].signature_s" });
-scalarFields.set("blocks.master.config.p39.temp_public_key", { type: "string", path: "doc.master.config.p39[*].temp_public_key" });
-scalarFields.set("blocks.master.config.p39.valid_until", { type: "number", path: "doc.master.config.p39[*].valid_until" });
-scalarFields.set("blocks.master.config.p4", { type: "string", path: "doc.master.config.p4" });
-scalarFields.set("blocks.master.config.p6.mint_add_price", { type: "string", path: "doc.master.config.p6.mint_add_price" });
-scalarFields.set("blocks.master.config.p6.mint_new_price", { type: "string", path: "doc.master.config.p6.mint_new_price" });
-scalarFields.set("blocks.master.config.p7.currency", { type: "number", path: "doc.master.config.p7[*].currency" });
-scalarFields.set("blocks.master.config.p7.value", { type: "string", path: "doc.master.config.p7[*].value" });
-scalarFields.set("blocks.master.config.p8.capabilities", { type: "uint64", path: "doc.master.config.p8.capabilities" });
-scalarFields.set("blocks.master.config.p8.version", { type: "number", path: "doc.master.config.p8.version" });
-scalarFields.set("blocks.master.config.p9", { type: "number", path: "doc.master.config.p9[*]" });
-scalarFields.set("blocks.master.config_addr", { type: "string", path: "doc.master.config_addr" });
-scalarFields.set("blocks.master.max_shard_gen_utime", { type: "number", path: "doc.master.max_shard_gen_utime" });
-scalarFields.set("blocks.master.min_shard_gen_utime", { type: "number", path: "doc.master.min_shard_gen_utime" });
-scalarFields.set("blocks.master.prev_blk_signatures.node_id", { type: "string", path: "doc.master.prev_blk_signatures[*].node_id" });
-scalarFields.set("blocks.master.prev_blk_signatures.r", { type: "string", path: "doc.master.prev_blk_signatures[*].r" });
-scalarFields.set("blocks.master.prev_blk_signatures.s", { type: "string", path: "doc.master.prev_blk_signatures[*].s" });
-scalarFields.set("blocks.master.recover_create_msg.fwd_fee", { type: "uint1024", path: "doc.master.recover_create_msg.fwd_fee" });
-scalarFields.set("blocks.master.recover_create_msg.ihr_fee", { type: "uint1024", path: "doc.master.recover_create_msg.ihr_fee" });
-scalarFields.set("blocks.master.recover_create_msg.in_msg.cur_addr", { type: "string", path: "doc.master.recover_create_msg.in_msg.cur_addr" });
-scalarFields.set("blocks.master.recover_create_msg.in_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.master.recover_create_msg.in_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.master.recover_create_msg.in_msg.msg_id", { type: "string", path: "doc.master.recover_create_msg.in_msg.msg_id" });
-scalarFields.set("blocks.master.recover_create_msg.in_msg.next_addr", { type: "string", path: "doc.master.recover_create_msg.in_msg.next_addr" });
-scalarFields.set("blocks.master.recover_create_msg.msg_id", { type: "string", path: "doc.master.recover_create_msg.msg_id" });
-scalarFields.set("blocks.master.recover_create_msg.out_msg.cur_addr", { type: "string", path: "doc.master.recover_create_msg.out_msg.cur_addr" });
-scalarFields.set("blocks.master.recover_create_msg.out_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.master.recover_create_msg.out_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.master.recover_create_msg.out_msg.msg_id", { type: "string", path: "doc.master.recover_create_msg.out_msg.msg_id" });
-scalarFields.set("blocks.master.recover_create_msg.out_msg.next_addr", { type: "string", path: "doc.master.recover_create_msg.out_msg.next_addr" });
-scalarFields.set("blocks.master.recover_create_msg.proof_created", { type: "string", path: "doc.master.recover_create_msg.proof_created" });
-scalarFields.set("blocks.master.recover_create_msg.proof_delivered", { type: "string", path: "doc.master.recover_create_msg.proof_delivered" });
-scalarFields.set("blocks.master.recover_create_msg.transaction_id", { type: "string", path: "doc.master.recover_create_msg.transaction_id" });
-scalarFields.set("blocks.master.recover_create_msg.transit_fee", { type: "uint1024", path: "doc.master.recover_create_msg.transit_fee" });
-scalarFields.set("blocks.master.shard_fees.create", { type: "uint1024", path: "doc.master.shard_fees[*].create" });
-scalarFields.set("blocks.master.shard_fees.create_other.currency", { type: "number", path: "doc.master.shard_fees[*].create_other[**].currency" });
-scalarFields.set("blocks.master.shard_fees.create_other.value", { type: "uint1024", path: "doc.master.shard_fees[*].create_other[**].value" });
-scalarFields.set("blocks.master.shard_fees.fees", { type: "uint1024", path: "doc.master.shard_fees[*].fees" });
-scalarFields.set("blocks.master.shard_fees.fees_other.currency", { type: "number", path: "doc.master.shard_fees[*].fees_other[**].currency" });
-scalarFields.set("blocks.master.shard_fees.fees_other.value", { type: "uint1024", path: "doc.master.shard_fees[*].fees_other[**].value" });
-scalarFields.set("blocks.master.shard_fees.shard", { type: "string", path: "doc.master.shard_fees[*].shard" });
-scalarFields.set("blocks.master.shard_fees.workchain_id", { type: "number", path: "doc.master.shard_fees[*].workchain_id" });
-scalarFields.set("blocks.master.shard_hashes.descr.before_merge", { type: "boolean", path: "doc.master.shard_hashes[*].descr.before_merge" });
-scalarFields.set("blocks.master.shard_hashes.descr.before_split", { type: "boolean", path: "doc.master.shard_hashes[*].descr.before_split" });
-scalarFields.set("blocks.master.shard_hashes.descr.end_lt", { type: "uint64", path: "doc.master.shard_hashes[*].descr.end_lt" });
-scalarFields.set("blocks.master.shard_hashes.descr.fees_collected", { type: "uint1024", path: "doc.master.shard_hashes[*].descr.fees_collected" });
-scalarFields.set("blocks.master.shard_hashes.descr.fees_collected_other.currency", { type: "number", path: "doc.master.shard_hashes[*].descr.fees_collected_other[**].currency" });
-scalarFields.set("blocks.master.shard_hashes.descr.fees_collected_other.value", { type: "uint1024", path: "doc.master.shard_hashes[*].descr.fees_collected_other[**].value" });
-scalarFields.set("blocks.master.shard_hashes.descr.file_hash", { type: "string", path: "doc.master.shard_hashes[*].descr.file_hash" });
-scalarFields.set("blocks.master.shard_hashes.descr.flags", { type: "number", path: "doc.master.shard_hashes[*].descr.flags" });
-scalarFields.set("blocks.master.shard_hashes.descr.funds_created", { type: "uint1024", path: "doc.master.shard_hashes[*].descr.funds_created" });
-scalarFields.set("blocks.master.shard_hashes.descr.funds_created_other.currency", { type: "number", path: "doc.master.shard_hashes[*].descr.funds_created_other[**].currency" });
-scalarFields.set("blocks.master.shard_hashes.descr.funds_created_other.value", { type: "uint1024", path: "doc.master.shard_hashes[*].descr.funds_created_other[**].value" });
-scalarFields.set("blocks.master.shard_hashes.descr.gen_utime", { type: "number", path: "doc.master.shard_hashes[*].descr.gen_utime" });
-scalarFields.set("blocks.master.shard_hashes.descr.min_ref_mc_seqno", { type: "number", path: "doc.master.shard_hashes[*].descr.min_ref_mc_seqno" });
-scalarFields.set("blocks.master.shard_hashes.descr.next_catchain_seqno", { type: "number", path: "doc.master.shard_hashes[*].descr.next_catchain_seqno" });
-scalarFields.set("blocks.master.shard_hashes.descr.next_validator_shard", { type: "string", path: "doc.master.shard_hashes[*].descr.next_validator_shard" });
-scalarFields.set("blocks.master.shard_hashes.descr.nx_cc_updated", { type: "boolean", path: "doc.master.shard_hashes[*].descr.nx_cc_updated" });
-scalarFields.set("blocks.master.shard_hashes.descr.reg_mc_seqno", { type: "number", path: "doc.master.shard_hashes[*].descr.reg_mc_seqno" });
-scalarFields.set("blocks.master.shard_hashes.descr.root_hash", { type: "string", path: "doc.master.shard_hashes[*].descr.root_hash" });
-scalarFields.set("blocks.master.shard_hashes.descr.seq_no", { type: "number", path: "doc.master.shard_hashes[*].descr.seq_no" });
-scalarFields.set("blocks.master.shard_hashes.descr.split", { type: "number", path: "doc.master.shard_hashes[*].descr.split" });
-scalarFields.set("blocks.master.shard_hashes.descr.start_lt", { type: "uint64", path: "doc.master.shard_hashes[*].descr.start_lt" });
-scalarFields.set("blocks.master.shard_hashes.descr.want_merge", { type: "boolean", path: "doc.master.shard_hashes[*].descr.want_merge" });
-scalarFields.set("blocks.master.shard_hashes.descr.want_split", { type: "boolean", path: "doc.master.shard_hashes[*].descr.want_split" });
-scalarFields.set("blocks.master.shard_hashes.shard", { type: "string", path: "doc.master.shard_hashes[*].shard" });
-scalarFields.set("blocks.master.shard_hashes.workchain_id", { type: "number", path: "doc.master.shard_hashes[*].workchain_id" });
-scalarFields.set("blocks.master_ref.end_lt", { type: "uint64", path: "doc.master_ref.end_lt" });
-scalarFields.set("blocks.master_ref.file_hash", { type: "string", path: "doc.master_ref.file_hash" });
-scalarFields.set("blocks.master_ref.root_hash", { type: "string", path: "doc.master_ref.root_hash" });
-scalarFields.set("blocks.master_ref.seq_no", { type: "number", path: "doc.master_ref.seq_no" });
-scalarFields.set("blocks.min_ref_mc_seqno", { type: "number", path: "doc.min_ref_mc_seqno" });
-scalarFields.set("blocks.out_msg_descr.import_block_lt", { type: "uint64", path: "doc.out_msg_descr[*].import_block_lt" });
-scalarFields.set("blocks.out_msg_descr.imported.fwd_fee", { type: "uint1024", path: "doc.out_msg_descr[*].imported.fwd_fee" });
-scalarFields.set("blocks.out_msg_descr.imported.ihr_fee", { type: "uint1024", path: "doc.out_msg_descr[*].imported.ihr_fee" });
-scalarFields.set("blocks.out_msg_descr.imported.in_msg.cur_addr", { type: "string", path: "doc.out_msg_descr[*].imported.in_msg.cur_addr" });
-scalarFields.set("blocks.out_msg_descr.imported.in_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.out_msg_descr[*].imported.in_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.out_msg_descr.imported.in_msg.msg_id", { type: "string", path: "doc.out_msg_descr[*].imported.in_msg.msg_id" });
-scalarFields.set("blocks.out_msg_descr.imported.in_msg.next_addr", { type: "string", path: "doc.out_msg_descr[*].imported.in_msg.next_addr" });
-scalarFields.set("blocks.out_msg_descr.imported.msg_id", { type: "string", path: "doc.out_msg_descr[*].imported.msg_id" });
-scalarFields.set("blocks.out_msg_descr.imported.out_msg.cur_addr", { type: "string", path: "doc.out_msg_descr[*].imported.out_msg.cur_addr" });
-scalarFields.set("blocks.out_msg_descr.imported.out_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.out_msg_descr[*].imported.out_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.out_msg_descr.imported.out_msg.msg_id", { type: "string", path: "doc.out_msg_descr[*].imported.out_msg.msg_id" });
-scalarFields.set("blocks.out_msg_descr.imported.out_msg.next_addr", { type: "string", path: "doc.out_msg_descr[*].imported.out_msg.next_addr" });
-scalarFields.set("blocks.out_msg_descr.imported.proof_created", { type: "string", path: "doc.out_msg_descr[*].imported.proof_created" });
-scalarFields.set("blocks.out_msg_descr.imported.proof_delivered", { type: "string", path: "doc.out_msg_descr[*].imported.proof_delivered" });
-scalarFields.set("blocks.out_msg_descr.imported.transaction_id", { type: "string", path: "doc.out_msg_descr[*].imported.transaction_id" });
-scalarFields.set("blocks.out_msg_descr.imported.transit_fee", { type: "uint1024", path: "doc.out_msg_descr[*].imported.transit_fee" });
-scalarFields.set("blocks.out_msg_descr.msg_env_hash", { type: "string", path: "doc.out_msg_descr[*].msg_env_hash" });
-scalarFields.set("blocks.out_msg_descr.msg_id", { type: "string", path: "doc.out_msg_descr[*].msg_id" });
-scalarFields.set("blocks.out_msg_descr.next_addr_pfx", { type: "uint64", path: "doc.out_msg_descr[*].next_addr_pfx" });
-scalarFields.set("blocks.out_msg_descr.next_workchain", { type: "number", path: "doc.out_msg_descr[*].next_workchain" });
-scalarFields.set("blocks.out_msg_descr.out_msg.cur_addr", { type: "string", path: "doc.out_msg_descr[*].out_msg.cur_addr" });
-scalarFields.set("blocks.out_msg_descr.out_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.out_msg_descr[*].out_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.out_msg_descr.out_msg.msg_id", { type: "string", path: "doc.out_msg_descr[*].out_msg.msg_id" });
-scalarFields.set("blocks.out_msg_descr.out_msg.next_addr", { type: "string", path: "doc.out_msg_descr[*].out_msg.next_addr" });
-scalarFields.set("blocks.out_msg_descr.reimport.fwd_fee", { type: "uint1024", path: "doc.out_msg_descr[*].reimport.fwd_fee" });
-scalarFields.set("blocks.out_msg_descr.reimport.ihr_fee", { type: "uint1024", path: "doc.out_msg_descr[*].reimport.ihr_fee" });
-scalarFields.set("blocks.out_msg_descr.reimport.in_msg.cur_addr", { type: "string", path: "doc.out_msg_descr[*].reimport.in_msg.cur_addr" });
-scalarFields.set("blocks.out_msg_descr.reimport.in_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.out_msg_descr[*].reimport.in_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.out_msg_descr.reimport.in_msg.msg_id", { type: "string", path: "doc.out_msg_descr[*].reimport.in_msg.msg_id" });
-scalarFields.set("blocks.out_msg_descr.reimport.in_msg.next_addr", { type: "string", path: "doc.out_msg_descr[*].reimport.in_msg.next_addr" });
-scalarFields.set("blocks.out_msg_descr.reimport.msg_id", { type: "string", path: "doc.out_msg_descr[*].reimport.msg_id" });
-scalarFields.set("blocks.out_msg_descr.reimport.out_msg.cur_addr", { type: "string", path: "doc.out_msg_descr[*].reimport.out_msg.cur_addr" });
-scalarFields.set("blocks.out_msg_descr.reimport.out_msg.fwd_fee_remaining", { type: "uint1024", path: "doc.out_msg_descr[*].reimport.out_msg.fwd_fee_remaining" });
-scalarFields.set("blocks.out_msg_descr.reimport.out_msg.msg_id", { type: "string", path: "doc.out_msg_descr[*].reimport.out_msg.msg_id" });
-scalarFields.set("blocks.out_msg_descr.reimport.out_msg.next_addr", { type: "string", path: "doc.out_msg_descr[*].reimport.out_msg.next_addr" });
-scalarFields.set("blocks.out_msg_descr.reimport.proof_created", { type: "string", path: "doc.out_msg_descr[*].reimport.proof_created" });
-scalarFields.set("blocks.out_msg_descr.reimport.proof_delivered", { type: "string", path: "doc.out_msg_descr[*].reimport.proof_delivered" });
-scalarFields.set("blocks.out_msg_descr.reimport.transaction_id", { type: "string", path: "doc.out_msg_descr[*].reimport.transaction_id" });
-scalarFields.set("blocks.out_msg_descr.reimport.transit_fee", { type: "uint1024", path: "doc.out_msg_descr[*].reimport.transit_fee" });
-scalarFields.set("blocks.out_msg_descr.transaction_id", { type: "string", path: "doc.out_msg_descr[*].transaction_id" });
-scalarFields.set("blocks.prev_alt_ref.end_lt", { type: "uint64", path: "doc.prev_alt_ref.end_lt" });
-scalarFields.set("blocks.prev_alt_ref.file_hash", { type: "string", path: "doc.prev_alt_ref.file_hash" });
-scalarFields.set("blocks.prev_alt_ref.root_hash", { type: "string", path: "doc.prev_alt_ref.root_hash" });
-scalarFields.set("blocks.prev_alt_ref.seq_no", { type: "number", path: "doc.prev_alt_ref.seq_no" });
-scalarFields.set("blocks.prev_key_block_seqno", { type: "number", path: "doc.prev_key_block_seqno" });
-scalarFields.set("blocks.prev_ref.end_lt", { type: "uint64", path: "doc.prev_ref.end_lt" });
-scalarFields.set("blocks.prev_ref.file_hash", { type: "string", path: "doc.prev_ref.file_hash" });
-scalarFields.set("blocks.prev_ref.root_hash", { type: "string", path: "doc.prev_ref.root_hash" });
-scalarFields.set("blocks.prev_ref.seq_no", { type: "number", path: "doc.prev_ref.seq_no" });
-scalarFields.set("blocks.prev_vert_alt_ref.end_lt", { type: "uint64", path: "doc.prev_vert_alt_ref.end_lt" });
-scalarFields.set("blocks.prev_vert_alt_ref.file_hash", { type: "string", path: "doc.prev_vert_alt_ref.file_hash" });
-scalarFields.set("blocks.prev_vert_alt_ref.root_hash", { type: "string", path: "doc.prev_vert_alt_ref.root_hash" });
-scalarFields.set("blocks.prev_vert_alt_ref.seq_no", { type: "number", path: "doc.prev_vert_alt_ref.seq_no" });
-scalarFields.set("blocks.prev_vert_ref.end_lt", { type: "uint64", path: "doc.prev_vert_ref.end_lt" });
-scalarFields.set("blocks.prev_vert_ref.file_hash", { type: "string", path: "doc.prev_vert_ref.file_hash" });
-scalarFields.set("blocks.prev_vert_ref.root_hash", { type: "string", path: "doc.prev_vert_ref.root_hash" });
-scalarFields.set("blocks.prev_vert_ref.seq_no", { type: "number", path: "doc.prev_vert_ref.seq_no" });
-scalarFields.set("blocks.rand_seed", { type: "string", path: "doc.rand_seed" });
-scalarFields.set("blocks.seq_no", { type: "number", path: "doc.seq_no" });
-scalarFields.set("blocks.shard", { type: "string", path: "doc.shard" });
-scalarFields.set("blocks.start_lt", { type: "uint64", path: "doc.start_lt" });
-scalarFields.set("blocks.state_update.new", { type: "string", path: "doc.state_update.new" });
-scalarFields.set("blocks.state_update.new_depth", { type: "number", path: "doc.state_update.new_depth" });
-scalarFields.set("blocks.state_update.new_hash", { type: "string", path: "doc.state_update.new_hash" });
-scalarFields.set("blocks.state_update.old", { type: "string", path: "doc.state_update.old" });
-scalarFields.set("blocks.state_update.old_depth", { type: "number", path: "doc.state_update.old_depth" });
-scalarFields.set("blocks.state_update.old_hash", { type: "string", path: "doc.state_update.old_hash" });
-scalarFields.set("blocks.tr_count", { type: "number", path: "doc.tr_count" });
-scalarFields.set("blocks.value_flow.created", { type: "uint1024", path: "doc.value_flow.created" });
-scalarFields.set("blocks.value_flow.created_other.currency", { type: "number", path: "doc.value_flow.created_other[*].currency" });
-scalarFields.set("blocks.value_flow.created_other.value", { type: "uint1024", path: "doc.value_flow.created_other[*].value" });
-scalarFields.set("blocks.value_flow.exported", { type: "uint1024", path: "doc.value_flow.exported" });
-scalarFields.set("blocks.value_flow.exported_other.currency", { type: "number", path: "doc.value_flow.exported_other[*].currency" });
-scalarFields.set("blocks.value_flow.exported_other.value", { type: "uint1024", path: "doc.value_flow.exported_other[*].value" });
-scalarFields.set("blocks.value_flow.fees_collected", { type: "uint1024", path: "doc.value_flow.fees_collected" });
-scalarFields.set("blocks.value_flow.fees_collected_other.currency", { type: "number", path: "doc.value_flow.fees_collected_other[*].currency" });
-scalarFields.set("blocks.value_flow.fees_collected_other.value", { type: "uint1024", path: "doc.value_flow.fees_collected_other[*].value" });
-scalarFields.set("blocks.value_flow.fees_imported", { type: "uint1024", path: "doc.value_flow.fees_imported" });
-scalarFields.set("blocks.value_flow.fees_imported_other.currency", { type: "number", path: "doc.value_flow.fees_imported_other[*].currency" });
-scalarFields.set("blocks.value_flow.fees_imported_other.value", { type: "uint1024", path: "doc.value_flow.fees_imported_other[*].value" });
-scalarFields.set("blocks.value_flow.from_prev_blk", { type: "uint1024", path: "doc.value_flow.from_prev_blk" });
-scalarFields.set("blocks.value_flow.from_prev_blk_other.currency", { type: "number", path: "doc.value_flow.from_prev_blk_other[*].currency" });
-scalarFields.set("blocks.value_flow.from_prev_blk_other.value", { type: "uint1024", path: "doc.value_flow.from_prev_blk_other[*].value" });
-scalarFields.set("blocks.value_flow.imported", { type: "uint1024", path: "doc.value_flow.imported" });
-scalarFields.set("blocks.value_flow.imported_other.currency", { type: "number", path: "doc.value_flow.imported_other[*].currency" });
-scalarFields.set("blocks.value_flow.imported_other.value", { type: "uint1024", path: "doc.value_flow.imported_other[*].value" });
-scalarFields.set("blocks.value_flow.minted", { type: "uint1024", path: "doc.value_flow.minted" });
-scalarFields.set("blocks.value_flow.minted_other.currency", { type: "number", path: "doc.value_flow.minted_other[*].currency" });
-scalarFields.set("blocks.value_flow.minted_other.value", { type: "uint1024", path: "doc.value_flow.minted_other[*].value" });
-scalarFields.set("blocks.value_flow.to_next_blk", { type: "uint1024", path: "doc.value_flow.to_next_blk" });
-scalarFields.set("blocks.value_flow.to_next_blk_other.currency", { type: "number", path: "doc.value_flow.to_next_blk_other[*].currency" });
-scalarFields.set("blocks.value_flow.to_next_blk_other.value", { type: "uint1024", path: "doc.value_flow.to_next_blk_other[*].value" });
-scalarFields.set("blocks.version", { type: "number", path: "doc.version" });
-scalarFields.set("blocks.vert_seq_no", { type: "number", path: "doc.vert_seq_no" });
-scalarFields.set("blocks.want_merge", { type: "boolean", path: "doc.want_merge" });
-scalarFields.set("blocks.want_split", { type: "boolean", path: "doc.want_split" });
-scalarFields.set("blocks.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("accounts.id", { type: "string", path: "doc._key" });
-scalarFields.set("accounts.balance", { type: "uint1024", path: "doc.balance" });
-scalarFields.set("accounts.balance_other.currency", { type: "number", path: "doc.balance_other[*].currency" });
-scalarFields.set("accounts.balance_other.value", { type: "uint1024", path: "doc.balance_other[*].value" });
-scalarFields.set("accounts.bits", { type: "uint64", path: "doc.bits" });
-scalarFields.set("accounts.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("accounts.cells", { type: "uint64", path: "doc.cells" });
-scalarFields.set("accounts.code", { type: "string", path: "doc.code" });
-scalarFields.set("accounts.code_hash", { type: "string", path: "doc.code_hash" });
-scalarFields.set("accounts.data", { type: "string", path: "doc.data" });
-scalarFields.set("accounts.data_hash", { type: "string", path: "doc.data_hash" });
-scalarFields.set("accounts.due_payment", { type: "uint1024", path: "doc.due_payment" });
-scalarFields.set("accounts.last_paid", { type: "number", path: "doc.last_paid" });
-scalarFields.set("accounts.last_trans_lt", { type: "uint64", path: "doc.last_trans_lt" });
-scalarFields.set("accounts.library", { type: "string", path: "doc.library" });
-scalarFields.set("accounts.library_hash", { type: "string", path: "doc.library_hash" });
-scalarFields.set("accounts.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("accounts.public_cells", { type: "uint64", path: "doc.public_cells" });
-scalarFields.set("accounts.split_depth", { type: "number", path: "doc.split_depth" });
-scalarFields.set("accounts.state_hash", { type: "string", path: "doc.state_hash" });
-scalarFields.set("accounts.tick", { type: "boolean", path: "doc.tick" });
-scalarFields.set("accounts.tock", { type: "boolean", path: "doc.tock" });
-scalarFields.set("accounts.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("transactions.id", { type: "string", path: "doc._key" });
-scalarFields.set("transactions.aborted", { type: "boolean", path: "doc.aborted" });
-scalarFields.set("transactions.account_addr", { type: "string", path: "doc.account_addr" });
-scalarFields.set("transactions.action.action_list_hash", { type: "string", path: "doc.action.action_list_hash" });
-scalarFields.set("transactions.action.msgs_created", { type: "number", path: "doc.action.msgs_created" });
-scalarFields.set("transactions.action.no_funds", { type: "boolean", path: "doc.action.no_funds" });
-scalarFields.set("transactions.action.result_arg", { type: "number", path: "doc.action.result_arg" });
-scalarFields.set("transactions.action.result_code", { type: "number", path: "doc.action.result_code" });
-scalarFields.set("transactions.action.skipped_actions", { type: "number", path: "doc.action.skipped_actions" });
-scalarFields.set("transactions.action.spec_actions", { type: "number", path: "doc.action.spec_actions" });
-scalarFields.set("transactions.action.success", { type: "boolean", path: "doc.action.success" });
-scalarFields.set("transactions.action.tot_actions", { type: "number", path: "doc.action.tot_actions" });
-scalarFields.set("transactions.action.total_action_fees", { type: "uint1024", path: "doc.action.total_action_fees" });
-scalarFields.set("transactions.action.total_fwd_fees", { type: "uint1024", path: "doc.action.total_fwd_fees" });
-scalarFields.set("transactions.action.total_msg_size_bits", { type: "number", path: "doc.action.total_msg_size_bits" });
-scalarFields.set("transactions.action.total_msg_size_cells", { type: "number", path: "doc.action.total_msg_size_cells" });
-scalarFields.set("transactions.action.valid", { type: "boolean", path: "doc.action.valid" });
-scalarFields.set("transactions.balance_delta", { type: "uint1024", path: "doc.balance_delta" });
-scalarFields.set("transactions.balance_delta_other.currency", { type: "number", path: "doc.balance_delta_other[*].currency" });
-scalarFields.set("transactions.balance_delta_other.value", { type: "uint1024", path: "doc.balance_delta_other[*].value" });
-scalarFields.set("transactions.block_id", { type: "string", path: "doc.block_id" });
-scalarFields.set("transactions.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("transactions.bounce.fwd_fees", { type: "uint1024", path: "doc.bounce.fwd_fees" });
-scalarFields.set("transactions.bounce.msg_fees", { type: "uint1024", path: "doc.bounce.msg_fees" });
-scalarFields.set("transactions.bounce.msg_size_bits", { type: "number", path: "doc.bounce.msg_size_bits" });
-scalarFields.set("transactions.bounce.msg_size_cells", { type: "number", path: "doc.bounce.msg_size_cells" });
-scalarFields.set("transactions.bounce.req_fwd_fees", { type: "uint1024", path: "doc.bounce.req_fwd_fees" });
-scalarFields.set("transactions.compute.account_activated", { type: "boolean", path: "doc.compute.account_activated" });
-scalarFields.set("transactions.compute.exit_arg", { type: "number", path: "doc.compute.exit_arg" });
-scalarFields.set("transactions.compute.exit_code", { type: "number", path: "doc.compute.exit_code" });
-scalarFields.set("transactions.compute.gas_credit", { type: "number", path: "doc.compute.gas_credit" });
-scalarFields.set("transactions.compute.gas_fees", { type: "uint1024", path: "doc.compute.gas_fees" });
-scalarFields.set("transactions.compute.gas_limit", { type: "uint64", path: "doc.compute.gas_limit" });
-scalarFields.set("transactions.compute.gas_used", { type: "uint64", path: "doc.compute.gas_used" });
-scalarFields.set("transactions.compute.mode", { type: "number", path: "doc.compute.mode" });
-scalarFields.set("transactions.compute.msg_state_used", { type: "boolean", path: "doc.compute.msg_state_used" });
-scalarFields.set("transactions.compute.success", { type: "boolean", path: "doc.compute.success" });
-scalarFields.set("transactions.compute.vm_final_state_hash", { type: "string", path: "doc.compute.vm_final_state_hash" });
-scalarFields.set("transactions.compute.vm_init_state_hash", { type: "string", path: "doc.compute.vm_init_state_hash" });
-scalarFields.set("transactions.compute.vm_steps", { type: "number", path: "doc.compute.vm_steps" });
-scalarFields.set("transactions.credit.credit", { type: "uint1024", path: "doc.credit.credit" });
-scalarFields.set("transactions.credit.credit_other.currency", { type: "number", path: "doc.credit.credit_other[*].currency" });
-scalarFields.set("transactions.credit.credit_other.value", { type: "uint1024", path: "doc.credit.credit_other[*].value" });
-scalarFields.set("transactions.credit.due_fees_collected", { type: "uint1024", path: "doc.credit.due_fees_collected" });
-scalarFields.set("transactions.credit_first", { type: "boolean", path: "doc.credit_first" });
-scalarFields.set("transactions.destroyed", { type: "boolean", path: "doc.destroyed" });
-scalarFields.set("transactions.in_msg", { type: "string", path: "doc.in_msg" });
-scalarFields.set("transactions.installed", { type: "boolean", path: "doc.installed" });
-scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" });
-scalarFields.set("transactions.new_hash", { type: "string", path: "doc.new_hash" });
-scalarFields.set("transactions.now", { type: "number", path: "doc.now" });
-scalarFields.set("transactions.old_hash", { type: "string", path: "doc.old_hash" });
-scalarFields.set("transactions.out_msgs", { type: "string", path: "doc.out_msgs[*]" });
-scalarFields.set("transactions.outmsg_cnt", { type: "number", path: "doc.outmsg_cnt" });
-scalarFields.set("transactions.prepare_transaction", { type: "string", path: "doc.prepare_transaction" });
-scalarFields.set("transactions.prev_trans_hash", { type: "string", path: "doc.prev_trans_hash" });
-scalarFields.set("transactions.prev_trans_lt", { type: "uint64", path: "doc.prev_trans_lt" });
-scalarFields.set("transactions.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("transactions.split_info.acc_split_depth", { type: "number", path: "doc.split_info.acc_split_depth" });
-scalarFields.set("transactions.split_info.cur_shard_pfx_len", { type: "number", path: "doc.split_info.cur_shard_pfx_len" });
-scalarFields.set("transactions.split_info.sibling_addr", { type: "string", path: "doc.split_info.sibling_addr" });
-scalarFields.set("transactions.split_info.this_addr", { type: "string", path: "doc.split_info.this_addr" });
-scalarFields.set("transactions.storage.storage_fees_collected", { type: "uint1024", path: "doc.storage.storage_fees_collected" });
-scalarFields.set("transactions.storage.storage_fees_due", { type: "uint1024", path: "doc.storage.storage_fees_due" });
-scalarFields.set("transactions.total_fees", { type: "uint1024", path: "doc.total_fees" });
-scalarFields.set("transactions.total_fees_other.currency", { type: "number", path: "doc.total_fees_other[*].currency" });
-scalarFields.set("transactions.total_fees_other.value", { type: "uint1024", path: "doc.total_fees_other[*].value" });
-scalarFields.set("transactions.tt", { type: "string", path: "doc.tt" });
-scalarFields.set("transactions.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("messages.id", { type: "string", path: "doc._key" });
-scalarFields.set("messages.block_id", { type: "string", path: "doc.block_id" });
-scalarFields.set("messages.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("messages.body", { type: "string", path: "doc.body" });
-scalarFields.set("messages.body_hash", { type: "string", path: "doc.body_hash" });
-scalarFields.set("messages.bounce", { type: "boolean", path: "doc.bounce" });
-scalarFields.set("messages.bounced", { type: "boolean", path: "doc.bounced" });
-scalarFields.set("messages.code", { type: "string", path: "doc.code" });
-scalarFields.set("messages.code_hash", { type: "string", path: "doc.code_hash" });
-scalarFields.set("messages.created_at", { type: "number", path: "doc.created_at" });
-scalarFields.set("messages.created_lt", { type: "uint64", path: "doc.created_lt" });
-scalarFields.set("messages.data", { type: "string", path: "doc.data" });
-scalarFields.set("messages.data_hash", { type: "string", path: "doc.data_hash" });
-scalarFields.set("messages.dst", { type: "string", path: "doc.dst" });
-scalarFields.set("messages.dst_workchain_id", { type: "number", path: "doc.dst_workchain_id" });
-scalarFields.set("messages.fwd_fee", { type: "uint1024", path: "doc.fwd_fee" });
-scalarFields.set("messages.ihr_disabled", { type: "boolean", path: "doc.ihr_disabled" });
-scalarFields.set("messages.ihr_fee", { type: "uint1024", path: "doc.ihr_fee" });
-scalarFields.set("messages.import_fee", { type: "uint1024", path: "doc.import_fee" });
-scalarFields.set("messages.library", { type: "string", path: "doc.library" });
-scalarFields.set("messages.library_hash", { type: "string", path: "doc.library_hash" });
-scalarFields.set("messages.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("messages.split_depth", { type: "number", path: "doc.split_depth" });
-scalarFields.set("messages.src", { type: "string", path: "doc.src" });
-scalarFields.set("messages.src_workchain_id", { type: "number", path: "doc.src_workchain_id" });
-scalarFields.set("messages.tick", { type: "boolean", path: "doc.tick" });
-scalarFields.set("messages.tock", { type: "boolean", path: "doc.tock" });
-scalarFields.set("messages.value", { type: "uint1024", path: "doc.value" });
-scalarFields.set("messages.value_other.currency", { type: "number", path: "doc.value_other[*].currency" });
-scalarFields.set("messages.value_other.value", { type: "uint1024", path: "doc.value_other[*].value" });
-scalarFields.set("zerostates.id", { type: "string", path: "doc._key" });
-scalarFields.set("zerostates.accounts.id", { type: "string", path: "doc.accounts[*].id" });
-scalarFields.set("zerostates.accounts.balance", { type: "uint1024", path: "doc.accounts[*].balance" });
-scalarFields.set("zerostates.accounts.balance_other.currency", { type: "number", path: "doc.accounts[*].balance_other[**].currency" });
-scalarFields.set("zerostates.accounts.balance_other.value", { type: "uint1024", path: "doc.accounts[*].balance_other[**].value" });
-scalarFields.set("zerostates.accounts.bits", { type: "uint64", path: "doc.accounts[*].bits" });
-scalarFields.set("zerostates.accounts.boc", { type: "string", path: "doc.accounts[*].boc" });
-scalarFields.set("zerostates.accounts.cells", { type: "uint64", path: "doc.accounts[*].cells" });
-scalarFields.set("zerostates.accounts.code", { type: "string", path: "doc.accounts[*].code" });
-scalarFields.set("zerostates.accounts.code_hash", { type: "string", path: "doc.accounts[*].code_hash" });
-scalarFields.set("zerostates.accounts.data", { type: "string", path: "doc.accounts[*].data" });
-scalarFields.set("zerostates.accounts.data_hash", { type: "string", path: "doc.accounts[*].data_hash" });
-scalarFields.set("zerostates.accounts.due_payment", { type: "uint1024", path: "doc.accounts[*].due_payment" });
-scalarFields.set("zerostates.accounts.last_paid", { type: "number", path: "doc.accounts[*].last_paid" });
-scalarFields.set("zerostates.accounts.last_trans_lt", { type: "uint64", path: "doc.accounts[*].last_trans_lt" });
-scalarFields.set("zerostates.accounts.library", { type: "string", path: "doc.accounts[*].library" });
-scalarFields.set("zerostates.accounts.library_hash", { type: "string", path: "doc.accounts[*].library_hash" });
-scalarFields.set("zerostates.accounts.proof", { type: "string", path: "doc.accounts[*].proof" });
-scalarFields.set("zerostates.accounts.public_cells", { type: "uint64", path: "doc.accounts[*].public_cells" });
-scalarFields.set("zerostates.accounts.split_depth", { type: "number", path: "doc.accounts[*].split_depth" });
-scalarFields.set("zerostates.accounts.state_hash", { type: "string", path: "doc.accounts[*].state_hash" });
-scalarFields.set("zerostates.accounts.tick", { type: "boolean", path: "doc.accounts[*].tick" });
-scalarFields.set("zerostates.accounts.tock", { type: "boolean", path: "doc.accounts[*].tock" });
-scalarFields.set("zerostates.accounts.workchain_id", { type: "number", path: "doc.accounts[*].workchain_id" });
-scalarFields.set("zerostates.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("zerostates.global_id", { type: "number", path: "doc.global_id" });
-scalarFields.set("zerostates.libraries.hash", { type: "string", path: "doc.libraries[*].hash" });
-scalarFields.set("zerostates.libraries.lib", { type: "string", path: "doc.libraries[*].lib" });
-scalarFields.set("zerostates.libraries.publishers", { type: "string", path: "doc.libraries[*].publishers[**]" });
-scalarFields.set("zerostates.master.config.p0", { type: "string", path: "doc.master.config.p0" });
-scalarFields.set("zerostates.master.config.p1", { type: "string", path: "doc.master.config.p1" });
-scalarFields.set("zerostates.master.config.p10", { type: "number", path: "doc.master.config.p10[*]" });
-scalarFields.set("zerostates.master.config.p11.critical_params.bit_price", { type: "number", path: "doc.master.config.p11.critical_params.bit_price" });
-scalarFields.set("zerostates.master.config.p11.critical_params.cell_price", { type: "number", path: "doc.master.config.p11.critical_params.cell_price" });
-scalarFields.set("zerostates.master.config.p11.critical_params.max_losses", { type: "number", path: "doc.master.config.p11.critical_params.max_losses" });
-scalarFields.set("zerostates.master.config.p11.critical_params.max_store_sec", { type: "number", path: "doc.master.config.p11.critical_params.max_store_sec" });
-scalarFields.set("zerostates.master.config.p11.critical_params.max_tot_rounds", { type: "number", path: "doc.master.config.p11.critical_params.max_tot_rounds" });
-scalarFields.set("zerostates.master.config.p11.critical_params.min_store_sec", { type: "number", path: "doc.master.config.p11.critical_params.min_store_sec" });
-scalarFields.set("zerostates.master.config.p11.critical_params.min_tot_rounds", { type: "number", path: "doc.master.config.p11.critical_params.min_tot_rounds" });
-scalarFields.set("zerostates.master.config.p11.critical_params.min_wins", { type: "number", path: "doc.master.config.p11.critical_params.min_wins" });
-scalarFields.set("zerostates.master.config.p11.normal_params.bit_price", { type: "number", path: "doc.master.config.p11.normal_params.bit_price" });
-scalarFields.set("zerostates.master.config.p11.normal_params.cell_price", { type: "number", path: "doc.master.config.p11.normal_params.cell_price" });
-scalarFields.set("zerostates.master.config.p11.normal_params.max_losses", { type: "number", path: "doc.master.config.p11.normal_params.max_losses" });
-scalarFields.set("zerostates.master.config.p11.normal_params.max_store_sec", { type: "number", path: "doc.master.config.p11.normal_params.max_store_sec" });
-scalarFields.set("zerostates.master.config.p11.normal_params.max_tot_rounds", { type: "number", path: "doc.master.config.p11.normal_params.max_tot_rounds" });
-scalarFields.set("zerostates.master.config.p11.normal_params.min_store_sec", { type: "number", path: "doc.master.config.p11.normal_params.min_store_sec" });
-scalarFields.set("zerostates.master.config.p11.normal_params.min_tot_rounds", { type: "number", path: "doc.master.config.p11.normal_params.min_tot_rounds" });
-scalarFields.set("zerostates.master.config.p11.normal_params.min_wins", { type: "number", path: "doc.master.config.p11.normal_params.min_wins" });
-scalarFields.set("zerostates.master.config.p12.accept_msgs", { type: "boolean", path: "doc.master.config.p12[*].accept_msgs" });
-scalarFields.set("zerostates.master.config.p12.active", { type: "boolean", path: "doc.master.config.p12[*].active" });
-scalarFields.set("zerostates.master.config.p12.actual_min_split", { type: "number", path: "doc.master.config.p12[*].actual_min_split" });
-scalarFields.set("zerostates.master.config.p12.addr_len_step", { type: "number", path: "doc.master.config.p12[*].addr_len_step" });
-scalarFields.set("zerostates.master.config.p12.basic", { type: "boolean", path: "doc.master.config.p12[*].basic" });
-scalarFields.set("zerostates.master.config.p12.enabled_since", { type: "number", path: "doc.master.config.p12[*].enabled_since" });
-scalarFields.set("zerostates.master.config.p12.flags", { type: "number", path: "doc.master.config.p12[*].flags" });
-scalarFields.set("zerostates.master.config.p12.max_addr_len", { type: "number", path: "doc.master.config.p12[*].max_addr_len" });
-scalarFields.set("zerostates.master.config.p12.max_split", { type: "number", path: "doc.master.config.p12[*].max_split" });
-scalarFields.set("zerostates.master.config.p12.min_addr_len", { type: "number", path: "doc.master.config.p12[*].min_addr_len" });
-scalarFields.set("zerostates.master.config.p12.min_split", { type: "number", path: "doc.master.config.p12[*].min_split" });
-scalarFields.set("zerostates.master.config.p12.version", { type: "number", path: "doc.master.config.p12[*].version" });
-scalarFields.set("zerostates.master.config.p12.vm_mode", { type: "string", path: "doc.master.config.p12[*].vm_mode" });
-scalarFields.set("zerostates.master.config.p12.vm_version", { type: "number", path: "doc.master.config.p12[*].vm_version" });
-scalarFields.set("zerostates.master.config.p12.workchain_id", { type: "number", path: "doc.master.config.p12[*].workchain_id" });
-scalarFields.set("zerostates.master.config.p12.workchain_type_id", { type: "number", path: "doc.master.config.p12[*].workchain_type_id" });
-scalarFields.set("zerostates.master.config.p12.zerostate_file_hash", { type: "string", path: "doc.master.config.p12[*].zerostate_file_hash" });
-scalarFields.set("zerostates.master.config.p12.zerostate_root_hash", { type: "string", path: "doc.master.config.p12[*].zerostate_root_hash" });
-scalarFields.set("zerostates.master.config.p14.basechain_block_fee", { type: "uint1024", path: "doc.master.config.p14.basechain_block_fee" });
-scalarFields.set("zerostates.master.config.p14.masterchain_block_fee", { type: "uint1024", path: "doc.master.config.p14.masterchain_block_fee" });
-scalarFields.set("zerostates.master.config.p15.elections_end_before", { type: "number", path: "doc.master.config.p15.elections_end_before" });
-scalarFields.set("zerostates.master.config.p15.elections_start_before", { type: "number", path: "doc.master.config.p15.elections_start_before" });
-scalarFields.set("zerostates.master.config.p15.stake_held_for", { type: "number", path: "doc.master.config.p15.stake_held_for" });
-scalarFields.set("zerostates.master.config.p15.validators_elected_for", { type: "number", path: "doc.master.config.p15.validators_elected_for" });
-scalarFields.set("zerostates.master.config.p16.max_main_validators", { type: "number", path: "doc.master.config.p16.max_main_validators" });
-scalarFields.set("zerostates.master.config.p16.max_validators", { type: "number", path: "doc.master.config.p16.max_validators" });
-scalarFields.set("zerostates.master.config.p16.min_validators", { type: "number", path: "doc.master.config.p16.min_validators" });
-scalarFields.set("zerostates.master.config.p17.max_stake", { type: "uint1024", path: "doc.master.config.p17.max_stake" });
-scalarFields.set("zerostates.master.config.p17.max_stake_factor", { type: "number", path: "doc.master.config.p17.max_stake_factor" });
-scalarFields.set("zerostates.master.config.p17.min_stake", { type: "uint1024", path: "doc.master.config.p17.min_stake" });
-scalarFields.set("zerostates.master.config.p17.min_total_stake", { type: "uint1024", path: "doc.master.config.p17.min_total_stake" });
-scalarFields.set("zerostates.master.config.p18.bit_price_ps", { type: "uint64", path: "doc.master.config.p18[*].bit_price_ps" });
-scalarFields.set("zerostates.master.config.p18.cell_price_ps", { type: "uint64", path: "doc.master.config.p18[*].cell_price_ps" });
-scalarFields.set("zerostates.master.config.p18.mc_bit_price_ps", { type: "uint64", path: "doc.master.config.p18[*].mc_bit_price_ps" });
-scalarFields.set("zerostates.master.config.p18.mc_cell_price_ps", { type: "uint64", path: "doc.master.config.p18[*].mc_cell_price_ps" });
-scalarFields.set("zerostates.master.config.p18.utime_since", { type: "number", path: "doc.master.config.p18[*].utime_since" });
-scalarFields.set("zerostates.master.config.p2", { type: "string", path: "doc.master.config.p2" });
-scalarFields.set("zerostates.master.config.p20.block_gas_limit", { type: "uint64", path: "doc.master.config.p20.block_gas_limit" });
-scalarFields.set("zerostates.master.config.p20.delete_due_limit", { type: "uint64", path: "doc.master.config.p20.delete_due_limit" });
-scalarFields.set("zerostates.master.config.p20.flat_gas_limit", { type: "uint64", path: "doc.master.config.p20.flat_gas_limit" });
-scalarFields.set("zerostates.master.config.p20.flat_gas_price", { type: "uint64", path: "doc.master.config.p20.flat_gas_price" });
-scalarFields.set("zerostates.master.config.p20.freeze_due_limit", { type: "uint64", path: "doc.master.config.p20.freeze_due_limit" });
-scalarFields.set("zerostates.master.config.p20.gas_credit", { type: "uint64", path: "doc.master.config.p20.gas_credit" });
-scalarFields.set("zerostates.master.config.p20.gas_limit", { type: "uint64", path: "doc.master.config.p20.gas_limit" });
-scalarFields.set("zerostates.master.config.p20.gas_price", { type: "uint64", path: "doc.master.config.p20.gas_price" });
-scalarFields.set("zerostates.master.config.p20.special_gas_limit", { type: "uint64", path: "doc.master.config.p20.special_gas_limit" });
-scalarFields.set("zerostates.master.config.p21.block_gas_limit", { type: "uint64", path: "doc.master.config.p21.block_gas_limit" });
-scalarFields.set("zerostates.master.config.p21.delete_due_limit", { type: "uint64", path: "doc.master.config.p21.delete_due_limit" });
-scalarFields.set("zerostates.master.config.p21.flat_gas_limit", { type: "uint64", path: "doc.master.config.p21.flat_gas_limit" });
-scalarFields.set("zerostates.master.config.p21.flat_gas_price", { type: "uint64", path: "doc.master.config.p21.flat_gas_price" });
-scalarFields.set("zerostates.master.config.p21.freeze_due_limit", { type: "uint64", path: "doc.master.config.p21.freeze_due_limit" });
-scalarFields.set("zerostates.master.config.p21.gas_credit", { type: "uint64", path: "doc.master.config.p21.gas_credit" });
-scalarFields.set("zerostates.master.config.p21.gas_limit", { type: "uint64", path: "doc.master.config.p21.gas_limit" });
-scalarFields.set("zerostates.master.config.p21.gas_price", { type: "uint64", path: "doc.master.config.p21.gas_price" });
-scalarFields.set("zerostates.master.config.p21.special_gas_limit", { type: "uint64", path: "doc.master.config.p21.special_gas_limit" });
-scalarFields.set("zerostates.master.config.p22.bytes.hard_limit", { type: "number", path: "doc.master.config.p22.bytes.hard_limit" });
-scalarFields.set("zerostates.master.config.p22.bytes.soft_limit", { type: "number", path: "doc.master.config.p22.bytes.soft_limit" });
-scalarFields.set("zerostates.master.config.p22.bytes.underload", { type: "number", path: "doc.master.config.p22.bytes.underload" });
-scalarFields.set("zerostates.master.config.p22.gas.hard_limit", { type: "number", path: "doc.master.config.p22.gas.hard_limit" });
-scalarFields.set("zerostates.master.config.p22.gas.soft_limit", { type: "number", path: "doc.master.config.p22.gas.soft_limit" });
-scalarFields.set("zerostates.master.config.p22.gas.underload", { type: "number", path: "doc.master.config.p22.gas.underload" });
-scalarFields.set("zerostates.master.config.p22.lt_delta.hard_limit", { type: "number", path: "doc.master.config.p22.lt_delta.hard_limit" });
-scalarFields.set("zerostates.master.config.p22.lt_delta.soft_limit", { type: "number", path: "doc.master.config.p22.lt_delta.soft_limit" });
-scalarFields.set("zerostates.master.config.p22.lt_delta.underload", { type: "number", path: "doc.master.config.p22.lt_delta.underload" });
-scalarFields.set("zerostates.master.config.p23.bytes.hard_limit", { type: "number", path: "doc.master.config.p23.bytes.hard_limit" });
-scalarFields.set("zerostates.master.config.p23.bytes.soft_limit", { type: "number", path: "doc.master.config.p23.bytes.soft_limit" });
-scalarFields.set("zerostates.master.config.p23.bytes.underload", { type: "number", path: "doc.master.config.p23.bytes.underload" });
-scalarFields.set("zerostates.master.config.p23.gas.hard_limit", { type: "number", path: "doc.master.config.p23.gas.hard_limit" });
-scalarFields.set("zerostates.master.config.p23.gas.soft_limit", { type: "number", path: "doc.master.config.p23.gas.soft_limit" });
-scalarFields.set("zerostates.master.config.p23.gas.underload", { type: "number", path: "doc.master.config.p23.gas.underload" });
-scalarFields.set("zerostates.master.config.p23.lt_delta.hard_limit", { type: "number", path: "doc.master.config.p23.lt_delta.hard_limit" });
-scalarFields.set("zerostates.master.config.p23.lt_delta.soft_limit", { type: "number", path: "doc.master.config.p23.lt_delta.soft_limit" });
-scalarFields.set("zerostates.master.config.p23.lt_delta.underload", { type: "number", path: "doc.master.config.p23.lt_delta.underload" });
-scalarFields.set("zerostates.master.config.p24.bit_price", { type: "uint64", path: "doc.master.config.p24.bit_price" });
-scalarFields.set("zerostates.master.config.p24.cell_price", { type: "uint64", path: "doc.master.config.p24.cell_price" });
-scalarFields.set("zerostates.master.config.p24.first_frac", { type: "number", path: "doc.master.config.p24.first_frac" });
-scalarFields.set("zerostates.master.config.p24.ihr_price_factor", { type: "number", path: "doc.master.config.p24.ihr_price_factor" });
-scalarFields.set("zerostates.master.config.p24.lump_price", { type: "uint64", path: "doc.master.config.p24.lump_price" });
-scalarFields.set("zerostates.master.config.p24.next_frac", { type: "number", path: "doc.master.config.p24.next_frac" });
-scalarFields.set("zerostates.master.config.p25.bit_price", { type: "uint64", path: "doc.master.config.p25.bit_price" });
-scalarFields.set("zerostates.master.config.p25.cell_price", { type: "uint64", path: "doc.master.config.p25.cell_price" });
-scalarFields.set("zerostates.master.config.p25.first_frac", { type: "number", path: "doc.master.config.p25.first_frac" });
-scalarFields.set("zerostates.master.config.p25.ihr_price_factor", { type: "number", path: "doc.master.config.p25.ihr_price_factor" });
-scalarFields.set("zerostates.master.config.p25.lump_price", { type: "uint64", path: "doc.master.config.p25.lump_price" });
-scalarFields.set("zerostates.master.config.p25.next_frac", { type: "number", path: "doc.master.config.p25.next_frac" });
-scalarFields.set("zerostates.master.config.p28.mc_catchain_lifetime", { type: "number", path: "doc.master.config.p28.mc_catchain_lifetime" });
-scalarFields.set("zerostates.master.config.p28.shard_catchain_lifetime", { type: "number", path: "doc.master.config.p28.shard_catchain_lifetime" });
-scalarFields.set("zerostates.master.config.p28.shard_validators_lifetime", { type: "number", path: "doc.master.config.p28.shard_validators_lifetime" });
-scalarFields.set("zerostates.master.config.p28.shard_validators_num", { type: "number", path: "doc.master.config.p28.shard_validators_num" });
-scalarFields.set("zerostates.master.config.p28.shuffle_mc_validators", { type: "boolean", path: "doc.master.config.p28.shuffle_mc_validators" });
-scalarFields.set("zerostates.master.config.p29.attempt_duration", { type: "number", path: "doc.master.config.p29.attempt_duration" });
-scalarFields.set("zerostates.master.config.p29.catchain_max_deps", { type: "number", path: "doc.master.config.p29.catchain_max_deps" });
-scalarFields.set("zerostates.master.config.p29.consensus_timeout_ms", { type: "number", path: "doc.master.config.p29.consensus_timeout_ms" });
-scalarFields.set("zerostates.master.config.p29.fast_attempts", { type: "number", path: "doc.master.config.p29.fast_attempts" });
-scalarFields.set("zerostates.master.config.p29.max_block_bytes", { type: "number", path: "doc.master.config.p29.max_block_bytes" });
-scalarFields.set("zerostates.master.config.p29.max_collated_bytes", { type: "number", path: "doc.master.config.p29.max_collated_bytes" });
-scalarFields.set("zerostates.master.config.p29.new_catchain_ids", { type: "boolean", path: "doc.master.config.p29.new_catchain_ids" });
-scalarFields.set("zerostates.master.config.p29.next_candidate_delay_ms", { type: "number", path: "doc.master.config.p29.next_candidate_delay_ms" });
-scalarFields.set("zerostates.master.config.p29.round_candidates", { type: "number", path: "doc.master.config.p29.round_candidates" });
-scalarFields.set("zerostates.master.config.p3", { type: "string", path: "doc.master.config.p3" });
-scalarFields.set("zerostates.master.config.p31", { type: "string", path: "doc.master.config.p31[*]" });
-scalarFields.set("zerostates.master.config.p32.list.adnl_addr", { type: "string", path: "doc.master.config.p32.list[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p32.list.public_key", { type: "string", path: "doc.master.config.p32.list[*].public_key" });
-scalarFields.set("zerostates.master.config.p32.list.weight", { type: "uint64", path: "doc.master.config.p32.list[*].weight" });
-scalarFields.set("zerostates.master.config.p32.total", { type: "number", path: "doc.master.config.p32.total" });
-scalarFields.set("zerostates.master.config.p32.total_weight", { type: "uint64", path: "doc.master.config.p32.total_weight" });
-scalarFields.set("zerostates.master.config.p32.utime_since", { type: "number", path: "doc.master.config.p32.utime_since" });
-scalarFields.set("zerostates.master.config.p32.utime_until", { type: "number", path: "doc.master.config.p32.utime_until" });
-scalarFields.set("zerostates.master.config.p33.list.adnl_addr", { type: "string", path: "doc.master.config.p33.list[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p33.list.public_key", { type: "string", path: "doc.master.config.p33.list[*].public_key" });
-scalarFields.set("zerostates.master.config.p33.list.weight", { type: "uint64", path: "doc.master.config.p33.list[*].weight" });
-scalarFields.set("zerostates.master.config.p33.total", { type: "number", path: "doc.master.config.p33.total" });
-scalarFields.set("zerostates.master.config.p33.total_weight", { type: "uint64", path: "doc.master.config.p33.total_weight" });
-scalarFields.set("zerostates.master.config.p33.utime_since", { type: "number", path: "doc.master.config.p33.utime_since" });
-scalarFields.set("zerostates.master.config.p33.utime_until", { type: "number", path: "doc.master.config.p33.utime_until" });
-scalarFields.set("zerostates.master.config.p34.list.adnl_addr", { type: "string", path: "doc.master.config.p34.list[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p34.list.public_key", { type: "string", path: "doc.master.config.p34.list[*].public_key" });
-scalarFields.set("zerostates.master.config.p34.list.weight", { type: "uint64", path: "doc.master.config.p34.list[*].weight" });
-scalarFields.set("zerostates.master.config.p34.total", { type: "number", path: "doc.master.config.p34.total" });
-scalarFields.set("zerostates.master.config.p34.total_weight", { type: "uint64", path: "doc.master.config.p34.total_weight" });
-scalarFields.set("zerostates.master.config.p34.utime_since", { type: "number", path: "doc.master.config.p34.utime_since" });
-scalarFields.set("zerostates.master.config.p34.utime_until", { type: "number", path: "doc.master.config.p34.utime_until" });
-scalarFields.set("zerostates.master.config.p35.list.adnl_addr", { type: "string", path: "doc.master.config.p35.list[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p35.list.public_key", { type: "string", path: "doc.master.config.p35.list[*].public_key" });
-scalarFields.set("zerostates.master.config.p35.list.weight", { type: "uint64", path: "doc.master.config.p35.list[*].weight" });
-scalarFields.set("zerostates.master.config.p35.total", { type: "number", path: "doc.master.config.p35.total" });
-scalarFields.set("zerostates.master.config.p35.total_weight", { type: "uint64", path: "doc.master.config.p35.total_weight" });
-scalarFields.set("zerostates.master.config.p35.utime_since", { type: "number", path: "doc.master.config.p35.utime_since" });
-scalarFields.set("zerostates.master.config.p35.utime_until", { type: "number", path: "doc.master.config.p35.utime_until" });
-scalarFields.set("zerostates.master.config.p36.list.adnl_addr", { type: "string", path: "doc.master.config.p36.list[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p36.list.public_key", { type: "string", path: "doc.master.config.p36.list[*].public_key" });
-scalarFields.set("zerostates.master.config.p36.list.weight", { type: "uint64", path: "doc.master.config.p36.list[*].weight" });
-scalarFields.set("zerostates.master.config.p36.total", { type: "number", path: "doc.master.config.p36.total" });
-scalarFields.set("zerostates.master.config.p36.total_weight", { type: "uint64", path: "doc.master.config.p36.total_weight" });
-scalarFields.set("zerostates.master.config.p36.utime_since", { type: "number", path: "doc.master.config.p36.utime_since" });
-scalarFields.set("zerostates.master.config.p36.utime_until", { type: "number", path: "doc.master.config.p36.utime_until" });
-scalarFields.set("zerostates.master.config.p37.list.adnl_addr", { type: "string", path: "doc.master.config.p37.list[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p37.list.public_key", { type: "string", path: "doc.master.config.p37.list[*].public_key" });
-scalarFields.set("zerostates.master.config.p37.list.weight", { type: "uint64", path: "doc.master.config.p37.list[*].weight" });
-scalarFields.set("zerostates.master.config.p37.total", { type: "number", path: "doc.master.config.p37.total" });
-scalarFields.set("zerostates.master.config.p37.total_weight", { type: "uint64", path: "doc.master.config.p37.total_weight" });
-scalarFields.set("zerostates.master.config.p37.utime_since", { type: "number", path: "doc.master.config.p37.utime_since" });
-scalarFields.set("zerostates.master.config.p37.utime_until", { type: "number", path: "doc.master.config.p37.utime_until" });
-scalarFields.set("zerostates.master.config.p39.adnl_addr", { type: "string", path: "doc.master.config.p39[*].adnl_addr" });
-scalarFields.set("zerostates.master.config.p39.seqno", { type: "number", path: "doc.master.config.p39[*].seqno" });
-scalarFields.set("zerostates.master.config.p39.signature_r", { type: "string", path: "doc.master.config.p39[*].signature_r" });
-scalarFields.set("zerostates.master.config.p39.signature_s", { type: "string", path: "doc.master.config.p39[*].signature_s" });
-scalarFields.set("zerostates.master.config.p39.temp_public_key", { type: "string", path: "doc.master.config.p39[*].temp_public_key" });
-scalarFields.set("zerostates.master.config.p39.valid_until", { type: "number", path: "doc.master.config.p39[*].valid_until" });
-scalarFields.set("zerostates.master.config.p4", { type: "string", path: "doc.master.config.p4" });
-scalarFields.set("zerostates.master.config.p6.mint_add_price", { type: "string", path: "doc.master.config.p6.mint_add_price" });
-scalarFields.set("zerostates.master.config.p6.mint_new_price", { type: "string", path: "doc.master.config.p6.mint_new_price" });
-scalarFields.set("zerostates.master.config.p7.currency", { type: "number", path: "doc.master.config.p7[*].currency" });
-scalarFields.set("zerostates.master.config.p7.value", { type: "string", path: "doc.master.config.p7[*].value" });
-scalarFields.set("zerostates.master.config.p8.capabilities", { type: "uint64", path: "doc.master.config.p8.capabilities" });
-scalarFields.set("zerostates.master.config.p8.version", { type: "number", path: "doc.master.config.p8.version" });
-scalarFields.set("zerostates.master.config.p9", { type: "number", path: "doc.master.config.p9[*]" });
-scalarFields.set("zerostates.master.config_addr", { type: "string", path: "doc.master.config_addr" });
-scalarFields.set("zerostates.master.global_balance", { type: "uint1024", path: "doc.master.global_balance" });
-scalarFields.set("zerostates.master.global_balance_other.currency", { type: "number", path: "doc.master.global_balance_other[*].currency" });
-scalarFields.set("zerostates.master.global_balance_other.value", { type: "uint1024", path: "doc.master.global_balance_other[*].value" });
-scalarFields.set("zerostates.master.validator_list_hash_short", { type: "number", path: "doc.master.validator_list_hash_short" });
-scalarFields.set("zerostates.total_balance", { type: "uint1024", path: "doc.total_balance" });
-scalarFields.set("zerostates.total_balance_other.currency", { type: "number", path: "doc.total_balance_other[*].currency" });
-scalarFields.set("zerostates.total_balance_other.value", { type: "uint1024", path: "doc.total_balance_other[*].value" });
-scalarFields.set("zerostates.workchain_id", { type: "number", path: "doc.workchain_id" });
+scalarFields.set("blocks_signatures.id", {
+    type: "string",
+    path: "doc._key",
+});
+scalarFields.set("blocks_signatures.catchain_seqno", {
+    type: "number",
+    path: "doc.catchain_seqno",
+});
+scalarFields.set("blocks_signatures.gen_utime", {
+    type: "number",
+    path: "doc.gen_utime",
+});
+scalarFields.set("blocks_signatures.proof", {
+    type: "string",
+    path: "doc.proof",
+});
+scalarFields.set("blocks_signatures.seq_no", {
+    type: "number",
+    path: "doc.seq_no",
+});
+scalarFields.set("blocks_signatures.shard", {
+    type: "string",
+    path: "doc.shard",
+});
+scalarFields.set("blocks_signatures.sig_weight", {
+    type: "uint64",
+    path: "doc.sig_weight",
+});
+scalarFields.set("blocks_signatures.signatures.node_id", {
+    type: "string",
+    path: "doc.signatures[*].node_id",
+});
+scalarFields.set("blocks_signatures.signatures.r", {
+    type: "string",
+    path: "doc.signatures[*].r",
+});
+scalarFields.set("blocks_signatures.signatures.s", {
+    type: "string",
+    path: "doc.signatures[*].s",
+});
+scalarFields.set("blocks_signatures.validator_list_hash_short", {
+    type: "number",
+    path: "doc.validator_list_hash_short",
+});
+scalarFields.set("blocks_signatures.workchain_id", {
+    type: "number",
+    path: "doc.workchain_id",
+});
+scalarFields.set("blocks.id", {
+    type: "string",
+    path: "doc._key",
+});
+scalarFields.set("blocks.account_blocks.account_addr", {
+    type: "string",
+    path: "doc.account_blocks[*].account_addr",
+});
+scalarFields.set("blocks.account_blocks.new_hash", {
+    type: "string",
+    path: "doc.account_blocks[*].new_hash",
+});
+scalarFields.set("blocks.account_blocks.old_hash", {
+    type: "string",
+    path: "doc.account_blocks[*].old_hash",
+});
+scalarFields.set("blocks.account_blocks.tr_count", {
+    type: "number",
+    path: "doc.account_blocks[*].tr_count",
+});
+scalarFields.set("blocks.account_blocks.transactions.lt", {
+    type: "uint64",
+    path: "doc.account_blocks[*].transactions[**].lt",
+});
+scalarFields.set("blocks.account_blocks.transactions.total_fees", {
+    type: "uint1024",
+    path: "doc.account_blocks[*].transactions[**].total_fees",
+});
+scalarFields.set("blocks.account_blocks.transactions.total_fees_other.currency", {
+    type: "number",
+    path: "doc.account_blocks[*].transactions[**].total_fees_other[***].currency",
+});
+scalarFields.set("blocks.account_blocks.transactions.total_fees_other.value", {
+    type: "uint1024",
+    path: "doc.account_blocks[*].transactions[**].total_fees_other[***].value",
+});
+scalarFields.set("blocks.account_blocks.transactions.transaction_id", {
+    type: "string",
+    path: "doc.account_blocks[*].transactions[**].transaction_id",
+});
+scalarFields.set("blocks.after_merge", {
+    type: "boolean",
+    path: "doc.after_merge",
+});
+scalarFields.set("blocks.after_split", {
+    type: "boolean",
+    path: "doc.after_split",
+});
+scalarFields.set("blocks.before_split", {
+    type: "boolean",
+    path: "doc.before_split",
+});
+scalarFields.set("blocks.boc", {
+    type: "string",
+    path: "doc.boc",
+});
+scalarFields.set("blocks.created_by", {
+    type: "string",
+    path: "doc.created_by",
+});
+scalarFields.set("blocks.end_lt", {
+    type: "uint64",
+    path: "doc.end_lt",
+});
+scalarFields.set("blocks.flags", {
+    type: "number",
+    path: "doc.flags",
+});
+scalarFields.set("blocks.gen_catchain_seqno", {
+    type: "number",
+    path: "doc.gen_catchain_seqno",
+});
+scalarFields.set("blocks.gen_software_capabilities", {
+    type: "string",
+    path: "doc.gen_software_capabilities",
+});
+scalarFields.set("blocks.gen_software_version", {
+    type: "number",
+    path: "doc.gen_software_version",
+});
+scalarFields.set("blocks.gen_utime", {
+    type: "number",
+    path: "doc.gen_utime",
+});
+scalarFields.set("blocks.gen_validator_list_hash_short", {
+    type: "number",
+    path: "doc.gen_validator_list_hash_short",
+});
+scalarFields.set("blocks.global_id", {
+    type: "number",
+    path: "doc.global_id",
+});
+scalarFields.set("blocks.in_msg_descr.fwd_fee", {
+    type: "uint1024",
+    path: "doc.in_msg_descr[*].fwd_fee",
+});
+scalarFields.set("blocks.in_msg_descr.ihr_fee", {
+    type: "uint1024",
+    path: "doc.in_msg_descr[*].ihr_fee",
+});
+scalarFields.set("blocks.in_msg_descr.in_msg.cur_addr", {
+    type: "string",
+    path: "doc.in_msg_descr[*].in_msg.cur_addr",
+});
+scalarFields.set("blocks.in_msg_descr.in_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.in_msg_descr[*].in_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.in_msg_descr.in_msg.msg_id", {
+    type: "string",
+    path: "doc.in_msg_descr[*].in_msg.msg_id",
+});
+scalarFields.set("blocks.in_msg_descr.in_msg.next_addr", {
+    type: "string",
+    path: "doc.in_msg_descr[*].in_msg.next_addr",
+});
+scalarFields.set("blocks.in_msg_descr.msg_id", {
+    type: "string",
+    path: "doc.in_msg_descr[*].msg_id",
+});
+scalarFields.set("blocks.in_msg_descr.out_msg.cur_addr", {
+    type: "string",
+    path: "doc.in_msg_descr[*].out_msg.cur_addr",
+});
+scalarFields.set("blocks.in_msg_descr.out_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.in_msg_descr[*].out_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.in_msg_descr.out_msg.msg_id", {
+    type: "string",
+    path: "doc.in_msg_descr[*].out_msg.msg_id",
+});
+scalarFields.set("blocks.in_msg_descr.out_msg.next_addr", {
+    type: "string",
+    path: "doc.in_msg_descr[*].out_msg.next_addr",
+});
+scalarFields.set("blocks.in_msg_descr.proof_created", {
+    type: "string",
+    path: "doc.in_msg_descr[*].proof_created",
+});
+scalarFields.set("blocks.in_msg_descr.proof_delivered", {
+    type: "string",
+    path: "doc.in_msg_descr[*].proof_delivered",
+});
+scalarFields.set("blocks.in_msg_descr.transaction_id", {
+    type: "string",
+    path: "doc.in_msg_descr[*].transaction_id",
+});
+scalarFields.set("blocks.in_msg_descr.transit_fee", {
+    type: "uint1024",
+    path: "doc.in_msg_descr[*].transit_fee",
+});
+scalarFields.set("blocks.key_block", {
+    type: "boolean",
+    path: "doc.key_block",
+});
+scalarFields.set("blocks.master.config.p0", {
+    type: "string",
+    path: "doc.master.config.p0",
+});
+scalarFields.set("blocks.master.config.p1", {
+    type: "string",
+    path: "doc.master.config.p1",
+});
+scalarFields.set("blocks.master.config.p10", {
+    type: "number",
+    path: "doc.master.config.p10[*]",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.bit_price", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.bit_price",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.cell_price", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.cell_price",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.max_losses", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.max_losses",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.max_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.max_store_sec",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.max_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.max_tot_rounds",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.min_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.min_store_sec",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.min_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.min_tot_rounds",
+});
+scalarFields.set("blocks.master.config.p11.critical_params.min_wins", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.min_wins",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.bit_price", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.bit_price",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.cell_price", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.cell_price",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.max_losses", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.max_losses",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.max_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.max_store_sec",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.max_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.max_tot_rounds",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.min_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.min_store_sec",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.min_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.min_tot_rounds",
+});
+scalarFields.set("blocks.master.config.p11.normal_params.min_wins", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.min_wins",
+});
+scalarFields.set("blocks.master.config.p12.accept_msgs", {
+    type: "boolean",
+    path: "doc.master.config.p12[*].accept_msgs",
+});
+scalarFields.set("blocks.master.config.p12.active", {
+    type: "boolean",
+    path: "doc.master.config.p12[*].active",
+});
+scalarFields.set("blocks.master.config.p12.actual_min_split", {
+    type: "number",
+    path: "doc.master.config.p12[*].actual_min_split",
+});
+scalarFields.set("blocks.master.config.p12.addr_len_step", {
+    type: "number",
+    path: "doc.master.config.p12[*].addr_len_step",
+});
+scalarFields.set("blocks.master.config.p12.basic", {
+    type: "boolean",
+    path: "doc.master.config.p12[*].basic",
+});
+scalarFields.set("blocks.master.config.p12.enabled_since", {
+    type: "number",
+    path: "doc.master.config.p12[*].enabled_since",
+});
+scalarFields.set("blocks.master.config.p12.flags", {
+    type: "number",
+    path: "doc.master.config.p12[*].flags",
+});
+scalarFields.set("blocks.master.config.p12.max_addr_len", {
+    type: "number",
+    path: "doc.master.config.p12[*].max_addr_len",
+});
+scalarFields.set("blocks.master.config.p12.max_split", {
+    type: "number",
+    path: "doc.master.config.p12[*].max_split",
+});
+scalarFields.set("blocks.master.config.p12.min_addr_len", {
+    type: "number",
+    path: "doc.master.config.p12[*].min_addr_len",
+});
+scalarFields.set("blocks.master.config.p12.min_split", {
+    type: "number",
+    path: "doc.master.config.p12[*].min_split",
+});
+scalarFields.set("blocks.master.config.p12.version", {
+    type: "number",
+    path: "doc.master.config.p12[*].version",
+});
+scalarFields.set("blocks.master.config.p12.vm_mode", {
+    type: "string",
+    path: "doc.master.config.p12[*].vm_mode",
+});
+scalarFields.set("blocks.master.config.p12.vm_version", {
+    type: "number",
+    path: "doc.master.config.p12[*].vm_version",
+});
+scalarFields.set("blocks.master.config.p12.workchain_id", {
+    type: "number",
+    path: "doc.master.config.p12[*].workchain_id",
+});
+scalarFields.set("blocks.master.config.p12.workchain_type_id", {
+    type: "number",
+    path: "doc.master.config.p12[*].workchain_type_id",
+});
+scalarFields.set("blocks.master.config.p12.zerostate_file_hash", {
+    type: "string",
+    path: "doc.master.config.p12[*].zerostate_file_hash",
+});
+scalarFields.set("blocks.master.config.p12.zerostate_root_hash", {
+    type: "string",
+    path: "doc.master.config.p12[*].zerostate_root_hash",
+});
+scalarFields.set("blocks.master.config.p14.basechain_block_fee", {
+    type: "uint1024",
+    path: "doc.master.config.p14.basechain_block_fee",
+});
+scalarFields.set("blocks.master.config.p14.masterchain_block_fee", {
+    type: "uint1024",
+    path: "doc.master.config.p14.masterchain_block_fee",
+});
+scalarFields.set("blocks.master.config.p15.elections_end_before", {
+    type: "number",
+    path: "doc.master.config.p15.elections_end_before",
+});
+scalarFields.set("blocks.master.config.p15.elections_start_before", {
+    type: "number",
+    path: "doc.master.config.p15.elections_start_before",
+});
+scalarFields.set("blocks.master.config.p15.stake_held_for", {
+    type: "number",
+    path: "doc.master.config.p15.stake_held_for",
+});
+scalarFields.set("blocks.master.config.p15.validators_elected_for", {
+    type: "number",
+    path: "doc.master.config.p15.validators_elected_for",
+});
+scalarFields.set("blocks.master.config.p16.max_main_validators", {
+    type: "number",
+    path: "doc.master.config.p16.max_main_validators",
+});
+scalarFields.set("blocks.master.config.p16.max_validators", {
+    type: "number",
+    path: "doc.master.config.p16.max_validators",
+});
+scalarFields.set("blocks.master.config.p16.min_validators", {
+    type: "number",
+    path: "doc.master.config.p16.min_validators",
+});
+scalarFields.set("blocks.master.config.p17.max_stake", {
+    type: "uint1024",
+    path: "doc.master.config.p17.max_stake",
+});
+scalarFields.set("blocks.master.config.p17.max_stake_factor", {
+    type: "number",
+    path: "doc.master.config.p17.max_stake_factor",
+});
+scalarFields.set("blocks.master.config.p17.min_stake", {
+    type: "uint1024",
+    path: "doc.master.config.p17.min_stake",
+});
+scalarFields.set("blocks.master.config.p17.min_total_stake", {
+    type: "uint1024",
+    path: "doc.master.config.p17.min_total_stake",
+});
+scalarFields.set("blocks.master.config.p18.bit_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].bit_price_ps",
+});
+scalarFields.set("blocks.master.config.p18.cell_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].cell_price_ps",
+});
+scalarFields.set("blocks.master.config.p18.mc_bit_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].mc_bit_price_ps",
+});
+scalarFields.set("blocks.master.config.p18.mc_cell_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].mc_cell_price_ps",
+});
+scalarFields.set("blocks.master.config.p18.utime_since", {
+    type: "number",
+    path: "doc.master.config.p18[*].utime_since",
+});
+scalarFields.set("blocks.master.config.p2", {
+    type: "string",
+    path: "doc.master.config.p2",
+});
+scalarFields.set("blocks.master.config.p20.block_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.block_gas_limit",
+});
+scalarFields.set("blocks.master.config.p20.delete_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.delete_due_limit",
+});
+scalarFields.set("blocks.master.config.p20.flat_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.flat_gas_limit",
+});
+scalarFields.set("blocks.master.config.p20.flat_gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p20.flat_gas_price",
+});
+scalarFields.set("blocks.master.config.p20.freeze_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.freeze_due_limit",
+});
+scalarFields.set("blocks.master.config.p20.gas_credit", {
+    type: "uint64",
+    path: "doc.master.config.p20.gas_credit",
+});
+scalarFields.set("blocks.master.config.p20.gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.gas_limit",
+});
+scalarFields.set("blocks.master.config.p20.gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p20.gas_price",
+});
+scalarFields.set("blocks.master.config.p20.special_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.special_gas_limit",
+});
+scalarFields.set("blocks.master.config.p21.block_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.block_gas_limit",
+});
+scalarFields.set("blocks.master.config.p21.delete_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.delete_due_limit",
+});
+scalarFields.set("blocks.master.config.p21.flat_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.flat_gas_limit",
+});
+scalarFields.set("blocks.master.config.p21.flat_gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p21.flat_gas_price",
+});
+scalarFields.set("blocks.master.config.p21.freeze_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.freeze_due_limit",
+});
+scalarFields.set("blocks.master.config.p21.gas_credit", {
+    type: "uint64",
+    path: "doc.master.config.p21.gas_credit",
+});
+scalarFields.set("blocks.master.config.p21.gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.gas_limit",
+});
+scalarFields.set("blocks.master.config.p21.gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p21.gas_price",
+});
+scalarFields.set("blocks.master.config.p21.special_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.special_gas_limit",
+});
+scalarFields.set("blocks.master.config.p22.bytes.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p22.bytes.hard_limit",
+});
+scalarFields.set("blocks.master.config.p22.bytes.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p22.bytes.soft_limit",
+});
+scalarFields.set("blocks.master.config.p22.bytes.underload", {
+    type: "number",
+    path: "doc.master.config.p22.bytes.underload",
+});
+scalarFields.set("blocks.master.config.p22.gas.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p22.gas.hard_limit",
+});
+scalarFields.set("blocks.master.config.p22.gas.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p22.gas.soft_limit",
+});
+scalarFields.set("blocks.master.config.p22.gas.underload", {
+    type: "number",
+    path: "doc.master.config.p22.gas.underload",
+});
+scalarFields.set("blocks.master.config.p22.lt_delta.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p22.lt_delta.hard_limit",
+});
+scalarFields.set("blocks.master.config.p22.lt_delta.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p22.lt_delta.soft_limit",
+});
+scalarFields.set("blocks.master.config.p22.lt_delta.underload", {
+    type: "number",
+    path: "doc.master.config.p22.lt_delta.underload",
+});
+scalarFields.set("blocks.master.config.p23.bytes.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p23.bytes.hard_limit",
+});
+scalarFields.set("blocks.master.config.p23.bytes.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p23.bytes.soft_limit",
+});
+scalarFields.set("blocks.master.config.p23.bytes.underload", {
+    type: "number",
+    path: "doc.master.config.p23.bytes.underload",
+});
+scalarFields.set("blocks.master.config.p23.gas.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p23.gas.hard_limit",
+});
+scalarFields.set("blocks.master.config.p23.gas.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p23.gas.soft_limit",
+});
+scalarFields.set("blocks.master.config.p23.gas.underload", {
+    type: "number",
+    path: "doc.master.config.p23.gas.underload",
+});
+scalarFields.set("blocks.master.config.p23.lt_delta.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p23.lt_delta.hard_limit",
+});
+scalarFields.set("blocks.master.config.p23.lt_delta.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p23.lt_delta.soft_limit",
+});
+scalarFields.set("blocks.master.config.p23.lt_delta.underload", {
+    type: "number",
+    path: "doc.master.config.p23.lt_delta.underload",
+});
+scalarFields.set("blocks.master.config.p24.bit_price", {
+    type: "uint64",
+    path: "doc.master.config.p24.bit_price",
+});
+scalarFields.set("blocks.master.config.p24.cell_price", {
+    type: "uint64",
+    path: "doc.master.config.p24.cell_price",
+});
+scalarFields.set("blocks.master.config.p24.first_frac", {
+    type: "number",
+    path: "doc.master.config.p24.first_frac",
+});
+scalarFields.set("blocks.master.config.p24.ihr_price_factor", {
+    type: "number",
+    path: "doc.master.config.p24.ihr_price_factor",
+});
+scalarFields.set("blocks.master.config.p24.lump_price", {
+    type: "uint64",
+    path: "doc.master.config.p24.lump_price",
+});
+scalarFields.set("blocks.master.config.p24.next_frac", {
+    type: "number",
+    path: "doc.master.config.p24.next_frac",
+});
+scalarFields.set("blocks.master.config.p25.bit_price", {
+    type: "uint64",
+    path: "doc.master.config.p25.bit_price",
+});
+scalarFields.set("blocks.master.config.p25.cell_price", {
+    type: "uint64",
+    path: "doc.master.config.p25.cell_price",
+});
+scalarFields.set("blocks.master.config.p25.first_frac", {
+    type: "number",
+    path: "doc.master.config.p25.first_frac",
+});
+scalarFields.set("blocks.master.config.p25.ihr_price_factor", {
+    type: "number",
+    path: "doc.master.config.p25.ihr_price_factor",
+});
+scalarFields.set("blocks.master.config.p25.lump_price", {
+    type: "uint64",
+    path: "doc.master.config.p25.lump_price",
+});
+scalarFields.set("blocks.master.config.p25.next_frac", {
+    type: "number",
+    path: "doc.master.config.p25.next_frac",
+});
+scalarFields.set("blocks.master.config.p28.mc_catchain_lifetime", {
+    type: "number",
+    path: "doc.master.config.p28.mc_catchain_lifetime",
+});
+scalarFields.set("blocks.master.config.p28.shard_catchain_lifetime", {
+    type: "number",
+    path: "doc.master.config.p28.shard_catchain_lifetime",
+});
+scalarFields.set("blocks.master.config.p28.shard_validators_lifetime", {
+    type: "number",
+    path: "doc.master.config.p28.shard_validators_lifetime",
+});
+scalarFields.set("blocks.master.config.p28.shard_validators_num", {
+    type: "number",
+    path: "doc.master.config.p28.shard_validators_num",
+});
+scalarFields.set("blocks.master.config.p28.shuffle_mc_validators", {
+    type: "boolean",
+    path: "doc.master.config.p28.shuffle_mc_validators",
+});
+scalarFields.set("blocks.master.config.p29.attempt_duration", {
+    type: "number",
+    path: "doc.master.config.p29.attempt_duration",
+});
+scalarFields.set("blocks.master.config.p29.catchain_max_deps", {
+    type: "number",
+    path: "doc.master.config.p29.catchain_max_deps",
+});
+scalarFields.set("blocks.master.config.p29.consensus_timeout_ms", {
+    type: "number",
+    path: "doc.master.config.p29.consensus_timeout_ms",
+});
+scalarFields.set("blocks.master.config.p29.fast_attempts", {
+    type: "number",
+    path: "doc.master.config.p29.fast_attempts",
+});
+scalarFields.set("blocks.master.config.p29.max_block_bytes", {
+    type: "number",
+    path: "doc.master.config.p29.max_block_bytes",
+});
+scalarFields.set("blocks.master.config.p29.max_collated_bytes", {
+    type: "number",
+    path: "doc.master.config.p29.max_collated_bytes",
+});
+scalarFields.set("blocks.master.config.p29.new_catchain_ids", {
+    type: "boolean",
+    path: "doc.master.config.p29.new_catchain_ids",
+});
+scalarFields.set("blocks.master.config.p29.next_candidate_delay_ms", {
+    type: "number",
+    path: "doc.master.config.p29.next_candidate_delay_ms",
+});
+scalarFields.set("blocks.master.config.p29.round_candidates", {
+    type: "number",
+    path: "doc.master.config.p29.round_candidates",
+});
+scalarFields.set("blocks.master.config.p3", {
+    type: "string",
+    path: "doc.master.config.p3",
+});
+scalarFields.set("blocks.master.config.p31", {
+    type: "string",
+    path: "doc.master.config.p31[*]",
+});
+scalarFields.set("blocks.master.config.p32.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p32.list[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p32.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p32.list[*].public_key",
+});
+scalarFields.set("blocks.master.config.p32.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p32.list[*].weight",
+});
+scalarFields.set("blocks.master.config.p32.total", {
+    type: "number",
+    path: "doc.master.config.p32.total",
+});
+scalarFields.set("blocks.master.config.p32.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p32.total_weight",
+});
+scalarFields.set("blocks.master.config.p32.utime_since", {
+    type: "number",
+    path: "doc.master.config.p32.utime_since",
+});
+scalarFields.set("blocks.master.config.p32.utime_until", {
+    type: "number",
+    path: "doc.master.config.p32.utime_until",
+});
+scalarFields.set("blocks.master.config.p33.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p33.list[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p33.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p33.list[*].public_key",
+});
+scalarFields.set("blocks.master.config.p33.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p33.list[*].weight",
+});
+scalarFields.set("blocks.master.config.p33.total", {
+    type: "number",
+    path: "doc.master.config.p33.total",
+});
+scalarFields.set("blocks.master.config.p33.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p33.total_weight",
+});
+scalarFields.set("blocks.master.config.p33.utime_since", {
+    type: "number",
+    path: "doc.master.config.p33.utime_since",
+});
+scalarFields.set("blocks.master.config.p33.utime_until", {
+    type: "number",
+    path: "doc.master.config.p33.utime_until",
+});
+scalarFields.set("blocks.master.config.p34.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p34.list[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p34.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p34.list[*].public_key",
+});
+scalarFields.set("blocks.master.config.p34.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p34.list[*].weight",
+});
+scalarFields.set("blocks.master.config.p34.total", {
+    type: "number",
+    path: "doc.master.config.p34.total",
+});
+scalarFields.set("blocks.master.config.p34.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p34.total_weight",
+});
+scalarFields.set("blocks.master.config.p34.utime_since", {
+    type: "number",
+    path: "doc.master.config.p34.utime_since",
+});
+scalarFields.set("blocks.master.config.p34.utime_until", {
+    type: "number",
+    path: "doc.master.config.p34.utime_until",
+});
+scalarFields.set("blocks.master.config.p35.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p35.list[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p35.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p35.list[*].public_key",
+});
+scalarFields.set("blocks.master.config.p35.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p35.list[*].weight",
+});
+scalarFields.set("blocks.master.config.p35.total", {
+    type: "number",
+    path: "doc.master.config.p35.total",
+});
+scalarFields.set("blocks.master.config.p35.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p35.total_weight",
+});
+scalarFields.set("blocks.master.config.p35.utime_since", {
+    type: "number",
+    path: "doc.master.config.p35.utime_since",
+});
+scalarFields.set("blocks.master.config.p35.utime_until", {
+    type: "number",
+    path: "doc.master.config.p35.utime_until",
+});
+scalarFields.set("blocks.master.config.p36.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p36.list[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p36.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p36.list[*].public_key",
+});
+scalarFields.set("blocks.master.config.p36.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p36.list[*].weight",
+});
+scalarFields.set("blocks.master.config.p36.total", {
+    type: "number",
+    path: "doc.master.config.p36.total",
+});
+scalarFields.set("blocks.master.config.p36.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p36.total_weight",
+});
+scalarFields.set("blocks.master.config.p36.utime_since", {
+    type: "number",
+    path: "doc.master.config.p36.utime_since",
+});
+scalarFields.set("blocks.master.config.p36.utime_until", {
+    type: "number",
+    path: "doc.master.config.p36.utime_until",
+});
+scalarFields.set("blocks.master.config.p37.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p37.list[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p37.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p37.list[*].public_key",
+});
+scalarFields.set("blocks.master.config.p37.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p37.list[*].weight",
+});
+scalarFields.set("blocks.master.config.p37.total", {
+    type: "number",
+    path: "doc.master.config.p37.total",
+});
+scalarFields.set("blocks.master.config.p37.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p37.total_weight",
+});
+scalarFields.set("blocks.master.config.p37.utime_since", {
+    type: "number",
+    path: "doc.master.config.p37.utime_since",
+});
+scalarFields.set("blocks.master.config.p37.utime_until", {
+    type: "number",
+    path: "doc.master.config.p37.utime_until",
+});
+scalarFields.set("blocks.master.config.p39.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p39[*].adnl_addr",
+});
+scalarFields.set("blocks.master.config.p39.seqno", {
+    type: "number",
+    path: "doc.master.config.p39[*].seqno",
+});
+scalarFields.set("blocks.master.config.p39.signature_r", {
+    type: "string",
+    path: "doc.master.config.p39[*].signature_r",
+});
+scalarFields.set("blocks.master.config.p39.signature_s", {
+    type: "string",
+    path: "doc.master.config.p39[*].signature_s",
+});
+scalarFields.set("blocks.master.config.p39.temp_public_key", {
+    type: "string",
+    path: "doc.master.config.p39[*].temp_public_key",
+});
+scalarFields.set("blocks.master.config.p39.valid_until", {
+    type: "number",
+    path: "doc.master.config.p39[*].valid_until",
+});
+scalarFields.set("blocks.master.config.p4", {
+    type: "string",
+    path: "doc.master.config.p4",
+});
+scalarFields.set("blocks.master.config.p6.mint_add_price", {
+    type: "string",
+    path: "doc.master.config.p6.mint_add_price",
+});
+scalarFields.set("blocks.master.config.p6.mint_new_price", {
+    type: "string",
+    path: "doc.master.config.p6.mint_new_price",
+});
+scalarFields.set("blocks.master.config.p7.currency", {
+    type: "number",
+    path: "doc.master.config.p7[*].currency",
+});
+scalarFields.set("blocks.master.config.p7.value", {
+    type: "string",
+    path: "doc.master.config.p7[*].value",
+});
+scalarFields.set("blocks.master.config.p8.capabilities", {
+    type: "uint64",
+    path: "doc.master.config.p8.capabilities",
+});
+scalarFields.set("blocks.master.config.p8.version", {
+    type: "number",
+    path: "doc.master.config.p8.version",
+});
+scalarFields.set("blocks.master.config.p9", {
+    type: "number",
+    path: "doc.master.config.p9[*]",
+});
+scalarFields.set("blocks.master.config_addr", {
+    type: "string",
+    path: "doc.master.config_addr",
+});
+scalarFields.set("blocks.master.max_shard_gen_utime", {
+    type: "number",
+    path: "doc.master.max_shard_gen_utime",
+});
+scalarFields.set("blocks.master.min_shard_gen_utime", {
+    type: "number",
+    path: "doc.master.min_shard_gen_utime",
+});
+scalarFields.set("blocks.master.prev_blk_signatures.node_id", {
+    type: "string",
+    path: "doc.master.prev_blk_signatures[*].node_id",
+});
+scalarFields.set("blocks.master.prev_blk_signatures.r", {
+    type: "string",
+    path: "doc.master.prev_blk_signatures[*].r",
+});
+scalarFields.set("blocks.master.prev_blk_signatures.s", {
+    type: "string",
+    path: "doc.master.prev_blk_signatures[*].s",
+});
+scalarFields.set("blocks.master.recover_create_msg.fwd_fee", {
+    type: "uint1024",
+    path: "doc.master.recover_create_msg.fwd_fee",
+});
+scalarFields.set("blocks.master.recover_create_msg.ihr_fee", {
+    type: "uint1024",
+    path: "doc.master.recover_create_msg.ihr_fee",
+});
+scalarFields.set("blocks.master.recover_create_msg.in_msg.cur_addr", {
+    type: "string",
+    path: "doc.master.recover_create_msg.in_msg.cur_addr",
+});
+scalarFields.set("blocks.master.recover_create_msg.in_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.master.recover_create_msg.in_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.master.recover_create_msg.in_msg.msg_id", {
+    type: "string",
+    path: "doc.master.recover_create_msg.in_msg.msg_id",
+});
+scalarFields.set("blocks.master.recover_create_msg.in_msg.next_addr", {
+    type: "string",
+    path: "doc.master.recover_create_msg.in_msg.next_addr",
+});
+scalarFields.set("blocks.master.recover_create_msg.msg_id", {
+    type: "string",
+    path: "doc.master.recover_create_msg.msg_id",
+});
+scalarFields.set("blocks.master.recover_create_msg.out_msg.cur_addr", {
+    type: "string",
+    path: "doc.master.recover_create_msg.out_msg.cur_addr",
+});
+scalarFields.set("blocks.master.recover_create_msg.out_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.master.recover_create_msg.out_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.master.recover_create_msg.out_msg.msg_id", {
+    type: "string",
+    path: "doc.master.recover_create_msg.out_msg.msg_id",
+});
+scalarFields.set("blocks.master.recover_create_msg.out_msg.next_addr", {
+    type: "string",
+    path: "doc.master.recover_create_msg.out_msg.next_addr",
+});
+scalarFields.set("blocks.master.recover_create_msg.proof_created", {
+    type: "string",
+    path: "doc.master.recover_create_msg.proof_created",
+});
+scalarFields.set("blocks.master.recover_create_msg.proof_delivered", {
+    type: "string",
+    path: "doc.master.recover_create_msg.proof_delivered",
+});
+scalarFields.set("blocks.master.recover_create_msg.transaction_id", {
+    type: "string",
+    path: "doc.master.recover_create_msg.transaction_id",
+});
+scalarFields.set("blocks.master.recover_create_msg.transit_fee", {
+    type: "uint1024",
+    path: "doc.master.recover_create_msg.transit_fee",
+});
+scalarFields.set("blocks.master.shard_fees.create", {
+    type: "uint1024",
+    path: "doc.master.shard_fees[*].create",
+});
+scalarFields.set("blocks.master.shard_fees.create_other.currency", {
+    type: "number",
+    path: "doc.master.shard_fees[*].create_other[**].currency",
+});
+scalarFields.set("blocks.master.shard_fees.create_other.value", {
+    type: "uint1024",
+    path: "doc.master.shard_fees[*].create_other[**].value",
+});
+scalarFields.set("blocks.master.shard_fees.fees", {
+    type: "uint1024",
+    path: "doc.master.shard_fees[*].fees",
+});
+scalarFields.set("blocks.master.shard_fees.fees_other.currency", {
+    type: "number",
+    path: "doc.master.shard_fees[*].fees_other[**].currency",
+});
+scalarFields.set("blocks.master.shard_fees.fees_other.value", {
+    type: "uint1024",
+    path: "doc.master.shard_fees[*].fees_other[**].value",
+});
+scalarFields.set("blocks.master.shard_fees.shard", {
+    type: "string",
+    path: "doc.master.shard_fees[*].shard",
+});
+scalarFields.set("blocks.master.shard_fees.workchain_id", {
+    type: "number",
+    path: "doc.master.shard_fees[*].workchain_id",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.before_merge", {
+    type: "boolean",
+    path: "doc.master.shard_hashes[*].descr.before_merge",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.before_split", {
+    type: "boolean",
+    path: "doc.master.shard_hashes[*].descr.before_split",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.end_lt", {
+    type: "uint64",
+    path: "doc.master.shard_hashes[*].descr.end_lt",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.fees_collected", {
+    type: "uint1024",
+    path: "doc.master.shard_hashes[*].descr.fees_collected",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.fees_collected_other.currency", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.fees_collected_other[**].currency",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.fees_collected_other.value", {
+    type: "uint1024",
+    path: "doc.master.shard_hashes[*].descr.fees_collected_other[**].value",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.file_hash", {
+    type: "string",
+    path: "doc.master.shard_hashes[*].descr.file_hash",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.flags", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.flags",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.funds_created", {
+    type: "uint1024",
+    path: "doc.master.shard_hashes[*].descr.funds_created",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.funds_created_other.currency", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.funds_created_other[**].currency",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.funds_created_other.value", {
+    type: "uint1024",
+    path: "doc.master.shard_hashes[*].descr.funds_created_other[**].value",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.gen_utime", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.gen_utime",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.min_ref_mc_seqno", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.min_ref_mc_seqno",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.next_catchain_seqno", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.next_catchain_seqno",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.next_validator_shard", {
+    type: "string",
+    path: "doc.master.shard_hashes[*].descr.next_validator_shard",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.nx_cc_updated", {
+    type: "boolean",
+    path: "doc.master.shard_hashes[*].descr.nx_cc_updated",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.reg_mc_seqno", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.reg_mc_seqno",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.root_hash", {
+    type: "string",
+    path: "doc.master.shard_hashes[*].descr.root_hash",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.seq_no", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.seq_no",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.split", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].descr.split",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.start_lt", {
+    type: "uint64",
+    path: "doc.master.shard_hashes[*].descr.start_lt",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.want_merge", {
+    type: "boolean",
+    path: "doc.master.shard_hashes[*].descr.want_merge",
+});
+scalarFields.set("blocks.master.shard_hashes.descr.want_split", {
+    type: "boolean",
+    path: "doc.master.shard_hashes[*].descr.want_split",
+});
+scalarFields.set("blocks.master.shard_hashes.shard", {
+    type: "string",
+    path: "doc.master.shard_hashes[*].shard",
+});
+scalarFields.set("blocks.master.shard_hashes.workchain_id", {
+    type: "number",
+    path: "doc.master.shard_hashes[*].workchain_id",
+});
+scalarFields.set("blocks.master_ref.end_lt", {
+    type: "uint64",
+    path: "doc.master_ref.end_lt",
+});
+scalarFields.set("blocks.master_ref.file_hash", {
+    type: "string",
+    path: "doc.master_ref.file_hash",
+});
+scalarFields.set("blocks.master_ref.root_hash", {
+    type: "string",
+    path: "doc.master_ref.root_hash",
+});
+scalarFields.set("blocks.master_ref.seq_no", {
+    type: "number",
+    path: "doc.master_ref.seq_no",
+});
+scalarFields.set("blocks.min_ref_mc_seqno", {
+    type: "number",
+    path: "doc.min_ref_mc_seqno",
+});
+scalarFields.set("blocks.out_msg_descr.import_block_lt", {
+    type: "uint64",
+    path: "doc.out_msg_descr[*].import_block_lt",
+});
+scalarFields.set("blocks.out_msg_descr.imported.fwd_fee", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].imported.fwd_fee",
+});
+scalarFields.set("blocks.out_msg_descr.imported.ihr_fee", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].imported.ihr_fee",
+});
+scalarFields.set("blocks.out_msg_descr.imported.in_msg.cur_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.in_msg.cur_addr",
+});
+scalarFields.set("blocks.out_msg_descr.imported.in_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].imported.in_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.out_msg_descr.imported.in_msg.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.in_msg.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.imported.in_msg.next_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.in_msg.next_addr",
+});
+scalarFields.set("blocks.out_msg_descr.imported.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.imported.out_msg.cur_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.out_msg.cur_addr",
+});
+scalarFields.set("blocks.out_msg_descr.imported.out_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].imported.out_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.out_msg_descr.imported.out_msg.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.out_msg.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.imported.out_msg.next_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.out_msg.next_addr",
+});
+scalarFields.set("blocks.out_msg_descr.imported.proof_created", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.proof_created",
+});
+scalarFields.set("blocks.out_msg_descr.imported.proof_delivered", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.proof_delivered",
+});
+scalarFields.set("blocks.out_msg_descr.imported.transaction_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].imported.transaction_id",
+});
+scalarFields.set("blocks.out_msg_descr.imported.transit_fee", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].imported.transit_fee",
+});
+scalarFields.set("blocks.out_msg_descr.msg_env_hash", {
+    type: "string",
+    path: "doc.out_msg_descr[*].msg_env_hash",
+});
+scalarFields.set("blocks.out_msg_descr.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.next_addr_pfx", {
+    type: "uint64",
+    path: "doc.out_msg_descr[*].next_addr_pfx",
+});
+scalarFields.set("blocks.out_msg_descr.next_workchain", {
+    type: "number",
+    path: "doc.out_msg_descr[*].next_workchain",
+});
+scalarFields.set("blocks.out_msg_descr.out_msg.cur_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].out_msg.cur_addr",
+});
+scalarFields.set("blocks.out_msg_descr.out_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].out_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.out_msg_descr.out_msg.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].out_msg.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.out_msg.next_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].out_msg.next_addr",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.fwd_fee", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].reimport.fwd_fee",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.ihr_fee", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].reimport.ihr_fee",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.in_msg.cur_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.in_msg.cur_addr",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.in_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].reimport.in_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.in_msg.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.in_msg.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.in_msg.next_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.in_msg.next_addr",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.out_msg.cur_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.out_msg.cur_addr",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.out_msg.fwd_fee_remaining", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].reimport.out_msg.fwd_fee_remaining",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.out_msg.msg_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.out_msg.msg_id",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.out_msg.next_addr", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.out_msg.next_addr",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.proof_created", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.proof_created",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.proof_delivered", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.proof_delivered",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.transaction_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].reimport.transaction_id",
+});
+scalarFields.set("blocks.out_msg_descr.reimport.transit_fee", {
+    type: "uint1024",
+    path: "doc.out_msg_descr[*].reimport.transit_fee",
+});
+scalarFields.set("blocks.out_msg_descr.transaction_id", {
+    type: "string",
+    path: "doc.out_msg_descr[*].transaction_id",
+});
+scalarFields.set("blocks.prev_alt_ref.end_lt", {
+    type: "uint64",
+    path: "doc.prev_alt_ref.end_lt",
+});
+scalarFields.set("blocks.prev_alt_ref.file_hash", {
+    type: "string",
+    path: "doc.prev_alt_ref.file_hash",
+});
+scalarFields.set("blocks.prev_alt_ref.root_hash", {
+    type: "string",
+    path: "doc.prev_alt_ref.root_hash",
+});
+scalarFields.set("blocks.prev_alt_ref.seq_no", {
+    type: "number",
+    path: "doc.prev_alt_ref.seq_no",
+});
+scalarFields.set("blocks.prev_key_block_seqno", {
+    type: "number",
+    path: "doc.prev_key_block_seqno",
+});
+scalarFields.set("blocks.prev_ref.end_lt", {
+    type: "uint64",
+    path: "doc.prev_ref.end_lt",
+});
+scalarFields.set("blocks.prev_ref.file_hash", {
+    type: "string",
+    path: "doc.prev_ref.file_hash",
+});
+scalarFields.set("blocks.prev_ref.root_hash", {
+    type: "string",
+    path: "doc.prev_ref.root_hash",
+});
+scalarFields.set("blocks.prev_ref.seq_no", {
+    type: "number",
+    path: "doc.prev_ref.seq_no",
+});
+scalarFields.set("blocks.prev_vert_alt_ref.end_lt", {
+    type: "uint64",
+    path: "doc.prev_vert_alt_ref.end_lt",
+});
+scalarFields.set("blocks.prev_vert_alt_ref.file_hash", {
+    type: "string",
+    path: "doc.prev_vert_alt_ref.file_hash",
+});
+scalarFields.set("blocks.prev_vert_alt_ref.root_hash", {
+    type: "string",
+    path: "doc.prev_vert_alt_ref.root_hash",
+});
+scalarFields.set("blocks.prev_vert_alt_ref.seq_no", {
+    type: "number",
+    path: "doc.prev_vert_alt_ref.seq_no",
+});
+scalarFields.set("blocks.prev_vert_ref.end_lt", {
+    type: "uint64",
+    path: "doc.prev_vert_ref.end_lt",
+});
+scalarFields.set("blocks.prev_vert_ref.file_hash", {
+    type: "string",
+    path: "doc.prev_vert_ref.file_hash",
+});
+scalarFields.set("blocks.prev_vert_ref.root_hash", {
+    type: "string",
+    path: "doc.prev_vert_ref.root_hash",
+});
+scalarFields.set("blocks.prev_vert_ref.seq_no", {
+    type: "number",
+    path: "doc.prev_vert_ref.seq_no",
+});
+scalarFields.set("blocks.rand_seed", {
+    type: "string",
+    path: "doc.rand_seed",
+});
+scalarFields.set("blocks.seq_no", {
+    type: "number",
+    path: "doc.seq_no",
+});
+scalarFields.set("blocks.shard", {
+    type: "string",
+    path: "doc.shard",
+});
+scalarFields.set("blocks.start_lt", {
+    type: "uint64",
+    path: "doc.start_lt",
+});
+scalarFields.set("blocks.state_update.new", {
+    type: "string",
+    path: "doc.state_update.new",
+});
+scalarFields.set("blocks.state_update.new_depth", {
+    type: "number",
+    path: "doc.state_update.new_depth",
+});
+scalarFields.set("blocks.state_update.new_hash", {
+    type: "string",
+    path: "doc.state_update.new_hash",
+});
+scalarFields.set("blocks.state_update.old", {
+    type: "string",
+    path: "doc.state_update.old",
+});
+scalarFields.set("blocks.state_update.old_depth", {
+    type: "number",
+    path: "doc.state_update.old_depth",
+});
+scalarFields.set("blocks.state_update.old_hash", {
+    type: "string",
+    path: "doc.state_update.old_hash",
+});
+scalarFields.set("blocks.tr_count", {
+    type: "number",
+    path: "doc.tr_count",
+});
+scalarFields.set("blocks.value_flow.created", {
+    type: "uint1024",
+    path: "doc.value_flow.created",
+});
+scalarFields.set("blocks.value_flow.created_other.currency", {
+    type: "number",
+    path: "doc.value_flow.created_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.created_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.created_other[*].value",
+});
+scalarFields.set("blocks.value_flow.exported", {
+    type: "uint1024",
+    path: "doc.value_flow.exported",
+});
+scalarFields.set("blocks.value_flow.exported_other.currency", {
+    type: "number",
+    path: "doc.value_flow.exported_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.exported_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.exported_other[*].value",
+});
+scalarFields.set("blocks.value_flow.fees_collected", {
+    type: "uint1024",
+    path: "doc.value_flow.fees_collected",
+});
+scalarFields.set("blocks.value_flow.fees_collected_other.currency", {
+    type: "number",
+    path: "doc.value_flow.fees_collected_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.fees_collected_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.fees_collected_other[*].value",
+});
+scalarFields.set("blocks.value_flow.fees_imported", {
+    type: "uint1024",
+    path: "doc.value_flow.fees_imported",
+});
+scalarFields.set("blocks.value_flow.fees_imported_other.currency", {
+    type: "number",
+    path: "doc.value_flow.fees_imported_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.fees_imported_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.fees_imported_other[*].value",
+});
+scalarFields.set("blocks.value_flow.from_prev_blk", {
+    type: "uint1024",
+    path: "doc.value_flow.from_prev_blk",
+});
+scalarFields.set("blocks.value_flow.from_prev_blk_other.currency", {
+    type: "number",
+    path: "doc.value_flow.from_prev_blk_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.from_prev_blk_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.from_prev_blk_other[*].value",
+});
+scalarFields.set("blocks.value_flow.imported", {
+    type: "uint1024",
+    path: "doc.value_flow.imported",
+});
+scalarFields.set("blocks.value_flow.imported_other.currency", {
+    type: "number",
+    path: "doc.value_flow.imported_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.imported_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.imported_other[*].value",
+});
+scalarFields.set("blocks.value_flow.minted", {
+    type: "uint1024",
+    path: "doc.value_flow.minted",
+});
+scalarFields.set("blocks.value_flow.minted_other.currency", {
+    type: "number",
+    path: "doc.value_flow.minted_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.minted_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.minted_other[*].value",
+});
+scalarFields.set("blocks.value_flow.to_next_blk", {
+    type: "uint1024",
+    path: "doc.value_flow.to_next_blk",
+});
+scalarFields.set("blocks.value_flow.to_next_blk_other.currency", {
+    type: "number",
+    path: "doc.value_flow.to_next_blk_other[*].currency",
+});
+scalarFields.set("blocks.value_flow.to_next_blk_other.value", {
+    type: "uint1024",
+    path: "doc.value_flow.to_next_blk_other[*].value",
+});
+scalarFields.set("blocks.version", {
+    type: "number",
+    path: "doc.version",
+});
+scalarFields.set("blocks.vert_seq_no", {
+    type: "number",
+    path: "doc.vert_seq_no",
+});
+scalarFields.set("blocks.want_merge", {
+    type: "boolean",
+    path: "doc.want_merge",
+});
+scalarFields.set("blocks.want_split", {
+    type: "boolean",
+    path: "doc.want_split",
+});
+scalarFields.set("blocks.workchain_id", {
+    type: "number",
+    path: "doc.workchain_id",
+});
+scalarFields.set("accounts.id", {
+    type: "string",
+    path: "doc._key",
+});
+scalarFields.set("accounts.balance", {
+    type: "uint1024",
+    path: "doc.balance",
+});
+scalarFields.set("accounts.balance_other.currency", {
+    type: "number",
+    path: "doc.balance_other[*].currency",
+});
+scalarFields.set("accounts.balance_other.value", {
+    type: "uint1024",
+    path: "doc.balance_other[*].value",
+});
+scalarFields.set("accounts.bits", {
+    type: "uint64",
+    path: "doc.bits",
+});
+scalarFields.set("accounts.boc", {
+    type: "string",
+    path: "doc.boc",
+});
+scalarFields.set("accounts.cells", {
+    type: "uint64",
+    path: "doc.cells",
+});
+scalarFields.set("accounts.code", {
+    type: "string",
+    path: "doc.code",
+});
+scalarFields.set("accounts.code_hash", {
+    type: "string",
+    path: "doc.code_hash",
+});
+scalarFields.set("accounts.data", {
+    type: "string",
+    path: "doc.data",
+});
+scalarFields.set("accounts.data_hash", {
+    type: "string",
+    path: "doc.data_hash",
+});
+scalarFields.set("accounts.due_payment", {
+    type: "uint1024",
+    path: "doc.due_payment",
+});
+scalarFields.set("accounts.last_paid", {
+    type: "number",
+    path: "doc.last_paid",
+});
+scalarFields.set("accounts.last_trans_lt", {
+    type: "uint64",
+    path: "doc.last_trans_lt",
+});
+scalarFields.set("accounts.library", {
+    type: "string",
+    path: "doc.library",
+});
+scalarFields.set("accounts.library_hash", {
+    type: "string",
+    path: "doc.library_hash",
+});
+scalarFields.set("accounts.proof", {
+    type: "string",
+    path: "doc.proof",
+});
+scalarFields.set("accounts.public_cells", {
+    type: "uint64",
+    path: "doc.public_cells",
+});
+scalarFields.set("accounts.split_depth", {
+    type: "number",
+    path: "doc.split_depth",
+});
+scalarFields.set("accounts.state_hash", {
+    type: "string",
+    path: "doc.state_hash",
+});
+scalarFields.set("accounts.tick", {
+    type: "boolean",
+    path: "doc.tick",
+});
+scalarFields.set("accounts.tock", {
+    type: "boolean",
+    path: "doc.tock",
+});
+scalarFields.set("accounts.workchain_id", {
+    type: "number",
+    path: "doc.workchain_id",
+});
+scalarFields.set("transactions.id", {
+    type: "string",
+    path: "doc._key",
+});
+scalarFields.set("transactions.aborted", {
+    type: "boolean",
+    path: "doc.aborted",
+});
+scalarFields.set("transactions.account_addr", {
+    type: "string",
+    path: "doc.account_addr",
+});
+scalarFields.set("transactions.action.action_list_hash", {
+    type: "string",
+    path: "doc.action.action_list_hash",
+});
+scalarFields.set("transactions.action.msgs_created", {
+    type: "number",
+    path: "doc.action.msgs_created",
+});
+scalarFields.set("transactions.action.no_funds", {
+    type: "boolean",
+    path: "doc.action.no_funds",
+});
+scalarFields.set("transactions.action.result_arg", {
+    type: "number",
+    path: "doc.action.result_arg",
+});
+scalarFields.set("transactions.action.result_code", {
+    type: "number",
+    path: "doc.action.result_code",
+});
+scalarFields.set("transactions.action.skipped_actions", {
+    type: "number",
+    path: "doc.action.skipped_actions",
+});
+scalarFields.set("transactions.action.spec_actions", {
+    type: "number",
+    path: "doc.action.spec_actions",
+});
+scalarFields.set("transactions.action.success", {
+    type: "boolean",
+    path: "doc.action.success",
+});
+scalarFields.set("transactions.action.tot_actions", {
+    type: "number",
+    path: "doc.action.tot_actions",
+});
+scalarFields.set("transactions.action.total_action_fees", {
+    type: "uint1024",
+    path: "doc.action.total_action_fees",
+});
+scalarFields.set("transactions.action.total_fwd_fees", {
+    type: "uint1024",
+    path: "doc.action.total_fwd_fees",
+});
+scalarFields.set("transactions.action.total_msg_size_bits", {
+    type: "number",
+    path: "doc.action.total_msg_size_bits",
+});
+scalarFields.set("transactions.action.total_msg_size_cells", {
+    type: "number",
+    path: "doc.action.total_msg_size_cells",
+});
+scalarFields.set("transactions.action.valid", {
+    type: "boolean",
+    path: "doc.action.valid",
+});
+scalarFields.set("transactions.balance_delta", {
+    type: "uint1024",
+    path: "doc.balance_delta",
+});
+scalarFields.set("transactions.balance_delta_other.currency", {
+    type: "number",
+    path: "doc.balance_delta_other[*].currency",
+});
+scalarFields.set("transactions.balance_delta_other.value", {
+    type: "uint1024",
+    path: "doc.balance_delta_other[*].value",
+});
+scalarFields.set("transactions.block_id", {
+    type: "string",
+    path: "doc.block_id",
+});
+scalarFields.set("transactions.boc", {
+    type: "string",
+    path: "doc.boc",
+});
+scalarFields.set("transactions.bounce.fwd_fees", {
+    type: "uint1024",
+    path: "doc.bounce.fwd_fees",
+});
+scalarFields.set("transactions.bounce.msg_fees", {
+    type: "uint1024",
+    path: "doc.bounce.msg_fees",
+});
+scalarFields.set("transactions.bounce.msg_size_bits", {
+    type: "number",
+    path: "doc.bounce.msg_size_bits",
+});
+scalarFields.set("transactions.bounce.msg_size_cells", {
+    type: "number",
+    path: "doc.bounce.msg_size_cells",
+});
+scalarFields.set("transactions.bounce.req_fwd_fees", {
+    type: "uint1024",
+    path: "doc.bounce.req_fwd_fees",
+});
+scalarFields.set("transactions.compute.account_activated", {
+    type: "boolean",
+    path: "doc.compute.account_activated",
+});
+scalarFields.set("transactions.compute.exit_arg", {
+    type: "number",
+    path: "doc.compute.exit_arg",
+});
+scalarFields.set("transactions.compute.exit_code", {
+    type: "number",
+    path: "doc.compute.exit_code",
+});
+scalarFields.set("transactions.compute.gas_credit", {
+    type: "number",
+    path: "doc.compute.gas_credit",
+});
+scalarFields.set("transactions.compute.gas_fees", {
+    type: "uint1024",
+    path: "doc.compute.gas_fees",
+});
+scalarFields.set("transactions.compute.gas_limit", {
+    type: "uint64",
+    path: "doc.compute.gas_limit",
+});
+scalarFields.set("transactions.compute.gas_used", {
+    type: "uint64",
+    path: "doc.compute.gas_used",
+});
+scalarFields.set("transactions.compute.mode", {
+    type: "number",
+    path: "doc.compute.mode",
+});
+scalarFields.set("transactions.compute.msg_state_used", {
+    type: "boolean",
+    path: "doc.compute.msg_state_used",
+});
+scalarFields.set("transactions.compute.success", {
+    type: "boolean",
+    path: "doc.compute.success",
+});
+scalarFields.set("transactions.compute.vm_final_state_hash", {
+    type: "string",
+    path: "doc.compute.vm_final_state_hash",
+});
+scalarFields.set("transactions.compute.vm_init_state_hash", {
+    type: "string",
+    path: "doc.compute.vm_init_state_hash",
+});
+scalarFields.set("transactions.compute.vm_steps", {
+    type: "number",
+    path: "doc.compute.vm_steps",
+});
+scalarFields.set("transactions.credit.credit", {
+    type: "uint1024",
+    path: "doc.credit.credit",
+});
+scalarFields.set("transactions.credit.credit_other.currency", {
+    type: "number",
+    path: "doc.credit.credit_other[*].currency",
+});
+scalarFields.set("transactions.credit.credit_other.value", {
+    type: "uint1024",
+    path: "doc.credit.credit_other[*].value",
+});
+scalarFields.set("transactions.credit.due_fees_collected", {
+    type: "uint1024",
+    path: "doc.credit.due_fees_collected",
+});
+scalarFields.set("transactions.credit_first", {
+    type: "boolean",
+    path: "doc.credit_first",
+});
+scalarFields.set("transactions.destroyed", {
+    type: "boolean",
+    path: "doc.destroyed",
+});
+scalarFields.set("transactions.in_msg", {
+    type: "string",
+    path: "doc.in_msg",
+});
+scalarFields.set("transactions.installed", {
+    type: "boolean",
+    path: "doc.installed",
+});
+scalarFields.set("transactions.lt", {
+    type: "uint64",
+    path: "doc.lt",
+});
+scalarFields.set("transactions.new_hash", {
+    type: "string",
+    path: "doc.new_hash",
+});
+scalarFields.set("transactions.now", {
+    type: "number",
+    path: "doc.now",
+});
+scalarFields.set("transactions.old_hash", {
+    type: "string",
+    path: "doc.old_hash",
+});
+scalarFields.set("transactions.out_msgs", {
+    type: "string",
+    path: "doc.out_msgs[*]",
+});
+scalarFields.set("transactions.outmsg_cnt", {
+    type: "number",
+    path: "doc.outmsg_cnt",
+});
+scalarFields.set("transactions.prepare_transaction", {
+    type: "string",
+    path: "doc.prepare_transaction",
+});
+scalarFields.set("transactions.prev_trans_hash", {
+    type: "string",
+    path: "doc.prev_trans_hash",
+});
+scalarFields.set("transactions.prev_trans_lt", {
+    type: "uint64",
+    path: "doc.prev_trans_lt",
+});
+scalarFields.set("transactions.proof", {
+    type: "string",
+    path: "doc.proof",
+});
+scalarFields.set("transactions.split_info.acc_split_depth", {
+    type: "number",
+    path: "doc.split_info.acc_split_depth",
+});
+scalarFields.set("transactions.split_info.cur_shard_pfx_len", {
+    type: "number",
+    path: "doc.split_info.cur_shard_pfx_len",
+});
+scalarFields.set("transactions.split_info.sibling_addr", {
+    type: "string",
+    path: "doc.split_info.sibling_addr",
+});
+scalarFields.set("transactions.split_info.this_addr", {
+    type: "string",
+    path: "doc.split_info.this_addr",
+});
+scalarFields.set("transactions.storage.storage_fees_collected", {
+    type: "uint1024",
+    path: "doc.storage.storage_fees_collected",
+});
+scalarFields.set("transactions.storage.storage_fees_due", {
+    type: "uint1024",
+    path: "doc.storage.storage_fees_due",
+});
+scalarFields.set("transactions.total_fees", {
+    type: "uint1024",
+    path: "doc.total_fees",
+});
+scalarFields.set("transactions.total_fees_other.currency", {
+    type: "number",
+    path: "doc.total_fees_other[*].currency",
+});
+scalarFields.set("transactions.total_fees_other.value", {
+    type: "uint1024",
+    path: "doc.total_fees_other[*].value",
+});
+scalarFields.set("transactions.tt", {
+    type: "string",
+    path: "doc.tt",
+});
+scalarFields.set("transactions.workchain_id", {
+    type: "number",
+    path: "doc.workchain_id",
+});
+scalarFields.set("messages.id", {
+    type: "string",
+    path: "doc._key",
+});
+scalarFields.set("messages.block_id", {
+    type: "string",
+    path: "doc.block_id",
+});
+scalarFields.set("messages.boc", {
+    type: "string",
+    path: "doc.boc",
+});
+scalarFields.set("messages.body", {
+    type: "string",
+    path: "doc.body",
+});
+scalarFields.set("messages.body_hash", {
+    type: "string",
+    path: "doc.body_hash",
+});
+scalarFields.set("messages.bounce", {
+    type: "boolean",
+    path: "doc.bounce",
+});
+scalarFields.set("messages.bounced", {
+    type: "boolean",
+    path: "doc.bounced",
+});
+scalarFields.set("messages.code", {
+    type: "string",
+    path: "doc.code",
+});
+scalarFields.set("messages.code_hash", {
+    type: "string",
+    path: "doc.code_hash",
+});
+scalarFields.set("messages.created_at", {
+    type: "number",
+    path: "doc.created_at",
+});
+scalarFields.set("messages.created_lt", {
+    type: "uint64",
+    path: "doc.created_lt",
+});
+scalarFields.set("messages.data", {
+    type: "string",
+    path: "doc.data",
+});
+scalarFields.set("messages.data_hash", {
+    type: "string",
+    path: "doc.data_hash",
+});
+scalarFields.set("messages.dst", {
+    type: "string",
+    path: "doc.dst",
+});
+scalarFields.set("messages.dst_workchain_id", {
+    type: "number",
+    path: "doc.dst_workchain_id",
+});
+scalarFields.set("messages.fwd_fee", {
+    type: "uint1024",
+    path: "doc.fwd_fee",
+});
+scalarFields.set("messages.ihr_disabled", {
+    type: "boolean",
+    path: "doc.ihr_disabled",
+});
+scalarFields.set("messages.ihr_fee", {
+    type: "uint1024",
+    path: "doc.ihr_fee",
+});
+scalarFields.set("messages.import_fee", {
+    type: "uint1024",
+    path: "doc.import_fee",
+});
+scalarFields.set("messages.library", {
+    type: "string",
+    path: "doc.library",
+});
+scalarFields.set("messages.library_hash", {
+    type: "string",
+    path: "doc.library_hash",
+});
+scalarFields.set("messages.proof", {
+    type: "string",
+    path: "doc.proof",
+});
+scalarFields.set("messages.split_depth", {
+    type: "number",
+    path: "doc.split_depth",
+});
+scalarFields.set("messages.src", {
+    type: "string",
+    path: "doc.src",
+});
+scalarFields.set("messages.src_workchain_id", {
+    type: "number",
+    path: "doc.src_workchain_id",
+});
+scalarFields.set("messages.tick", {
+    type: "boolean",
+    path: "doc.tick",
+});
+scalarFields.set("messages.tock", {
+    type: "boolean",
+    path: "doc.tock",
+});
+scalarFields.set("messages.value", {
+    type: "uint1024",
+    path: "doc.value",
+});
+scalarFields.set("messages.value_other.currency", {
+    type: "number",
+    path: "doc.value_other[*].currency",
+});
+scalarFields.set("messages.value_other.value", {
+    type: "uint1024",
+    path: "doc.value_other[*].value",
+});
+scalarFields.set("zerostates.id", {
+    type: "string",
+    path: "doc._key",
+});
+scalarFields.set("zerostates.accounts.id", {
+    type: "string",
+    path: "doc.accounts[*].id",
+});
+scalarFields.set("zerostates.accounts.balance", {
+    type: "uint1024",
+    path: "doc.accounts[*].balance",
+});
+scalarFields.set("zerostates.accounts.balance_other.currency", {
+    type: "number",
+    path: "doc.accounts[*].balance_other[**].currency",
+});
+scalarFields.set("zerostates.accounts.balance_other.value", {
+    type: "uint1024",
+    path: "doc.accounts[*].balance_other[**].value",
+});
+scalarFields.set("zerostates.accounts.bits", {
+    type: "uint64",
+    path: "doc.accounts[*].bits",
+});
+scalarFields.set("zerostates.accounts.boc", {
+    type: "string",
+    path: "doc.accounts[*].boc",
+});
+scalarFields.set("zerostates.accounts.cells", {
+    type: "uint64",
+    path: "doc.accounts[*].cells",
+});
+scalarFields.set("zerostates.accounts.code", {
+    type: "string",
+    path: "doc.accounts[*].code",
+});
+scalarFields.set("zerostates.accounts.code_hash", {
+    type: "string",
+    path: "doc.accounts[*].code_hash",
+});
+scalarFields.set("zerostates.accounts.data", {
+    type: "string",
+    path: "doc.accounts[*].data",
+});
+scalarFields.set("zerostates.accounts.data_hash", {
+    type: "string",
+    path: "doc.accounts[*].data_hash",
+});
+scalarFields.set("zerostates.accounts.due_payment", {
+    type: "uint1024",
+    path: "doc.accounts[*].due_payment",
+});
+scalarFields.set("zerostates.accounts.last_paid", {
+    type: "number",
+    path: "doc.accounts[*].last_paid",
+});
+scalarFields.set("zerostates.accounts.last_trans_lt", {
+    type: "uint64",
+    path: "doc.accounts[*].last_trans_lt",
+});
+scalarFields.set("zerostates.accounts.library", {
+    type: "string",
+    path: "doc.accounts[*].library",
+});
+scalarFields.set("zerostates.accounts.library_hash", {
+    type: "string",
+    path: "doc.accounts[*].library_hash",
+});
+scalarFields.set("zerostates.accounts.proof", {
+    type: "string",
+    path: "doc.accounts[*].proof",
+});
+scalarFields.set("zerostates.accounts.public_cells", {
+    type: "uint64",
+    path: "doc.accounts[*].public_cells",
+});
+scalarFields.set("zerostates.accounts.split_depth", {
+    type: "number",
+    path: "doc.accounts[*].split_depth",
+});
+scalarFields.set("zerostates.accounts.state_hash", {
+    type: "string",
+    path: "doc.accounts[*].state_hash",
+});
+scalarFields.set("zerostates.accounts.tick", {
+    type: "boolean",
+    path: "doc.accounts[*].tick",
+});
+scalarFields.set("zerostates.accounts.tock", {
+    type: "boolean",
+    path: "doc.accounts[*].tock",
+});
+scalarFields.set("zerostates.accounts.workchain_id", {
+    type: "number",
+    path: "doc.accounts[*].workchain_id",
+});
+scalarFields.set("zerostates.boc", {
+    type: "string",
+    path: "doc.boc",
+});
+scalarFields.set("zerostates.global_id", {
+    type: "number",
+    path: "doc.global_id",
+});
+scalarFields.set("zerostates.libraries.hash", {
+    type: "string",
+    path: "doc.libraries[*].hash",
+});
+scalarFields.set("zerostates.libraries.lib", {
+    type: "string",
+    path: "doc.libraries[*].lib",
+});
+scalarFields.set("zerostates.libraries.publishers", {
+    type: "string",
+    path: "doc.libraries[*].publishers[**]",
+});
+scalarFields.set("zerostates.master.config.p0", {
+    type: "string",
+    path: "doc.master.config.p0",
+});
+scalarFields.set("zerostates.master.config.p1", {
+    type: "string",
+    path: "doc.master.config.p1",
+});
+scalarFields.set("zerostates.master.config.p10", {
+    type: "number",
+    path: "doc.master.config.p10[*]",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.bit_price", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.bit_price",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.cell_price", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.cell_price",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.max_losses", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.max_losses",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.max_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.max_store_sec",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.max_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.max_tot_rounds",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.min_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.min_store_sec",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.min_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.min_tot_rounds",
+});
+scalarFields.set("zerostates.master.config.p11.critical_params.min_wins", {
+    type: "number",
+    path: "doc.master.config.p11.critical_params.min_wins",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.bit_price", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.bit_price",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.cell_price", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.cell_price",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.max_losses", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.max_losses",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.max_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.max_store_sec",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.max_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.max_tot_rounds",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.min_store_sec", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.min_store_sec",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.min_tot_rounds", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.min_tot_rounds",
+});
+scalarFields.set("zerostates.master.config.p11.normal_params.min_wins", {
+    type: "number",
+    path: "doc.master.config.p11.normal_params.min_wins",
+});
+scalarFields.set("zerostates.master.config.p12.accept_msgs", {
+    type: "boolean",
+    path: "doc.master.config.p12[*].accept_msgs",
+});
+scalarFields.set("zerostates.master.config.p12.active", {
+    type: "boolean",
+    path: "doc.master.config.p12[*].active",
+});
+scalarFields.set("zerostates.master.config.p12.actual_min_split", {
+    type: "number",
+    path: "doc.master.config.p12[*].actual_min_split",
+});
+scalarFields.set("zerostates.master.config.p12.addr_len_step", {
+    type: "number",
+    path: "doc.master.config.p12[*].addr_len_step",
+});
+scalarFields.set("zerostates.master.config.p12.basic", {
+    type: "boolean",
+    path: "doc.master.config.p12[*].basic",
+});
+scalarFields.set("zerostates.master.config.p12.enabled_since", {
+    type: "number",
+    path: "doc.master.config.p12[*].enabled_since",
+});
+scalarFields.set("zerostates.master.config.p12.flags", {
+    type: "number",
+    path: "doc.master.config.p12[*].flags",
+});
+scalarFields.set("zerostates.master.config.p12.max_addr_len", {
+    type: "number",
+    path: "doc.master.config.p12[*].max_addr_len",
+});
+scalarFields.set("zerostates.master.config.p12.max_split", {
+    type: "number",
+    path: "doc.master.config.p12[*].max_split",
+});
+scalarFields.set("zerostates.master.config.p12.min_addr_len", {
+    type: "number",
+    path: "doc.master.config.p12[*].min_addr_len",
+});
+scalarFields.set("zerostates.master.config.p12.min_split", {
+    type: "number",
+    path: "doc.master.config.p12[*].min_split",
+});
+scalarFields.set("zerostates.master.config.p12.version", {
+    type: "number",
+    path: "doc.master.config.p12[*].version",
+});
+scalarFields.set("zerostates.master.config.p12.vm_mode", {
+    type: "string",
+    path: "doc.master.config.p12[*].vm_mode",
+});
+scalarFields.set("zerostates.master.config.p12.vm_version", {
+    type: "number",
+    path: "doc.master.config.p12[*].vm_version",
+});
+scalarFields.set("zerostates.master.config.p12.workchain_id", {
+    type: "number",
+    path: "doc.master.config.p12[*].workchain_id",
+});
+scalarFields.set("zerostates.master.config.p12.workchain_type_id", {
+    type: "number",
+    path: "doc.master.config.p12[*].workchain_type_id",
+});
+scalarFields.set("zerostates.master.config.p12.zerostate_file_hash", {
+    type: "string",
+    path: "doc.master.config.p12[*].zerostate_file_hash",
+});
+scalarFields.set("zerostates.master.config.p12.zerostate_root_hash", {
+    type: "string",
+    path: "doc.master.config.p12[*].zerostate_root_hash",
+});
+scalarFields.set("zerostates.master.config.p14.basechain_block_fee", {
+    type: "uint1024",
+    path: "doc.master.config.p14.basechain_block_fee",
+});
+scalarFields.set("zerostates.master.config.p14.masterchain_block_fee", {
+    type: "uint1024",
+    path: "doc.master.config.p14.masterchain_block_fee",
+});
+scalarFields.set("zerostates.master.config.p15.elections_end_before", {
+    type: "number",
+    path: "doc.master.config.p15.elections_end_before",
+});
+scalarFields.set("zerostates.master.config.p15.elections_start_before", {
+    type: "number",
+    path: "doc.master.config.p15.elections_start_before",
+});
+scalarFields.set("zerostates.master.config.p15.stake_held_for", {
+    type: "number",
+    path: "doc.master.config.p15.stake_held_for",
+});
+scalarFields.set("zerostates.master.config.p15.validators_elected_for", {
+    type: "number",
+    path: "doc.master.config.p15.validators_elected_for",
+});
+scalarFields.set("zerostates.master.config.p16.max_main_validators", {
+    type: "number",
+    path: "doc.master.config.p16.max_main_validators",
+});
+scalarFields.set("zerostates.master.config.p16.max_validators", {
+    type: "number",
+    path: "doc.master.config.p16.max_validators",
+});
+scalarFields.set("zerostates.master.config.p16.min_validators", {
+    type: "number",
+    path: "doc.master.config.p16.min_validators",
+});
+scalarFields.set("zerostates.master.config.p17.max_stake", {
+    type: "uint1024",
+    path: "doc.master.config.p17.max_stake",
+});
+scalarFields.set("zerostates.master.config.p17.max_stake_factor", {
+    type: "number",
+    path: "doc.master.config.p17.max_stake_factor",
+});
+scalarFields.set("zerostates.master.config.p17.min_stake", {
+    type: "uint1024",
+    path: "doc.master.config.p17.min_stake",
+});
+scalarFields.set("zerostates.master.config.p17.min_total_stake", {
+    type: "uint1024",
+    path: "doc.master.config.p17.min_total_stake",
+});
+scalarFields.set("zerostates.master.config.p18.bit_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].bit_price_ps",
+});
+scalarFields.set("zerostates.master.config.p18.cell_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].cell_price_ps",
+});
+scalarFields.set("zerostates.master.config.p18.mc_bit_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].mc_bit_price_ps",
+});
+scalarFields.set("zerostates.master.config.p18.mc_cell_price_ps", {
+    type: "uint64",
+    path: "doc.master.config.p18[*].mc_cell_price_ps",
+});
+scalarFields.set("zerostates.master.config.p18.utime_since", {
+    type: "number",
+    path: "doc.master.config.p18[*].utime_since",
+});
+scalarFields.set("zerostates.master.config.p2", {
+    type: "string",
+    path: "doc.master.config.p2",
+});
+scalarFields.set("zerostates.master.config.p20.block_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.block_gas_limit",
+});
+scalarFields.set("zerostates.master.config.p20.delete_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.delete_due_limit",
+});
+scalarFields.set("zerostates.master.config.p20.flat_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.flat_gas_limit",
+});
+scalarFields.set("zerostates.master.config.p20.flat_gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p20.flat_gas_price",
+});
+scalarFields.set("zerostates.master.config.p20.freeze_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.freeze_due_limit",
+});
+scalarFields.set("zerostates.master.config.p20.gas_credit", {
+    type: "uint64",
+    path: "doc.master.config.p20.gas_credit",
+});
+scalarFields.set("zerostates.master.config.p20.gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.gas_limit",
+});
+scalarFields.set("zerostates.master.config.p20.gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p20.gas_price",
+});
+scalarFields.set("zerostates.master.config.p20.special_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p20.special_gas_limit",
+});
+scalarFields.set("zerostates.master.config.p21.block_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.block_gas_limit",
+});
+scalarFields.set("zerostates.master.config.p21.delete_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.delete_due_limit",
+});
+scalarFields.set("zerostates.master.config.p21.flat_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.flat_gas_limit",
+});
+scalarFields.set("zerostates.master.config.p21.flat_gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p21.flat_gas_price",
+});
+scalarFields.set("zerostates.master.config.p21.freeze_due_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.freeze_due_limit",
+});
+scalarFields.set("zerostates.master.config.p21.gas_credit", {
+    type: "uint64",
+    path: "doc.master.config.p21.gas_credit",
+});
+scalarFields.set("zerostates.master.config.p21.gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.gas_limit",
+});
+scalarFields.set("zerostates.master.config.p21.gas_price", {
+    type: "uint64",
+    path: "doc.master.config.p21.gas_price",
+});
+scalarFields.set("zerostates.master.config.p21.special_gas_limit", {
+    type: "uint64",
+    path: "doc.master.config.p21.special_gas_limit",
+});
+scalarFields.set("zerostates.master.config.p22.bytes.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p22.bytes.hard_limit",
+});
+scalarFields.set("zerostates.master.config.p22.bytes.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p22.bytes.soft_limit",
+});
+scalarFields.set("zerostates.master.config.p22.bytes.underload", {
+    type: "number",
+    path: "doc.master.config.p22.bytes.underload",
+});
+scalarFields.set("zerostates.master.config.p22.gas.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p22.gas.hard_limit",
+});
+scalarFields.set("zerostates.master.config.p22.gas.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p22.gas.soft_limit",
+});
+scalarFields.set("zerostates.master.config.p22.gas.underload", {
+    type: "number",
+    path: "doc.master.config.p22.gas.underload",
+});
+scalarFields.set("zerostates.master.config.p22.lt_delta.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p22.lt_delta.hard_limit",
+});
+scalarFields.set("zerostates.master.config.p22.lt_delta.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p22.lt_delta.soft_limit",
+});
+scalarFields.set("zerostates.master.config.p22.lt_delta.underload", {
+    type: "number",
+    path: "doc.master.config.p22.lt_delta.underload",
+});
+scalarFields.set("zerostates.master.config.p23.bytes.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p23.bytes.hard_limit",
+});
+scalarFields.set("zerostates.master.config.p23.bytes.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p23.bytes.soft_limit",
+});
+scalarFields.set("zerostates.master.config.p23.bytes.underload", {
+    type: "number",
+    path: "doc.master.config.p23.bytes.underload",
+});
+scalarFields.set("zerostates.master.config.p23.gas.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p23.gas.hard_limit",
+});
+scalarFields.set("zerostates.master.config.p23.gas.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p23.gas.soft_limit",
+});
+scalarFields.set("zerostates.master.config.p23.gas.underload", {
+    type: "number",
+    path: "doc.master.config.p23.gas.underload",
+});
+scalarFields.set("zerostates.master.config.p23.lt_delta.hard_limit", {
+    type: "number",
+    path: "doc.master.config.p23.lt_delta.hard_limit",
+});
+scalarFields.set("zerostates.master.config.p23.lt_delta.soft_limit", {
+    type: "number",
+    path: "doc.master.config.p23.lt_delta.soft_limit",
+});
+scalarFields.set("zerostates.master.config.p23.lt_delta.underload", {
+    type: "number",
+    path: "doc.master.config.p23.lt_delta.underload",
+});
+scalarFields.set("zerostates.master.config.p24.bit_price", {
+    type: "uint64",
+    path: "doc.master.config.p24.bit_price",
+});
+scalarFields.set("zerostates.master.config.p24.cell_price", {
+    type: "uint64",
+    path: "doc.master.config.p24.cell_price",
+});
+scalarFields.set("zerostates.master.config.p24.first_frac", {
+    type: "number",
+    path: "doc.master.config.p24.first_frac",
+});
+scalarFields.set("zerostates.master.config.p24.ihr_price_factor", {
+    type: "number",
+    path: "doc.master.config.p24.ihr_price_factor",
+});
+scalarFields.set("zerostates.master.config.p24.lump_price", {
+    type: "uint64",
+    path: "doc.master.config.p24.lump_price",
+});
+scalarFields.set("zerostates.master.config.p24.next_frac", {
+    type: "number",
+    path: "doc.master.config.p24.next_frac",
+});
+scalarFields.set("zerostates.master.config.p25.bit_price", {
+    type: "uint64",
+    path: "doc.master.config.p25.bit_price",
+});
+scalarFields.set("zerostates.master.config.p25.cell_price", {
+    type: "uint64",
+    path: "doc.master.config.p25.cell_price",
+});
+scalarFields.set("zerostates.master.config.p25.first_frac", {
+    type: "number",
+    path: "doc.master.config.p25.first_frac",
+});
+scalarFields.set("zerostates.master.config.p25.ihr_price_factor", {
+    type: "number",
+    path: "doc.master.config.p25.ihr_price_factor",
+});
+scalarFields.set("zerostates.master.config.p25.lump_price", {
+    type: "uint64",
+    path: "doc.master.config.p25.lump_price",
+});
+scalarFields.set("zerostates.master.config.p25.next_frac", {
+    type: "number",
+    path: "doc.master.config.p25.next_frac",
+});
+scalarFields.set("zerostates.master.config.p28.mc_catchain_lifetime", {
+    type: "number",
+    path: "doc.master.config.p28.mc_catchain_lifetime",
+});
+scalarFields.set("zerostates.master.config.p28.shard_catchain_lifetime", {
+    type: "number",
+    path: "doc.master.config.p28.shard_catchain_lifetime",
+});
+scalarFields.set("zerostates.master.config.p28.shard_validators_lifetime", {
+    type: "number",
+    path: "doc.master.config.p28.shard_validators_lifetime",
+});
+scalarFields.set("zerostates.master.config.p28.shard_validators_num", {
+    type: "number",
+    path: "doc.master.config.p28.shard_validators_num",
+});
+scalarFields.set("zerostates.master.config.p28.shuffle_mc_validators", {
+    type: "boolean",
+    path: "doc.master.config.p28.shuffle_mc_validators",
+});
+scalarFields.set("zerostates.master.config.p29.attempt_duration", {
+    type: "number",
+    path: "doc.master.config.p29.attempt_duration",
+});
+scalarFields.set("zerostates.master.config.p29.catchain_max_deps", {
+    type: "number",
+    path: "doc.master.config.p29.catchain_max_deps",
+});
+scalarFields.set("zerostates.master.config.p29.consensus_timeout_ms", {
+    type: "number",
+    path: "doc.master.config.p29.consensus_timeout_ms",
+});
+scalarFields.set("zerostates.master.config.p29.fast_attempts", {
+    type: "number",
+    path: "doc.master.config.p29.fast_attempts",
+});
+scalarFields.set("zerostates.master.config.p29.max_block_bytes", {
+    type: "number",
+    path: "doc.master.config.p29.max_block_bytes",
+});
+scalarFields.set("zerostates.master.config.p29.max_collated_bytes", {
+    type: "number",
+    path: "doc.master.config.p29.max_collated_bytes",
+});
+scalarFields.set("zerostates.master.config.p29.new_catchain_ids", {
+    type: "boolean",
+    path: "doc.master.config.p29.new_catchain_ids",
+});
+scalarFields.set("zerostates.master.config.p29.next_candidate_delay_ms", {
+    type: "number",
+    path: "doc.master.config.p29.next_candidate_delay_ms",
+});
+scalarFields.set("zerostates.master.config.p29.round_candidates", {
+    type: "number",
+    path: "doc.master.config.p29.round_candidates",
+});
+scalarFields.set("zerostates.master.config.p3", {
+    type: "string",
+    path: "doc.master.config.p3",
+});
+scalarFields.set("zerostates.master.config.p31", {
+    type: "string",
+    path: "doc.master.config.p31[*]",
+});
+scalarFields.set("zerostates.master.config.p32.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p32.list[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p32.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p32.list[*].public_key",
+});
+scalarFields.set("zerostates.master.config.p32.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p32.list[*].weight",
+});
+scalarFields.set("zerostates.master.config.p32.total", {
+    type: "number",
+    path: "doc.master.config.p32.total",
+});
+scalarFields.set("zerostates.master.config.p32.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p32.total_weight",
+});
+scalarFields.set("zerostates.master.config.p32.utime_since", {
+    type: "number",
+    path: "doc.master.config.p32.utime_since",
+});
+scalarFields.set("zerostates.master.config.p32.utime_until", {
+    type: "number",
+    path: "doc.master.config.p32.utime_until",
+});
+scalarFields.set("zerostates.master.config.p33.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p33.list[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p33.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p33.list[*].public_key",
+});
+scalarFields.set("zerostates.master.config.p33.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p33.list[*].weight",
+});
+scalarFields.set("zerostates.master.config.p33.total", {
+    type: "number",
+    path: "doc.master.config.p33.total",
+});
+scalarFields.set("zerostates.master.config.p33.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p33.total_weight",
+});
+scalarFields.set("zerostates.master.config.p33.utime_since", {
+    type: "number",
+    path: "doc.master.config.p33.utime_since",
+});
+scalarFields.set("zerostates.master.config.p33.utime_until", {
+    type: "number",
+    path: "doc.master.config.p33.utime_until",
+});
+scalarFields.set("zerostates.master.config.p34.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p34.list[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p34.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p34.list[*].public_key",
+});
+scalarFields.set("zerostates.master.config.p34.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p34.list[*].weight",
+});
+scalarFields.set("zerostates.master.config.p34.total", {
+    type: "number",
+    path: "doc.master.config.p34.total",
+});
+scalarFields.set("zerostates.master.config.p34.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p34.total_weight",
+});
+scalarFields.set("zerostates.master.config.p34.utime_since", {
+    type: "number",
+    path: "doc.master.config.p34.utime_since",
+});
+scalarFields.set("zerostates.master.config.p34.utime_until", {
+    type: "number",
+    path: "doc.master.config.p34.utime_until",
+});
+scalarFields.set("zerostates.master.config.p35.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p35.list[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p35.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p35.list[*].public_key",
+});
+scalarFields.set("zerostates.master.config.p35.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p35.list[*].weight",
+});
+scalarFields.set("zerostates.master.config.p35.total", {
+    type: "number",
+    path: "doc.master.config.p35.total",
+});
+scalarFields.set("zerostates.master.config.p35.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p35.total_weight",
+});
+scalarFields.set("zerostates.master.config.p35.utime_since", {
+    type: "number",
+    path: "doc.master.config.p35.utime_since",
+});
+scalarFields.set("zerostates.master.config.p35.utime_until", {
+    type: "number",
+    path: "doc.master.config.p35.utime_until",
+});
+scalarFields.set("zerostates.master.config.p36.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p36.list[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p36.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p36.list[*].public_key",
+});
+scalarFields.set("zerostates.master.config.p36.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p36.list[*].weight",
+});
+scalarFields.set("zerostates.master.config.p36.total", {
+    type: "number",
+    path: "doc.master.config.p36.total",
+});
+scalarFields.set("zerostates.master.config.p36.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p36.total_weight",
+});
+scalarFields.set("zerostates.master.config.p36.utime_since", {
+    type: "number",
+    path: "doc.master.config.p36.utime_since",
+});
+scalarFields.set("zerostates.master.config.p36.utime_until", {
+    type: "number",
+    path: "doc.master.config.p36.utime_until",
+});
+scalarFields.set("zerostates.master.config.p37.list.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p37.list[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p37.list.public_key", {
+    type: "string",
+    path: "doc.master.config.p37.list[*].public_key",
+});
+scalarFields.set("zerostates.master.config.p37.list.weight", {
+    type: "uint64",
+    path: "doc.master.config.p37.list[*].weight",
+});
+scalarFields.set("zerostates.master.config.p37.total", {
+    type: "number",
+    path: "doc.master.config.p37.total",
+});
+scalarFields.set("zerostates.master.config.p37.total_weight", {
+    type: "uint64",
+    path: "doc.master.config.p37.total_weight",
+});
+scalarFields.set("zerostates.master.config.p37.utime_since", {
+    type: "number",
+    path: "doc.master.config.p37.utime_since",
+});
+scalarFields.set("zerostates.master.config.p37.utime_until", {
+    type: "number",
+    path: "doc.master.config.p37.utime_until",
+});
+scalarFields.set("zerostates.master.config.p39.adnl_addr", {
+    type: "string",
+    path: "doc.master.config.p39[*].adnl_addr",
+});
+scalarFields.set("zerostates.master.config.p39.seqno", {
+    type: "number",
+    path: "doc.master.config.p39[*].seqno",
+});
+scalarFields.set("zerostates.master.config.p39.signature_r", {
+    type: "string",
+    path: "doc.master.config.p39[*].signature_r",
+});
+scalarFields.set("zerostates.master.config.p39.signature_s", {
+    type: "string",
+    path: "doc.master.config.p39[*].signature_s",
+});
+scalarFields.set("zerostates.master.config.p39.temp_public_key", {
+    type: "string",
+    path: "doc.master.config.p39[*].temp_public_key",
+});
+scalarFields.set("zerostates.master.config.p39.valid_until", {
+    type: "number",
+    path: "doc.master.config.p39[*].valid_until",
+});
+scalarFields.set("zerostates.master.config.p4", {
+    type: "string",
+    path: "doc.master.config.p4",
+});
+scalarFields.set("zerostates.master.config.p6.mint_add_price", {
+    type: "string",
+    path: "doc.master.config.p6.mint_add_price",
+});
+scalarFields.set("zerostates.master.config.p6.mint_new_price", {
+    type: "string",
+    path: "doc.master.config.p6.mint_new_price",
+});
+scalarFields.set("zerostates.master.config.p7.currency", {
+    type: "number",
+    path: "doc.master.config.p7[*].currency",
+});
+scalarFields.set("zerostates.master.config.p7.value", {
+    type: "string",
+    path: "doc.master.config.p7[*].value",
+});
+scalarFields.set("zerostates.master.config.p8.capabilities", {
+    type: "uint64",
+    path: "doc.master.config.p8.capabilities",
+});
+scalarFields.set("zerostates.master.config.p8.version", {
+    type: "number",
+    path: "doc.master.config.p8.version",
+});
+scalarFields.set("zerostates.master.config.p9", {
+    type: "number",
+    path: "doc.master.config.p9[*]",
+});
+scalarFields.set("zerostates.master.config_addr", {
+    type: "string",
+    path: "doc.master.config_addr",
+});
+scalarFields.set("zerostates.master.global_balance", {
+    type: "uint1024",
+    path: "doc.master.global_balance",
+});
+scalarFields.set("zerostates.master.global_balance_other.currency", {
+    type: "number",
+    path: "doc.master.global_balance_other[*].currency",
+});
+scalarFields.set("zerostates.master.global_balance_other.value", {
+    type: "uint1024",
+    path: "doc.master.global_balance_other[*].value",
+});
+scalarFields.set("zerostates.master.validator_list_hash_short", {
+    type: "number",
+    path: "doc.master.validator_list_hash_short",
+});
+scalarFields.set("zerostates.total_balance", {
+    type: "uint1024",
+    path: "doc.total_balance",
+});
+scalarFields.set("zerostates.total_balance_other.currency", {
+    type: "number",
+    path: "doc.total_balance_other[*].currency",
+});
+scalarFields.set("zerostates.total_balance_other.value", {
+    type: "uint1024",
+    path: "doc.total_balance_other[*].value",
+});
+scalarFields.set("zerostates.workchain_id", {
+    type: "number",
+    path: "doc.workchain_id",
+});
 export {
     scalarFields,
     createResolvers,

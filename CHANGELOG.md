@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.43.0] 2021-07-24
+
+### New
+
+- flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
+
 ## [0.42.0] 2021-07-15
 
 ### New

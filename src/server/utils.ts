@@ -87,9 +87,17 @@ export class QError extends Error {
             { authErrorCode: error.code },
         );
     }
+
+    static internalServerError() {
+        return QError.create(500, "Internal Server Error");
+    }
+
+    static serviceUnavailable() {
+        return QError.create(503, "Service Unavailable");
+    }
 }
 
-function isInternalServerError(error: Error & {
+export function isSystemError(error: Error & {
     type?: string,
     errno?: unknown,
     syscall?: unknown,
@@ -105,11 +113,19 @@ export async function wrap<R>(log: QLog, op: string, args: unknown, fetch: () =>
         return await fetch();
     } catch (err) {
         let cleaned = cleanError(err);
-        log.error("FAILED", op, args, cleaned);
-        if (isInternalServerError(cleaned)) {
-            cleaned = QError.create(500, "Service temporary unavailable");
+        log.error(`${op}_FAILED`, args, err);
+        if (isSystemError(err)) {
+            cleaned = QError.internalServerError();
         }
         throw cleaned;
+    }
+}
+
+export function toJSON(value: unknown): string {
+    try {
+        return JSON.stringify(toLog(value));
+    } catch (error) {
+        return JSON.stringify(`${value}`);
     }
 }
 
@@ -193,3 +209,9 @@ export function cloneDeep(source: Record<string, unknown> | undefined): Record<s
 
 }
 
+export function required<T>(value: T | undefined): T {
+    if (value !== undefined) {
+        return value;
+    }
+    throw QError.serviceUnavailable();
+}

@@ -136,8 +136,11 @@ describe("DataCache", () => {
             config: testConfig,
             logs,
             data: createTestData({
-                mutable,
-                immutable,
+                blockchain: {
+                    accounts: mutable,
+                    blocks: immutable,
+                    transactions: immutable,
+                },
                 counterparties: mutable,
             }),
         });
@@ -152,7 +155,7 @@ describe("DataCache", () => {
         expect(firstCold.hotUpdateCount).toEqual(1);
         expect(secondCold.hotUpdateCount).toEqual(1);
 
-        await server.data.providers.immutable.hotUpdate();
+        await server.data.providers.blockchain?.accounts?.hotUpdate();
 
         expect(firstCold.hotUpdateCount).toEqual(2);
         expect(secondCold.hotUpdateCount).toEqual(2);
@@ -209,7 +212,7 @@ describe("DataCache", () => {
         const vars = { b: 2 };
         const orderBy: OrderBy[] = [];
 
-        await server.data.providers.immutable.query(text, vars, orderBy);
+        await server.data.providers.blockchain?.accounts?.query(text, vars, orderBy);
         const lastKey = "Q_" + hash(cachedCold.configHash, JSON.stringify({
             text,
             vars,

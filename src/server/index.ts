@@ -17,17 +17,18 @@
 import program from "commander";
 import type { QConfig } from "./config";
 import {
-    createConfig,
-    programOptions, readConfigFile
+    configParams,
+    readConfigFile,
+    resolveConfig,
 } from "./config";
 import type { QLog } from "./logs";
 import QLogs from "./logs";
 import TONQServer from "./server";
+import { ConfigParam } from "./config-param";
 
 
-Object.values(programOptions).forEach((value) => {
-    const option = value;
-    program.option(option.option, option.description);
+ConfigParam.getAll(configParams).forEach((param) => {
+    program.option(param.option, param.description);
 });
 
 program.parse(process.argv);
@@ -78,11 +79,10 @@ function initGlobalState() {
         ? readConfigFile(gs.configPath)
         : {};
 
-    gs.config = createConfig(
+    gs.config = resolveConfig(
         program, // program args
         configData, // config file
-        process.env, // os envs
-        programOptions, // defaults
+        process.env as Record<string, string>, // os envs
     );
 
     gs.logs = new QLogs();

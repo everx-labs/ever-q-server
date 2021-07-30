@@ -35,12 +35,24 @@ type GraphQLConnection = {
     }
 };
 
+export type AccessArgs = {
+    accessKey?: string | null | undefined
+};
+
 export class Auth {
     config: QConfig;
+    mamAccessKeys: Set<string>;
 
     constructor(config: QConfig) {
         this.config = config;
+        this.mamAccessKeys = new Set<string>(config.mamAccessKeys);
     }
+
+    static accessGranted: AccessRights = {
+        granted: true,
+        restrictToAccounts: [],
+    };
+
 
     static extractAccessKey(req: RequestWithAccessHeaders | undefined, connection: GraphQLConnection | undefined): string {
         return req?.headers?.accessKey ??
@@ -58,7 +70,7 @@ export class Auth {
         }
     }
 
-    async requireGrantedAccess(accessKey: string | typeof undefined): Promise<AccessRights> {
+    async requireGrantedAccess(accessKey?: string): Promise<AccessRights> {
         const access = await this.getAccessRights(accessKey);
         if (!access.granted) {
             throw Auth.unauthorizedError();
@@ -66,7 +78,7 @@ export class Auth {
         return access;
     }
 
-    async getAccessRights(accessKey: string | typeof undefined): Promise<AccessRights> {
+    async getAccessRights(accessKey?: string): Promise<AccessRights> {
         if (!this.config.authorization.endpoint) {
             return grantedAccess;
         }

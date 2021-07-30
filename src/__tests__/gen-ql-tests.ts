@@ -19,6 +19,7 @@ import {
 } from "graphql";
 import { grantedAccess } from "../server/auth";
 import { FilterOrConversion } from "../server/config";
+import { required } from "../server/utils";
 
 type Blocks = {
     blocks: {
@@ -106,7 +107,7 @@ return doc
 test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs());
     const withOr = normalized(
-        data.messages.createDatabaseQuery(
+        required(data.messages).createDatabaseQuery(
             {
                 filter: {
                     src: { eq: "1" },
@@ -135,7 +136,7 @@ test("OR conversions", () => {
     `));
 
     const withSubQueries = normalized(
-        data.messages.createDatabaseQuery(
+        required(data.messages).createDatabaseQuery(
             {
                 filter: {
                     src: { eq: "1" },
@@ -177,8 +178,12 @@ test("OR conversions", () => {
 
 test("reduced RETURN", () => {
     const data = createLocalArangoTestData(new QLogs());
+    const blocks = required(data.blocks);
+    const accounts = required(data.accounts);
+    const transactions = required(data.transactions);
+    const messages = required(data.transactions);
 
-    expect(queryText(data.blocks, "seq_no", [{
+    expect(queryText(blocks, "seq_no", [{
         path: "gen_utime",
         direction: "ASC",
     }])).toEqual(
@@ -190,14 +195,14 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(data.accounts, "id balance __typename")).toEqual(normalized(`
+    expect(queryText(accounts, "id balance __typename")).toEqual(normalized(`
         FOR doc IN accounts LIMIT 50 RETURN {
             _key: doc._key,
             balance: doc.balance
         }
     `));
 
-    expect(queryText(data.blocks, "value_flow { imported }")).toEqual(normalized(`
+    expect(queryText(blocks, "value_flow { imported }")).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             value_flow: ( doc.value_flow && {
@@ -206,7 +211,7 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(data.blocks, "in_msg_descr { msg_type }")).toEqual(normalized(`
+    expect(queryText(blocks, "in_msg_descr { msg_type }")).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             in_msg_descr: ( doc.in_msg_descr && (
@@ -215,28 +220,28 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(data.transactions, "in_message { id }")).toEqual(normalized(`
+    expect(queryText(transactions, "in_message { id }")).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
             in_msg: doc.in_msg
         }
     `));
 
-    expect(queryText(data.transactions, "out_messages { id }")).toEqual(normalized(`
+    expect(queryText(transactions, "out_messages { id }")).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
             out_msgs: doc.out_msgs
         }
     `));
 
-    expect(queryText(data.messages, "msg_type_name msg_type")).toEqual(normalized(`
+    expect(queryText(messages, "msg_type_name msg_type")).toEqual(normalized(`
         FOR doc IN messages LIMIT 50 RETURN {
             _key: doc._key,
             msg_type: doc.msg_type
         }
     `));
 
-    expect(queryText(data.blocks, "gen_utime_string")).toEqual(normalized(`
+    expect(queryText(blocks, "gen_utime_string")).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             gen_utime: doc.gen_utime

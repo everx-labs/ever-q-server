@@ -1,4 +1,8 @@
-import { createConfig, parseArangoConfig, programOptions, readConfigFile } from "../server/config";
+import {
+    parseArangoConfig,
+    readConfigFile,
+    resolveConfig,
+} from "../server/config";
 import { QTracer } from "../server/tracer";
 import { httpUrl } from "../server/utils";
 
@@ -38,52 +42,49 @@ test("Config Priority", () => {
     // override direction:
     //   defaults -> OS envs -> config file -> args
 
-    const full_options = createConfig(
-        { "port": 8083 },
-        { "Q_PORT": 8082 },
-        { "Q_PORT": 8081 },
-        programOptions,
+    const full_options = resolveConfig(
+        { port: 8083 },
+        { server: { port: 8082 } },
+        { "Q_PORT": "8081" },
     );
     expect(full_options.server.port).toEqual(8083);
 
-    const no_args_options = createConfig(
+    const no_args_options = resolveConfig(
         {},
-        { "Q_PORT": 8082 },
-        { "Q_PORT": 8081 },
-        programOptions,
+        { server: { port: 8082 } },
+        { "Q_PORT": "8081" },
     );
     expect(no_args_options.server.port).toEqual(8082);
 
-    const only_env_options = createConfig(
+    const only_env_options = resolveConfig(
         {},
         {},
-        { "Q_PORT": 8081 },
-        programOptions,
+        { "Q_PORT": "8081" },
     );
     expect(only_env_options.server.port).toEqual(8081);
 });
 
 
 test("Arango Config", () => {
-    expect(parseArangoConfig("arango", 3)).toMatchObject({
+    expect(parseArangoConfig("arango")).toMatchObject({
         server: "https://arango",
         auth: "",
         name: "blockchain",
-        maxSockets: 3,
+        maxSockets: 100,
     });
-    expect(parseArangoConfig("arango:8529", 3)).toMatchObject({
+    expect(parseArangoConfig("arango:8529")).toMatchObject({
         server: "https://arango:8529",
         auth: "",
         name: "blockchain",
-        maxSockets: 3,
+        maxSockets: 100,
     });
-    expect(parseArangoConfig(httpUrl("arango:8529"), 3)).toMatchObject({
+    expect(parseArangoConfig(httpUrl("arango:8529"))).toMatchObject({
         server: httpUrl("arango:8529"),
         auth: "",
         name: "blockchain",
-        maxSockets: 3,
+        maxSockets: 100,
     });
-    expect(parseArangoConfig(httpUrl("u:p@arango:8529?name=bc&maxSockets=6"), 3)).toMatchObject({
+    expect(parseArangoConfig(httpUrl("u:p@arango:8529?name=bc&maxSockets=6"))).toMatchObject({
         server: httpUrl("arango:8529"),
         auth: "u:p",
         name: "bc",
