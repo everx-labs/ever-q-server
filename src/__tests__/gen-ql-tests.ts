@@ -19,7 +19,6 @@ import {
 } from "graphql";
 import { grantedAccess } from "../server/auth";
 import { FilterOrConversion } from "../server/config";
-import { required } from "../server/utils";
 
 type Blocks = {
     blocks: {
@@ -107,7 +106,7 @@ return doc
 test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs());
     const withOr = normalized(
-        required(data.messages).createDatabaseQuery(
+        data.messages.createDatabaseQuery(
             {
                 filter: {
                     src: { eq: "1" },
@@ -136,7 +135,7 @@ test("OR conversions", () => {
     `));
 
     const withSubQueries = normalized(
-        required(data.messages).createDatabaseQuery(
+        data.messages.createDatabaseQuery(
             {
                 filter: {
                     src: { eq: "1" },
@@ -178,10 +177,10 @@ test("OR conversions", () => {
 
 test("reduced RETURN", () => {
     const data = createLocalArangoTestData(new QLogs());
-    const blocks = required(data.blocks);
-    const accounts = required(data.accounts);
-    const transactions = required(data.transactions);
-    const messages = required(data.transactions);
+    const blocks = data.blocks;
+    const accounts = data.accounts;
+    const transactions = data.transactions;
+    const messages = data.messages;
 
     expect(queryText(blocks, "seq_no", [{
         path: "gen_utime",

@@ -212,7 +212,7 @@ describe("DataCache", () => {
         const vars = { b: 2 };
         const orderBy: OrderBy[] = [];
 
-        await server.data.providers.blockchain?.accounts?.query(text, vars, orderBy);
+        await server.data.providers.blockchain?.blocks?.query(text, vars, orderBy);
         const lastKey = "Q_" + hash(cachedCold.configHash, JSON.stringify({
             text,
             vars,

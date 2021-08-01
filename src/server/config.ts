@@ -284,12 +284,15 @@ function resolveMaxSocketsFor(configs: (string[] | undefined)[], defMaxSockets: 
 }
 
 function upgradeDatabases(deprecated: string | undefined): string[] {
-    return (deprecated ?? "").trim().split(",");
+    return (deprecated ?? "")
+        .split(",")
+        .map(x => x.trim())
+        .filter(x => x !== "");
 }
 
-function upgradeHotCold(deprecated: QDeprecatedDataConfig): QHotColdDataConfig {
+function upgradeHotCold(deprecated: QDeprecatedDataConfig, def: string | undefined): QHotColdDataConfig {
     return {
-        hot: upgradeDatabases(deprecated.hot),
+        hot: upgradeDatabases(deprecated.hot || def),
         cache: deprecated.cache,
         cold: deprecated.cold ?? [],
     };
@@ -298,8 +301,8 @@ function upgradeHotCold(deprecated: QDeprecatedDataConfig): QHotColdDataConfig {
 function upgradeBlockchain(deprecated: QDeprecatedDataConfig): QBlockchainDataConfig {
     return {
         accounts: upgradeDatabases(deprecated.mut),
-        blocks: upgradeHotCold(deprecated),
-        transactions: upgradeHotCold(deprecated),
+        blocks: upgradeHotCold(deprecated, deprecated.mut),
+        transactions: upgradeHotCold(deprecated, deprecated.mut),
     };
 }
 
