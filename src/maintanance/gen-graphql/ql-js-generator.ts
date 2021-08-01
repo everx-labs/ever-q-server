@@ -448,9 +448,9 @@ function main(schemaDef: TypeDef): {
             js.writeLn("                }");
 
             if (field.arrayDepth === 0) {
-                js.writeLn(`                return required(context.services.data.${collection}).waitForDoc(parent.${on}, "${refOn}", args, context);`);
+                js.writeLn(`                return context.services.data.${collection}.waitForDoc(parent.${on}, "${refOn}", args, context);`);
             } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return required(context.services.data.${collection}).waitForDocs(parent.${on}, "${refOn}", args, context);`);
+                js.writeLn(`                return context.services.data.${collection}.waitForDocs(parent.${on}, "${refOn}", args, context);`);
             } else {
                 throw "Joins on a nested arrays does not supported.";
             }
@@ -575,7 +575,6 @@ function main(schemaDef: TypeDef): {
             createEnumNameResolver,
             unixSecondsToString,
         } from "../filter/filters";
-        import {required} from "../utils";
         import QBlockchainData from "../data/blockchain";
         import { QRequestContext } from "../request";
         `);
@@ -592,12 +591,12 @@ function main(schemaDef: TypeDef): {
         });
         js.writeLn("        Query: {");
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection ?? ""}: required(data.${type.collection ?? ""}).queryResolver(),`);
+            js.writeLn(`            ${type.collection ?? ""}: data.${type.collection ?? ""}.queryResolver(),`);
         });
         js.writeLn("        },");
         js.writeLn("        Subscription: {");
         collections.forEach((type) => {
-            js.writeLn(`            ${type.collection ?? ""}: required(data.${type.collection ?? ""}).subscriptionResolver(),`);
+            js.writeLn(`            ${type.collection ?? ""}: data.${type.collection ?? ""}.subscriptionResolver(),`);
         });
         js.writeBlockLn(`
                 }

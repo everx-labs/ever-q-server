@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { URL } from "url";
-import { readFileSync } from "fs";
+import {URL} from "url";
+import {readFileSync} from "fs";
 import {
     ConfigParam,
     ConfigValue,
@@ -40,7 +40,7 @@ export type QConfig = {
     counterparties: string[],
 
     slowQueries: SlowQueriesMode,
-    slowQueriesBlockchain: QBlockchainDataConfig,
+    slowQueriesBlockchain?: QBlockchainDataConfig,
 
     data?: QDeprecatedDataConfig,
     slowQueriesData?: QDeprecatedDataConfig,
@@ -273,10 +273,12 @@ function resolveMaxSockets(config: string, defMaxSockets: number): string {
     return url.toString();
 }
 
-function resolveMaxSocketsFor(configs: string[][], defMaxSockets: number) {
-    for (let i = 0; i < configs.length; i += 1) {
-        for (let j = 0; j < configs[i].length; j += 1) {
-            configs[i][j] = resolveMaxSockets(configs[i][j], defMaxSockets);
+function resolveMaxSocketsFor(configs: (string[] | undefined)[], defMaxSockets: number) {
+    for (const config of configs) {
+        if (config !== undefined) {
+            for (let j = 0; j < config.length; j += 1) {
+                config[j] = resolveMaxSockets(config[j], defMaxSockets);
+            }
         }
     }
 }
@@ -315,13 +317,15 @@ export function resolveConfig(
         config.slowQueriesBlockchain = upgradeBlockchain(config.slowQueriesData);
     }
     const slow = config.slowQueriesBlockchain;
-    resolveMaxSocketsFor([
-        slow.accounts,
-        slow.blocks.hot,
-        slow.blocks.cold,
-        slow.transactions.hot,
-        slow.transactions.cold,
-    ], DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS);
+    if (slow !== undefined) {
+        resolveMaxSocketsFor([
+            slow.accounts,
+            slow.blocks.hot,
+            slow.blocks.cold,
+            slow.transactions.hot,
+            slow.transactions.cold,
+        ], DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS);
+    }
     return config;
 }
 

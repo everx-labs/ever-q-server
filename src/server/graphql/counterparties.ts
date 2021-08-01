@@ -9,8 +9,7 @@ import {
 } from "../filter/filters";
 import { QTracer } from "../tracer";
 import { QRequestContext } from "../request";
-import { QDataCollection } from "../data/collection";
-import { QError } from "../utils";
+import {required} from "../utils";
 
 //------------------------------------------------------------- Counterparties
 
@@ -40,14 +39,6 @@ export const Counterparty = struct({
     last_message_value: bigUInt2,
 }, true);
 
-function requiredCollection(data: QBlockchainData): QDataCollection {
-    const collection = data.counterparties;
-    if (collection !== undefined) {
-        return collection;
-    }
-    throw QError.serviceUnavailable();
-}
-
 async function counterparties(_parent: unknown, args: CounterpartiesArgs, context: QRequestContext): Promise<CounterpartiesResult[]> {
     const tracer = context.services.tracer;
     return QTracer.trace(tracer, "counterparties", async () => {
@@ -69,7 +60,7 @@ async function counterparties(_parent: unknown, args: CounterpartiesArgs, contex
         text += " SORT doc.last_message_at DESC, doc.counterparty DESC LIMIT @first RETURN doc";
 
         const result = await context.services.data.query(
-            requiredCollection(context.services.data).provider,
+            required(context.services.data.counterparties.provider),
             text,
             vars,
             [{
@@ -93,7 +84,7 @@ export function counterpartiesResolvers(data: QBlockchainData) {
             counterparties,
         },
         Subscription: {
-            counterparties: requiredCollection(data).subscriptionResolver(),
+            counterparties: data.counterparties.subscriptionResolver(),
         },
     };
 }

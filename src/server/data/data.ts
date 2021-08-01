@@ -113,7 +113,7 @@ export default class QData {
     addCollection(
         name: string,
         docType: QType,
-        provider: QDataProvider,
+        provider: QDataProvider | undefined,
         slowQueriesProvider: QDataProvider | undefined,
         indexes: QIndexInfo[],
     ) {

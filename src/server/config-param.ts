@@ -4,6 +4,10 @@ function toPascal(s: string): string {
     return `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}`;
 }
 
+function toOption(s: string): string {
+    return s.toLowerCase().split(" ").filter(x => x !== "").join("-");
+}
+
 export type DeepPartial<T> = {
     [P in keyof T]?: DeepPartial<T[P]>;
 };
@@ -17,18 +21,25 @@ const parse = {
         return Number.isInteger(n) ? n : undefined;
     },
     string: (s: string): string | undefined => s,
-    array: (s: string): string[] | undefined => s.split(","),
+    array: (s: string): string[] | undefined => s
+        .split(",")
+        .map(x => x.trim())
+        .filter(x => x !== ""),
     map(s: string): Record<string, string> {
-        return s.split(",").reduce((map, nameValue): Record<string, string> => {
-            let i = nameValue.indexOf("=");
-            if (i < 0) {
-                i = nameValue.length;
-            }
-            return {
-                ...map,
-                [nameValue.substr(0, i)]: nameValue.substr(i + 1),
-            };
-        }, {} as Record<string, string>);
+        return s
+            .split(",")
+            .map(x => x.trim())
+            .filter(x => x !== "")
+            .reduce((map, nameValue): Record<string, string> => {
+                let i = nameValue.indexOf("=");
+                if (i < 0) {
+                    i = nameValue.length;
+                }
+                return {
+                    ...map,
+                    [nameValue.substr(0, i)]: nameValue.substr(i + 1),
+                };
+            }, {} as Record<string, string>);
     },
 };
 
@@ -118,7 +129,7 @@ export class ConfigParam<T extends ConfigValue> {
     } {
         function dataParam<T extends ConfigValue>(name: string, defaultValue: T, description: string, parser: ValueParser<T>) {
             return new ConfigParam<T>(
-                `${prefix.toLowerCase().split(" ").join("-")}-${name}`,
+                `${toOption(prefix)}-${name}`,
                 defaultValue,
                 `${toPascal(prefix)} ${description}`,
                 parser,
@@ -139,7 +150,7 @@ export class ConfigParam<T extends ConfigValue> {
         return {
             hot: ConfigParam.databases(`${prefix} hot`),
             cache: ConfigParam.string(
-                `${prefix.toLowerCase().split(" ").join("-")}-cache`,
+                `${toOption(prefix)}-cache`,
                 "",
                 `${toPascal(prefix)} cache server`,
             ),
@@ -150,7 +161,7 @@ export class ConfigParam<T extends ConfigValue> {
 
     static databases(prefix: string): ConfigParam<string[]> {
         return ConfigParam.array(
-            `${prefix.toLowerCase().split(" ").join("-")}`,
+            toOption(prefix),
             [],
             `${toPascal(prefix)} databases`,
         );
@@ -164,19 +175,21 @@ export class ConfigParam<T extends ConfigValue> {
         };
     }
 
-    static resolvePath(path: string[], value: Record<string, unknown>): unknown | undefined {
-        let result: unknown | undefined = value;
-        for (let i = 0; i < path.length && result !== undefined; i += 1) {
-            result = (result as Record<string, unknown>)[path[i]];
+    static resolvePath(path: string[], value: Record<string, unknown>): ConfigValue | undefined {
+        let parent: Record<string, unknown> | undefined = value;
+        for (let i = 0; i < path.length - 1 && parent !== undefined; i += 1) {
+            parent = parent[path[i]] as Record<string, unknown>;
         }
-        return result;
+        return parent !== undefined
+            ? parent[path[path.length - 1]] as (ConfigValue | undefined)
+            : undefined;
     }
 
     /**
      * Converts value specified in program option or environment variable into param type.
      * Returns undefined if value can't be converted.
      */
-    parse(value: string | number | boolean | undefined | null): ConfigValue | undefined {
+    parse(value: ConfigValue | undefined | null): ConfigValue | undefined {
         return (value !== undefined && value !== null)
             ? this.parser(value.toString().trim())
             : undefined;
@@ -188,10 +201,10 @@ export class ConfigParam<T extends ConfigValue> {
         json: Record<string, unknown>,
         env: Record<string, string>,
     ): unknown | undefined {
-        let resolved: ConfigValue | undefined = options[this.optionName]
+        let resolved: ConfigValue | undefined = this.parse(options[this.optionName])
             ?? ConfigParam.resolvePath(path, json)
-            ?? env[this.env];
-        if (resolved !== undefined && !this.deprecated) {
+            ?? this.parse(env[this.env]);
+        if (resolved === undefined && !this.deprecated) {
             resolved = this.defaultValue;
         }
         if (resolved === "{ip}") {
@@ -209,12 +222,13 @@ export class ConfigParam<T extends ConfigValue> {
         const resolve = (path: string[], params: Record<string, unknown>): Record<string, unknown> | undefined => {
             let resolved: Record<string, unknown> | undefined = undefined;
             for (const [name, param] of Object.entries(params)) {
+                const paramPath = [...path, name];
                 const value = param instanceof ConfigParam
-                    ? param.resolve(path, options, json, env)
-                    : resolve([...path, name], param as Record<string, unknown>);
+                    ? param.resolve(paramPath, options, json, env)
+                    : resolve(paramPath, param as Record<string, unknown>);
                 if (value !== undefined) {
                     if (resolved === undefined) {
-                        resolved = { [name]: value };
+                        resolved = {[name]: value};
                     } else {
                         resolved[name] = value;
                     }

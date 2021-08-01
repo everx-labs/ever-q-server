@@ -15,7 +15,6 @@ import {
     createEnumNameResolver,
     unixSecondsToString,
 } from "../filter/filters";
-import {required} from "../utils";
 import QBlockchainData from "../data/blockchain";
 import { QRequestContext } from "../request";
 const OtherCurrency = struct({
@@ -906,7 +905,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !BlockSignatures.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.blocks).waitForDoc(parent._key, "_key", args, context);
+                return context.services.data.blocks.waitForDoc(parent._key, "_key", args, context);
             },
             sig_weight(parent: { sig_weight: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.sig_weight, args);
@@ -923,7 +922,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Block.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.blocks_signatures).waitForDoc(parent._key, "_key", args, context);
+                return context.services.data.blocks_signatures.waitForDoc(parent._key, "_key", args, context);
             },
             end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
@@ -1019,25 +1018,25 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.accounts).waitForDoc(parent.account_addr, "_key", args, context);
+                return context.services.data.accounts.waitForDoc(parent.account_addr, "_key", args, context);
             },
             block(parent: { block_id: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.blocks).waitForDoc(parent.block_id, "_key", args, context);
+                return context.services.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
             },
             in_message(parent: { in_msg: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.messages).waitForDoc(parent.in_msg, "_key", args, context);
+                return context.services.data.messages.waitForDoc(parent.in_msg, "_key", args, context);
             },
             out_messages(parent: { out_msgs: string[] }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.messages).waitForDocs(parent.out_msgs, "_key", args, context);
+                return context.services.data.messages.waitForDocs(parent.out_msgs, "_key", args, context);
             },
             balance_delta(parent: { balance_delta: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance_delta, args);
@@ -1067,7 +1066,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.blocks).waitForDoc(parent.block_id, "_key", args, context);
+                return context.services.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
             },
             dst_account(parent: { dst: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.msg_type !== 2)) {
@@ -1076,7 +1075,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.accounts).waitForDoc(parent.dst, "_key", args, context);
+                return context.services.data.accounts.waitForDoc(parent.dst, "_key", args, context);
             },
             dst_transaction(parent: { _key: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.msg_type !== 2)) {
@@ -1085,7 +1084,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.transactions).waitForDoc(parent._key, "in_msg", args, context);
+                return context.services.data.transactions.waitForDoc(parent._key, "in_msg", args, context);
             },
             src_account(parent: { src: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.msg_type !== 1)) {
@@ -1094,7 +1093,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.accounts).waitForDoc(parent.src, "_key", args, context);
+                return context.services.data.accounts.waitForDoc(parent.src, "_key", args, context);
             },
             src_transaction(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.created_lt !== "00" && parent.msg_type !== 1)) {
@@ -1103,7 +1102,7 @@ function createResolvers(data: QBlockchainData) {
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return required(context.services.data.transactions).waitForDoc(parent._key, "out_msgs[*]", args, context);
+                return context.services.data.transactions.waitForDoc(parent._key, "out_msgs[*]", args, context);
             },
             created_lt(parent: { created_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.created_lt, args);
@@ -1161,20 +1160,20 @@ function createResolvers(data: QBlockchainData) {
             },
         },
         Query: {
-            blocks_signatures: required(data.blocks_signatures).queryResolver(),
-            blocks: required(data.blocks).queryResolver(),
-            accounts: required(data.accounts).queryResolver(),
-            transactions: required(data.transactions).queryResolver(),
-            messages: required(data.messages).queryResolver(),
-            zerostates: required(data.zerostates).queryResolver(),
+            blocks_signatures: data.blocks_signatures.queryResolver(),
+            blocks: data.blocks.queryResolver(),
+            accounts: data.accounts.queryResolver(),
+            transactions: data.transactions.queryResolver(),
+            messages: data.messages.queryResolver(),
+            zerostates: data.zerostates.queryResolver(),
         },
         Subscription: {
-            blocks_signatures: required(data.blocks_signatures).subscriptionResolver(),
-            blocks: required(data.blocks).subscriptionResolver(),
-            accounts: required(data.accounts).subscriptionResolver(),
-            transactions: required(data.transactions).subscriptionResolver(),
-            messages: required(data.messages).subscriptionResolver(),
-            zerostates: required(data.zerostates).subscriptionResolver(),
+            blocks_signatures: data.blocks_signatures.subscriptionResolver(),
+            blocks: data.blocks.subscriptionResolver(),
+            accounts: data.accounts.subscriptionResolver(),
+            transactions: data.transactions.subscriptionResolver(),
+            messages: data.messages.subscriptionResolver(),
+            zerostates: data.zerostates.subscriptionResolver(),
         }
     };
 }

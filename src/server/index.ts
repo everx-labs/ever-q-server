@@ -28,7 +28,7 @@ import { ConfigParam } from "./config-param";
 
 
 ConfigParam.getAll(configParams).forEach((param) => {
-    program.option(param.option, param.description);
+    program.option(`--${param.option} <value>`, param.description);
 });
 
 program.parse(process.argv);

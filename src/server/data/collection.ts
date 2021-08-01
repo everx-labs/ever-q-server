@@ -75,7 +75,7 @@ import {
     StatsTiming,
 } from "../tracer";
 import {
-    QError,
+    QError, required,
     wrap,
 } from "../utils";
 import EventEmitter from "events";
@@ -101,7 +101,7 @@ export type QCollectionOptions = {
     docType: QType,
     indexes: QIndexInfo[],
 
-    provider: QDataProvider,
+    provider: QDataProvider | undefined,
     slowQueriesProvider: QDataProvider | undefined,
     logs: QLogs,
     auth: Auth,
@@ -118,7 +118,7 @@ export class QDataCollection {
     indexesRefreshTime: number;
 
     // Dependencies
-    provider: QDataProvider;
+    provider: QDataProvider | undefined;
     slowQueriesProvider: QDataProvider | undefined;
     log: QLog;
     auth: Auth;
@@ -190,18 +190,22 @@ export class QDataCollection {
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
 
-        (async () => {
-            this.hotSubscription = await options.provider.subscribe(
-                name,
-                doc => this.onDocumentInsertOrUpdate(doc as QDoc),
-            );
-        })();
+        const provider = options.provider;
+        if (provider !== undefined) {
+            (async () => {
+                this.hotSubscription = await provider.subscribe(
+                    name,
+                    doc => this.onDocumentInsertOrUpdate(doc as QDoc),
+                );
+            })();
+        }
     }
 
     close() {
-        if (this.hotSubscription) {
+        if (this.provider !== undefined && this.hotSubscription) {
             this.provider.unsubscribe(this.hotSubscription);
             this.hotSubscription = null;
+            this.provider = undefined;
         }
     }
 
@@ -589,7 +593,7 @@ export class QDataCollection {
         orderBy: OrderBy[],
         isFast: boolean,
     ): Promise<QResult[]> {
-        const provider = isFast ? this.provider : this.slowQueriesProvider;
+        const provider = required(isFast ? this.provider : this.slowQueriesProvider);
         return provider?.query(text, vars, orderBy) ?? [];
     }
 
@@ -807,7 +811,7 @@ export class QDataCollection {
     }
 
     async getIndexes(): Promise<QIndexInfo[]> {
-        return this.provider.getCollectionIndexes(this.name);
+        return (await this.provider?.getCollectionIndexes(this.name)) ?? [];
     }
 
     //--------------------------------------------------------- Internals

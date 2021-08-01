@@ -113,13 +113,13 @@ export type Latency = {
 };
 
 export default class QBlockchainData extends QData {
-    accounts?: QDataCollection;
-    blocks?: QDataCollection;
-    blocks_signatures?: QDataCollection;
-    transactions?: QDataCollection;
-    messages?: QDataCollection;
-    zerostates?: QDataCollection;
-    counterparties?: QDataCollection;
+    accounts: QDataCollection;
+    blocks: QDataCollection;
+    blocks_signatures: QDataCollection;
+    transactions: QDataCollection;
+    messages: QDataCollection;
+    zerostates: QDataCollection;
+    counterparties: QDataCollection;
 
     latency: Latency;
     debugLatency: number;
@@ -129,9 +129,7 @@ export default class QBlockchainData extends QData {
         const fast = options.providers.blockchain;
         const slow = options.slowQueriesProviders;
         const add = (name: string, type: QType, provider?: QDataProvider, slowQueriesProvider?: QDataProvider) => {
-            return provider
-                ? this.addCollection(name, type, provider, slowQueriesProvider, INDEXES[name].indexes)
-                : undefined;
+            return this.addCollection(name, type, provider, slowQueriesProvider, INDEXES[name].indexes);
         };
         this.accounts = add("accounts", Account, fast?.accounts, slow?.accounts);
         this.blocks = add("blocks", Block, fast?.blocks, slow?.blocks);
@@ -215,8 +213,8 @@ export default class QBlockchainData extends QData {
         this.latency.lastBlockTime = blocks.maxTime;
     }
 
-    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection | undefined, field: string): Promise<boolean> {
-        if (collection === undefined || Date.now() <= latency.nextUpdateTime) {
+    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string): Promise<boolean> {
+        if (collection.provider === undefined || Date.now() <= latency.nextUpdateTime) {
             return false;
         }
         const result = (await collection.provider.query(

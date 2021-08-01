@@ -14,7 +14,7 @@ async function getAccountsCount(_parent: Record<string, unknown>, args: AccessAr
     return QTracer.trace(tracer, "getAccountsCount", async () => {
         await context.requireGrantedAccess(args);
         const result: QResult = await data.query(
-            required(data.accounts).provider,
+            required(data.accounts.provider),
             "RETURN LENGTH(accounts)",
             {},
             [],
@@ -32,7 +32,7 @@ async function getTransactionsCount(_parent: Record<string, unknown>, args: Acce
     return QTracer.trace(tracer, "getTransactionsCount", async () => {
         await context.requireGrantedAccess(args);
         const result = await data.query(
-            required(data.transactions).provider,
+            required(data.transactions.provider),
             "RETURN LENGTH(transactions)",
             {},
             [],
@@ -55,7 +55,7 @@ async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: A
         And the total result is (hs << 24) + ls
          */
         const result = await data.query(
-            required(data.accounts).provider,
+            required(data.accounts.provider),
             `
             LET d = 16777216
             FOR a in accounts
