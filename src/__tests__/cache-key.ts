@@ -155,7 +155,7 @@ describe("DataCache", () => {
         expect(firstCold.hotUpdateCount).toEqual(1);
         expect(secondCold.hotUpdateCount).toEqual(1);
 
-        await server.data.providers.blockchain?.accounts?.hotUpdate();
+        await server.data.providers.blockchain?.blocks?.hotUpdate();
 
         expect(firstCold.hotUpdateCount).toEqual(2);
         expect(secondCold.hotUpdateCount).toEqual(2);

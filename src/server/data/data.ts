@@ -17,18 +17,18 @@
 import {
     QDataCollection,
 } from "./collection";
-import { Auth } from "../auth";
-import { STATS } from "../config";
-import type { QLog } from "../logs";
+import {Auth} from "../auth";
+import {STATS} from "../config";
+import type {QLog} from "../logs";
 import QLogs from "../logs";
 import type {
     OrderBy,
     QType,
 } from "../filter/filters";
-import { Tracer } from "opentracing";
-import { StatsCounter } from "../tracer";
-import type { IStats } from "../tracer";
-import { wrap } from "../utils";
+import {Tracer} from "opentracing";
+import {StatsCounter} from "../tracer";
+import type {IStats} from "../tracer";
+import {wrap} from "../utils";
 import type {
     QDataProvider,
     QIndexInfo,
@@ -55,6 +55,16 @@ export type QDataOptions = {
     stats: IStats,
     isTests: boolean,
 };
+
+function collectProviders(source: (QDataProvider | undefined)[]): QDataProvider[] {
+    const providers: QDataProvider[] = [];
+    for (const provider of source) {
+        if (provider !== undefined && !providers.includes(provider)) {
+            providers.push(provider);
+        }
+    }
+    return providers;
+}
 
 export default class QData {
     // Dependencies
@@ -94,20 +104,18 @@ export default class QData {
         this.collections = [];
         this.collectionsByName = new Map();
 
-        this.dataProviders = [
+        this.dataProviders = collectProviders([
             this.providers.blockchain?.blocks,
             this.providers.blockchain?.transactions,
             this.providers.blockchain?.accounts,
             this.providers.counterparties,
-        ].filter(x => x !== undefined) as QDataProvider[];
+        ]);
 
-
-        this.slowQueriesDataProviders = [
+        this.slowQueriesDataProviders = collectProviders([
             this.slowQueriesProviders?.blocks,
             this.slowQueriesProviders?.transactions,
             this.slowQueriesProviders?.accounts,
-        ].filter(x => x !== undefined) as QDataProvider[];
-
+        ]);
     }
 
     addCollection(
