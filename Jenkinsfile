@@ -40,7 +40,6 @@ pipeline {
 			agent {
 				docker {
 					image 'node:14-buster'
-					args '--network proxy_nw'
 					reuseNode true
 				}
 			}
