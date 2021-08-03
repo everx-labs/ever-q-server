@@ -14,6 +14,8 @@ type Info {
     version: String
     " Server unix time in ms"
     time: Float
+    " Reliable upper boundary for pagination by chain_order field. Before this boundary no additions are possible."
+    reliableChainOrderUpperBoundary: String,
     " Blocks latency in ms (server time - max of blocks.gen_utime * 1000)"
     blocksLatency: Float,
     " Messages latency in ms (server time - max of messages.created_at * 1000)"

@@ -16,7 +16,8 @@
         "hot": "",
         "cold": [],
         "cache": "",
-        "counterparties": ""
+        "counterparties": "",
+        "chainRangesVerification": ""
     },
     "slowQueries": {
         "mode": "redirect",

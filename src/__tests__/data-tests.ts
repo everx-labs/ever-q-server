@@ -89,6 +89,7 @@ test("Data Broker", async () => {
                 testConfig.cacheKeyPrefix,
             )]),
             counterparties: mut,
+            chainRangesVerification: hot,
         }),
     });
     await server.start();
@@ -176,6 +177,7 @@ test("Limit of combined data", async () => {
                 testConfig.cacheKeyPrefix,
             )]),
             counterparties: mut,
+            chainRangesVerification: hot,
         }),
     });
     await server.start();

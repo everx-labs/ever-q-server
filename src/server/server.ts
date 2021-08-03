@@ -156,10 +156,12 @@ export function createProviders(configName: string, logs: QLogs, config: QDataPr
     );
     const immutable = new QDataCombiner([hot, cold]);
     const counterparties = newArangoProvider("counterparties", config.counterparties);
+    const chainRangesVerification = newArangoProvider("chainRangesVerification", config.chainRangesVerification);
     return {
         mutable,
         immutable,
         counterparties,
+        chainRangesVerification,
     };
 }
 

@@ -16,6 +16,7 @@ test("Config File", () => {
         Q_DATA_HOT: "",
         Q_DATA_COLD: "",
         Q_DATA_CACHE: "",
+        Q_DATA_CHAIN_RANGES_VERIFICATION: "",
         Q_DATA_COUNTERPARTIES: "",
         Q_SLOW_QUERIES: "redirect",
         Q_SLOW_QUERIES_MUT: "arangodb",
