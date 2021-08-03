@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [xxx]
+
+### New
+
+- support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
+
 ## [0.42.0] 2021-07-15
 
 ### New

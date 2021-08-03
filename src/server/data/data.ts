@@ -39,6 +39,7 @@ export type QDataProviders = {
     mutable: QDataProvider,
     immutable: QDataProvider,
     counterparties: QDataProvider,
+    chainRangesVerification: QDataProvider,
 };
 
 export type QDataOptions = {

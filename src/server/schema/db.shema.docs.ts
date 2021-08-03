@@ -234,6 +234,7 @@ If there is no reason to skip the computing phase, TVM is invoked and the result
         proof: "",
         boc: "",
         balance_delta: "Account balance change after transaction",
+        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
     },
 
     shardDescr: {
@@ -485,6 +486,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
         key_block: "true if this block is a key block",
         boc: "Serialized bag of cells of this block encoded with base64",
         balance_delta: "Account balance change after transaction",
+        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
     },
 
     blockSignatures: {

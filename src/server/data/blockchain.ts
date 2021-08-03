@@ -112,6 +112,11 @@ export type Latency = {
     lastBlockTime: number,
 };
 
+export type ReliableChainOrderUpperBoundary = {
+    boundary: string,
+    lastCheckTime: number,
+};
+
 export default class QBlockchainData extends QData {
     transactions: QDataCollection;
     messages: QDataCollection;
@@ -123,6 +128,8 @@ export default class QBlockchainData extends QData {
 
     latency: Latency;
     debugLatency: number;
+
+    reliableChainOrderUpperBoundary: ReliableChainOrderUpperBoundary;
 
     constructor(options: QDataOptions) {
         super(options);
@@ -168,6 +175,11 @@ export default class QBlockchainData extends QData {
         this.messages.docInsertOrUpdate.on("doc", async (msg) => {
             this.updateLatency(this.latency.messages, msg.created_at);
         });
+
+        this.reliableChainOrderUpperBoundary = {
+            boundary: "",
+            lastCheckTime: 0,
+        };
     }
 
     updateLatency(latency: CollectionLatency, timeInSeconds?: number | null) {
@@ -246,5 +258,23 @@ export default class QBlockchainData extends QData {
             }
         }
         return latency;
+    }
+
+    async getReliableChainOrderUpperBoundary(): Promise<ReliableChainOrderUpperBoundary> {
+        const now = Date.now();
+        if (now > this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
+            const result = await this.providers.chainRangesVerification.query(
+                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, []
+            );
+            if (result.length != 1) {
+                throw new Error("Couldn't get chain_ranges_verification summary");
+            }
+            const summary = result?.[0] as Record<string, unknown> | undefined | null;
+            this.reliableChainOrderUpperBoundary = {
+                boundary: (summary?.["reliabe_chain_order_upper_boundary"] ?? "") as string,
+                lastCheckTime: now,
+            };
+        }
+        return this.reliableChainOrderUpperBoundary;
     }
 }

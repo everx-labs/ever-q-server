@@ -37,6 +37,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
     --data-cold <array>            Q_DATA_COLD                             Data cold db config urls (comma separated)
     --data-cache <url>             Q_DATA_CACHE                            Data cache config url
     --data-counterparties <url>    Q_DATA_COUNTERPARTIES    <mut>          Data counterparties db config url
+    --data-chain-ranges-verification <url>    Q_DATA_CHAIN_RANGES_VERIFICATION    <hot>    Data chain ranges verification db config url
     --slow-queries <mode>          Q_SLOW_QUERIES           redirect       Slow queries handling:
                                                                            `enable` – process slow queries on the main database
                                                                            `redirect` – redirect slow queries to slow-queries database
@@ -192,7 +193,7 @@ npm run babel
 
 This will regenerate file in `dist` folder.
 
-**SECOND**. If you want to modify scheme of database, you must do it only in one place `db.scheme.js`.
+**SECOND**. If you want to modify scheme of database, you must do it only in one place `db-schema.ts`.
 After that you need to generate source code for a graphql type definitions and for resolvers JavaScript code.
 You must do it with:
 
@@ -257,7 +258,8 @@ or/and via arg `--config <path to config>`
         "hot": "",
         "cold": [],
         "cache": "",
-        "counterparties": ""
+        "counterparties": "",
+        "chainRangesVerification": ""
     },
     "slowQueries": {
         "mode": "redirect",

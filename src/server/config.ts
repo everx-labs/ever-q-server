@@ -38,6 +38,7 @@ export type QDataProvidersConfig = {
     cold: QArangoConfig[];
     cache: QMemCachedConfig;
     counterparties: QArangoConfig;
+    chainRangesVerification: QArangoConfig;
 };
 
 export enum SlowQueriesMode {
@@ -134,6 +135,7 @@ const dataOpt = (prefix: string) => {
     opt(o("cold"), "", d("cold db config urls (comma separated)"));
     opt(o("cache"), "", d("cache config url"));
     opt(o("counterparties"), "", d("counterparties db config url"));
+    opt(o("chain-ranges-verification"), "", d("chain ranges verification db config url"));
 };
 
 opt("host", getIp(), "Listening address");
@@ -222,6 +224,7 @@ export function readConfigFile(configFile: string): Record<string, unknown> {
             Q_DATA_COLD: config.data?.cold.join(","),
             Q_DATA_CACHE: config.data?.cache,
             Q_DATA_COUNTERPARTIES: config.data?.counterparties,
+            Q_DATA_CHAIN_RANGES_VERIFICATION: config.data?.chainRangesVerification,
             Q_SLOW_QUERIES: config.slowQueries?.mode,
             Q_SLOW_QUERIES_MUT: config.slowQueries?.mut,
             Q_SLOW_QUERIES_HOT: config.slowQueries?.hot,
@@ -402,12 +405,17 @@ export function parseDataConfig(values: Record<string, string>): {
         const counterparties = counterpartiesOpt
             ? parseArangoConfig(counterpartiesOpt, defMaxSockets)
             : mut;
+        const chainRangesVerificationOpt = opt("ChainRangesVerification");
+        const chainRangesVerification = chainRangesVerificationOpt
+            ? parseArangoConfig(chainRangesVerificationOpt, defMaxSockets)
+            : hot;
         return {
             mut,
             hot,
             cold,
             cache,
             counterparties,
+            chainRangesVerification,
         };
     }
 
