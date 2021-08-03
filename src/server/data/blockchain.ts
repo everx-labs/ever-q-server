@@ -269,9 +269,9 @@ export default class QBlockchainData extends QData {
             if (result.length != 1) {
                 throw new Error("Couldn't get chain_ranges_verification summary");
             }
-            const summary = result[0] as Record<string, unknown>;
+            const summary = result?.[0] as Record<string, unknown> | undefined | null;
             this.reliableChainOrderUpperBoundary = {
-                boundary: summary["reliabe_chain_order_upper_boundary"] as string,
+                boundary: (summary?.["reliabe_chain_order_upper_boundary"] ?? "") as string,
                 lastCheckTime: now,
             };
         }
