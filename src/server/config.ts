@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import {URL} from "url";
-import {readFileSync} from "fs";
+import { URL } from "url";
+import { readFileSync } from "fs";
 import {
     ConfigParam,
     ConfigValue,
@@ -73,7 +73,11 @@ export const configParams = {
         orConversion: ConfigParam.string(
             "filter-or-conversion",
             "sub-queries",
-            "Filter OR conversion (or-operator | sub-queries)",
+            "Filter OR conversion:\n" +
+            "`or-operator` – q-server uses AQL with OR\n" +
+            "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
+            " and combines results (this option provides faster execution\n" +
+            " than OR operator in AQL)",
         ),
     },
     server: {
@@ -82,7 +86,12 @@ export const configParams = {
         keepAlive: ConfigParam.integer("keep-alive", 60000, "GraphQL keep alive ms"),
     },
     requests: {
-        mode: ConfigParam.string("requests-mode", "kafka", "Requests mode (kafka | rest)"),
+        mode: ConfigParam.string(
+            "requests-mode",
+            "kafka",
+            "Requests mode:\n" +
+            "`kafka` – writes external messages to kafka topic\n" +
+            "`rest` – posts external messages to REST endpoint"),
         server: ConfigParam.string("requests-server", "kafka:9092", "Requests server url"),
         topic: ConfigParam.string("requests-topic", "requests", "Requests topic name"),
         maxSize: ConfigParam.integer("requests-max-size", 16383, "Maximum request message size in bytes"),
@@ -94,7 +103,10 @@ export const configParams = {
     slowQueries: ConfigParam.string(
         "slow-queries",
         "redirect",
-        "Slow queries handling (enable | redirect | disable)",
+        "Slow queries handling:\n" +
+        "`enable` – process slow queries on the main database\n" +
+        "`redirect` – redirect slow queries to slow-queries database\n" +
+        "`disable` – fail on slow queries",
     ),
     slowQueriesBlockchain: ConfigParam.blockchain("slow queries"),
 
@@ -123,7 +135,7 @@ export const configParams = {
         resetInterval: ConfigParam.integer(
             "statsd-reset-interval",
             0,
-            "Interval in ms between recreations of the StatsD socket",
+            "Interval between statsd reconnects.\nIf it is zero – no reconnects.",
         ),
     },
     mamAccessKeys: ConfigParam.array(
@@ -131,7 +143,7 @@ export const configParams = {
         [],
         "Access keys used to authorize mam endpoint access",
     ),
-    isTests: ConfigParam.boolean("is-tests", false, ""),
+    isTests: ConfigParam.boolean("is-tests", false, "Determines that q-server runs in unit tests mode."),
     networkName: ConfigParam.string(
         "network-name",
         "cinet.tonlabs.io",

@@ -4,8 +4,19 @@ function toPascal(s: string): string {
     return `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}`;
 }
 
+function splitNonEmpty(s: string, separator = ","): string[] {
+    return s
+        .split(separator)
+        .map(x => x.trim())
+        .filter(x => x !== "");
+}
+
 function toOption(s: string): string {
-    return s.toLowerCase().split(" ").filter(x => x !== "").join("-");
+    return splitNonEmpty(s.toLowerCase(), " ").join("-");
+}
+
+function withPrefix(prefix: string, s: string): string {
+    return prefix !== "" ? `${prefix} ${s}` : s;
 }
 
 export type DeepPartial<T> = {
@@ -21,15 +32,9 @@ const parse = {
         return Number.isInteger(n) ? n : undefined;
     },
     string: (s: string): string | undefined => s,
-    array: (s: string): string[] | undefined => s
-        .split(",")
-        .map(x => x.trim())
-        .filter(x => x !== ""),
+    array: (s: string): string[] | undefined => splitNonEmpty(s),
     map(s: string): Record<string, string> {
-        return s
-            .split(",")
-            .map(x => x.trim())
-            .filter(x => x !== "")
+        return splitNonEmpty(s)
             .reduce((map, nameValue): Record<string, string> => {
                 let i = nameValue.indexOf("=");
                 if (i < 0) {
@@ -60,19 +65,22 @@ type BlockchainParams = {
 export class ConfigParam<T extends ConfigValue> {
     optionName: string;
     env: string;
-    description: string;
 
     private constructor(
         public option: string,
         public defaultValue: T,
-        description: string,
+        public description: string,
         public parser: ValueParser<T>,
         public deprecated: boolean = false,
     ) {
         const words = option.split("-");
         this.env = `Q_${words.map(x => x.toUpperCase()).join("_")}`;
         this.optionName = `${words[0]}${words.slice(1).map(toPascal).join("")}`;
-        this.description = `${description}${defaultValue && ` (default: "${defaultValue}")`}`;
+    }
+
+    descriptionWithDefaults(): string {
+        const defaultValueStr = this.defaultValueAsString();
+        return `${this.description}${defaultValueStr !== "" ? ` (default: "${defaultValueStr}")` : ""}`;
     }
 
     static string(
@@ -131,7 +139,7 @@ export class ConfigParam<T extends ConfigValue> {
             return new ConfigParam<T>(
                 `${toOption(prefix)}-${name}`,
                 defaultValue,
-                `${toPascal(prefix)} ${description}`,
+                withPrefix(toPascal(prefix), description),
                 parser,
                 true,
             );
@@ -148,13 +156,13 @@ export class ConfigParam<T extends ConfigValue> {
 
     static hotCold(prefix: string): HotColdParams {
         return {
-            hot: ConfigParam.databases(`${prefix} hot`),
+            hot: ConfigParam.databases(withPrefix(prefix, "hot")),
             cache: ConfigParam.string(
                 `${toOption(prefix)}-cache`,
                 "",
-                `${toPascal(prefix)} cache server`,
+                withPrefix(toPascal(prefix), "cache server"),
             ),
-            cold: ConfigParam.databases(`${prefix} cold`),
+            cold: ConfigParam.databases(withPrefix(prefix, "cold")),
         };
 
     }
@@ -163,15 +171,15 @@ export class ConfigParam<T extends ConfigValue> {
         return ConfigParam.array(
             toOption(prefix),
             [],
-            `${toPascal(prefix)} databases`,
+            withPrefix(toPascal(prefix), "databases"),
         );
     }
 
     static blockchain(prefix: string): BlockchainParams {
         return {
-            accounts: ConfigParam.databases(`${prefix} accounts`),
-            blocks: ConfigParam.hotCold(`${prefix} blocks`),
-            transactions: ConfigParam.hotCold(`${prefix} transactions`),
+            accounts: ConfigParam.databases(withPrefix(prefix, "accounts")),
+            blocks: ConfigParam.hotCold(withPrefix(prefix, "blocks")),
+            transactions: ConfigParam.hotCold(withPrefix(prefix, "transactions")),
         };
     }
 
@@ -228,7 +236,7 @@ export class ConfigParam<T extends ConfigValue> {
                     : resolve(paramPath, param as Record<string, unknown>);
                 if (value !== undefined) {
                     if (resolved === undefined) {
-                        resolved = {[name]: value};
+                        resolved = { [name]: value };
                     } else {
                         resolved[name] = value;
                     }
@@ -252,6 +260,23 @@ export class ConfigParam<T extends ConfigValue> {
         };
         collect(params);
         return all;
+    }
+
+    defaultValueAsString(): string {
+        const v = this.defaultValue;
+        if (v === null || v === undefined || v === "") {
+            return "";
+        }
+        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+            return `${v}`;
+        }
+        if (Array.isArray(v)) {
+            return v.join(",");
+        }
+        if (typeof v === "object" && v !== null && Object.keys(v).length === 0) {
+            return "";
+        }
+        return JSON.stringify(v);
     }
 }
 
