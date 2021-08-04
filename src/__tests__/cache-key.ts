@@ -142,6 +142,7 @@ describe("DataCache", () => {
                     transactions: immutable,
                 },
                 counterparties: mutable,
+                chainRangesVerification: immutable,
             }),
         });
     });

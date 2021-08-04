@@ -25,7 +25,8 @@ test("Config File", () => {
                 "hot": "",
                 "cold": [],
                 "cache": "",
-                "counterparties": ""
+                "counterparties": "",
+                chainRangesVerification: ""
             },
             "slowQueries": {
                 "mode": "redirect",

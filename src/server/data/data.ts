@@ -43,6 +43,7 @@ export type QBlockchainDataProvider = {
 export type QDataProviders = {
     blockchain?: QBlockchainDataProvider,
     counterparties?: QDataProvider,
+    chainRangesVerification?: QDataProvider,
 };
 
 export type QDataOptions = {

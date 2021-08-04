@@ -93,6 +93,7 @@ test("Data Broker", async () => {
                 transactions: immut,
             },
             counterparties: mut,
+            chainRangesVerification: hot,
         }),
     });
     await server.start();
@@ -184,6 +185,7 @@ test("Limit of combined data", async () => {
                 transactions: immut,
             },
             counterparties: mut,
+            chainRangesVerification: hot,
         }),
     });
     await server.start();

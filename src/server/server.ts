@@ -110,6 +110,7 @@ export class DataProviderFactory {
         return {
             blockchain: this.ensureBlockchain(this.config.blockchain, "blockchain"),
             counterparties: this.ensureDatabases(this.config.counterparties, "counterparties"),
+            chainRangesVerification: this.ensureDatabases(this.config.chainRangesVerification, "chainRangesVerification"),
         };
     }
 

@@ -34,6 +34,7 @@ import {
     sortedIndex,
 } from "./data-provider";
 import { QType } from "../filter/filters";
+import { required } from "../utils";
 
 export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
     blocks: {
@@ -112,6 +113,15 @@ export type Latency = {
     lastBlockTime: number,
 };
 
+type ChainRangesVerificationSummary = {
+    reliable_chain_order_upper_boundary?: string,
+};
+
+export type ReliableChainOrderUpperBoundary = {
+    boundary: string,
+    lastCheckTime: number,
+};
+
 export default class QBlockchainData extends QData {
     accounts: QDataCollection;
     blocks: QDataCollection;
@@ -123,6 +133,8 @@ export default class QBlockchainData extends QData {
 
     latency: Latency;
     debugLatency: number;
+
+    reliableChainOrderUpperBoundary: ReliableChainOrderUpperBoundary;
 
     constructor(options: QDataOptions) {
         super(options);
@@ -170,6 +182,11 @@ export default class QBlockchainData extends QData {
         this.messages?.docInsertOrUpdate.on("doc", async (msg) => {
             this.updateLatency(this.latency.messages, msg.created_at);
         });
+
+        this.reliableChainOrderUpperBoundary = {
+            boundary: "",
+            lastCheckTime: 0,
+        };
     }
 
     updateLatency(latency: CollectionLatency, timeInSeconds?: number | null) {
@@ -248,5 +265,23 @@ export default class QBlockchainData extends QData {
             }
         }
         return latency;
+    }
+
+    async getReliableChainOrderUpperBoundary(): Promise<ReliableChainOrderUpperBoundary> {
+        const now = Date.now();
+        if (now > this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
+            const result = await required(this.providers.chainRangesVerification).query(
+                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, [],
+            ) as ChainRangesVerificationSummary[];
+            if (result.length != 1) {
+                throw new Error("Couldn't get chain_ranges_verification summary");
+            }
+            const summary = result[0];
+            this.reliableChainOrderUpperBoundary = {
+                boundary: summary.reliable_chain_order_upper_boundary ?? "",
+                lastCheckTime: now,
+            };
+        }
+        return this.reliableChainOrderUpperBoundary;
     }
 }

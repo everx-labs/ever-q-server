@@ -38,6 +38,7 @@ export type QConfig = {
     },
     blockchain: QBlockchainDataConfig,
     counterparties: string[],
+    chainRangesVerification: string[],
 
     slowQueries: SlowQueriesMode,
     slowQueriesBlockchain?: QBlockchainDataConfig,
@@ -88,6 +89,7 @@ export const configParams = {
     },
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
+    chainRangesVerification: ConfigParam.databases("chain ranges verification"),
 
     slowQueries: ConfigParam.string(
         "slow-queries",

@@ -317,6 +317,7 @@ const Transaction: TypeDef = {
     boc: string(docs.transaction.boc),
     balance_delta: grams(docs.transaction.balance_delta),
     balance_delta_other: otherCurrencyCollection(docs.transaction.balance_delta),
+    chain_order: stringWithLowerFilter(docs.transaction.chain_order),
 };
 
 // BLOCK SIGNATURES
@@ -715,6 +716,7 @@ const Block: TypeDef = {
     key_block: bool(docs.block.key_block),
     boc: string(docs.block.boc),
     signatures: join({ BlockSignatures }, "id", "id"),
+    chain_order: stringWithLowerFilter(docs.block.chain_order),
 };
 
 const Zerostate: TypeDef = {

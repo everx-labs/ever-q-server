@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.43.0] 2021-07-24
+## [0.43.0] 2021-08-04
 
 ### New
 
 - flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
+- support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
 
 ## [0.42.0] 2021-07-15
 

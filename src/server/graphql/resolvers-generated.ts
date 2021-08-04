@@ -424,6 +424,7 @@ const Block = struct({
     after_split: scalar,
     before_split: scalar,
     boc: scalar,
+    chain_order: stringLowerFilter,
     created_by: scalar,
     end_lt: bigUInt1,
     flags: scalar,
@@ -570,6 +571,7 @@ const Transaction = struct({
     block_id: stringLowerFilter,
     boc: scalar,
     bounce: TransactionBounce,
+    chain_order: stringLowerFilter,
     compute: TransactionCompute,
     credit: TransactionCredit,
     credit_first: scalar,
@@ -1205,6 +1207,7 @@ scalarFields.set("blocks.after_merge", { type: "boolean", path: "doc.after_merge
 scalarFields.set("blocks.after_split", { type: "boolean", path: "doc.after_split" });
 scalarFields.set("blocks.before_split", { type: "boolean", path: "doc.before_split" });
 scalarFields.set("blocks.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("blocks.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("blocks.created_by", { type: "string", path: "doc.created_by" });
 scalarFields.set("blocks.end_lt", { type: "uint64", path: "doc.end_lt" });
 scalarFields.set("blocks.flags", { type: "number", path: "doc.flags" });
@@ -1612,6 +1615,7 @@ scalarFields.set("transactions.bounce.msg_fees", { type: "uint1024", path: "doc.
 scalarFields.set("transactions.bounce.msg_size_bits", { type: "number", path: "doc.bounce.msg_size_bits" });
 scalarFields.set("transactions.bounce.msg_size_cells", { type: "number", path: "doc.bounce.msg_size_cells" });
 scalarFields.set("transactions.bounce.req_fwd_fees", { type: "uint1024", path: "doc.bounce.req_fwd_fees" });
+scalarFields.set("transactions.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("transactions.compute.account_activated", { type: "boolean", path: "doc.compute.account_activated" });
 scalarFields.set("transactions.compute.exit_arg", { type: "number", path: "doc.compute.exit_arg" });
 scalarFields.set("transactions.compute.exit_code", { type: "number", path: "doc.compute.exit_code" });
