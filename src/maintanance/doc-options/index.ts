@@ -64,7 +64,7 @@ export function formatTable(table: unknown[][], options?: {
 const rows = [["Option", "ENV", "Default", "Description"]];
 for (const param of ConfigParam.getAll(configParams)) {
     rows.push([
-        `${param.option}${param.deprecated ? " (DEPRECATED)" : ""}`,
+        `--${param.option}${param.deprecated ? " (DEPRECATED)" : ""}`,
         param.env,
         `${param.defaultValueAsString()}`,
         param.description,
