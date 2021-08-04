@@ -75,7 +75,8 @@ import {
     StatsTiming,
 } from "../tracer";
 import {
-    QError, required,
+    QError,
+    required,
     wrap,
 } from "../utils";
 import EventEmitter from "events";
@@ -594,7 +595,7 @@ export class QDataCollection {
         isFast: boolean,
     ): Promise<QResult[]> {
         const provider = required(isFast ? this.provider : this.slowQueriesProvider);
-        return provider?.query(text, vars, orderBy) ?? [];
+        return provider.query(text, vars, orderBy);
     }
 
 

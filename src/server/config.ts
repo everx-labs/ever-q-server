@@ -21,6 +21,7 @@ import {
     ConfigValue,
     DeepPartial,
 } from "./config-param";
+import { QError } from "./utils";
 
 export type QConfig = {
     config: string,
@@ -66,20 +67,48 @@ export type QConfig = {
     endpoints: string[],
 };
 
+export type FilterConfig = {
+    orConversion: FilterOrConversion,
+};
+
+export type QBlockchainDataConfig = {
+    accounts: string[],
+    blocks: QHotColdDataConfig,
+    transactions: QHotColdDataConfig,
+};
+
+export type QHotColdDataConfig = {
+    hot: string[],
+    cache?: string,
+    cold: string[],
+};
+
+export type QDeprecatedDataConfig = {
+    mut?: string;
+    hot?: string;
+    cold?: string[];
+    cache?: string;
+    counterparties?: string;
+};
+
+export enum SlowQueriesMode {
+    ENABLE = "enable",
+    REDIRECT = "redirect",
+    DISABLE = "disable"
+}
+
+export enum RequestsMode {
+    KAFKA = "kafka",
+    REST = "rest",
+}
+
+export enum FilterOrConversion {
+    OR_OPERATOR = "or-operator",
+    SUB_QUERIES = "sub-queries",
+}
 
 export const configParams = {
     config: ConfigParam.string("config", "", "Path to JSON configuration file"),
-    filter: {
-        orConversion: ConfigParam.string(
-            "filter-or-conversion",
-            "sub-queries",
-            "Filter OR conversion:\n" +
-            "`or-operator` – q-server uses AQL with OR\n" +
-            "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
-            " and combines results (this option provides faster execution\n" +
-            " than OR operator in AQL)",
-        ),
-    },
     server: {
         host: ConfigParam.string("host", "{ip}", "Listening address"),
         port: ConfigParam.integer("port", 4000, "Listening port"),
@@ -95,6 +124,17 @@ export const configParams = {
         server: ConfigParam.string("requests-server", "kafka:9092", "Requests server url"),
         topic: ConfigParam.string("requests-topic", "requests", "Requests topic name"),
         maxSize: ConfigParam.integer("requests-max-size", 16383, "Maximum request message size in bytes"),
+    },
+    filter: {
+        orConversion: ConfigParam.string(
+            "filter-or-conversion",
+            "sub-queries",
+            "Filter OR conversion:\n" +
+            "`or-operator` – q-server uses AQL with OR\n" +
+            "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
+            " and combines results (this option provides faster execution\n" +
+            " than OR operator in AQL)",
+        ),
     },
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
@@ -172,46 +212,6 @@ export type QArangoConfig = {
 
 export type QMemCachedConfig = {
     server: string,
-};
-
-export type QHotColdDataConfig = {
-    hot: string[],
-    cache?: string,
-    cold: string[],
-};
-
-export type QBlockchainDataConfig = {
-    accounts: string[],
-    blocks: QHotColdDataConfig,
-    transactions: QHotColdDataConfig,
-};
-
-export type QDeprecatedDataConfig = {
-    mut?: string;
-    hot?: string;
-    cold?: string[];
-    cache?: string;
-    counterparties?: string;
-};
-
-export enum SlowQueriesMode {
-    ENABLE = "enable",
-    REDIRECT = "redirect",
-    DISABLE = "disable"
-}
-
-export enum RequestsMode {
-    KAFKA = "kafka",
-    REST = "rest",
-}
-
-export enum FilterOrConversion {
-    OR_OPERATOR = "or-operator",
-    SUB_QUERIES = "sub-queries",
-}
-
-export type FilterConfig = {
-    orConversion: FilterOrConversion,
 };
 
 const DEFAULT_LISTENER_RESTART_TIMEOUT = 1000;
@@ -320,17 +320,60 @@ function upgradeBlockchain(deprecated: QDeprecatedDataConfig): QBlockchainDataCo
     };
 }
 
+type ConfigParamSource = ConfigParam<ConfigValue> | Record<string, unknown>;
+
+function isSpecifiedAny(specified: ConfigParam<ConfigValue>[], ...params: ConfigParamSource[]): boolean {
+    for (const param of params) {
+        const isSpecified = param instanceof ConfigParam
+            ? specified.includes(param)
+            : isSpecifiedAny(specified, ...Object.values(param) as ConfigParamSource[]);
+        if (isSpecified) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function checkDataUpgradeRequired(
+    specified: ConfigParam<ConfigValue>[],
+    deprecated: ConfigParamSource,
+    ...data: ConfigParamSource[]
+): boolean {
+    const isDeprecatedSpecified = isSpecifiedAny(specified, deprecated);
+    const isSpecified = isSpecifiedAny(specified, ...data);
+    if (isSpecified && isDeprecatedSpecified) {
+        throw QError.invalidConfig("Invalid data config: data configuration mustn't be mixed with deprecated data configuration. Please choose one.");
+    }
+    return isDeprecatedSpecified;
+}
+
 export function resolveConfig(
     options: Record<string, ConfigValue>,
     json: DeepPartial<QConfig>,
     env: Record<string, string>,
 ): QConfig {
-    const config = ConfigParam.resolveConfig(options, json, env, configParams);
-    if (config.data) {
+    const {
+        config,
+        specified,
+    } = ConfigParam.resolveConfig(options, json, env, configParams);
+
+
+    const isDataUpgradeRequired = checkDataUpgradeRequired(
+        specified,
+        configParams.data,
+        configParams.blockchain,
+        configParams.counterparties,
+    );
+    if (config.data !== undefined && isDataUpgradeRequired) {
         config.blockchain = upgradeBlockchain(config.data);
         config.counterparties = upgradeDatabases(config.data.counterparties);
     }
-    if (config.slowQueriesData) {
+    const isSlowQueriesDataUpgradeRequired = checkDataUpgradeRequired(
+        specified,
+        configParams.slowQueriesData,
+        configParams.slowQueriesBlockchain,
+    );
+    if (config.slowQueriesData && isSlowQueriesDataUpgradeRequired) {
         config.slowQueriesBlockchain = upgradeBlockchain(config.slowQueriesData);
     }
     const slow = config.slowQueriesBlockchain;

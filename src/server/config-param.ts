@@ -1,4 +1,5 @@
 import os from "os";
+import { QError } from "./utils";
 
 function toPascal(s: string): string {
     return `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}`;
@@ -28,8 +29,14 @@ type ValueParser<T extends ConfigValue> = (s: string) => T | undefined;
 const parse = {
     boolean: (s: string): boolean | undefined => s.toLowerCase() === "true",
     integer(s: string): number | undefined {
-        const n = Number.parseInt(s);
-        return Number.isInteger(n) ? n : undefined;
+        if (s.trim() === "") {
+            return undefined;
+        }
+        const n = Number(s);
+        if (!Number.isInteger(n)) {
+            throw new Error(`Not valid integer: ${s}`);
+        }
+        return n;
     },
     string: (s: string): string | undefined => s,
     array: (s: string): string[] | undefined => splitNonEmpty(s),
@@ -198,9 +205,14 @@ export class ConfigParam<T extends ConfigValue> {
      * Returns undefined if value can't be converted.
      */
     parse(value: ConfigValue | undefined | null): ConfigValue | undefined {
-        return (value !== undefined && value !== null)
-            ? this.parser(value.toString().trim())
-            : undefined;
+        if (value === undefined || value === null) {
+            return undefined;
+        }
+        try {
+            return this.parser(value.toString().trim());
+        } catch (error) {
+            throw QError.invalidConfigValue(this.option, error.message ?? error.toString());
+        }
     }
 
     resolve(
@@ -208,10 +220,14 @@ export class ConfigParam<T extends ConfigValue> {
         options: Record<string, ConfigValue>,
         json: Record<string, unknown>,
         env: Record<string, string>,
+        specified?: ConfigParam<ConfigValue>[],
     ): unknown | undefined {
         let resolved: ConfigValue | undefined = this.parse(options[this.optionName])
             ?? ConfigParam.resolvePath(path, json)
             ?? this.parse(env[this.env]);
+        if (resolved !== undefined && specified !== undefined) {
+            specified.push(this);
+        }
         if (resolved === undefined && !this.deprecated) {
             resolved = this.defaultValue;
         }
@@ -226,13 +242,17 @@ export class ConfigParam<T extends ConfigValue> {
         json: DeepPartial<T>,
         env: Record<string, string>,
         params: Record<string, unknown>,
-    ): T {
+    ): {
+        config: T,
+        specified: ConfigParam<ConfigValue>[],
+    } {
+        const specified: ConfigParam<ConfigValue>[] = [];
         const resolve = (path: string[], params: Record<string, unknown>): Record<string, unknown> | undefined => {
             let resolved: Record<string, unknown> | undefined = undefined;
             for (const [name, param] of Object.entries(params)) {
                 const paramPath = [...path, name];
                 const value = param instanceof ConfigParam
-                    ? param.resolve(paramPath, options, json, env)
+                    ? param.resolve(paramPath, options, json, env, specified)
                     : resolve(paramPath, param as Record<string, unknown>);
                 if (value !== undefined) {
                     if (resolved === undefined) {
@@ -244,7 +264,10 @@ export class ConfigParam<T extends ConfigValue> {
             }
             return resolved;
         };
-        return resolve([], params) as T;
+        return {
+            config: resolve([], params) as T,
+            specified,
+        };
     }
 
     static getAll(params: Record<string, unknown>): ConfigParam<ConfigValue>[] {
@@ -293,5 +316,3 @@ function getIp(): string {
     }
     return "";
 }
-
-

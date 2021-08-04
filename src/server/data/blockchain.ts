@@ -173,13 +173,13 @@ export default class QBlockchainData extends QData {
         };
         this.debugLatency = 0;
 
-        this.blocks?.docInsertOrUpdate.on("doc", async (block) => {
+        this.blocks.docInsertOrUpdate.on("doc", async (block) => {
             this.updateLatency(this.latency.blocks, block.gen_utime);
         });
-        this.transactions?.docInsertOrUpdate.on("doc", async (tr) => {
+        this.transactions.docInsertOrUpdate.on("doc", async (tr) => {
             this.updateLatency(this.latency.transactions, tr.now);
         });
-        this.messages?.docInsertOrUpdate.on("doc", async (msg) => {
+        this.messages.docInsertOrUpdate.on("doc", async (msg) => {
             this.updateLatency(this.latency.messages, msg.created_at);
         });
 

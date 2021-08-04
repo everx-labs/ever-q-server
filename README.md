@@ -2,7 +2,8 @@
 
 TON GraphQL Server.
 
-This component is a part of TON-Server and must not be accessed directly but through TON Labs Client Libraries.
+This component is a part of TON-Server and must not be accessed directly but through TON Labs Client
+Libraries.
 
 ## Prerequisites
 
@@ -24,11 +25,6 @@ You can configure Q Server with command line parameters and/or ENV variables:
 Option                                    ENV                                Default           Description
 ----------------------------------------  ---------------------------------  ----------------  ----------------------------------------------------------------------
 config                                    Q_CONFIG                                             Path to JSON configuration file
-filter-or-conversion                      Q_FILTER_OR_CONVERSION             sub-queries       Filter OR conversion:
-                                                                                               `or-operator` – q-server uses AQL with OR
-                                                                                               `sub-queries` – q-server performs parallel queries for each OR operand
-                                                                                                and combines results (this option provides faster execution
-                                                                                                than OR operator in AQL)
 host                                      Q_HOST                             {ip}              Listening address
 port                                      Q_PORT                             4000              Listening port
 keep-alive                                Q_KEEP_ALIVE                       60000             GraphQL keep alive ms
@@ -38,6 +34,11 @@ requests-mode                             Q_REQUESTS_MODE                    kaf
 requests-server                           Q_REQUESTS_SERVER                  kafka:9092        Requests server url
 requests-topic                            Q_REQUESTS_TOPIC                   requests          Requests topic name
 requests-max-size                         Q_REQUESTS_MAX_SIZE                16383             Maximum request message size in bytes
+filter-or-conversion                      Q_FILTER_OR_CONVERSION             sub-queries       Filter OR conversion:
+                                                                                               `or-operator` – q-server uses AQL with OR
+                                                                                               `sub-queries` – q-server performs parallel queries for each OR operand
+                                                                                                and combines results (this option provides faster execution
+                                                                                                than OR operator in AQL)
 accounts                                  Q_ACCOUNTS                                           Accounts databases
 blocks-hot                                Q_BLOCKS_HOT                                         Blocks hot databases
 blocks-cache                              Q_BLOCKS_CACHE                                       Blocks cache server
@@ -81,6 +82,95 @@ is-tests                                  Q_IS_TESTS                         fal
 network-name                              Q_NETWORK_NAME                     cinet.tonlabs.io  Define the name of the network q-server is working with
 cache-key-prefix                          Q_CACHE_KEY_PREFIX                 Q_                Prefix string to identify q-server keys in data cache
 endpoints                                 Q_ENDPOINTS                                          Alternative endpoints of q-server (comma separated addresses)
+```
+
+If you use `config.json` file the specified file must have the following structure (in TypeScript
+notation):
+
+```ts
+type QConfig = {
+    config: string,
+    filter: FilterConfig,
+    server: {
+        host: string,
+        port: number,
+        keepAlive: number,
+    },
+    requests: {
+        mode: RequestsMode,
+        server: string,
+        topic: string,
+        maxSize: number,
+    },
+    blockchain: QBlockchainDataConfig,
+    counterparties: string[],
+    chainRangesVerification: string[],
+
+    slowQueries: SlowQueriesMode,
+    slowQueriesBlockchain?: QBlockchainDataConfig,
+
+    data?: QDeprecatedDataConfig,
+    slowQueriesData?: QDeprecatedDataConfig,
+
+    authorization: {
+        endpoint: string,
+    },
+    jaeger: {
+        endpoint: string,
+        service: string,
+        tags: Record<string, string>,
+    },
+    statsd: {
+        server: string,
+        tags: string[],
+        resetInterval: number,
+    },
+    mamAccessKeys: string[],
+    isTests: boolean,
+    networkName: string,
+    cacheKeyPrefix: string,
+    endpoints: string[],
+};
+
+type FilterConfig = {
+    orConversion: FilterOrConversion,
+};
+
+type QBlockchainDataConfig = {
+    accounts: string[],
+    blocks: QHotColdDataConfig,
+    transactions: QHotColdDataConfig,
+};
+
+type QHotColdDataConfig = {
+    hot: string[],
+    cache?: string,
+    cold: string[],
+};
+
+type QDeprecatedDataConfig = {
+    mut?: string;
+    hot?: string;
+    cold?: string[];
+    cache?: string;
+    counterparties?: string;
+};
+
+enum SlowQueriesMode {
+    ENABLE = "enable",
+    REDIRECT = "redirect",
+    DISABLE = "disable"
+}
+
+enum RequestsMode {
+    KAFKA = "kafka",
+    REST = "rest",
+}
+
+enum FilterOrConversion {
+    OR_OPERATOR = "or-operator",
+    SUB_QUERIES = "sub-queries",
+}
 ```
 
 Db config must be specified in form of URL:
@@ -198,7 +288,8 @@ filter: src:{eq},dst:{eq},value:{ne}
 orderBy: created_at DESC
 ```
 
-Next, collect fields from filter and order by into index (filter fields must be placed first in any order, then fields from `orderBy` in same order as in `orderBy`:
+Next, collect fields from filter and order by into index (filter fields must be placed first in any
+order, then fields from `orderBy` in same order as in `orderBy`:
 
 ```text
 collection: messages
@@ -219,9 +310,9 @@ npm run babel
 
 This will regenerate file in `dist` folder.
 
-**SECOND**. If you want to modify scheme of database, you must do it only in one place `db-schema.ts`.
-After that you need to generate source code for a graphql type definitions and for resolvers JavaScript code.
-You must do it with:
+**SECOND**. If you want to modify scheme of database, you must do it only in one
+place `db-schema.ts`. After that you need to generate source code for a graphql type definitions and
+for resolvers JavaScript code. You must do it with:
 
 ```bash
 npm run babel
@@ -252,6 +343,7 @@ $ npm run test
 ```
 
 ## Configuration
+
 You can change default behavior with env:
 
 ```bash
@@ -267,45 +359,45 @@ or/and via arg `--config <path to config>`
 
 ```json
 {
-    "endpoints": [],
-    "server": {
-        "host": "localhost",
-        "port": 4000,
-        "keepAlive": 60000
-    },
-    "requests": {
-        "mode": "rest",
-        "server": "kafka:9092",
-        "topic": "requests",
-        "maxSize": "16383"
-    },
-    "data": {
-        "mut": "",
-        "hot": "",
-        "cold": [],
-        "cache": "",
-        "counterparties": "",
-        "chainRangesVerification": ""
-    },
-    "slowQueries": {
-        "mode": "redirect",
-        "mut": "arangodb",
-        "hot": "arangodb",
-        "cold": [],
-        "cache": ""
-    },
-    "authEndpoint": "",
-    "mamAccessKeys": "",
-    "jaegerEndpoint": "",
-    "trace": {
-        "service": "",
-        "tags": []
-    },
-    "statsd": {
-        "server": "",
-        "tags": [],
-        "resetInterval": 0
-    }
+	"endpoints": [],
+	"server": {
+		"host": "localhost",
+		"port": 4000,
+		"keepAlive": 60000
+	},
+	"requests": {
+		"mode": "rest",
+		"server": "kafka:9092",
+		"topic": "requests",
+		"maxSize": "16383"
+	},
+	"data": {
+		"mut": "",
+		"hot": "",
+		"cold": [],
+		"cache": "",
+		"counterparties": "",
+		"chainRangesVerification": ""
+	},
+	"slowQueries": {
+		"mode": "redirect",
+		"mut": "arangodb",
+		"hot": "arangodb",
+		"cold": [],
+		"cache": ""
+	},
+	"authEndpoint": "",
+	"mamAccessKeys": "",
+	"jaegerEndpoint": "",
+	"trace": {
+		"service": "",
+		"tags": []
+	},
+	"statsd": {
+		"server": "",
+		"tags": [],
+		"resetInterval": 0
+	}
 }
 ```
 
