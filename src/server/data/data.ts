@@ -16,35 +16,39 @@
 
 import {
     QDataCollection,
-    QDataScope,
 } from "./collection";
-import { Auth } from "../auth";
-import { STATS } from "../config";
-import type { QLog } from "../logs";
+import {Auth} from "../auth";
+import {STATS} from "../config";
+import type {QLog} from "../logs";
 import QLogs from "../logs";
 import type {
     OrderBy,
     QType,
 } from "../filter/filters";
-import { Tracer } from "opentracing";
-import { StatsCounter } from "../tracer";
-import type { IStats } from "../tracer";
-import { wrap } from "../utils";
+import {Tracer} from "opentracing";
+import {StatsCounter} from "../tracer";
+import type {IStats} from "../tracer";
+import {wrap} from "../utils";
 import type {
     QDataProvider,
     QIndexInfo,
 } from "./data-provider";
 
+export type QBlockchainDataProvider = {
+    blocks?: QDataProvider,
+    transactions?: QDataProvider,
+    accounts?: QDataProvider,
+};
+
 export type QDataProviders = {
-    mutable: QDataProvider,
-    immutable: QDataProvider,
-    counterparties: QDataProvider,
-    chainRangesVerification: QDataProvider,
+    blockchain?: QBlockchainDataProvider,
+    counterparties?: QDataProvider,
+    chainRangesVerification?: QDataProvider,
 };
 
 export type QDataOptions = {
     providers: QDataProviders,
-    slowQueriesProviders?: QDataProviders,
+    slowQueriesProviders?: QBlockchainDataProvider,
 
     logs: QLogs,
     auth: Auth,
@@ -53,10 +57,20 @@ export type QDataOptions = {
     isTests: boolean,
 };
 
+function collectProviders(source: (QDataProvider | undefined)[]): QDataProvider[] {
+    const providers: QDataProvider[] = [];
+    for (const provider of source) {
+        if (provider !== undefined && !providers.includes(provider)) {
+            providers.push(provider);
+        }
+    }
+    return providers;
+}
+
 export default class QData {
     // Dependencies
     providers: QDataProviders;
-    slowQueriesProviders: QDataProviders;
+    slowQueriesProviders?: QBlockchainDataProvider;
     logs: QLogs;
     stats: IStats;
     auth: Auth;
@@ -68,12 +82,15 @@ export default class QData {
     statPostCount: StatsCounter;
     statPostFailed: StatsCounter;
 
+    dataProviders: QDataProvider[];
+    slowQueriesDataProviders: QDataProvider[];
+
     collections: QDataCollection[];
     collectionsByName: Map<string, QDataCollection>;
 
     constructor(options: QDataOptions) {
         this.providers = options.providers;
-        this.slowQueriesProviders = options.slowQueriesProviders || options.providers;
+        this.slowQueriesProviders = options.slowQueriesProviders;
         this.logs = options.logs;
         this.stats = options.stats;
         this.auth = options.auth;
@@ -87,16 +104,34 @@ export default class QData {
 
         this.collections = [];
         this.collectionsByName = new Map();
+
+        this.dataProviders = collectProviders([
+            this.providers.blockchain?.blocks,
+            this.providers.blockchain?.transactions,
+            this.providers.blockchain?.accounts,
+            this.providers.counterparties,
+        ]);
+
+        this.slowQueriesDataProviders = collectProviders([
+            this.slowQueriesProviders?.blocks,
+            this.slowQueriesProviders?.transactions,
+            this.slowQueriesProviders?.accounts,
+        ]);
     }
 
-    addCollection(name: string, docType: QType, scope: QDataScope, indexes: QIndexInfo[]) {
+    addCollection(
+        name: string,
+        docType: QType,
+        provider: QDataProvider | undefined,
+        slowQueriesProvider: QDataProvider | undefined,
+        indexes: QIndexInfo[],
+    ) {
         const collection = new QDataCollection({
             name,
             docType,
-            scope,
             indexes,
-            provider: this.providers[scope],
-            slowQueriesProvider: this.slowQueriesProviders[scope],
+            provider,
+            slowQueriesProvider,
             logs: this.logs,
             auth: this.auth,
             tracer: this.tracer,
@@ -109,26 +144,29 @@ export default class QData {
     }
 
     async start() {
-        for (const scope of Object.keys(QDataScope)) {
+        for (const provider of this.dataProviders) {
             const collectionsForSubscribe = this.collections
-                .filter(x => x.scope === scope)
+                .filter(x => x.provider === provider)
                 .map(x => x.name);
-            await this.providers[scope as keyof QDataProviders].start(collectionsForSubscribe);
-            await this.slowQueriesProviders[scope as keyof QDataProviders].start([]);
+            await provider.start(collectionsForSubscribe);
+            await provider.hotUpdate();
         }
-        await this.providers.immutable.hotUpdate();
+        for (const provider of this.slowQueriesDataProviders) {
+            await provider.start([]);
+        }
     }
 
     async stop() {
-        for (const scope of Object.keys(QDataScope)) {
-            await this.providers[scope as keyof QDataProviders].stop();
-            await this.slowQueriesProviders[scope as keyof QDataProviders].stop();
+        for (const provider of [...this.dataProviders, ...this.slowQueriesDataProviders]) {
+            await provider.stop();
         }
     }
 
     async dropCachedDbInfo() {
         this.collections.forEach((x: QDataCollection) => x.dropCachedDbInfo());
-        await this.providers.immutable.hotUpdate();
+        for (const provider of this.dataProviders) {
+            await provider.hotUpdate();
+        }
     }
 
     async query(provider: QDataProvider, text: string, vars: Record<string, unknown>, orderBy: OrderBy[]) {

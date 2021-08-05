@@ -76,18 +76,22 @@ test("Data Broker", async () => {
     ];
 
     const logs = new QLogs();
-    const server = new TONQServer({
-        config: testConfig,
-        logs: logs,
-        data: createTestData({
-            mutable: mut,
-            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(
+    const immut = new QDataCombiner([hot, new QDataPrecachedCombiner(
                 logs.create("cache"),
                 cache,
                 cold,
                 testConfig.networkName,
                 testConfig.cacheKeyPrefix,
-            )]),
+            )]);
+    const server = new TONQServer({
+        config: testConfig,
+        logs: logs,
+        data: createTestData({
+            blockchain: {
+                accounts: mut,
+                blocks: immut,
+                transactions: immut,
+            },
             counterparties: mut,
             chainRangesVerification: hot,
         }),
@@ -164,18 +168,22 @@ test("Limit of combined data", async () => {
     ];
 
     const logs = new QLogs();
-    const server = new TONQServer({
-        config: testConfig,
-        logs: logs,
-        data: createTestData({
-            mutable: mut,
-            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(
+    const immut = new QDataCombiner([hot, new QDataPrecachedCombiner(
                 logs.create("cache"),
                 cache,
                 cold,
                 testConfig.networkName,
                 testConfig.cacheKeyPrefix,
-            )]),
+            )]);
+    const server = new TONQServer({
+        config: testConfig,
+        logs: logs,
+        data: createTestData({
+            blockchain:{
+                accounts: mut,
+                blocks: immut,
+                transactions: immut,
+            },
             counterparties: mut,
             chainRangesVerification: hot,
         }),

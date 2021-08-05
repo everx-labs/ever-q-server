@@ -1,5 +1,4 @@
 import QBlockchainData from "../data/blockchain";
-import { requireGrantedAccess } from "../data/collection";
 import {
     bigUInt2,
     resolveBigUInt,
@@ -9,7 +8,8 @@ import {
     BigIntArgs,
 } from "../filter/filters";
 import { QTracer } from "../tracer";
-import type { GraphQLRequestContextEx } from "./context";
+import { QRequestContext } from "../request";
+import {required} from "../utils";
 
 //------------------------------------------------------------- Counterparties
 
@@ -39,10 +39,10 @@ export const Counterparty = struct({
     last_message_value: bigUInt2,
 }, true);
 
-async function counterparties(_parent: unknown, args: CounterpartiesArgs, context: GraphQLRequestContextEx): Promise<CounterpartiesResult[]> {
-    const tracer = context.tracer;
+async function counterparties(_parent: unknown, args: CounterpartiesArgs, context: QRequestContext): Promise<CounterpartiesResult[]> {
+    const tracer = context.services.tracer;
     return QTracer.trace(tracer, "counterparties", async () => {
-        await requireGrantedAccess(context, args);
+        await context.requireGrantedAccess(args);
         let text = "FOR doc IN counterparties FILTER doc.account == @account";
         const vars: Record<string, unknown> = {
             account: args.account,
@@ -59,8 +59,8 @@ async function counterparties(_parent: unknown, args: CounterpartiesArgs, contex
         }
         text += " SORT doc.last_message_at DESC, doc.counterparty DESC LIMIT @first RETURN doc";
 
-        const result = await context.data.query(
-            context.data.counterparties.provider,
+        const result = await context.services.data.query(
+            required(context.services.data.counterparties.provider),
             text,
             vars,
             [{

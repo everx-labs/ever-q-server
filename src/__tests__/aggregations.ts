@@ -14,11 +14,12 @@ import { FieldAggregation } from "@tonclient/core";
 import {
     CollectionFilter,
 } from "../server/filter/filters";
+import { required } from "../server/utils";
 
 test("Optimized MIN, MAX", () => {
     const data = createLocalArangoTestData(new QLogs());
 
-    expect(aggregationQueryText(data.blocks, [{
+    expect(aggregationQueryText(required(data.blocks), [{
         field: "seq_no",
         fn: AggregationFn.MIN,
     }])).toEqual(
@@ -38,8 +39,8 @@ test("Aggregations Fast Detector", async () => {
     const data = createLocalArangoTestData(new QLogs());
 
     const isFast = async (filter: CollectionFilter, fields: FieldAggregation[]) => {
-        const q = data.transactions.createAggregationQuery(filter, fields, granted);
-        return q !== null && data.transactions.isFastAggregationQuery(q.text, filter, q.queries);
+        const q = required(data.transactions).createAggregationQuery(filter, fields, granted);
+        return q !== null && required(data.transactions).isFastAggregationQuery(q.text, filter, q.queries);
     };
     expect(await isFast({}, [
         {

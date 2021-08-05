@@ -134,7 +134,7 @@ test("Filter test", () => {
 
 test("Enum Names", () => {
     const data = createLocalArangoTestData(new QLogs());
-    const resolvers = createResolvers(data);
+    const resolvers = createResolvers(data as any);
     const params = new QParams();
     const m1 = {
         msg_type: 1,

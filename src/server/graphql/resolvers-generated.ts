@@ -16,7 +16,7 @@ import {
     unixSecondsToString,
 } from "../filter/filters";
 import QBlockchainData from "../data/blockchain";
-import { GraphQLRequestContextEx } from "./context";
+import { QRequestContext } from "../request";
 const OtherCurrency = struct({
     currency: scalar,
     value: bigUInt2,
@@ -903,11 +903,11 @@ function createResolvers(data: QBlockchainData) {
             id(parent: { _key: string }) {
                 return parent._key;
             },
-            block(parent: { _key: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            block(parent: { _key: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !BlockSignatures.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.blocks.waitForDoc(parent._key, "_key", args, context);
+                return context.services.data.blocks.waitForDoc(parent._key, "_key", args, context);
             },
             sig_weight(parent: { sig_weight: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.sig_weight, args);
@@ -920,11 +920,11 @@ function createResolvers(data: QBlockchainData) {
             id(parent: { _key: string }) {
                 return parent._key;
             },
-            signatures(parent: { _key: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            signatures(parent: { _key: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Block.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.blocks_signatures.waitForDoc(parent._key, "_key", args, context);
+                return context.services.data.blocks_signatures.waitForDoc(parent._key, "_key", args, context);
             },
             end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
@@ -1016,29 +1016,29 @@ function createResolvers(data: QBlockchainData) {
             id(parent: { _key: string }) {
                 return parent._key;
             },
-            account(parent: { account_addr: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            account(parent: { account_addr: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.accounts.waitForDoc(parent.account_addr, "_key", args, context);
+                return context.services.data.accounts.waitForDoc(parent.account_addr, "_key", args, context);
             },
-            block(parent: { block_id: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            block(parent: { block_id: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
+                return context.services.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
             },
-            in_message(parent: { in_msg: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            in_message(parent: { in_msg: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.messages.waitForDoc(parent.in_msg, "_key", args, context);
+                return context.services.data.messages.waitForDoc(parent.in_msg, "_key", args, context);
             },
-            out_messages(parent: { out_msgs: string[] }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            out_messages(parent: { out_msgs: string[] }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.messages.waitForDocs(parent.out_msgs, "_key", args, context);
+                return context.services.data.messages.waitForDocs(parent.out_msgs, "_key", args, context);
             },
             balance_delta(parent: { balance_delta: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance_delta, args);
@@ -1064,47 +1064,47 @@ function createResolvers(data: QBlockchainData) {
             id(parent: { _key: string }) {
                 return parent._key;
             },
-            block(parent: { block_id: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            block(parent: { block_id: string }, args: JoinArgs, context: QRequestContext) {
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
+                return context.services.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
             },
-            dst_account(parent: { dst: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            dst_account(parent: { dst: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.msg_type !== 2)) {
                     return null;
                 }
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.accounts.waitForDoc(parent.dst, "_key", args, context);
+                return context.services.data.accounts.waitForDoc(parent.dst, "_key", args, context);
             },
-            dst_transaction(parent: { _key: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            dst_transaction(parent: { _key: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.msg_type !== 2)) {
                     return null;
                 }
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.transactions.waitForDoc(parent._key, "in_msg", args, context);
+                return context.services.data.transactions.waitForDoc(parent._key, "in_msg", args, context);
             },
-            src_account(parent: { src: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            src_account(parent: { src: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.msg_type !== 1)) {
                     return null;
                 }
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.accounts.waitForDoc(parent.src, "_key", args, context);
+                return context.services.data.accounts.waitForDoc(parent.src, "_key", args, context);
             },
-            src_transaction(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
+            src_transaction(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs, context: QRequestContext) {
                 if (!(parent.created_lt !== "00" && parent.msg_type !== 1)) {
                     return null;
                 }
                 if (args.when !== undefined && !Message.test(null, parent, args.when)) {
                     return null;
                 }
-                return context.data.transactions.waitForDoc(parent._key, "out_msgs[*]", args, context);
+                return context.services.data.transactions.waitForDoc(parent._key, "out_msgs[*]", args, context);
             },
             created_lt(parent: { created_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.created_lt, args);

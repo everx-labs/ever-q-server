@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
+  Old data configurations are deprecated now but supported yet. For details see README.
 - support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
 
 ## [0.42.0] 2021-07-15

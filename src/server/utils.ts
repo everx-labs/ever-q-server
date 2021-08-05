@@ -32,6 +32,7 @@ enum QErrorCode {
     AUTH_SERVICE_UNAVAILABLE = 10004,
     AUTH_FAILED = 10005,
     QUERY_TERMINATED_ON_TIMEOUT = 10006,
+    INVALID_CONFIG = 10007,
 }
 
 export class QError extends Error {
@@ -87,9 +88,25 @@ export class QError extends Error {
             { authErrorCode: error.code },
         );
     }
+
+    static internalServerError() {
+        return QError.create(500, "Internal Server Error");
+    }
+
+    static serviceUnavailable() {
+        return QError.create(503, "Service Unavailable");
+    }
+
+    static invalidConfigValue(option: string, message: string) {
+        return QError.create(QErrorCode.INVALID_CONFIG, `Invalid ${option}: ${message}`);
+    }
+
+    static invalidConfig(message: string) {
+        return QError.create(QErrorCode.INVALID_CONFIG, message);
+    }
 }
 
-function isInternalServerError(error: Error & {
+export function isSystemError(error: Error & {
     type?: string,
     errno?: unknown,
     syscall?: unknown,
@@ -105,11 +122,19 @@ export async function wrap<R>(log: QLog, op: string, args: unknown, fetch: () =>
         return await fetch();
     } catch (err) {
         let cleaned = cleanError(err);
-        log.error("FAILED", op, args, cleaned);
-        if (isInternalServerError(cleaned)) {
-            cleaned = QError.create(500, "Service temporary unavailable");
+        log.error(`${op}_FAILED`, args, err);
+        if (isSystemError(err)) {
+            cleaned = QError.internalServerError();
         }
         throw cleaned;
+    }
+}
+
+export function toJSON(value: unknown): string {
+    try {
+        return JSON.stringify(toLog(value));
+    } catch (error) {
+        return JSON.stringify(`${value}`);
     }
 }
 
@@ -191,5 +216,12 @@ export function cloneDeep(source: Record<string, unknown> | undefined): Record<s
     }
     return clone;
 
+}
+
+export function required<T>(value: T | undefined): T {
+    if (value !== undefined) {
+        return value;
+    }
+    throw QError.serviceUnavailable();
 }
 

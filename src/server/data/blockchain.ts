@@ -19,7 +19,6 @@ import type { QDataOptions } from "./data";
 import QData from "./data";
 import {
     QDataCollection,
-    QDataScope,
 } from "./collection";
 import {
     Account,
@@ -30,10 +29,12 @@ import {
     Zerostate,
 } from "../graphql/resolvers-generated";
 import {
+    QDataProvider,
     QIndexInfo,
     sortedIndex,
 } from "./data-provider";
 import { QType } from "../filter/filters";
+import { required } from "../utils";
 
 export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
     blocks: {
@@ -112,17 +113,21 @@ export type Latency = {
     lastBlockTime: number,
 };
 
+type ChainRangesVerificationSummary = {
+    reliable_chain_order_upper_boundary?: string,
+};
+
 export type ReliableChainOrderUpperBoundary = {
     boundary: string,
     lastCheckTime: number,
 };
 
 export default class QBlockchainData extends QData {
-    transactions: QDataCollection;
-    messages: QDataCollection;
     accounts: QDataCollection;
     blocks: QDataCollection;
     blocks_signatures: QDataCollection;
+    transactions: QDataCollection;
+    messages: QDataCollection;
     zerostates: QDataCollection;
     counterparties: QDataCollection;
 
@@ -133,16 +138,18 @@ export default class QBlockchainData extends QData {
 
     constructor(options: QDataOptions) {
         super(options);
-        const add = (name: string, type: QType, scope: QDataScope) => {
-            return this.addCollection(name, type, scope, INDEXES[name].indexes);
+        const fast = options.providers.blockchain;
+        const slow = options.slowQueriesProviders;
+        const add = (name: string, type: QType, provider?: QDataProvider, slowQueriesProvider?: QDataProvider) => {
+            return this.addCollection(name, type, provider, slowQueriesProvider, INDEXES[name].indexes);
         };
-        this.accounts = add("accounts", Account, QDataScope.mutable);
-        this.transactions = add("transactions", Transaction, QDataScope.immutable);
-        this.messages = add("messages", Message, QDataScope.immutable);
-        this.blocks = add("blocks", Block, QDataScope.immutable);
-        this.blocks_signatures = add("blocks_signatures", BlockSignatures, QDataScope.immutable);
-        this.zerostates = add("zerostates", Zerostate, QDataScope.mutable);
-        this.counterparties = add("counterparties", Counterparty, QDataScope.counterparties);
+        this.accounts = add("accounts", Account, fast?.accounts, slow?.accounts);
+        this.blocks = add("blocks", Block, fast?.blocks, slow?.blocks);
+        this.blocks_signatures = add("blocks_signatures", BlockSignatures, fast?.blocks, slow?.blocks);
+        this.transactions = add("transactions", Transaction, fast?.transactions, slow?.transactions);
+        this.messages = add("messages", Message, fast?.transactions, slow?.transactions);
+        this.zerostates = add("zerostates", Zerostate, fast?.blocks, slow?.blocks);
+        this.counterparties = add("counterparties", Counterparty, options.providers.counterparties);
 
         this.latency = {
             blocks: {
@@ -224,7 +231,7 @@ export default class QBlockchainData extends QData {
     }
 
     async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string): Promise<boolean> {
-        if (Date.now() <= latency.nextUpdateTime) {
+        if (collection.provider === undefined || Date.now() <= latency.nextUpdateTime) {
             return false;
         }
         const result = (await collection.provider.query(
@@ -263,15 +270,15 @@ export default class QBlockchainData extends QData {
     async getReliableChainOrderUpperBoundary(): Promise<ReliableChainOrderUpperBoundary> {
         const now = Date.now();
         if (now > this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
-            const result = await this.providers.chainRangesVerification.query(
-                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, []
-            );
+            const result = await required(this.providers.chainRangesVerification).query(
+                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, [],
+            ) as ChainRangesVerificationSummary[];
             if (result.length != 1) {
                 throw new Error("Couldn't get chain_ranges_verification summary");
             }
-            const summary = result?.[0] as Record<string, unknown> | undefined | null;
+            const summary = result[0];
             this.reliableChainOrderUpperBoundary = {
-                boundary: (summary?.["reliabe_chain_order_upper_boundary"] ?? "") as string,
+                boundary: summary.reliable_chain_order_upper_boundary ?? "",
                 lastCheckTime: now,
             };
         }

@@ -2,7 +2,8 @@
 
 TON GraphQL Server.
 
-This component is a part of TON-Server and must not be accessed directly but through TON Labs Client Libraries.
+This component is a part of TON-Server and must not be accessed directly but through TON Labs Client
+Libraries.
 
 ## Prerequisites
 
@@ -21,40 +22,155 @@ npm install
 You can configure Q Server with command line parameters and/or ENV variables:
 
 ```text
-    Option                         ENV                      Default        Description
-    -----------------------------  -----------------------  -------------  ---------------------------------------------------------
-    --endpoints <array>            Q_ENDPOINTS                             Alternative endpoints of q-server (comma separated addresses)
-    --host <address>               Q_HOST                   192.168.1.137  Listening address
-    --port <number>                Q_PORT                   4000           Listening port
-    --keep-alive <number>          Q_KEEP_ALIVE             60000          GraphQL keep alive ms
-    --config <path>                Q_CONFIG                                JSON config file
-    --requests-mode <string>       Q_REQUESTS_MODE          kafka          Requests mode (kafka | rest)
-    --requests-server <address>    Q_REQUESTS_SERVER        kafka:9092     Requests server url
-    --requests-topic <string>      Q_REQUESTS_TOPIC         requests       Requests topic name
-    --requests-max-size <number>   Q_REQUESTS_MAX_SIZE      16383          Maximum request message size in bytes
-    --data-mut <url>               Q_DATA_MUT               arangodb       Data mutable db config url
-    --data-hot <url>               Q_DATA_HOT               arangodb       Data hot db config url
-    --data-cold <array>            Q_DATA_COLD                             Data cold db config urls (comma separated)
-    --data-cache <url>             Q_DATA_CACHE                            Data cache config url
-    --data-counterparties <url>    Q_DATA_COUNTERPARTIES    <mut>          Data counterparties db config url
-    --data-chain-ranges-verification <url>    Q_DATA_CHAIN_RANGES_VERIFICATION    <hot>    Data chain ranges verification db config url
-    --slow-queries <mode>          Q_SLOW_QUERIES           redirect       Slow queries handling:
-                                                                           `enable` – process slow queries on the main database
-                                                                           `redirect` – redirect slow queries to slow-queries database
-                                                                           `disable` – fail on slow queries
-    --slow-queries-mut <url>       Q_SLOW_QUERIES_MUT       arangodb       Slow queries mutable db config url
-    --slow-queries-hot <url>       Q_SLOW_QUERIES_HOT       arangodb       Slow queries hot db config url
-    --slow-queries-cold <array>    Q_SLOW_QUERIES_COLD                     Slow queries cold db config urls (comma separated)
-    --slow-queries-cache <url>     Q_SLOW_QUERIES_CACHE                    Slow queries cache config url
-    --auth-endpoint <url>          Q_AUTH_ENDPOINT                         Auth endpoint
-    --mam-access-keys <string>     Q_MAM_ACCESS_KEYS                       Access keys used to authorize mam endpoint access
-    --jaeger-endpoint <url>        Q_JAEGER_ENDPOINT                       Jaeger endpoint
-    --trace-service <string>       Q_TRACE_SERVICE          Q Server       Trace service name
-    --trace-tags <array>           Q_TRACE_TAGS                            Additional trace tags (comma separated name=value pairs)
-    --statsd-server <address>      Q_STATSD_SERVER                         StatsD server (host:port)
-    --statsd-tags <array>          Q_STATSD_TAGS                           Additional StatsD tags (comma separated name=value pairs)
-    --statsd-reset-interval <ms>   Q_STATSD_RESET_INTERVAL  0              Interval between statsd reconnects. If it is zero – no reconnects.
-    --filter-or-conversion <mode>  Q_FILTER_OR_CONVERSION   sub-queries    Filter OR conversion (or-operator | sub-queries)
+Option                                      ENV                                Default           Description
+------------------------------------------  ---------------------------------  ----------------  ----------------------------------------------------------------------
+--config                                    Q_CONFIG                                             Path to JSON configuration file
+--host                                      Q_HOST                             {ip}              Listening address
+--port                                      Q_PORT                             4000              Listening port
+--keep-alive                                Q_KEEP_ALIVE                       60000             GraphQL keep alive ms
+--requests-mode                             Q_REQUESTS_MODE                    kafka             Requests mode:
+                                                                                                 `kafka` – writes external messages to kafka topic
+                                                                                                 `rest` – posts external messages to REST endpoint
+--requests-server                           Q_REQUESTS_SERVER                  kafka:9092        Requests server url
+--requests-topic                            Q_REQUESTS_TOPIC                   requests          Requests topic name
+--requests-max-size                         Q_REQUESTS_MAX_SIZE                16383             Maximum request message size in bytes
+--filter-or-conversion                      Q_FILTER_OR_CONVERSION             sub-queries       Filter OR conversion:
+                                                                                                 `or-operator` – q-server uses AQL with OR
+                                                                                                 `sub-queries` – q-server performs parallel queries for each OR operand
+                                                                                                  and combines results (this option provides faster execution
+                                                                                                  than OR operator in AQL)
+--accounts                                  Q_ACCOUNTS                                           Accounts databases
+--blocks-hot                                Q_BLOCKS_HOT                                         Blocks hot databases
+--blocks-cache                              Q_BLOCKS_CACHE                                       Blocks cache server
+--blocks-cold                               Q_BLOCKS_COLD                                        Blocks cold databases
+--transactions-hot                          Q_TRANSACTIONS_HOT                                   Transactions hot databases
+--transactions-cache                        Q_TRANSACTIONS_CACHE                                 Transactions cache server
+--transactions-cold                         Q_TRANSACTIONS_COLD                                  Transactions cold databases
+--counterparties                            Q_COUNTERPARTIES                                     Counterparties databases
+--chain-ranges-verification                 Q_CHAIN_RANGES_VERIFICATION                          Chain ranges verification databases
+--slow-queries                              Q_SLOW_QUERIES                     redirect          Slow queries handling:
+                                                                                                 `enable` – process slow queries on the main database
+                                                                                                 `redirect` – redirect slow queries to slow-queries database
+                                                                                                 `disable` – fail on slow queries
+--slow-queries-accounts                     Q_SLOW_QUERIES_ACCOUNTS                              Slow queries accounts databases
+--slow-queries-blocks-hot                   Q_SLOW_QUERIES_BLOCKS_HOT                            Slow queries blocks hot databases
+--slow-queries-blocks-cache                 Q_SLOW_QUERIES_BLOCKS_CACHE                          Slow queries blocks cache server
+--slow-queries-blocks-cold                  Q_SLOW_QUERIES_BLOCKS_COLD                           Slow queries blocks cold databases
+--slow-queries-transactions-hot             Q_SLOW_QUERIES_TRANSACTIONS_HOT                      Slow queries transactions hot databases
+--slow-queries-transactions-cache           Q_SLOW_QUERIES_TRANSACTIONS_CACHE                    Slow queries transactions cache server
+--slow-queries-transactions-cold            Q_SLOW_QUERIES_TRANSACTIONS_COLD                     Slow queries transactions cold databases
+--data-mut (DEPRECATED)                     Q_DATA_MUT                         arangodb          Data mutable db config url
+--data-hot (DEPRECATED)                     Q_DATA_HOT                         arangodb          Data hot db config url
+--data-cold (DEPRECATED)                    Q_DATA_COLD                                          Data cold db config urls (comma separated)
+--data-cache (DEPRECATED)                   Q_DATA_CACHE                                         Data cache config url
+--data-counterparties (DEPRECATED)          Q_DATA_COUNTERPARTIES                                Data counterparties db config url
+--slow-queries-mut (DEPRECATED)             Q_SLOW_QUERIES_MUT                 arangodb          Slow-queries mutable db config url
+--slow-queries-hot (DEPRECATED)             Q_SLOW_QUERIES_HOT                 arangodb          Slow-queries hot db config url
+--slow-queries-cold (DEPRECATED)            Q_SLOW_QUERIES_COLD                                  Slow-queries cold db config urls (comma separated)
+--slow-queries-cache (DEPRECATED)           Q_SLOW_QUERIES_CACHE                                 Slow-queries cache config url
+--slow-queries-counterparties (DEPRECATED)  Q_SLOW_QUERIES_COUNTERPARTIES                        Slow-queries counterparties db config url
+--auth-endpoint                             Q_AUTH_ENDPOINT                                      Auth endpoint
+--jaeger-endpoint                           Q_JAEGER_ENDPOINT                                    Jaeger endpoint
+--trace-service                             Q_TRACE_SERVICE                    Q Server          Trace service name
+--trace-tags                                Q_TRACE_TAGS                                         Additional trace tags (comma separated name=value pairs)
+--statsd-server                             Q_STATSD_SERVER                                      StatsD server (host:port)
+--statsd-tags                               Q_STATSD_TAGS                                        Additional StatsD tags (comma separated name=value pairs)
+--statsd-reset-interval                     Q_STATSD_RESET_INTERVAL            0                 Interval between statsd reconnects.
+                                                                                                 If it is zero – no reconnects.
+--mam-access-keys                           Q_MAM_ACCESS_KEYS                                    Access keys used to authorize mam endpoint access
+--is-tests                                  Q_IS_TESTS                         false             Determines that q-server runs in unit tests mode.
+--network-name                              Q_NETWORK_NAME                     cinet.tonlabs.io  Define the name of the network q-server is working with
+--cache-key-prefix                          Q_CACHE_KEY_PREFIX                 Q_                Prefix string to identify q-server keys in data cache
+--endpoints                                 Q_ENDPOINTS                                          Alternative endpoints of q-server (comma separated addresses)
+```
+
+If you use `config.json` file the specified file must have the following structure (in TypeScript
+notation):
+
+```ts
+type QConfig = {
+    config: string,
+    filter: FilterConfig,
+    server: {
+        host: string,
+        port: number,
+        keepAlive: number,
+    },
+    requests: {
+        mode: RequestsMode,
+        server: string,
+        topic: string,
+        maxSize: number,
+    },
+    blockchain: QBlockchainDataConfig,
+    counterparties: string[],
+    chainRangesVerification: string[],
+
+    slowQueries: SlowQueriesMode,
+    slowQueriesBlockchain?: QBlockchainDataConfig,
+
+    data?: QDeprecatedDataConfig,
+    slowQueriesData?: QDeprecatedDataConfig,
+
+    authorization: {
+        endpoint: string,
+    },
+    jaeger: {
+        endpoint: string,
+        service: string,
+        tags: Record<string, string>,
+    },
+    statsd: {
+        server: string,
+        tags: string[],
+        resetInterval: number,
+    },
+    mamAccessKeys: string[],
+    isTests: boolean,
+    networkName: string,
+    cacheKeyPrefix: string,
+    endpoints: string[],
+};
+
+type FilterConfig = {
+    orConversion: FilterOrConversion,
+};
+
+type QBlockchainDataConfig = {
+    accounts: string[],
+    blocks: QHotColdDataConfig,
+    transactions: QHotColdDataConfig,
+};
+
+type QHotColdDataConfig = {
+    hot: string[],
+    cache?: string,
+    cold: string[],
+};
+
+type QDeprecatedDataConfig = {
+    mut?: string;
+    hot?: string;
+    cold?: string[];
+    cache?: string;
+    counterparties?: string;
+};
+
+enum SlowQueriesMode {
+    ENABLE = "enable",
+    REDIRECT = "redirect",
+    DISABLE = "disable"
+}
+
+enum RequestsMode {
+    KAFKA = "kafka",
+    REST = "rest",
+}
+
+enum FilterOrConversion {
+    OR_OPERATOR = "or-operator",
+    SUB_QUERIES = "sub-queries",
+}
 ```
 
 Db config must be specified in form of URL:
@@ -172,7 +288,8 @@ filter: src:{eq},dst:{eq},value:{ne}
 orderBy: created_at DESC
 ```
 
-Next, collect fields from filter and order by into index (filter fields must be placed first in any order, then fields from `orderBy` in same order as in `orderBy`:
+Next, collect fields from filter and order by into index (filter fields must be placed first in any
+order, then fields from `orderBy` in same order as in `orderBy`:
 
 ```text
 collection: messages
@@ -193,9 +310,9 @@ npm run babel
 
 This will regenerate file in `dist` folder.
 
-**SECOND**. If you want to modify scheme of database, you must do it only in one place `db-schema.ts`.
-After that you need to generate source code for a graphql type definitions and for resolvers JavaScript code.
-You must do it with:
+**SECOND**. If you want to modify scheme of database, you must do it only in one
+place `db-schema.ts`. After that you need to generate source code for a graphql type definitions and
+for resolvers JavaScript code. You must do it with:
 
 ```bash
 npm run babel
@@ -226,6 +343,7 @@ $ npm run test
 ```
 
 ## Configuration
+
 You can change default behavior with env:
 
 ```bash
@@ -241,45 +359,45 @@ or/and via arg `--config <path to config>`
 
 ```json
 {
-    "endpoints": [],
-    "server": {
-        "host": "localhost",
-        "port": 4000,
-        "keepAlive": 60000
-    },
-    "requests": {
-        "mode": "rest",
-        "server": "kafka:9092",
-        "topic": "requests",
-        "maxSize": "16383"
-    },
-    "data": {
-        "mut": "",
-        "hot": "",
-        "cold": [],
-        "cache": "",
-        "counterparties": "",
-        "chainRangesVerification": ""
-    },
-    "slowQueries": {
-        "mode": "redirect",
-        "mut": "arangodb",
-        "hot": "arangodb",
-        "cold": [],
-        "cache": ""
-    },
-    "authEndpoint": "",
-    "mamAccessKeys": "",
-    "jaegerEndpoint": "",
-    "trace": {
-        "service": "",
-        "tags": []
-    },
-    "statsd": {
-        "server": "",
-        "tags": [],
-        "resetInterval": 0
-    }
+	"endpoints": [],
+	"server": {
+		"host": "localhost",
+		"port": 4000,
+		"keepAlive": 60000
+	},
+	"requests": {
+		"mode": "rest",
+		"server": "kafka:9092",
+		"topic": "requests",
+		"maxSize": "16383"
+	},
+	"data": {
+		"mut": "",
+		"hot": "",
+		"cold": [],
+		"cache": "",
+		"counterparties": "",
+		"chainRangesVerification": ""
+	},
+	"slowQueries": {
+		"mode": "redirect",
+		"mut": "arangodb",
+		"hot": "arangodb",
+		"cold": [],
+		"cache": ""
+	},
+	"authEndpoint": "",
+	"mamAccessKeys": "",
+	"jaegerEndpoint": "",
+	"trace": {
+		"service": "",
+		"tags": []
+	},
+	"statsd": {
+		"server": "",
+		"tags": [],
+		"resetInterval": 0
+	}
 }
 ```
 

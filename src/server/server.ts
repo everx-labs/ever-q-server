@@ -29,20 +29,22 @@ import {
 import { ConnectionContext } from "subscriptions-transport-ws";
 import { ArangoProvider } from "./data/arango-provider";
 import QBlockchainData from "./data/blockchain";
-import type { QDataProviders } from "./data/data";
+import type {
+    QBlockchainDataProvider,
+    QDataProviders,
+} from "./data/data";
 import {
-    RequestController,
-    RequestEvent,
-} from "./data/collection";
-import type { GraphQLRequestContext } from "./data/collection";
-import { STATS } from "./config";
+    parseArangoConfig,
+    QBlockchainDataConfig,
+    QHotColdDataConfig,
+    STATS,
+} from "./config";
 import {
-    missingDataCache,
     QDataCombiner,
     QDataPrecachedCombiner,
+    QDataProvider,
 } from "./data/data-provider";
 import {
-    isCacheEnabled,
     MemjsDataCache,
 } from "./data/memjs-datacache";
 import { aggregatesResolvers } from "./graphql/aggregates";
@@ -56,9 +58,7 @@ import { accessResolvers } from "./graphql/access";
 import { mam } from "./graphql/mam";
 
 import type {
-    QArangoConfig,
     QConfig,
-    QDataProvidersConfig,
 } from "./config";
 import { totalsResolvers } from "./graphql/totals";
 import QLogs from "./logs";
@@ -72,7 +72,6 @@ import {
 import { Tracer } from "opentracing";
 import {
     Auth,
-    RequestWithAccessHeaders,
 } from "./auth";
 import {
     assignDeep,
@@ -81,8 +80,14 @@ import {
     QError,
 } from "./utils";
 import WebSocket from "ws";
+import { MemStats } from "./mem-stat";
+import {
+    QRequestContext,
+    QRequestServices,
+    RequestEvent,
+} from "./request";
 
-type QOptions = {
+type QServerOptions = {
     config: QConfig,
     logs: QLogs,
     data?: QBlockchainData,
@@ -95,78 +100,94 @@ type EndPoint = {
     supportSubscriptions: boolean,
 };
 
-import v8 from "v8";
+export class DataProviderFactory {
+    providers = new Map<string, QDataProvider>();
 
-class MemStats {
-    stats: IStats;
-
-    constructor(stats: IStats) {
-        this.stats = stats;
+    constructor(public config: QConfig, public logs: QLogs) {
     }
 
-    report() {
-        v8.getHeapSpaceStatistics().forEach((space: { space_name: string; physical_space_size: number; space_available_size: number; space_size: number; space_used_size: number; }) => {
-            const spaceName = space.space_name
-                .replace("space_", "")
-                .replace("_space", "");
-            const gauge = (metric: string, value: number) => {
-                this.stats.gauge(`heap.space.${spaceName}.${metric}`, value, []).then(() => {
-                });
+    ensure(): QDataProviders {
+        return {
+            blockchain: this.ensureBlockchain(this.config.blockchain, "blockchain"),
+            counterparties: this.ensureDatabases(this.config.counterparties, "counterparties"),
+            chainRangesVerification: this.ensureDatabases(this.config.chainRangesVerification, "chainRangesVerification"),
+        };
+    }
+
+    ensureBlockchain(config: QBlockchainDataConfig | undefined, logKey: string): QBlockchainDataProvider | undefined {
+        return config === undefined
+            ? undefined
+            : {
+                accounts: this.ensureDatabases(config.accounts, `${logKey}_accounts`),
+                blocks: this.ensureHotCold(config.blocks, `${logKey}_blocks`),
+                transactions: this.ensureHotCold(config.transactions, `${logKey}_transactions`),
             };
-            gauge("physical_size", space.physical_space_size);
-            gauge("available_size", space.space_available_size);
-            gauge("size", space.space_size);
-            gauge("used_size", space.space_used_size);
+    }
+
+    ensureHotCold(config: QHotColdDataConfig, logKey: string): QDataProvider | undefined {
+        return this.ensureProvider(config, () => {
+            const hot = this.ensureDatabases(config.hot, `${logKey}_hot`);
+            let cold = this.ensureDatabases(config.cold, `${logKey}_cold`);
+            const cacheConfig = (config.cache ?? "").trim();
+            if (cold !== undefined && cacheConfig !== "") {
+                cold = new QDataPrecachedCombiner(
+                    this.logs.create(logKey),
+                    new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
+                    [cold],
+                    this.config.networkName,
+                    this.config.cacheKeyPrefix,
+                );
+            }
+            if (hot !== undefined && cold !== undefined) {
+                return new QDataCombiner([hot, cold]);
+            }
+            return hot ?? cold;
         });
     }
 
-    start() {
-        //TODO: this.checkMemReport();
-        //TODO: this.checkGc();
+    ensureDatabases(config: string[], logKey: string): QDataProvider | undefined {
+        return this.ensureProvider(config, () => {
+            const providers: QDataProvider[] = [];
+            config.forEach((x, i) => {
+                const provider = this.ensureDatabase(x, `${logKey}_${i}`);
+                if (provider !== undefined && !providers.includes(provider)) {
+                    providers.push(provider);
+                }
+            });
+            if (providers.length === 0) {
+                return undefined;
+            }
+            return providers.length === 1 ? providers[0] : new QDataCombiner(providers);
+        });
     }
 
-    checkMemReport() {
-        setTimeout(() => {
-            this.report();
-            this.checkMemReport();
-        }, 5000);
+    ensureDatabase(config: string, logKey: string): QDataProvider | undefined {
+        return this.ensureProvider(config, () => {
+            return config.trim() !== ""
+                ? new ArangoProvider(this.logs.create(logKey), parseArangoConfig(config))
+                : undefined;
+        });
     }
 
-    checkGc() {
-        setTimeout(() => {
-            global.gc();
-            this.checkGc();
-        }, 60000);
+
+    ensureProvider(config: unknown, factory: () => QDataProvider | undefined): QDataProvider | undefined {
+        const providerKey = JSON.stringify(config);
+        const existing = this.providers.get(providerKey);
+        if (existing !== undefined) {
+            return existing;
+        }
+        const provider = factory();
+        if (provider !== undefined) {
+            this.providers.set(providerKey, provider);
+        }
+        return provider;
     }
+
 }
 
-export function createProviders(configName: string, logs: QLogs, config: QDataProvidersConfig, networkName: string, cacheKeyPrefix: string): QDataProviders {
-    const newArangoProvider = (dbName: string, config: QArangoConfig): ArangoProvider => (
-        new ArangoProvider(logs.create(`${configName}_${dbName}`), config)
-    );
-    const mutable = newArangoProvider("mut", config.mut);
-    const hot = newArangoProvider("hot", config.hot);
-    const cacheLog = logs.create(`${configName}_cache`);
-    const cold = new QDataPrecachedCombiner(
-        cacheLog,
-        isCacheEnabled(config.cache) ? new MemjsDataCache(cacheLog, config.cache) : missingDataCache,
-        config.cold.map(x => newArangoProvider("cold", x)),
-        networkName,
-        cacheKeyPrefix,
-    );
-    const immutable = new QDataCombiner([hot, cold]);
-    const counterparties = newArangoProvider("counterparties", config.counterparties);
-    const chainRangesVerification = newArangoProvider("chainRangesVerification", config.chainRangesVerification);
-    return {
-        mutable,
-        immutable,
-        counterparties,
-        chainRangesVerification,
-    };
-}
 
 type QConnectionContext = ConnectionContext & {
-    activeRequests?: RequestController[],
+    activeRequests?: QRequestContext[],
 };
 
 type QConnectionParams = {
@@ -188,9 +209,10 @@ export default class TONQServer {
     auth: Auth;
     memStats: MemStats;
     shared: Map<string, unknown>;
+    requestServices: QRequestServices;
 
 
-    constructor(options: QOptions) {
+    constructor(options: QServerOptions) {
         TonClient.useBinaryLibrary(libNode);
         this.client = new TonClient();
         this.config = options.config;
@@ -207,24 +229,35 @@ export default class TONQServer {
         this.endPoints = [];
         this.app = express();
         this.server = http.createServer(this.app);
+        const providers = new DataProviderFactory(this.config, this.logs);
         this.data = options.data || new QBlockchainData({
             logs: this.logs,
             auth: this.auth,
             tracer: this.tracer,
             stats: this.stats,
-            providers: createProviders("fast", this.logs, this.config.data, this.config.networkName, this.config.cacheKeyPrefix),
-            slowQueriesProviders: createProviders("slow", this.logs, this.config.slowQueriesData, this.config.networkName, this.config.cacheKeyPrefix),
+            providers: providers.ensure(),
+            slowQueriesProviders: providers.ensureBlockchain(this.config.slowQueriesBlockchain, "slow"),
             isTests: false,
         });
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
+        this.requestServices = new QRequestServices(
+            this.config,
+            this.auth,
+            this.tracer,
+            this.stats,
+            this.client,
+            this.shared,
+            this.logs,
+            this.data,
+        );
         this.addEndPoint({
             path: "/graphql/mam",
             resolvers: mam,
             typeDefFileNames: ["type-defs-mam.graphql"],
             supportSubscriptions: false,
         });
-        const resolvers = createResolvers(this.data) as IResolvers;
+        const resolvers = createResolvers(this.data as any) as IResolvers;
         [
             infoResolvers,
             totalsResolvers,
@@ -297,7 +330,7 @@ export default class TONQServer {
                     }
                 },
                 onConnect(connectionParams: QConnectionParams, _webSocket: WebSocket, context: QConnectionContext): Record<string, unknown> {
-                    const activeRequests: RequestController[] = [];
+                    const activeRequests: QRequestContext[] = [];
                     context.activeRequests = activeRequests;
                     return {
                         activeRequests,
@@ -309,10 +342,7 @@ export default class TONQServer {
                           req,
                           connection,
                       }) => {
-                const request = new RequestController();
-                req?.on?.("close", () => {
-                    request.emitClose();
-                });
+                const request = new QRequestContext(this.requestServices, req, connection);
                 if (connection?.context !== undefined) {
                     if (!connection.context.activeRequests) {
                         connection.context.activeRequests = [];
@@ -326,28 +356,14 @@ export default class TONQServer {
                         }
                     });
                 }
-                return {
-                    data: this.data,
-                    tracer: this.tracer,
-                    stats: this.stats,
-                    auth: this.auth,
-                    client: this.client,
-                    config: this.config,
-                    shared: this.shared,
-                    remoteAddress: req?.socket?.remoteAddress ?? "",
-                    accessKey: Auth.extractAccessKey(req as RequestWithAccessHeaders, connection),
-                    parentSpan: QTracer.extractParentSpan(this.tracer, connection ?? req),
-                    req,
-                    connection,
-                    request,
-                };
+                return request;
             },
             plugins: [
                 {
                     requestDidStart() {
                         return {
                             willSendResponse(ctx) {
-                                const context = ctx.context as GraphQLRequestContext;
+                                const context = ctx.context as QRequestContext;
                                 if (context.multipleAccessKeysDetected ?? false) {
                                     throw QError.multipleAccessKeys();
                                 }

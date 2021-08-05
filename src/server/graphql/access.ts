@@ -1,8 +1,5 @@
-import type {
-    GraphQLRequestContext,
-} from "../data/collection";
 import type { AccessKey } from "../auth";
-import type { GraphQLRequestContextEx } from "./context";
+import { QRequestContext } from "../request";
 
 type ManagementArgs = {
     account?: string,
@@ -17,16 +14,16 @@ type RevokeAccessKeysArgs = ManagementArgs & {
     keys: string[],
 };
 
-async function getManagementAccessKey(_parent: unknown, _args: unknown, context: GraphQLRequestContext): Promise<string> {
-    return context.auth.getManagementAccessKey();
+async function getManagementAccessKey(_parent: unknown, _args: unknown, context: QRequestContext): Promise<string> {
+    return context.services.auth.getManagementAccessKey();
 }
 
 async function registerAccessKeys(
     _parent: unknown,
     args: RegisterAccessKeysArgs,
-    context: GraphQLRequestContext,
+    context: QRequestContext,
 ): Promise<number> {
-    return context.auth.registerAccessKeys(
+    return context.services.auth.registerAccessKeys(
         args.account || "",
         args.keys || [],
         args.signedManagementAccessKey || "");
@@ -35,9 +32,9 @@ async function registerAccessKeys(
 async function revokeAccessKeys(
     _parent: unknown,
     args: RevokeAccessKeysArgs,
-    context: GraphQLRequestContext,
+    context: QRequestContext,
 ): Promise<number> {
-    return context.auth.revokeAccessKeys(
+    return context.services.auth.revokeAccessKeys(
         args.account || "",
         args.keys || [],
         args.signedManagementAccessKey || "");
@@ -50,13 +47,13 @@ type FinishOperationsArgs = {
 async function finishOperations(
     _parent: unknown,
     args: FinishOperationsArgs,
-    context: GraphQLRequestContextEx,
+    context: QRequestContext,
 ): Promise<number> {
     const operationIds = new Set(args.operationIds || []);
     if (operationIds.size === 0) {
         return 0;
     }
-    return context.data.finishOperations(operationIds);
+    return context.services.data.finishOperations(operationIds);
 }
 
 export const accessResolvers = {
