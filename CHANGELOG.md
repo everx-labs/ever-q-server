@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.42.1] 2021-08-09
+
+### Fixed
+
+- Q-Server failed on StatsD sending
+
 ## [0.42.0] 2021-07-15
 
 ### New
