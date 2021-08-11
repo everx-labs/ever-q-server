@@ -33,6 +33,7 @@ enum QErrorCode {
     AUTH_FAILED = 10005,
     QUERY_TERMINATED_ON_TIMEOUT = 10006,
     INVALID_CONFIG = 10007,
+    INVALID_QUERY = 10008,
 }
 
 export class QError extends Error {
@@ -103,6 +104,10 @@ export class QError extends Error {
 
     static invalidConfig(message: string) {
         return QError.create(QErrorCode.INVALID_CONFIG, message);
+    }
+
+    static invalidQuery(message: string) {
+        return QError.create(QErrorCode.INVALID_QUERY, message);
     }
 }
 

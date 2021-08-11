@@ -274,6 +274,7 @@ export default class TONQServer {
                 "type-defs-generated.graphql",
                 "type-defs-custom.graphql",
                 "type-defs-counterparties.graphql",
+                "type-defs-blockchain.graphql",
             ],
             supportSubscriptions: true,
         });

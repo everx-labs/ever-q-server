@@ -1,0 +1,80 @@
+type BlockchainMasterSeqNoRange {
+    "Minimum inclusive seq_no of corresponding master blocks"
+    start: Int
+    "Maximum exclusive seq_no of corresponding master blocks"
+    end: Int
+}
+
+input BlockchainMasterSeqNoFilter {
+    "Minimum inclusive seq_no of corresponding master blocks"
+    start: Int
+    "Maximum exclusive seq_no of corresponding master blocks"
+    end: Int
+}
+
+type BlockchainTransactionsConnection {
+    edges: [BlockchainTransactionEdge!]!
+    pageInfo: PageInfo!
+}
+
+type BlockchainTransactionEdge {
+    node: BlockchainTransaction!
+    cursor: String!
+}
+
+type BlockchainQuery {
+    """
+    Returns master seq_no range with masterblock(start).gen_utime <= time_start and masterblock(end - 1).gen_utime >= time_end.
+    If time_start is null, then start is null. If time_end is null, then end is null.
+    """
+    master_seq_no_range(
+         time_start: Int,
+         time_end: Int,
+    ): BlockchainMasterSeqNoRange
+
+    account_transactions(
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockchain { master_seq_no_range }
+        """
+        master_seq_no: BlockchainMasterSeqNoFilter
+
+        """
+        The transactions could be filtered by the list of addresses.
+        """
+        account_addresses: [String!]
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainTransactionsConnection
+
+    workchain_transactions(
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockchain { master_seq_no_range }
+        """
+        master_seq_no: BlockchainMasterSeqNoFilter
+
+        """
+        The transactions could be filtered by the list of workchains.
+        """
+        workchains: [Int!]
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainTransactionsConnection
+}
+
+type Query {
+    blockchain: BlockchainQuery
+}

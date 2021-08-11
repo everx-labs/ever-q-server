@@ -1,5 +1,8 @@
 module.exports = {
     root: true,
+    ignorePatterns: [
+        "src/server/graphql/blockchain/resolvers-types-generated.ts"
+    ],
     parser: "@typescript-eslint/parser",
     plugins: [
         "@typescript-eslint",

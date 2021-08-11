@@ -1,0 +1,92 @@
+"TON Transaction"
+type BlockchainTransaction implements Node {
+    """
+    BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
+    For id without prefix see "hash".
+    """
+	id: String
+    hash: String
+	aborted: Boolean
+	account_addr: String
+	action: TransactionAction
+	"Account balance change after transaction"
+	balance_delta(format: BigIntFormat): String
+	"Account balance change after transaction"
+	balance_delta_other: [OtherCurrency]
+	block_id: String
+	boc: String
+	bounce: TransactionBounce
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical order."
+	chain_order: String
+	compute: TransactionCompute
+	credit: TransactionCredit
+	credit_first: Boolean
+	destroyed: Boolean
+	"""
+	The end state of an account after a transaction, 1 is returned to indicate a finalized transaction at an active account
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	- 3 – nonExist
+	"""
+	end_status: Int
+	end_status_name: AccountStatusEnum
+	in_msg: String
+	installed: Boolean
+	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
+	lt(format: BigIntFormat): String
+	"Merkle update field"
+	new_hash: String
+	now: Float
+	now_string: String
+	"Merkle update field"
+	old_hash: String
+	"""
+	The initial state of account. Note that in this case the query may return 0, if the account was not active before the transaction and 1 if it was already active
+	- 0 – uninit
+	- 1 – active
+	- 2 – frozen
+	- 3 – nonExist
+	"""
+	orig_status: Int
+	orig_status_name: AccountStatusEnum
+	out_msgs: [String]
+	"The number of generated outbound messages (one of the common transaction parameters defined by the specification)"
+	outmsg_cnt: Int
+	prepare_transaction: String
+	prev_trans_hash: String
+	prev_trans_lt(format: BigIntFormat): String
+	proof: String
+	split_info: TransactionSplitInfo
+	"""
+	Transaction processing status
+	- 0 – unknown
+	- 1 – preliminary
+	- 2 – proposed
+	- 3 – finalized
+	- 4 – refused
+	"""
+	status: Int
+	status_name: TransactionProcessingStatusEnum
+	storage: TransactionStorage
+	"Total amount of fees that entails account state change and used in Merkle update"
+	total_fees(format: BigIntFormat): String
+	"Same as above, but reserved for non gram coins that may appear in the blockchain"
+	total_fees_other: [OtherCurrency]
+	"""
+	Transaction type according to the original blockchain specification, clause 4.2.4.
+	- 0 – ordinary
+	- 1 – storage
+	- 2 – tick
+	- 3 – tock
+	- 4 – splitPrepare
+	- 5 – splitInstall
+	- 6 – mergePrepare
+	- 7 – mergeInstall
+	"""
+	tr_type: Int
+	tr_type_name: TransactionTypeEnum
+	tt: String
+	"Workchain id of the account address (account_addr field)"
+	workchain_id: Int
+}
