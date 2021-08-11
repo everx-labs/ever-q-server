@@ -76,5 +76,5 @@ type BlockchainQuery {
 }
 
 type Query {
-    blockchain: BlockchainQuery
+    blockchain(accessKey: String): BlockchainQuery
 }

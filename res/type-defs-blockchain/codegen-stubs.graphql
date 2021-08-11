@@ -1,6 +1,17 @@
+type AccessRights {
+	granted: Boolean!
+    restrictToAccounts: [String!]!
+}
+
 type BlockchainTransaction {
 	_key: String!
 }
+
+type BlockchainQuery {
+	accessRights: AccessRights!
+}
+
+# -----------------------------------------------------------------------------------
 
 type TransactionStorage {
 	"""

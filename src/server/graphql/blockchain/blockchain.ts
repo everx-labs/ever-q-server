@@ -1,4 +1,4 @@
-import { AccessArgs, AccessRights } from "../../auth";
+import { AccessRights } from "../../auth";
 import { QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
 import { QTracer } from "../../tracer";
@@ -33,13 +33,16 @@ function getAccountAccessRestictionCondition(accessRights: AccessRights, params:
 
 export const resolvers: Resolvers<QRequestContext> = {
     Query: {
-        blockchain: () => { return {}; },
+        blockchain: async (_parent, args, context) => {
+            return {
+                accessRights: await context.requireGrantedAccess(args)
+            };
+        },
     },
     BlockchainQuery: {
         master_seq_no_range: (_parent, args, context) => {
             const tracer = context.services.tracer;
             return QTracer.trace(tracer, "blockchain-master_seq_no_range", async () => {
-                await context.requireGrantedAccess(args as AccessArgs);
                 const text =
                     `RETURN {
                         _key: UUID(),
@@ -74,11 +77,9 @@ export const resolvers: Resolvers<QRequestContext> = {
                 };
             }, QTracer.getParentSpan(tracer, context));
         },
-        account_transactions: async (_parent, args, context, info) => {
+        account_transactions: async (parent, args, context, info) => {
             const tracer = context.services.tracer;
             return QTracer.trace(tracer, "blockchain-account_transactions", async () => {
-                const accessRights = await context.requireGrantedAccess(args as AccessArgs);
-                
                 const filters: string[] = [];
                 
                 // master_seq_no
@@ -109,20 +110,20 @@ export const resolvers: Resolvers<QRequestContext> = {
                     filters.push(`doc.account_addr IN @${paramName}`);
                 }
 
-                const accessFilter = getAccountAccessRestictionCondition(accessRights, params);
+                const accessFilter = getAccountAccessRestictionCondition(parent.accessRights, params);
                 if (accessFilter) {
                     filters.push(accessFilter);
                 }
 
                 // first, last
                 if (args.first && args.last) {
-                    throw QError.invalidQuery(`"first" and "last" shouldn't be used simultaneously`);
+                    throw QError.invalidQuery("\"first\" and \"last\" shouldn't be used simultaneously");
                 }
                 if (args.first && args.before) {
-                    throw QError.invalidQuery(`"first" should not be used with "before"`);
+                    throw QError.invalidQuery("\"first\" should not be used with \"before\"");
                 }
                 if (args.last && args.after) {
-                    throw QError.invalidQuery(`"last" should not be used with "after"`);
+                    throw QError.invalidQuery("\"last\" should not be used with \"after\"");
                 }
                 const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
                 const direction = args.last ? Direction.Backward : Direction.Forward;
@@ -156,7 +157,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                             result.splice(limit - 1);
                             break;
                         case Direction.Backward: 
-                            helperTransaction = result[result.length - limit + 1]
+                            helperTransaction = result[result.length - limit + 1];
                             result.splice(0, result.length - limit + 1);
                             break;
                     }
@@ -177,5 +178,6 @@ export const resolvers: Resolvers<QRequestContext> = {
                 } as BlockchainTransactionsConnection;
             }, QTracer.getParentSpan(tracer, context));
         },
+        // workchain_transactions:,
     },
 };

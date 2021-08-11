@@ -13,6 +13,12 @@ export type Scalars = {
   Float: number;
 };
 
+export type AccessRights = {
+  __typename?: 'AccessRights';
+  granted: Scalars['Boolean'];
+  restrictToAccounts: Array<Scalars['String']>;
+};
+
 export enum AccountStatusChangeEnum {
   Deleted = 'Deleted',
   Frozen = 'Frozen',
@@ -54,19 +60,14 @@ export type BlockchainMasterSeqNoRange = {
 
 export type BlockchainQuery = {
   __typename?: 'BlockchainQuery';
+  accessRights: AccessRights;
+  account_transactions?: Maybe<BlockchainTransactionsConnection>;
   /**
    * Returns master seq_no range with masterblock(start).gen_utime <= time_start and masterblock(end - 1).gen_utime >= time_end.
    * If time_start is null, then start is null. If time_end is null, then end is null.
    */
   master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
-  account_transactions?: Maybe<BlockchainTransactionsConnection>;
   workchain_transactions?: Maybe<BlockchainTransactionsConnection>;
-};
-
-
-export type BlockchainQueryMaster_Seq_No_RangeArgs = {
-  time_start?: Maybe<Scalars['Int']>;
-  time_end?: Maybe<Scalars['Int']>;
 };
 
 
@@ -77,6 +78,12 @@ export type BlockchainQueryAccount_TransactionsArgs = {
   after?: Maybe<Scalars['String']>;
   last?: Maybe<Scalars['Int']>;
   before?: Maybe<Scalars['String']>;
+};
+
+
+export type BlockchainQueryMaster_Seq_No_RangeArgs = {
+  time_start?: Maybe<Scalars['Int']>;
+  time_end?: Maybe<Scalars['Int']>;
 };
 
 
@@ -258,6 +265,11 @@ export type PageInfo = {
 export type Query = {
   __typename?: 'Query';
   blockchain?: Maybe<BlockchainQuery>;
+};
+
+
+export type QueryBlockchainArgs = {
+  accessKey?: Maybe<Scalars['String']>;
 };
 
 export enum SkipReasonEnum {
@@ -530,6 +542,9 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  AccessRights: ResolverTypeWrapper<AccessRights>;
+  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  String: ResolverTypeWrapper<Scalars['String']>;
   AccountStatusChangeEnum: AccountStatusChangeEnum;
   AccountStatusEnum: AccountStatusEnum;
   BigIntFormat: BigIntFormat;
@@ -537,9 +552,7 @@ export type ResolversTypes = {
   Int: ResolverTypeWrapper<Scalars['Int']>;
   BlockchainMasterSeqNoRange: ResolverTypeWrapper<BlockchainMasterSeqNoRange>;
   BlockchainQuery: ResolverTypeWrapper<BlockchainQuery>;
-  String: ResolverTypeWrapper<Scalars['String']>;
   BlockchainTransaction: ResolverTypeWrapper<BlockchainTransaction>;
-  Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   BlockchainTransactionEdge: ResolverTypeWrapper<BlockchainTransactionEdge>;
   BlockchainTransactionsConnection: ResolverTypeWrapper<BlockchainTransactionsConnection>;
@@ -563,13 +576,14 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
+  AccessRights: AccessRights;
+  Boolean: Scalars['Boolean'];
+  String: Scalars['String'];
   BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   Int: Scalars['Int'];
   BlockchainMasterSeqNoRange: BlockchainMasterSeqNoRange;
   BlockchainQuery: BlockchainQuery;
-  String: Scalars['String'];
   BlockchainTransaction: BlockchainTransaction;
-  Boolean: Scalars['Boolean'];
   Float: Scalars['Float'];
   BlockchainTransactionEdge: BlockchainTransactionEdge;
   BlockchainTransactionsConnection: BlockchainTransactionsConnection;
@@ -586,6 +600,12 @@ export type ResolversParentTypes = {
   TransactionStorage: TransactionStorage;
 };
 
+export type AccessRightsResolvers<ContextType = any, ParentType extends ResolversParentTypes['AccessRights'] = ResolversParentTypes['AccessRights']> = {
+  granted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  restrictToAccounts?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BlockchainMasterSeqNoRangeResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainMasterSeqNoRange'] = ResolversParentTypes['BlockchainMasterSeqNoRange']> = {
   start?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   end?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -593,8 +613,9 @@ export type BlockchainMasterSeqNoRangeResolvers<ContextType = any, ParentType ex
 };
 
 export type BlockchainQueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainQuery'] = ResolversParentTypes['BlockchainQuery']> = {
-  master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<BlockchainQueryMaster_Seq_No_RangeArgs, never>>;
+  accessRights?: Resolver<ResolversTypes['AccessRights'], ParentType, ContextType>;
   account_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryAccount_TransactionsArgs, never>>;
+  master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<BlockchainQueryMaster_Seq_No_RangeArgs, never>>;
   workchain_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryWorkchain_TransactionsArgs, never>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -678,7 +699,7 @@ export type PageInfoResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  blockchain?: Resolver<Maybe<ResolversTypes['BlockchainQuery']>, ParentType, ContextType>;
+  blockchain?: Resolver<Maybe<ResolversTypes['BlockchainQuery']>, ParentType, ContextType, RequireFields<QueryBlockchainArgs, never>>;
 };
 
 export type TransactionActionResolvers<ContextType = any, ParentType extends ResolversParentTypes['TransactionAction'] = ResolversParentTypes['TransactionAction']> = {
@@ -757,6 +778,7 @@ export type TransactionStorageResolvers<ContextType = any, ParentType extends Re
 };
 
 export type Resolvers<ContextType = any> = {
+  AccessRights?: AccessRightsResolvers<ContextType>;
   BlockchainMasterSeqNoRange?: BlockchainMasterSeqNoRangeResolvers<ContextType>;
   BlockchainQuery?: BlockchainQueryResolvers<ContextType>;
   BlockchainTransaction?: BlockchainTransactionResolvers<ContextType>;
