@@ -130,7 +130,7 @@ export type BlockchainTransaction = Node & {
    * BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
    * For id without prefix see "hash".
    */
-  id?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
   in_msg?: Maybe<Scalars['String']>;
   installed?: Maybe<Scalars['Boolean']>;
   /** Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf). */
@@ -239,7 +239,6 @@ export enum ComputeTypeEnum {
 }
 
 export type Node = {
-  __typename?: 'Node';
   id: Scalars['ID'];
 };
 
@@ -553,13 +552,13 @@ export type ResolversTypes = {
   BlockchainMasterSeqNoRange: ResolverTypeWrapper<BlockchainMasterSeqNoRange>;
   BlockchainQuery: ResolverTypeWrapper<BlockchainQuery>;
   BlockchainTransaction: ResolverTypeWrapper<BlockchainTransaction>;
+  ID: ResolverTypeWrapper<Scalars['ID']>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   BlockchainTransactionEdge: ResolverTypeWrapper<BlockchainTransactionEdge>;
   BlockchainTransactionsConnection: ResolverTypeWrapper<BlockchainTransactionsConnection>;
   BounceTypeEnum: BounceTypeEnum;
   ComputeTypeEnum: ComputeTypeEnum;
-  Node: ResolverTypeWrapper<Node>;
-  ID: ResolverTypeWrapper<Scalars['ID']>;
+  Node: ResolversTypes['BlockchainTransaction'];
   OtherCurrency: ResolverTypeWrapper<OtherCurrency>;
   PageInfo: ResolverTypeWrapper<PageInfo>;
   Query: ResolverTypeWrapper<{}>;
@@ -584,11 +583,11 @@ export type ResolversParentTypes = {
   BlockchainMasterSeqNoRange: BlockchainMasterSeqNoRange;
   BlockchainQuery: BlockchainQuery;
   BlockchainTransaction: BlockchainTransaction;
+  ID: Scalars['ID'];
   Float: Scalars['Float'];
   BlockchainTransactionEdge: BlockchainTransactionEdge;
   BlockchainTransactionsConnection: BlockchainTransactionsConnection;
-  Node: Node;
-  ID: Scalars['ID'];
+  Node: ResolversParentTypes['BlockchainTransaction'];
   OtherCurrency: OtherCurrency;
   PageInfo: PageInfo;
   Query: {};
@@ -638,7 +637,7 @@ export type BlockchainTransactionResolvers<ContextType = any, ParentType extends
   end_status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   end_status_name?: Resolver<Maybe<ResolversTypes['AccountStatusEnum']>, ParentType, ContextType>;
   hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   in_msg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   installed?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainTransactionLtArgs, never>>;
@@ -680,8 +679,8 @@ export type BlockchainTransactionsConnectionResolvers<ContextType = any, ParentT
 };
 
 export type NodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['Node'] = ResolversParentTypes['Node']> = {
+  __resolveType: TypeResolveFn<'BlockchainTransaction', ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type OtherCurrencyResolvers<ContextType = any, ParentType extends ResolversParentTypes['OtherCurrency'] = ResolversParentTypes['OtherCurrency']> = {

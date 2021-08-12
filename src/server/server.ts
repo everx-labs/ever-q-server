@@ -52,6 +52,7 @@ import { counterpartiesResolvers } from "./graphql/counterparties";
 import { explainResolvers } from "./graphql/explain";
 import { infoResolvers } from "./graphql/info";
 import { postRequestsResolvers } from "./graphql/post-requests";
+import { blockchainResolvers } from "./graphql/blockchain";
 
 import { createResolvers } from "./graphql/resolvers-generated";
 import { accessResolvers } from "./graphql/access";
@@ -266,6 +267,7 @@ export default class TONQServer {
             postRequestsResolvers,
             accessResolvers,
             counterpartiesResolvers(this.data),
+            blockchainResolvers,
         ].forEach(x => assignDeep(resolvers, x));
         this.addEndPoint({
             path: "/graphql",
@@ -274,6 +276,9 @@ export default class TONQServer {
                 "type-defs-generated.graphql",
                 "type-defs-custom.graphql",
                 "type-defs-counterparties.graphql",
+                "type-defs-blockchain/blockchain.graphql",
+                "type-defs-blockchain/common.graphql",
+                "type-defs-blockchain/transaction.graphql",
             ],
             supportSubscriptions: true,
         });
@@ -383,6 +388,4 @@ export default class TONQServer {
         }
         this.endPoints.push(endPoint);
     }
-
-
 }

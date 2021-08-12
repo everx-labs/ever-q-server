@@ -4,7 +4,7 @@ type BlockchainTransaction implements Node {
     BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
     For id without prefix see "hash".
     """
-	id: String
+	id: ID!
     hash: String
 	aborted: Boolean
 	account_addr: String

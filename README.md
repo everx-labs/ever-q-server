@@ -302,10 +302,10 @@ index: src,dst,value,created_at
 
 IMPORTANT!!!
 
-**FIRST**. If you have modified source code you need to compile it with babel:
+**FIRST**. If you have modified source code you need to compile it:
 
 ```bash
-npm run babel
+npm run tsc
 ```
 
 This will regenerate file in `dist` folder.
@@ -315,12 +315,12 @@ place `db-schema.ts`. After that you need to generate source code for a graphql 
 for resolvers JavaScript code. You must do it with:
 
 ```bash
-npm run babel
+npm run tsc
 npm run gen
-npm run babel
+npm run tsc
 ```
 
-Yes, you need too run babel twice :(.
+Yes, you need too run tsc twice :(.
 
 ## Tests
 

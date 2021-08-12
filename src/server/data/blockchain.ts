@@ -114,7 +114,7 @@ export type Latency = {
 };
 
 type ChainRangesVerificationSummary = {
-    reliable_chain_order_upper_boundary?: string,
+    reliable_chain_order_upper_boundary?: string | null,
 };
 
 export type ReliableChainOrderUpperBoundary = {
@@ -273,14 +273,20 @@ export default class QBlockchainData extends QData {
             const result = await required(this.providers.chainRangesVerification).query(
                 "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, [],
             ) as ChainRangesVerificationSummary[];
-            if (result.length != 1) {
+            if (result.length > 0) {
+                const boundary =
+                    result.reduce<string>((prev, summary) => {
+                        const curr = summary.reliable_chain_order_upper_boundary ?? "";
+                        return curr < prev ? curr : prev;
+                    }, "z");
+                    
+                this.reliableChainOrderUpperBoundary = {
+                    boundary,
+                    lastCheckTime: now,
+                };
+            } else {
                 throw new Error("Couldn't get chain_ranges_verification summary");
             }
-            const summary = result[0];
-            this.reliableChainOrderUpperBoundary = {
-                boundary: summary.reliable_chain_order_upper_boundary ?? "",
-                lastCheckTime: now,
-            };
         }
         return this.reliableChainOrderUpperBoundary;
     }
