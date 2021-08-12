@@ -8,7 +8,7 @@ import { AccountStatusEnum, Resolvers, TransactionProcessingStatusEnum, Transact
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainTransaction: {
-        id: parent => `message/${parent._key}`,
+        id: parent => `transaction/${parent._key}`,
         hash: parent => parent._key,
         balance_delta: (parent, args) => resolveBigUInt(2, parent.balance_delta, args as BigIntArgs),
         lt: (parent, args) => resolveBigUInt(1, parent.lt, args as BigIntArgs),

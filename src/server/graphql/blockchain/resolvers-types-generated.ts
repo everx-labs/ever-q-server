@@ -63,8 +63,11 @@ export type BlockchainQuery = {
   accessRights: AccessRights;
   account_transactions?: Maybe<BlockchainTransactionsConnection>;
   /**
-   * Returns master seq_no range with masterblock(start).gen_utime <= time_start and masterblock(end - 1).gen_utime >= time_end.
+   * Returns seq_no range such that:
+   * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
+   * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
    * If time_start is null, then start is null. If time_end is null, then end is null.
+   * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
    */
   master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
   workchain_transactions?: Maybe<BlockchainTransactionsConnection>;

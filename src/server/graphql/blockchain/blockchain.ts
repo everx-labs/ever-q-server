@@ -1,4 +1,4 @@
-import { GraphQLResolveInfo } from "graphql";
+import { FieldNode, GraphQLResolveInfo } from "graphql";
 import { AccessRights } from "../../auth";
 import { QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
@@ -26,6 +26,10 @@ function parseMasterSeqNo(chain_order: string) {
 }
 
 async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_RangeArgs, context: QRequestContext) {
+    if (args.time_start && args.time_end && args.time_start > args.time_end) {
+        throw QError.invalidQuery("time_start should not be greater than time_end");
+    }
+
     const text = `
         RETURN {
             _key: UUID(),
@@ -34,8 +38,8 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
         }
     `; // UUID is a hack to bypass QDataCombiner deduplication
     const vars: Record<string, unknown> = {
-        time_start: args.time_start,
-        time_end: args.time_end,
+        time_start: args.time_start ?? null,
+        time_end: args.time_end ?? null,
     };
     const result = await context.services.data.query(
         required(context.services.data.blocks.provider),
@@ -53,6 +57,12 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
         if (r.end && (!end || r.end > end)) {
             end = r.end;
         }
+    }
+    if (args.time_end && !end) {
+        start = null;
+    }
+    if (args.time_start && !start) {
+        end = null;
     }
 
     return {
@@ -86,6 +96,10 @@ async function prepareChainOrderFilter(
 
     // reliable boundary
     const reliable = await context.services.data.getReliableChainOrderUpperBoundary();
+    if (reliable.boundary == "") {
+        throw QError.internalServerError();
+    }
+
     end_chain_order = (end_chain_order && end_chain_order < reliable.boundary) ? end_chain_order : reliable.boundary;
 
     // apply
@@ -137,13 +151,35 @@ async function resolve_transactions(
     if (args.last && args.after) {
         throw QError.invalidQuery("\"last\" should not be used with \"after\"");
     }
+    if (args.first && args.first < 1) {
+        throw QError.invalidQuery("\"first\" should not be less than than 1");
+    }
+    if (args.last && args.last < 1) {
+        throw QError.invalidQuery("\"last\" should not be less than than 1");
+    }
     const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
     const direction = (args.last || args.before) ? Direction.Backward : Direction.Forward;
 
     const orderBy = [{ path: "chain_order", direction: "ASC" }];
-    const retunExpression = context.services.data.transactions.buildReturnExpression(
-        info.fieldNodes[0].selectionSet,
-        orderBy
+    
+    const edgesNode =
+        info.fieldNodes[0].selectionSet?.selections
+            .find(s => s.kind == "Field" && s.name.value == "edges") as FieldNode | undefined;
+    let nodeNode =
+        edgesNode?.selectionSet?.selections
+            .find(s => s.kind == "Field" && s.name.value == "node") as FieldNode | undefined;
+    if (nodeNode && nodeNode.selectionSet?.selections.find(s =>s.kind == "Field" && s.name.value == "hash")) {
+        const selectionSet = Object.assign({}, nodeNode.selectionSet);
+        selectionSet.selections = selectionSet.selections
+            .filter(s => !(s.kind == "Field" && s.name.value == "hash")),
+
+        nodeNode = Object.assign({}, nodeNode);
+        nodeNode = Object.assign(nodeNode, { selectionSet });
+    }
+
+    const returnExpression = context.services.data.transactions.buildReturnExpression(
+        nodeNode?.selectionSet,
+        orderBy,
     );
 
     const query = `
@@ -151,17 +187,29 @@ async function resolve_transactions(
         FILTER ${filters.join(" AND ")}
         SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
-        ${retunExpression}
+        RETURN ${returnExpression}
     `;
 
     const queryResult = await context.services.data.query(
         required(context.services.data.transactions.provider),
         query,
         params.values,
-        orderBy
+        orderBy,
     ) as BlockchainTransaction[];
+    queryResult.sort((a, b) => {
+        if (!a.chain_order || !b.chain_order) {
+            throw QError.internalServerError();
+        }
+        if (a.chain_order > b.chain_order) {
+            return 1;
+        }
+        if (a.chain_order < b.chain_order) {
+            return -1;
+        }
+        throw QError.internalServerError();
+    });
 
-    const hasMore = queryResult.length > limit;
+    const hasMore = queryResult.length >= limit;
     if (hasMore) {
         switch (direction) {
             case Direction.Forward:
@@ -181,8 +229,8 @@ async function resolve_transactions(
             };
         }),
         pageInfo: {
-            startCursor: queryResult[0].chain_order,
-            endCursor: queryResult[queryResult.length - 1].chain_order,
+            startCursor: queryResult.length > 0 ? queryResult[0].chain_order : "",
+            endCursor: queryResult.length > 0 ? queryResult[queryResult.length - 1].chain_order : "",
             hasNextPage: (direction == Direction.Forward) ? hasMore : false,
             hasPreviousPage: (direction == Direction.Backward) ? hasMore : false,
         },
@@ -251,5 +299,5 @@ export const resolvers: Resolvers<QRequestContext> = {
                     return null;
             }
         }
-    }
+    },
 };
