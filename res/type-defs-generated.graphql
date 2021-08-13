@@ -1043,7 +1043,13 @@ type Transaction {
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	storage: TransactionStorage
-	"Total amount of fees that entails account state change and used in Merkle update"
+	"""
+	Total amount of fees collected by the validators. 
+	Because fwd_fee is collected by the validators of the receiving shard, 
+	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
+
+	The formula is total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
+	"""
 	total_fees(format: BigIntFormat): String
 	"Same as above, but reserved for non gram coins that may appear in the blockchain"
 	total_fees_other: [OtherCurrency]
@@ -2393,7 +2399,15 @@ input TransactionFilter {
 	account: AccountFilter
 	account_addr: StringFilter
 	action: TransactionActionFilter
-	"Account balance change after transaction"
+	"""
+	Account balance change after the transaction.
+	Because fwd_fee is collected by the validators of the receiving shard, 
+	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
+
+	The formula is:
+	balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
+
+	"""
 	balance_delta: StringFilter
 	"Account balance change after transaction"
 	balance_delta_other: OtherCurrencyArrayFilter
