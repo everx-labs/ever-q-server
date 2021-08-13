@@ -136,6 +136,7 @@ async function resolve_transactions(
     info: GraphQLResolveInfo,
     prepareAccountFilter: (params: QParams, filters: string[]) => void,
 ) {
+    // filters
     const filters: string[] = [];
     const params = new QParams();
 
@@ -165,29 +166,31 @@ async function resolve_transactions(
     }
     const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
     const direction = (args.last || args.before) ? Direction.Backward : Direction.Forward;
-
-    const orderBy = [{ path: "chain_order", direction: "ASC" }];
     
+    // get node selection set
     const edgesNode =
         info.fieldNodes[0].selectionSet?.selections
             .find(s => s.kind == "Field" && s.name.value == "edges") as FieldNode | undefined;
-    let nodeNode =
+    const nodeNode =
         edgesNode?.selectionSet?.selections
             .find(s => s.kind == "Field" && s.name.value == "node") as FieldNode | undefined;
-    if (nodeNode && nodeNode.selectionSet?.selections.find(s =>s.kind == "Field" && s.name.value == "hash")) {
-        const selectionSet = Object.assign({}, nodeNode.selectionSet);
-        selectionSet.selections = selectionSet.selections
-            .filter(s => !(s.kind == "Field" && s.name.value == "hash")),
+    let selectionSet = nodeNode?.selectionSet;
 
-        nodeNode = Object.assign({}, nodeNode);
-        nodeNode = Object.assign(nodeNode, { selectionSet });
+    // filter out "hash" field
+    if (selectionSet && selectionSet.selections.find(s =>s.kind == "Field" && s.name.value == "hash")) {
+        selectionSet = Object.assign({}, selectionSet);
+        selectionSet.selections = selectionSet.selections
+            .filter(s => !(s.kind == "Field" && s.name.value == "hash"));
     }
 
+    // build return expression
+    const orderBy = [{ path: "chain_order", direction: "ASC" }];
     const returnExpression = context.services.data.transactions.buildReturnExpression(
-        nodeNode?.selectionSet,
+        selectionSet,
         orderBy,
     );
 
+    // query
     const query = `
         FOR doc IN transactions
         FILTER ${filters.join(" AND ")}
@@ -195,13 +198,14 @@ async function resolve_transactions(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `;
-
     const queryResult = await context.services.data.query(
         required(context.services.data.transactions.provider),
         query,
         params.values,
         orderBy,
     ) as BlockchainTransaction[];
+
+    // sort query result by chain_order ASC
     queryResult.sort((a, b) => {
         if (!a.chain_order || !b.chain_order) {
             throw QError.internalServerError();
@@ -215,6 +219,7 @@ async function resolve_transactions(
         throw QError.internalServerError();
     });
 
+    // limit result length
     const hasMore = queryResult.length >= limit;
     if (hasMore) {
         switch (direction) {
