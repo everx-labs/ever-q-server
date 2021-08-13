@@ -19,5 +19,6 @@ module.exports = {
         "@typescript-eslint/quotes": ["error", "double"],
         "semi": "off",
         "@typescript-eslint/semi": ["error"],
+        "eol-last": ["error", "always"],
     },
 };
