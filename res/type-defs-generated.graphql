@@ -1043,7 +1043,7 @@ type Transaction {
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	storage: TransactionStorage
-		"""
+	"""
 	Total amount of fees collected by the validators. 
 	Because fwd_fee is collected by the validators of the receiving shard, 
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
