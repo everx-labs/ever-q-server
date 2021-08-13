@@ -33,8 +33,8 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     const text = `
         RETURN {
             _key: UUID(),
-            start: @time_start ? (FOR b IN blocks FILTER b.gen_utime >= @time_start SORT b.gen_utime ASC LIMIT 1 RETURN b.chain_order)[0] : null,
-            end: @time_end ? (FOR b IN blocks FILTER b.gen_utime <= @time_end SORT b.gen_utime DESC LIMIT 1 RETURN b.chain_order)[0] : null
+            start: @time_start ? (FOR b IN blocks FILTER b.gen_utime >= @time_start SORT b.chain_order ASC LIMIT 1 RETURN b.chain_order)[0] : null,
+            end: @time_end ? (FOR b IN blocks FILTER b.gen_utime <= @time_end SORT b.chain_order DESC LIMIT 1 RETURN b.chain_order)[0] : null
         }
     `; // UUID is a hack to bypass QDataCombiner deduplication
     const vars: Record<string, unknown> = {
@@ -65,9 +65,15 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
         end = null;
     }
 
+    // reliable boundary
+    const reliable = await context.services.data.getReliableChainOrderUpperBoundary();
+    if (reliable.boundary == "") {
+        throw QError.internalServerError();
+    }
+
     return {
         start: start ? parseMasterSeqNo(start) : null,
-        end: end ? parseMasterSeqNo(end) + 1 : null,
+        end: end ? Math.min(parseMasterSeqNo(end) + 1, parseMasterSeqNo(reliable.boundary)) : null,
     };
 }
 
