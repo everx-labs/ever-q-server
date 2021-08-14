@@ -243,6 +243,7 @@ export class QDataCollection {
                 request: QRequestContext,
                 info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
+                throw new Error("Disabled");
                 const accessRights = await request.requireGrantedAccess(args);
                 await this.statSubscription.increment();
                 const subscription = new QDataSubscription(
@@ -625,8 +626,10 @@ export class QDataCollection {
                 resolveBy("close", resolveOnClose, []);
             });
             try {
+                const queryTimeoutAt = Date.now() + q.timeout;
                 const onQuery = new Promise<QDoc[]>((resolve, reject) => {
                     const check = () => {
+                        const checkStart = Date.now();
                         this.queryProvider(
                             q.text,
                             q.params,
@@ -639,7 +642,11 @@ export class QDataCollection {
                                     forceTimerId = undefined;
                                     resolveBy("query", resolve, docs as QDoc[]);
                                 } else {
-                                    forceTimerId = setTimeout(check, 5_000);
+                                    const now = Date.now();
+                                    const checkDuration = now - checkStart;
+                                    const timeLeft = queryTimeoutAt - now;
+                                    const toWait = Math.min(5_000, timeLeft - 2 * checkDuration, timeLeft - 100);
+                                    forceTimerId = setTimeout(check, Math.max(toWait, 0));
                                 }
                             }
                         }, reject);

@@ -59,7 +59,7 @@ export class ArangoProvider implements QDataProvider {
     async start(collectionsForSubscribe: string[]): Promise<void> {
         this.started = true;
         this.collectionsForSubscribe = collectionsForSubscribe;
-        this.checkStartListener();
+        // this.checkStartListener();
         return Promise.resolve();
     }
 
@@ -101,6 +101,7 @@ export class ArangoProvider implements QDataProvider {
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {
+        throw new Error("Disabled");
         if (this.listenerSubscribers) {
             this.listenerSubscribers.on(collection, listener);
             this.listenerSubscribersCount += 1;
