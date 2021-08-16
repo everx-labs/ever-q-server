@@ -67,6 +67,7 @@ type BlockchainParams = {
     accounts: ConfigParam<string[]>,
     blocks: HotColdParams,
     transactions: HotColdParams,
+    zerostate: ConfigParam<string>,
 };
 
 export class ConfigParam<T extends ConfigValue> {
@@ -183,10 +184,16 @@ export class ConfigParam<T extends ConfigValue> {
     }
 
     static blockchain(prefix: string): BlockchainParams {
+        const zerostatePrefix = withPrefix(prefix, "zerostate");
         return {
             accounts: ConfigParam.databases(withPrefix(prefix, "accounts")),
             blocks: ConfigParam.hotCold(withPrefix(prefix, "blocks")),
             transactions: ConfigParam.hotCold(withPrefix(prefix, "transactions")),
+            zerostate: ConfigParam.string(
+                toOption(zerostatePrefix),
+                "",
+                withPrefix(toPascal(zerostatePrefix), "database"),
+            ),
         };
     }
 

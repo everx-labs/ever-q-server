@@ -17,18 +17,18 @@
 import {
     QDataCollection,
 } from "./collection";
-import {Auth} from "../auth";
-import {STATS} from "../config";
-import type {QLog} from "../logs";
+import { Auth } from "../auth";
+import { STATS } from "../config";
+import type { QLog } from "../logs";
 import QLogs from "../logs";
 import type {
     OrderBy,
     QType,
 } from "../filter/filters";
-import {Tracer} from "opentracing";
-import {StatsCounter} from "../tracer";
-import type {IStats} from "../tracer";
-import {wrap} from "../utils";
+import { Tracer } from "opentracing";
+import { StatsCounter } from "../tracer";
+import type { IStats } from "../tracer";
+import { wrap } from "../utils";
 import type {
     QDataProvider,
     QIndexInfo,
@@ -38,6 +38,7 @@ export type QBlockchainDataProvider = {
     blocks?: QDataProvider,
     transactions?: QDataProvider,
     accounts?: QDataProvider,
+    zerostate?: QDataProvider,
 };
 
 export type QDataProviders = {
@@ -109,6 +110,7 @@ export default class QData {
             this.providers.blockchain?.blocks,
             this.providers.blockchain?.transactions,
             this.providers.blockchain?.accounts,
+            this.providers.blockchain?.zerostate,
             this.providers.counterparties,
         ]);
 
@@ -116,6 +118,7 @@ export default class QData {
             this.slowQueriesProviders?.blocks,
             this.slowQueriesProviders?.transactions,
             this.slowQueriesProviders?.accounts,
+            this.slowQueriesProviders?.zerostate,
         ]);
     }
 

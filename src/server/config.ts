@@ -75,6 +75,7 @@ export type QBlockchainDataConfig = {
     accounts: string[],
     blocks: QHotColdDataConfig,
     transactions: QHotColdDataConfig,
+    zerostate: string,
 };
 
 export type QHotColdDataConfig = {
@@ -313,10 +314,12 @@ function upgradeHotCold(deprecated: QDeprecatedDataConfig, def: string | undefin
 }
 
 function upgradeBlockchain(deprecated: QDeprecatedDataConfig): QBlockchainDataConfig {
+    const blocks = upgradeHotCold(deprecated, deprecated.mut);
     return {
         accounts: upgradeDatabases(deprecated.mut),
-        blocks: upgradeHotCold(deprecated, deprecated.mut),
+        blocks,
         transactions: upgradeHotCold(deprecated, deprecated.mut),
+        zerostate: blocks.hot[0] ?? "",
     };
 }
 
@@ -385,6 +388,9 @@ export function resolveConfig(
             slow.transactions.hot,
             slow.transactions.cold,
         ], DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS);
+    }
+    if (config.blockchain.zerostate === "" && !specified.includes(configParams.blockchain.zerostate)) {
+        config.blockchain.zerostate = config.blockchain.blocks.hot[0] ?? config.blockchain.blocks.cold[0] ?? "";
     }
     return config;
 }

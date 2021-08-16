@@ -121,6 +121,7 @@ export class DataProviderFactory {
                 accounts: this.ensureDatabases(config.accounts, `${logKey}_accounts`),
                 blocks: this.ensureHotCold(config.blocks, `${logKey}_blocks`),
                 transactions: this.ensureHotCold(config.transactions, `${logKey}_transactions`),
+                zerostate: this.ensureDatabase(config.zerostate, `${logKey}_zerostate`),
             };
     }
 
