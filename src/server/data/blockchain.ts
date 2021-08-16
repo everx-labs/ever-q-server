@@ -148,7 +148,7 @@ export default class QBlockchainData extends QData {
         this.blocks_signatures = add("blocks_signatures", BlockSignatures, fast?.blocks, slow?.blocks);
         this.transactions = add("transactions", Transaction, fast?.transactions, slow?.transactions);
         this.messages = add("messages", Message, fast?.transactions, slow?.transactions);
-        this.zerostates = add("zerostates", Zerostate, fast?.blocks, slow?.blocks);
+        this.zerostates = add("zerostates", Zerostate, fast?.zerostate, slow?.zerostate);
         this.counterparties = add("counterparties", Counterparty, options.providers.counterparties);
 
         this.latency = {
