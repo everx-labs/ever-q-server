@@ -1,4 +1,7 @@
-"TON Transaction"
+"""
+**EXPERIMENTAL**
+TON Transaction
+"""
 type BlockchainTransaction implements Node {
     """
     BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.

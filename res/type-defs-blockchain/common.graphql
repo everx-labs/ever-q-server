@@ -1,7 +1,13 @@
+"""
+This type is experimental
+"""
 interface Node {
     id: ID!
 }
 
+"""
+This type is experimental
+"""
 type PageInfo {
     startCursor: String!
     endCursor: String!

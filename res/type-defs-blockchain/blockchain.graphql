@@ -1,3 +1,6 @@
+"""
+This type is experimental
+"""
 type BlockchainMasterSeqNoRange {
     "Minimum inclusive seq_no of corresponding master blocks"
     start: Int
@@ -5,6 +8,9 @@ type BlockchainMasterSeqNoRange {
     end: Int
 }
 
+"""
+This type is experimental
+"""
 input BlockchainMasterSeqNoFilter {
     "Minimum inclusive seq_no of corresponding master blocks"
     start: Int
@@ -12,18 +18,28 @@ input BlockchainMasterSeqNoFilter {
     end: Int
 }
 
+"""
+This type is experimental
+"""
 type BlockchainTransactionsConnection {
     edges: [BlockchainTransactionEdge!]!
     pageInfo: PageInfo!
 }
 
+"""
+This type is experimental
+"""
 type BlockchainTransactionEdge {
     node: BlockchainTransaction!
     cursor: String!
 }
 
+"""
+This type is experimental
+"""
 type BlockchainQuery {
     """
+    **EXPERIMENTAL**
     Returns seq_no range such that:
     1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
     2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
@@ -35,6 +51,10 @@ type BlockchainQuery {
          time_end: Int,
     ): BlockchainMasterSeqNoRange
 
+    """
+    **EXPERIMENTAL**
+    This node could be used for a cursor-based pagination of transactions filtered by account addresses.
+    """
     account_transactions(
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
@@ -56,6 +76,10 @@ type BlockchainQuery {
         before: String
     ): BlockchainTransactionsConnection
 
+    """
+    **EXPERIMENTAL**
+    This node could be used for a cursor-based pagination of transactions filtered by workchains.
+    """
     workchain_transactions(
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
@@ -79,5 +103,6 @@ type BlockchainQuery {
 }
 
 extend type Query {
+    "This node is experimental"
     blockchain(accessKey: String): BlockchainQuery
 }

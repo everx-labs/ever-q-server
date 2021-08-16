@@ -43,6 +43,7 @@ export enum BigIntFormat {
   Dec = 'DEC'
 }
 
+/** This type is experimental */
 export type BlockchainMasterSeqNoFilter = {
   /** Minimum inclusive seq_no of corresponding master blocks */
   start?: Maybe<Scalars['Int']>;
@@ -50,6 +51,7 @@ export type BlockchainMasterSeqNoFilter = {
   end?: Maybe<Scalars['Int']>;
 };
 
+/** This type is experimental */
 export type BlockchainMasterSeqNoRange = {
   __typename?: 'BlockchainMasterSeqNoRange';
   /** Minimum inclusive seq_no of corresponding master blocks */
@@ -58,11 +60,17 @@ export type BlockchainMasterSeqNoRange = {
   end?: Maybe<Scalars['Int']>;
 };
 
+/** This type is experimental */
 export type BlockchainQuery = {
   __typename?: 'BlockchainQuery';
   accessRights: AccessRights;
+  /**
+   * **EXPERIMENTAL**
+   * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
+   */
   account_transactions?: Maybe<BlockchainTransactionsConnection>;
   /**
+   * **EXPERIMENTAL**
    * Returns seq_no range such that:
    * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
    * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
@@ -70,10 +78,15 @@ export type BlockchainQuery = {
    * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
    */
   master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
+  /**
+   * **EXPERIMENTAL**
+   * This node could be used for a cursor-based pagination of transactions filtered by workchains.
+   */
   workchain_transactions?: Maybe<BlockchainTransactionsConnection>;
 };
 
 
+/** This type is experimental */
 export type BlockchainQueryAccount_TransactionsArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
   account_addresses?: Maybe<Array<Scalars['String']>>;
@@ -84,12 +97,14 @@ export type BlockchainQueryAccount_TransactionsArgs = {
 };
 
 
+/** This type is experimental */
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {
   time_start?: Maybe<Scalars['Int']>;
   time_end?: Maybe<Scalars['Int']>;
 };
 
 
+/** This type is experimental */
 export type BlockchainQueryWorkchain_TransactionsArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
   workchains?: Maybe<Array<Scalars['Int']>>;
@@ -99,7 +114,10 @@ export type BlockchainQueryWorkchain_TransactionsArgs = {
   before?: Maybe<Scalars['String']>;
 };
 
-/** TON Transaction */
+/**
+ * **EXPERIMENTAL**
+ * TON Transaction
+ */
 export type BlockchainTransaction = Node & {
   __typename?: 'BlockchainTransaction';
   _key: Scalars['String'];
@@ -195,35 +213,49 @@ export type BlockchainTransaction = Node & {
 };
 
 
-/** TON Transaction */
+/**
+ * **EXPERIMENTAL**
+ * TON Transaction
+ */
 export type BlockchainTransactionBalance_DeltaArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
 
-/** TON Transaction */
+/**
+ * **EXPERIMENTAL**
+ * TON Transaction
+ */
 export type BlockchainTransactionLtArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
 
-/** TON Transaction */
+/**
+ * **EXPERIMENTAL**
+ * TON Transaction
+ */
 export type BlockchainTransactionPrev_Trans_LtArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
 
-/** TON Transaction */
+/**
+ * **EXPERIMENTAL**
+ * TON Transaction
+ */
 export type BlockchainTransactionTotal_FeesArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
+/** This type is experimental */
 export type BlockchainTransactionEdge = {
   __typename?: 'BlockchainTransactionEdge';
   node: BlockchainTransaction;
   cursor: Scalars['String'];
 };
 
+/** This type is experimental */
 export type BlockchainTransactionsConnection = {
   __typename?: 'BlockchainTransactionsConnection';
   edges: Array<BlockchainTransactionEdge>;
@@ -241,6 +273,7 @@ export enum ComputeTypeEnum {
   Vm = 'Vm'
 }
 
+/** This type is experimental */
 export type Node = {
   id: Scalars['ID'];
 };
@@ -256,6 +289,7 @@ export type OtherCurrencyValueArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
+/** This type is experimental */
 export type PageInfo = {
   __typename?: 'PageInfo';
   startCursor: Scalars['String'];
@@ -266,6 +300,7 @@ export type PageInfo = {
 
 export type Query = {
   __typename?: 'Query';
+  /** This node is experimental */
   blockchain?: Maybe<BlockchainQuery>;
 };
 
