@@ -111,7 +111,7 @@ export class QStats implements IStats {
     }
 
     dropImpl(error?: Error) {
-        if (error !== undefined) {
+        if (error !== undefined && error !== null) {
             logStatsError(error);
         }
         if (this.impl !== null) {
@@ -131,7 +131,7 @@ export class QStats implements IStats {
                     }
                 }
                 f(this.ensureImpl(), (error?: Error) => {
-                    if (error !== undefined) {
+                    if (error !== undefined && error !== null) {
                         this.dropImpl(error);
                     }
                     resolve();
@@ -381,8 +381,7 @@ export class QTracer {
                 }
             });
             const result = await f(span);
-            if (result !== undefined
-            ) {
+            if (result !== undefined) {
                 span.setTag("result", toLog(result));
             }
             span.finish();
