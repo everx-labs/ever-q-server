@@ -1,0 +1,196 @@
+type AccessRights {
+	granted: Boolean!
+    restrictToAccounts: [String!]!
+}
+
+type BlockchainTransaction {
+	_key: String!
+}
+
+type BlockchainQuery {
+	accessRights: AccessRights!
+}
+
+# -----------------------------------------------------------------------------------
+
+type TransactionStorage {
+	"""
+	This field represents account status change after the transaction is completed.
+	- 0 – unchanged
+	- 1 – frozen
+	- 2 – deleted
+	"""
+	status_change: Int
+	status_change_name: AccountStatusChangeEnum
+	"This field defines the amount of storage fees collected in grams."
+	storage_fees_collected(format: BigIntFormat): String
+	"This field represents the amount of due fees in grams, it might be empty."
+	storage_fees_due(format: BigIntFormat): String
+}
+
+type TransactionCredit {
+	credit(format: BigIntFormat): String
+	credit_other: [OtherCurrency]
+	"The sum of due_fees_collected and credit must equal the value of the message received, plus its ihr_fee if the message has not been received via Instant Hypercube Routing, IHR (otherwise the ihr_fee is awarded to the validators)."
+	due_fees_collected(format: BigIntFormat): String
+}
+
+type TransactionCompute {
+	"The flag reflects whether this has resulted in the activation of a previously frozen, uninitialized or non-existent account."
+	account_activated: Boolean
+	"""
+	- 0 – skipped
+	- 1 – vm
+	"""
+	compute_type: Int
+	compute_type_name: ComputeTypeEnum
+	exit_arg: Int
+	"These parameter represents the status values returned by TVM; for a successful transaction, exit_code has to be 0 or 1"
+	exit_code: Int
+	"This parameter may be non-zero only for external inbound messages. It is the lesser of either the amount of gas that can be paid from the account balance or the maximum gas credit"
+	gas_credit: Int
+	"This parameter reflects the total gas fees collected by the validators for executing this transaction. It must be equal to the product of gas_used and gas_price from the current block header."
+	gas_fees(format: BigIntFormat): String
+	"This parameter reflects the gas limit for this instance of TVM. It equals the lesser of either the Grams credited in the credit phase from the value of the inbound message divided by the current gas price, or the global per-transaction gas limit."
+	gas_limit(format: BigIntFormat): String
+	gas_used(format: BigIntFormat): String
+	mode: Int
+	"This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)"
+	msg_state_used: Boolean
+	"""
+	Reason for skipping the compute phase. According to the specification, the phase can be skipped due to the absence of funds to buy gas, absence of state of an account or a message, failure to provide a valid state in the message
+	- 0 – noState
+	- 1 – badState
+	- 2 – noGas
+	"""
+	skipped_reason: Int
+	skipped_reason_name: SkipReasonEnum
+	"This flag is set if and only if exit_code is either 0 or 1."
+	success: Boolean
+	"This parameter is the representation hashes of the resulting state of TVM."
+	vm_final_state_hash: String
+	"This parameter is the representation hashes of the original state of TVM."
+	vm_init_state_hash: String
+	"the total number of steps performed by TVM (usually equal to two plus the number of instructions executed, including implicit RETs)"
+	vm_steps: Float
+}
+
+type TransactionAction {
+	action_list_hash: String
+	msgs_created: Int
+	"The flag indicates absence of funds required to create an outbound message"
+	no_funds: Boolean
+	result_arg: Int
+	result_code: Int
+	skipped_actions: Int
+	spec_actions: Int
+	"""
+	- 0 – unchanged
+	- 1 – frozen
+	- 2 – deleted
+	"""
+	status_change: Int
+	status_change_name: AccountStatusChangeEnum
+	success: Boolean
+	tot_actions: Int
+	total_action_fees(format: BigIntFormat): String
+	total_fwd_fees(format: BigIntFormat): String
+	total_msg_size_bits: Float
+	total_msg_size_cells: Float
+	valid: Boolean
+}
+
+type TransactionBounce {
+	"""
+	- 0 – negFunds
+	- 1 – noFunds
+	- 2 – ok
+	"""
+	bounce_type: Int
+	bounce_type_name: BounceTypeEnum
+	fwd_fees(format: BigIntFormat): String
+	msg_fees(format: BigIntFormat): String
+	msg_size_bits: Float
+	msg_size_cells: Float
+	req_fwd_fees(format: BigIntFormat): String
+}
+
+type TransactionSplitInfo {
+	acc_split_depth: Int
+	"length of the current shard prefix"
+	cur_shard_pfx_len: Int
+	sibling_addr: String
+	this_addr: String
+}
+
+enum AccountStatusEnum {
+    Uninit
+    Active
+    Frozen
+    NonExist
+}
+
+enum AccountStatusChangeEnum {
+    Unchanged
+    Frozen
+    Deleted
+}
+
+
+enum TransactionTypeEnum {
+    Ordinary
+    Storage
+    Tick
+    Tock
+    SplitPrepare
+    SplitInstall
+    MergePrepare
+    MergeInstall
+}
+
+enum TransactionProcessingStatusEnum {
+    Unknown
+    Preliminary
+    Proposed
+    Finalized
+    Refused
+}
+
+enum AccountStatusChangeEnum {
+    Unchanged
+    Frozen
+    Deleted
+}
+
+enum ComputeTypeEnum {
+    Skipped
+    Vm
+}
+
+enum SkipReasonEnum {
+    NoState
+    BadState
+    NoGas
+}
+
+enum BounceTypeEnum {
+    NegFunds
+    NoFunds
+    Ok
+}
+
+"""
+Due to GraphQL limitations big numbers are returned as a string.
+You can specify format used to string representation for big integers.
+"""
+enum BigIntFormat {
+    " Hexadecimal representation started with 0x (default) "
+    HEX
+    " Decimal representation "
+    DEC
+}
+
+type OtherCurrency {
+	currency: Float
+	value(format: BigIntFormat): String
+}
