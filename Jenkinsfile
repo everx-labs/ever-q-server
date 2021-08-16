@@ -131,6 +131,21 @@ pipeline {
 					}
 				}
 
+				stage ('Push Image') {
+					steps {
+						script {
+							docker.withRegistry('', "${G_dockerCred}") {
+								builtImage.push()
+							}
+						}
+					}
+					post {
+						success {script{G_PushImage = "success"}}
+						failure {script{G_PushImage = "failure"}}
+						always {script{cleanWs notFailBuild: true}}
+					}
+				}
+
 				stage ('Unit Tests') {
 					steps {
 						script {
@@ -169,21 +184,6 @@ pipeline {
 					post {
 						success {script{G_UnitTestImage = "success"}}
 						failure {script{G_UnitTestImage = "failure"}}
-					}
-				}
-
-				stage ('Push Image') {
-					steps {
-						script {
-							docker.withRegistry('', "${G_dockerCred}") {
-								builtImage.push()
-							}
-						}
-					}
-					post {
-						success {script{G_PushImage = "success"}}
-						failure {script{G_PushImage = "failure"}}
-						always {script{cleanWs notFailBuild: true}}
 					}
 				}
 
