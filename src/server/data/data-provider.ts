@@ -85,11 +85,11 @@ export class QDataCombiner implements QDataProvider {
     }
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown {
-        return this.providers[0].subscribe(collection, listener);
+        return this.providers.map(p => p.subscribe(collection, listener));
     }
 
     unsubscribe(subscription: unknown): void {
-        this.providers[0].unsubscribe(subscription);
+        (subscription as unknown[]).map((s, i) => this.providers[i].unsubscribe(s));
     }
 }
 
