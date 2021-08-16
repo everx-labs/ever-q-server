@@ -10,6 +10,12 @@ All notable changes to this project will be documented in this file.
   Old data configurations are deprecated now but supported yet. For details see README.
 - support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
 
+## [0.42.1] 2021-08-09
+
+### Fixed
+
+- Q-Server failed on StatsD sending
+
 ## [0.42.0] 2021-07-15
 
 ### New
