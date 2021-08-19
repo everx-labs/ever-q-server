@@ -15,6 +15,7 @@ import {
     MockProvider,
 } from "./init-tests";
 import { OrderBy } from "../server/filter/filters";
+import { QRequestContext } from "../server/request";
 
 
 jest.mock("arangojs", () => ({
@@ -213,7 +214,7 @@ describe("DataCache", () => {
         const vars = { b: 2 };
         const orderBy: OrderBy[] = [];
 
-        await server.data.providers.blockchain?.blocks?.query(text, vars, orderBy);
+        await server.data.providers.blockchain?.blocks?.query(text, vars, orderBy, null as unknown as QRequestContext);
         const lastKey = "Q_" + hash(cachedCold.configHash, JSON.stringify({
             text,
             vars,

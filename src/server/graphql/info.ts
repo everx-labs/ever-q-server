@@ -16,7 +16,7 @@ type Info = {
 
 async function info(_parent: Record<string, unknown>, _args: unknown, context: QRequestContext): Promise<Info> {
     const data = context.services.data;
-    const latency = await data.getLatency();
+    const latency = await data.getLatency(context);
     return {
         version: version as string,
         time: Date.now(),

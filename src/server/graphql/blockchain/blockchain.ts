@@ -45,7 +45,8 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
         required(context.services.data.blocks.provider),
         text,
         vars,
-        []
+        [],
+        context,
     ) as { start: string | null, end: string | null }[];
 
     let start: string | null = null;
@@ -66,7 +67,7 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     }
 
     // reliable boundary
-    const reliable = await context.services.data.getReliableChainOrderUpperBoundary();
+    const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
         throw QError.internalServerError();
     }
@@ -101,7 +102,7 @@ async function prepareChainOrderFilter(
         : end_chain_order;
 
     // reliable boundary
-    const reliable = await context.services.data.getReliableChainOrderUpperBoundary();
+    const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
         throw QError.internalServerError();
     }
@@ -203,6 +204,7 @@ async function resolve_transactions(
         query,
         params.values,
         orderBy,
+        context,
     ) as BlockchainTransaction[];
 
     // sort query result by chain_order ASC

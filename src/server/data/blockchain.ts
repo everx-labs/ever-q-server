@@ -35,6 +35,7 @@ import {
 } from "./data-provider";
 import { QType } from "../filter/filters";
 import { required } from "../utils";
+import { QRequestContext } from "../request";
 
 export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
     blocks: {
@@ -206,7 +207,7 @@ export default class QBlockchainData extends QData {
         if (time > latency.maxTime) {
             latency.maxTime = time;
         }
-        latency.nextUpdateTime = now + 30000; // LATENCY_UPDATE_FREQUENCY
+        latency.nextUpdateTime = now + 25000 + Math.random() * 10000; // LATENCY_UPDATE_FREQUENCY
         latency.latency = Math.max(0, now - latency.maxTime);
         return true;
     }
@@ -230,7 +231,7 @@ export default class QBlockchainData extends QData {
         this.latency.lastBlockTime = blocks.maxTime;
     }
 
-    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string): Promise<boolean> {
+    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string, context: QRequestContext): Promise<boolean> {
         if (collection.provider === undefined || Date.now() <= latency.nextUpdateTime) {
             return false;
         }
@@ -240,6 +241,7 @@ export default class QBlockchainData extends QData {
                 path: field,
                 direction: "DESC",
             }],
+            context,
         )) as unknown as (({ maxTime: number }[]) | undefined | null);
         const maxTime = result?.[0]?.maxTime ?? 0;
         return this.updateCollectionLatency(latency, maxTime);
@@ -250,14 +252,14 @@ export default class QBlockchainData extends QData {
         this.debugLatency = latency;
     }
 
-    async getLatency(): Promise<Latency> {
+    async getLatency(context: QRequestContext): Promise<Latency> {
         const latency = this.latency;
         if (Date.now() > latency.nextUpdateTime) {
-            let hasUpdates = await this.updateMaxTime(latency.blocks, this.blocks, "gen_utime");
-            if (await this.updateMaxTime(latency.messages, this.messages, "created_at")) {
+            let hasUpdates = await this.updateMaxTime(latency.blocks, this.blocks, "gen_utime", context);
+            if (await this.updateMaxTime(latency.messages, this.messages, "created_at", context)) {
                 hasUpdates = true;
             }
-            if (await this.updateMaxTime(latency.transactions, this.transactions, "now")) {
+            if (await this.updateMaxTime(latency.transactions, this.transactions, "now", context)) {
                 hasUpdates = true;
             }
             if (hasUpdates) {
@@ -267,11 +269,11 @@ export default class QBlockchainData extends QData {
         return latency;
     }
 
-    async getReliableChainOrderUpperBoundary(): Promise<ReliableChainOrderUpperBoundary> {
+    async getReliableChainOrderUpperBoundary(context: QRequestContext): Promise<ReliableChainOrderUpperBoundary> {
         const now = Date.now();
         if (now > this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
             const result = await required(this.providers.chainRangesVerification).query(
-                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, [],
+                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, [], context,
             ) as ChainRangesVerificationSummary[];
             if (result.length > 0) {
                 const boundary =

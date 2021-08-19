@@ -21,6 +21,7 @@ import EventEmitter from "events";
 import { QError } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
+import { randomUUID } from "crypto";
 
 export class QRequestServices {
     constructor(
@@ -42,6 +43,9 @@ export const RequestEvent = {
 };
 
 export class QRequestContext {
+    id: string;
+    start: number;
+    log_entries: {time: number, event_name: string, additionalInfo?: string}[];
     events: EventEmitter;
     remoteAddress: string;
     accessKey: string;
@@ -55,6 +59,10 @@ export class QRequestContext {
         public req: express.Request | undefined,
         public connection: ExecutionParams | undefined,
     ) {
+        this.id = randomUUID();
+        this.start = Date.now();
+        this.log("Context_create");
+        this.log_entries = [];
         this.events = new EventEmitter();
         this.events.setMaxListeners(0);
         req?.on?.("close", () => {
@@ -98,5 +106,19 @@ export class QRequestContext {
         this.events.emit(RequestEvent.FINISH);
         this.events.removeAllListeners();
     }
-}
 
+    log(event_name: string, additionalInfo?: string): void {
+        this.log_entries.push({
+            time: Date.now() - this.start, 
+            event_name, 
+            additionalInfo
+        });
+    }
+
+    writeLog(): void {
+        console.info(JSON.stringify({id: this.id, log: this.log_entries}));
+        // for (const log_entry of this.log_entries) {
+        //     console.info(`${this.id} ${log_entry.time} ${log_entry.event_name} ${log_entry.additionalInfo}`);
+        // }
+    }
+}

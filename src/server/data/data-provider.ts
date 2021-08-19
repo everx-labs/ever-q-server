@@ -1,6 +1,7 @@
 import type { OrderBy } from "../filter/filters";
 import { hash } from "../utils";
 import type { QLog } from "../logs";
+import { QRequestContext } from "../request";
 
 export type QIndexInfo = {
     fields: string[],
@@ -33,7 +34,7 @@ export interface QDataProvider {
 
     hotUpdate(): Promise<void>;
 
-    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]>;
+    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]>;
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
@@ -79,9 +80,13 @@ export class QDataCombiner implements QDataProvider {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]> {
-        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy)));
-        return combineResults(results, orderBy);
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]> {
+        request.log("QDataCombiner_query_start");
+        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request)));
+        request.log("QDataCombiner_query_dataIsFetched");
+        const result = combineResults(results, orderBy);
+        request.log("QDataCombiner_query_end");
+        return result;
     }
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown {
@@ -120,7 +125,8 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]> {
+        request.log("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
             vars,
@@ -129,9 +135,11 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         const key = this.cacheKey(aql);
         let docs = (await this.cache.get(key)) as QResult[];
         if (isNullOrUndefined(docs)) {
-            docs = await super.query(text, vars, orderBy);
+            request.log("QDataPrecachedCombiner_query_no_cache");
+            docs = await super.query(text, vars, orderBy, request);
             await this.cache.set(key, docs);
         }
+        request.log("QDataPrecachedCombiner_query_end");
         return docs;
     }
 }

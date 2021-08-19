@@ -493,6 +493,7 @@ export class QDataCollection {
                 created: false,
             };
             try {
+                request.log("collection_resolver_start", this.name);
                 const accessRights = await request.requireGrantedAccess(args);
                 const query = this.createDatabaseQuery(
                     args,
@@ -531,10 +532,12 @@ export class QDataCollection {
                     args,
                     isFast ? "FAST" : "SLOW", request.remoteAddress,
                 );
+                request.log("collection_resolver_before_querying", this.name);
                 const start = Date.now();
                 const result = query.timeout > 0
                     ? await this.queryWaitFor(query, isFast, traceParams, request)
                     : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request);
+                request.log("collection_resolver_after_querying", this.name);
                 this.log.debug(
                     "QUERY",
                     args,
@@ -584,7 +587,7 @@ export class QDataCollection {
             if (traceParams) {
                 span.setTag("params", traceParams);
             }
-            return this.queryProvider(text, vars, orderBy, isFast);
+            return this.queryProvider(text, vars, orderBy, isFast, request);
         };
         return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.parentSpan);
     }
@@ -594,9 +597,13 @@ export class QDataCollection {
         vars: Record<string, unknown>,
         orderBy: OrderBy[],
         isFast: boolean,
+        request: QRequestContext,
     ): Promise<QResult[]> {
+        request.log("collection_queryProvider_start", this.name);
         const provider = required(isFast ? this.provider : this.slowQueriesProvider);
-        return provider.query(text, vars, orderBy);
+        const result = provider.query(text, vars, orderBy, request);
+        request.log("collection_queryProvider_end", this.name);
+        return result;
     }
 
 
@@ -607,6 +614,7 @@ export class QDataCollection {
         request: QRequestContext,
     ): Promise<QDoc[]> {
         const impl = async (span: Span): Promise<QDoc[]> => {
+            request.log("collection_queryWaitFor_start", this.name);
             if (traceParams) {
                 span.setTag("params", traceParams);
             }
@@ -635,6 +643,7 @@ export class QDataCollection {
                             q.params,
                             q.orderBy,
                             isFast,
+                            request,
                         ).then((docs) => {
                             hasDbResponse = true;
                             if (!resolvedBy) {
@@ -697,6 +706,7 @@ export class QDataCollection {
                     onClose,
                 ]);
                 span.setTag("resolved", resolvedBy);
+                request.log("collection_queryWaitFor_end", this.name);
                 return result;
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
@@ -803,7 +813,7 @@ export class QDataCollection {
                     q.queries,
                 ));
                 const start = Date.now();
-                const result = await this.queryProvider(q.text, q.params, [], isFast);
+                const result = await this.queryProvider(q.text, q.params, [], isFast, request);
                 this.log.debug(
                     "AGGREGATE",
                     args,
@@ -882,6 +892,7 @@ export class QDataCollection {
                 queryParams.params,
                 [],
                 true,
+                request,
             );
             return docs[0] as QDoc;
         }

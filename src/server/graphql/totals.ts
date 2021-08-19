@@ -18,6 +18,7 @@ async function getAccountsCount(_parent: Record<string, unknown>, args: AccessAr
             "RETURN LENGTH(accounts)",
             {},
             [],
+            context,
         );
         const counts = (result as number[]);
         return counts.length > 0 ? counts[0] : 0;
@@ -36,6 +37,7 @@ async function getTransactionsCount(_parent: Record<string, unknown>, args: Acce
             "RETURN LENGTH(transactions)",
             {},
             [],
+            context,
         );
         return result.length > 0 ? result[0] as number : 0;
     }, QTracer.getParentSpan(tracer, context));
@@ -66,7 +68,8 @@ async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: A
             RETURN { hs, ls }
         `,
             {},
-            []);
+            [],
+            context);
         const parts = (result as { hs: number, ls: number }[])[0];
         return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
     }, QTracer.getParentSpan(tracer, context));

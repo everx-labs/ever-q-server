@@ -67,6 +67,7 @@ async function counterparties(_parent: unknown, args: CounterpartiesArgs, contex
                 path: "last_message_at,counterparty",
                 direction: "DESC",
             }],
+            context,
         ) as CounterpartiesResult[];
         result.forEach(x => x.cursor = `${x.last_message_at}/${x.counterparty}`);
         return result;

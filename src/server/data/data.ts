@@ -33,6 +33,7 @@ import type {
     QDataProvider,
     QIndexInfo,
 } from "./data-provider";
+import { QRequestContext } from "../request";
 
 export type QBlockchainDataProvider = {
     blocks?: QDataProvider,
@@ -172,12 +173,12 @@ export default class QData {
         }
     }
 
-    async query(provider: QDataProvider, text: string, vars: Record<string, unknown>, orderBy: OrderBy[]) {
+    async query(provider: QDataProvider, text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext) {
         return wrap(this.log, "QUERY", {
             text,
             vars,
         }, async () => {
-            return provider.query(text, vars, orderBy);
+            return provider.query(text, vars, orderBy, request);
         });
     }
 

@@ -368,8 +368,26 @@ export default class TONQServer {
                 {
                     requestDidStart() {
                         return {
+                            didResolveSource(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_didResolveSource");
+                            },
+                            parsingDidStart(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_parsingDidStart");
+                            },
+                            validationDidStart(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_validationDidStart");
+                            },
+                            executionDidStart(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_executionDidStart");
+                            },
                             willSendResponse(ctx) {
                                 const context = ctx.context as QRequestContext;
+                                context.log("Apollo_willSendResponse");
+                                context.writeLog();
                                 if (context.multipleAccessKeysDetected ?? false) {
                                     throw QError.multipleAccessKeys();
                                 }
