@@ -3,4 +3,4 @@ WORKDIR /home/node
 USER node
 ADD . /home/node
 EXPOSE 4000
-ENTRYPOINT ["node", "index.js"]
+ENTRYPOINT ["node", "--trace_gc", "index.js"]

@@ -116,7 +116,7 @@ export class QRequestContext {
     }
 
     writeLog(): void {
-        console.info(JSON.stringify({id: this.id, log: this.log_entries}));
+        console.info(`REQUEST_SUMMARY ${this.id} ${JSON.stringify(this.log_entries)}`);
         // for (const log_entry of this.log_entries) {
         //     console.info(`${this.id} ${log_entry.time} ${log_entry.event_name} ${log_entry.additionalInfo}`);
         // }
