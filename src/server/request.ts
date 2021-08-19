@@ -61,8 +61,8 @@ export class QRequestContext {
     ) {
         this.id = randomUUID();
         this.start = Date.now();
-        this.log("Context_create");
         this.log_entries = [];
+        this.log("Context_create");
         this.events = new EventEmitter();
         this.events.setMaxListeners(0);
         req?.on?.("close", () => {
