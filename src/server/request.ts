@@ -62,7 +62,7 @@ export class QRequestContext {
         this.id = randomUUID();
         this.start = Date.now();
         this.log_entries = [];
-        this.log("Context_create");
+        this.log("Context_create", this.start.toString());
         this.events = new EventEmitter();
         this.events.setMaxListeners(0);
         req?.on?.("close", () => {
@@ -116,7 +116,7 @@ export class QRequestContext {
     }
 
     writeLog(): void {
-        console.info(`REQUEST_SUMMARY ${this.id} ${JSON.stringify(this.log_entries)}`);
+        console.info(`${Date.now()} REQUEST_SUMMARY ${this.id} ${JSON.stringify(this.log_entries)}`);
         // for (const log_entry of this.log_entries) {
         //     console.info(`${this.id} ${log_entry.time} ${log_entry.event_name} ${log_entry.additionalInfo}`);
         // }
