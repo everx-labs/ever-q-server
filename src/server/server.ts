@@ -40,6 +40,7 @@ import {
     STATS,
 } from "./config";
 import {
+    QDataCache,
     QDataCombiner,
     QDataPrecachedCombiner,
     QDataProvider,
@@ -101,6 +102,32 @@ type EndPoint = {
     supportSubscriptions: boolean,
 };
 
+export class MemCache implements QDataCache {
+    data: Map<string, unknown>;
+    getCount: number;
+    setCount: number;
+    lastKey: string;
+
+    constructor() {
+        this.data = new Map();
+        this.getCount = 0;
+        this.setCount = 0;
+        this.lastKey = "";
+    }
+
+    async get(key: string): Promise<unknown | undefined> {
+        this.lastKey = key;
+        this.getCount += 1;
+        return this.data.get(key);
+    }
+
+    async set(key: string, value: unknown): Promise<void> {
+        this.lastKey = key;
+        this.setCount += 1;
+        this.data.set(key, value);
+    }
+}
+
 export class DataProviderFactory {
     providers = new Map<string, QDataProvider>();
 
@@ -134,6 +161,7 @@ export class DataProviderFactory {
         return new QDataPrecachedCombiner(
             this.logs.create(logKey),
             new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
+            // new MemCache(),
             [main],
             this.config.networkName,
             this.config.cacheKeyPrefix,
