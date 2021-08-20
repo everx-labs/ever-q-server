@@ -9,22 +9,24 @@ import type { QDataCache } from "./data-provider";
 export class MemjsDataCache implements QDataCache {
     memcached: MemcachedClient;
     log: QLog;
+    config: QMemCachedConfig;
 
     constructor(log: QLog, config: QMemCachedConfig) {
         this.log = log;
+        this.config = config;
         const options: ClientOptions = {
             logger: {
                 log: () => {
                 },
             },
-            retries: 0, // don't retry
+            retries: 1, // don't retry
             expires: 0, // keepForever
-            timeout: 0.1, // 100ms
-            conntimeout: 0.2, // twice of timeout
+            timeout: 0.5, // 100ms
+            conntimeout: 1.0, // twice of timeout
             keepAlive: true,
             keepAliveDelay: 15,
         } as ClientOptions;
-        this.memcached = MemcachedClient.create(config.server, options);
+        this.memcached = MemcachedClient.create(this.config.server, options);
     }
 
     async get(hashedKey: string): Promise<unknown> {
@@ -62,4 +64,3 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 }
-
