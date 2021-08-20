@@ -954,6 +954,29 @@ export class QDataCollection {
                 text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
                 params: { v: fieldValue },
             };
+        
+        let shard = undefined;
+        switch (this.name) {
+            case "accounts":
+                if (fieldPath == "_key") {
+                    const idPrefix = fieldValue.toString().split(":")[0];
+                    let workchain = parseInt(idPrefix);
+                    if (workchain == -1) {
+                        workchain = 0;
+                    }
+                    if (workchain >= 0 && workchain <= 31) {
+                        shard = workchain.toString(2).padStart(5, "0");
+                    }
+                }
+                break;
+            case "blocks":
+                if (fieldPath == "_key") {
+                    const shard_n = parseInt(fieldValue.toString().substr(0, 2), 16) >> 3;
+                    if (shard_n && shard_n >= 0 && shard_n <= 31) {
+                        shard = shard_n.toString(2).padStart(5, "0");
+                    }
+                }
+        }
 
         const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);
         if (timeout === 0) {
@@ -963,6 +986,7 @@ export class QDataCollection {
                 [],
                 true,
                 request,
+                shard,
             );
             return docs[0] as QDoc;
         }
