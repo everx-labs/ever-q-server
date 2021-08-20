@@ -238,7 +238,7 @@ export default class QBlockchainData extends QData {
         const result = (await collection.provider.query(
             `FOR d IN ${collection.name} SORT d.${field} DESC LIMIT 1 RETURN { maxTime: d.${field} }`,
             {}, [{
-                path: field,
+                path: "maxTime",
                 direction: "DESC",
             }],
             context,
@@ -281,7 +281,7 @@ export default class QBlockchainData extends QData {
                         const curr = summary.reliable_chain_order_upper_boundary ?? "";
                         return curr < prev ? curr : prev;
                     }, "z");
-                    
+
                 this.reliableChainOrderUpperBoundary = {
                     boundary,
                     lastCheckTime: now,
