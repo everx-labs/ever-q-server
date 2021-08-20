@@ -79,12 +79,16 @@ async function postRequestsUsingKafka(requests: Request[], context: QRequestCont
             clientId: "q-server",
             brokers: [config.server],
         }));
+        context.log("postRequest_kafka_before");
         const newProducer = kafka.producer();
+        context.log("postRequest_kafka_producer_created");
         await newProducer.connect();
+        context.log("postRequest_kafka_producer_connected");
         return newProducer;
 
     });
 
+    context.log("postRequest_kafka_message_preparation_start");
     const messages = requests.map((request) => {
         const traceInfo = {};
         context.services.data.tracer.inject(span, FORMAT_TEXT_MAP, traceInfo);
@@ -99,10 +103,13 @@ async function postRequestsUsingKafka(requests: Request[], context: QRequestCont
             value,
         };
     });
-    await producer.send({
+    context.log("postRequest_kafka_sending");
+    const send = producer.send({
         topic: config.topic,
         messages,
     });
+    context.log("postRequest_kafka_sent");
+    await send;
 }
 
 async function checkPostRestrictions(
@@ -137,6 +144,7 @@ async function postRequests(
     args: AccessArgs & { requests: Request[] },
     context: QRequestContext,
 ): Promise<string[]> {
+    context.log("postRequest_resolver_start");
     const requests: (Request[]) | null = args.requests;
     if (!requests) {
         return [];
@@ -149,6 +157,7 @@ async function postRequests(
         config,
     } = context.services;
     return QTracer.trace(tracer, "postRequests", async (span: Span) => {
+        context.log("postRequest_inside_tracer");
         span.setTag("params", requests);
         const accessRights = await context.requireGrantedAccess(args);
         await checkPostRestrictions(config, client, requests, accessRights);
@@ -160,6 +169,7 @@ async function postRequests(
 
         const messageTraceSpans = requests.map((request) => {
             const messageId = Buffer.from(request.id, "base64").toString("hex");
+            context.log("postRequest_resolver_messageId", messageId);
             const postSpan = tracer.startSpan("postRequest", {
                 childOf: QTracer.messageRootSpanContext(messageId),
             });
@@ -170,11 +180,13 @@ async function postRequests(
             return postSpan;
         });
         try {
+            context.log("postRequest_resolver_before_send");
             if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context);
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }
+            context.log("postRequest_resolver_after_send");
             await data.statPostCount.increment();
             data.log.debug("postRequests", "POSTED", args, context.remoteAddress);
         } catch (error) {
