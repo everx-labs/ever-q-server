@@ -21,7 +21,10 @@ export enum QDataEvent {
     UPDATE = "update",
 }
 
+const FETCHING = "FETCHING";
+
 export type QResult = unknown[] | Record<string, unknown> | number | bigint | string | boolean;
+type CacheValue = QResult[] | "FETCHING";
 
 export interface QDataProvider {
     start(collectionsForSubscribe: string[]): Promise<void>;
@@ -45,7 +48,7 @@ export interface QDataProvider {
 export interface QDataCache {
     get(key: string): Promise<unknown>;
 
-    set(key: string, value: unknown): Promise<void>;
+    set(key: string, value: unknown, expirationTimeout: number): Promise<void>;
 }
 
 export class QDataCombiner implements QDataProvider {
@@ -105,7 +108,16 @@ export class QDataPrecachedCombiner extends QDataCombiner {
     cacheKeyPrefix: string;
     configHash: string;
 
-    constructor(log: QLog, cache: QDataCache, providers: QDataProvider[], networkName: string, cacheKeyPrefix: string) {
+    constructor(
+        log: QLog,
+        cache: QDataCache,
+        providers: QDataProvider[],
+        networkName: string,
+        cacheKeyPrefix: string,
+        public dataExpirationTimeout = 0,
+        public fetchingPoolTimeout = 3000,
+        public fetchingExpirationTimeout = 10000,
+    ) {
         super(providers);
         this.log = log;
         this.cache = cache;
@@ -133,11 +145,19 @@ export class QDataPrecachedCombiner extends QDataCombiner {
             orderBy,
         });
         const key = this.cacheKey(aql);
-        let docs = (await this.cache.get(key)) as QResult[];
-        if (isNullOrUndefined(docs)) {
-            request.log("QDataPrecachedCombiner_query_no_cache");
-            docs = await super.query(text, vars, orderBy, request);
-            await this.cache.set(key, docs);
+        let docs: QResult[] | undefined = undefined;
+        while (docs === undefined) {
+            const value = await this.cache.get(key) as CacheValue | undefined | null;
+            if (value === undefined || value === null) {
+                request.log("QDataPrecachedCombiner_query_no_cache");
+                await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
+                docs = await super.query(text, vars, orderBy, request);
+                await this.cache.set(key, docs, this.dataExpirationTimeout);
+            } else if (value === FETCHING) {
+                await new Promise(resolve => setTimeout(resolve, this.fetchingExpirationTimeout));
+            } else {
+                docs = value;
+            }
         }
         request.log("QDataPrecachedCombiner_query_end");
         return docs;

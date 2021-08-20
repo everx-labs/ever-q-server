@@ -47,9 +47,11 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 
-    async set(hashedKey: string, value: unknown): Promise<void> {
+    async set(hashedKey: string, value: unknown, expirationTimeout: number): Promise<void> {
         return new Promise((resolve) => {
-            this.memcached.set(hashedKey, JSON.stringify(value), {}, (err) => {
+            this.memcached.set(hashedKey, JSON.stringify(value), expirationTimeout !== 0
+                ? { expires: expirationTimeout }
+                : {}, (err) => {
                 if (!err) {
                     this.log.debug("SET", hashedKey);
                 } else {

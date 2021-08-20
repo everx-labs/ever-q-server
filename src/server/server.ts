@@ -126,20 +126,34 @@ export class DataProviderFactory {
             };
     }
 
+    preCache(main: QDataProvider | undefined, config: string | undefined, logKey: string, dataExpirationTimeout = 0): QDataProvider | undefined {
+        const cacheConfig = (config ?? "").trim();
+        if (main === undefined || cacheConfig === "") {
+            return main;
+        }
+        return new QDataPrecachedCombiner(
+            this.logs.create(logKey),
+            new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
+            [main],
+            this.config.networkName,
+            this.config.cacheKeyPrefix,
+            dataExpirationTimeout,
+        );
+    }
+
     ensureHotCold(config: QHotColdDataConfig, logKey: string): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
-            const hot = this.ensureDatabases(config.hot, `${logKey}_hot`);
-            let cold = this.ensureDatabases(config.cold, `${logKey}_cold`);
-            const cacheConfig = (config.cache ?? "").trim();
-            if (cold !== undefined && cacheConfig !== "") {
-                cold = new QDataPrecachedCombiner(
-                    this.logs.create(logKey),
-                    new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
-                    [cold],
-                    this.config.networkName,
-                    this.config.cacheKeyPrefix,
-                );
-            }
+            const hot = this.preCache(
+                this.ensureDatabases(config.hot, `${logKey}_hot`),
+                this.config.blockchain.hotCache,
+                logKey,
+                5,
+            );
+            const cold = this.preCache(
+                this.ensureDatabases(config.cold, `${logKey}_cold`),
+                config.cache,
+                logKey,
+            );
             if (hot !== undefined && cold !== undefined) {
                 return new QDataCombiner([hot, cold]);
             }
@@ -259,7 +273,7 @@ export default class TONQServer {
             typeDefFileNames: ["type-defs-mam.graphql"],
             supportSubscriptions: false,
         });
-        const resolvers = createResolvers(this.data as any) as IResolvers;
+        const resolvers = createResolvers(this.data) as IResolvers;
         [
             infoResolvers,
             totalsResolvers,

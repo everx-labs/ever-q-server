@@ -2,7 +2,7 @@ import os from "os";
 import { QError } from "./utils";
 
 function toPascal(s: string): string {
-    return `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}`;
+    return s !== "" ? `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}` : "";
 }
 
 function splitNonEmpty(s: string, separator = ","): string[] {
@@ -64,6 +64,7 @@ type HotColdParams = {
 };
 
 type BlockchainParams = {
+    hotCache: ConfigParam<string>,
     accounts: ConfigParam<string[]>,
     blocks: HotColdParams,
     transactions: HotColdParams,
@@ -186,6 +187,11 @@ export class ConfigParam<T extends ConfigValue> {
     static blockchain(prefix: string): BlockchainParams {
         const zerostatePrefix = withPrefix(prefix, "zerostate");
         return {
+            hotCache: ConfigParam.string(
+                `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache`,
+                "",
+                withPrefix(toPascal(prefix), "hot cache server"),
+            ),
             accounts: ConfigParam.databases(withPrefix(prefix, "accounts")),
             blocks: ConfigParam.hotCold(withPrefix(prefix, "blocks")),
             transactions: ConfigParam.hotCold(withPrefix(prefix, "transactions")),

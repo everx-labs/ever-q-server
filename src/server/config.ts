@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+
+
 import { URL } from "url";
 import { readFileSync } from "fs";
 import {
@@ -72,6 +74,7 @@ export type FilterConfig = {
 };
 
 export type QBlockchainDataConfig = {
+    hotCache?: string,
     accounts: string[],
     blocks: QHotColdDataConfig,
     transactions: QHotColdDataConfig,
