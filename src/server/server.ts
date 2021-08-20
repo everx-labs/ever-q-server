@@ -175,7 +175,7 @@ export class DataProviderFactory {
                 this.ensureDatabases(config.hot, `${logKey}_hot`),
                 this.config.blockchain.hotCache,
                 logKey,
-                5,
+                10,
             );
             const cold = this.preCache(
                 this.ensureDatabases(config.cold, `${logKey}_cold`),

@@ -115,8 +115,8 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         networkName: string,
         cacheKeyPrefix: string,
         public dataExpirationTimeout = 0,
-        public fetchingPoolTimeout = 3000,
-        public fetchingExpirationTimeout = 10000,
+        public fetchingPoolTimeout = 3,
+        public fetchingExpirationTimeout = 10,
     ) {
         super(providers);
         this.log = log;
@@ -154,7 +154,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                 docs = await super.query(text, vars, orderBy, request, shards);
                 await this.cache.set(key, docs, this.dataExpirationTimeout);
             } else if (value === FETCHING) {
-                await new Promise(resolve => setTimeout(resolve, this.fetchingExpirationTimeout));
+                await new Promise(resolve => setTimeout(resolve, this.fetchingPoolTimeout));
             } else {
                 docs = value;
             }
