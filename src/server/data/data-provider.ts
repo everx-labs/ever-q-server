@@ -34,7 +34,7 @@ export interface QDataProvider {
 
     hotUpdate(): Promise<void>;
 
-    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]>;
+    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QResult[]>;
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 

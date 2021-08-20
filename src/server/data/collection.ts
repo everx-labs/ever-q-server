@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 /*
 * Copyright 2018-2020 TON DEV SOLUTIONS LTD.
 *
@@ -59,8 +60,10 @@ import {
     QParams,
     QType,
     QueryStat,
+    ScalarFilter,
     selectionToString,
     splitOr,
+    StructFilter,
 } from "../filter/filters";
 import QLogs, { QLog } from "../logs";
 import {
@@ -511,6 +514,69 @@ export class QDataCollection {
                     query.filter,
                     query.orderBy,
                 ));
+                let shard = undefined;
+                {
+                    const shards = 
+                        splitOr(query.filter).map(orOperand => {
+                            switch(this.name) {
+                                case "accounts": {
+                                    const idFilter = (orOperand as StructFilter)["id"] as ScalarFilter | undefined;
+                                    const idEqFilter = idFilter?.eq;
+                                    const idValue = idEqFilter?.toString();
+                                    const idPrefix = idValue?.split(":")[0] ?? "undefined";
+                                    let workchain = parseInt(idPrefix);
+                                    if (workchain == -1) {
+                                        workchain = 0;
+                                    }
+                                    if (workchain >= 0 && workchain <= 31) {
+                                        return workchain.toString(2).padStart(5, "0");
+                                    }
+                                    return undefined;
+                                }
+                                case "blocks": {
+                                    const idFilter = (orOperand as StructFilter)["id"] as ScalarFilter | undefined;
+                                    const idEqFilter = idFilter?.eq;
+                                    const idValue = idEqFilter?.toString();
+                                    const shard_n = idValue ? (parseInt(idValue.substr(0, 2), 16) >> 3) : undefined;
+                                    if (shard_n && shard_n >= 0 && shard_n <= 31) {
+                                        return shard_n.toString(2).padStart(5, "0");
+                                    }
+                                    return undefined;
+                                }
+                                case "messages": {
+                                    const srcFilter = (orOperand as StructFilter)["src"] as ScalarFilter | undefined;
+                                    const srcValue = srcFilter?.eq?.toString();
+                                    const dstFilter = (orOperand as StructFilter)["dst"] as ScalarFilter | undefined;
+                                    const dstValue = dstFilter?.eq?.toString();
+                                    const idValue = srcValue || dstValue;
+                                    const shard_n = idValue ? (parseInt(idValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
+                                    if (shard_n && shard_n >= 0 && shard_n <= 31) {
+                                        return shard_n.toString(2).padStart(5, "0");
+                                    }
+                                    return undefined;
+                                }
+                                case "transactions": {
+                                    const accountAddrFilter = (orOperand as StructFilter)["account_addr"] as ScalarFilter | undefined;
+                                    const accountAddrValue = accountAddrFilter?.eq?.toString();
+                                    const idValue = accountAddrValue;
+                                    const shard_n = idValue ? (parseInt(idValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
+                                    if (shard_n && shard_n >= 0 && shard_n <= 31) {
+                                        return shard_n.toString(2).padStart(5, "0");
+                                    }
+                                    return undefined;
+                                }
+                                default:
+                                    return undefined;
+                            }
+                        });
+                    shard = shards[0];
+                    for (const s of shards) {
+                        if (shard != s) {
+                            shard = undefined;
+                        }
+                    }
+                }
+
                 if (!isFast) {
                     await this.statQuerySlow.increment();
                 }
@@ -529,14 +595,14 @@ export class QDataCollection {
                 }
                 this.log.debug(
                     "BEFORE_QUERY",
-                    args,
+                    { ...args, shard: shard },
                     isFast ? "FAST" : "SLOW", request.remoteAddress,
                 );
                 request.log("collection_resolver_before_querying", this.name);
                 const start = Date.now();
                 const result = query.timeout > 0
-                    ? await this.queryWaitFor(query, isFast, traceParams, request)
-                    : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request);
+                    ? await this.queryWaitFor(query, isFast, traceParams, request, shard)
+                    : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request, shard);
                 request.log("collection_resolver_after_querying", this.name);
                 this.log.debug(
                     "QUERY",
@@ -582,12 +648,13 @@ export class QDataCollection {
         isFast: boolean,
         traceParams: Record<string, unknown>,
         request: QRequestContext,
+        shard?: string,
     ): Promise<QResult[]> {
         const impl = async (span: Span) => {
             if (traceParams) {
                 span.setTag("params", traceParams);
             }
-            return this.queryProvider(text, vars, orderBy, isFast, request);
+            return this.queryProvider(text, vars, orderBy, isFast, request, shard);
         };
         return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.parentSpan);
     }
@@ -598,10 +665,11 @@ export class QDataCollection {
         orderBy: OrderBy[],
         isFast: boolean,
         request: QRequestContext,
+        shard?: string,
     ): Promise<QResult[]> {
         request.log("collection_queryProvider_start", this.name);
         const provider = required(isFast ? this.provider : this.slowQueriesProvider);
-        const result = provider.query(text, vars, orderBy, request);
+        const result = provider.query(text, vars, orderBy, request, shard);
         request.log("collection_queryProvider_end", this.name);
         return result;
     }
@@ -612,6 +680,7 @@ export class QDataCollection {
         isFast: boolean,
         traceParams: Record<string, unknown> | null,
         request: QRequestContext,
+        shard?: string,
     ): Promise<QDoc[]> {
         const impl = async (span: Span): Promise<QDoc[]> => {
             request.log("collection_queryWaitFor_start", this.name);
@@ -644,6 +713,7 @@ export class QDataCollection {
                             q.orderBy,
                             isFast,
                             request,
+                            shard,
                         ).then((docs) => {
                             hasDbResponse = true;
                             if (!resolvedBy) {
