@@ -98,8 +98,17 @@ export class ArangoProvider implements QDataProvider {
         return Promise.resolve();
     }
 
-    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QDoc[]> {
-        if (shard && !this.config.name.endsWith(shard)) {
+    belongsToShards(shards: string[]) {
+        for (const shard of shards) {
+            if (this.config.name.endsWith(shard)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shards?: string[]): Promise<QDoc[]> {
+        if (shards && !this.belongsToShards(shards)) {
             return [];
         }
 
