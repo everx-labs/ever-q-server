@@ -1006,6 +1006,7 @@ export class QDataCollection {
             true,
             null,
             request,
+            shard,
         );
         return docs[0];
     }
