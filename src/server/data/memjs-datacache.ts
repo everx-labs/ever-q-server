@@ -24,7 +24,7 @@ export class MemjsDataCache implements QDataCache {
             keepAlive: true,
             keepAliveDelay: 15,
         } as ClientOptions;
-        this.memcached = new MemcachedClient(config.server, options);
+        this.memcached = MemcachedClient.create(config.server, options);
     }
 
     async get(hashedKey: string): Promise<unknown> {
