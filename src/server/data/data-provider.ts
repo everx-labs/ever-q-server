@@ -37,7 +37,7 @@ export interface QDataProvider {
 
     hotUpdate(): Promise<void>;
 
-    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]>;
+    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QResult[]>;
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
@@ -83,9 +83,9 @@ export class QDataCombiner implements QDataProvider {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QResult[]> {
         request.log("QDataCombiner_query_start");
-        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request)));
+        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request, shard)));
         request.log("QDataCombiner_query_dataIsFetched");
         const result = combineResults(results, orderBy);
         request.log("QDataCombiner_query_end");
@@ -137,7 +137,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QResult[]> {
         request.log("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
@@ -151,7 +151,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
             if (value === undefined || value === null) {
                 request.log("QDataPrecachedCombiner_query_no_cache");
                 await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
-                docs = await super.query(text, vars, orderBy, request);
+                docs = await super.query(text, vars, orderBy, request, shard);
                 await this.cache.set(key, docs, this.dataExpirationTimeout);
             } else if (value === FETCHING) {
                 await new Promise(resolve => setTimeout(resolve, this.fetchingExpirationTimeout));

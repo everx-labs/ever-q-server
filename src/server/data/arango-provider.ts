@@ -98,7 +98,11 @@ export class ArangoProvider implements QDataProvider {
         return Promise.resolve();
     }
 
-    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext): Promise<QDoc[]> {
+    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QDoc[]> {
+        if (shard && !this.config.name.endsWith(shard)) {
+            return [];
+        }
+
         const impl = async () => {
             request.log("ArangoProvider_query_start", this.config.name);
             const cursor = await this.arango.query(text, vars);
@@ -107,7 +111,7 @@ export class ArangoProvider implements QDataProvider {
             request.log("ArangoProvider_query_end", this.config.name);
             return result;
         };
-        return QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.parentSpan);
+        return await QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.parentSpan);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {

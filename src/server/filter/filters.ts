@@ -29,7 +29,7 @@ import {
 
 const NOT_IMPLEMENTED = new Error("Not Implemented");
 
-interface StructFilter {
+export interface StructFilter {
     [name: string]: CollectionFilter,
 }
 
@@ -1115,5 +1115,3 @@ export function parseOrderBy(s: string): OrderBy[] {
             };
         });
 }
-
-
