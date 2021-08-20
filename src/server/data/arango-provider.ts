@@ -13,6 +13,7 @@ import url from "url";
 import ArangoChair from "arangochair";
 import { QRequestContext } from "../request";
 import { OrderBy } from "../filter/filters";
+import { QTracer } from "../tracer";
 
 type ArangoCollectionDescr = {
     name: string,
@@ -98,12 +99,15 @@ export class ArangoProvider implements QDataProvider {
     }
 
     async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext): Promise<QDoc[]> {
-        request.log("ArangoProvider_query_start", this.config.name);
-        const cursor = await this.arango.query(text, vars);
-        request.log("ArangoProvider_query_cursor_obtained", this.config.name);
-        const result = await cursor.all();
-        request.log("ArangoProvider_query_end", this.config.name);
-        return result;
+        const impl = async () => {
+            request.log("ArangoProvider_query_start", this.config.name);
+            const cursor = await this.arango.query(text, vars);
+            request.log("ArangoProvider_query_cursor_obtained", this.config.name);
+            const result = await cursor.all();
+            request.log("ArangoProvider_query_end", this.config.name);
+            return result;
+        };
+        return QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.parentSpan);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {

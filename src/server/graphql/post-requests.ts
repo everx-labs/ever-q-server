@@ -176,6 +176,7 @@ async function postRequests(
             postSpan.addTags({
                 messageId,
                 messageSize: Math.ceil(request.body.length * 3 / 4),
+                requestId: context.id,
             });
             return postSpan;
         });
