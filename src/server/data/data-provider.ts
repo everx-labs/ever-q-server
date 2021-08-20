@@ -80,9 +80,9 @@ export class QDataCombiner implements QDataProvider {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QResult[]> {
         request.log("QDataCombiner_query_start");
-        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request)));
+        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request, shard)));
         request.log("QDataCombiner_query_dataIsFetched");
         const result = combineResults(results, orderBy);
         request.log("QDataCombiner_query_end");
@@ -125,7 +125,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shard?: string): Promise<QResult[]> {
         request.log("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
@@ -136,7 +136,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         let docs = (await this.cache.get(key)) as QResult[];
         if (isNullOrUndefined(docs)) {
             request.log("QDataPrecachedCombiner_query_no_cache");
-            docs = await super.query(text, vars, orderBy, request);
+            docs = await super.query(text, vars, orderBy, request, shard);
             await this.cache.set(key, docs);
         }
         request.log("QDataPrecachedCombiner_query_end");
