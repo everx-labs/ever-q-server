@@ -158,7 +158,7 @@ async function postRequests(
     } = context.services;
     return QTracer.trace(tracer, "postRequests", async (span: Span) => {
         context.log("postRequest_inside_tracer");
-        span.setTag("params", requests);
+        span.log({ params: requests });
         const accessRights = await context.requireGrantedAccess(args);
         await checkPostRestrictions(config, client, requests, accessRights);
 
@@ -178,7 +178,19 @@ async function postRequests(
                 messageSize: Math.ceil(request.body.length * 3 / 4),
                 requestId: context.id,
             });
-            return postSpan;
+
+            // ----- This is a hack to be able to link messageId with requestContext -----
+            const postSpan2 = tracer.startSpan("postRequests_postRequest", {
+                childOf: span,
+            });
+            postSpan2.addTags({
+                messageId,
+                messageSize: Math.ceil(request.body.length * 3 / 4),
+                requestId: context.id,
+            });
+            // ------------------------------------------------
+
+            return [postSpan, postSpan2];
         });
         try {
             context.log("postRequest_resolver_before_send");
@@ -195,10 +207,10 @@ async function postRequests(
             data.log.debug("postRequests", "FAILED", args, context.remoteAddress);
             throw error;
         } finally {
-            messageTraceSpans.forEach(x => x.finish());
+            messageTraceSpans.forEach(x => x.forEach(y => y.finish()));
         }
         return requests.map(x => x.id);
-    }, context.parentSpan);
+    }, context.requestSpan);
 }
 
 export const postRequestsResolvers = {

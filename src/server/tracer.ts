@@ -372,17 +372,10 @@ export class QTracer {
     ): Promise<T> {
         const span = tracer.startSpan(name, { childOf: parentSpan });
         try {
-            span
-                .setTag(Tags.SPAN_KIND, "server");
-            Object
-                .entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
-                if (name !== "") {
-                    span.setTag(name, value);
-                }
-            });
+            QTracer.attachCommonTags(span);
             const result = await f(span);
             if (result !== undefined) {
-                span.setTag("result", toLog(result));
+                span.log({ result: toLog(result) });
             }
             span.finish();
             return result;
@@ -392,5 +385,16 @@ export class QTracer {
             span.finish();
             throw cleaned;
         }
+    }
+
+    static attachCommonTags(span: Span) {
+        span
+            .setTag(Tags.SPAN_KIND, "server");
+        Object
+            .entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
+            if (name !== "") {
+                span.setTag(name, value);
+            }
+        });
     }
 }

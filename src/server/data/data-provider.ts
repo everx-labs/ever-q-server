@@ -153,9 +153,12 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                 await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
                 docs = await super.query(text, vars, orderBy, request, shards);
                 await this.cache.set(key, docs, this.dataExpirationTimeout);
+                request.requestSpan.setTag("updated_cache", true);
             } else if (value === FETCHING) {
+                request.requestSpan.setTag("waited_for_cache", true);
                 await new Promise(resolve => setTimeout(resolve, this.fetchingPollTimeout * 1000));
             } else {
+                request.requestSpan.setTag("fetched_from_cache", true);
                 docs = value;
             }
         }

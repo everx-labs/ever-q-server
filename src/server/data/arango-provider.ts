@@ -120,7 +120,7 @@ export class ArangoProvider implements QDataProvider {
             request.log("ArangoProvider_query_end", this.config.name);
             return result;
         };
-        return await QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.parentSpan);
+        return await QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.requestSpan);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {
