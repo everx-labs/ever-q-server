@@ -473,6 +473,83 @@ export class QDataCollection {
         };
     }
 
+    static shardNtoShard(n: number | undefined) {
+        if (n && n >= 0 && n <= 31) {
+            return n.toString(2).padStart(5, "0");
+        }
+        return undefined;
+    }
+
+    getAccountsShards(filter: StructFilter) {
+        const idFilter = filter["id"] as ScalarFilter | undefined;
+        const idEqFilter = idFilter?.eq;
+        const idValue = idEqFilter?.toString();
+        const idPrefix = idValue?.split(":")[0] ?? "undefined";
+        let workchain = parseInt(idPrefix);
+        if (workchain == -1) {
+            workchain = 0;
+        }
+        return [QDataCollection.shardNtoShard(workchain)];
+    }
+
+    getBlocksShards(filter: StructFilter) {
+        const idFilter = filter["id"] as ScalarFilter | undefined;
+        const idEqFilter = idFilter?.eq;
+        const idValue = idEqFilter?.toString();
+        const shard_n = idValue ? (parseInt(idValue.substr(0, 2), 16) >> 3) : undefined;
+        return [QDataCollection.shardNtoShard(shard_n)];
+    }
+
+    getMessagesShards(filter: StructFilter) {
+        const srcFilter = filter["src"] as ScalarFilter | undefined;
+        const srcValue = srcFilter?.eq?.toString();
+        const srcShard_n = srcValue ? (parseInt(srcValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
+        const srcShard = QDataCollection.shardNtoShard(srcShard_n);
+
+        const dstFilter = filter["dst"] as ScalarFilter | undefined;
+        const dstValue = dstFilter?.eq?.toString();
+        const dstShard_n = dstValue ? (parseInt(dstValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
+        const dstShard = QDataCollection.shardNtoShard(dstShard_n);
+
+        if (srcShard && dstShard) {
+            return [srcShard, dstShard];
+        }
+        return srcShard ? [srcShard] : [dstShard];
+
+    }
+
+    getTransactionsShards(filter: StructFilter) {
+        const accountAddrFilter = filter["account_addr"] as ScalarFilter | undefined;
+        const idValue = accountAddrFilter?.eq?.toString();
+        const shard_n = idValue ? (parseInt(idValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
+        return [QDataCollection.shardNtoShard(shard_n)];
+    }
+
+    getShards(query: DatabaseQuery) {
+        const shards = splitOr(query.filter).map(orOperand => {
+            const filter = orOperand as StructFilter;
+            switch (this.name) {
+            case "accounts":
+                return this.getAccountsShards(filter);
+            case "blocks":
+                return this.getBlocksShards(filter);
+            case "messages":
+                return this.getMessagesShards(filter);
+            case "transactions":
+                return this.getTransactionsShards(filter);
+            default:
+                return [undefined];
+            }
+        }).flat() as string[];
+
+        for (const s of shards) {
+            if (!s) {
+                return undefined;
+            }
+        }
+        return shards;
+    }
+
     queryResolver() {
         return async (
             _parent: unknown,
@@ -514,75 +591,7 @@ export class QDataCollection {
                     query.filter,
                     query.orderBy,
                 ));
-                let shards = undefined;
-                {
-                    const shards_1 = 
-                        splitOr(query.filter).map(orOperand => {
-                            function shardNtoShard(n: number | undefined) {
-                                if (n && n >= 0 && n <= 31) {
-                                    return n.toString(2).padStart(5, "0");
-                                }
-                                return undefined;
-                            }
-                            switch(this.name) {
-                                case "accounts": {
-                                    const idFilter = (orOperand as StructFilter)["id"] as ScalarFilter | undefined;
-                                    const idEqFilter = idFilter?.eq;
-                                    const idValue = idEqFilter?.toString();
-                                    const idPrefix = idValue?.split(":")[0] ?? "undefined";
-                                    let workchain = parseInt(idPrefix);
-                                    if (workchain == -1) {
-                                        workchain = 0;
-                                    }
-                                    return [shardNtoShard(workchain)];
-                                }
-                                case "blocks": {
-                                    const idFilter = (orOperand as StructFilter)["id"] as ScalarFilter | undefined;
-                                    const idEqFilter = idFilter?.eq;
-                                    const idValue = idEqFilter?.toString();
-                                    const shard_n = idValue ? (parseInt(idValue.substr(0, 2), 16) >> 3) : undefined;
-                                    return [shardNtoShard(shard_n)];
-                                }
-                                case "messages": {
-                                    const srcFilter = (orOperand as StructFilter)["src"] as ScalarFilter | undefined;
-                                    const srcValue = srcFilter?.eq?.toString();
-                                    const srcShard_n = srcValue ? (parseInt(srcValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
-                                    const srcShard = shardNtoShard(srcShard_n);
-
-                                    const dstFilter = (orOperand as StructFilter)["dst"] as ScalarFilter | undefined;
-                                    const dstValue = dstFilter?.eq?.toString();
-                                    const dstShard_n = dstValue ? (parseInt(dstValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
-                                    const dstShard = shardNtoShard(dstShard_n);
-
-                                    if (srcShard && dstShard) {
-                                        return [srcShard, dstShard];
-                                    } else {
-                                        if (srcShard) {
-                                            return [srcShard];
-                                        } else {
-                                            return [dstShard];
-                                        }
-                                    }
-                                }
-                                case "transactions": {
-                                    const accountAddrFilter = (orOperand as StructFilter)["account_addr"] as ScalarFilter | undefined;
-                                    const accountAddrValue = accountAddrFilter?.eq?.toString();
-                                    const idValue = accountAddrValue;
-                                    const shard_n = idValue ? (parseInt(idValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
-                                    return [shardNtoShard(shard_n)];
-                                }
-                                default:
-                                    return [undefined];
-                            }
-                        });
-                        
-                    shards = shards_1.flat() as string[];
-                    for (const s of shards) {
-                        if (!s) {
-                            shards = undefined;
-                        }
-                    }
-                }
+                const shards = this.getShards(query);
 
                 if (!isFast) {
                     await this.statQuerySlow.increment();
@@ -602,7 +611,10 @@ export class QDataCollection {
                 }
                 this.log.debug(
                     "BEFORE_QUERY",
-                    { ...args, shards: shards },
+                    {
+                        ...args,
+                        shards: shards,
+                    },
                     isFast ? "FAST" : "SLOW", request.remoteAddress,
                 );
                 request.log("collection_resolver_before_querying", this.name);
@@ -961,28 +973,28 @@ export class QDataCollection {
                 text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
                 params: { v: fieldValue },
             };
-        
+
         let shards = undefined;
         switch (this.name) {
-            case "accounts":
-                if (fieldPath == "_key") {
-                    const idPrefix = fieldValue.toString().split(":")[0];
-                    let workchain = parseInt(idPrefix);
-                    if (workchain == -1) {
-                        workchain = 0;
-                    }
-                    if (workchain >= 0 && workchain <= 31) {
-                        shards = [workchain.toString(2).padStart(5, "0")];
-                    }
+        case "accounts":
+            if (fieldPath == "_key") {
+                const idPrefix = fieldValue.toString().split(":")[0];
+                let workchain = parseInt(idPrefix);
+                if (workchain == -1) {
+                    workchain = 0;
                 }
-                break;
-            case "blocks":
-                if (fieldPath == "_key") {
-                    const shard_n = parseInt(fieldValue.toString().substr(0, 2), 16) >> 3;
-                    if (shard_n && shard_n >= 0 && shard_n <= 31) {
-                        shards = [shard_n.toString(2).padStart(5, "0")];
-                    }
+                if (workchain >= 0 && workchain <= 31) {
+                    shards = [workchain.toString(2).padStart(5, "0")];
                 }
+            }
+            break;
+        case "blocks":
+            if (fieldPath == "_key") {
+                const shard_n = parseInt(fieldValue.toString().substr(0, 2), 16) >> 3;
+                if (shard_n && shard_n >= 0 && shard_n <= 31) {
+                    shards = [shard_n.toString(2).padStart(5, "0")];
+                }
+            }
         }
 
         const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);
