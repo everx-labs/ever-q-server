@@ -500,14 +500,26 @@ export class QDataCollection {
                     request.services.config,
                 );
                 if (joinQuery !== null) {
-                    const joinedRecords = await join.refCollection.queryProvider(
-                        joinQuery.text,
-                        joinQuery.params,
-                        [],
-                        true,
-                        request,
-                        joinQuery.shards,
-                    ) as Record<string, unknown>[];
+                    const fetcher = async (span: Span) => {
+                        span.log({ text: joinQuery.text, params: joinQuery.params, shards: joinQuery.shards });
+                        return await join.refCollection.queryProvider(
+                            joinQuery.text,
+                            joinQuery.params,
+                            [],
+                            true,
+                            request,
+                            joinQuery.shards,
+                        ) as Record<string, unknown>[];
+                    };
+                    const joinedRecords = await QTracer.trace(request.services.tracer, `${this.name}.query.join`, fetcher, request.requestSpan);
+                    // const joinedRecords = await join.refCollection.queryProvider(
+                    //     joinQuery.text,
+                    //     joinQuery.params,
+                    //     [],
+                    //     true,
+                    //     request,
+                    //     joinQuery.shards,
+                    // ) as Record<string, unknown>[];
                     for (const joinedRecord of joinedRecords) {
                         this.joinRecordToMain(joinPlan, joinedRecord, join);
                     }
