@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { AccessRights } from "../auth";
 import type {
     QDoc,
     QIndexInfo,
@@ -1077,18 +1076,6 @@ export function selectFields(doc: QDoc | unknown[], selection: FieldSelection[])
 export type OrderBy = {
     path: string,
     direction: string,
-};
-
-export type DatabaseQuery = {
-    filter: CollectionFilter,
-    selection: FieldSelection[],
-    orderBy: OrderBy[],
-    limit: number,
-    timeout: number,
-    operationId: string | null,
-    text: string,
-    params: { [name: string]: unknown },
-    accessRights: AccessRights,
 };
 
 export type QueryStat = {

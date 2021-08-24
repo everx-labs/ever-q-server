@@ -37,7 +37,7 @@ export interface QDataProvider {
 
     hotUpdate(): Promise<void>;
 
-    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: string[]): Promise<QResult[]>;
+    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QResult[]>;
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
@@ -83,7 +83,7 @@ export class QDataCombiner implements QDataProvider {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: string[]): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QResult[]> {
         request.log("QDataCombiner_query_start");
         const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request, shards)));
         request.log("QDataCombiner_query_dataIsFetched");
@@ -137,7 +137,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: string[]): Promise<QResult[]> {
+    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QResult[]> {
         request.log("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
