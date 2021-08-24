@@ -284,7 +284,7 @@ function getAccountShard(address: string): number | undefined {
 }
 
 function getTransactionShard(account_address: string): number | undefined {
-    return parseInt(account_address.substr(0, 2), 16) >> 3;
+    return parseInt(account_address.split(":")[1].substr(0, 2), 16) >> 3;
 }
 
 function getBlockShard(id: string): number | undefined {
