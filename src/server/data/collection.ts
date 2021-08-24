@@ -350,13 +350,24 @@ export class QDataCollection {
             if (join.canJoin(record, join.field.arguments as JoinArgs)) {
                 const onValue = record[join.on === "id" ? "_key" : join.on] as string | string[] | null | undefined;
                 if (onValue !== null && onValue !== undefined) {
-                    const onValues = Array.isArray(onValue) ? onValue : [onValue];
-                    for (const value of onValues) {
-                        const valuePlan = plan.get(value);
+                    if (Array.isArray(onValue)) {
+                        const joins: (Record<string, unknown> | null)[] = [];
+                        for (const value of onValue) {
+                            const valuePlan = plan.get(value);
+                            if (valuePlan !== undefined) {
+                                valuePlan.push(record);
+                            } else {
+                                plan.set(value, [record]);
+                            }
+                            joins.push(null);
+                        }
+                        record[join.field.name.value] = joins;
+                    } else {
+                        const valuePlan = plan.get(onValue);
                         if (valuePlan !== undefined) {
                             valuePlan.push(record);
                         } else {
-                            plan.set(value, [record]);
+                            plan.set(onValue, [record]);
                         }
                     }
                 }
@@ -452,14 +463,7 @@ export class QDataCollection {
                     const onField = join.on === "id" ? "_key" : join.on;
                     const mainLinkValues = mainRecord[onField];
                     if (Array.isArray(mainLinkValues)) {
-                        let joins = mainRecord[join.field.name.value] as unknown[] | undefined;
-                        if (joins === undefined) {
-                            joins = new Array(mainLinkValues.length);
-                            for (let i = 0; i < joins.length; i += 1) {
-                                joins[i] = null;
-                            }
-                            mainRecord[join.field.name.value] = joins;
-                        }
+                        const joins = mainRecord[join.field.name.value] as (Record<string, unknown> | null)[];
                         for (let i = 0; i < joins.length; i += 1) {
                             if (mainLinkValues[i] === joinedLinkValue) {
                                 joins[i] = joinedRecord;
@@ -501,7 +505,11 @@ export class QDataCollection {
                 );
                 if (joinQuery !== null) {
                     const fetcher = async (span: Span) => {
-                        span.log({ text: joinQuery.text, params: joinQuery.params, shards: joinQuery.shards });
+                        span.log({
+                            text: joinQuery.text,
+                            params: joinQuery.params,
+                            shards: joinQuery.shards,
+                        });
                         return await join.refCollection.queryProvider(
                             joinQuery.text,
                             joinQuery.params,
@@ -657,7 +665,12 @@ export class QDataCollection {
             if (traceParams) {
                 span.log({ params: traceParams });
             }
-            span.log({ text, vars, orderBy, shards });
+            span.log({
+                text,
+                vars,
+                orderBy,
+                shards,
+            });
             return this.queryProvider(text, vars, orderBy, isFast, request, shards);
         };
         return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.requestSpan);
