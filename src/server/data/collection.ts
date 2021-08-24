@@ -653,6 +653,7 @@ export class QDataCollection {
             if (traceParams) {
                 span.log({ params: traceParams });
             }
+            span.log({ text, vars, orderBy, shards });
             return this.queryProvider(text, vars, orderBy, isFast, request, shards);
         };
         return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.requestSpan);
