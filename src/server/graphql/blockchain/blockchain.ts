@@ -265,7 +265,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             const tracer = context.services.tracer;
             return QTracer.trace(tracer, "blockchain-master_seq_no_range", async () => {
                 return await resolve_maser_seq_no_range(args, context);
-            }, QTracer.getParentSpan(tracer, context));
+            }, context.requestSpan);
         },
         account_transactions: async (parent, args, context, info) => {
             const tracer = context.services.tracer;
@@ -282,7 +282,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                         }
                     },
                 );
-            }, QTracer.getParentSpan(tracer, context));
+            }, context.requestSpan);
         },
         workchain_transactions: async (parent, args, context, info) => {
             const tracer = context.services.tracer;
@@ -300,7 +300,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                         }
                     },
                 );
-            }, QTracer.getParentSpan(tracer, context));
+            }, context.requestSpan);
         },
     },
     Node: {

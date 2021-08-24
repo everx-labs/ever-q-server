@@ -71,7 +71,7 @@ async function counterparties(_parent: unknown, args: CounterpartiesArgs, contex
         ) as CounterpartiesResult[];
         result.forEach(x => x.cursor = `${x.last_message_at}/${x.counterparty}`);
         return result;
-    }, QTracer.getParentSpan(tracer, context));
+    }, context.requestSpan);
 }
 
 export function counterpartiesResolvers(data: QBlockchainData) {

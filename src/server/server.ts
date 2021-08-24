@@ -429,7 +429,7 @@ export default class TONQServer {
                             willSendResponse(ctx) {
                                 const context = ctx.context as QRequestContext;
                                 context.log("Apollo_willSendResponse");
-                                context.writeLog();
+                                context.onRequestFinishing();
                                 if (context.multipleAccessKeysDetected ?? false) {
                                     throw QError.multipleAccessKeys();
                                 }

@@ -651,11 +651,11 @@ export class QDataCollection {
     ): Promise<QResult[]> {
         const impl = async (span: Span) => {
             if (traceParams) {
-                span.setTag("params", traceParams);
+                span.log({ params: traceParams });
             }
             return this.queryProvider(text, vars, orderBy, isFast, request, shards);
         };
-        return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.parentSpan);
+        return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.requestSpan);
     }
 
     async queryProvider(
@@ -683,7 +683,7 @@ export class QDataCollection {
         const impl = async (span: Span): Promise<QDoc[]> => {
             request.log("collection_queryWaitFor_start", this.name);
             if (traceParams) {
-                span.setTag("params", traceParams);
+                span.log({ params: traceParams });
             }
             let waitFor: ((doc: QDoc) => void) | null = null;
             let forceTimerId: unknown | undefined = undefined;
@@ -789,7 +789,7 @@ export class QDataCollection {
                 }
             }
         };
-        return QTracer.trace(this.tracer, `${this.name}.waitFor`, impl, request.parentSpan);
+        return QTracer.trace(this.tracer, `${this.name}.waitFor`, impl, request.requestSpan);
     }
 
     //--------------------------------------------------------- Aggregates
