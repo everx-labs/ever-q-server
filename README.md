@@ -39,6 +39,8 @@ Option                                      ENV                                D
                                                                                                  `sub-queries` – q-server performs parallel queries for each OR operand
                                                                                                   and combines results (this option provides faster execution
                                                                                                   than OR operator in AQL)
+--wait-for-period                           Q_WAIT_FOR_PERIOD                  1000              Wait-for collection polling in ms
+--hot-cache                                 Q_HOT_CACHE                                          hot cache server
 --accounts                                  Q_ACCOUNTS                                           Accounts databases
 --blocks-hot                                Q_BLOCKS_HOT                                         Blocks hot databases
 --blocks-cache                              Q_BLOCKS_CACHE                                       Blocks cache server
@@ -46,12 +48,14 @@ Option                                      ENV                                D
 --transactions-hot                          Q_TRANSACTIONS_HOT                                   Transactions hot databases
 --transactions-cache                        Q_TRANSACTIONS_CACHE                                 Transactions cache server
 --transactions-cold                         Q_TRANSACTIONS_COLD                                  Transactions cold databases
+--zerostate                                 Q_ZEROSTATE                                          Zerostate database
 --counterparties                            Q_COUNTERPARTIES                                     Counterparties databases
 --chain-ranges-verification                 Q_CHAIN_RANGES_VERIFICATION                          Chain ranges verification databases
 --slow-queries                              Q_SLOW_QUERIES                     redirect          Slow queries handling:
                                                                                                  `enable` – process slow queries on the main database
                                                                                                  `redirect` – redirect slow queries to slow-queries database
                                                                                                  `disable` – fail on slow queries
+--slow-queries-hot-cache                    Q_SLOW_QUERIES_HOT_CACHE                             Slow queries hot cache server
 --slow-queries-accounts                     Q_SLOW_QUERIES_ACCOUNTS                              Slow queries accounts databases
 --slow-queries-blocks-hot                   Q_SLOW_QUERIES_BLOCKS_HOT                            Slow queries blocks hot databases
 --slow-queries-blocks-cache                 Q_SLOW_QUERIES_BLOCKS_CACHE                          Slow queries blocks cache server
@@ -59,6 +63,7 @@ Option                                      ENV                                D
 --slow-queries-transactions-hot             Q_SLOW_QUERIES_TRANSACTIONS_HOT                      Slow queries transactions hot databases
 --slow-queries-transactions-cache           Q_SLOW_QUERIES_TRANSACTIONS_CACHE                    Slow queries transactions cache server
 --slow-queries-transactions-cold            Q_SLOW_QUERIES_TRANSACTIONS_COLD                     Slow queries transactions cold databases
+--slow-queries-zerostate                    Q_SLOW_QUERIES_ZEROSTATE                             Slow queries zerostate database
 --data-mut (DEPRECATED)                     Q_DATA_MUT                         arangodb          Data mutable db config url
 --data-hot (DEPRECATED)                     Q_DATA_HOT                         arangodb          Data hot db config url
 --data-cold (DEPRECATED)                    Q_DATA_COLD                                          Data cold db config urls (comma separated)

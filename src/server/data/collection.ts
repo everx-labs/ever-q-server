@@ -740,7 +740,7 @@ export class QDataCollection {
                                     const now = Date.now();
                                     const checkDuration = now - checkStart;
                                     const timeLeft = queryTimeoutAt - now;
-                                    const toWait = Math.min(5_000, timeLeft - 2 * checkDuration, timeLeft - 100);
+                                    const toWait = Math.min(request.services.config.waitForPeriod, timeLeft - 2 * checkDuration, timeLeft - 100);
                                     forceTimerId = setTimeout(check, Math.max(toWait, 0));
                                 }
                             }

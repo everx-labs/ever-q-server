@@ -39,6 +39,7 @@ export type QConfig = {
         topic: string,
         maxSize: number,
     },
+    waitForPeriod: number,
     blockchain: QBlockchainDataConfig,
     counterparties: string[],
     chainRangesVerification: string[],
@@ -140,6 +141,7 @@ export const configParams = {
             " than OR operator in AQL)",
         ),
     },
+    waitForPeriod: ConfigParam.integer("wait-for-period", 1000, "Wait-for collection polling in ms"),
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
@@ -397,5 +399,3 @@ export function resolveConfig(
     }
     return config;
 }
-
-
