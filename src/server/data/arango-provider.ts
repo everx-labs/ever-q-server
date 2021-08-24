@@ -30,6 +30,7 @@ export class ArangoProvider implements QDataProvider {
 
     started: boolean;
     arango: Database;
+    shard: string;
     collectionsForSubscribe: string[];
     listener: ArangoChair | null;
     listenerSubscribers: EventEmitter;
@@ -52,6 +53,7 @@ export class ArangoProvider implements QDataProvider {
             const authParts = config.auth.split(":");
             this.arango.useBasicAuth(authParts[0], authParts.slice(1).join(":"));
         }
+        this.shard = config.name.slice(-5);
         this.collectionsForSubscribe = [];
         this.listener = null;
         this.listenerSubscribers = new EventEmitter();
@@ -98,20 +100,11 @@ export class ArangoProvider implements QDataProvider {
         return Promise.resolve();
     }
 
-    belongsToShards(shards: string[]) {
-        for (const shard of shards) {
-            if (this.config.name.endsWith(shard)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shards?: string[]): Promise<QDoc[]> {
-        if (shards && !this.belongsToShards(shards)) {
+    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QDoc[]> {
+        if (shards !== undefined && !shards.has(this.shard)) {
             return [];
         }
-
+        console.log("arango");
         const impl = async () => {
             request.log("ArangoProvider_query_start", this.config.name);
             const cursor = await this.arango.query(text, vars);

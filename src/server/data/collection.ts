@@ -41,29 +41,21 @@ import {
     grantedAccess,
 } from "../auth";
 import {
-    FilterConfig,
-    FilterOrConversion,
     QConfig,
     SlowQueriesMode,
     STATS,
 } from "../config";
 import {
     CollectionFilter,
-    collectReturnExpressions,
-    combineReturnExpressions,
-    DatabaseQuery,
-    FieldSelection,
     indexToString,
+    JoinArgs,
     mergeFieldWithSelectionSet,
     OrderBy,
     parseSelectionSet,
     QParams,
     QType,
     QueryStat,
-    ScalarFilter,
     selectionToString,
-    splitOr,
-    StructFilter,
 } from "../filter/filters";
 import QLogs, { QLog } from "../logs";
 import {
@@ -86,11 +78,16 @@ import EventEmitter from "events";
 import {
     FieldNode,
     SelectionSetNode,
+    ValueNode,
 } from "graphql";
 import {
     QRequestContext,
     RequestEvent,
 } from "../request";
+import {
+    joinFields,
+} from "../graphql/resolvers-generated";
+import { QCollectionQuery } from "./collection-query";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
@@ -113,6 +110,16 @@ export type QCollectionOptions = {
     stats: IStats,
 
     isTests: boolean,
+};
+
+type JoinInfo = {
+    on: string,
+    refCollection: QDataCollection,
+    refOn: string,
+    refOnIsArray: boolean,
+    field: FieldNode,
+    args: JoinArgs,
+    canJoin: (parent: Record<string, unknown>, args: JoinArgs) => boolean,
 };
 
 export class QDataCollection {
@@ -282,143 +289,6 @@ export class QDataCollection {
 
     // Queries
 
-    getAdditionalCondition(accessRights: AccessRights, params: QParams) {
-        const accounts = accessRights.restrictToAccounts;
-        if (accounts.length === 0) {
-            return "";
-        }
-        const condition = accounts.length === 1
-            ? `== @${params.add(accounts[0])}`
-            : `IN [${accounts.map(x => `@${params.add(x)}`).join(",")}]`;
-        switch (this.name) {
-        case "accounts":
-            return `doc._key ${condition}`;
-        case "transactions":
-            return `doc.account_addr ${condition}`;
-        case "messages":
-            return `(doc.src ${condition}) OR (doc.dst ${condition})`;
-        default:
-            return "";
-        }
-    }
-
-    buildFilterCondition(
-        filter: { [name: string]: unknown },
-        params: QParams,
-        accessRights: AccessRights,
-    ): string | null {
-        const primaryCondition = Object.keys(filter).length > 0
-            ? this.docType.filterCondition(params, "doc", filter)
-            : "";
-        const additionalCondition = this.getAdditionalCondition(accessRights, params);
-        if (primaryCondition === "false" || additionalCondition === "false") {
-            return null;
-        }
-        return (primaryCondition && additionalCondition)
-            ? `(${primaryCondition}) AND (${additionalCondition})`
-            : (primaryCondition || additionalCondition);
-
-    }
-
-    buildReturnExpression(selectionSet: SelectionSetNode | undefined, orderBy: OrderBy[]): string {
-        const expressions = new Map();
-        expressions.set("_key", "doc._key");
-        const fields = this.docType.fields;
-        if (fields) {
-            collectReturnExpressions(expressions, "doc", selectionSet, fields);
-            if (orderBy.length > 0) {
-                let orderBySelectionSet: SelectionSetNode | undefined = undefined;
-                for (const item of orderBy) {
-                    orderBySelectionSet = mergeFieldWithSelectionSet(item.path, orderBySelectionSet);
-                }
-                collectReturnExpressions(
-                    expressions,
-                    "doc",
-                    orderBySelectionSet,
-                    fields,
-                );
-            }
-        }
-        expressions.delete("id");
-        return combineReturnExpressions(expressions);
-    }
-
-    createDatabaseQuery(
-        args: {
-            filter?: CollectionFilter,
-            orderBy?: OrderBy[],
-            limit?: number,
-            timeout?: number,
-            operationId?: string,
-        },
-        selectionSet: SelectionSetNode | undefined,
-        accessRights: AccessRights,
-        config?: FilterConfig,
-    ): DatabaseQuery | null {
-        const orderBy: OrderBy[] = args.orderBy || [];
-        const orderByText = orderBy
-            .map((field) => {
-                const direction = (field.direction && field.direction.toLowerCase() === "desc")
-                    ? " DESC"
-                    : "";
-                return `doc.${field.path.replace(/\bid\b/gi, "_key")}${direction}`;
-            })
-            .join(", ");
-
-        const sortSection = orderByText !== "" ? `SORT ${orderByText}` : "";
-        const limit: number = Math.min(args.limit || 50, 50);
-        const limitSection = `LIMIT ${limit}`;
-
-        const params = new QParams();
-        const orConversion = config?.orConversion ?? FilterOrConversion.SUB_QUERIES;
-        const useSubQueries = orConversion === FilterOrConversion.SUB_QUERIES;
-        const filter = args.filter ?? {};
-        const subFilters = useSubQueries ? splitOr(filter) : [filter];
-
-        const texts: string[] = [];
-
-        for (const subFilter of subFilters) {
-            const condition = this.buildFilterCondition(subFilter, params, accessRights);
-            if (condition !== null) {
-                const filterSection = condition ? `FILTER ${condition}` : "";
-                const returnExpression = this.buildReturnExpression(selectionSet, orderBy);
-                texts.push(`
-                    FOR doc IN ${this.name}
-                    ${filterSection}
-                    ${sortSection}
-                    ${limitSection}
-                    RETURN ${returnExpression}
-                `);
-            }
-        }
-
-        if (texts.length === 0) {
-            return null;
-        }
-
-        const text = texts.length === 1
-            ? texts[0]
-            : `
-                FOR doc IN UNION_DISTINCT(${texts.map(x => `${x}`).join(", ")})
-                ${sortSection}
-                ${limitSection}
-                RETURN doc`;
-        const timeout = Number(args.timeout) || 0;
-        const selection: FieldSelection[] = parseSelectionSet(selectionSet, this.name);
-
-        return {
-            filter,
-            selection,
-            orderBy,
-            limit,
-            timeout,
-            operationId: args.operationId || null,
-            text,
-            params: params.values,
-            accessRights,
-        };
-    }
-
     async isFastQuery(
         text: string,
         filter: CollectionFilter,
@@ -455,7 +325,7 @@ export class QDataCollection {
             },
         ) => {
             await this.checkRefreshInfo();
-            const q = this.createDatabaseQuery(args, undefined, grantedAccess);
+            const q = QCollectionQuery.create(this.name, this.docType, args, undefined, grantedAccess);
             if (!q) {
                 return { isFast: true };
             }
@@ -473,81 +343,182 @@ export class QDataCollection {
         };
     }
 
-    static shardNtoShard(n: number | undefined) {
-        if (n && n >= 0 && n <= 31) {
-            return n.toString(2).padStart(5, "0");
-        }
-        return undefined;
-    }
 
-    getAccountsShards(filter: StructFilter) {
-        const idFilter = filter["id"] as ScalarFilter | undefined;
-        const idEqFilter = idFilter?.eq;
-        const idValue = idEqFilter?.toString();
-        const idPrefix = idValue?.split(":")[0] ?? "undefined";
-        let workchain = parseInt(idPrefix);
-        if (workchain == -1) {
-            workchain = 0;
-        }
-        return [QDataCollection.shardNtoShard(workchain)];
-    }
-
-    getBlocksShards(filter: StructFilter) {
-        const idFilter = filter["id"] as ScalarFilter | undefined;
-        const idEqFilter = idFilter?.eq;
-        const idValue = idEqFilter?.toString();
-        const shard_n = idValue ? (parseInt(idValue.substr(0, 2), 16) >> 3) : undefined;
-        return [QDataCollection.shardNtoShard(shard_n)];
-    }
-
-    getMessagesShards(filter: StructFilter) {
-        const srcFilter = filter["src"] as ScalarFilter | undefined;
-        const srcValue = srcFilter?.eq?.toString();
-        const srcShard_n = srcValue ? (parseInt(srcValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
-        const srcShard = QDataCollection.shardNtoShard(srcShard_n);
-
-        const dstFilter = filter["dst"] as ScalarFilter | undefined;
-        const dstValue = dstFilter?.eq?.toString();
-        const dstShard_n = dstValue ? (parseInt(dstValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
-        const dstShard = QDataCollection.shardNtoShard(dstShard_n);
-
-        if (srcShard && dstShard) {
-            return [srcShard, dstShard];
-        }
-        return srcShard ? [srcShard] : [dstShard];
-
-    }
-
-    getTransactionsShards(filter: StructFilter) {
-        const accountAddrFilter = filter["account_addr"] as ScalarFilter | undefined;
-        const idValue = accountAddrFilter?.eq?.toString();
-        const shard_n = idValue ? (parseInt(idValue.split(":")[1].substr(0, 2), 16) >> 3) : undefined;
-        return [QDataCollection.shardNtoShard(shard_n)];
-    }
-
-    getShards(query: DatabaseQuery) {
-        const shards = splitOr(query.filter).map(orOperand => {
-            const filter = orOperand as StructFilter;
-            switch (this.name) {
-            case "accounts":
-                return this.getAccountsShards(filter);
-            case "blocks":
-                return this.getBlocksShards(filter);
-            case "messages":
-                return this.getMessagesShards(filter);
-            case "transactions":
-                return this.getTransactionsShards(filter);
-            default:
-                return [undefined];
-            }
-        }).flat() as string[];
-
-        for (const s of shards) {
-            if (!s) {
-                return undefined;
+    static buildJoinPlan(mainRecords: Record<string, unknown>[], join: JoinInfo): Map<string, Record<string, unknown>[]> {
+        const plan = new Map<string, Record<string, unknown>[]>();
+        for (const record of mainRecords) {
+            if (join.canJoin(record, join.field.arguments as JoinArgs)) {
+                const onValue = record[join.on === "id" ? "_key" : join.on] as string | string[] | null | undefined;
+                if (onValue !== null && onValue !== undefined) {
+                    const onValues = Array.isArray(onValue) ? onValue : [onValue];
+                    for (const value of onValues) {
+                        const valuePlan = plan.get(value);
+                        if (valuePlan !== undefined) {
+                            valuePlan.push(record);
+                        } else {
+                            plan.set(value, [record]);
+                        }
+                    }
+                }
             }
         }
-        return shards;
+        return plan;
+    }
+
+    static parseValue(node: ValueNode): unknown {
+        switch (node.kind) {
+        case "StringValue":
+            return node.value;
+        case "IntValue":
+            return parseInt(node.value);
+        case "ObjectValue": {
+            const obj: Record<string, unknown> = {};
+            for (const field of node.fields) {
+                obj[field.name.value] = this.parseValue(field.value);
+            }
+            return obj;
+        }
+        case "BooleanValue":
+            return node.value;
+        case "EnumValue":
+            return node.value;
+        case "FloatValue":
+            return Number(node.value);
+        case "NullValue":
+            return null;
+        case "ListValue": {
+            const list = [];
+            for (const item of node.values) {
+                list.push(this.parseValue(item));
+            }
+            return list;
+        }
+        default:
+            return undefined;
+        }
+    }
+
+    static parseArgs(field: FieldNode): Record<string, unknown> {
+        const args: Record<string, unknown> = {};
+        for (const arg of field.arguments ?? []) {
+            const value = this.parseValue(arg.value);
+            if (value !== undefined) {
+                args[arg.name.value] = value;
+            }
+        }
+        return args;
+    }
+
+    static getJoinSummary(
+        mainCollectionName: string,
+        mainSelection: SelectionSetNode | undefined,
+        request: QRequestContext,
+    ): JoinInfo[] {
+        const joins: JoinInfo[] = [];
+
+        for (const field of (mainSelection?.selections ?? [])) {
+            if (field.kind === "Field") {
+                const join = joinFields.get(`${mainCollectionName}.${field.name.value}`);
+                if (join !== undefined) {
+                    const refCollection = request.services.data.collectionsByName.get(join.collection);
+                    const refOnIsArray = join.refOn.endsWith("[*]");
+                    if (refCollection !== undefined) {
+                        joins.push({
+                            on: join.on,
+                            refCollection,
+                            refOn: refOnIsArray ? join.refOn.slice(0, -3) : join.refOn,
+                            refOnIsArray,
+                            field,
+                            args: this.parseArgs(field) as JoinArgs,
+                            canJoin: join.canJoin,
+                        });
+                    }
+                }
+            }
+        }
+        return joins;
+    }
+
+    static joinRecordToMain(
+        mainRecordsByOnValue: Map<string, Record<string, unknown>[]>,
+        joinedRecord: Record<string, unknown>,
+        join: JoinInfo,
+    ) {
+        const joinedLinkValues = joinedRecord[join.refOn === "id" ? "_key" : join.refOn] as string;
+        for (const joinedLinkValue of Array.isArray(joinedLinkValues) ? joinedLinkValues : [joinedLinkValues]) {
+            const mainRecords = mainRecordsByOnValue.get(joinedLinkValue);
+            if (mainRecords !== undefined) {
+                for (const mainRecord of mainRecords) {
+                    const onField = join.on === "id" ? "_key" : join.on;
+                    const mainLinkValues = mainRecord[onField];
+                    if (Array.isArray(mainLinkValues)) {
+                        let joins = mainRecord[onField] as unknown[] | undefined;
+                        if (joins === undefined) {
+                            joins = new Array(mainLinkValues.length);
+                            for (let i = 0; i < joins.length; i += 1) {
+                                joins[i] = null;
+                            }
+                            mainRecord[join.field.name.value] = joins;
+                        }
+                        for (let i = 0; i < joins.length; i += 1) {
+                            if (mainLinkValues[i] === joinedLinkValue) {
+                                joins[i] = joinedRecord;
+                            }
+                        }
+                    } else {
+                        mainRecord[join.field.name.value] = joinedRecord;
+                    }
+                }
+                mainRecordsByOnValue.delete(joinedLinkValue);
+            }
+        }
+    }
+
+    static async fetchJoinedRecords(
+        mainCollection: QDataCollection,
+        mainRecords: Record<string, unknown>[],
+        mainSelection: SelectionSetNode | undefined,
+        accessRights: AccessRights,
+        defaultTimeout: number | undefined,
+        request: QRequestContext,
+    ): Promise<Record<string, unknown>[]> {
+        const joins = QDataCollection.getJoinSummary(mainCollection.name, mainSelection, request);
+        for (const join of joins) {
+            const joinPlan = QDataCollection.buildJoinPlan(mainRecords, join);
+            const fieldSelection = mergeFieldWithSelectionSet(join.refOn, join.field.selectionSet);
+            const timeout = join.args.timeout ?? defaultTimeout ?? 0;
+            const timeLimit = Date.now() + timeout;
+            while (joinPlan.size > 0) {
+                const joinQuery = QCollectionQuery.createForJoin(
+                    [...joinPlan.keys()],
+                    join.refCollection.name,
+                    join.refCollection.docType,
+                    join.refOn,
+                    join.refOnIsArray,
+                    fieldSelection,
+                    accessRights,
+                    request.services.config,
+                );
+                if (joinQuery !== null) {
+                    const joinedRecords = await join.refCollection.queryProvider(
+                        joinQuery.text,
+                        joinQuery.params,
+                        [],
+                        true,
+                        request,
+                        joinQuery.shards,
+                    ) as Record<string, unknown>[];
+                    for (const joinedRecord of joinedRecords) {
+                        this.joinRecordToMain(joinPlan, joinedRecord, join);
+                    }
+                    await QDataCollection.fetchJoinedRecords(join.refCollection, joinedRecords, fieldSelection, accessRights, defaultTimeout, request);
+                }
+                if (Date.now() > timeLimit) {
+                    break;
+                }
+            }
+        }
+        return mainRecords;
     }
 
     queryResolver() {
@@ -562,7 +533,7 @@ export class QDataCollection {
                 operationId?: string,
             },
             request: QRequestContext,
-            info: {
+            selection: {
                 fieldNodes: FieldNode[],
             },
         ) => wrap(this.log, "QUERY", args, async () => {
@@ -575,9 +546,11 @@ export class QDataCollection {
             try {
                 request.log("collection_resolver_start", this.name);
                 const accessRights = await request.requireGrantedAccess(args);
-                const query = this.createDatabaseQuery(
+                const query = QCollectionQuery.create(
+                    this.name,
+                    this.docType,
                     args,
-                    info.fieldNodes[0].selectionSet,
+                    selection.fieldNodes[0].selectionSet,
                     accessRights,
                     request.services.config.filter,
                 );
@@ -591,7 +564,6 @@ export class QDataCollection {
                     query.filter,
                     query.orderBy,
                 ));
-                const shards = this.getShards(query);
 
                 if (!isFast) {
                     await this.statQuerySlow.increment();
@@ -613,15 +585,26 @@ export class QDataCollection {
                     "BEFORE_QUERY",
                     {
                         ...args,
-                        shards: shards,
+                        shards: query.shards,
                     },
                     isFast ? "FAST" : "SLOW", request.remoteAddress,
                 );
                 request.log("collection_resolver_before_querying", this.name);
                 const start = Date.now();
-                const result = query.timeout > 0
-                    ? await this.queryWaitFor(query, isFast, traceParams, request, shards)
-                    : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request, shards);
+                const records = query.timeout > 0
+                    ? await this.queryWaitFor(query, isFast, traceParams, request)
+                    : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request, query.shards);
+                if (records.length > query.limit) {
+                    records.splice(query.limit);
+                }
+                await QDataCollection.fetchJoinedRecords(
+                    this,
+                    records as Record<string, unknown>[],
+                    selection.fieldNodes[0].selectionSet,
+                    query.accessRights,
+                    query.timeout,
+                    request,
+                );
                 request.log("collection_resolver_after_querying", this.name);
                 this.log.debug(
                     "QUERY",
@@ -629,10 +612,7 @@ export class QDataCollection {
                     (Date.now() - start) / 1000,
                     isFast ? "FAST" : "SLOW", request.remoteAddress,
                 );
-                if (result.length > query.limit) {
-                    result.splice(query.limit);
-                }
-                return result;
+                return records;
             } catch (error) {
                 await this.statQueryFailed.increment();
                 if (queryProcessing.created) {
@@ -667,7 +647,7 @@ export class QDataCollection {
         isFast: boolean,
         traceParams: Record<string, unknown>,
         request: QRequestContext,
-        shards?: string[],
+        shards?: Set<string>,
     ): Promise<QResult[]> {
         const impl = async (span: Span) => {
             if (traceParams) {
@@ -684,7 +664,7 @@ export class QDataCollection {
         orderBy: OrderBy[],
         isFast: boolean,
         request: QRequestContext,
-        shards?: string[],
+        shards?: Set<string>,
     ): Promise<QResult[]> {
         request.log("collection_queryProvider_start", this.name);
         const provider = required(isFast ? this.provider : this.slowQueriesProvider);
@@ -695,11 +675,10 @@ export class QDataCollection {
 
 
     async queryWaitFor(
-        q: DatabaseQuery,
+        q: QCollectionQuery,
         isFast: boolean,
         traceParams: Record<string, unknown> | null,
         request: QRequestContext,
-        shards?: string[],
     ): Promise<QDoc[]> {
         const impl = async (span: Span): Promise<QDoc[]> => {
             request.log("collection_queryWaitFor_start", this.name);
@@ -732,7 +711,7 @@ export class QDataCollection {
                             q.orderBy,
                             isFast,
                             request,
-                            shards,
+                            q.shards,
                         ).then((docs) => {
                             hasDbResponse = true;
                             if (!resolvedBy) {
@@ -815,7 +794,6 @@ export class QDataCollection {
 
     //--------------------------------------------------------- Aggregates
 
-
     createAggregationQuery(
         filter: CollectionFilter,
         fields: FieldAggregation[],
@@ -826,7 +804,7 @@ export class QDataCollection {
         queries: AggregationQuery[],
     } | null {
         const params = new QParams();
-        const condition = this.buildFilterCondition(filter, params, accessRights);
+        const condition = QCollectionQuery.buildFilterCondition(this.name, this.docType, filter, params, accessRights);
         if (condition === null) {
             return null;
         }
@@ -984,7 +962,7 @@ export class QDataCollection {
                     workchain = 0;
                 }
                 if (workchain >= 0 && workchain <= 31) {
-                    shards = [workchain.toString(2).padStart(5, "0")];
+                    shards = new Set([workchain.toString(2).padStart(5, "0")]);
                 }
             }
             break;
@@ -992,7 +970,7 @@ export class QDataCollection {
             if (fieldPath == "_key") {
                 const shard_n = parseInt(fieldValue.toString().substr(0, 2), 16) >> 3;
                 if (shard_n && shard_n >= 0 && shard_n <= 31) {
-                    shards = [shard_n.toString(2).padStart(5, "0")];
+                    shards = new Set([shard_n.toString(2).padStart(5, "0")]);
                 }
             }
         }
@@ -1021,11 +999,11 @@ export class QDataCollection {
                 text: queryParams.text,
                 params: queryParams.params,
                 accessRights: Auth.accessGranted,
+                shards,
             },
             true,
             null,
             request,
-            shards,
         );
         return docs[0];
     }

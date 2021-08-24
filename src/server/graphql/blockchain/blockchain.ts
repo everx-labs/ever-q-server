@@ -14,6 +14,7 @@ import {
     BlockchainTransactionsConnection,
     Resolvers,
 } from "./resolvers-types-generated";
+import { QCollectionQuery } from "../../data/collection-query";
 
 const enum Direction {
     Forward,
@@ -84,7 +85,7 @@ function toU64String(value: number): string {
 }
 
 async function prepareChainOrderFilter(
-    args: BlockchainQueryAccount_TransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs, 
+    args: BlockchainQueryAccount_TransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs,
     params: QParams,
     filters: string[],
     context: QRequestContext,
@@ -143,7 +144,7 @@ async function resolve_transactions(
 
     await prepareChainOrderFilter(args, params, filters, context);
     prepareAccountFilter(params, filters);
-    
+
     const accessFilter = getAccountAccessRestictionCondition(parent.accessRights, params);
     if (accessFilter) {
         filters.push(accessFilter);
@@ -167,7 +168,7 @@ async function resolve_transactions(
     }
     const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
     const direction = (args.last || args.before) ? Direction.Backward : Direction.Forward;
-    
+
     // get node selection set
     const edgesNode =
         info.fieldNodes[0].selectionSet?.selections
@@ -186,7 +187,8 @@ async function resolve_transactions(
 
     // build return expression
     const orderBy = [{ path: "chain_order", direction: "ASC" }];
-    const returnExpression = context.services.data.transactions.buildReturnExpression(
+    const returnExpression = QCollectionQuery.buildReturnExpression(
+        context.services.data.transactions.docType,
         selectionSet,
         orderBy,
     );
@@ -306,7 +308,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             // it could fail if parent is a value from db instead of a value with resolved fields
             // need to test
             switch(parent.id.split("/")[0]) {
-                case "transaction": 
+                case "transaction":
                     return "BlockchainTransaction";
                 default:
                     return null;

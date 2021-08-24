@@ -52,6 +52,7 @@ import {
     cloneDeep,
 } from "../server/utils";
 import fetch from "node-fetch";
+import { QCollectionQuery } from "../server/data/collection-query";
 
 jest.setTimeout(100000);
 
@@ -82,7 +83,9 @@ export function selectionInfo(r: string) {
 
 export function queryText(collection: QDataCollection, result: string, orderBy?: OrderBy[]): string {
     return normalized(
-        collection.createDatabaseQuery(
+        QCollectionQuery.create(
+            collection.name,
+            collection.docType,
             {
                 filter: {},
                 orderBy,

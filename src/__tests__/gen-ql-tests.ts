@@ -19,6 +19,7 @@ import {
 } from "graphql";
 import { grantedAccess } from "../server/auth";
 import { FilterOrConversion } from "../server/config";
+import { QCollectionQuery } from "../server/data/collection-query";
 
 type Blocks = {
     blocks: {
@@ -106,7 +107,9 @@ return doc
 test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs());
     const withOr = normalized(
-        data.messages.createDatabaseQuery(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
             {
                 filter: {
                     src: { eq: "1" },
@@ -135,7 +138,9 @@ test("OR conversions", () => {
     `));
 
     const withSubQueries = normalized(
-        data.messages.createDatabaseQuery(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
             {
                 filter: {
                     src: { eq: "1" },
