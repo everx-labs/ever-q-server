@@ -452,7 +452,7 @@ export class QDataCollection {
                     const onField = join.on === "id" ? "_key" : join.on;
                     const mainLinkValues = mainRecord[onField];
                     if (Array.isArray(mainLinkValues)) {
-                        let joins = mainRecord[onField] as unknown[] | undefined;
+                        let joins = mainRecord[join.field.name.value] as unknown[] | undefined;
                         if (joins === undefined) {
                             joins = new Array(mainLinkValues.length);
                             for (let i = 0; i < joins.length; i += 1) {
@@ -512,14 +512,6 @@ export class QDataCollection {
                         ) as Record<string, unknown>[];
                     };
                     const joinedRecords = await QTracer.trace(request.services.tracer, `${this.name}.query.join`, fetcher, request.requestSpan);
-                    // const joinedRecords = await join.refCollection.queryProvider(
-                    //     joinQuery.text,
-                    //     joinQuery.params,
-                    //     [],
-                    //     true,
-                    //     request,
-                    //     joinQuery.shards,
-                    // ) as Record<string, unknown>[];
                     for (const joinedRecord of joinedRecords) {
                         this.joinRecordToMain(joinPlan, joinedRecord, join);
                     }
