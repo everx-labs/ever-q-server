@@ -148,11 +148,11 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         let docs: QResult[] | undefined = undefined;
         while (docs === undefined) {
             const value = await this.cache.get(key) as CacheValue | undefined | null;
-            if (value === undefined || value === null || (value != FETCHING && value.length === 0)) {
+            if (value === undefined || value === null) {
                 request.log("QDataPrecachedCombiner_query_no_cache");
                 await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
                 docs = await super.query(text, vars, orderBy, request, shards);
-                await this.cache.set(key, docs, this.dataExpirationTimeout);
+                await this.cache.set(key, docs, (docs.length) ? this.dataExpirationTimeout : Math.min(this.dataExpirationTimeout, 2));
                 request.requestSpan.setTag("updated_cache", true);
             } else if (value === FETCHING) {
                 request.requestSpan.setTag("waited_for_cache", true);

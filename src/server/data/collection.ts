@@ -686,7 +686,7 @@ export class QDataCollection {
     ): Promise<QResult[]> {
         request.log("collection_queryProvider_start", this.name);
         const provider = required(isFast ? this.provider : this.slowQueriesProvider);
-        const result = provider.query(text, vars, orderBy, request, shards);
+        const result = await provider.query(text, vars, orderBy, request, shards);
         request.log("collection_queryProvider_end", this.name);
         return result;
     }
