@@ -6,13 +6,12 @@ import type { QLog } from "../logs";
 import type {
     QDataEvent,
     QDataProvider,
+    QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
 } from "./data-provider";
 import url from "url";
 import ArangoChair from "arangochair";
-import { QRequestContext } from "../request";
-import { OrderBy } from "../filter/filters";
 
 type ArangoCollectionDescr = {
     name: string,
@@ -99,7 +98,15 @@ export class ArangoProvider implements QDataProvider {
         return Promise.resolve();
     }
 
-    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QDoc[]> {
+    async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
+        const {
+            shards,
+            request,
+            text,
+            vars,
+            traceSpan,
+        } = params;
+
         if (shards !== undefined && !shards.has(this.shard)) {
             return [];
         }
@@ -112,7 +119,7 @@ export class ArangoProvider implements QDataProvider {
             request.log("ArangoProvider_query_end", this.config.name);
             return result;
         };
-        return request.trace(`arangoQuery.${this.config.name}`, impl);
+        return traceSpan.traceChildOperation(`arangoQuery.${this.config.name}`, impl);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {

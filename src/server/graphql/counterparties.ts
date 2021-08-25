@@ -39,7 +39,7 @@ export const Counterparty = struct({
 }, true);
 
 async function counterparties(_parent: unknown, args: CounterpartiesArgs, context: QRequestContext): Promise<CounterpartiesResult[]> {
-    return context.trace("counterparties", async () => {
+    return context.trace("counterparties", async traceSpan => {
         await context.requireGrantedAccess(args);
         let text = "FOR doc IN counterparties FILTER doc.account == @account";
         const vars: Record<string, unknown> = {
@@ -59,13 +59,16 @@ async function counterparties(_parent: unknown, args: CounterpartiesArgs, contex
 
         const result = await context.services.data.query(
             required(context.services.data.counterparties.provider),
-            text,
-            vars,
-            [{
-                path: "last_message_at,counterparty",
-                direction: "DESC",
-            }],
-            context,
+            {
+                text,
+                vars,
+                orderBy: [{
+                    path: "last_message_at,counterparty",
+                    direction: "DESC",
+                }],
+                request: context,
+                traceSpan,
+            }
         ) as CounterpartiesResult[];
         result.forEach(x => x.cursor = `${x.last_message_at}/${x.counterparty}`);
         return result;

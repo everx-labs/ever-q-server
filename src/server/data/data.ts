@@ -22,7 +22,6 @@ import { STATS } from "../config";
 import type { QLog } from "../logs";
 import QLogs from "../logs";
 import type {
-    OrderBy,
     QType,
 } from "../filter/filters";
 import { Tracer } from "opentracing";
@@ -31,9 +30,9 @@ import type { IStats } from "../stats";
 import { wrap } from "../utils";
 import type {
     QDataProvider,
+    QDataProviderQueryParams,
     QIndexInfo,
 } from "./data-provider";
-import { QRequestContext } from "../request";
 
 export type QBlockchainDataProvider = {
     blocks?: QDataProvider,
@@ -173,12 +172,12 @@ export default class QData {
         }
     }
 
-    async query(provider: QDataProvider, text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext) {
+    async query(provider: QDataProvider, queryParams: QDataProviderQueryParams) {
         return wrap(this.log, "QUERY", {
-            text,
-            vars,
+            text: queryParams.text,
+            vars: queryParams.vars,
         }, async () => {
-            return provider.query(text, vars, orderBy, request);
+            return provider.query(queryParams);
         });
     }
 

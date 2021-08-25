@@ -2,6 +2,7 @@ import type { OrderBy } from "../filter/filters";
 import { hash } from "../utils";
 import type { QLog } from "../logs";
 import { QRequestContext } from "../request";
+import QTraceSpan from "../tracing/trace-span";
 
 export type QIndexInfo = {
     fields: string[],
@@ -26,6 +27,15 @@ const FETCHING = "FETCHING";
 export type QResult = unknown[] | Record<string, unknown> | number | bigint | string | boolean;
 type CacheValue = QResult[] | "FETCHING";
 
+export type QDataProviderQueryParams = {
+    text: string,
+    vars: Record<string, unknown>,
+    orderBy: OrderBy[],
+    request: QRequestContext,
+    shards?: Set<string>,
+    traceSpan: QTraceSpan,
+};
+
 export interface QDataProvider {
     start(collectionsForSubscribe: string[]): Promise<void>;
 
@@ -37,7 +47,7 @@ export interface QDataProvider {
 
     hotUpdate(): Promise<void>;
 
-    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QResult[]>;
+    query(params: QDataProviderQueryParams): Promise<QResult[]>;
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
@@ -83,12 +93,12 @@ export class QDataCombiner implements QDataProvider {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QResult[]> {
-        request.log("QDataCombiner_query_start");
-        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy, request, shards)));
-        request.log("QDataCombiner_query_dataIsFetched");
-        const result = combineResults(results, orderBy);
-        request.log("QDataCombiner_query_end");
+    async query(params: QDataProviderQueryParams): Promise<QResult[]> {
+        params.request.log("QDataCombiner_query_start");
+        const results = await Promise.all(this.providers.map(x => x.query(params)));
+        params.request.log("QDataCombiner_query_dataIsFetched");
+        const result = combineResults(results, params.orderBy);
+        params.request.log("QDataCombiner_query_end");
         return result;
     }
 
@@ -137,7 +147,14 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QResult[]> {
+    async query(params: QDataProviderQueryParams): Promise<QResult[]> {
+        const {
+            request,
+            text,
+            vars,
+            orderBy,
+            traceSpan,
+        } = params;
         request.log("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
@@ -147,18 +164,18 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         const key = this.cacheKey(aql);
         let docs: QResult[] | undefined = undefined;
         while (docs === undefined) {
-            const value = await request.trace("QDataPrecachedCombiner_cache_get", async (span) => {
+            const value = await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_get", async (span) => {
                 span.setTag("cache_key", key);
                 return await this.cache.get(key) as CacheValue | undefined | null;
             });
             if (value === undefined || value === null) {
                 request.log("QDataPrecachedCombiner_query_no_cache");
-                await request.trace("QDataPrecachedCombiner_cache_set_fetching", async (span) => {
+                await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_set_fetching", async (span) => {
                     span.setTag("cache_key", key);
                     await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
                 });
-                docs = await super.query(text, vars, orderBy, request, shards);
-                await request.trace("QDataPrecachedCombiner_cache_set_result", async (span) => {
+                docs = await super.query(params);
+                await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_set_result", async (span) => {
                     span.setTag("cache_key", key);
                     await this.cache.set(key, docs, (docs && docs.length > 0) ? this.dataExpirationTimeout : Math.min(this.dataExpirationTimeout, 2));
                 });
