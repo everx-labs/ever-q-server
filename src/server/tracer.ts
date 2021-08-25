@@ -81,8 +81,7 @@ export class QTracer {
                 reporter: {
                     logSpans: true,
                     agentHost: parts.host,
-                    agentPort: Number(parts.port)
-                    ,
+                    agentPort: Number(parts.port),
                 },
             }
             : {
@@ -143,17 +142,6 @@ export class QTracer {
         return tracer.extract(ctx_frm, ctx_src);
     }
 
-    static getParentSpan(_tracer: Tracer, context: { parentSpan?: Span | SpanContext }): Span | SpanContext | undefined {
-        return context.parentSpan;
-    }
-
-    static failed(_tracer: Tracer, span: Span, error: Error) {
-        span.log({
-            event: "failed",
-            payload: toLog(error),
-        });
-    }
-
     static async trace<T>(
         tracer: Tracer,
         name: string,
@@ -171,7 +159,7 @@ export class QTracer {
             return result;
         } catch (error) {
             const cleaned = cleanError(error);
-            QTracer.failed(tracer, span, cleaned);
+            span.log({ event: "failed", payload: toLog(error) });
             span.finish();
             throw cleaned;
         }

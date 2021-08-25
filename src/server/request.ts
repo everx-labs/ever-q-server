@@ -20,7 +20,6 @@ import EventEmitter from "events";
 import { QError } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
-import { randomUUID } from "crypto";
 import { IStats } from "./stats";
 
 export class QRequestServices {
@@ -43,9 +42,7 @@ export const RequestEvent = {
 };
 
 export class QRequestContext {
-    id: string;
     start: number;
-    log_entries: {time: number, event_name: string, additionalInfo?: string}[];
     events: EventEmitter;
     remoteAddress: string;
     accessKey: string;
@@ -54,15 +51,16 @@ export class QRequestContext {
     multipleAccessKeysDetected = false;
     parentSpan: Span | SpanContext | undefined;
     requestSpan: Span;
+    requestTags = {
+        hasWaitFor: false,
+    };
 
     constructor(
         public services: QRequestServices,
         public req: express.Request | undefined,
         public connection: ExecutionParams | undefined,
     ) {
-        this.id = randomUUID();
         this.start = Date.now();
-        this.log_entries = [];
         this.events = new EventEmitter();
         this.events.setMaxListeners(0);
         req?.on?.("close", () => {
@@ -76,6 +74,7 @@ export class QRequestContext {
         });
         QTracer.attachCommonTags(this.requestSpan);
         this.requestSpan.log({
+            headers: req?.headers,
             request_body: req?.body,
         });
         this.log("Context_create", this.start.toString());
@@ -117,19 +116,15 @@ export class QRequestContext {
 
     log(event_name: string, additionalInfo?: string): void {
         const logEntry = {
-            time: Date.now() - this.start, 
-            event_name, 
-            additionalInfo
+            event: event_name,
+            info: additionalInfo,
+            time: Date.now() - this.start,
         };
-        this.log_entries.push(logEntry);
         this.requestSpan.log(logEntry);
     }
 
     onRequestFinishing(): void {
+        this.requestSpan.addTags(this.requestTags);
         this.requestSpan.finish();
-        //console.info(`${Date.now()} REQUEST_SUMMARY ${this.id} ${JSON.stringify(this.log_entries)}`);
-        // for (const log_entry of this.log_entries) {
-        //     console.info(`${this.id} ${log_entry.time} ${log_entry.event_name} ${log_entry.additionalInfo}`);
-        // }
     }
 }

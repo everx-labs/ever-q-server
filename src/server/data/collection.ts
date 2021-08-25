@@ -568,6 +568,7 @@ export class QDataCollection {
         request: QRequestContext,
     ): Promise<QDoc[]> {
         const impl = async (span: Span): Promise<QDoc[]> => {
+            request.requestTags.hasWaitFor = true;
             request.log("collection_queryWaitFor_start", this.name);
             if (traceParams) {
                 span.log({ params: traceParams });
