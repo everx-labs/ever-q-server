@@ -48,8 +48,6 @@ import {
 import {
     CollectionFilter,
     indexToString,
-    JoinArgs,
-    mergeFieldWithSelectionSet,
     OrderBy,
     parseSelectionSet,
     QParams,
@@ -78,16 +76,13 @@ import EventEmitter from "events";
 import {
     FieldNode,
     SelectionSetNode,
-    ValueNode,
 } from "graphql";
 import {
     QRequestContext,
     RequestEvent,
 } from "../request";
-import {
-    joinFields,
-} from "../graphql/resolvers-generated";
 import { QCollectionQuery } from "./collection-query";
+import { QJoinQuery } from "./collection-joins";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
@@ -110,16 +105,6 @@ export type QCollectionOptions = {
     stats: IStats,
 
     isTests: boolean,
-};
-
-type JoinInfo = {
-    on: string,
-    refCollection: QDataCollection,
-    refOn: string,
-    refOnIsArray: boolean,
-    field: FieldNode,
-    args: JoinArgs,
-    canJoin: (parent: Record<string, unknown>, args: JoinArgs) => boolean,
 };
 
 export class QDataCollection {
@@ -343,194 +328,127 @@ export class QDataCollection {
         };
     }
 
-
-    static buildJoinPlan(mainRecords: Record<string, unknown>[], join: JoinInfo): Map<string, Record<string, unknown>[]> {
-        const plan = new Map<string, Record<string, unknown>[]>();
-        for (const record of mainRecords) {
-            if (join.canJoin(record, join.field.arguments as JoinArgs)) {
-                const onValue = record[join.on === "id" ? "_key" : join.on] as string | string[] | null | undefined;
-                if (onValue !== null && onValue !== undefined) {
-                    if (Array.isArray(onValue)) {
-                        const joins: (Record<string, unknown> | null)[] = [];
-                        for (const value of onValue) {
-                            const valuePlan = plan.get(value);
-                            if (valuePlan !== undefined) {
-                                valuePlan.push(record);
-                            } else {
-                                plan.set(value, [record]);
-                            }
-                            joins.push(null);
-                        }
-                        record[join.field.name.value] = joins;
-                    } else {
-                        const valuePlan = plan.get(onValue);
-                        if (valuePlan !== undefined) {
-                            valuePlan.push(record);
-                        } else {
-                            plan.set(onValue, [record]);
-                        }
-                    }
-                }
-            }
-        }
-        return plan;
-    }
-
-    static parseValue(node: ValueNode): unknown {
-        switch (node.kind) {
-        case "StringValue":
-            return node.value;
-        case "IntValue":
-            return parseInt(node.value);
-        case "ObjectValue": {
-            const obj: Record<string, unknown> = {};
-            for (const field of node.fields) {
-                obj[field.name.value] = this.parseValue(field.value);
-            }
-            return obj;
-        }
-        case "BooleanValue":
-            return node.value;
-        case "EnumValue":
-            return node.value;
-        case "FloatValue":
-            return Number(node.value);
-        case "NullValue":
-            return null;
-        case "ListValue": {
-            const list = [];
-            for (const item of node.values) {
-                list.push(this.parseValue(item));
-            }
-            return list;
-        }
-        default:
-            return undefined;
-        }
-    }
-
-    static parseArgs(field: FieldNode): Record<string, unknown> {
-        const args: Record<string, unknown> = {};
-        for (const arg of field.arguments ?? []) {
-            const value = this.parseValue(arg.value);
-            if (value !== undefined) {
-                args[arg.name.value] = value;
-            }
-        }
-        return args;
-    }
-
-    static getJoinSummary(
-        mainCollectionName: string,
-        mainSelection: SelectionSetNode | undefined,
-        request: QRequestContext,
-    ): JoinInfo[] {
-        const joins: JoinInfo[] = [];
-
-        for (const field of (mainSelection?.selections ?? [])) {
-            if (field.kind === "Field") {
-                const join = joinFields.get(`${mainCollectionName}.${field.name.value}`);
-                if (join !== undefined) {
-                    const refCollection = request.services.data.collectionsByName.get(join.collection);
-                    const refOnIsArray = join.refOn.endsWith("[*]");
-                    if (refCollection !== undefined) {
-                        joins.push({
-                            on: join.on,
-                            refCollection,
-                            refOn: refOnIsArray ? join.refOn.slice(0, -3) : join.refOn,
-                            refOnIsArray,
-                            field,
-                            args: this.parseArgs(field) as JoinArgs,
-                            canJoin: join.canJoin,
-                        });
-                    }
-                }
-            }
-        }
-        return joins;
-    }
-
-    static joinRecordToMain(
-        mainRecordsByOnValue: Map<string, Record<string, unknown>[]>,
-        joinedRecord: Record<string, unknown>,
-        join: JoinInfo,
-    ) {
-        const joinedLinkValues = joinedRecord[join.refOn === "id" ? "_key" : join.refOn] as string;
-        for (const joinedLinkValue of Array.isArray(joinedLinkValues) ? joinedLinkValues : [joinedLinkValues]) {
-            const mainRecords = mainRecordsByOnValue.get(joinedLinkValue);
-            if (mainRecords !== undefined) {
-                for (const mainRecord of mainRecords) {
-                    const onField = join.on === "id" ? "_key" : join.on;
-                    const mainLinkValues = mainRecord[onField];
-                    if (Array.isArray(mainLinkValues)) {
-                        const joins = mainRecord[join.field.name.value] as (Record<string, unknown> | null)[];
-                        for (let i = 0; i < joins.length; i += 1) {
-                            if (mainLinkValues[i] === joinedLinkValue) {
-                                joins[i] = joinedRecord;
-                            }
-                        }
-                    } else {
-                        mainRecord[join.field.name.value] = joinedRecord;
-                    }
-                }
-                mainRecordsByOnValue.delete(joinedLinkValue);
-            }
-        }
-    }
-
-    static async fetchJoinedRecords(
-        mainCollection: QDataCollection,
-        mainRecords: Record<string, unknown>[],
-        mainSelection: SelectionSetNode | undefined,
+    async optimizeSortedQueryWithSingleResult(
+        args: {
+            accessKey?: string | null,
+            filter?: CollectionFilter,
+            orderBy?: OrderBy[],
+            limit?: number,
+            timeout?: number,
+            operationId?: string,
+        },
         accessRights: AccessRights,
-        defaultTimeout: number | undefined,
         request: QRequestContext,
-    ): Promise<Record<string, unknown>[]> {
-        const joins = QDataCollection.getJoinSummary(mainCollection.name, mainSelection, request);
-        for (const join of joins) {
-            const joinPlan = QDataCollection.buildJoinPlan(mainRecords, join);
-            const fieldSelection = mergeFieldWithSelectionSet(join.refOn, join.field.selectionSet);
-            const timeout = join.args.timeout ?? defaultTimeout ?? 0;
-            const timeLimit = Date.now() + timeout;
-            while (joinPlan.size > 0) {
-                const joinQuery = QCollectionQuery.createForJoin(
-                    [...joinPlan.keys()],
-                    join.refCollection.name,
-                    join.refCollection.docType,
-                    join.refOn,
-                    join.refOnIsArray,
-                    fieldSelection,
-                    accessRights,
-                    request.services.config,
-                );
-                if (joinQuery !== null) {
-                    const fetcher = async (span: Span) => {
-                        span.log({
-                            text: joinQuery.text,
-                            params: joinQuery.params,
-                            shards: joinQuery.shards,
-                        });
-                        return await join.refCollection.queryProvider(
-                            joinQuery.text,
-                            joinQuery.params,
-                            [],
-                            true,
-                            request,
-                            joinQuery.shards,
-                        ) as Record<string, unknown>[];
-                    };
-                    const joinedRecords = await QTracer.trace(request.services.tracer, `${this.name}.query.join`, fetcher, request.requestSpan);
-                    for (const joinedRecord of joinedRecords) {
-                        this.joinRecordToMain(joinPlan, joinedRecord, join);
-                    }
-                    await QDataCollection.fetchJoinedRecords(join.refCollection, joinedRecords, fieldSelection, accessRights, defaultTimeout, request);
-                }
-                if (Date.now() > timeLimit) {
-                    break;
-                }
-            }
+    ) {
+        if (args.orderBy === undefined || args.orderBy.length === 0) {
+            return;
         }
-        return mainRecords;
+        if (args.limit === undefined || args.limit !== 1) {
+            return;
+        }
+        const selection: SelectionSetNode = {
+            kind: "SelectionSet",
+            selections: [
+                {
+                    kind: "Field",
+                    name: {
+                        kind: "Name",
+                        value: "id",
+                    },
+                },
+            ],
+        };
+        const query = QCollectionQuery.create(
+            this.name,
+            this.docType,
+            args,
+            selection,
+            accessRights,
+            request.services.config.filter,
+        );
+        if (query === null) {
+            args.filter = { id: { in: [] } };
+            return;
+        }
+        const records = await this.fetchRecords(query, args, selection, request);
+        if (records.length !== 1) {
+            if (records.length === 0) {
+                args.filter = { id: { in: [] } };
+            }
+            return;
+        }
+        const id = (records[0] as Record<string, unknown>)["_key"] as string;
+        args.filter = { id: { eq: id } };
+        args.orderBy = undefined;
+    }
+
+    async fetchRecords(
+        query: QCollectionQuery,
+        args: {
+            accessKey?: string | null,
+            filter?: CollectionFilter,
+            orderBy?: OrderBy[],
+            limit?: number,
+            timeout?: number,
+            operationId?: string,
+        },
+        selection: SelectionSetNode | undefined,
+        request: QRequestContext,
+    ): Promise<QResult[]> {
+        const isFast = await checkIsFast(request.services.config, () => this.isFastQuery(
+            query.text,
+            query.filter,
+            query.orderBy,
+        ));
+
+        if (!isFast) {
+            await this.statQuerySlow.increment();
+        }
+        const traceParams: Record<string, unknown> = {
+            filter: query.filter,
+            selection: selectionToString(query.selection),
+        };
+        if (query.orderBy.length > 0) {
+            traceParams.orderBy = query.orderBy;
+        }
+        if (query.limit !== 50) {
+            traceParams.limit = query.limit;
+        }
+        if (query.timeout > 0) {
+            traceParams.timeout = query.timeout;
+        }
+        this.log.debug(
+            "BEFORE_QUERY",
+            {
+                ...args,
+                shards: query.shards,
+            },
+            isFast ? "FAST" : "SLOW", request.remoteAddress,
+        );
+        request.log("collection_resolver_before_querying", this.name);
+        const start = Date.now();
+        const records = query.timeout > 0
+            ? await this.queryWaitFor(query, isFast, traceParams, request)
+            : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request, query.shards);
+        if (records.length > query.limit) {
+            records.splice(query.limit);
+        }
+        await QJoinQuery.fetchJoinedRecords(
+            this,
+            records as Record<string, unknown>[],
+            selection,
+            query.accessRights,
+            query.timeout,
+            request,
+        );
+        request.log("collection_resolver_after_querying", this.name);
+        this.log.debug(
+            "QUERY",
+            args,
+            (Date.now() - start) / 1000,
+            isFast ? "FAST" : "SLOW", request.remoteAddress,
+        );
+        return records;
     }
 
     queryResolver() {
@@ -558,11 +476,13 @@ export class QDataCollection {
             try {
                 request.log("collection_resolver_start", this.name);
                 const accessRights = await request.requireGrantedAccess(args);
+                const selectionSet = selection.fieldNodes[0].selectionSet;
+                await this.optimizeSortedQueryWithSingleResult(args, accessRights, request);
                 const query = QCollectionQuery.create(
                     this.name,
                     this.docType,
                     args,
-                    selection.fieldNodes[0].selectionSet,
+                    selectionSet,
                     accessRights,
                     request.services.config.filter,
                 );
@@ -571,60 +491,7 @@ export class QDataCollection {
                     return [];
                 }
                 queryProcessing.created = true;
-                const isFast = await checkIsFast(request.services.config, () => this.isFastQuery(
-                    query.text,
-                    query.filter,
-                    query.orderBy,
-                ));
-
-                if (!isFast) {
-                    await this.statQuerySlow.increment();
-                }
-                const traceParams: Record<string, unknown> = {
-                    filter: query.filter,
-                    selection: selectionToString(query.selection),
-                };
-                if (query.orderBy.length > 0) {
-                    traceParams.orderBy = query.orderBy;
-                }
-                if (query.limit !== 50) {
-                    traceParams.limit = query.limit;
-                }
-                if (query.timeout > 0) {
-                    traceParams.timeout = query.timeout;
-                }
-                this.log.debug(
-                    "BEFORE_QUERY",
-                    {
-                        ...args,
-                        shards: query.shards,
-                    },
-                    isFast ? "FAST" : "SLOW", request.remoteAddress,
-                );
-                request.log("collection_resolver_before_querying", this.name);
-                const start = Date.now();
-                const records = query.timeout > 0
-                    ? await this.queryWaitFor(query, isFast, traceParams, request)
-                    : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, request, query.shards);
-                if (records.length > query.limit) {
-                    records.splice(query.limit);
-                }
-                await QDataCollection.fetchJoinedRecords(
-                    this,
-                    records as Record<string, unknown>[],
-                    selection.fieldNodes[0].selectionSet,
-                    query.accessRights,
-                    query.timeout,
-                    request,
-                );
-                request.log("collection_resolver_after_querying", this.name);
-                this.log.debug(
-                    "QUERY",
-                    args,
-                    (Date.now() - start) / 1000,
-                    isFast ? "FAST" : "SLOW", request.remoteAddress,
-                );
-                return records;
+                return await this.fetchRecords(query, args, selectionSet, request);
             } catch (error) {
                 await this.statQueryFailed.increment();
                 if (queryProcessing.created) {
