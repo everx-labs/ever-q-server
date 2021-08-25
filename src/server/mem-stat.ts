@@ -1,5 +1,5 @@
 import v8 from "v8";
-import { IStats } from "./tracer";
+import { IStats } from "./stats";
 
 export class MemStats {
     stats: IStats;
@@ -43,4 +43,3 @@ export class MemStats {
         }, 60000);
     }
 }
-

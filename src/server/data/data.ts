@@ -26,8 +26,8 @@ import type {
     QType,
 } from "../filter/filters";
 import { Tracer } from "opentracing";
-import { StatsCounter } from "../tracer";
-import type { IStats } from "../tracer";
+import { StatsCounter } from "../stats";
+import type { IStats } from "../stats";
 import { wrap } from "../utils";
 import type {
     QDataProvider,

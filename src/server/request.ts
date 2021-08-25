@@ -11,7 +11,6 @@ import {
     Tracer,
 } from "opentracing";
 import {
-    IStats,
     QTracer,
 } from "./tracer";
 import { TonClient } from "@tonclient/core";
@@ -22,6 +21,7 @@ import { QError } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
 import { randomUUID } from "crypto";
+import { IStats } from "./stats";
 
 export class QRequestServices {
     constructor(

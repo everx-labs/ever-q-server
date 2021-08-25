@@ -65,11 +65,13 @@ import type {
 import { totalsResolvers } from "./graphql/totals";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
-import type { IStats } from "./tracer";
-import {
+import type { IStats } from "./stats";
+import { 
     QStats,
+    StatsCounter
+} from "./stats";
+import {
     QTracer,
-    StatsCounter,
 } from "./tracer";
 import { Tracer } from "opentracing";
 import {

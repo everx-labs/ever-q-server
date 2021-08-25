@@ -62,10 +62,12 @@ import {
 } from "../filter/slow-detector";
 import {
     IStats,
-    QTracer,
     StatsCounter,
     StatsGauge,
     StatsTiming,
+} from "../stats";
+import {
+    QTracer,
 } from "../tracer";
 import {
     QError,
