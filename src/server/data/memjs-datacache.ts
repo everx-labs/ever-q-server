@@ -19,7 +19,7 @@ export class MemjsDataCache implements QDataCache {
                 log: () => {
                 },
             },
-            retries: 1, // don't retry
+            retries: 1, // retry once
             expires: 0, // keepForever
             timeout: 0.5, // 100ms
             conntimeout: 1.0, // twice of timeout
