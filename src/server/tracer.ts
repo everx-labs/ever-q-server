@@ -150,6 +150,7 @@ export class QTracer {
     ): Promise<T> {
         const span = tracer.startSpan(name, { childOf: parentSpan });
         try {
+            span.setTag(Tags.SPAN_KIND, "server");
             QTracer.attachCommonTags(span);
             const result = await f(span);
             if (result !== undefined) {
@@ -166,8 +167,6 @@ export class QTracer {
     }
 
     static attachCommonTags(span: Span) {
-        span
-            .setTag(Tags.SPAN_KIND, "server");
         Object
             .entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
             if (name !== "") {

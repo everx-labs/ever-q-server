@@ -21,6 +21,7 @@ import fetch, { RequestInit } from "node-fetch";
 import { QTracer } from "../tracer";
 import { QError } from "../utils";
 import { QRequestContext } from "../request";
+import QTraceSpan from "../tracing/trace-span";
 
 type Request = {
     id: string,
@@ -156,7 +157,7 @@ async function postRequests(
         data,
         config,
     } = context.services;
-    return QTracer.trace(tracer, "postRequests", async (span: Span) => {
+    return context.trace("postRequests", async (span: QTraceSpan) => {
         context.log("postRequest_inside_tracer");
         span.log({ params: requests });
         const accessRights = await context.requireGrantedAccess(args);
@@ -176,17 +177,13 @@ async function postRequests(
             postSpan.addTags({
                 messageId,
                 messageSize: Math.ceil(request.body.length * 3 / 4),
-                requestId: context.id,
             });
 
             // ----- This is a hack to be able to link messageId with requestContext -----
-            const postSpan2 = tracer.startSpan("postRequests_postRequest", {
-                childOf: span,
-            });
+            const postSpan2 = span.createChildSpan("postRequests_postRequest");
             postSpan2.addTags({
                 messageId,
                 messageSize: Math.ceil(request.body.length * 3 / 4),
-                requestId: context.id,
             });
             // ------------------------------------------------
 
@@ -197,7 +194,7 @@ async function postRequests(
             if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context);
             } else {
-                await postRequestsUsingKafka(requests, context, span);
+                await postRequestsUsingKafka(requests, context, span.span);
             }
             context.log("postRequest_resolver_after_send");
             await data.statPostCount.increment();
@@ -210,7 +207,7 @@ async function postRequests(
             messageTraceSpans.forEach(x => x.forEach(y => y.finish()));
         }
         return requests.map(x => x.id);
-    }, context.requestSpan);
+    });
 }
 
 export const postRequestsResolvers = {

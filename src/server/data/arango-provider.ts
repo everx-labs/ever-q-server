@@ -13,7 +13,6 @@ import url from "url";
 import ArangoChair from "arangochair";
 import { QRequestContext } from "../request";
 import { OrderBy } from "../filter/filters";
-import { QTracer } from "../tracer";
 
 type ArangoCollectionDescr = {
     name: string,
@@ -113,7 +112,7 @@ export class ArangoProvider implements QDataProvider {
             request.log("ArangoProvider_query_end", this.config.name);
             return result;
         };
-        return await QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.requestSpan);
+        return request.trace(`arangoQuery.${this.config.name}`, impl);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {

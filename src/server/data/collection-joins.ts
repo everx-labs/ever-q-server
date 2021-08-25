@@ -10,14 +10,13 @@ import {
 import { QRequestContext } from "../request";
 import { AccessRights } from "../auth";
 import { QCollectionQuery } from "./collection-query";
-import { Span } from "opentracing";
-import { QTracer } from "../tracer";
 import { QDataCollection } from "./collection";
 import {
     joinFields,
 } from "../graphql/resolvers-generated";
 import QData from "./data";
 import QBlockchainData from "./blockchain";
+import QTraceSpan from "../tracing/trace-span";
 
 export class QJoinQuery {
     on: string;
@@ -150,7 +149,7 @@ export class QJoinQuery {
                 request.services.config,
             );
             if (joinQuery !== null) {
-                const fetcher = async (span: Span) => {
+                const fetcher = async (span: QTraceSpan) => {
                     span.log({
                         text: joinQuery.text,
                         params: joinQuery.params,
@@ -165,7 +164,7 @@ export class QJoinQuery {
                         joinQuery.shards,
                     ) as Record<string, unknown>[];
                 };
-                const joinedRecords = await QTracer.trace(request.services.tracer, `${mainCollection.name}.query.join`, fetcher, request.requestSpan);
+                const joinedRecords = await request.trace(`${mainCollection.name}.query.join`, fetcher);
                 for (const joinedRecord of joinedRecords) {
                     this.joinRecordToMain(joinPlan, joinedRecord);
                 }

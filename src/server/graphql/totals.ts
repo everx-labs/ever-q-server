@@ -1,17 +1,15 @@
 import { QResult } from "../data/data-provider";
 import { AccessArgs } from "../auth";
 import { QRequestContext } from "../request";
-import { QTracer } from "../tracer";
 import { required } from "../utils";
 
 //------------------------------------------------------------- Query
 
 async function getAccountsCount(_parent: Record<string, unknown>, args: AccessArgs, context: QRequestContext): Promise<number> {
     const {
-        tracer,
         data,
     } = context.services;
-    return QTracer.trace(tracer, "getAccountsCount", async () => {
+    return context.trace("getAccountsCount", async () => {
         await context.requireGrantedAccess(args);
         const result: QResult = await data.query(
             required(data.accounts.provider),
@@ -22,15 +20,14 @@ async function getAccountsCount(_parent: Record<string, unknown>, args: AccessAr
         );
         const counts = (result as number[]);
         return counts.length > 0 ? counts[0] : 0;
-    }, context.requestSpan);
+    });
 }
 
 async function getTransactionsCount(_parent: Record<string, unknown>, args: AccessArgs, context: QRequestContext): Promise<number> {
     const {
-        tracer,
         data,
     } = context.services;
-    return QTracer.trace(tracer, "getTransactionsCount", async () => {
+    return context.trace("getTransactionsCount", async () => {
         await context.requireGrantedAccess(args);
         const result = await data.query(
             required(data.transactions.provider),
@@ -40,15 +37,14 @@ async function getTransactionsCount(_parent: Record<string, unknown>, args: Acce
             context,
         );
         return result.length > 0 ? result[0] as number : 0;
-    }, context.requestSpan);
+    });
 }
 
 async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: AccessArgs, context: QRequestContext): Promise<string> {
     const {
-        tracer,
         data,
     } = context.services;
-    return QTracer.trace(tracer, "getAccountsTotalBalance", async () => {
+    return context.trace("getAccountsTotalBalance", async () => {
         await context.requireGrantedAccess(args);
         /*
         Because arango can not sum BigInt we need to sum separately:
@@ -72,7 +68,7 @@ async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: A
             context);
         const parts = (result as { hs: number, ls: number }[])[0];
         return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();
-    }, context.requestSpan);
+    });
 }
 
 export const totalsResolvers = {

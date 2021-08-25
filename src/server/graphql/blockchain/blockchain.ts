@@ -2,7 +2,6 @@ import { FieldNode, GraphQLResolveInfo } from "graphql";
 import { AccessRights } from "../../auth";
 import { QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
-import { QTracer } from "../../tracer";
 import { QError, required } from "../../utils";
 
 import {
@@ -262,14 +261,12 @@ export const resolvers: Resolvers<QRequestContext> = {
     },
     BlockchainQuery: {
         master_seq_no_range: (_parent, args, context) => {
-            const tracer = context.services.tracer;
-            return QTracer.trace(tracer, "blockchain-master_seq_no_range", async () => {
+            return context.trace("blockchain-master_seq_no_range", async () => {
                 return await resolve_maser_seq_no_range(args, context);
-            }, context.requestSpan);
+            });
         },
         account_transactions: async (parent, args, context, info) => {
-            const tracer = context.services.tracer;
-            return QTracer.trace(tracer, "blockchain-account_transactions", async () => {
+            return context.trace("blockchain-account_transactions", async () => {
                 return await resolve_transactions(
                     parent,
                     args,
@@ -282,11 +279,10 @@ export const resolvers: Resolvers<QRequestContext> = {
                         }
                     },
                 );
-            }, context.requestSpan);
+            });
         },
         workchain_transactions: async (parent, args, context, info) => {
-            const tracer = context.services.tracer;
-            return QTracer.trace(tracer, "blockchain-workchain_transactions", async () => {
+            return context.trace("blockchain-workchain_transactions", async () => {
                 return await resolve_transactions(
                     parent,
                     args,
@@ -300,7 +296,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                         }
                     },
                 );
-            }, context.requestSpan);
+            });
         },
     },
     Node: {

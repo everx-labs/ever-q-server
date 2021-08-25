@@ -21,6 +21,7 @@ import { QError } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
 import { IStats } from "./stats";
+import QTraceSpan from "./tracing/trace-span";
 
 export class QRequestServices {
     constructor(
@@ -50,7 +51,7 @@ export class QRequestContext {
     usedMamAccessKey?: string = undefined;
     multipleAccessKeysDetected = false;
     parentSpan: Span | SpanContext | undefined;
-    requestSpan: Span;
+    requestSpan: QTraceSpan;
     requestTags = {
         hasWaitFor: false,
     };
@@ -69,15 +70,12 @@ export class QRequestContext {
         this.remoteAddress = req?.socket?.remoteAddress ?? "";
         this.accessKey = Auth.extractAccessKey(req as RequestWithAccessHeaders, connection);
         this.parentSpan = QTracer.extractParentSpan(services.tracer, connection ?? req) ?? undefined;
-        this.requestSpan = services.tracer.startSpan("q-request", {
-            childOf: this.parentSpan,
-        });
-        QTracer.attachCommonTags(this.requestSpan);
+        this.requestSpan = QTraceSpan.create(services.tracer, "q-request", this.parentSpan);
         this.requestSpan.log({
+            event: "QRequestContext_created",
             headers: req?.headers,
             request_body: req?.body,
         });
-        this.log("Context_create", this.start.toString());
     }
 
     async requireGrantedAccess(args: AccessArgs): Promise<AccessRights> {
@@ -126,5 +124,12 @@ export class QRequestContext {
     onRequestFinishing(): void {
         this.requestSpan.addTags(this.requestTags);
         this.requestSpan.finish();
+    }
+
+    trace<T>(
+        operationName: string,
+        operation: (span: QTraceSpan) => Promise<T>,
+    ): Promise<T> {
+        return this.trace(operationName, operation);
     }
 }

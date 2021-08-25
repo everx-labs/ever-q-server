@@ -16,7 +16,6 @@
 */
 
 import {
-    Span,
     Tracer,
 } from "opentracing";
 import {
@@ -85,6 +84,7 @@ import {
 } from "../request";
 import { QCollectionQuery } from "./collection-query";
 import { QJoinQuery } from "./collection-joins";
+import QTraceSpan from "../tracing/trace-span";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
@@ -530,7 +530,7 @@ export class QDataCollection {
         request: QRequestContext,
         shards?: Set<string>,
     ): Promise<QResult[]> {
-        const impl = async (span: Span) => {
+        const impl = async (span: QTraceSpan) => {
             if (traceParams) {
                 span.log({ params: traceParams });
             }
@@ -542,7 +542,7 @@ export class QDataCollection {
             });
             return this.queryProvider(text, vars, orderBy, isFast, request, shards);
         };
-        return QTracer.trace(this.tracer, `${this.name}.query`, impl, request.requestSpan);
+        return request.trace(`${this.name}.query`, impl);
     }
 
     async queryProvider(
@@ -567,7 +567,7 @@ export class QDataCollection {
         traceParams: Record<string, unknown> | null,
         request: QRequestContext,
     ): Promise<QDoc[]> {
-        const impl = async (span: Span): Promise<QDoc[]> => {
+        const impl = async (span: QTraceSpan): Promise<QDoc[]> => {
             request.requestTags.hasWaitFor = true;
             request.log("collection_queryWaitFor_start", this.name);
             if (traceParams) {
@@ -677,7 +677,7 @@ export class QDataCollection {
                 }
             }
         };
-        return QTracer.trace(this.tracer, `${this.name}.waitFor`, impl, request.requestSpan);
+        return request.trace(`${this.name}.waitFor`, impl);
     }
 
     //--------------------------------------------------------- Aggregates
