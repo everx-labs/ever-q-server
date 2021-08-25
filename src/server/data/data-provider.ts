@@ -2,6 +2,7 @@ import type { OrderBy } from "../filter/filters";
 import { hash } from "../utils";
 import type { QLog } from "../logs";
 import { QRequestContext } from "../request";
+import { QTracer } from "../tracer";
 
 export type QIndexInfo = {
     fields: string[],
@@ -147,15 +148,25 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         const key = this.cacheKey(aql);
         let docs: QResult[] | undefined = undefined;
         while (docs === undefined) {
-            const value = await this.cache.get(key) as CacheValue | undefined | null;
+            const value = await QTracer.trace(request.services.tracer, "QDataPrecachedCombiner_cache_get", async (span) => {
+                span.setTag("cache_key", key);
+                return await this.cache.get(key) as CacheValue | undefined | null;
+            }, request.requestSpan);
             if (value === undefined || value === null) {
                 request.log("QDataPrecachedCombiner_query_no_cache");
-                await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
+                await QTracer.trace(request.services.tracer, "QDataPrecachedCombiner_cache_set_fetching", async (span) => {
+                    span.setTag("cache_key", key);
+                    await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
+                }, request.requestSpan);
                 docs = await super.query(text, vars, orderBy, request, shards);
-                await this.cache.set(key, docs, (docs.length) ? this.dataExpirationTimeout : Math.min(this.dataExpirationTimeout, 2));
+                await QTracer.trace(request.services.tracer, "QDataPrecachedCombiner_cache_set_result", async (span) => {
+                    span.setTag("cache_key", key);
+                    await this.cache.set(key, docs, (docs && docs.length > 0) ? this.dataExpirationTimeout : Math.min(this.dataExpirationTimeout, 2));
+                }, request.requestSpan);
                 request.requestSpan.setTag("updated_cache", true);
             } else if (value === FETCHING) {
                 request.requestSpan.setTag("waited_for_cache", true);
+                request.log("QDataPrecachedCombiner_query_waiting");
                 await new Promise(resolve => setTimeout(resolve, this.fetchingPollTimeout * 1000));
             } else {
                 request.requestSpan.setTag("fetched_from_cache", true);
