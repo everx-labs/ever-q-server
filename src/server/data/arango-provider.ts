@@ -12,6 +12,7 @@ import type {
 } from "./data-provider";
 import url from "url";
 import ArangoChair from "arangochair";
+import { QTraceSpan } from "../tracing";
 
 type ArangoCollectionDescr = {
     name: string,
@@ -101,7 +102,6 @@ export class ArangoProvider implements QDataProvider {
     async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
         const {
             shards,
-            request,
             text,
             vars,
             traceSpan,
@@ -110,16 +110,12 @@ export class ArangoProvider implements QDataProvider {
         if (shards !== undefined && !shards.has(this.shard)) {
             return [];
         }
-        console.log("arango");
-        const impl = async () => {
-            request.log("ArangoProvider_query_start", this.config.name);
+        const impl = async (span: QTraceSpan) => {
             const cursor = await this.arango.query(text, vars);
-            request.log("ArangoProvider_query_cursor_obtained", this.config.name);
-            const result = await cursor.all();
-            request.log("ArangoProvider_query_end", this.config.name);
-            return result;
+            span.logEvent("cursor_obtained");
+            return await cursor.all();
         };
-        return traceSpan.traceChildOperation(`arangoQuery.${this.config.name}`, impl);
+        return traceSpan.traceChildOperation(`arango.query.${this.shard}`, impl);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {

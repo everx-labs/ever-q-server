@@ -94,11 +94,12 @@ export class QDataCombiner implements QDataProvider {
     }
 
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
-        params.request.log("QDataCombiner_query_start");
+        const traceSpan = params.traceSpan;
+        traceSpan.logEvent("QDataCombiner_query_start");
         const results = await Promise.all(this.providers.map(x => x.query(params)));
-        params.request.log("QDataCombiner_query_dataIsFetched");
+        traceSpan.logEvent("QDataCombiner_query_dataIsFetched");
         const result = combineResults(results, params.orderBy);
-        params.request.log("QDataCombiner_query_end");
+        traceSpan.logEvent("QDataCombiner_query_end");
         return result;
     }
 
@@ -149,13 +150,12 @@ export class QDataPrecachedCombiner extends QDataCombiner {
 
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
         const {
-            request,
             text,
             vars,
             orderBy,
             traceSpan,
         } = params;
-        request.log("QDataPrecachedCombiner_query_start");
+        traceSpan.logEvent("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
             vars,
@@ -169,7 +169,6 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                 return await this.cache.get(key) as CacheValue | undefined | null;
             });
             if (value === undefined || value === null) {
-                request.log("QDataPrecachedCombiner_query_no_cache");
                 await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_set_fetching", async (span) => {
                     span.setTag("cache_key", key);
                     await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
@@ -179,17 +178,17 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                     span.setTag("cache_key", key);
                     await this.cache.set(key, docs, (docs && docs.length > 0) ? this.dataExpirationTimeout : Math.min(this.dataExpirationTimeout, 2));
                 });
-                request.requestSpan.setTag("updated_cache", true);
+                traceSpan.setTag("updated_cache", true);
             } else if (value === FETCHING) {
-                request.requestSpan.setTag("waited_for_cache", true);
-                request.log("QDataPrecachedCombiner_query_waiting");
+                traceSpan.setTag("waited_for_cache", true);
+                traceSpan.logEvent("QDataPrecachedCombiner_query_waiting");
                 await new Promise(resolve => setTimeout(resolve, this.fetchingPollTimeout * 1000));
             } else {
-                request.requestSpan.setTag("fetched_from_cache", true);
+                traceSpan.setTag("fetched_from_cache", true);
                 docs = value;
             }
         }
-        request.log("QDataPrecachedCombiner_query_end");
+        traceSpan.logEvent("QDataPrecachedCombiner_query_end");
         return docs;
     }
 }

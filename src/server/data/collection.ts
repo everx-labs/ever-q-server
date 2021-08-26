@@ -430,7 +430,7 @@ export class QDataCollection {
             },
             isFast ? "FAST" : "SLOW", request.remoteAddress,
         );
-        request.log("collection_resolver_before_querying", this.name);
+        traceSpan.logEvent("ready_to_fetch");
         const start = Date.now();
         const records = query.timeout > 0
             ? await this.queryWaitFor(query, isFast, traceParams, request, traceSpan)
@@ -447,6 +447,7 @@ export class QDataCollection {
         if (records.length > query.limit) {
             records.splice(query.limit);
         }
+        traceSpan.logEvent("ready_to_fetch_joins");
         await QJoinQuery.fetchJoinedRecords(
             this,
             records as Record<string, unknown>[],
@@ -456,7 +457,7 @@ export class QDataCollection {
             request,
             traceSpan,
         );
-        request.log("collection_resolver_after_querying", this.name);
+        traceSpan.logEvent("joins_are_fetched");
         this.log.debug(
             "QUERY",
             args,
@@ -482,7 +483,7 @@ export class QDataCollection {
                 fieldNodes: FieldNode[],
             },
         ) => wrap(this.log, "QUERY", args, async () => {
-        await request.trace(`${this.name}.queryResolver`, async traceSpan => {
+        return await request.trace(`${this.name}.queryResolver`, async traceSpan => {
             await this.statQuery.increment();
             await this.statQueryActive.increment();
             const start = Date.now();
@@ -490,7 +491,6 @@ export class QDataCollection {
                 created: false,
             };
             try {
-                request.log("collection_resolver_start", this.name);
                 const accessRights = await request.requireGrantedAccess(args);
                 const selectionSet = selection.fieldNodes[0].selectionSet;
                 await this.optimizeSortedQueryWithSingleResult(args, accessRights, request, traceSpan);
@@ -560,11 +560,11 @@ export class QDataCollection {
     async queryProvider(
         params: QDataProviderQueryParams & { isFast: boolean },
     ): Promise<QResult[]> {
-        const request = params.request;
-        request.log("collection_queryProvider_start", this.name);
+        const traceSpan = params.traceSpan;
+        traceSpan.logEvent("collection_queryProvider_start");
         const provider = required(params.isFast ? this.provider : this.slowQueriesProvider);
         const result = await provider.query(params);
-        request.log("collection_queryProvider_end", this.name);
+        traceSpan.logEvent("collection_queryProvider_end");
         return result;
     }
 
@@ -578,7 +578,6 @@ export class QDataCollection {
     ): Promise<QDoc[]> {
         const impl = async (span: QTraceSpan): Promise<QDoc[]> => {
             request.requestTags.hasWaitFor = true;
-            request.log("collection_queryWaitFor_start", this.name);
             if (traceParams) {
                 span.log({ params: traceParams });
             }
@@ -600,6 +599,8 @@ export class QDataCollection {
             try {
                 const queryTimeoutAt = Date.now() + q.timeout;
                 const onQuery = new Promise<QDoc[]>((resolve, reject) => {
+                    let queryCount = 0;
+                    let period = request.services.config.waitForPeriod;
                     const check = () => {
                         const checkStart = Date.now();
                         this.queryProvider({
@@ -611,6 +612,10 @@ export class QDataCollection {
                             traceSpan: span,
                             isFast,
                         }).then((docs) => {
+                            queryCount += 1;
+                            if (queryCount >= 7) {
+                                period = period * 1.5;
+                            }
                             hasDbResponse = true;
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
@@ -620,7 +625,7 @@ export class QDataCollection {
                                     const now = Date.now();
                                     const checkDuration = now - checkStart;
                                     const timeLeft = queryTimeoutAt - now;
-                                    const toWait = Math.min(request.services.config.waitForPeriod, timeLeft - 2 * checkDuration, timeLeft - 200);
+                                    const toWait = Math.min(period, timeLeft - 2 * checkDuration, timeLeft - 200);
                                     forceTimerId = setTimeout(check, Math.max(toWait, 100));
                                 }
                             }
@@ -672,7 +677,6 @@ export class QDataCollection {
                     onClose,
                 ]);
                 span.setTag("resolved", resolvedBy);
-                request.log("collection_queryWaitFor_end", this.name);
                 return result;
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
@@ -752,7 +756,7 @@ export class QDataCollection {
             args: AggregationArgs,
             request: QRequestContext,
         ) => wrap(this.log, "AGGREGATE", args, async () => {
-            await request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
+            return await request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
             request.requestTags.hasAggregations = true;
             await this.statQuery.increment();
             await this.statQueryActive.increment();
@@ -779,7 +783,13 @@ export class QDataCollection {
                     filter,
                     q.queries,
                 ));
+                traceSpan.log({
+                    text: q.text,
+                    vars: q.params,
+                    isFast,
+                });
                 const start = Date.now();
+                traceSpan.logEvent("ready_to_fetch");
                 const result = await this.queryProvider({
                     text: q.text, 
                     vars: q.params, 
@@ -788,6 +798,7 @@ export class QDataCollection {
                     request,
                     traceSpan,
                 });
+                traceSpan.logEvent("data_is_fetched");
                 this.log.debug(
                     "AGGREGATE",
                     args,
