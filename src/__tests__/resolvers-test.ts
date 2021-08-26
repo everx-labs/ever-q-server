@@ -134,7 +134,7 @@ test("Filter test", () => {
 
 test("Enum Names", () => {
     const data = createLocalArangoTestData(new QLogs());
-    const resolvers = createResolvers(data as any);
+    const resolvers = createResolvers(data);
     const params = new QParams();
     const m1 = {
         msg_type: 1,
@@ -207,4 +207,3 @@ test("Select Fields", () => {
         master: { shard_hashes: [{ shard: "1" }, { shard: "2" }] },
     });
 });
-

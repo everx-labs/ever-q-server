@@ -191,7 +191,7 @@ export class QDataCollection {
 
         const provider = options.provider;
         if (provider !== undefined) {
-            (async () => {
+            void (async () => {
                 this.hotSubscription = await provider.subscribe(
                     name,
                     doc => this.onDocumentInsertOrUpdate(doc as QDoc),
@@ -215,7 +215,7 @@ export class QDataCollection {
     // Subscriptions
 
     onDocumentInsertOrUpdate(doc: QDoc) {
-        this.statDoc.increment().then(() => {
+        void this.statDoc.increment().then(() => {
             this.docInsertOrUpdate.emit("doc", doc);
             const isExternalInboundFinalizedMessage = this.name === "messages"
                 && doc._key
@@ -482,7 +482,7 @@ export class QDataCollection {
                 fieldNodes: FieldNode[],
             },
         ) => wrap(this.log, "QUERY", args, async () => {
-        request.trace(`${this.name}.queryResolver`, async traceSpan => {
+        await request.trace(`${this.name}.queryResolver`, async traceSpan => {
             await this.statQuery.increment();
             await this.statQueryActive.increment();
             const start = Date.now();
@@ -650,7 +650,7 @@ export class QDataCollection {
                     };
                     this.waitForCount += 1;
                     this.docInsertOrUpdate.on("doc", waitFor);
-                    this.statWaitForActive.increment().then(() => {
+                    void this.statWaitForActive.increment().then(() => {
                     });
                 });
                 const onTimeout = new Promise<QDoc[]>((resolve, reject) => {
@@ -752,8 +752,8 @@ export class QDataCollection {
             args: AggregationArgs,
             request: QRequestContext,
         ) => wrap(this.log, "AGGREGATE", args, async () => {
+            await request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
             request.requestTags.hasAggregations = true;
-            request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
             await this.statQuery.increment();
             await this.statQueryActive.increment();
             const start = Date.now();

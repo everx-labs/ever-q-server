@@ -182,7 +182,7 @@ test("Partitioned Data", async () => {
     expect(aggregated[13]).toEqual(ids.min);
     expect(aggregated[14]).toEqual(ids.max);
 
-    server.stop();
+    void server.stop();
 });
 
 test("Partitioned data with null", async () => {
@@ -203,7 +203,7 @@ test("Partitioned data with null", async () => {
         }`}`,
     })).data.aggregateMessages;
     expect(aggregated[1]).toBeNull();
-    server.stop();
+    void server.stop();
 });
 
 test("Balance delta sum", async () => {
@@ -229,5 +229,5 @@ test("Balance delta sum", async () => {
 
     expect(BigInt(aggregated[0]).toString()).toEqual(BigInt(account.balance).toString());
 
-    server.stop();
+    void server.stop();
 });

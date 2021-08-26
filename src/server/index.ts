@@ -63,7 +63,7 @@ process.on("SIGHUP", () => {
     if (!gs.reloadLock) {
         gs.reloadLock = true;
         gs.configLog?.debug("RELOAD", "CONFIG", gs.configPath);
-        (async () => {
+        void (async () => {
             gs.configLog?.debug("STOP", "SERVER");
             await gs.server?.stop();
         })().then(() => {
@@ -99,7 +99,7 @@ function initGlobalState() {
 export function main() {
     initGlobalState();
 
-    (async () => {
+    void (async () => {
         if (gs.server) {
             try {
                 await gs.server.start();

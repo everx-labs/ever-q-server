@@ -69,7 +69,7 @@ async function updateDb(config: { server: string, name: string, auth?: string })
 }
 
 function update(servers: string[], options: { auth?: string }) {
-    (async () => {
+    void (async () => {
         let hasErrors = false;
         for (const server of ([] as string[]).concat(servers)) {
             console.log(`Update ${server}`);
@@ -93,6 +93,3 @@ program
     .option("-a, --auth <user:password>", "user:password", "")
     .action(update)
     .parse(process.argv);
-
-
-

@@ -14,7 +14,7 @@ export class MemStats {
                 .replace("space_", "")
                 .replace("_space", "");
             const gauge = (metric: string, value: number) => {
-                this.stats.gauge(`heap.space.${spaceName}.${metric}`, value, []).then(() => {
+                void this.stats.gauge(`heap.space.${spaceName}.${metric}`, value, []).then(() => {
                 });
             };
             gauge("physical_size", space.physical_space_size);
