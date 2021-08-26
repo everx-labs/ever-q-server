@@ -28,6 +28,7 @@ export class QJoinQuery {
     refOnAttr: string;
     refOnIsArray: boolean;
     canJoin: (parent: unknown, args: JoinArgs) => boolean;
+    fieldSelection: SelectionSetNode;
 
     constructor(
         join: {
@@ -48,6 +49,7 @@ export class QJoinQuery {
         this.refOn = this.refOnIsArray ? join.refOn.slice(0, -3) : join.refOn;
         this.refOnAttr = this.refOn === "id" ? "_key" : this.refOn;
         this.canJoin = join.canJoin;
+        this.fieldSelection = mergeFieldWithSelectionSet(this.refOn, this.field.selectionSet);
     }
 
     static getJoins(
@@ -135,17 +137,18 @@ export class QJoinQuery {
         traceSpan: QTraceSpan,
     ): Promise<void> {
         const joinPlan = this.buildPlan(mainRecords);
-        const fieldSelection = mergeFieldWithSelectionSet(this.refOn, this.field.selectionSet);
         const timeout = this.args.timeout ?? defaultTimeout ?? 0;
         const timeLimit = Date.now() + timeout;
+        let joinedRecords: Record<string, unknown>[] = [];
         while (joinPlan.size > 0) {
+            const portionOnValues =[...joinPlan.keys()].slice(0, 100);
             const joinQuery = QCollectionQuery.createForJoin(
-                [...joinPlan.keys()],
+                portionOnValues,
                 this.refCollection.name,
                 this.refCollection.docType,
                 this.refOn,
                 this.refOnIsArray,
-                fieldSelection,
+                this.fieldSelection,
                 accessRights,
                 request.services.config,
             );
@@ -166,17 +169,25 @@ export class QJoinQuery {
                         traceSpan: span,
                     }) as Record<string, unknown>[];
                 };
-                const joinedRecords = await traceSpan.traceChildOperation(`${mainCollection.name}.query.join`, fetcher);
-                for (const joinedRecord of joinedRecords) {
+                const joinedPortion = await traceSpan.traceChildOperation(`${mainCollection.name}.query.join`, fetcher);
+                for (const joinedRecord of joinedPortion) {
                     this.joinRecordToMain(joinPlan, joinedRecord);
                 }
-                await QJoinQuery.fetchJoinedRecords(this.refCollection, joinedRecords, fieldSelection, accessRights, defaultTimeout, request, traceSpan);
+                joinedRecords = joinedRecords.concat(joinedPortion);
             }
             if (Date.now() > timeLimit) {
                 break;
             }
         }
-
+        await QJoinQuery.fetchJoinedRecords(
+            this.refCollection,
+            joinedRecords,
+            this.fieldSelection,
+            accessRights,
+            defaultTimeout,
+            request,
+            traceSpan,
+        );
     }
 
     static async fetchJoinedRecords(

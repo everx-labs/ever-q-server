@@ -975,7 +975,7 @@ function isFieldWithName(def: SelectionNode, name: string): boolean {
     return def.kind === "Field" && def.name.value.toLowerCase() === name.toLowerCase();
 }
 
-export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: SelectionSetNode | undefined): SelectionSetNode | undefined {
+export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: SelectionSetNode | undefined): SelectionSetNode {
     const dotPos = fieldPath.indexOf(".");
     const name = dotPos >= 0 ? fieldPath.substr(0, dotPos) : fieldPath;
     const tail = dotPos >= 0 ? fieldPath.substr(dotPos + 1) : "";
@@ -984,7 +984,7 @@ export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: Sele
     const tailSelectionSet = tail !== ""
         ? mergeFieldWithSelectionSet(tail, oldField?.selectionSet)
         : oldField?.selectionSet;
-    if (oldField !== undefined && tailSelectionSet === oldField?.selectionSet) {
+    if (selectionSet !== undefined && oldField !== undefined && tailSelectionSet === oldField?.selectionSet) {
         return selectionSet;
     }
     const newField: FieldNode = {
