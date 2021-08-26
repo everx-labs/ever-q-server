@@ -28,10 +28,8 @@ import type {
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
 import TONQServer, { DataProviderFactory } from "../server/server";
-import {
-    QStats,
-    QTracer,
-} from "../server/tracer";
+import { QStats } from "../server/stats";
+import { QTracer } from "../server/tracing";
 import {
     Auth,
     grantedAccess,
@@ -281,6 +279,10 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     }
 
     unsubscribe(): void {
+    }
+
+    hasDataForShards(): boolean {
+        return true;
     }
 }
 

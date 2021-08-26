@@ -27,7 +27,7 @@ test("Query without id should be filtered by limit", async () => {
         query: gql`query { messages(limit: 1){value created_at created_lt} }`,
     }));
     expect(messages.data.messages.length).toEqual(1);
-    server.stop();
+    void server.stop();
 });
 
 type Accounts = {
@@ -136,7 +136,7 @@ test("Data Broker", async () => {
     })).data.transactions;
     expect(transactions.length).toEqual(1);
 
-    server.stop();
+    void server.stop();
 });
 
 test("Limit of combined data", async () => {
@@ -195,7 +195,7 @@ test("Limit of combined data", async () => {
     })).data.transactions;
 
     expect(transactions.length).toEqual(50);
-    server.stop();
+    void server.stop();
 });
 
 test("Combiner", async () => {

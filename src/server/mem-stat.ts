@@ -1,5 +1,5 @@
 import v8 from "v8";
-import { IStats } from "./tracer";
+import { IStats } from "./stats";
 
 export class MemStats {
     stats: IStats;
@@ -14,7 +14,7 @@ export class MemStats {
                 .replace("space_", "")
                 .replace("_space", "");
             const gauge = (metric: string, value: number) => {
-                this.stats.gauge(`heap.space.${spaceName}.${metric}`, value, []).then(() => {
+                void this.stats.gauge(`heap.space.${spaceName}.${metric}`, value, []).then(() => {
                 });
             };
             gauge("physical_size", space.physical_space_size);
@@ -43,4 +43,3 @@ export class MemStats {
         }, 60000);
     }
 }
-

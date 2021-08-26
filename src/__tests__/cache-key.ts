@@ -16,6 +16,7 @@ import {
 } from "./init-tests";
 import { OrderBy } from "../server/filter/filters";
 import { QRequestContext } from "../server/request";
+import { QTraceSpan } from "../server/tracing";
 
 
 jest.mock("arangojs", () => ({
@@ -214,7 +215,13 @@ describe("DataCache", () => {
         const vars = { b: 2 };
         const orderBy: OrderBy[] = [];
 
-        await server.data.providers.blockchain?.blocks?.query(text, vars, orderBy, null as unknown as QRequestContext);
+        await server.data.providers.blockchain?.blocks?.query({
+            text, 
+            vars, 
+            orderBy, 
+            request: null as unknown as QRequestContext,
+            traceSpan: null as unknown as QTraceSpan,
+        });
         const lastKey = "Q_" + hash(cachedCold.configHash, JSON.stringify({
             text,
             vars,

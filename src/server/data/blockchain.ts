@@ -235,14 +235,16 @@ export default class QBlockchainData extends QData {
         if (collection.provider === undefined || Date.now() <= latency.nextUpdateTime) {
             return false;
         }
-        const result = (await collection.provider.query(
-            `FOR d IN ${collection.name} SORT d.${field} DESC LIMIT 1 RETURN { maxTime: d.${field} }`,
-            {}, [{
+        const result = (await collection.provider.query({
+            text: `FOR d IN ${collection.name} SORT d.${field} DESC LIMIT 1 RETURN { maxTime: d.${field} }`,
+            vars: {},
+            orderBy: [{
                 path: "maxTime",
                 direction: "DESC",
             }],
-            context,
-        )) as unknown as (({ maxTime: number }[]) | undefined | null);
+            request: context,
+            traceSpan: context.requestSpan,
+        })) as unknown as (({ maxTime: number }[]) | undefined | null);
         const maxTime = result?.[0]?.maxTime ?? 0;
         return this.updateCollectionLatency(latency, maxTime);
 
@@ -272,9 +274,13 @@ export default class QBlockchainData extends QData {
     async getReliableChainOrderUpperBoundary(context: QRequestContext): Promise<ReliableChainOrderUpperBoundary> {
         const now = Date.now();
         if (now > this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
-            const result = await required(this.providers.chainRangesVerification).query(
-                "RETURN DOCUMENT('chain_ranges_verification/summary')", {}, [], context,
-            ) as ChainRangesVerificationSummary[];
+            const result = await required(this.providers.chainRangesVerification).query({
+                text: "RETURN DOCUMENT('chain_ranges_verification/summary')",
+                vars: {},
+                orderBy: [],
+                request: context,
+                traceSpan: context.requestSpan,
+            }) as ChainRangesVerificationSummary[];
             if (result.length > 0) {
                 const boundary =
                     result.reduce<string>((prev, summary) => {

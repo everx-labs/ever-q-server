@@ -6,14 +6,13 @@ import type { QLog } from "../logs";
 import type {
     QDataEvent,
     QDataProvider,
+    QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
 } from "./data-provider";
 import url from "url";
 import ArangoChair from "arangochair";
-import { QRequestContext } from "../request";
-import { OrderBy } from "../filter/filters";
-import { QTracer } from "../tracer";
+import { QTraceSpan } from "../tracing";
 
 type ArangoCollectionDescr = {
     name: string,
@@ -100,20 +99,23 @@ export class ArangoProvider implements QDataProvider {
         return Promise.resolve();
     }
 
-    async query(text: string, vars: { [name: string]: unknown }, _orderBy: OrderBy[], request: QRequestContext, shards?: Set<string>): Promise<QDoc[]> {
+    async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
+        const {
+            shards,
+            text,
+            vars,
+            traceSpan,
+        } = params;
+
         if (shards !== undefined && !shards.has(this.shard)) {
             return [];
         }
-        console.log("arango");
-        const impl = async () => {
-            request.log("ArangoProvider_query_start", this.config.name);
+        const impl = async (span: QTraceSpan) => {
             const cursor = await this.arango.query(text, vars);
-            request.log("ArangoProvider_query_cursor_obtained", this.config.name);
-            const result = await cursor.all();
-            request.log("ArangoProvider_query_end", this.config.name);
-            return result;
+            span.logEvent("cursor_obtained");
+            return await cursor.all();
         };
-        return await QTracer.trace(request.services.tracer, `arangoQuery.${this.config.name}`, impl, request.requestSpan);
+        return traceSpan.traceChildOperation(`arango.query.${this.shard}`, impl);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {
@@ -137,6 +139,10 @@ export class ArangoProvider implements QDataProvider {
             );
             this.listenerSubscribersCount = Math.max(this.listenerSubscribersCount - 1, 0);
         }
+    }
+
+    hasDataForShards(shards: Set<string>): boolean {
+        return shards.has(this.shard);
     }
 
     // Internals

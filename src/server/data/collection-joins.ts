@@ -10,14 +10,13 @@ import {
 import { QRequestContext } from "../request";
 import { AccessRights } from "../auth";
 import { QCollectionQuery } from "./collection-query";
-import { Span } from "opentracing";
-import { QTracer } from "../tracer";
 import { QDataCollection } from "./collection";
 import {
     joinFields,
 } from "../graphql/resolvers-generated";
 import QData from "./data";
 import QBlockchainData from "./blockchain";
+import { QTraceSpan } from "../tracing";
 
 export class QJoinQuery {
     on: string;
@@ -133,6 +132,7 @@ export class QJoinQuery {
         accessRights: AccessRights,
         defaultTimeout: number | undefined,
         request: QRequestContext,
+        traceSpan: QTraceSpan,
     ): Promise<void> {
         const joinPlan = this.buildPlan(mainRecords);
         const fieldSelection = mergeFieldWithSelectionSet(this.refOn, this.field.selectionSet);
@@ -150,26 +150,27 @@ export class QJoinQuery {
                 request.services.config,
             );
             if (joinQuery !== null) {
-                const fetcher = async (span: Span) => {
+                const fetcher = async (span: QTraceSpan) => {
                     span.log({
                         text: joinQuery.text,
                         params: joinQuery.params,
                         shards: joinQuery.shards,
                     });
-                    return await this.refCollection.queryProvider(
-                        joinQuery.text,
-                        joinQuery.params,
-                        [],
-                        true,
+                    return await this.refCollection.queryProvider({
+                        text: joinQuery.text,
+                        vars: joinQuery.params,
+                        orderBy: [],
+                        isFast: true,
                         request,
-                        joinQuery.shards,
-                    ) as Record<string, unknown>[];
+                        shards: joinQuery.shards,
+                        traceSpan: span,
+                    }) as Record<string, unknown>[];
                 };
-                const joinedRecords = await QTracer.trace(request.services.tracer, `${mainCollection.name}.query.join`, fetcher, request.requestSpan);
+                const joinedRecords = await traceSpan.traceChildOperation(`${mainCollection.name}.query.join`, fetcher);
                 for (const joinedRecord of joinedRecords) {
                     this.joinRecordToMain(joinPlan, joinedRecord);
                 }
-                await QJoinQuery.fetchJoinedRecords(this.refCollection, joinedRecords, fieldSelection, accessRights, defaultTimeout, request);
+                await QJoinQuery.fetchJoinedRecords(this.refCollection, joinedRecords, fieldSelection, accessRights, defaultTimeout, request, traceSpan);
             }
             if (Date.now() > timeLimit) {
                 break;
@@ -185,6 +186,7 @@ export class QJoinQuery {
         accessRights: AccessRights,
         defaultTimeout: number | undefined,
         request: QRequestContext,
+        traceSpan: QTraceSpan,
     ): Promise<void> {
         const joins = QJoinQuery.getJoins(mainCollection.name, mainSelection, request.services.data);
         for (const join of joins) {
@@ -194,6 +196,7 @@ export class QJoinQuery {
                 accessRights,
                 defaultTimeout,
                 request,
+                traceSpan,
             );
         }
     }
