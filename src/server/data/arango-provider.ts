@@ -141,6 +141,10 @@ export class ArangoProvider implements QDataProvider {
         }
     }
 
+    hasDataForShards(shards: Set<string>): boolean {
+        return shards.has(this.shard);
+    }
+
     // Internals
 
     checkStartListener() {

@@ -280,6 +280,10 @@ export class MockProvider<T extends QResult> implements QDataProvider {
 
     unsubscribe(): void {
     }
+
+    hasDataForShards(): boolean {
+        return true;
+    }
 }
 
 export class MockCache<T> implements QDataCache {

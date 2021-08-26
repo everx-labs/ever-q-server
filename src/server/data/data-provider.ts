@@ -52,6 +52,8 @@ export interface QDataProvider {
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
     unsubscribe(subscription: unknown): void;
+
+    hasDataForShards(shards: Set<string>): boolean;
 }
 
 
@@ -96,7 +98,8 @@ export class QDataCombiner implements QDataProvider {
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
         const traceSpan = params.traceSpan;
         traceSpan.logEvent("QDataCombiner_query_start");
-        const results = await Promise.all(this.providers.map(x => x.query(params)));
+        const providers = this.getProvidersForShards(params.shards);
+        const results = await Promise.all(providers.map(x => x.query(params)));
         traceSpan.logEvent("QDataCombiner_query_dataIsFetched");
         const result = combineResults(results, params.orderBy);
         traceSpan.logEvent("QDataCombiner_query_end");
@@ -109,6 +112,23 @@ export class QDataCombiner implements QDataProvider {
 
     unsubscribe(subscription: unknown): void {
         (subscription as unknown[]).map((s, i) => this.providers[i].unsubscribe(s));
+    }
+
+    hasDataForShards(shards: Set<string>): boolean {
+        for (const provider of this.providers) {
+            if (provider.hasDataForShards(shards)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private getProvidersForShards(shards: Set<string> | undefined) {
+        if (!shards) {
+            return this.providers;
+        }
+
+        return this.providers.filter(p => p.hasDataForShards(shards));
     }
 }
 
