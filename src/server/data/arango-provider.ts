@@ -105,12 +105,14 @@ export class ArangoProvider implements QDataProvider {
             text,
             vars,
             traceSpan,
+            request,
         } = params;
 
         if (shards !== undefined && !shards.has(this.shard)) {
             return [];
         }
         const impl = async (span: QTraceSpan) => {
+            request.requestTags.arangoCalls += 1;
             const cursor = await this.arango.query(text, vars);
             span.logEvent("cursor_obtained");
             return await cursor.all();
