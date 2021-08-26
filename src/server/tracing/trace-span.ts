@@ -47,6 +47,7 @@ export class QTraceSpan {
             } else {
                 span.log({ event: "completed" });
             }
+            span.finish();
             return result;
         } catch (error) {
             const cleaned = cleanError(error);
