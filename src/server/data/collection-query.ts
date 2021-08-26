@@ -21,6 +21,7 @@ import {
     FilterOrConversion,
     QConfig,
 } from "../config";
+import { QError } from "../utils";
 
 export class QCollectionQuery {
     private constructor(
@@ -240,7 +241,7 @@ export class QCollectionQuery {
         return combineReturnExpressions(expressions);
     }
 
-    static getShards(collectionName: string, filter: CollectionFilter): Set<string> | undefined {
+    static getShards(collectionName: string, filter: CollectionFilter, isAggregation = false): Set<string> | undefined {
         const shards = new Set<string>();
         const getShards = {
             "accounts": getAccountsShards,
@@ -251,10 +252,18 @@ export class QCollectionQuery {
         if (getShards === undefined) {
             return undefined;
         }
+
         for (const orOperand of splitOr(filter)) {
-            if (!getShards(orOperand as StructFilter, shards)) {
+            if (!getShards(orOperand as StructFilter, shards, isAggregation)) {
+                if (isAggregation && collectionName == "messages" && shards.size > 0) {
+                    throw QError.invalidQuery("This aggregation query is too complex to be supported in rustnet");
+                }
+
                 return undefined;
             }
+        }
+        if (isAggregation && collectionName == "messages" && shards.size > 1) {
+            throw QError.invalidQuery("This aggregation query is too complex to be supported in rustnet");
         }
         return shards;
     }
@@ -268,7 +277,15 @@ function getBlocksShards(filter: StructFilter, shards: Set<string>): boolean {
     return getShardsForEqOrIn(filter, "id", shards, getBlockShard);
 }
 
-function getMessagesShards(filter: StructFilter, shards: Set<string>) {
+function getMessagesShards(filter: StructFilter, shards: Set<string>, isAggregation: boolean) {
+    if (isAggregation) {
+        const srcUsed = getShardsForEqOrIn(filter, "src", shards, getTransactionShard);
+        if (!srcUsed) {
+            return getShardsForEqOrIn(filter, "dst", shards, getTransactionShard);
+        }
+        return srcUsed;
+    }
+
     const srcUsed = getShardsForEqOrIn(filter, "src", shards, getTransactionShard);
     const dstUsed = getShardsForEqOrIn(filter, "dst", shards, getTransactionShard);
     return srcUsed || dstUsed;
@@ -317,4 +334,3 @@ function getShardsForEqOrIn(filter: StructFilter, field: string, shards: Set<str
     }
     return values.length > 0;
 }
-

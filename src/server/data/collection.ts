@@ -704,6 +704,7 @@ export class QDataCollection {
         text: string,
         params: Record<string, unknown>,
         queries: AggregationQuery[],
+        shards?: Set<string>,
     } | null {
         const params = new QParams();
         const condition = QCollectionQuery.buildFilterCondition(this.name, this.docType, filter, params, accessRights);
@@ -715,6 +716,7 @@ export class QDataCollection {
             text: query.text,
             params: params.values,
             queries: query.queries,
+            shards: QCollectionQuery.getShards(this.name, filter, true),
         };
     }
 
@@ -794,6 +796,7 @@ export class QDataCollection {
                         text: q.text, 
                         vars: q.params, 
                         orderBy: [],
+                        shards: q.shards,
                         isFast, 
                         request,
                         traceSpan,
