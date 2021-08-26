@@ -11,8 +11,9 @@ import {
     Tracer,
 } from "opentracing";
 import {
+    QTraceSpan,
     QTracer,
-} from "./tracer";
+} from "./tracing";
 import { TonClient } from "@tonclient/core";
 import QLogs from "./logs";
 import QBlockchainData from "./data/blockchain";
@@ -21,7 +22,6 @@ import { QError } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
 import { IStats } from "./stats";
-import QTraceSpan from "./tracing/trace-span";
 
 export class QRequestServices {
     constructor(
@@ -54,6 +54,8 @@ export class QRequestContext {
     requestSpan: QTraceSpan;
     requestTags = {
         hasWaitFor: false,
+        hasAggregations: false,
+        hasTotals: false,
     };
 
     constructor(
@@ -130,6 +132,6 @@ export class QRequestContext {
         operationName: string,
         operation: (span: QTraceSpan) => Promise<T>,
     ): Promise<T> {
-        return this.trace(operationName, operation);
+        return this.requestSpan.traceChildOperation(operationName, operation);
     }
 }

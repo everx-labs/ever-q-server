@@ -16,7 +16,7 @@ import {
 } from "../graphql/resolvers-generated";
 import QData from "./data";
 import QBlockchainData from "./blockchain";
-import QTraceSpan from "../tracing/trace-span";
+import { QTraceSpan } from "../tracing";
 
 export class QJoinQuery {
     on: string;

@@ -4,7 +4,7 @@ import {
     Tags,
     Tracer,
 } from "opentracing";
-import { QTracer } from "../tracer";
+import { QTracer } from "./tracer";
 import {
     cleanError,
     toLog,
@@ -15,7 +15,7 @@ const SPAN_CREATION_TAGS = {
     [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
 };
 
-export default class QTraceSpan {
+export class QTraceSpan {
     constructor(
         public tracer: Tracer,
         public span: Span,
@@ -73,6 +73,14 @@ export default class QTraceSpan {
     log(keyValuePairs: { [key: string]: unknown; }): QTraceSpan {
         this.span.log(keyValuePairs);
         return this;
+    }
+
+    logEvent(event_name: string, info?: unknown): void {
+        const logEntry = {
+            event: event_name,
+            ...info ? { info: toLog(info) } : {},
+        };
+        this.span.log(logEntry);
     }
     
     finish(): void {

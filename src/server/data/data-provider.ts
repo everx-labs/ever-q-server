@@ -2,7 +2,7 @@ import type { OrderBy } from "../filter/filters";
 import { hash } from "../utils";
 import type { QLog } from "../logs";
 import { QRequestContext } from "../request";
-import QTraceSpan from "../tracing/trace-span";
+import { QTraceSpan } from "../tracing";
 
 export type QIndexInfo = {
     fields: string[],

@@ -29,7 +29,7 @@ import type {
 import QLogs from "../server/logs";
 import TONQServer, { DataProviderFactory } from "../server/server";
 import { QStats } from "../server/stats";
-import { QTracer } from "../server/tracer";
+import { QTracer } from "../server/tracing";
 import {
     Auth,
     grantedAccess,

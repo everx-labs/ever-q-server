@@ -14,7 +14,7 @@ import {
     Resolvers,
 } from "./resolvers-types-generated";
 import { QCollectionQuery } from "../../data/collection-query";
-import QTraceSpan from "../../tracing/trace-span";
+import { QTraceSpan } from "../../tracing/trace-span";
 
 const enum Direction {
     Forward,

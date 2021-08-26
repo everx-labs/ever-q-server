@@ -3,7 +3,7 @@ import {
     readConfigFile,
     resolveConfig,
 } from "../server/config";
-import {QTracer} from "../server/tracer";
+import {QTracer} from "../server/tracing";
 import {httpUrl} from "../server/utils";
 
 test("Config File", () => {

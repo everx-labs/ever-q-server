@@ -67,8 +67,9 @@ import {
     StatsTiming,
 } from "../stats";
 import {
+    QTraceSpan,
     QTracer,
-} from "../tracer";
+} from "../tracing";
 import {
     QError,
     required,
@@ -85,7 +86,6 @@ import {
 } from "../request";
 import { QCollectionQuery } from "./collection-query";
 import { QJoinQuery } from "./collection-joins";
-import QTraceSpan from "../tracing/trace-span";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
@@ -752,6 +752,7 @@ export class QDataCollection {
             args: AggregationArgs,
             request: QRequestContext,
         ) => wrap(this.log, "AGGREGATE", args, async () => {
+            request.requestTags.hasAggregations = true;
             request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
             await this.statQuery.increment();
             await this.statQueryActive.increment();

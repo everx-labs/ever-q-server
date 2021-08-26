@@ -10,6 +10,7 @@ async function getAccountsCount(_parent: Record<string, unknown>, args: AccessAr
         data,
     } = context.services;
     return context.trace("getAccountsCount", async traceSpan => {
+        context.requestTags.hasTotals = true;
         await context.requireGrantedAccess(args);
         const result: QResult = await data.query(
             required(data.accounts.provider),
@@ -19,6 +20,7 @@ async function getAccountsCount(_parent: Record<string, unknown>, args: AccessAr
                 orderBy: [],
                 request: context,
                 traceSpan,
+                shards: new Set<string>("00000"),
             }
         );
         const counts = (result as number[]);
@@ -31,6 +33,7 @@ async function getTransactionsCount(_parent: Record<string, unknown>, args: Acce
         data,
     } = context.services;
     return context.trace("getTransactionsCount", async traceSpan => {
+        context.requestTags.hasTotals = true;
         await context.requireGrantedAccess(args);
         const result = await data.query(
             required(data.transactions.provider),
@@ -40,6 +43,7 @@ async function getTransactionsCount(_parent: Record<string, unknown>, args: Acce
                 orderBy: [],
                 request: context,
                 traceSpan,
+                shards: new Set<string>("00000"),
             }
         );
         return result.length > 0 ? result[0] as number : 0;
@@ -51,6 +55,7 @@ async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: A
         data,
     } = context.services;
     return context.trace("getAccountsTotalBalance", async traceSpan => {
+        context.requestTags.hasTotals = true;
         await context.requireGrantedAccess(args);
         /*
         Because arango can not sum BigInt we need to sum separately:
@@ -74,6 +79,7 @@ async function getAccountsTotalBalance(_parent: Record<string, unknown>, args: A
                 orderBy: [],
                 request: context,
                 traceSpan,
+                shards: new Set<string>("00000"),
             });
         const parts = (result as { hs: number, ls: number }[])[0];
         return (BigInt(parts.hs) * BigInt(0x1000000) + BigInt(parts.ls)).toString();

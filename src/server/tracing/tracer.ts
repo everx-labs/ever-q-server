@@ -1,4 +1,4 @@
-import type { QConfig } from "./config";
+import type { QConfig } from "../config";
 import { tracer as noopTracer } from "opentracing/lib/noop";
 import opentracing, {
     Tracer,
@@ -14,7 +14,7 @@ import jaegerclient from "jaeger-client";
 import {
     cleanError,
     toLog,
-} from "./utils";
+} from "../utils";
 import express from "express";
 
 declare module "jaeger-client" {

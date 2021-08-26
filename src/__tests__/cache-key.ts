@@ -16,7 +16,7 @@ import {
 } from "./init-tests";
 import { OrderBy } from "../server/filter/filters";
 import { QRequestContext } from "../server/request";
-import QTraceSpan from "../server/tracing/trace-span";
+import { QTraceSpan } from "../server/tracing";
 
 
 jest.mock("arangojs", () => ({

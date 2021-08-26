@@ -72,7 +72,7 @@ import {
 } from "./stats";
 import {
     QTracer,
-} from "./tracer";
+} from "./tracing";
 import { Tracer } from "opentracing";
 import {
     Auth,
