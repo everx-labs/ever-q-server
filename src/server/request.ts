@@ -117,8 +117,8 @@ export class QRequestContext {
     log(event_name: string, additionalInfo?: string): void {
         const logEntry = {
             event: event_name,
-            info: additionalInfo,
             time: Date.now() - this.start,
+            ...additionalInfo ? { info: additionalInfo } : {},
         };
         this.requestSpan.log(logEntry);
     }

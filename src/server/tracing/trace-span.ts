@@ -41,7 +41,7 @@ export class QTraceSpan {
     ): Promise<T> {
         const span = this.createChildSpan(operationName);
         try {
-            const result = operation(span);
+            const result = await operation(span);
             if (result !== undefined) {
                 span.log({ event: "completed", result: toLog(result) });
             } else {
