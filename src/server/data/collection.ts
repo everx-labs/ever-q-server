@@ -483,56 +483,56 @@ export class QDataCollection {
                 fieldNodes: FieldNode[],
             },
         ) => wrap(this.log, "QUERY", args, async () => {
-        return await request.trace(`${this.name}.queryResolver`, async traceSpan => {
-            await this.statQuery.increment();
-            await this.statQueryActive.increment();
-            const start = Date.now();
-            const queryProcessing = {
-                created: false,
-            };
-            try {
-                const accessRights = await request.requireGrantedAccess(args);
-                const selectionSet = selection.fieldNodes[0].selectionSet;
-                await this.optimizeSortedQueryWithSingleResult(args, accessRights, request, traceSpan);
-                const query = QCollectionQuery.create(
-                    this.name,
-                    this.docType,
-                    args,
-                    selectionSet,
-                    accessRights,
-                    request.services.config.filter,
-                );
-                if (query === null) {
-                    this.log.debug("QUERY", args, 0, "SKIPPED", request.remoteAddress);
-                    return [];
-                }
-                queryProcessing.created = true;
-                return await this.fetchRecords(query, args, selectionSet, request, traceSpan);
-            } catch (error) {
-                await this.statQueryFailed.increment();
-                if (queryProcessing.created) {
-                    const slowReason = explainSlowReason(
+            return await request.trace(`${this.name}.queryResolver`, async traceSpan => {
+                await this.statQuery.increment();
+                await this.statQueryActive.increment();
+                const start = Date.now();
+                const queryProcessing = {
+                    created: false,
+                };
+                try {
+                    const accessRights = await request.requireGrantedAccess(args);
+                    const selectionSet = selection.fieldNodes[0].selectionSet;
+                    await this.optimizeSortedQueryWithSingleResult(args, accessRights, request, traceSpan);
+                    const query = QCollectionQuery.create(
                         this.name,
-                        this.indexes,
                         this.docType,
-                        args.filter ?? {},
-                        args.orderBy ?? [],
+                        args,
+                        selectionSet,
+                        accessRights,
+                        request.services.config.filter,
                     );
-                    if (slowReason) {
-                        error.message += `. Query was detected as a slow. ${slowReason.summary}. See error data for details.`;
-                        error.data = {
-                            ...error.data,
-                            slowReason,
-                        };
+                    if (query === null) {
+                        this.log.debug("QUERY", args, 0, "SKIPPED", request.remoteAddress);
+                        return [];
                     }
+                    queryProcessing.created = true;
+                    return await this.fetchRecords(query, args, selectionSet, request, traceSpan);
+                } catch (error) {
+                    await this.statQueryFailed.increment();
+                    if (queryProcessing.created) {
+                        const slowReason = explainSlowReason(
+                            this.name,
+                            this.indexes,
+                            this.docType,
+                            args.filter ?? {},
+                            args.orderBy ?? [],
+                        );
+                        if (slowReason) {
+                            error.message += `. Query was detected as a slow. ${slowReason.summary}. See error data for details.`;
+                            error.data = {
+                                ...error.data,
+                                slowReason,
+                            };
+                        }
+                    }
+                    throw error;
+                } finally {
+                    await this.statQueryTime.report(Date.now() - start);
+                    await this.statQueryActive.decrement();
+                    request.finish();
                 }
-                throw error;
-            } finally {
-                await this.statQueryTime.report(Date.now() - start);
-                await this.statQueryActive.decrement();
-                request.finish();
-            }
-        });
+            });
         });
     }
 
@@ -757,60 +757,60 @@ export class QDataCollection {
             request: QRequestContext,
         ) => wrap(this.log, "AGGREGATE", args, async () => {
             return await request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
-            request.requestTags.hasAggregations = true;
-            await this.statQuery.increment();
-            await this.statQueryActive.increment();
-            const start = Date.now();
-            try {
-                const accessRights = await request.requireGrantedAccess(args);
-                const filter = args.filter || {};
-                const fields = Array.isArray(args.fields) && args.fields.length > 0
-                    ? args.fields
-                    : [
-                        {
-                            field: "",
-                            fn: AggregationFn.COUNT,
-                        },
-                    ];
-
-                const q = this.createAggregationQuery(filter, fields, accessRights);
-                if (!q) {
-                    this.log.debug("AGGREGATE", args, 0, "SKIPPED", request.remoteAddress);
-                    return [];
-                }
-                const isFast = await checkIsFast(request.services.config, () => this.isFastAggregationQuery(
-                    q.text,
-                    filter,
-                    q.queries,
-                ));
-                traceSpan.log({
-                    text: q.text,
-                    vars: q.params,
-                    isFast,
-                });
+                request.requestTags.hasAggregations = true;
+                await this.statQuery.increment();
+                await this.statQueryActive.increment();
                 const start = Date.now();
-                traceSpan.logEvent("ready_to_fetch");
-                const result = await this.queryProvider({
-                    text: q.text, 
-                    vars: q.params, 
-                    orderBy: [],
-                    isFast, 
-                    request,
-                    traceSpan,
-                });
-                traceSpan.logEvent("data_is_fetched");
-                this.log.debug(
-                    "AGGREGATE",
-                    args,
-                    (Date.now() - start) / 1000,
-                    isFast ? "FAST" : "SLOW", request.remoteAddress,
-                );
-                return AggregationQuery.reduceResults(result, q.queries);
-            } finally {
-                await this.statQueryTime.report(Date.now() - start);
-                await this.statQueryActive.decrement();
-            }
-        });
+                try {
+                    const accessRights = await request.requireGrantedAccess(args);
+                    const filter = args.filter || {};
+                    const fields = Array.isArray(args.fields) && args.fields.length > 0
+                        ? args.fields
+                        : [
+                            {
+                                field: "",
+                                fn: AggregationFn.COUNT,
+                            },
+                        ];
+
+                    const q = this.createAggregationQuery(filter, fields, accessRights);
+                    if (!q) {
+                        this.log.debug("AGGREGATE", args, 0, "SKIPPED", request.remoteAddress);
+                        return [];
+                    }
+                    const isFast = await checkIsFast(request.services.config, () => this.isFastAggregationQuery(
+                        q.text,
+                        filter,
+                        q.queries,
+                    ));
+                    traceSpan.log({
+                        text: q.text,
+                        vars: q.params,
+                        isFast,
+                    });
+                    const start = Date.now();
+                    traceSpan.logEvent("ready_to_fetch");
+                    const result = await this.queryProvider({
+                        text: q.text, 
+                        vars: q.params, 
+                        orderBy: [],
+                        isFast, 
+                        request,
+                        traceSpan,
+                    });
+                    traceSpan.logEvent("data_is_fetched");
+                    this.log.debug(
+                        "AGGREGATE",
+                        args,
+                        (Date.now() - start) / 1000,
+                        isFast ? "FAST" : "SLOW", request.remoteAddress,
+                    );
+                    return AggregationQuery.reduceResults(result, q.queries);
+                } finally {
+                    await this.statQueryTime.report(Date.now() - start);
+                    await this.statQueryActive.decrement();
+                }
+            });
         });
     }
 
