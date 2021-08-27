@@ -25,6 +25,7 @@ import type {
     QDataProvider,
     QIndexInfo,
     QResult,
+    QShard,
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
 import TONQServer, { DataProviderFactory } from "../server/server";
@@ -281,8 +282,8 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     unsubscribe(): void {
     }
 
-    hasDataForShards(): boolean {
-        return true;
+    getShards(): QShard[] {
+        return [];
     }
 }
 

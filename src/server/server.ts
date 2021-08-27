@@ -27,7 +27,7 @@ import {
     IResolvers,
 } from "apollo-server-express";
 import { ConnectionContext } from "subscriptions-transport-ws";
-import { ArangoProvider } from "./data/arango-provider";
+import { QShardDatabaseProvider } from "./data/shard-database-provider";
 import QBlockchainData from "./data/blockchain";
 import type {
     QBlockchainDataProvider,
@@ -40,6 +40,7 @@ import {
     STATS,
 } from "./config";
 import {
+    QDatabasePool,
     QDataCache,
     QDataCombiner,
     QDataPrecachedCombiner,
@@ -66,7 +67,7 @@ import { totalsResolvers } from "./graphql/totals";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
 import type { IStats } from "./stats";
-import { 
+import {
     QStats,
     StatsCounter
 } from "./stats";
@@ -132,6 +133,7 @@ export class MemCache implements QDataCache {
 
 export class DataProviderFactory {
     providers = new Map<string, QDataProvider>();
+    databasePool = new QDatabasePool();
 
     constructor(public config: QConfig, public logs: QLogs) {
     }
@@ -209,9 +211,12 @@ export class DataProviderFactory {
 
     ensureDatabase(config: string, logKey: string): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
-            return config.trim() !== ""
-                ? new ArangoProvider(this.logs.create(logKey), parseArangoConfig(config))
-                : undefined;
+            if (config.trim() === "") {
+                return undefined;
+            }
+            const databaseConfig = parseArangoConfig(config);
+            const shard = this.databasePool.ensureShard(databaseConfig, databaseConfig.name.slice(-5));
+            return new QShardDatabaseProvider(this.logs.create(logKey), shard, this.config.useListeners);
         });
     }
 

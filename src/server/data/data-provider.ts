@@ -1,8 +1,62 @@
 import type { OrderBy } from "../filter/filters";
-import { hash } from "../utils";
+import {
+    hash,
+    setHasIntersections,
+} from "../utils";
 import type { QLog } from "../logs";
 import { QRequestContext } from "../request";
 import { QTraceSpan } from "../tracing";
+import { Database } from "arangojs";
+import {
+    ensureProtocol,
+    QArangoConfig,
+} from "../config";
+
+export type QShard = {
+    database: Database,
+    poolIndex: number,
+    config: QArangoConfig,
+    shard: string,
+};
+
+export class QDatabasePool {
+    private items: { database: Database, config: QArangoConfig } [] = [];
+
+    static sameConfig(a: QArangoConfig, b: QArangoConfig): boolean {
+        return a.server === b.server
+            && a.name === b.name
+            && a.maxSockets === b.maxSockets
+            && a.listenerRestartTimeout === b.listenerRestartTimeout;
+    }
+
+    ensureShard(config: QArangoConfig, shard: string): QShard {
+        let poolIndex = this.items.findIndex(x => QDatabasePool.sameConfig(x.config, config));
+        if (poolIndex < 0) {
+            poolIndex = this.items.length;
+            const database = new Database({
+                url: `${ensureProtocol(config.server, "http")}`,
+                agentOptions: {
+                    maxSockets: config.maxSockets,
+                },
+            });
+            database.useDatabase(config.name);
+            if (config.auth) {
+                const authParts = config.auth.split(":");
+                database.useBasicAuth(authParts[0], authParts.slice(1).join(":"));
+            }
+            this.items.push({
+                database,
+                config,
+            });
+        }
+        return {
+            database: this.items[poolIndex].database,
+            config: this.items[poolIndex].config,
+            poolIndex,
+            shard,
+        };
+    }
+}
 
 export type QIndexInfo = {
     fields: string[],
@@ -36,6 +90,7 @@ export type QDataProviderQueryParams = {
     traceSpan: QTraceSpan,
 };
 
+
 export interface QDataProvider {
     start(collectionsForSubscribe: string[]): Promise<void>;
 
@@ -53,7 +108,7 @@ export interface QDataProvider {
 
     unsubscribe(subscription: unknown): void;
 
-    hasDataForShards(shards: Set<string>): boolean;
+    getShards(): QShard[];
 }
 
 
@@ -65,9 +120,19 @@ export interface QDataCache {
 
 export class QDataCombiner implements QDataProvider {
     providers: QDataProvider[];
+    providersShards: Set<string>[] = [];
+    shards: QShard[] = [];
 
     constructor(providers: QDataProvider[]) {
         this.providers = providers;
+        for (const provider of providers) {
+            const providerShards = new Set<string>();
+            for (const shard of provider.getShards()) {
+                providerShards.add(shard.shard);
+            }
+            this.providersShards.push(providerShards);
+            this.shards = this.shards.concat(provider.getShards());
+        }
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -114,21 +179,21 @@ export class QDataCombiner implements QDataProvider {
         (subscription as unknown[]).map((s, i) => this.providers[i].unsubscribe(s));
     }
 
-    hasDataForShards(shards: Set<string>): boolean {
-        for (const provider of this.providers) {
-            if (provider.hasDataForShards(shards)) {
-                return true;
-            }
-        }
-        return false;
+    getShards(): QShard[] {
+        return this.shards;
     }
 
     private getProvidersForShards(shards: Set<string> | undefined) {
         if (!shards) {
             return this.providers;
         }
-
-        return this.providers.filter(p => p.hasDataForShards(shards));
+        const providers: QDataProvider[] = [];
+        for (let i = 0; i < this.providers.length; i += 1) {
+            if(setHasIntersections(this.providersShards[i], shards)) {
+                providers.push(providers[i]);
+            }
+        }
+        return providers;
     }
 }
 

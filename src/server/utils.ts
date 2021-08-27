@@ -230,3 +230,18 @@ export function required<T>(value: T | undefined): T {
     throw QError.serviceUnavailable();
 }
 
+export function setAdd<T>(target: Set<T>, source: Set<T>) {
+    for(const x of source) {
+        target.add(x);
+    }
+}
+
+export function setHasIntersections<T>(a: Set<T>, b: Set<T>): boolean {
+    const [c, d] = a.size < b.size ? [a, b] : [b, a];
+    for(const x of c) {
+        if (d.has(x)) {
+            return true;
+        }
+    }
+    return false;
+}
