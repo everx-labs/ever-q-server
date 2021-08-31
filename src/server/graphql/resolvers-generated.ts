@@ -316,6 +316,7 @@ const ValidatorSetList = struct({
 const ValidatorSetListArray = array(() => ValidatorSetList);
 const ValidatorSet = struct({
     list: ValidatorSetListArray,
+    main: scalar,
     total: scalar,
     total_weight: bigUInt1,
     utime_since: scalar,
@@ -1277,6 +1278,7 @@ scalarFields.set("blocks.master.config.p31", { type: "string", path: "doc.master
 scalarFields.set("blocks.master.config.p32.list.adnl_addr", { type: "string", path: "doc.master.config.p32.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p32.list.public_key", { type: "string", path: "doc.master.config.p32.list[*].public_key" });
 scalarFields.set("blocks.master.config.p32.list.weight", { type: "uint64", path: "doc.master.config.p32.list[*].weight" });
+scalarFields.set("blocks.master.config.p32.main", { type: "number", path: "doc.master.config.p32.main" });
 scalarFields.set("blocks.master.config.p32.total", { type: "number", path: "doc.master.config.p32.total" });
 scalarFields.set("blocks.master.config.p32.total_weight", { type: "uint64", path: "doc.master.config.p32.total_weight" });
 scalarFields.set("blocks.master.config.p32.utime_since", { type: "number", path: "doc.master.config.p32.utime_since" });
@@ -1284,6 +1286,7 @@ scalarFields.set("blocks.master.config.p32.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p33.list.adnl_addr", { type: "string", path: "doc.master.config.p33.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p33.list.public_key", { type: "string", path: "doc.master.config.p33.list[*].public_key" });
 scalarFields.set("blocks.master.config.p33.list.weight", { type: "uint64", path: "doc.master.config.p33.list[*].weight" });
+scalarFields.set("blocks.master.config.p33.main", { type: "number", path: "doc.master.config.p33.main" });
 scalarFields.set("blocks.master.config.p33.total", { type: "number", path: "doc.master.config.p33.total" });
 scalarFields.set("blocks.master.config.p33.total_weight", { type: "uint64", path: "doc.master.config.p33.total_weight" });
 scalarFields.set("blocks.master.config.p33.utime_since", { type: "number", path: "doc.master.config.p33.utime_since" });
@@ -1291,6 +1294,7 @@ scalarFields.set("blocks.master.config.p33.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p34.list.adnl_addr", { type: "string", path: "doc.master.config.p34.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p34.list.public_key", { type: "string", path: "doc.master.config.p34.list[*].public_key" });
 scalarFields.set("blocks.master.config.p34.list.weight", { type: "uint64", path: "doc.master.config.p34.list[*].weight" });
+scalarFields.set("blocks.master.config.p34.main", { type: "number", path: "doc.master.config.p34.main" });
 scalarFields.set("blocks.master.config.p34.total", { type: "number", path: "doc.master.config.p34.total" });
 scalarFields.set("blocks.master.config.p34.total_weight", { type: "uint64", path: "doc.master.config.p34.total_weight" });
 scalarFields.set("blocks.master.config.p34.utime_since", { type: "number", path: "doc.master.config.p34.utime_since" });
@@ -1298,6 +1302,7 @@ scalarFields.set("blocks.master.config.p34.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p35.list.adnl_addr", { type: "string", path: "doc.master.config.p35.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p35.list.public_key", { type: "string", path: "doc.master.config.p35.list[*].public_key" });
 scalarFields.set("blocks.master.config.p35.list.weight", { type: "uint64", path: "doc.master.config.p35.list[*].weight" });
+scalarFields.set("blocks.master.config.p35.main", { type: "number", path: "doc.master.config.p35.main" });
 scalarFields.set("blocks.master.config.p35.total", { type: "number", path: "doc.master.config.p35.total" });
 scalarFields.set("blocks.master.config.p35.total_weight", { type: "uint64", path: "doc.master.config.p35.total_weight" });
 scalarFields.set("blocks.master.config.p35.utime_since", { type: "number", path: "doc.master.config.p35.utime_since" });
@@ -1305,6 +1310,7 @@ scalarFields.set("blocks.master.config.p35.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p36.list.adnl_addr", { type: "string", path: "doc.master.config.p36.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p36.list.public_key", { type: "string", path: "doc.master.config.p36.list[*].public_key" });
 scalarFields.set("blocks.master.config.p36.list.weight", { type: "uint64", path: "doc.master.config.p36.list[*].weight" });
+scalarFields.set("blocks.master.config.p36.main", { type: "number", path: "doc.master.config.p36.main" });
 scalarFields.set("blocks.master.config.p36.total", { type: "number", path: "doc.master.config.p36.total" });
 scalarFields.set("blocks.master.config.p36.total_weight", { type: "uint64", path: "doc.master.config.p36.total_weight" });
 scalarFields.set("blocks.master.config.p36.utime_since", { type: "number", path: "doc.master.config.p36.utime_since" });
@@ -1312,6 +1318,7 @@ scalarFields.set("blocks.master.config.p36.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p37.list.adnl_addr", { type: "string", path: "doc.master.config.p37.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p37.list.public_key", { type: "string", path: "doc.master.config.p37.list[*].public_key" });
 scalarFields.set("blocks.master.config.p37.list.weight", { type: "uint64", path: "doc.master.config.p37.list[*].weight" });
+scalarFields.set("blocks.master.config.p37.main", { type: "number", path: "doc.master.config.p37.main" });
 scalarFields.set("blocks.master.config.p37.total", { type: "number", path: "doc.master.config.p37.total" });
 scalarFields.set("blocks.master.config.p37.total_weight", { type: "uint64", path: "doc.master.config.p37.total_weight" });
 scalarFields.set("blocks.master.config.p37.utime_since", { type: "number", path: "doc.master.config.p37.utime_since" });
@@ -1761,6 +1768,7 @@ scalarFields.set("zerostates.master.config.p31", { type: "string", path: "doc.ma
 scalarFields.set("zerostates.master.config.p32.list.adnl_addr", { type: "string", path: "doc.master.config.p32.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p32.list.public_key", { type: "string", path: "doc.master.config.p32.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p32.list.weight", { type: "uint64", path: "doc.master.config.p32.list[*].weight" });
+scalarFields.set("zerostates.master.config.p32.main", { type: "number", path: "doc.master.config.p32.main" });
 scalarFields.set("zerostates.master.config.p32.total", { type: "number", path: "doc.master.config.p32.total" });
 scalarFields.set("zerostates.master.config.p32.total_weight", { type: "uint64", path: "doc.master.config.p32.total_weight" });
 scalarFields.set("zerostates.master.config.p32.utime_since", { type: "number", path: "doc.master.config.p32.utime_since" });
@@ -1768,6 +1776,7 @@ scalarFields.set("zerostates.master.config.p32.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p33.list.adnl_addr", { type: "string", path: "doc.master.config.p33.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p33.list.public_key", { type: "string", path: "doc.master.config.p33.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p33.list.weight", { type: "uint64", path: "doc.master.config.p33.list[*].weight" });
+scalarFields.set("zerostates.master.config.p33.main", { type: "number", path: "doc.master.config.p33.main" });
 scalarFields.set("zerostates.master.config.p33.total", { type: "number", path: "doc.master.config.p33.total" });
 scalarFields.set("zerostates.master.config.p33.total_weight", { type: "uint64", path: "doc.master.config.p33.total_weight" });
 scalarFields.set("zerostates.master.config.p33.utime_since", { type: "number", path: "doc.master.config.p33.utime_since" });
@@ -1775,6 +1784,7 @@ scalarFields.set("zerostates.master.config.p33.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p34.list.adnl_addr", { type: "string", path: "doc.master.config.p34.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p34.list.public_key", { type: "string", path: "doc.master.config.p34.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p34.list.weight", { type: "uint64", path: "doc.master.config.p34.list[*].weight" });
+scalarFields.set("zerostates.master.config.p34.main", { type: "number", path: "doc.master.config.p34.main" });
 scalarFields.set("zerostates.master.config.p34.total", { type: "number", path: "doc.master.config.p34.total" });
 scalarFields.set("zerostates.master.config.p34.total_weight", { type: "uint64", path: "doc.master.config.p34.total_weight" });
 scalarFields.set("zerostates.master.config.p34.utime_since", { type: "number", path: "doc.master.config.p34.utime_since" });
@@ -1782,6 +1792,7 @@ scalarFields.set("zerostates.master.config.p34.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p35.list.adnl_addr", { type: "string", path: "doc.master.config.p35.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p35.list.public_key", { type: "string", path: "doc.master.config.p35.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p35.list.weight", { type: "uint64", path: "doc.master.config.p35.list[*].weight" });
+scalarFields.set("zerostates.master.config.p35.main", { type: "number", path: "doc.master.config.p35.main" });
 scalarFields.set("zerostates.master.config.p35.total", { type: "number", path: "doc.master.config.p35.total" });
 scalarFields.set("zerostates.master.config.p35.total_weight", { type: "uint64", path: "doc.master.config.p35.total_weight" });
 scalarFields.set("zerostates.master.config.p35.utime_since", { type: "number", path: "doc.master.config.p35.utime_since" });
@@ -1789,6 +1800,7 @@ scalarFields.set("zerostates.master.config.p35.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p36.list.adnl_addr", { type: "string", path: "doc.master.config.p36.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p36.list.public_key", { type: "string", path: "doc.master.config.p36.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p36.list.weight", { type: "uint64", path: "doc.master.config.p36.list[*].weight" });
+scalarFields.set("zerostates.master.config.p36.main", { type: "number", path: "doc.master.config.p36.main" });
 scalarFields.set("zerostates.master.config.p36.total", { type: "number", path: "doc.master.config.p36.total" });
 scalarFields.set("zerostates.master.config.p36.total_weight", { type: "uint64", path: "doc.master.config.p36.total_weight" });
 scalarFields.set("zerostates.master.config.p36.utime_since", { type: "number", path: "doc.master.config.p36.utime_since" });
@@ -1796,6 +1808,7 @@ scalarFields.set("zerostates.master.config.p36.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p37.list.adnl_addr", { type: "string", path: "doc.master.config.p37.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p37.list.public_key", { type: "string", path: "doc.master.config.p37.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p37.list.weight", { type: "uint64", path: "doc.master.config.p37.list[*].weight" });
+scalarFields.set("zerostates.master.config.p37.main", { type: "number", path: "doc.master.config.p37.main" });
 scalarFields.set("zerostates.master.config.p37.total", { type: "number", path: "doc.master.config.p37.total" });
 scalarFields.set("zerostates.master.config.p37.total_weight", { type: "uint64", path: "doc.master.config.p37.total_weight" });
 scalarFields.set("zerostates.master.config.p37.utime_since", { type: "number", path: "doc.master.config.p37.utime_since" });
