@@ -465,6 +465,7 @@ const ValidatorSet: TypeDef = {
     utime_since: unixSeconds(),
     utime_until: unixSeconds(),
     total: u16(),
+    main: u16(),
     total_weight: u64(),
     list: arrayOf({
         public_key: stringWithLowerFilter(),
