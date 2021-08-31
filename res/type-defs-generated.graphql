@@ -521,6 +521,7 @@ type ValidatorSetList {
 
 type ValidatorSet {
 	list: [ValidatorSetList]
+	main: Int
 	total: Int
 	total_weight(format: BigIntFormat): String
 	utime_since: Float
@@ -1788,6 +1789,7 @@ input ValidatorSetListArrayFilter {
 
 input ValidatorSetFilter {
 	list: ValidatorSetListArrayFilter
+	main: IntFilter
 	total: IntFilter
 	total_weight: StringFilter
 	utime_since: FloatFilter
