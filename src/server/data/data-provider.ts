@@ -19,42 +19,97 @@ export type QShard = {
     shard: string,
 };
 
+type QDatabasePoolItem = {
+    config: QArangoConfig,
+    shards: QShard[],
+};
+
 export class QDatabasePool {
-    private items: { database: Database, config: QArangoConfig } [] = [];
+    private items: QDatabasePoolItem[] = [];
 
     static sameConfig(a: QArangoConfig, b: QArangoConfig): boolean {
         return a.server === b.server
-            && a.name === b.name
-            && a.maxSockets === b.maxSockets
-            && a.listenerRestartTimeout === b.listenerRestartTimeout;
+            && a.name === b.name;
     }
 
     ensureShard(config: QArangoConfig, shard: string): QShard {
-        let poolIndex = this.items.findIndex(x => QDatabasePool.sameConfig(x.config, config));
-        if (poolIndex < 0) {
-            poolIndex = this.items.length;
-            const database = new Database({
-                url: `${ensureProtocol(config.server, "http")}`,
-                agentOptions: {
-                    maxSockets: config.maxSockets,
-                },
-            });
-            database.useDatabase(config.name);
-            if (config.auth) {
-                const authParts = config.auth.split(":");
-                database.useBasicAuth(authParts[0], authParts.slice(1).join(":"));
-            }
-            this.items.push({
-                database,
-                config,
-            });
+        const [poolIndex, poolItem] = this.ensurePoolItem(config);
+        let qShard = poolItem.shards.find(x => x.shard === shard);
+        if (qShard) {
+            return qShard;
         }
-        return {
-            database: this.items[poolIndex].database,
-            config: this.items[poolIndex].config,
+
+        const database = (poolItem.shards.length > 0)
+            ? poolItem.shards[0].database
+            : this.createDatabaseHandle(poolItem.config);
+        
+        qShard = {
+            database,
+            config: poolItem.config,
             poolIndex,
             shard,
         };
+
+        poolItem.shards.push(qShard);
+        return qShard;
+    }
+
+    private ensurePoolItem(config: QArangoConfig): [number, QDatabasePoolItem] {
+        let poolIndex = this.items.findIndex(x => QDatabasePool.sameConfig(x.config, config));
+        if (poolIndex < 0) {
+            poolIndex = this.items.length;
+            const poolItem = {
+                shards: [],
+                config,
+            };
+            this.items.push(poolItem);
+            return [poolIndex, poolItem];
+        }
+
+        const poolItem = this.items[poolIndex];
+        this.upgradeConfigIfNeeded(poolItem, config);
+        return [poolIndex, poolItem];
+    }
+
+    private upgradeConfigIfNeeded(poolItem: QDatabasePoolItem, config: QArangoConfig): void {
+        if (!QDatabasePool.sameConfig(poolItem.config, config)) {
+            throw new Error("Invalid upgradeDatabaseHandlesIfNeeded use");
+        }
+        if (poolItem.config.maxSockets === config.maxSockets &&
+            poolItem.config.listenerRestartTimeout === config.listenerRestartTimeout) {
+            return;
+        }
+
+        const oldDatabase = poolItem.shards[0].database;
+        oldDatabase.close();
+
+        const newConfig = {
+            ...config,
+            maxSockets: Math.max(config.maxSockets, poolItem.config.maxSockets),
+            listenerRestartTimeout: Math.min(config.listenerRestartTimeout, poolItem.config.listenerRestartTimeout),
+        };
+
+        const database = this.createDatabaseHandle(newConfig);
+        poolItem.config = newConfig;
+        for (const shard of poolItem.shards) {
+            shard.config = newConfig;
+            shard.database = database;
+        }
+    }
+
+    private createDatabaseHandle(config: QArangoConfig): Database {
+        const database = new Database({
+            url: `${ensureProtocol(config.server, "http")}`,
+            agentOptions: {
+                maxSockets: config.maxSockets,
+            },
+        });
+        database.useDatabase(config.name);
+        if (config.auth) {
+            const authParts = config.auth.split(":");
+            database.useBasicAuth(authParts[0], authParts.slice(1).join(":"));
+        }
+        return database;
     }
 }
 
