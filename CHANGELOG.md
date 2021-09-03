@@ -9,11 +9,18 @@ All notable changes to this project will be documented in this file.
 - Flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
   Old data configurations are deprecated now but supported yet. For details see README.
 - Support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
+- Option to set max execution time for queries on ArangoDb side
+- Option to configure polling period in waitFor queries (queries with timeout)
+- Memjs data cache support for hot databases
 - Joins loading optimisations.
-- Sharding support.
 - Latency refreshing optimisation.
 - Info query optimisation.
 - Better jaeger tracing.
+- "main" parameter support for ValidatorSet type
+
+### Fixed
+
+- Subscriptions for sharded data sources
 
 
 ## [0.42.1] 2021-08-09

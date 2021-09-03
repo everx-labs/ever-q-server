@@ -41,14 +41,13 @@ import {
 } from "./config";
 import {
     QDatabasePool,
-    QDataCache,
     QDataCombiner,
     QDataPrecachedCombiner,
     QDataProvider,
 } from "./data/data-provider";
 import {
     MemjsDataCache,
-} from "./data/memjs-datacache";
+} from "./data/caching/memjs-datacache";
 import { aggregatesResolvers } from "./graphql/aggregates";
 import { counterpartiesResolvers } from "./graphql/counterparties";
 import { explainResolvers } from "./graphql/explain";
@@ -105,32 +104,6 @@ type EndPoint = {
     supportSubscriptions: boolean,
 };
 
-export class MemCache implements QDataCache {
-    data: Map<string, unknown>;
-    getCount: number;
-    setCount: number;
-    lastKey: string;
-
-    constructor() {
-        this.data = new Map();
-        this.getCount = 0;
-        this.setCount = 0;
-        this.lastKey = "";
-    }
-
-    async get(key: string): Promise<unknown | undefined> {
-        this.lastKey = key;
-        this.getCount += 1;
-        return this.data.get(key);
-    }
-
-    async set(key: string, value: unknown): Promise<void> {
-        this.lastKey = key;
-        this.setCount += 1;
-        this.data.set(key, value);
-    }
-}
-
 export class DataProviderFactory {
     providers = new Map<string, QDataProvider>();
     databasePool = new QDatabasePool();
@@ -141,8 +114,8 @@ export class DataProviderFactory {
     ensure(): QDataProviders {
         return {
             blockchain: this.ensureBlockchain(this.config.blockchain, "blockchain"),
-            counterparties: this.ensureDatabases(this.config.counterparties, "counterparties"),
-            chainRangesVerification: this.ensureDatabases(this.config.chainRangesVerification, "chainRangesVerification"),
+            counterparties: this.ensureDatabases(this.config.counterparties, "counterparties", false),
+            chainRangesVerification: this.ensureDatabases(this.config.chainRangesVerification, "chainRangesVerification", false),
         };
     }
 
@@ -150,14 +123,20 @@ export class DataProviderFactory {
         return config === undefined
             ? undefined
             : {
-                accounts: this.ensureDatabases(config.accounts, `${logKey}_accounts`),
+                accounts: this.ensureDatabases(config.accounts, `${logKey}_accounts`, true),
                 blocks: this.ensureHotCold(config.blocks, `${logKey}_blocks`),
                 transactions: this.ensureHotCold(config.transactions, `${logKey}_transactions`),
-                zerostate: this.ensureDatabase(config.zerostate, `${logKey}_zerostate`),
+                zerostate: this.ensureDatabase(config.zerostate, `${logKey}_zerostate`, 0),
             };
     }
 
-    preCache(main: QDataProvider | undefined, config: string | undefined, logKey: string, dataExpirationTimeout = 0): QDataProvider | undefined {
+    preCache(
+        main: QDataProvider | undefined,
+        config: string | undefined,
+        logKey: string,
+        dataExpirationTimeout = 0,
+        emptyDataExpirationTimeout = 0
+    ): QDataProvider | undefined {
         const cacheConfig = (config ?? "").trim();
         if (main === undefined || cacheConfig === "") {
             return main;
@@ -165,24 +144,26 @@ export class DataProviderFactory {
         return new QDataPrecachedCombiner(
             this.logs.create(logKey),
             new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
-            // new MemCache(),
+            // new InMemoryDataCache(),
             [main],
             this.config.networkName,
             this.config.cacheKeyPrefix,
             dataExpirationTimeout,
+            emptyDataExpirationTimeout,
         );
     }
 
     ensureHotCold(config: QHotColdDataConfig, logKey: string): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
             const hot = this.preCache(
-                this.ensureDatabases(config.hot, `${logKey}_hot`),
+                this.ensureDatabases(config.hot, `${logKey}_hot`, true),
                 this.config.blockchain.hotCache,
                 logKey,
-                10,
+                this.config.blockchain.hotCacheExpiration,
+                this.config.blockchain.hotCacheEmptyDataExpiration,
             );
             const cold = this.preCache(
-                this.ensureDatabases(config.cold, `${logKey}_cold`),
+                this.ensureDatabases(config.cold, `${logKey}_cold`, false),
                 config.cache,
                 logKey,
             );
@@ -190,14 +171,19 @@ export class DataProviderFactory {
                 return new QDataCombiner([hot, cold]);
             }
             return hot ?? cold;
-        });
+        }, false);
     }
 
-    ensureDatabases(config: string[], logKey: string): QDataProvider | undefined {
+    ensureDatabases(config: string[], logKey: string, sharded: boolean): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
             const providers: QDataProvider[] = [];
+            const shardingDepth = (sharded && config.length > 0) ? Math.log2(config.length) : 0;
+            if (shardingDepth % 1 !== 0) {
+                throw new Error("Invalid sharding configuration: the count of databases should be a power of 2");
+            }
+
             config.forEach((x, i) => {
-                const provider = this.ensureDatabase(x, `${logKey}_${i}`);
+                const provider = this.ensureDatabase(x, `${logKey}_${i}`, shardingDepth);
                 if (provider !== undefined && !providers.includes(provider)) {
                     providers.push(provider);
                 }
@@ -206,23 +192,24 @@ export class DataProviderFactory {
                 return undefined;
             }
             return providers.length === 1 ? providers[0] : new QDataCombiner(providers);
-        });
+        }, sharded);
     }
 
-    ensureDatabase(config: string, logKey: string): QDataProvider | undefined {
+    ensureDatabase(config: string, logKey: string, shardingDepth: number): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
             if (config.trim() === "") {
                 return undefined;
             }
             const databaseConfig = parseArangoConfig(config);
-            const shard = this.databasePool.ensureShard(databaseConfig, databaseConfig.name.slice(-5));
-            return new QShardDatabaseProvider(this.logs.create(logKey), shard, this.config.useListeners);
-        });
+            const shard = (shardingDepth > 0) ? databaseConfig.name.slice(-shardingDepth) : "";
+            const qShard = this.databasePool.ensureShard(databaseConfig, shard);
+            return new QShardDatabaseProvider(this.logs.create(logKey), qShard, this.config.useListeners);
+        }, false);
     }
 
 
-    ensureProvider(config: unknown, factory: () => QDataProvider | undefined): QDataProvider | undefined {
-        const providerKey = JSON.stringify(config);
+    ensureProvider(config: unknown, factory: () => QDataProvider | undefined, sharded: boolean): QDataProvider | undefined {
+        const providerKey = JSON.stringify({ config, sharded });
         const existing = this.providers.get(providerKey);
         if (existing !== undefined) {
             return existing;

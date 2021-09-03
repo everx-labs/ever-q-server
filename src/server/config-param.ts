@@ -65,6 +65,8 @@ type HotColdParams = {
 
 type BlockchainParams = {
     hotCache: ConfigParam<string>,
+    hotCacheExpiration: ConfigParam<number>,
+    hotCacheEmptyDataExpiration: ConfigParam<number>,
     accounts: ConfigParam<string[]>,
     blocks: HotColdParams,
     transactions: HotColdParams,
@@ -191,6 +193,16 @@ export class ConfigParam<T extends ConfigValue> {
                 `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache`,
                 "",
                 withPrefix(toPascal(prefix), "hot cache server"),
+            ),
+            hotCacheExpiration: ConfigParam.integer(
+                `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache-expiration`,
+                10,
+                withPrefix(toPascal(prefix), "hot cache expiration in seconds"),
+            ),
+            hotCacheEmptyDataExpiration: ConfigParam.integer(
+                `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache-empty-data-expiration`,
+                2,
+                withPrefix(toPascal(prefix), "hot cache empty entries expiration in seconds"),
             ),
             accounts: ConfigParam.databases(withPrefix(prefix, "accounts")),
             blocks: ConfigParam.hotCold(withPrefix(prefix, "blocks")),

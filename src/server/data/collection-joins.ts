@@ -17,6 +17,7 @@ import {
 import QData from "./data";
 import QBlockchainData from "./blockchain";
 import { QTraceSpan } from "../tracing";
+import { required } from "../utils";
 
 export class QJoinQuery {
     on: string;
@@ -73,7 +74,7 @@ export class QJoinQuery {
     buildPlan(mainRecords: Record<string, unknown>[]): Map<string, Record<string, unknown>[]> {
         const plan = new Map<string, Record<string, unknown>[]>();
         for (const record of mainRecords) {
-            if (this.canJoin(record, this.field.arguments as JoinArgs)) {
+            if (this.canJoin(record, QJoinQuery.parseArgs(this.field) as JoinArgs)) {
                 const onValue = record[this.onAttr] as string | string[] | null | undefined;
                 if (onValue !== null && onValue !== undefined) {
                     if (Array.isArray(onValue)) {
@@ -150,6 +151,7 @@ export class QJoinQuery {
                 this.refOnIsArray,
                 this.fieldSelection,
                 accessRights,
+                required(this.refCollection.provider).shardingDegree,
                 request.services.config,
             );
             if (joinQuery !== null) {

@@ -25,7 +25,6 @@ import type {
     QDataProvider,
     QIndexInfo,
     QResult,
-    QShard,
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
 import TONQServer, { DataProviderFactory } from "../server/server";
@@ -91,6 +90,7 @@ export function queryText(collection: QDataCollection, result: string, orderBy?:
             },
             selectionInfo(result),
             grantedAccess,
+            0,
         )?.text ?? "",
     );
 }
@@ -245,6 +245,8 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     data: T[];
     queryCount: number;
     hotUpdateCount: number;
+    shards = [];
+    shardingDegree = 0;
 
     constructor(data: T[]) {
         this.data = data;
@@ -280,10 +282,6 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     }
 
     unsubscribe(): void {
-    }
-
-    getShards(): QShard[] {
-        return [];
     }
 }
 

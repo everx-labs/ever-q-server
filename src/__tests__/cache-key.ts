@@ -223,7 +223,7 @@ describe("DataCache", () => {
             vars,
             orderBy,
             request: null as unknown as QRequestContext,
-            traceSpan: null as unknown as QTraceSpan,
+            traceSpan: QTraceSpan.create(server.tracer, ""),
         });
         const lastKey = "Q_" + hash(cachedCold.configHash, JSON.stringify({
             text,

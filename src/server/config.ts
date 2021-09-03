@@ -27,7 +27,6 @@ import { QError } from "./utils";
 
 export type QConfig = {
     config: string,
-    filter: FilterConfig,
     server: {
         host: string,
         port: number,
@@ -39,13 +38,17 @@ export type QConfig = {
         topic: string,
         maxSize: number,
     },
-    waitForPeriod: number,
+    queries: {
+        filter: FilterConfig,
+        maxRuntimeInS: number,
+        slowQueries: SlowQueriesMode,
+        waitForPeriod: number,
+    },
     useListeners: boolean,
     blockchain: QBlockchainDataConfig,
     counterparties: string[],
     chainRangesVerification: string[],
 
-    slowQueries: SlowQueriesMode,
     slowQueriesBlockchain?: QBlockchainDataConfig,
 
     data?: QDeprecatedDataConfig,
@@ -77,6 +80,8 @@ export type FilterConfig = {
 
 export type QBlockchainDataConfig = {
     hotCache?: string,
+    hotCacheExpiration: number,
+    hotCacheEmptyDataExpiration: number,
     accounts: string[],
     blocks: QHotColdDataConfig,
     transactions: QHotColdDataConfig,
@@ -131,31 +136,42 @@ export const configParams = {
         topic: ConfigParam.string("requests-topic", "requests", "Requests topic name"),
         maxSize: ConfigParam.integer("requests-max-size", 16383, "Maximum request message size in bytes"),
     },
-    filter: {
-        orConversion: ConfigParam.string(
-            "filter-or-conversion",
-            "sub-queries",
-            "Filter OR conversion:\n" +
-            "`or-operator` – q-server uses AQL with OR\n" +
-            "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
-            " and combines results (this option provides faster execution\n" +
-            " than OR operator in AQL)",
+    queries: {
+        filter: {
+            orConversion: ConfigParam.string(
+                "filter-or-conversion",
+                "sub-queries",
+                "Filter OR conversion:\n" +
+                "`or-operator` – q-server uses AQL with OR\n" +
+                "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
+                " and combines results (this option provides faster execution\n" +
+                " than OR operator in AQL)",
+            ),
+        },
+        maxRuntimeInS: ConfigParam.integer(
+            "query-max-runtime",
+            600,
+            "Max allowed execution time for ArangoDb queries in seconds",
+        ),
+        slowQueries: ConfigParam.string(
+            "slow-queries",
+            "redirect",
+            "Slow queries handling:\n" +
+            "`enable` – process slow queries on the main database\n" +
+            "`redirect` – redirect slow queries to slow-queries database\n" +
+            "`disable` – fail on slow queries",
+        ),
+        waitForPeriod: ConfigParam.integer(
+            "query-wait-for-period",
+            1000,
+            "Collection polling period for wait-for queries\n" +
+            "(collection queries with timeout) in ms",
         ),
     },
-    waitForPeriod: ConfigParam.integer("wait-for-period", 1000, "Wait-for collection polling in ms"),
     useListeners: ConfigParam.boolean("use-listeners", false, "Use database listeners for subscriptions"),
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
-
-    slowQueries: ConfigParam.string(
-        "slow-queries",
-        "redirect",
-        "Slow queries handling:\n" +
-        "`enable` – process slow queries on the main database\n" +
-        "`redirect` – redirect slow queries to slow-queries database\n" +
-        "`disable` – fail on slow queries",
-    ),
     slowQueriesBlockchain: ConfigParam.blockchain("slow queries"),
 
     data: ConfigParam.dataDeprecated("data"),
@@ -327,6 +343,8 @@ function upgradeBlockchain(deprecated: QDeprecatedDataConfig): QBlockchainDataCo
         blocks,
         transactions: upgradeHotCold(deprecated, deprecated.mut),
         zerostate: blocks.hot[0] ?? "",
+        hotCacheExpiration: configParams.blockchain.hotCacheExpiration.defaultValue,
+        hotCacheEmptyDataExpiration: configParams.blockchain.hotCacheEmptyDataExpiration.defaultValue,
     };
 }
 
