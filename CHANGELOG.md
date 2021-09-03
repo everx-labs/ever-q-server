@@ -2,13 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.43.0] 2021-08-04
+## [0.43.0] 2021-08-30
 
 ### New
 
-- flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
+- Flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
   Old data configurations are deprecated now but supported yet. For details see README.
-- support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
+- Support for `chain_order` fields in `blocks` and `transactions` and `reliableChainOrderUpperBoundary` (the boundary before which no additions are possible) field in `info`
+- Joins loading optimisations.
+- Sharding support.
+- Latency refreshing optimisation.
+- Info query optimisation.
+- Better jaeger tracing.
+
 
 ## [0.42.1] 2021-08-09
 

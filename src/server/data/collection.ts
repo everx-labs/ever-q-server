@@ -453,7 +453,7 @@ export class QDataCollection {
             records as Record<string, unknown>[],
             selection,
             query.accessRights,
-            query.timeout,
+            query.timeout ?? 40000,
             request,
             traceSpan,
         );
@@ -791,10 +791,10 @@ export class QDataCollection {
                     const start = Date.now();
                     traceSpan.logEvent("ready_to_fetch");
                     const result = await this.queryProvider({
-                        text: q.text, 
-                        vars: q.params, 
+                        text: q.text,
+                        vars: q.params,
                         orderBy: [],
-                        isFast, 
+                        isFast,
                         request,
                         traceSpan,
                     });
