@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */
 /*
 * Copyright 2018-2020 TON DEV SOLUTIONS LTD.
 *
