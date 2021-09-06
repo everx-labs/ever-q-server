@@ -351,21 +351,16 @@ Yes, you need too run tsc twice :(.
 
 ## Tests
 
-By default tests connects to Arango on [http://localhost:8901]
+By default tests connect to Arango on [http://localhost:8901]
 
 ```bash
-$ tondev info
-TON Labs Dev Tools 0.17.7
-
-default network/blockchain:
-
-  Used version: latest
-  Bound to host port: 8080
-  Arango DB is bound to host port: 8901
-  Docker image: tonlabs/local-node:latest
-  Docker container: tonlabs-local-node-g9d running
-
-$ tondev start
+$ tondev se start
+Starting tonlabs-tonos-se-user... ✓
+$ tondev se info
+Instance  State    Version  GraphQL Port  ArangoDB Port  Docker Container          Docker Image
+--------  -------  -------  ------------  -------------  ---------------------  -------------------------
+default   running  0.28.3   80            2021           tonlabs-tonos-se-user  tonlabs/local-node:0.28.3
+$ export Q_DATA_MUT="http://localhost:2021"
 $ npm run test
 ```
 
