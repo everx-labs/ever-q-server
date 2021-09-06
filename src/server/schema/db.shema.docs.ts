@@ -244,6 +244,7 @@ total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fw
 The formula is:
 balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
         chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
+        ext_in_msg_fee: "Fee for inbound external message import.",
     },
 
     shardDescr: {
