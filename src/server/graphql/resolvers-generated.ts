@@ -578,6 +578,7 @@ const Transaction = struct({
     destroyed: scalar,
     end_status: scalar,
     end_status_name: enumName("end_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    ext_in_msg_fee: bigUInt2,
     in_message: join("in_msg", "id", "messages", [], () => Message),
     in_msg: stringLowerFilter,
     installed: scalar,
@@ -1042,6 +1043,9 @@ function createResolvers(data: QBlockchainData) {
             },
             balance_delta(parent: { balance_delta: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance_delta, args);
+            },
+            ext_in_msg_fee(parent: { ext_in_msg_fee: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.ext_in_msg_fee, args);
             },
             lt(parent: { lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.lt, args);
@@ -1635,6 +1639,7 @@ scalarFields.set("transactions.credit.credit_other.value", { type: "uint1024", p
 scalarFields.set("transactions.credit.due_fees_collected", { type: "uint1024", path: "doc.credit.due_fees_collected" });
 scalarFields.set("transactions.credit_first", { type: "boolean", path: "doc.credit_first" });
 scalarFields.set("transactions.destroyed", { type: "boolean", path: "doc.destroyed" });
+scalarFields.set("transactions.ext_in_msg_fee", { type: "uint1024", path: "doc.ext_in_msg_fee" });
 scalarFields.set("transactions.in_msg", { type: "string", path: "doc.in_msg" });
 scalarFields.set("transactions.installed", { type: "boolean", path: "doc.installed" });
 scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" });
