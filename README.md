@@ -53,9 +53,9 @@ Option                                          ENV                             
 --blocks-hot                                    Q_BLOCKS_HOT                                                      Blocks hot databases
 --blocks-cache                                  Q_BLOCKS_CACHE                                                    Blocks cache server
 --blocks-cold                                   Q_BLOCKS_COLD                                                     Blocks cold databases
---transactions-hot                              Q_TRANSACTIONS_HOT                                                Transactions hot databases
---transactions-cache                            Q_TRANSACTIONS_CACHE                                              Transactions cache server
---transactions-cold                             Q_TRANSACTIONS_COLD                                               Transactions cold databases
+--transactions-hot                              Q_TRANSACTIONS_HOT                                                Transactions and messages hot databases
+--transactions-cache                            Q_TRANSACTIONS_CACHE                                              Transactions and messages cache server
+--transactions-cold                             Q_TRANSACTIONS_COLD                                               Transactions and messages cold databases
 --zerostate                                     Q_ZEROSTATE                                                       Zerostate database
 --counterparties                                Q_COUNTERPARTIES                                                  Counterparties databases
 --chain-ranges-verification                     Q_CHAIN_RANGES_VERIFICATION                                       Chain ranges verification databases
@@ -66,9 +66,9 @@ Option                                          ENV                             
 --slow-queries-blocks-hot                       Q_SLOW_QUERIES_BLOCKS_HOT                                         Slow queries blocks hot databases
 --slow-queries-blocks-cache                     Q_SLOW_QUERIES_BLOCKS_CACHE                                       Slow queries blocks cache server
 --slow-queries-blocks-cold                      Q_SLOW_QUERIES_BLOCKS_COLD                                        Slow queries blocks cold databases
---slow-queries-transactions-hot                 Q_SLOW_QUERIES_TRANSACTIONS_HOT                                   Slow queries transactions hot databases
---slow-queries-transactions-cache               Q_SLOW_QUERIES_TRANSACTIONS_CACHE                                 Slow queries transactions cache server
---slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                  Slow queries transactions cold databases
+--slow-queries-transactions-hot                 Q_SLOW_QUERIES_TRANSACTIONS_HOT                                   Slow queries transactions and messages hot databases
+--slow-queries-transactions-cache               Q_SLOW_QUERIES_TRANSACTIONS_CACHE                                 Slow queries transactions and messages cache server
+--slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                  Slow queries transactions and messages cold databases
 --slow-queries-zerostate                        Q_SLOW_QUERIES_ZEROSTATE                                          Slow queries zerostate database
 --data-mut (DEPRECATED)                         Q_DATA_MUT                                      arangodb          Data mutable db config url
 --data-hot (DEPRECATED)                         Q_DATA_HOT                                      arangodb          Data hot db config url
@@ -101,7 +101,6 @@ notation):
 ```ts
 type QConfig = {
     config: string,
-    filter: FilterConfig,
     server: {
         host: string,
         port: number,
@@ -113,11 +112,17 @@ type QConfig = {
         topic: string,
         maxSize: number,
     },
+    queries: {
+        filter: FilterConfig,
+        maxRuntimeInS: number,
+        slowQueries: SlowQueriesMode,
+        waitForPeriod: number,
+    },
+    useListeners: boolean,
     blockchain: QBlockchainDataConfig,
     counterparties: string[],
     chainRangesVerification: string[],
 
-    slowQueries: SlowQueriesMode,
     slowQueriesBlockchain?: QBlockchainDataConfig,
 
     data?: QDeprecatedDataConfig,
@@ -148,9 +153,13 @@ type FilterConfig = {
 };
 
 type QBlockchainDataConfig = {
+    hotCache?: string,
+    hotCacheExpiration: number,
+    hotCacheEmptyDataExpiration: number,
     accounts: string[],
     blocks: QHotColdDataConfig,
     transactions: QHotColdDataConfig,
+    zerostate: string,
 };
 
 type QHotColdDataConfig = {
@@ -184,10 +193,17 @@ enum FilterOrConversion {
 }
 ```
 
+Command line parameters and ENV variables with "databases" at the end of desciption accept comma-separated list of database urls (described below). E.g.:
+```text
+Q_ACCOUNTS: accounts_db_url
+Q_BLOCKS_HOT: blocks_00_url,blocks_01_url,blocks_10_url,blocks_11_url
+```
+
+Zerostate database defaults to the first database in hot blocks databases.
 Db config must be specified in form of URL:
 
 ```text
-    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=60000]]`
+    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=1000]]`
 ```
 
 Default values:
@@ -198,7 +214,7 @@ Default values:
 - path is empty;
 - name is `blockchain`;
 - maxSockets is `100` for fast queries and `3` for slow queries.
-- listenerRestartTimeout is `60000` for fast queries and `3` for slow queries.
+- listenerRestartTimeout is `1000`.
 
 ## Run
 
@@ -322,7 +338,7 @@ npm run tsc
 This will regenerate file in `dist` folder.
 
 **SECOND**. If you want to modify scheme of database, you must do it only in one
-place `db-schema.ts`. After that you need to generate source code for a graphql type definitions and
+place: `db-schema.ts`. After that you need to generate source code for a graphql type definitions and
 for resolvers JavaScript code. You must do it with:
 
 ```bash
@@ -358,12 +374,17 @@ $ npm run test
 You can change default behavior with env:
 
 ```bash
-export Q_DATA_MUT=http://localhost:8529
-export Q_DATA_HOT=${Q_DATA_MUT}
-export Q_DATA_COLD=${Q_DATA_MUT}
-export Q_SLOW_QUERIES_MUT=${Q_DATA_MUT}
-export Q_SLOW_QUERIES_HOT=${Q_DATA_MUT}
-export Q_SLOW_QUERIES_COLD=${Q_DATA_MUT}
+export Q_ACCOUNTS=http://localhost:8529
+export Q_ACCOUNTS=${Q_DATA_MUT}
+export Q_BLOCKS_HOT=${Q_DATA_MUT}
+export Q_BLOCKS_COLD=${Q_DATA_MUT}
+export Q_TRANSACTIONS_HOT=${Q_DATA_MUT}
+export Q_TRANSACTIONS_COLD=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_ACCOUNTS=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_BLOCKS_HOT=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_BLOCKS_COLD=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_TRANSACTIONS_HOT=${Q_DATA_MUT}
+export Q_SLOW_QUERIES_TRANSACTIONS_COLD=${Q_DATA_MUT}
 ```
 
 or/and via arg `--config <path to config>`
@@ -382,21 +403,40 @@ or/and via arg `--config <path to config>`
 		"topic": "requests",
 		"maxSize": "16383"
 	},
-	"data": {
-		"mut": "",
-		"hot": "",
-		"cold": [],
-		"cache": "",
-		"counterparties": "",
-		"chainRangesVerification": ""
-	},
-	"slowQueries": {
-		"mode": "redirect",
-		"mut": "arangodb",
-		"hot": "arangodb",
-		"cold": [],
-		"cache": ""
-	},
+    "blockchain": {
+        "hotCache": "",
+        "hotCacheExpiration": 10,
+        "hotCacheEmptyDataExpiration": 3,
+        "acounts": [],
+        "blocks": {
+            "hot": [],
+            "cache": "",
+            "cold": []
+        },
+        "transactions": {
+            "hot": [],
+            "cache": "",
+            "cold": []
+        },
+        "zerostate": "",
+    },
+    "slowQueriesBlockchain": {
+        "hotCache": "",
+        "hotCacheExpiration": 10,
+        "hotCacheEmptyDataExpiration": 3,
+        "acounts": [],
+        "blocks": {
+            "hot": [],
+            "cache": "",
+            "cold": []
+        },
+        "transactions": {
+            "hot": [],
+            "cache": "",
+            "cold": []
+        },
+        "zerostate": "",
+    },
 	"authEndpoint": "",
 	"mamAccessKeys": "",
 	"jaegerEndpoint": "",
@@ -424,13 +464,41 @@ Required at least one of `--config` or `env Q_CONFIG` to be set at server start
 
 ### Sharding configuration
 
-In the current state of code only accounts and hot blocks and transactions databases (fast and slow) could be sharded. For these 3*2=6 types of databases:
+**CAUTION**: sharding is experimental and is likely to change.
+
+In the current state of code only Q_ACCOUNTS, Q_BLOCKS_HOT, Q_TRANSACTIONS_HOT databases and their "SLOW_QUERIES" counterparts could be sharded. For these six types of databases:
 1. Sharding depth is determined as log2 of databases count.
 2. If sharding depth is not an integer, the error is thrown (so there should be 1, 2, 4, 8, ... databases).
 3. For every database the shard name is determined as last sharding depth symbols of database name. So for 8 databases case the database with name "blockchain-101" will have shard name "101".
 
-Accounts are considered sharded by workchain id: -1 and 0 resides in 0 shard ("00000" for 32 db case), 1 - in 1 ("00001"), etc. So there should be at least as many databases as there are workchains.
+- Accounts are considered sharded by workchain id: -1 and 0 resides in 0 shard ("000" for the case with 8 databases), 1 - in 1 ("001"), etc. So there should be at least as many account databases as there are workchains.
+- Transactions and messages are considered to be sharded by the first bits by account hash ("-1:ac..." -> "ac" -> "10101011..." -> "1010" for the case with 16 databases).
+- Blocks are considered to be sharded by the first bits of block id.
 
-Transactions and messages are considered to be sharded by first bits by account hash ("-1:ac..." -> "ac" -> "10101011..." -> "1010" for 16 db case).
+### Example configuration with a sharded database
 
-Blocks are considered to be sharded by first bits of block id.
+```bash
+export Q_BLOCKS_HOT=
+export Q_BLOCKS_HOT="http://arango-3.example.com:8529?maxSockets=10&name=blockchain-hot-011,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-0.example.com:8529?maxSockets=10&name=blockchain-hot-000,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-1.example.com:8529?maxSockets=10&name=blockchain-hot-001,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-5.example.com:8529?maxSockets=10&name=blockchain-hot-101,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-2.example.com:8529?maxSockets=10&name=blockchain-hot-010,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-4.example.com:8529?maxSockets=10&name=blockchain-hot-100,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-6.example.com:8529?maxSockets=10&name=blockchain-hot-110,${Q_BLOCKS_HOT}"
+export Q_BLOCKS_HOT="http://arango-7.example.com:8529?maxSockets=10&name=blockchain-hot-111,${Q_BLOCKS_HOT}"
+
+export Q_TRANSACTIONS_HOT=${Q_BLOCKS_HOT}
+export Q_ACCOUNTS=${Q_BLOCKS_HOT}
+export Q_ZEROSTATE="http://arango-0.example.com:8529?maxSockets=10&name=blockchain-hot-000"
+
+export Q_REQUESTS_MODE=kafka
+export Q_REQUESTS_TOPIC=requests
+export Q_REQUESTS_SERVER="kafka.example.com:9092"
+
+export Q_JAEGER_ENDPOINT="http://jaeger.example.com:14268/api/traces"
+export Q_TRACE_SERVICE=q-server
+export Q_TRACE_TAGS=network=rustnet
+
+export Q_STATSD_SERVER="statsd.example.com:9125"
+```
