@@ -418,6 +418,19 @@ Configuration priority is follows:
 
 ### Reload config
 
-QServer can reload config file without an actal restart by handling `SIGHUP` signal.
+QServer can reload config file without an actual restart by handling `SIGHUP` signal.
 
 Required at least one of `--config` or `env Q_CONFIG` to be set at server start
+
+### Sharding configuration
+
+In the current state of code only accounts and hot blocks and transactions databases (fast and slow) could be sharded. For these 3*2=6 types of databases:
+1. Sharding depth is determined as log2 of databases count.
+2. If sharding depth is not an integer, the error is thrown (so there should be 1, 2, 4, 8, ... databases).
+3. For every database the shard name is determined as last sharding depth symbols of database name. So for 8 databases case the database with name "blockchain-101" will have shard name "101".
+
+Accounts are considered sharded by workchain id: -1 and 0 resides in 0 shard ("00000" for 32 db case), 1 - in 1 ("00001"), etc. So there should be at least as many databases as there are workchains.
+
+Transactions and messages are considered to be sharded by first bits by account hash ("-1:ac..." -> "ac" -> "10101011..." -> "1010" for 16 db case).
+
+Blocks are considered to be sharded by first bits of block id.
