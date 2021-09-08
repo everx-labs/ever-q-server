@@ -245,7 +245,7 @@ export class QDataCombiner implements QDataProvider {
         const providers: QDataProvider[] = [];
         for (let i = 0; i < this.providers.length; i += 1) {
             if(setHasIntersections(this.providersShards[i], shards)) {
-                providers.push(providers[i]);
+                providers.push(this.providers[i]);
             }
         }
         return providers;
