@@ -10,6 +10,7 @@ export type DbJoin = {
     on: string,
     refOn: string,
     preCondition?: string,
+    shardOn?: string,
 };
 
 export type IntEnumValues = {
@@ -66,4 +67,3 @@ export type SchemaFunction = {
 };
 
 export type SchemaMember<M> = { name: string } & M;
-

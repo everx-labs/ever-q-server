@@ -928,6 +928,7 @@ export function joinArray(
     onField: string,
     _refField: string,
     refCollection: string,
+    extraFields: string[],
     resolveRefType: () => QType,
 ): QType {
     let resolved: QType | null = null;
@@ -953,7 +954,10 @@ export function joinArray(
             return [{
                 name: onField,
                 expression: `${path}.${onField}`,
-            }];
+            }, ...extraFields.map(x => ({
+                name: x,
+                expression: `${path}.${x}`,
+            }))];
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());

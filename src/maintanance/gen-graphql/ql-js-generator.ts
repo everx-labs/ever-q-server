@@ -318,14 +318,18 @@ function main(schemaDef: TypeDef): {
                     `"${join.refOn}"`,
                     `"${field.type.collection ?? ""}"`,
                 ];
+                const extraFields: string[] = [];
                 if (field.arrayDepth === 0) {
-                    const extraFields = (join.preCondition ?? "")
+                    extraFields.push(...(join.preCondition ?? "")
                         .split(" ")
                         .map(x => x.trim())
                         .filter(x => x.startsWith("parent."))
-                        .map(x => x.substr(7));
-                    params.push(extraFields.length > 0 ? `["${extraFields.join("\", \"")}"]` : "[]");
+                        .map(x => x.substr(7)));
                 }
+                if (join.shardOn !== undefined) {
+                    extraFields.push(join.shardOn);
+                }
+                params.push(extraFields.length > 0 ? `["${extraFields.join("\", \"")}"]` : "[]");
                 params.push(`() => ${field.type.name}`);
                 typeDeclaration = `join${suffix}(${params.join(", ")})`;
             } else if (field.arrayDepth > 0) {
@@ -507,6 +511,9 @@ function main(schemaDef: TypeDef): {
                 js.writeLn(`    on: "${join.on}",`);
                 js.writeLn(`    collection: "${field.type.collection}",`);
                 js.writeLn(`    refOn: "${join.refOn}",`);
+                if (join.shardOn !== undefined) {
+                    js.writeLn(`    shardOn: "${join.shardOn}",`);
+                }
                 js.writeLn(`    canJoin(${parentParam(...parentFields)}, args: JoinArgs) {`);
                 if (join.preCondition !== undefined) {
                     js.writeLn(`        if (!(${join.preCondition})) {`);
