@@ -578,7 +578,8 @@ const Transaction = struct({
     destroyed: scalar,
     end_status: scalar,
     end_status_name: enumName("end_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    in_message: join("in_msg", "id", "messages", ["account_addr"], () => Message),
+    ext_in_msg_fee: bigUInt2,
+    in_message: join("in_msg", "id", "messages", [], () => Message),
     in_msg: stringLowerFilter,
     installed: scalar,
     lt: bigUInt1,
@@ -588,7 +589,7 @@ const Transaction = struct({
     old_hash: stringLowerFilter,
     orig_status: scalar,
     orig_status_name: enumName("orig_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    out_messages: joinArray("out_msgs", "id", "messages", ["account_addr"], () => Message),
+    out_messages: joinArray("out_msgs", "id", "messages", () => Message),
     out_msgs: StringArray,
     outmsg_cnt: scalar,
     prepare_transaction: stringLowerFilter,
@@ -625,7 +626,7 @@ const Message = struct({
     data_hash: stringLowerFilter,
     dst: stringLowerFilter,
     dst_account: join("dst", "id", "accounts", ["msg_type"], () => Account),
-    dst_transaction: join("id", "in_msg", "transactions", ["msg_type", "dst"], () => Transaction),
+    dst_transaction: join("id", "in_msg", "transactions", ["msg_type"], () => Transaction),
     dst_workchain_id: scalar,
     fwd_fee: bigUInt2,
     ihr_disabled: scalar,
@@ -639,7 +640,7 @@ const Message = struct({
     split_depth: scalar,
     src: stringLowerFilter,
     src_account: join("src", "id", "accounts", ["msg_type"], () => Account),
-    src_transaction: join("id", "out_msgs[*]", "transactions", ["created_lt", "msg_type", "src"], () => Transaction),
+    src_transaction: join("id", "out_msgs[*]", "transactions", ["created_lt", "msg_type"], () => Transaction),
     src_workchain_id: scalar,
     status: scalar,
     status_name: enumName("status", { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
@@ -1006,6 +1007,9 @@ function createResolvers(data: QBlockchainData) {
             },
             balance_delta(parent: { balance_delta: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance_delta, args);
+            },
+            ext_in_msg_fee(parent: { ext_in_msg_fee: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.ext_in_msg_fee, args);
             },
             lt(parent: { lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.lt, args);
@@ -1563,6 +1567,7 @@ scalarFields.set("transactions.credit.credit_other.value", { type: "uint1024", p
 scalarFields.set("transactions.credit.due_fees_collected", { type: "uint1024", path: "doc.credit.due_fees_collected" });
 scalarFields.set("transactions.credit_first", { type: "boolean", path: "doc.credit_first" });
 scalarFields.set("transactions.destroyed", { type: "boolean", path: "doc.destroyed" });
+scalarFields.set("transactions.ext_in_msg_fee", { type: "uint1024", path: "doc.ext_in_msg_fee" });
 scalarFields.set("transactions.in_msg", { type: "string", path: "doc.in_msg" });
 scalarFields.set("transactions.installed", { type: "boolean", path: "doc.installed" });
 scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" });
@@ -1873,7 +1878,6 @@ joinFields.set("transactions.in_message", {
     on: "in_msg",
     collection: "messages",
     refOn: "id",
-    shardOn: "account_addr",
     canJoin(parent: { in_msg: string }, args: JoinArgs) {
         return (args.when === undefined || Transaction.test(null, parent, args.when));
     },
@@ -1882,7 +1886,6 @@ joinFields.set("transactions.out_messages", {
     on: "out_msgs",
     collection: "messages",
     refOn: "id",
-    shardOn: "account_addr",
     canJoin(parent: { out_msgs: string[] }, args: JoinArgs) {
         return (args.when === undefined || Transaction.test(null, parent, args.when));
     },
@@ -1910,7 +1913,6 @@ joinFields.set("messages.dst_transaction", {
     on: "id",
     collection: "transactions",
     refOn: "in_msg",
-    shardOn: "dst",
     canJoin(parent: { _key: string, msg_type: number }, args: JoinArgs) {
         if (!(parent.msg_type !== 2)) {
             return false;
@@ -1933,7 +1935,6 @@ joinFields.set("messages.src_transaction", {
     on: "id",
     collection: "transactions",
     refOn: "out_msgs[*]",
-    shardOn: "src",
     canJoin(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs) {
         if (!(parent.created_lt !== "00" && parent.msg_type !== 1)) {
             return false;

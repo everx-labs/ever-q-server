@@ -318,6 +318,7 @@ const Transaction: TypeDef = {
     balance_delta: grams(docs.transaction.balance_delta),
     balance_delta_other: otherCurrencyCollection(docs.transaction.balance_delta),
     chain_order: stringWithLowerFilter(docs.transaction.chain_order),
+    ext_in_msg_fee: grams(docs.transaction.ext_in_msg_fee),
 };
 
 // BLOCK SIGNATURES

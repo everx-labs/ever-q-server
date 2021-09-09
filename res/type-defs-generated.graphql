@@ -1018,6 +1018,8 @@ type Transaction {
 	"""
 	end_status: Int
 	end_status_name: AccountStatusEnum
+	"Fee for inbound external message import."
+	ext_in_msg_fee(format: BigIntFormat): String
 	in_message(timeout: Int, when: TransactionFilter): Message
 	in_msg: String
 	installed: Boolean
@@ -2452,6 +2454,8 @@ input TransactionFilter {
 	"""
 	end_status: IntFilter
 	end_status_name: AccountStatusEnumFilter
+	"Fee for inbound external message import."
+	ext_in_msg_fee: StringFilter
 	in_message: MessageFilter
 	in_msg: StringFilter
 	installed: BooleanFilter
