@@ -28,6 +28,8 @@ export class QJoinQuery {
     refOn: string;
     refOnAttr: string;
     refOnIsArray: boolean;
+    shardOn?: string;
+    shardOnShardingDegree: number;
     canJoin: (parent: unknown, args: JoinArgs) => boolean;
     fieldSelection: SelectionSetNode;
 
@@ -36,10 +38,12 @@ export class QJoinQuery {
             on: string,
             collection: string,
             refOn: string,
+            shardOn?: string,
             canJoin: (parent: unknown, args: JoinArgs) => boolean,
         },
         public field: FieldNode,
         data: QData,
+        public mainCollectionName: string,
     ) {
         this.on = join.on;
         this.onAttr = join.on === "id" ? "_key" : join.on;
@@ -49,8 +53,15 @@ export class QJoinQuery {
         this.refOnIsArray = join.refOn.endsWith("[*]");
         this.refOn = this.refOnIsArray ? join.refOn.slice(0, -3) : join.refOn;
         this.refOnAttr = this.refOn === "id" ? "_key" : this.refOn;
+        this.shardOn = join.shardOn === "id" ? "_key": join.shardOn;
         this.canJoin = join.canJoin;
         this.fieldSelection = mergeFieldWithSelectionSet(this.refOn, this.field.selectionSet);
+
+        const mainCollectionProvider = required(data.collectionsByName.get(mainCollectionName)?.provider);
+        const refCollectionProvider = required(this.refCollection.provider);
+        const mainShardingDegree = mainCollectionProvider.shardingDegree;
+        const refShardingDegree = refCollectionProvider.shardingDegree;
+        this.shardOnShardingDegree = Math.min(mainShardingDegree, refShardingDegree);
     }
 
     static getJoins(
@@ -64,43 +75,74 @@ export class QJoinQuery {
             if (field.kind === "Field") {
                 const join = joinFields.get(`${mainCollectionName}.${field.name.value}`);
                 if (join !== undefined) {
-                    joins.push(new QJoinQuery(join, field, data));
+                    joins.push(new QJoinQuery(join, field, data, mainCollectionName));
                 }
             }
         }
         return joins;
     }
 
-    buildPlan(mainRecords: Record<string, unknown>[]): Map<string, Record<string, unknown>[]> {
-        const plan = new Map<string, Record<string, unknown>[]>();
+    buildPlan(mainRecords: Record<string, unknown>[]): JoinPlan {
+        const plan = new Map<Shard, Map<OnValue, MainRecord[]>>();
+        const shards = new Map<OnValue, Shard>();
         for (const record of mainRecords) {
-            if (this.canJoin(record, QJoinQuery.parseArgs(this.field) as JoinArgs)) {
-                const onValue = record[this.onAttr] as string | string[] | null | undefined;
-                if (onValue !== null && onValue !== undefined) {
-                    if (Array.isArray(onValue)) {
-                        const joins: (Record<string, unknown> | null)[] = [];
-                        for (const value of onValue) {
-                            const valuePlan = plan.get(value);
-                            if (valuePlan !== undefined) {
-                                valuePlan.push(record);
-                            } else {
-                                plan.set(value, [record]);
-                            }
-                            joins.push(null);
-                        }
-                        record[this.joinField] = joins;
-                    } else {
-                        const valuePlan = plan.get(onValue);
-                        if (valuePlan !== undefined) {
-                            valuePlan.push(record);
-                        } else {
-                            plan.set(onValue, [record]);
-                        }
-                    }
+            if (!this.canJoin(record, this.args)) {
+                continue;
+            }
+
+            const onValue = record[this.onAttr] as string | string[] | null | undefined;
+            if (onValue === null || onValue === undefined) {
+                continue;
+            }
+
+            if (Array.isArray(onValue)) {
+                const joins: (Record<string, unknown> | null)[] = [];
+                for (const value of onValue) {
+                    processValue(value, record, this);
+                    joins.push(null);
                 }
+                record[this.joinField] = joins;
+            } else {
+                processValue(onValue, record, this);
             }
         }
         return plan;
+
+        function processValue(value: string, record: MainRecord, joinQuery: QJoinQuery) {
+            const shard = getShard(value, record, joinQuery);
+            let shardPlan = plan.get(shard);
+            if (shardPlan === undefined) {
+                shardPlan = new Map<OnValue, MainRecord[]>();
+                plan.set(shard, shardPlan);
+            }
+
+            const valuePlan = shardPlan.get(value);
+            if (valuePlan !== undefined) {
+                valuePlan.push(record);
+            } else {
+                shardPlan.set(value, [record]);
+            }
+        }
+
+        function getShard(value: string, record: MainRecord, joinQuery: QJoinQuery): string | null {
+            if (joinQuery.shardOn === undefined) {
+                return null;
+            }
+
+            let shard = shards.get(value);
+            if (shard !== undefined) {
+                return shard;
+            }
+
+            [shard] = QCollectionQuery.getShards(
+                joinQuery.mainCollectionName,
+                { [joinQuery.shardOn]: { eq: record[joinQuery.shardOn] } },
+                joinQuery.shardOnShardingDegree,
+            ) ?? [null];
+
+            shards.set(value, shard);
+            return shard;
+        }
     }
 
     joinRecordToMain(
@@ -141,44 +183,51 @@ export class QJoinQuery {
         const timeout = this.args.timeout ?? defaultTimeout ?? 0;
         const timeLimit = Date.now() + timeout;
         let joinedRecords: Record<string, unknown>[] = [];
-        while (joinPlan.size > 0) {
-            const portionOnValues =[...joinPlan.keys()].slice(0, 100);
-            const joinQuery = QCollectionQuery.createForJoin(
-                portionOnValues,
-                this.refCollection.name,
-                this.refCollection.docType,
-                this.refOn,
-                this.refOnIsArray,
-                this.fieldSelection,
-                accessRights,
-                required(this.refCollection.provider).shardingDegree,
-                request.services.config,
-            );
-            if (joinQuery !== null) {
-                const fetcher = async (span: QTraceSpan) => {
-                    span.log({
-                        text: joinQuery.text,
-                        params: joinQuery.params,
-                        shards: joinQuery.shards,
-                    });
-                    return await this.refCollection.queryProvider({
-                        text: joinQuery.text,
-                        vars: joinQuery.params,
-                        orderBy: [],
-                        isFast: true,
-                        request,
-                        shards: joinQuery.shards,
-                        traceSpan: span,
-                    }) as Record<string, unknown>[];
-                };
-                const joinedPortion = await traceSpan.traceChildOperation(`${mainCollection.name}.query.join`, fetcher);
-                for (const joinedRecord of joinedPortion) {
-                    this.joinRecordToMain(joinPlan, joinedRecord);
-                }
-                joinedRecords = joinedRecords.concat(joinedPortion);
+        const shards = [...joinPlan.keys()];
+        for (const shard of shards) {
+            const shardPlan = joinPlan.get(shard);
+            if (shardPlan === undefined) {
+                throw new Error("This error should be impossible in join fetcher");
             }
-            if (Date.now() > timeLimit) {
-                break;
+            while (shardPlan.size > 0) {
+                const portionOnValues =[...shardPlan.keys()].slice(0, 100);
+                const joinQuery = QCollectionQuery.createForJoin(
+                    portionOnValues,
+                    this.refCollection.name,
+                    this.refCollection.docType,
+                    this.refOn,
+                    this.refOnIsArray,
+                    this.fieldSelection,
+                    accessRights,
+                    required(this.refCollection.provider).shardingDegree,
+                    request.services.config,
+                );
+                if (joinQuery !== null) {
+                    const fetcher = async (span: QTraceSpan) => {
+                        span.log({
+                            text: joinQuery.text,
+                            params: joinQuery.params,
+                            shards: joinQuery.shards,
+                        });
+                        return await this.refCollection.queryProvider({
+                            text: joinQuery.text,
+                            vars: joinQuery.params,
+                            orderBy: [],
+                            isFast: true,
+                            request,
+                            shards: (shard !== null) ? new Set([shard]) : joinQuery.shards,
+                            traceSpan: span,
+                        }) as Record<string, unknown>[];
+                    };
+                    const joinedPortion = await traceSpan.traceChildOperation(`${mainCollection.name}.query.join`, fetcher);
+                    for (const joinedRecord of joinedPortion) {
+                        this.joinRecordToMain(shardPlan, joinedRecord);
+                    }
+                    joinedRecords = joinedRecords.concat(joinedPortion);
+                }
+                if (Date.now() > timeLimit) {
+                    break;
+                }
             }
         }
         await QJoinQuery.fetchJoinedRecords(
@@ -257,6 +306,9 @@ export class QJoinQuery {
         }
         return args;
     }
-
-
 }
+
+type Shard = string | null;
+type OnValue = string;
+type MainRecord = Record<string, unknown>;
+type JoinPlan = Map<Shard, Map<OnValue, MainRecord[]>>;

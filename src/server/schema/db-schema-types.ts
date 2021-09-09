@@ -24,6 +24,7 @@ export const join = (
     on: string,
     refOn: string,
     preCondition?: string,
+    shardOn?: string,
 ): TypeDef => {
     return {
         ...ref(refDef),
@@ -33,6 +34,7 @@ export const join = (
                 on,
                 refOn,
                 preCondition,
+                shardOn,
             },
         },
     };
