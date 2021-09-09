@@ -229,14 +229,16 @@ test("reduced RETURN", () => {
     expect(queryText(transactions, "in_message { id }")).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
-            in_msg: doc.in_msg
+            in_msg: doc.in_msg,
+            account_addr: doc.account_addr
         }
     `));
 
     expect(queryText(transactions, "out_messages { id }")).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
-            out_msgs: doc.out_msgs
+            out_msgs: doc.out_msgs,
+            account_addr: doc.account_addr
         }
     `));
 
@@ -276,7 +278,7 @@ test("Include join precondition fields", () => {
     const e = Message.returnExpressions("doc", selection("message", [
         selection("dst_transaction", [selection("id", [])]),
     ]));
-    expect(e[0].expression).toEqual("( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type } )");
+    expect(e[0].expression).toEqual("( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )");
 });
 
 
