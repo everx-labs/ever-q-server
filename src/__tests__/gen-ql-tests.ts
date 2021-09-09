@@ -122,6 +122,7 @@ test("OR conversions", () => {
             },
             selectionInfo("src dst"),
             grantedAccess,
+            0,
             {
                 orConversion: FilterOrConversion.OR_OPERATOR,
             },
@@ -153,6 +154,7 @@ test("OR conversions", () => {
             },
             selectionInfo("src dst"),
             grantedAccess,
+            0,
             {
                 orConversion: FilterOrConversion.SUB_QUERIES,
             },

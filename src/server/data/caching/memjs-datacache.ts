@@ -2,9 +2,9 @@ import {
     Client as MemcachedClient,
     ClientOptions,
 } from "memjs";
-import type { QMemCachedConfig } from "../config";
-import type { QLog } from "../logs";
-import type { QDataCache } from "./data-provider";
+import type { QMemCachedConfig } from "../../config";
+import type { QLog } from "../../logs";
+import type { QDataCache } from "../data-provider";
 
 export class MemjsDataCache implements QDataCache {
     memcached: MemcachedClient;

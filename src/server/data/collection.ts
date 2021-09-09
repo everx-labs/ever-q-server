@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */
 /*
 * Copyright 2018-2020 TON DEV SOLUTIONS LTD.
 *
@@ -241,7 +240,9 @@ export class QDataCollection {
                 request: QRequestContext,
                 info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
-                throw new Error("Disabled");
+                if (!request.services.config.useListeners) {
+                    throw new Error("Disabled");
+                }
                 const accessRights = await request.requireGrantedAccess(args);
                 await this.statSubscription.increment();
                 const subscription = new QDataSubscription(
@@ -313,7 +314,7 @@ export class QDataCollection {
             },
         ) => {
             await this.checkRefreshInfo();
-            const q = QCollectionQuery.create(this.name, this.docType, args, undefined, grantedAccess);
+            const q = QCollectionQuery.create(this.name, this.docType, args, undefined, grantedAccess, 0);
             if (!q) {
                 return { isFast: true };
             }
@@ -368,7 +369,8 @@ export class QDataCollection {
             args,
             selection,
             accessRights,
-            request.services.config.filter,
+            required(this.provider).shardingDegree,
+            request.services.config.queries.filter,
         );
         if (query === null) {
             args.filter = { id: { in: [] } };
@@ -500,7 +502,8 @@ export class QDataCollection {
                         args,
                         selectionSet,
                         accessRights,
-                        request.services.config.filter,
+                        required(this.provider).shardingDegree,
+                        request.services.config.queries.filter,
                     );
                     if (query === null) {
                         this.log.debug("QUERY", args, 0, "SKIPPED", request.remoteAddress);
@@ -600,7 +603,7 @@ export class QDataCollection {
                 const queryTimeoutAt = Date.now() + q.timeout;
                 const onQuery = new Promise<QDoc[]>((resolve, reject) => {
                     let queryCount = 0;
-                    let period = request.services.config.waitForPeriod;
+                    let period = request.services.config.queries.waitForPeriod;
                     const check = () => {
                         const checkStart = Date.now();
                         this.queryProvider({
@@ -611,6 +614,7 @@ export class QDataCollection {
                             request,
                             traceSpan: span,
                             isFast,
+                            maxRuntimeInS: Math.ceil((queryTimeoutAt - checkStart) / 1000),
                         }).then((docs) => {
                             queryCount += 1;
                             if (queryCount >= 7) {
@@ -866,11 +870,11 @@ export class QDataCollection {
 }
 
 async function checkIsFast(config: QConfig, detector: () => Promise<boolean>): Promise<boolean> {
-    if (config.slowQueries === SlowQueriesMode.ENABLE) {
+    if (config.queries.slowQueries === SlowQueriesMode.ENABLE) {
         return true;
     }
     const isFast = await detector();
-    if (!isFast && config.slowQueries === SlowQueriesMode.DISABLE) {
+    if (!isFast && config.queries.slowQueries === SlowQueriesMode.DISABLE) {
         throw new Error("Slow queries are disabled");
     }
     return isFast;

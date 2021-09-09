@@ -27,6 +27,8 @@ export class QShardDatabaseProvider implements QDataProvider {
     listener: ArangoChair | null;
     listenerSubscribers: EventEmitter;
     listenerSubscribersCount: number;
+    shards: QShard[];
+    shardingDegree: number;
 
     constructor(public log: QLog, public shard: QShard, private useListener: boolean) {
         this.started = false;
@@ -35,6 +37,8 @@ export class QShardDatabaseProvider implements QDataProvider {
         this.listenerSubscribers = new EventEmitter();
         this.listenerSubscribers.setMaxListeners(0);
         this.listenerSubscribersCount = 0;
+        this.shards = [shard];
+        this.shardingDegree = shard.shard.length;
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -85,16 +89,33 @@ export class QShardDatabaseProvider implements QDataProvider {
             request,
         } = params;
 
-        if (shards !== undefined && !shards.has(this.shard.shard)) {
-            return [];
+        if (shards && !shards.has(this.shard.shard) &&
+            this.shard.shard !== "" && !shards.has("")
+        ) {
+            let shardMatches = false;
+            for (const shard of shards ?? []) {
+                if (this.shard.shard.startsWith(shard) ||
+                    shard.startsWith(this.shard.shard)) {
+                  shardMatches = true;
+                  break;  
+                }
+            }
+
+            if (!shardMatches) {
+                return [];
+            }
         }
+        const maxRuntime = params.maxRuntimeInS
+            ? Math.min(params.maxRuntimeInS, request.services.config.queries.maxRuntimeInS)
+            : request.services.config.queries.maxRuntimeInS;
+
         const impl = async (span: QTraceSpan) => {
             request.requestTags.arangoCalls += 1;
-            const cursor = await this.shard.database.query(text, vars);
+            const cursor = await this.shard.database.query(text, vars, { maxRuntime });
             span.logEvent("cursor_obtained");
             return await cursor.all();
         };
-        return traceSpan.traceChildOperation(`arango.query.${this.shard}`, impl);
+        return traceSpan.traceChildOperation(`arango.query.${this.shard.shard}`, impl);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {
@@ -118,10 +139,6 @@ export class QShardDatabaseProvider implements QDataProvider {
             );
             this.listenerSubscribersCount = Math.max(this.listenerSubscribersCount - 1, 0);
         }
-    }
-
-    getShards(): QShard[] {
-        return [this.shard];
     }
 
     // Internals

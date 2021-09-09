@@ -143,10 +143,13 @@ export type QDataProviderQueryParams = {
     request: QRequestContext,
     shards?: Set<string>,
     traceSpan: QTraceSpan,
+    maxRuntimeInS?: number,
 };
 
-
 export interface QDataProvider {
+    shards: QShard[];
+    shardingDegree: number;
+
     start(collectionsForSubscribe: string[]): Promise<void>;
 
     stop(): Promise<void>;
@@ -162,8 +165,6 @@ export interface QDataProvider {
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
     unsubscribe(subscription: unknown): void;
-
-    getShards(): QShard[];
 }
 
 
@@ -177,17 +178,18 @@ export class QDataCombiner implements QDataProvider {
     providers: QDataProvider[];
     providersShards: Set<string>[] = [];
     shards: QShard[] = [];
+    shardingDegree: number;
 
     constructor(providers: QDataProvider[]) {
         this.providers = providers;
+        this.shardingDegree = providers.reduce((acc, p) => Math.max(acc, p.shardingDegree), 0);
+
         for (const provider of providers) {
-            const providerShards = new Set<string>();
-            for (const shard of provider.getShards()) {
-                providerShards.add(shard.shard);
-            }
-            this.providersShards.push(providerShards);
-            this.shards = this.shards.concat(provider.getShards());
+            const providerShards = new Set<string>(provider.shards.map(x => x.shard));
+            this.providersShards.push(this.ensureShardingDegree(providerShards));
+            this.shards = this.shards.concat(provider.shards);
         }
+        this.shards = [...new Set(this.shards)]; // dedupe
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -234,21 +236,45 @@ export class QDataCombiner implements QDataProvider {
         (subscription as unknown[]).map((s, i) => this.providers[i].unsubscribe(s));
     }
 
-    getShards(): QShard[] {
-        return this.shards;
-    }
-
     private getProvidersForShards(shards: Set<string> | undefined) {
         if (!shards) {
             return this.providers;
         }
+
+        shards = this.ensureShardingDegree(shards);
         const providers: QDataProvider[] = [];
         for (let i = 0; i < this.providers.length; i += 1) {
             if(setHasIntersections(this.providersShards[i], shards)) {
-                providers.push(providers[i]);
+                providers.push(this.providers[i]);
             }
         }
         return providers;
+    }
+
+    private ensureShardingDegree(shards: Set<string>): Set<string> {
+        let needToFixShards = false;
+        for (const shard of shards) {
+            needToFixShards = needToFixShards || shard.length !== this.shardingDegree;
+        }
+
+        if (!needToFixShards) {
+            return shards;
+        }
+        
+        const fixedShards = new Set<string>();
+        for (const shard of shards) {
+            const diff = this.shardingDegree - shard.length;
+            if (diff > 0) {
+                // split shards
+                for (const index of Array(diff).keys()) {
+                    const append = index.toString(2).padStart(diff, "0");
+                    fixedShards.add(`${shard}${append}`);
+                }
+            } else {
+                fixedShards.add(shard.slice(0, this.shardingDegree));
+            }
+        }
+        return fixedShards;
     }
 }
 
@@ -266,6 +292,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         networkName: string,
         cacheKeyPrefix: string,
         public dataExpirationTimeout = 0,
+        public emptyDataExpirationTimeout = 0,
         public fetchingPollTimeout = 3,
         public fetchingExpirationTimeout = 10,
     ) {
@@ -316,7 +343,12 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                 docs = await super.query(params);
                 await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_set_result", async (span) => {
                     span.setTag("cache_key", key);
-                    await this.cache.set(key, docs, (docs && docs.length > 0) ? this.dataExpirationTimeout : Math.min(this.dataExpirationTimeout, 2));
+
+                    const expiration = (docs && docs.length > 0)
+                        ? this.dataExpirationTimeout
+                        : Math.min(this.dataExpirationTimeout, this.emptyDataExpirationTimeout);
+
+                    await this.cache.set(key, docs, expiration);
                 });
                 traceSpan.setTag("updated_cache", true);
             } else if (value === FETCHING) {

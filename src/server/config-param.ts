@@ -65,6 +65,8 @@ type HotColdParams = {
 
 type BlockchainParams = {
     hotCache: ConfigParam<string>,
+    hotCacheExpiration: ConfigParam<number>,
+    hotCacheEmptyDataExpiration: ConfigParam<number>,
     accounts: ConfigParam<string[]>,
     blocks: HotColdParams,
     transactions: HotColdParams,
@@ -163,24 +165,26 @@ export class ConfigParam<T extends ConfigValue> {
         };
     }
 
-    static hotCold(prefix: string): HotColdParams {
+    static hotCold(prefix: string, descriptionPrefix?: string): HotColdParams {
+        descriptionPrefix ??= prefix;
         return {
-            hot: ConfigParam.databases(withPrefix(prefix, "hot")),
+            hot: ConfigParam.databases(withPrefix(prefix, "hot"), withPrefix(descriptionPrefix, "hot")),
             cache: ConfigParam.string(
                 `${toOption(prefix)}-cache`,
                 "",
-                withPrefix(toPascal(prefix), "cache server"),
+                withPrefix(toPascal(descriptionPrefix), "cache server"),
             ),
-            cold: ConfigParam.databases(withPrefix(prefix, "cold")),
+            cold: ConfigParam.databases(withPrefix(prefix, "cold"), withPrefix(descriptionPrefix, "cold")),
         };
 
     }
 
-    static databases(prefix: string): ConfigParam<string[]> {
+    static databases(prefix: string, descriptionPrefix?: string): ConfigParam<string[]> {
+        descriptionPrefix ??= prefix;
         return ConfigParam.array(
             toOption(prefix),
             [],
-            withPrefix(toPascal(prefix), "databases"),
+            withPrefix(toPascal(descriptionPrefix), "databases"),
         );
     }
 
@@ -192,9 +196,19 @@ export class ConfigParam<T extends ConfigValue> {
                 "",
                 withPrefix(toPascal(prefix), "hot cache server"),
             ),
+            hotCacheExpiration: ConfigParam.integer(
+                `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache-expiration`,
+                10,
+                withPrefix(toPascal(prefix), "hot cache expiration in seconds"),
+            ),
+            hotCacheEmptyDataExpiration: ConfigParam.integer(
+                `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache-empty-data-expiration`,
+                2,
+                withPrefix(toPascal(prefix), "hot cache empty entries expiration in seconds"),
+            ),
             accounts: ConfigParam.databases(withPrefix(prefix, "accounts")),
             blocks: ConfigParam.hotCold(withPrefix(prefix, "blocks")),
-            transactions: ConfigParam.hotCold(withPrefix(prefix, "transactions")),
+            transactions: ConfigParam.hotCold(withPrefix(prefix, "transactions"), withPrefix(prefix, "transactions and messages")),
             zerostate: ConfigParam.string(
                 toOption(zerostatePrefix),
                 "",

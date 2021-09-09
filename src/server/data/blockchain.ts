@@ -243,7 +243,7 @@ export default class QBlockchainData extends QData {
             .map(x => ({
                 latency: x.latency,
                 provider: x.collection.provider as QDataProvider,
-                shards: (x.collection.provider as QDataProvider).getShards(),
+                shards: required(x.collection.provider).shards,
                 collection: x.collection.name,
                 field: x.field,
             }));

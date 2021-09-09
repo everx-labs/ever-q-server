@@ -118,7 +118,7 @@ test("Data Broker", async () => {
     expect(cold[0].queryCount).toEqual(1);
     expect(cold[1].queryCount).toEqual(1);
     expect(cache.getCount).toEqual(1);
-    expect(cache.setCount).toEqual(1);
+    expect(cache.setCount).toEqual(2);
 
     transactions = (await client.query({
         query: gql`query { transactions(orderBy:{path:"id"}) { id lt } }`,
@@ -129,7 +129,7 @@ test("Data Broker", async () => {
     expect(cold[0].queryCount).toEqual(1);
     expect(cold[1].queryCount).toEqual(1);
     expect(cache.getCount).toEqual(2);
-    expect(cache.setCount).toEqual(1);
+    expect(cache.setCount).toEqual(2);
 
     transactions = (await client.query({
         query: gql`query { transactions(orderBy:{path:"id"} limit: 1) { id lt } }`,
