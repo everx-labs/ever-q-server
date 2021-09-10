@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - Info query optimisation.
 - Better jaeger tracing.
 - "main" parameter support for ValidatorSet type
+- When messages database is sharded, use two collections `messages` and `messages_complement` for queries
 
 ### Fixed
 

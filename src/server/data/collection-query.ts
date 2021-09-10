@@ -21,6 +21,7 @@ import {
     FilterOrConversion,
     QConfig,
 } from "../config";
+import { QError } from "../utils";
 
 export class QCollectionQuery {
     private constructor(
@@ -86,6 +87,15 @@ export class QCollectionQuery {
                     ${limitSection}
                     RETURN ${returnExpression}
                 `);
+                if (collectionName === "messages" && shardingDegree > 0) {
+                    texts.push(`
+                        FOR doc IN messages_complement
+                        ${filterSection}
+                        ${sortSection}
+                        ${limitSection}
+                        RETURN ${returnExpression}
+                    `);
+                }
             }
         }
 
@@ -155,11 +165,24 @@ export class QCollectionQuery {
             }
             filterSection += `@${params.add(onValue)} IN doc.${refOn}`;
         }
-        const text = `
-            FOR doc IN ${refCollectionName}
-            ${filterSection}
-            RETURN ${returnExpression}
-        `;
+        const text = (refCollectionName === "messages" && shardingDegree > 0)
+            ? `
+                FOR doc IN UNION_DISTINCT(
+                    FOR doc IN messages
+                    ${filterSection}
+                    RETURN ${returnExpression},
+                    
+                    FOR doc IN messages_complement
+                    ${filterSection}
+                    RETURN ${returnExpression}
+                )
+                RETURN doc
+            `
+            : `
+                FOR doc IN ${refCollectionName}
+                ${filterSection}
+                RETURN ${returnExpression}
+            `;
         return new QCollectionQuery(
             {
                 [refOn]: { any: { in: onValues } },
@@ -272,30 +295,42 @@ function getBlocksShards(filter: StructFilter, shards: Set<string>, shardingDegr
 }
 
 function getMessagesShards(filter: StructFilter, shards: Set<string>, shardingDegree: number) {
-    const srcUsed = getShardsForEqOrIn(filter, "src", shards, shardingDegree, getTransactionShard);
-    const dstUsed = getShardsForEqOrIn(filter, "dst", shards, shardingDegree, getTransactionShard);
+    const srcUsed = getShardsForEqOrIn(filter, "src", shards, shardingDegree, getMessageAddressShard);
+    const dstUsed = getShardsForEqOrIn(filter, "dst", shards, shardingDegree, getMessageAddressShard);
     return srcUsed || dstUsed;
 }
 
 function getTransactionsShards(filter: StructFilter, shards: Set<string>, shardingDegree: number) {
-    return getShardsForEqOrIn(filter, "account_addr", shards, shardingDegree, getTransactionShard);
+    return getShardsForEqOrIn(filter, "account_addr", shards, shardingDegree, getAccountShard);
 }
 
-function getAccountShard(address: string): number | undefined {
-    const workchain = parseInt(address.split(":")[0] ?? "undefined");
-    return workchain === -1 ? 0 : workchain;
+function getMessageAddressShard(address: string, shardingDegree: number): number | undefined {
+    const addressWithoutPrefix = address.split(":")[1];
+    if (addressWithoutPrefix === undefined || addressWithoutPrefix.length < 1) {
+        return undefined;
+    }
+    return getShardFromHexString(addressWithoutPrefix.replace("_", ""), shardingDegree);
 }
 
-function getTransactionShard(account_address: string, shardingDegree: number): number | undefined {
-    const symbols = Math.ceil(shardingDegree / 4);
-    const excessBits = symbols * 4 - shardingDegree;
-    return parseInt(account_address.split(":")[1].substr(0, symbols), 16) >> excessBits;
+function getAccountShard(address: string, shardingDegree: number): number | undefined {
+    const addressWithoutPrefix = address.split(":")[1];
+    if (addressWithoutPrefix === undefined || addressWithoutPrefix.length !== 64) {
+        throw QError.invalidQuery(`Unsupported address in filter: ${address}`);
+    }
+    return getShardFromHexString(addressWithoutPrefix, shardingDegree);
 }
 
 function getBlockShard(id: string, shardingDegree: number): number | undefined {
+    if (id.length !== 64) {
+        throw QError.invalidQuery(`Unsupported id in filter: ${id}`);
+    }
+    return getShardFromHexString(id, shardingDegree);
+}
+
+function getShardFromHexString(hex: string, shardingDegree: number): number | undefined {
     const symbols = Math.ceil(shardingDegree / 4);
     const excessBits = symbols * 4 - shardingDegree;
-    return parseInt(id.substr(0, 2), 16) >> excessBits;
+    return parseInt(hex.padEnd(symbols, "0").substr(0, symbols), 16) >> excessBits;
 }
 
 function getShardsForEqOrIn(
