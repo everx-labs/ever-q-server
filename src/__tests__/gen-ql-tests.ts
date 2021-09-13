@@ -182,6 +182,106 @@ test("OR conversions", () => {
     `));
 });
 
+test("messages_complement are used for shardingDegree > 0", () => {
+    const data = createLocalArangoTestData(new QLogs());
+    const withOr = normalized(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
+            {
+                filter: {
+                    src: { eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" },
+                    OR: { dst: { eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" } },
+                },
+                orderBy: [{
+                    path: "created_at",
+                    direction: "ASC",
+                }],
+            },
+            selectionInfo("src dst"),
+            grantedAccess,
+            1,
+            {
+                orConversion: FilterOrConversion.OR_OPERATOR,
+            },
+        )?.text ?? "",
+    );
+
+    expect(withOr).toEqual(
+        normalized(`
+        FOR doc IN UNION_DISTINCT(
+            FOR doc IN messages
+            FILTER (doc.src == @v1) OR (doc.dst == @v2)
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at } ,
+            
+            FOR doc IN messages_complement
+            FILTER (doc.src == @v1) OR (doc.dst == @v2)
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+        )
+        SORT doc.created_at
+        LIMIT 50 RETURN doc
+    `));
+
+    const withSubQueries = normalized(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
+            {
+                filter: {
+                    src: { eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" },
+                    OR: { dst: { eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" } },
+                },
+                orderBy: [{
+                    path: "created_at",
+                    direction: "ASC",
+                }],
+            },
+            selectionInfo("src dst"),
+            grantedAccess,
+            1,
+            {
+                orConversion: FilterOrConversion.SUB_QUERIES,
+            },
+        )?.text ?? "",
+    );
+
+    expect(withSubQueries).toEqual(
+        normalized(`
+        FOR doc IN UNION_DISTINCT(
+            FOR doc IN messages
+            FILTER doc.src == @v1 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages_complement
+            FILTER doc.src == @v1 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages
+            FILTER doc.dst == @v2 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages_complement
+            FILTER doc.dst == @v2
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+        )
+        SORT doc.created_at
+        LIMIT 50
+        RETURN doc
+    `));
+});
+
 test("reduced RETURN", () => {
     const data = createLocalArangoTestData(new QLogs());
     const blocks = data.blocks;
