@@ -617,6 +617,7 @@ const Message = struct({
     body_hash: stringLowerFilter,
     bounce: scalar,
     bounced: scalar,
+    chain_order: stringLowerFilter,
     code: scalar,
     code_hash: stringLowerFilter,
     created_at: scalar,
@@ -1670,6 +1671,7 @@ scalarFields.set("messages.body", { type: "string", path: "doc.body" });
 scalarFields.set("messages.body_hash", { type: "string", path: "doc.body_hash" });
 scalarFields.set("messages.bounce", { type: "boolean", path: "doc.bounce" });
 scalarFields.set("messages.bounced", { type: "boolean", path: "doc.bounced" });
+scalarFields.set("messages.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("messages.code", { type: "string", path: "doc.code" });
 scalarFields.set("messages.code_hash", { type: "string", path: "doc.code_hash" });
 scalarFields.set("messages.created_at", { type: "number", path: "doc.created_at" });

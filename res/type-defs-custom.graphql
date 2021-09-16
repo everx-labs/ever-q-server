@@ -26,6 +26,8 @@ type Info {
     lastBlockTime: Float,
     " Alternative endpoints of q-server"
     endpoints: [String]
+    " Reliable upper boundary for pagination by chain_order field. Before this boundary no additions are possible."
+    chainOrderBoundary: String
 }
 
 "Aggregation function used to collect aggregated value"

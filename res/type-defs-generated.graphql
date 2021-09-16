@@ -1109,6 +1109,8 @@ type Message {
 	bounce: Boolean
 	"Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounced: Boolean
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	chain_order: String
 	"Represents contract code in deploy messages."
 	code: String
 	"`code` field root hash."
@@ -2566,6 +2568,8 @@ input MessageFilter {
 	bounce: BooleanFilter
 	"Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
 	bounced: BooleanFilter
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	chain_order: StringFilter
 	"Represents contract code in deploy messages."
 	code: StringFilter
 	"`code` field root hash."

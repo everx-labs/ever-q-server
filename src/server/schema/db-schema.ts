@@ -221,6 +221,7 @@ const Message: TypeDef = {
     dst_transaction: join("Transaction", "id", "in_msg", "parent.msg_type !== 2"),
     src_account: join("Account", "src", "id", "parent.msg_type !== 1"),
     dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
+    chain_order: stringWithLowerFilter(docs.message.chain_order),
 };
 
 

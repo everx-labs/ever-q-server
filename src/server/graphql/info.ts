@@ -1,5 +1,6 @@
 import { packageJson } from "../utils";
 import { QRequestContext } from "../request";
+import { FieldNode } from "graphql";
 
 const { version } = packageJson();
 
@@ -12,11 +13,32 @@ type Info = {
     messagesLatency: number,
     latency: number,
     endpoints: string[],
+    chainOrderBoundary: string | null,
 };
 
-async function info(_parent: Record<string, unknown>, _args: unknown, context: QRequestContext): Promise<Info> {
+async function info(
+    _parent: Record<string, unknown>,
+    _args: unknown,
+    context: QRequestContext,
+    info: { fieldNodes: FieldNode[] },
+): Promise<Info> {
+    const fields = new Set<string>();
+    for (const field of info.fieldNodes[0].selectionSet?.selections ?? []) {
+        if (field.kind === "Field") {
+            fields.add(field.name.value);
+        }
+    }
     const data = context.services.data;
     const latency = await data.getLatency();
+    
+    let chainOrderBoundary = null;
+    if (fields.has("chainOrderBoundary")) {
+        try {
+            chainOrderBoundary = (await context.services.data.getReliableChainOrderUpperBoundary()).boundary;
+        } catch {
+            // intentionally left blank
+        }
+    }
     return {
         version: version as string,
         time: Date.now(),
@@ -26,6 +48,7 @@ async function info(_parent: Record<string, unknown>, _args: unknown, context: Q
         messagesLatency: latency.messages.latency,
         latency: data.debugLatency === 0 ? latency.latency : data.debugLatency,
         endpoints: context.services.config.endpoints,
+        chainOrderBoundary,
     };
 }
 
