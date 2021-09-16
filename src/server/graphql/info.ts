@@ -12,11 +12,19 @@ type Info = {
     messagesLatency: number,
     latency: number,
     endpoints: string[],
+    chainOrderBoundary: string | null,
 };
 
 async function info(_parent: Record<string, unknown>, _args: unknown, context: QRequestContext): Promise<Info> {
     const data = context.services.data;
     const latency = await data.getLatency();
+    
+    let chainOrderBoundary = null;
+    try {
+        chainOrderBoundary = (await context.services.data.getReliableChainOrderUpperBoundary()).boundary;
+    } catch {
+        // intentionally left blank
+    }
     return {
         version: version as string,
         time: Date.now(),
@@ -26,6 +34,7 @@ async function info(_parent: Record<string, unknown>, _args: unknown, context: Q
         messagesLatency: latency.messages.latency,
         latency: data.debugLatency === 0 ? latency.latency : data.debugLatency,
         endpoints: context.services.config.endpoints,
+        chainOrderBoundary,
     };
 }
 
