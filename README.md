@@ -45,7 +45,7 @@ Option                                          ENV                             
                                                                                                                   `disable` – fail on slow queries
 --query-wait-for-period                         Q_QUERY_WAIT_FOR_PERIOD                         1000              Collection polling period for wait-for queries
                                                                                                                   (collection queries with timeout) in ms
---use-listeners                                 Q_USE_LISTENERS                                 false             Use database listeners for subscriptions
+--use-listeners                                 Q_USE_LISTENERS                                 true              Use database listeners for subscriptions
 --hot-cache                                     Q_HOT_CACHE                                                       hot cache server
 --hot-cache-expiration                          Q_HOT_CACHE_EXPIRATION                          10                hot cache expiration in seconds
 --hot-cache-empty-data-expiration               Q_HOT_CACHE_EMPTY_DATA_EXPIRATION               2                 hot cache empty entries expiration in seconds

@@ -168,7 +168,7 @@ export const configParams = {
             "(collection queries with timeout) in ms",
         ),
     },
-    useListeners: ConfigParam.boolean("use-listeners", false, "Use database listeners for subscriptions"),
+    useListeners: ConfigParam.boolean("use-listeners", true, "Use database listeners for subscriptions"),
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
