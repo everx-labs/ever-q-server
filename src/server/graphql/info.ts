@@ -35,7 +35,7 @@ async function info(
     };
     if (fields.has("chainOrderBoundary")) {
         try {
-            result.chainOrderBoundary = (await context.services.data.getReliableChainOrderUpperBoundary()).boundary;
+            result.chainOrderBoundary = (await context.services.data.getReliableChainOrderUpperBoundary(context)).boundary;
         } catch {
             // intentionally left blank
         }
