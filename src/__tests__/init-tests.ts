@@ -28,10 +28,8 @@ import type {
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
 import TONQServer, { DataProviderFactory } from "../server/server";
-import {
-    QStats,
-    QTracer,
-} from "../server/tracer";
+import { QStats } from "../server/stats";
+import { QTracer } from "../server/tracing";
 import {
     Auth,
     grantedAccess,
@@ -52,6 +50,7 @@ import {
     cloneDeep,
 } from "../server/utils";
 import fetch from "node-fetch";
+import { QCollectionQuery } from "../server/data/collection-query";
 
 jest.setTimeout(100000);
 
@@ -82,13 +81,16 @@ export function selectionInfo(r: string) {
 
 export function queryText(collection: QDataCollection, result: string, orderBy?: OrderBy[]): string {
     return normalized(
-        collection.createDatabaseQuery(
+        QCollectionQuery.create(
+            collection.name,
+            collection.docType,
             {
                 filter: {},
                 orderBy,
             },
             selectionInfo(result),
             grantedAccess,
+            0,
         )?.text ?? "",
     );
 }
@@ -243,6 +245,8 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     data: T[];
     queryCount: number;
     hotUpdateCount: number;
+    shards = [];
+    shardingDegree = 0;
 
     constructor(data: T[]) {
         this.data = data;

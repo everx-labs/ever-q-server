@@ -7,7 +7,8 @@ import { resolveConfig } from "../server/config";
 import QBlockchainData from "../server/data/blockchain";
 import QLogs from "../server/logs";
 import TONQServer, { DataProviderFactory } from "../server/server";
-import { QStats, QTracer } from "../server/tracer";
+import { QStats } from "../server/stats";
+import { QTracer } from "../server/tracing";
 
 import { createTestClient, testConfig } from "./init-tests";
 import {

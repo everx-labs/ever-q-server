@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { AccessRights } from "../auth";
 import type {
     QDoc,
     QIndexInfo,
@@ -29,7 +28,7 @@ import {
 
 const NOT_IMPLEMENTED = new Error("Not Implemented");
 
-interface StructFilter {
+export interface StructFilter {
     [name: string]: CollectionFilter,
 }
 
@@ -929,6 +928,7 @@ export function joinArray(
     onField: string,
     _refField: string,
     refCollection: string,
+    extraFields: string[],
     resolveRefType: () => QType,
 ): QType {
     let resolved: QType | null = null;
@@ -954,7 +954,10 @@ export function joinArray(
             return [{
                 name: onField,
                 expression: `${path}.${onField}`,
-            }];
+            }, ...extraFields.map(x => ({
+                name: x,
+                expression: `${path}.${x}`,
+            }))];
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -976,7 +979,7 @@ function isFieldWithName(def: SelectionNode, name: string): boolean {
     return def.kind === "Field" && def.name.value.toLowerCase() === name.toLowerCase();
 }
 
-export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: SelectionSetNode | undefined): SelectionSetNode | undefined {
+export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: SelectionSetNode | undefined): SelectionSetNode {
     const dotPos = fieldPath.indexOf(".");
     const name = dotPos >= 0 ? fieldPath.substr(0, dotPos) : fieldPath;
     const tail = dotPos >= 0 ? fieldPath.substr(dotPos + 1) : "";
@@ -985,7 +988,7 @@ export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: Sele
     const tailSelectionSet = tail !== ""
         ? mergeFieldWithSelectionSet(tail, oldField?.selectionSet)
         : oldField?.selectionSet;
-    if (oldField !== undefined && tailSelectionSet === oldField?.selectionSet) {
+    if (selectionSet !== undefined && oldField !== undefined && tailSelectionSet === oldField?.selectionSet) {
         return selectionSet;
     }
     const newField: FieldNode = {
@@ -1079,18 +1082,6 @@ export type OrderBy = {
     direction: string,
 };
 
-export type DatabaseQuery = {
-    filter: CollectionFilter,
-    selection: FieldSelection[],
-    orderBy: OrderBy[],
-    limit: number,
-    timeout: number,
-    operationId: string | null,
-    text: string,
-    params: { [name: string]: unknown },
-    accessRights: AccessRights,
-};
-
 export type QueryStat = {
     isFast: boolean,
 };
@@ -1115,5 +1106,3 @@ export function parseOrderBy(s: string): OrderBy[] {
             };
         });
 }
-
-

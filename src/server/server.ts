@@ -27,7 +27,7 @@ import {
     IResolvers,
 } from "apollo-server-express";
 import { ConnectionContext } from "subscriptions-transport-ws";
-import { ArangoProvider } from "./data/arango-provider";
+import { QShardDatabaseProvider } from "./data/shard-database-provider";
 import QBlockchainData from "./data/blockchain";
 import type {
     QBlockchainDataProvider,
@@ -40,13 +40,14 @@ import {
     STATS,
 } from "./config";
 import {
+    QDatabasePool,
     QDataCombiner,
     QDataPrecachedCombiner,
     QDataProvider,
 } from "./data/data-provider";
 import {
     MemjsDataCache,
-} from "./data/memjs-datacache";
+} from "./data/caching/memjs-datacache";
 import { aggregatesResolvers } from "./graphql/aggregates";
 import { counterpartiesResolvers } from "./graphql/counterparties";
 import { explainResolvers } from "./graphql/explain";
@@ -64,12 +65,14 @@ import type {
 import { totalsResolvers } from "./graphql/totals";
 import QLogs from "./logs";
 import type { QLog } from "./logs";
-import type { IStats } from "./tracer";
+import type { IStats } from "./stats";
 import {
     QStats,
+    StatsCounter
+} from "./stats";
+import {
     QTracer,
-    StatsCounter,
-} from "./tracer";
+} from "./tracing";
 import { Tracer } from "opentracing";
 import {
     Auth,
@@ -103,6 +106,7 @@ type EndPoint = {
 
 export class DataProviderFactory {
     providers = new Map<string, QDataProvider>();
+    databasePool = new QDatabasePool();
 
     constructor(public config: QConfig, public logs: QLogs) {
     }
@@ -110,8 +114,8 @@ export class DataProviderFactory {
     ensure(): QDataProviders {
         return {
             blockchain: this.ensureBlockchain(this.config.blockchain, "blockchain"),
-            counterparties: this.ensureDatabases(this.config.counterparties, "counterparties"),
-            chainRangesVerification: this.ensureDatabases(this.config.chainRangesVerification, "chainRangesVerification"),
+            counterparties: this.ensureDatabases(this.config.counterparties, "counterparties", false),
+            chainRangesVerification: this.ensureDatabases(this.config.chainRangesVerification, "chainRangesVerification", false),
         };
     }
 
@@ -119,39 +123,67 @@ export class DataProviderFactory {
         return config === undefined
             ? undefined
             : {
-                accounts: this.ensureDatabases(config.accounts, `${logKey}_accounts`),
+                accounts: this.ensureDatabases(config.accounts, `${logKey}_accounts`, true),
                 blocks: this.ensureHotCold(config.blocks, `${logKey}_blocks`),
                 transactions: this.ensureHotCold(config.transactions, `${logKey}_transactions`),
-                zerostate: this.ensureDatabase(config.zerostate, `${logKey}_zerostate`),
+                zerostate: this.ensureDatabase(config.zerostate, `${logKey}_zerostate`, 0),
             };
+    }
+
+    preCache(
+        main: QDataProvider | undefined,
+        config: string | undefined,
+        logKey: string,
+        dataExpirationTimeout = 0,
+        emptyDataExpirationTimeout = 0
+    ): QDataProvider | undefined {
+        const cacheConfig = (config ?? "").trim();
+        if (main === undefined || cacheConfig === "") {
+            return main;
+        }
+        return new QDataPrecachedCombiner(
+            this.logs.create(logKey),
+            new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
+            // new InMemoryDataCache(),
+            [main],
+            this.config.networkName,
+            this.config.cacheKeyPrefix,
+            dataExpirationTimeout,
+            emptyDataExpirationTimeout,
+        );
     }
 
     ensureHotCold(config: QHotColdDataConfig, logKey: string): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
-            const hot = this.ensureDatabases(config.hot, `${logKey}_hot`);
-            let cold = this.ensureDatabases(config.cold, `${logKey}_cold`);
-            const cacheConfig = (config.cache ?? "").trim();
-            if (cold !== undefined && cacheConfig !== "") {
-                cold = new QDataPrecachedCombiner(
-                    this.logs.create(logKey),
-                    new MemjsDataCache(this.logs.create(`${logKey}_cache`), { server: cacheConfig }),
-                    [cold],
-                    this.config.networkName,
-                    this.config.cacheKeyPrefix,
-                );
-            }
+            const hot = this.preCache(
+                this.ensureDatabases(config.hot, `${logKey}_hot`, true),
+                this.config.blockchain.hotCache,
+                logKey,
+                this.config.blockchain.hotCacheExpiration,
+                this.config.blockchain.hotCacheEmptyDataExpiration,
+            );
+            const cold = this.preCache(
+                this.ensureDatabases(config.cold, `${logKey}_cold`, false),
+                config.cache,
+                logKey,
+            );
             if (hot !== undefined && cold !== undefined) {
                 return new QDataCombiner([hot, cold]);
             }
             return hot ?? cold;
-        });
+        }, false);
     }
 
-    ensureDatabases(config: string[], logKey: string): QDataProvider | undefined {
+    ensureDatabases(config: string[], logKey: string, sharded: boolean): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
             const providers: QDataProvider[] = [];
+            const shardingDepth = (sharded && config.length > 0) ? Math.log2(config.length) : 0;
+            if (shardingDepth % 1 !== 0) {
+                throw new Error("Invalid sharding configuration: the count of databases should be a power of 2");
+            }
+
             config.forEach((x, i) => {
-                const provider = this.ensureDatabase(x, `${logKey}_${i}`);
+                const provider = this.ensureDatabase(x, `${logKey}_${i}`, shardingDepth);
                 if (provider !== undefined && !providers.includes(provider)) {
                     providers.push(provider);
                 }
@@ -160,20 +192,24 @@ export class DataProviderFactory {
                 return undefined;
             }
             return providers.length === 1 ? providers[0] : new QDataCombiner(providers);
-        });
+        }, sharded);
     }
 
-    ensureDatabase(config: string, logKey: string): QDataProvider | undefined {
+    ensureDatabase(config: string, logKey: string, shardingDepth: number): QDataProvider | undefined {
         return this.ensureProvider(config, () => {
-            return config.trim() !== ""
-                ? new ArangoProvider(this.logs.create(logKey), parseArangoConfig(config))
-                : undefined;
-        });
+            if (config.trim() === "") {
+                return undefined;
+            }
+            const databaseConfig = parseArangoConfig(config);
+            const shard = (shardingDepth > 0) ? databaseConfig.name.slice(-shardingDepth) : "";
+            const qShard = this.databasePool.ensureShard(databaseConfig, shard);
+            return new QShardDatabaseProvider(this.logs.create(logKey), qShard, this.config.useListeners);
+        }, false);
     }
 
 
-    ensureProvider(config: unknown, factory: () => QDataProvider | undefined): QDataProvider | undefined {
-        const providerKey = JSON.stringify(config);
+    ensureProvider(config: unknown, factory: () => QDataProvider | undefined, sharded: boolean): QDataProvider | undefined {
+        const providerKey = JSON.stringify({ config, sharded });
         const existing = this.providers.get(providerKey);
         if (existing !== undefined) {
             return existing;
@@ -259,7 +295,7 @@ export default class TONQServer {
             typeDefFileNames: ["type-defs-mam.graphql"],
             supportSubscriptions: false,
         });
-        const resolvers = createResolvers(this.data as any) as IResolvers;
+        const resolvers = createResolvers(this.data) as IResolvers;
         [
             infoResolvers,
             totalsResolvers,
@@ -368,8 +404,26 @@ export default class TONQServer {
                 {
                     requestDidStart() {
                         return {
+                            didResolveSource(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_didResolveSource");
+                            },
+                            parsingDidStart(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_parsingDidStart");
+                            },
+                            validationDidStart(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_validationDidStart");
+                            },
+                            executionDidStart(ctx) {
+                                const context = ctx.context as QRequestContext;
+                                context.log("Apollo_executionDidStart");
+                            },
                             willSendResponse(ctx) {
                                 const context = ctx.context as QRequestContext;
+                                context.log("Apollo_willSendResponse");
+                                context.onRequestFinishing();
                                 if (context.multipleAccessKeysDetected ?? false) {
                                     throw QError.multipleAccessKeys();
                                 }

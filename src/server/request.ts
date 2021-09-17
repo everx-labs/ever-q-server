@@ -11,9 +11,9 @@ import {
     Tracer,
 } from "opentracing";
 import {
-    IStats,
+    QTraceSpan,
     QTracer,
-} from "./tracer";
+} from "./tracing";
 import { TonClient } from "@tonclient/core";
 import QLogs from "./logs";
 import QBlockchainData from "./data/blockchain";
@@ -21,6 +21,7 @@ import EventEmitter from "events";
 import { QError } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
+import { IStats } from "./stats";
 
 export class QRequestServices {
     constructor(
@@ -42,6 +43,7 @@ export const RequestEvent = {
 };
 
 export class QRequestContext {
+    start: number;
     events: EventEmitter;
     remoteAddress: string;
     accessKey: string;
@@ -49,12 +51,20 @@ export class QRequestContext {
     usedMamAccessKey?: string = undefined;
     multipleAccessKeysDetected = false;
     parentSpan: Span | SpanContext | undefined;
+    requestSpan: QTraceSpan;
+    requestTags = {
+        hasWaitFor: false,
+        hasAggregations: false,
+        hasTotals: false,
+        arangoCalls: 0,
+    };
 
     constructor(
         public services: QRequestServices,
         public req: express.Request | undefined,
         public connection: ExecutionParams | undefined,
     ) {
+        this.start = Date.now();
         this.events = new EventEmitter();
         this.events.setMaxListeners(0);
         req?.on?.("close", () => {
@@ -63,6 +73,12 @@ export class QRequestContext {
         this.remoteAddress = req?.socket?.remoteAddress ?? "";
         this.accessKey = Auth.extractAccessKey(req as RequestWithAccessHeaders, connection);
         this.parentSpan = QTracer.extractParentSpan(services.tracer, connection ?? req) ?? undefined;
+        this.requestSpan = QTraceSpan.create(services.tracer, "q-request", this.parentSpan);
+        this.requestSpan.log({
+            event: "QRequestContext_created",
+            headers: req?.headers,
+            request_body: req?.body,
+        });
     }
 
     async requireGrantedAccess(args: AccessArgs): Promise<AccessRights> {
@@ -98,5 +114,25 @@ export class QRequestContext {
         this.events.emit(RequestEvent.FINISH);
         this.events.removeAllListeners();
     }
-}
 
+    log(event_name: string, additionalInfo?: string): void {
+        const logEntry = {
+            event: event_name,
+            time: Date.now() - this.start,
+            ...additionalInfo ? { info: additionalInfo } : {},
+        };
+        this.requestSpan.log(logEntry);
+    }
+
+    onRequestFinishing(): void {
+        this.requestSpan.addTags(this.requestTags);
+        this.requestSpan.finish();
+    }
+
+    trace<T>(
+        operationName: string,
+        operation: (span: QTraceSpan) => Promise<T>,
+    ): Promise<T> {
+        return this.requestSpan.traceChildOperation(operationName, operation);
+    }
+}

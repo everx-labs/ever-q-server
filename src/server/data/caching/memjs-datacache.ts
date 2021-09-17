@@ -2,29 +2,31 @@ import {
     Client as MemcachedClient,
     ClientOptions,
 } from "memjs";
-import type { QMemCachedConfig } from "../config";
-import type { QLog } from "../logs";
-import type { QDataCache } from "./data-provider";
+import type { QMemCachedConfig } from "../../config";
+import type { QLog } from "../../logs";
+import type { QDataCache } from "../data-provider";
 
 export class MemjsDataCache implements QDataCache {
     memcached: MemcachedClient;
     log: QLog;
+    config: QMemCachedConfig;
 
     constructor(log: QLog, config: QMemCachedConfig) {
         this.log = log;
+        this.config = config;
         const options: ClientOptions = {
             logger: {
                 log: () => {
                 },
             },
-            retries: 0, // don't retry
+            retries: 1, // retry once
             expires: 0, // keepForever
-            timeout: 0.1, // 100ms
-            conntimeout: 0.2, // twice of timeout
+            timeout: 0.5, // 100ms
+            conntimeout: 1.0, // twice of timeout
             keepAlive: true,
             keepAliveDelay: 15,
         } as ClientOptions;
-        this.memcached = new MemcachedClient(config.server, options);
+        this.memcached = MemcachedClient.create(this.config.server, options);
     }
 
     async get(hashedKey: string): Promise<unknown> {
@@ -47,9 +49,11 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 
-    async set(hashedKey: string, value: unknown): Promise<void> {
+    async set(hashedKey: string, value: unknown, expirationTimeout: number): Promise<void> {
         return new Promise((resolve) => {
-            this.memcached.set(hashedKey, JSON.stringify(value), {}, (err) => {
+            this.memcached.set(hashedKey, JSON.stringify(value), expirationTimeout !== 0
+                ? { expires: expirationTimeout }
+                : {}, (err) => {
                 if (!err) {
                     this.log.debug("SET", hashedKey);
                 } else {
@@ -60,4 +64,3 @@ export class MemjsDataCache implements QDataCache {
         });
     };
 }
-

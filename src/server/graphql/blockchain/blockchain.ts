@@ -2,7 +2,6 @@ import { FieldNode, GraphQLResolveInfo } from "graphql";
 import { AccessRights } from "../../auth";
 import { QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
-import { QTracer } from "../../tracer";
 import { QError, required } from "../../utils";
 
 import {
@@ -14,6 +13,8 @@ import {
     BlockchainTransactionsConnection,
     Resolvers,
 } from "./resolvers-types-generated";
+import { QCollectionQuery } from "../../data/collection-query";
+import { QTraceSpan } from "../../tracing";
 
 const enum Direction {
     Forward,
@@ -25,7 +26,7 @@ function parseMasterSeqNo(chain_order: string) {
     return parseInt(chain_order.slice(1, length + 1), 16);
 }
 
-async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_RangeArgs, context: QRequestContext) {
+async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_RangeArgs, context: QRequestContext, traceSpan: QTraceSpan) {
     if (args.time_start && args.time_end && args.time_start > args.time_end) {
         throw QError.invalidQuery("time_start should not be greater than time_end");
     }
@@ -43,9 +44,13 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     };
     const result = await context.services.data.query(
         required(context.services.data.blocks.provider),
-        text,
-        vars,
-        []
+        {
+            text,
+            vars,
+            orderBy: [],
+            request: context,
+            traceSpan,
+        },
     ) as { start: string | null, end: string | null }[];
 
     let start: string | null = null;
@@ -66,7 +71,7 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     }
 
     // reliable boundary
-    const reliable = await context.services.data.getReliableChainOrderUpperBoundary();
+    const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
         throw QError.internalServerError();
     }
@@ -83,7 +88,7 @@ function toU64String(value: number): string {
 }
 
 async function prepareChainOrderFilter(
-    args: BlockchainQueryAccount_TransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs, 
+    args: BlockchainQueryAccount_TransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs,
     params: QParams,
     filters: string[],
     context: QRequestContext,
@@ -101,7 +106,7 @@ async function prepareChainOrderFilter(
         : end_chain_order;
 
     // reliable boundary
-    const reliable = await context.services.data.getReliableChainOrderUpperBoundary();
+    const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
         throw QError.internalServerError();
     }
@@ -135,6 +140,7 @@ async function resolve_transactions(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     prepareAccountFilter: (params: QParams, filters: string[]) => void,
+    traceSpan: QTraceSpan,
 ) {
     // filters
     const filters: string[] = [];
@@ -142,7 +148,7 @@ async function resolve_transactions(
 
     await prepareChainOrderFilter(args, params, filters, context);
     prepareAccountFilter(params, filters);
-    
+
     const accessFilter = getAccountAccessRestictionCondition(parent.accessRights, params);
     if (accessFilter) {
         filters.push(accessFilter);
@@ -166,7 +172,7 @@ async function resolve_transactions(
     }
     const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
     const direction = (args.last || args.before) ? Direction.Backward : Direction.Forward;
-    
+
     // get node selection set
     const edgesNode =
         info.fieldNodes[0].selectionSet?.selections
@@ -185,7 +191,8 @@ async function resolve_transactions(
 
     // build return expression
     const orderBy = [{ path: "chain_order", direction: "ASC" }];
-    const returnExpression = context.services.data.transactions.buildReturnExpression(
+    const returnExpression = QCollectionQuery.buildReturnExpression(
+        context.services.data.transactions.docType,
         selectionSet,
         orderBy,
     );
@@ -200,9 +207,13 @@ async function resolve_transactions(
     `;
     const queryResult = await context.services.data.query(
         required(context.services.data.transactions.provider),
-        query,
-        params.values,
-        orderBy,
+        {
+            text: query,
+            vars: params.values,
+            orderBy,
+            request: context,
+            traceSpan,
+        },
     ) as BlockchainTransaction[];
 
     // sort query result by chain_order ASC
@@ -258,14 +269,12 @@ export const resolvers: Resolvers<QRequestContext> = {
     },
     BlockchainQuery: {
         master_seq_no_range: (_parent, args, context) => {
-            const tracer = context.services.tracer;
-            return QTracer.trace(tracer, "blockchain-master_seq_no_range", async () => {
-                return await resolve_maser_seq_no_range(args, context);
-            }, QTracer.getParentSpan(tracer, context));
+            return context.trace("blockchain-master_seq_no_range", async traceSpan => {
+                return await resolve_maser_seq_no_range(args, context, traceSpan);
+            });
         },
         account_transactions: async (parent, args, context, info) => {
-            const tracer = context.services.tracer;
-            return QTracer.trace(tracer, "blockchain-account_transactions", async () => {
+            return context.trace("blockchain-account_transactions", async traceSpan => {
                 return await resolve_transactions(
                     parent,
                     args,
@@ -277,12 +286,12 @@ export const resolvers: Resolvers<QRequestContext> = {
                             filters.push(`doc.account_addr IN @${paramName}`);
                         }
                     },
+                    traceSpan,
                 );
-            }, QTracer.getParentSpan(tracer, context));
+            });
         },
         workchain_transactions: async (parent, args, context, info) => {
-            const tracer = context.services.tracer;
-            return QTracer.trace(tracer, "blockchain-workchain_transactions", async () => {
+            return context.trace("blockchain-workchain_transactions", async traceSpan => {
                 return await resolve_transactions(
                     parent,
                     args,
@@ -295,8 +304,9 @@ export const resolvers: Resolvers<QRequestContext> = {
                             // we could probably use (doc.account_addr > "{w}:" AND doc.account_addr < "{w};")
                         }
                     },
+                    traceSpan,
                 );
-            }, QTracer.getParentSpan(tracer, context));
+            });
         },
     },
     Node: {
@@ -304,7 +314,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             // it could fail if parent is a value from db instead of a value with resolved fields
             // need to test
             switch(parent.id.split("/")[0]) {
-                case "transaction": 
+                case "transaction":
                     return "BlockchainTransaction";
                 default:
                     return null;
