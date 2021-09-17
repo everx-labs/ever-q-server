@@ -134,6 +134,7 @@ destination smart contract. It can be queried with the following fields:`,
         value_other: "May or may not be present.",
         proof: "Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64.",
         boc: "A bag of cells with the message structure encoded as base64.",
+        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message).",
     },
 
 

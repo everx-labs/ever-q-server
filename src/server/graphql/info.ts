@@ -13,6 +13,7 @@ type Info = {
     messagesLatency?: number,
     latency?: number,
     endpoints?: string[],
+    chainOrderBoundary?: string,
 };
 
 async function info(
@@ -32,6 +33,13 @@ async function info(
         time: Date.now(),
         endpoints: context.services.config.endpoints,
     };
+    if (fields.has("chainOrderBoundary")) {
+        try {
+            result.chainOrderBoundary = (await context.services.data.getReliableChainOrderUpperBoundary()).boundary;
+        } catch {
+            // intentionally left blank
+        }
+    }
     const latencyFieldsSelected =
         fields.has("latency")
         || fields.has("blocksLatency")
