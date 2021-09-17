@@ -185,7 +185,7 @@ export default class TONQServer {
     client: TonClient;
     auth: Auth;
     memStats: MemStats;
-    internalErrorStats: StatsCounter
+    internalErrorStats: StatsCounter;
     shared: Map<string, unknown>;
 
 
@@ -215,7 +215,7 @@ export default class TONQServer {
             slowQueriesProviders: createProviders("slow", this.logs, this.config.slowQueriesData, this.config.networkName, this.config.cacheKeyPrefix),
             isTests: false,
         });
-        this.internalErrorStats = new StatsCounter(this.stats, STATS.errors.internal, [])
+        this.internalErrorStats = new StatsCounter(this.stats, STATS.errors.internal, []);
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
         this.addEndPoint({
@@ -358,9 +358,9 @@ export default class TONQServer {
             ],
             formatError: (err) => {
                 if (err.extensions?.code === 'INTERNAL_SERVER_ERROR') {
-                    this.internalErrorStats.increment()
+                    this.internalErrorStats.increment();
                 }
-                return err
+                return err;
             },
         };
         const apollo = new ApolloServer(config);
