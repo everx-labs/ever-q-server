@@ -268,6 +268,9 @@ export const STATS = {
     waitFor: {
         active: "waitfor.active",
     },
+    errors: {
+        internal: 'errors.internal',
+    },
 };
 
 

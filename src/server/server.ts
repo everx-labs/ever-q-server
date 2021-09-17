@@ -246,6 +246,7 @@ export default class TONQServer {
     client: TonClient;
     auth: Auth;
     memStats: MemStats;
+    internalErrorStats: StatsCounter;
     shared: Map<string, unknown>;
     requestServices: QRequestServices;
 
@@ -277,6 +278,7 @@ export default class TONQServer {
             slowQueriesProviders: providers.ensureBlockchain(this.config.slowQueriesBlockchain, "slow"),
             isTests: false,
         });
+        this.internalErrorStats = new StatsCounter(this.stats, STATS.errors.internal, []);
         this.memStats = new MemStats(this.stats);
         this.memStats.start();
         this.requestServices = new QRequestServices(
@@ -432,6 +434,12 @@ export default class TONQServer {
                     },
                 },
             ],
+            formatError: (err) => {
+                if (err.extensions?.code === 'INTERNAL_SERVER_ERROR') {
+                    this.internalErrorStats.increment();
+                }
+                return err;
+            },
         };
         const apollo = new ApolloServer(config);
         apollo.applyMiddleware({
