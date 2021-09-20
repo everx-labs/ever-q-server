@@ -268,6 +268,9 @@ export default class QBlockchainData extends QData {
                         returns: [returnExpression],
                     });
                 }
+                if (shard.shard.length > 0) {
+                    request.requestTags.hasRangedQuery = true;
+                }
             }
         }
 

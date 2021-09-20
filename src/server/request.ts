@@ -57,6 +57,7 @@ export class QRequestContext {
         hasAggregations: false,
         hasTotals: false,
         arangoCalls: 0,
+        hasRangedQuery: false,
     };
 
     constructor(

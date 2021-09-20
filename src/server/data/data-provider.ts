@@ -220,7 +220,11 @@ export class QDataCombiner implements QDataProvider {
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
         const traceSpan = params.traceSpan;
         traceSpan.logEvent("QDataCombiner_query_start");
-        const providers = this.getProvidersForShards(params.shards);
+        const shards = params.shards ? this.ensureShardingDegree(params.shards) : undefined;
+        if (this.shardingDegree > 0 && (!shards || shards.size === Math.pow(2, this.shardingDegree))) {
+            params.request.requestTags.hasRangedQuery = true;
+        }
+        const providers = this.getProvidersForShards(shards);
         const results = await Promise.all(providers.map(x => x.query(params)));
         traceSpan.logEvent("QDataCombiner_query_dataIsFetched");
         const result = combineResults(results, params.orderBy);
