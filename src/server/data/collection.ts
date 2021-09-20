@@ -455,7 +455,7 @@ export class QDataCollection {
             records as Record<string, unknown>[],
             selection,
             query.accessRights,
-            query.timeout ?? 40000,
+            query.timeout || 40000,
             request,
             traceSpan,
         );
