@@ -171,7 +171,7 @@ export class DataProviderFactory {
                 return new QDataCombiner([hot, cold]);
             }
             return hot ?? cold;
-        }, false);
+        }, "hot-cold");
     }
 
     ensureDatabases(config: string[], logKey: string, sharded: boolean): QDataProvider | undefined {
@@ -192,7 +192,7 @@ export class DataProviderFactory {
                 return undefined;
             }
             return providers.length === 1 ? providers[0] : new QDataCombiner(providers);
-        }, sharded);
+        }, sharded.toString());
     }
 
     ensureDatabase(config: string, logKey: string, shardingDepth: number): QDataProvider | undefined {
@@ -204,12 +204,12 @@ export class DataProviderFactory {
             const shard = (shardingDepth > 0) ? databaseConfig.name.slice(-shardingDepth) : "";
             const qShard = this.databasePool.ensureShard(databaseConfig, shard);
             return new QShardDatabaseProvider(this.logs.create(logKey), qShard, this.config.useListeners);
-        }, false);
+        }, shardingDepth.toString());
     }
 
 
-    ensureProvider(config: unknown, factory: () => QDataProvider | undefined, sharded: boolean): QDataProvider | undefined {
-        const providerKey = JSON.stringify({ config, sharded });
+    ensureProvider(config: unknown, factory: () => QDataProvider | undefined, uniqueKey: string): QDataProvider | undefined {
+        const providerKey = JSON.stringify({ config, uniqueKey });
         const existing = this.providers.get(providerKey);
         if (existing !== undefined) {
             return existing;
@@ -435,8 +435,8 @@ export default class TONQServer {
                 },
             ],
             formatError: (err) => {
-                if (err.extensions?.code === 'INTERNAL_SERVER_ERROR') {
-                    this.internalErrorStats.increment();
+                if (err.extensions?.code === "INTERNAL_SERVER_ERROR") {
+                    void this.internalErrorStats.increment();
                 }
                 return err;
             },
