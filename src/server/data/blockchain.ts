@@ -34,7 +34,7 @@ import {
     sortedIndex,
 } from "./data-provider";
 import { QType } from "../filter/filters";
-import { required } from "../utils";
+import { required, toU64String } from "../utils";
 import { QRequestContext } from "../request";
 import { Database } from "arangojs";
 
@@ -336,7 +336,10 @@ export default class QBlockchainData extends QData {
 
     async getReliableChainOrderUpperBoundary(context: QRequestContext): Promise<ReliableChainOrderUpperBoundary> {
         const now = Date.now();
-        if (now > this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
+        if (now < this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
+            return this.reliableChainOrderUpperBoundary;
+        }
+        if (this.providers.chainRangesVerification) {
             const result = await required(this.providers.chainRangesVerification).query({
                 text: "RETURN DOCUMENT('chain_ranges_verification/summary')",
                 vars: {},
@@ -357,6 +360,33 @@ export default class QBlockchainData extends QData {
                 };
             } else {
                 throw new Error("Couldn't get chain_ranges_verification summary");
+            }
+        } else {
+            const gapInSeconds = 120;
+            const result = await required(this.providers.blockchain?.blocks).query({
+                text: `
+                    LET now = DATE_NOW() / 1000
+                    FOR b IN blocks
+                        FILTER b.workchain_id == -1 && b.gen_utime < now - ${gapInSeconds}
+                        SORT b.gen_utime DESC
+                        LIMIT 1
+                        RETURN b.seq_no
+                `,
+                vars: {},
+                orderBy: [],
+                request: context,
+                traceSpan: context.requestSpan,
+            }) as number[];
+            if (result.length > 0) {
+                const mc_seq_no = result.reduce((prev, curr) => Math.max(prev, curr));
+                const boundary = toU64String(mc_seq_no + 1);
+
+                this.reliableChainOrderUpperBoundary = {
+                    boundary,
+                    lastCheckTime: now,
+                };
+            } else {
+                throw new Error("There is something wrong with chain order boundary");
             }
         }
         return this.reliableChainOrderUpperBoundary;

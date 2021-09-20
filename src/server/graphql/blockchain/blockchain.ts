@@ -2,7 +2,7 @@ import { FieldNode, GraphQLResolveInfo } from "graphql";
 import { AccessRights } from "../../auth";
 import { QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
-import { QError, required } from "../../utils";
+import { QError, required, toU64String } from "../../utils";
 
 import {
     BlockchainQuery,
@@ -80,11 +80,6 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
         start: start ? parseMasterSeqNo(start) : null,
         end: end ? Math.min(parseMasterSeqNo(end) + 1, parseMasterSeqNo(reliable.boundary)) : null,
     };
-}
-
-function toU64String(value: number): string {
-    const hex = value.toString(16);
-    return `${(hex.length - 1).toString(16)}${hex}`;
 }
 
 async function prepareChainOrderFilter(

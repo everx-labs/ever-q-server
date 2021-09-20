@@ -239,3 +239,8 @@ export function setHasIntersections<T>(a: Set<T>, b: Set<T>): boolean {
     }
     return false;
 }
+
+export function toU64String(value: number): string {
+    const hex = value.toString(16);
+    return `${(hex.length - 1).toString(16)}${hex}`;
+}
