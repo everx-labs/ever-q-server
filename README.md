@@ -258,6 +258,8 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
                                                            query handler from SDK client
 
     qserver.subscription.count   counter  collection=name  Incremented for each subscription start
+
+    qserver.stats.error.internal counter                   Incremented for each internal server error
 ```
 
 Q-Server can report additional tags with help of optional parameter `Q_STATSD_TAGS`.

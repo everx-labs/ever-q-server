@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - Info query optimisation.
 - Better jaeger tracing.
 - When messages database is sharded, use two collections `messages` and `messages_complement` for queries
+- New `qserver.stats.error.internal` StartD counter for internal server errors
 
 ### Fixed
 
