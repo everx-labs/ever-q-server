@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [0.43.0] - 2021-08-30
 
 ### New schema fields
-- `main` parameter added in ValidatorSet type
+- `main` (number of masterchain validators) parameter added in ValidatorSet type
 - `chain_order` fields added in `blocks`, `transactions`, `messages`
 - `chainOrderBoundary` (the boundary before which no data inserts are possible) field added in `info`
 
