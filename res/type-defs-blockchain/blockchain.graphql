@@ -1,0 +1,108 @@
+"""
+This type is experimental
+"""
+type BlockchainMasterSeqNoRange {
+    "Minimum inclusive seq_no of corresponding master blocks"
+    start: Int
+    "Maximum exclusive seq_no of corresponding master blocks"
+    end: Int
+}
+
+"""
+This type is experimental
+"""
+input BlockchainMasterSeqNoFilter {
+    "Minimum inclusive seq_no of corresponding master blocks"
+    start: Int
+    "Maximum exclusive seq_no of corresponding master blocks"
+    end: Int
+}
+
+"""
+This type is experimental
+"""
+type BlockchainTransactionsConnection {
+    edges: [BlockchainTransactionEdge!]!
+    pageInfo: PageInfo!
+}
+
+"""
+This type is experimental
+"""
+type BlockchainTransactionEdge {
+    node: BlockchainTransaction!
+    cursor: String!
+}
+
+"""
+This type is experimental
+"""
+type BlockchainQuery {
+    """
+    **EXPERIMENTAL**
+    Returns seq_no range such that:
+    1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
+    2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
+    If time_start is null, then start is null. If time_end is null, then end is null.
+    **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
+    """
+    master_seq_no_range(
+         time_start: Int,
+         time_end: Int,
+    ): BlockchainMasterSeqNoRange
+
+    """
+    **EXPERIMENTAL**
+    This node could be used for a cursor-based pagination of transactions filtered by account addresses.
+    """
+    account_transactions(
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockchain { master_seq_no_range }
+        """
+        master_seq_no: BlockchainMasterSeqNoFilter
+
+        """
+        The transactions could be filtered by the list of addresses.
+        """
+        account_addresses: [String!]
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainTransactionsConnection
+
+    """
+    **EXPERIMENTAL**
+    This node could be used for a cursor-based pagination of transactions filtered by workchains.
+    """
+    workchain_transactions(
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockchain { master_seq_no_range }
+        """
+        master_seq_no: BlockchainMasterSeqNoFilter
+
+        """
+        The transactions could be filtered by the list of workchains.
+        """
+        workchains: [Int!]
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainTransactionsConnection
+}
+
+extend type Query {
+    "This node is experimental"
+    blockchain(accessKey: String): BlockchainQuery
+}

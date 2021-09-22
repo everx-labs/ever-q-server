@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.43.0] - 2021-09-22
+
+### New schema fields
+- `main` (number of masterchain validators) parameter added in ValidatorSet type
+- `chain_order` fields added in `blocks`, `transactions`, `messages`
+- `chainOrderBoundary` (the boundary before which no data inserts are possible) field added in `info`
+
+### Configuration
+- Flexible data sources configuration (including separation/sharding for accounts, blocks, messages/transactions).
+  Old data configurations are deprecated now but supported yet. For details see README.
+- Option to set max execution time for queries on ArangoDb side
+- Option to configure polling period in waitFor queries (queries with timeout)
+- Memjs data cache support for hot databases
+
+### Optimizations
+- Joins loading optimisations.
+- Latency refreshing optimisation.
+- Info query optimisation.
+- Better jaeger tracing.
+- When messages database is sharded, use two collections `messages` and `messages_complement` for queries
+- New `qserver.stats.error.internal` StartD counter for internal server errors
+
+### Fixed
+
+- Subscriptions for sharded data sources
+
 ## [0.42.1] 2021-08-09
 
 ### Fixed

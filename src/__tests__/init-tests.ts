@@ -16,11 +16,8 @@ import nodeFetch, { RequestInit } from "node-fetch";
 import WebSocket from "ws";
 import QBlockchainData, { INDEXES } from "../server/data/blockchain";
 import {
-    createConfig,
-    overrideDefs,
-    parseDataConfig,
-    programOptions,
     QConfig,
+    resolveConfig,
 } from "../server/config";
 import type { QDataProviders } from "../server/data/data";
 import type {
@@ -30,11 +27,9 @@ import type {
     QResult,
 } from "../server/data/data-provider";
 import QLogs from "../server/logs";
-import TONQServer, { createProviders } from "../server/server";
-import {
-    QStats,
-    QTracer,
-} from "../server/tracer";
+import TONQServer, { DataProviderFactory } from "../server/server";
+import { QStats } from "../server/stats";
+import { QTracer } from "../server/tracing";
 import {
     Auth,
     grantedAccess,
@@ -55,14 +50,14 @@ import {
     cloneDeep,
 } from "../server/utils";
 import fetch from "node-fetch";
+import { QCollectionQuery } from "../server/data/collection-query";
 
 jest.setTimeout(100000);
 
-export const testConfig = createConfig(
+export const testConfig = resolveConfig(
     {},
     {},
-    process.env,
-    overrideDefs(programOptions, {}),
+    process.env as Record<string, string>,
 );
 
 let testServer: TONQServer | null = null;
@@ -86,13 +81,16 @@ export function selectionInfo(r: string) {
 
 export function queryText(collection: QDataCollection, result: string, orderBy?: OrderBy[]): string {
     return normalized(
-        collection.createDatabaseQuery(
+        QCollectionQuery.create(
+            collection.name,
+            collection.docType,
             {
                 filter: {},
                 orderBy,
             },
             selectionInfo(result),
             grantedAccess,
+            0,
         )?.text ?? "",
     );
 }
@@ -111,7 +109,7 @@ interface SubscriptionClientPrivate {
     maxConnectTimeGenerator: {
         duration(): number,
         max: number,
-    }
+    };
 }
 
 export function createTestClient(options: { useWebSockets: boolean }): ApolloClient<unknown> {
@@ -219,25 +217,22 @@ export async function testServerStop() {
 
 export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
     const dataMut = process.env.Q_DATA_MUT ?? "http://localhost:8901";
-    const dataHot = process.env.Q_DATA_HOT ?? dataMut;
-    const dataCold = process.env.Q_DATA_COLD ?? "";
     const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT ?? dataMut;
-    const slowQueriesHot = process.env.Q_SLOW_QUERIES_HOT ?? slowQueriesMut;
-    const slowQueriesCold = process.env.Q_SLOW_QUERIES_COLD ?? "";
-    const {
-        data,
-        slowQueriesData,
-    } = parseDataConfig({
-        dataMut,
-        dataHot,
-        dataCold,
-        slowQueriesMut,
-        slowQueriesHot,
-        slowQueriesCold,
-    });
+
+    const config = resolveConfig({}, {},
+        {
+            Q_DATA_MUT: dataMut,
+            Q_DATA_HOT: process.env.Q_DATA_HOT ?? dataMut,
+            Q_DATA_COLD: process.env.Q_DATA_COLD ?? "",
+            Q_SLOW_QUERIES_MUT: slowQueriesMut,
+            Q_SLOW_QUERIES_HOT: process.env.Q_SLOW_QUERIES_HOT ?? slowQueriesMut,
+            Q_SLOW_QUERIES_COLD: process.env.Q_SLOW_QUERIES_COLD ?? "",
+        },
+    );
+    const providers = new DataProviderFactory(config, logs);
     return new QBlockchainData({
-        providers: createProviders("fast", logs, data, testConfig.networkName, testConfig.cacheKeyPrefix),
-        slowQueriesProviders: createProviders("slow", logs, slowQueriesData, testConfig.networkName, testConfig.cacheKeyPrefix),
+        providers: providers.ensure(),
+        slowQueriesProviders: providers.ensureBlockchain(config.slowQueriesBlockchain, "slow"),
         logs: new QLogs(),
         auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
@@ -250,6 +245,8 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     data: T[];
     queryCount: number;
     hotUpdateCount: number;
+    shards = [];
+    shardingDegree = 0;
 
     constructor(data: T[]) {
         this.data = data;
@@ -321,7 +318,7 @@ export function mock<T extends QResult>(data: T[]): MockProvider<T> {
 export function createTestData(providers: QDataProviders): QBlockchainData {
     return new QBlockchainData({
         providers,
-        slowQueriesProviders: providers,
+        slowQueriesProviders: providers.blockchain,
         logs: new QLogs(),
         auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),

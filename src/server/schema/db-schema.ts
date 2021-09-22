@@ -217,10 +217,11 @@ const Message: TypeDef = {
     value_other: otherCurrencyCollection(docs.message.value_other),
     proof: string(docs.message.proof),
     boc: string(docs.message.boc),
-    src_transaction: join("Transaction", "id", "out_msgs[*]", "parent.created_lt !== \"00\" && parent.msg_type !== 1"),
-    dst_transaction: join("Transaction", "id", "in_msg", "parent.msg_type !== 2"),
+    src_transaction: join("Transaction", "id", "out_msgs[*]", "parent.created_lt !== \"00\" && parent.msg_type !== 1", "src"),
+    dst_transaction: join("Transaction", "id", "in_msg", "parent.msg_type !== 2", "dst"),
     src_account: join("Account", "src", "id", "parent.msg_type !== 1"),
     dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
+    chain_order: stringWithLowerFilter(docs.message.chain_order),
 };
 
 
@@ -242,9 +243,9 @@ const Transaction: TypeDef = {
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
     in_msg: stringWithLowerFilter(docs.transaction.in_msg),
-    in_message: join({ Message }, "in_msg", "id"),
+    in_message: join({ Message }, "in_msg", "id", undefined, "account_addr"),
     out_msgs: arrayOf(stringWithLowerFilter(docs.transaction.out_msgs)),
-    out_messages: arrayOf(join({ Message }, "out_msgs", "id")),
+    out_messages: arrayOf(join({ Message }, "out_msgs", "id", undefined, "account_addr")),
     total_fees: grams(docs.transaction.total_fees),
     total_fees_other: otherCurrencyCollection(docs.transaction.total_fees_other),
     old_hash: stringWithLowerFilter(docs.transaction.old_hash),
@@ -317,6 +318,8 @@ const Transaction: TypeDef = {
     boc: string(docs.transaction.boc),
     balance_delta: grams(docs.transaction.balance_delta),
     balance_delta_other: otherCurrencyCollection(docs.transaction.balance_delta),
+    chain_order: stringWithLowerFilter(docs.transaction.chain_order),
+    ext_in_msg_fee: grams(docs.transaction.ext_in_msg_fee),
 };
 
 // BLOCK SIGNATURES
@@ -464,6 +467,7 @@ const ValidatorSet: TypeDef = {
     utime_since: unixSeconds(),
     utime_until: unixSeconds(),
     total: u16(),
+    main: u16(),
     total_weight: u64(),
     list: arrayOf({
         public_key: stringWithLowerFilter(),
@@ -715,6 +719,7 @@ const Block: TypeDef = {
     key_block: bool(docs.block.key_block),
     boc: string(docs.block.boc),
     signatures: join({ BlockSignatures }, "id", "id"),
+    chain_order: stringWithLowerFilter(docs.block.chain_order),
 };
 
 const Zerostate: TypeDef = {

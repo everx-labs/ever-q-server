@@ -5,20 +5,24 @@ import {
 } from "kafkajs";
 import {
     FORMAT_TEXT_MAP,
-    Span,
 } from "opentracing";
 import type { QConfig } from "../config";
 import {
     ensureProtocol,
     RequestsMode,
 } from "../config";
-import { requireGrantedAccess } from "../data/collection";
-import type { AccessRights } from "../auth";
+import type {
+    AccessArgs,
+    AccessRights,
+} from "../auth";
 import { Auth } from "../auth";
 import fetch, { RequestInit } from "node-fetch";
-import { QTracer } from "../tracer";
+import { 
+    QTraceSpan,
+    QTracer,
+} from "../tracing";
 import { QError } from "../utils";
-import type { GraphQLRequestContextEx } from "./context";
+import { QRequestContext } from "../request";
 
 type Request = {
     id: string,
@@ -33,8 +37,8 @@ type RequestInitEx = RequestInit & {
     referrer: string,
 };
 
-async function postRequestsUsingRest(requests: Request[], context: GraphQLRequestContextEx): Promise<void> {
-    const config = context.config.requests;
+async function postRequestsUsingRest(requests: Request[], context: QRequestContext): Promise<void> {
+    const config = context.services.config.requests;
     const url = `${ensureProtocol(config.server, "http")}/topics/${config.topic}`;
     const request: RequestInitEx = {
         method: "POST",
@@ -60,17 +64,18 @@ async function postRequestsUsingRest(requests: Request[], context: GraphQLReques
     }
 }
 
-async function postRequestsUsingKafka(requests: Request[], context: GraphQLRequestContextEx, span: Span): Promise<void> {
+async function postRequestsUsingKafka(requests: Request[], context: QRequestContext, span: QTraceSpan): Promise<void> {
     const ensureShared = async <T>(name: string, createValue: () => Promise<T>): Promise<T> => {
-        if (context.shared.has(name)) {
-            return context.shared.get(name) as T;
+        const shared = context.services.shared;
+        if (shared.has(name)) {
+            return shared.get(name) as T;
         }
         const value = await createValue();
-        context.shared.set(name, value);
+        shared.set(name, value);
         return value;
     };
 
-    const config = context.config.requests;
+    const config = context.services.config.requests;
     const producer: Producer = await ensureShared("producer", async () => {
         const kafka: Kafka = await ensureShared("kafka", async () => new Kafka({
             clientId: "q-server",
@@ -78,13 +83,15 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
         }));
         const newProducer = kafka.producer();
         await newProducer.connect();
+        span.logEvent("kafka_producer_connected");
         return newProducer;
 
     });
 
+    span.logEvent("kafka_message_preparation_start");
     const messages = requests.map((request) => {
         const traceInfo = {};
-        context.data.tracer.inject(span, FORMAT_TEXT_MAP, traceInfo);
+        context.services.data.tracer.inject(span.span, FORMAT_TEXT_MAP, traceInfo);
         const keyBuffer = Buffer.from(request.id, "base64");
         const traceBuffer = (Object.keys(traceInfo).length > 0)
             ? Buffer.from(JSON.stringify(traceInfo), "utf8")
@@ -96,10 +103,13 @@ async function postRequestsUsingKafka(requests: Request[], context: GraphQLReque
             value,
         };
     });
-    await producer.send({
+    span.logEvent("kafka_ready_to_send");
+    const send = producer.send({
         topic: config.topic,
         messages,
     });
+    span.logEvent("kafka_sent");
+    await send;
 }
 
 async function checkPostRestrictions(
@@ -131,19 +141,24 @@ async function checkPostRestrictions(
 
 async function postRequests(
     _parent: Record<string, unknown>,
-    args: { requests: Request[], accessKey?: string },
-    context: GraphQLRequestContextEx,
+    args: AccessArgs & { requests: Request[] },
+    context: QRequestContext,
 ): Promise<string[]> {
     const requests: (Request[]) | null = args.requests;
     if (!requests) {
         return [];
     }
 
-    const tracer = context.tracer;
-    return QTracer.trace(tracer, "postRequests", async (span: Span) => {
-        span.setTag("params", requests);
-        const accessRights = await requireGrantedAccess(context, args);
-        await checkPostRestrictions(context.config, context.client, requests, accessRights);
+    const {
+        tracer,
+        client,
+        data,
+        config,
+    } = context.services;
+    return context.trace("postRequests", async (span: QTraceSpan) => {
+        span.logEvent("start", { requests });
+        const accessRights = await context.requireGrantedAccess(args);
+        await checkPostRestrictions(config, client, requests, accessRights);
 
         const expired: Request | undefined = requests.find(x => x.expireAt && (Date.now() > x.expireAt));
         if (expired) {
@@ -159,25 +174,36 @@ async function postRequests(
                 messageId,
                 messageSize: Math.ceil(request.body.length * 3 / 4),
             });
-            return postSpan;
+
+            // ----- This is a hack to be able to link messageId with requestContext -----
+            const postSpan2 = span.createChildSpan("postRequests_postRequest");
+            postSpan2.addTags({
+                messageId,
+                messageSize: Math.ceil(request.body.length * 3 / 4),
+            });
+            // ------------------------------------------------
+
+            return [postSpan, postSpan2];
         });
         try {
-            if (context.config.requests.mode === RequestsMode.REST) {
+            span.logEvent("ready_to_send");
+            if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context);
             } else {
                 await postRequestsUsingKafka(requests, context, span);
             }
-            await context.data.statPostCount.increment();
-            context.data.log.debug("postRequests", "POSTED", args, context.remoteAddress);
+            await data.statPostCount.increment();
+            data.log.debug("postRequests", "POSTED", args, context.remoteAddress);
+            span.logEvent("sent", { remoteAddress: context.remoteAddress });
         } catch (error) {
-            await context.data.statPostFailed.increment();
-            context.data.log.debug("postRequests", "FAILED", args, context.remoteAddress);
+            await data.statPostFailed.increment();
+            data.log.debug("postRequests", "FAILED", args, context.remoteAddress);
             throw error;
         } finally {
-            messageTraceSpans.forEach(x => x.finish());
+            messageTraceSpans.forEach(x => x.forEach(y => y.finish()));
         }
         return requests.map(x => x.id);
-    }, context.parentSpan);
+    });
 }
 
 export const postRequestsResolvers = {

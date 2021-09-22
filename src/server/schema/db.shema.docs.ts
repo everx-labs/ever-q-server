@@ -101,9 +101,9 @@ If present, accumulates the storage payments that could not be exacted from the 
     message: {
         _doc: `# Message type
 
-           Message layout queries.  A message consists of its header followed by its
-           body or payload. The body is essentially arbitrary, to be interpreted by the
-           destination smart contract. It can be queried with the following fields:`,
+Message layout queries.  A message consists of its header followed by its
+body or payload. The body is essentially arbitrary, to be interpreted by the
+destination smart contract. It can be queried with the following fields:`,
         msg_type: "Returns the type of message.",
         status: "Returns internal processing status according to the numbers shown.",
         block_id: "Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64.",
@@ -134,6 +134,7 @@ If present, accumulates the storage payments that could not be exacted from the 
         value_other: "May or may not be present.",
         proof: "Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64.",
         boc: "A bag of cells with the message structure encoded as base64.",
+        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message).",
     },
 
 
@@ -156,7 +157,11 @@ If present, accumulates the storage payments that could not be exacted from the 
         in_message: "",
         out_msgs: "Dictionary of transaction outbound messages as specified in the specification",
         out_messages: "",
-        total_fees: "Total amount of fees that entails account state change and used in Merkle update",
+        total_fees: `Total amount of fees collected by the validators. 
+Because fwd_fee is collected by the validators of the receiving shard, 
+total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
+The formula is:
+total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
         total_fees_other: "Same as above, but reserved for non gram coins that may appear in the blockchain",
         old_hash: "Merkle update field",
         new_hash: "Merkle update field",
@@ -233,7 +238,14 @@ If there is no reason to skip the computing phase, TVM is invoked and the result
         installed: "",
         proof: "",
         boc: "",
-        balance_delta: "Account balance change after transaction",
+        balance_delta: `Account balance change after the transaction.
+Because fwd_fee is collected by the validators of the receiving shard, 
+total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
+
+The formula is:
+balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
+        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
+        ext_in_msg_fee: "Fee for inbound external message import.",
     },
 
     shardDescr: {
@@ -485,6 +497,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
         key_block: "true if this block is a key block",
         boc: "Serialized bag of cells of this block encoded with base64",
         balance_delta: "Account balance change after transaction",
+        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
     },
 
     blockSignatures: {

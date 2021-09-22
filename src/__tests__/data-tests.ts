@@ -27,7 +27,7 @@ test("Query without id should be filtered by limit", async () => {
         query: gql`query { messages(limit: 1){value created_at created_lt} }`,
     }));
     expect(messages.data.messages.length).toEqual(1);
-    server.stop();
+    void server.stop();
 });
 
 type Accounts = {
@@ -76,19 +76,24 @@ test("Data Broker", async () => {
     ];
 
     const logs = new QLogs();
-    const server = new TONQServer({
-        config: testConfig,
-        logs: logs,
-        data: createTestData({
-            mutable: mut,
-            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(
+    const immut = new QDataCombiner([hot, new QDataPrecachedCombiner(
                 logs.create("cache"),
                 cache,
                 cold,
                 testConfig.networkName,
                 testConfig.cacheKeyPrefix,
-            )]),
+            )]);
+    const server = new TONQServer({
+        config: testConfig,
+        logs: logs,
+        data: createTestData({
+            blockchain: {
+                accounts: mut,
+                blocks: immut,
+                transactions: immut,
+            },
             counterparties: mut,
+            chainRangesVerification: hot,
         }),
     });
     await server.start();
@@ -113,7 +118,7 @@ test("Data Broker", async () => {
     expect(cold[0].queryCount).toEqual(1);
     expect(cold[1].queryCount).toEqual(1);
     expect(cache.getCount).toEqual(1);
-    expect(cache.setCount).toEqual(1);
+    expect(cache.setCount).toEqual(2);
 
     transactions = (await client.query({
         query: gql`query { transactions(orderBy:{path:"id"}) { id lt } }`,
@@ -124,14 +129,14 @@ test("Data Broker", async () => {
     expect(cold[0].queryCount).toEqual(1);
     expect(cold[1].queryCount).toEqual(1);
     expect(cache.getCount).toEqual(2);
-    expect(cache.setCount).toEqual(1);
+    expect(cache.setCount).toEqual(2);
 
     transactions = (await client.query({
         query: gql`query { transactions(orderBy:{path:"id"} limit: 1) { id lt } }`,
     })).data.transactions;
     expect(transactions.length).toEqual(1);
 
-    server.stop();
+    void server.stop();
 });
 
 test("Limit of combined data", async () => {
@@ -163,19 +168,24 @@ test("Limit of combined data", async () => {
     ];
 
     const logs = new QLogs();
-    const server = new TONQServer({
-        config: testConfig,
-        logs: logs,
-        data: createTestData({
-            mutable: mut,
-            immutable: new QDataCombiner([hot, new QDataPrecachedCombiner(
+    const immut = new QDataCombiner([hot, new QDataPrecachedCombiner(
                 logs.create("cache"),
                 cache,
                 cold,
                 testConfig.networkName,
                 testConfig.cacheKeyPrefix,
-            )]),
+            )]);
+    const server = new TONQServer({
+        config: testConfig,
+        logs: logs,
+        data: createTestData({
+            blockchain:{
+                accounts: mut,
+                blocks: immut,
+                transactions: immut,
+            },
             counterparties: mut,
+            chainRangesVerification: hot,
         }),
     });
     await server.start();
@@ -185,7 +195,7 @@ test("Limit of combined data", async () => {
     })).data.transactions;
 
     expect(transactions.length).toEqual(50);
-    server.stop();
+    void server.stop();
 });
 
 test("Combiner", async () => {

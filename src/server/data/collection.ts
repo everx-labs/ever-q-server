@@ -15,11 +15,8 @@
 */
 
 import {
-    Span,
-    SpanContext,
     Tracer,
 } from "opentracing";
-import { TonClient } from "@tonclient/core";
 import {
     AggregationFn,
     AggregationQuery,
@@ -27,6 +24,7 @@ import {
 } from "./aggregations";
 import {
     QDataProvider,
+    QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
     QResult,
@@ -36,32 +34,25 @@ import {
     QDataSubscription,
 } from "./listener";
 import {
+    AccessArgs,
     AccessRights,
     Auth,
     grantedAccess,
 } from "../auth";
 import {
-    FilterConfig,
-    FilterOrConversion,
     QConfig,
     SlowQueriesMode,
     STATS,
 } from "../config";
 import {
     CollectionFilter,
-    collectReturnExpressions,
-    combineReturnExpressions,
-    DatabaseQuery,
-    FieldSelection,
     indexToString,
-    mergeFieldWithSelectionSet,
     OrderBy,
     parseSelectionSet,
     QParams,
     QType,
     QueryStat,
     selectionToString,
-    splitOr,
 } from "../filter/filters";
 import QLogs, { QLog } from "../logs";
 import {
@@ -70,13 +61,17 @@ import {
 } from "../filter/slow-detector";
 import {
     IStats,
-    QTracer,
     StatsCounter,
     StatsGauge,
     StatsTiming,
-} from "../tracer";
+} from "../stats";
+import {
+    QTraceSpan,
+    QTracer,
+} from "../tracing";
 import {
     QError,
+    required,
     wrap,
 } from "../utils";
 import EventEmitter from "events";
@@ -84,49 +79,14 @@ import {
     FieldNode,
     SelectionSetNode,
 } from "graphql";
+import {
+    QRequestContext,
+    RequestEvent,
+} from "../request";
+import { QCollectionQuery } from "./collection-query";
+import { QJoinQuery } from "./collection-joins";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
-
-export const RequestEvent = {
-    CLOSE: "close",
-    FINISH: "finish",
-};
-
-export class RequestController {
-    events: EventEmitter;
-
-    constructor() {
-        this.events = new EventEmitter();
-        this.events.setMaxListeners(0);
-    }
-
-    emitClose() {
-        this.events.emit(RequestEvent.CLOSE);
-    }
-
-    finish() {
-        this.events.emit(RequestEvent.FINISH);
-        this.events.removeAllListeners();
-    }
-}
-
-export type GraphQLRequestContext = {
-    request: RequestController,
-    config: QConfig,
-    auth: Auth,
-    tracer: Tracer,
-    stats: IStats,
-    client: TonClient,
-
-    remoteAddress?: string,
-    accessKey: string,
-    usedAccessKey: string | null,
-    usedMamAccessKey: string | null,
-    multipleAccessKeysDetected?: boolean,
-    parentSpan: (Span | SpanContext | typeof undefined),
-
-    shared: Map<string, unknown>,
-};
 
 export type AggregationArgs = {
     filter: CollectionFilter,
@@ -134,62 +94,13 @@ export type AggregationArgs = {
     accessKey?: string,
 };
 
-function checkUsedAccessKey(
-    usedAccessKey: string | null,
-    accessKey: string | null,
-    context: GraphQLRequestContext,
-): string | null {
-    if (!accessKey) {
-        return usedAccessKey;
-    }
-    if (usedAccessKey && accessKey !== usedAccessKey) {
-        context.multipleAccessKeysDetected = true;
-        throw QError.multipleAccessKeys();
-    }
-    return accessKey;
-}
-
-export async function requireGrantedAccess(
-    context: GraphQLRequestContext,
-    args: { accessKey?: string | null },
-): Promise<AccessRights> {
-    const accessKey = context.accessKey ?? args.accessKey ?? null;
-    context.usedAccessKey = checkUsedAccessKey(context.usedAccessKey, accessKey, context);
-    return context.auth.requireGrantedAccess(accessKey);
-}
-
-export type AccessArgs = {
-    accessKey?: string | null
-};
-
-export function mamAccessRequired(context: GraphQLRequestContext, args: AccessArgs) {
-    const accessKey = args.accessKey ?? null;
-    context.usedMamAccessKey = checkUsedAccessKey(context.usedMamAccessKey, accessKey, context);
-    if (!accessKey || !context.config.mamAccessKeys.has(accessKey)) {
-        throw Auth.unauthorizedError();
-    }
-}
-
-const accessGranted: AccessRights = {
-    granted: true,
-    restrictToAccounts: [],
-};
-
-
-export enum QDataScope {
-    mutable = "mutable",
-    immutable = "immutable",
-    counterparties = "counterparties",
-}
-
 export type QCollectionOptions = {
     name: string,
-    scope: QDataScope,
     docType: QType,
     indexes: QIndexInfo[],
 
-    provider: QDataProvider,
-    slowQueriesProvider: QDataProvider,
+    provider: QDataProvider | undefined,
+    slowQueriesProvider: QDataProvider | undefined,
     logs: QLogs,
     auth: Auth,
     tracer: Tracer,
@@ -201,13 +112,12 @@ export type QCollectionOptions = {
 export class QDataCollection {
     name: string;
     docType: QType;
-    scope: QDataScope;
     indexes: QIndexInfo[];
     indexesRefreshTime: number;
 
     // Dependencies
-    provider: QDataProvider;
-    slowQueriesProvider: QDataProvider;
+    provider: QDataProvider | undefined;
+    slowQueriesProvider: QDataProvider | undefined;
     log: QLog;
     auth: Auth;
     tracer: Tracer;
@@ -236,7 +146,6 @@ export class QDataCollection {
         const name = options.name;
         this.name = name;
         this.docType = options.docType;
-        this.scope = options.scope;
         this.indexes = options.indexes;
 
         this.provider = options.provider;
@@ -279,18 +188,22 @@ export class QDataCollection {
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
 
-        (async () => {
-            this.hotSubscription = await options.provider.subscribe(
-                name,
-                doc => this.onDocumentInsertOrUpdate(doc as QDoc),
-            );
-        })();
+        const provider = options.provider;
+        if (provider !== undefined) {
+            void (async () => {
+                this.hotSubscription = await provider.subscribe(
+                    name,
+                    doc => this.onDocumentInsertOrUpdate(doc as QDoc),
+                );
+            })();
+        }
     }
 
     close() {
-        if (this.hotSubscription) {
+        if (this.provider !== undefined && this.hotSubscription) {
             this.provider.unsubscribe(this.hotSubscription);
             this.hotSubscription = null;
+            this.provider = undefined;
         }
     }
 
@@ -301,7 +214,7 @@ export class QDataCollection {
     // Subscriptions
 
     onDocumentInsertOrUpdate(doc: QDoc) {
-        this.statDoc.increment().then(() => {
+        void this.statDoc.increment().then(() => {
             this.docInsertOrUpdate.emit("doc", doc);
             const isExternalInboundFinalizedMessage = this.name === "messages"
                 && doc._key
@@ -323,11 +236,14 @@ export class QDataCollection {
         return {
             subscribe: async (
                 _: unknown,
-                args: { filter: CollectionFilter, accessKey?: string | null },
-                context: GraphQLRequestContext,
+                args: AccessArgs & { filter: CollectionFilter },
+                request: QRequestContext,
                 info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
-                const accessRights = await requireGrantedAccess(context, args);
+                if (!request.services.config.useListeners) {
+                    throw new Error("Disabled");
+                }
+                const accessRights = await request.requireGrantedAccess(args);
                 await this.statSubscription.increment();
                 const subscription = new QDataSubscription(
                     this.name,
@@ -361,143 +277,6 @@ export class QDataCollection {
     }
 
     // Queries
-
-    getAdditionalCondition(accessRights: AccessRights, params: QParams) {
-        const accounts = accessRights.restrictToAccounts;
-        if (accounts.length === 0) {
-            return "";
-        }
-        const condition = accounts.length === 1
-            ? `== @${params.add(accounts[0])}`
-            : `IN [${accounts.map(x => `@${params.add(x)}`).join(",")}]`;
-        switch (this.name) {
-        case "accounts":
-            return `doc._key ${condition}`;
-        case "transactions":
-            return `doc.account_addr ${condition}`;
-        case "messages":
-            return `(doc.src ${condition}) OR (doc.dst ${condition})`;
-        default:
-            return "";
-        }
-    }
-
-    buildFilterCondition(
-        filter: { [name: string]: unknown },
-        params: QParams,
-        accessRights: AccessRights,
-    ): string | null {
-        const primaryCondition = Object.keys(filter).length > 0
-            ? this.docType.filterCondition(params, "doc", filter)
-            : "";
-        const additionalCondition = this.getAdditionalCondition(accessRights, params);
-        if (primaryCondition === "false" || additionalCondition === "false") {
-            return null;
-        }
-        return (primaryCondition && additionalCondition)
-            ? `(${primaryCondition}) AND (${additionalCondition})`
-            : (primaryCondition || additionalCondition);
-
-    }
-
-    buildReturnExpression(selectionSet: SelectionSetNode | undefined, orderBy: OrderBy[]): string {
-        const expressions = new Map();
-        expressions.set("_key", "doc._key");
-        const fields = this.docType.fields;
-        if (fields) {
-            collectReturnExpressions(expressions, "doc", selectionSet, fields);
-            if (orderBy.length > 0) {
-                let orderBySelectionSet: SelectionSetNode | undefined = undefined;
-                for (const item of orderBy) {
-                    orderBySelectionSet = mergeFieldWithSelectionSet(item.path, orderBySelectionSet);
-                }
-                collectReturnExpressions(
-                    expressions,
-                    "doc",
-                    orderBySelectionSet,
-                    fields,
-                );
-            }
-        }
-        expressions.delete("id");
-        return combineReturnExpressions(expressions);
-    }
-
-    createDatabaseQuery(
-        args: {
-            filter?: CollectionFilter,
-            orderBy?: OrderBy[],
-            limit?: number,
-            timeout?: number,
-            operationId?: string,
-        },
-        selectionSet: SelectionSetNode | undefined,
-        accessRights: AccessRights,
-        config?: FilterConfig,
-    ): DatabaseQuery | null {
-        const orderBy: OrderBy[] = args.orderBy || [];
-        const orderByText = orderBy
-            .map((field) => {
-                const direction = (field.direction && field.direction.toLowerCase() === "desc")
-                    ? " DESC"
-                    : "";
-                return `doc.${field.path.replace(/\bid\b/gi, "_key")}${direction}`;
-            })
-            .join(", ");
-
-        const sortSection = orderByText !== "" ? `SORT ${orderByText}` : "";
-        const limit: number = Math.min(args.limit || 50, 50);
-        const limitSection = `LIMIT ${limit}`;
-
-        const params = new QParams();
-        const orConversion = config?.orConversion ?? FilterOrConversion.SUB_QUERIES;
-        const useSubQueries = orConversion === FilterOrConversion.SUB_QUERIES;
-        const filter = args.filter ?? {};
-        const subFilters = useSubQueries ? splitOr(filter) : [filter];
-
-        const texts: string[] = [];
-
-        for (const subFilter of subFilters) {
-            const condition = this.buildFilterCondition(subFilter, params, accessRights);
-            if (condition !== null) {
-                const filterSection = condition ? `FILTER ${condition}` : "";
-                const returnExpression = this.buildReturnExpression(selectionSet, orderBy);
-                texts.push(`
-                    FOR doc IN ${this.name}
-                    ${filterSection}
-                    ${sortSection}
-                    ${limitSection}
-                    RETURN ${returnExpression}
-                `);
-            }
-        }
-
-        if (texts.length === 0) {
-            return null;
-        }
-
-        const text = texts.length === 1
-            ? texts[0]
-            : `
-                FOR doc IN UNION_DISTINCT(${texts.map(x => `${x}`).join(", ")})
-                ${sortSection}
-                ${limitSection}
-                RETURN doc`;
-        const timeout = Number(args.timeout) || 0;
-        const selection: FieldSelection[] = parseSelectionSet(selectionSet, this.name);
-
-        return {
-            filter,
-            selection,
-            orderBy,
-            limit,
-            timeout,
-            operationId: args.operationId || null,
-            text,
-            params: params.values,
-            accessRights,
-        };
-    }
 
     async isFastQuery(
         text: string,
@@ -535,7 +314,7 @@ export class QDataCollection {
             },
         ) => {
             await this.checkRefreshInfo();
-            const q = this.createDatabaseQuery(args, undefined, grantedAccess);
+            const q = QCollectionQuery.create(this.name, this.docType, args, undefined, grantedAccess, 0);
             if (!q) {
                 return { isFast: true };
             }
@@ -553,6 +332,143 @@ export class QDataCollection {
         };
     }
 
+    async optimizeSortedQueryWithSingleResult(
+        args: {
+            accessKey?: string | null,
+            filter?: CollectionFilter,
+            orderBy?: OrderBy[],
+            limit?: number,
+            timeout?: number,
+            operationId?: string,
+        },
+        accessRights: AccessRights,
+        request: QRequestContext,
+        traceSpan: QTraceSpan,
+    ) {
+        if (args.orderBy === undefined || args.orderBy.length === 0) {
+            return;
+        }
+        if (args.limit === undefined || args.limit !== 1) {
+            return;
+        }
+        const selection: SelectionSetNode = {
+            kind: "SelectionSet",
+            selections: [
+                {
+                    kind: "Field",
+                    name: {
+                        kind: "Name",
+                        value: "id",
+                    },
+                },
+            ],
+        };
+        const query = QCollectionQuery.create(
+            this.name,
+            this.docType,
+            args,
+            selection,
+            accessRights,
+            required(this.provider).shardingDegree,
+            request.services.config.queries.filter,
+        );
+        if (query === null) {
+            args.filter = { id: { in: [] } };
+            return;
+        }
+        const records = await this.fetchRecords(query, args, selection, request, traceSpan);
+        if (records.length !== 1) {
+            if (records.length === 0) {
+                args.filter = { id: { in: [] } };
+            }
+            return;
+        }
+        const id = (records[0] as Record<string, unknown>)["_key"] as string;
+        args.filter = { id: { eq: id } };
+        args.orderBy = undefined;
+    }
+
+    async fetchRecords(
+        query: QCollectionQuery,
+        args: {
+            accessKey?: string | null,
+            filter?: CollectionFilter,
+            orderBy?: OrderBy[],
+            limit?: number,
+            timeout?: number,
+            operationId?: string,
+        },
+        selection: SelectionSetNode | undefined,
+        request: QRequestContext,
+        traceSpan: QTraceSpan,
+    ): Promise<QResult[]> {
+        const isFast = await checkIsFast(request.services.config, () => this.isFastQuery(
+            query.text,
+            query.filter,
+            query.orderBy,
+        ));
+
+        if (!isFast) {
+            await this.statQuerySlow.increment();
+        }
+        const traceParams: Record<string, unknown> = {
+            filter: query.filter,
+            selection: selectionToString(query.selection),
+        };
+        if (query.orderBy.length > 0) {
+            traceParams.orderBy = query.orderBy;
+        }
+        if (query.limit !== 50) {
+            traceParams.limit = query.limit;
+        }
+        if (query.timeout > 0) {
+            traceParams.timeout = query.timeout;
+        }
+        this.log.debug(
+            "BEFORE_QUERY",
+            {
+                ...args,
+                shards: query.shards,
+            },
+            isFast ? "FAST" : "SLOW", request.remoteAddress,
+        );
+        traceSpan.logEvent("ready_to_fetch");
+        const start = Date.now();
+        const records = query.timeout > 0
+            ? await this.queryWaitFor(query, isFast, traceParams, request, traceSpan)
+            : await this.query({
+                text: query.text,
+                orderBy: query.orderBy,
+                vars: query.params,
+                shards: query.shards,
+                request,
+                traceSpan,
+                isFast,
+                traceParams,
+            });
+        if (records.length > query.limit) {
+            records.splice(query.limit);
+        }
+        traceSpan.logEvent("ready_to_fetch_joins");
+        await QJoinQuery.fetchJoinedRecords(
+            this,
+            records as Record<string, unknown>[],
+            selection,
+            query.accessRights,
+            query.timeout || 40000,
+            request,
+            traceSpan,
+        );
+        traceSpan.logEvent("joins_are_fetched");
+        this.log.debug(
+            "QUERY",
+            args,
+            (Date.now() - start) / 1000,
+            isFast ? "FAST" : "SLOW", request.remoteAddress,
+        );
+        return records;
+    }
+
     queryResolver() {
         return async (
             _parent: unknown,
@@ -564,134 +480,109 @@ export class QDataCollection {
                 timeout?: number,
                 operationId?: string,
             },
-            context: GraphQLRequestContext,
-            info: {
+            request: QRequestContext,
+            selection: {
                 fieldNodes: FieldNode[],
             },
         ) => wrap(this.log, "QUERY", args, async () => {
-            await this.statQuery.increment();
-            await this.statQueryActive.increment();
-            const start = Date.now();
-            const queryProcessing = {
-                created: false,
-            };
-            try {
-                const accessRights = await requireGrantedAccess(context, args);
-                const query = this.createDatabaseQuery(
-                    args,
-                    info.fieldNodes[0].selectionSet,
-                    accessRights,
-                    context.config.filter,
-                );
-                if (query === null) {
-                    this.log.debug("QUERY", args, 0, "SKIPPED", context.remoteAddress);
-                    return [];
-                }
-                queryProcessing.created = true;
-                const isFast = await checkIsFast(context.config, () => this.isFastQuery(
-                    query.text,
-                    query.filter,
-                    query.orderBy,
-                ));
-                if (!isFast) {
-                    await this.statQuerySlow.increment();
-                }
-                const traceParams: Record<string, unknown> = {
-                    filter: query.filter,
-                    selection: selectionToString(query.selection),
-                };
-                if (query.orderBy.length > 0) {
-                    traceParams.orderBy = query.orderBy;
-                }
-                if (query.limit !== 50) {
-                    traceParams.limit = query.limit;
-                }
-                if (query.timeout > 0) {
-                    traceParams.timeout = query.timeout;
-                }
-                this.log.debug(
-                    "BEFORE_QUERY",
-                    args,
-                    isFast ? "FAST" : "SLOW", context.remoteAddress,
-                );
+            return await request.trace(`${this.name}.queryResolver`, async traceSpan => {
+                await this.statQuery.increment();
+                await this.statQueryActive.increment();
                 const start = Date.now();
-                const result = query.timeout > 0
-                    ? await this.queryWaitFor(query, isFast, traceParams, context)
-                    : await this.query(query.text, query.params, query.orderBy, isFast, traceParams, context);
-                this.log.debug(
-                    "QUERY",
-                    args,
-                    (Date.now() - start) / 1000,
-                    isFast ? "FAST" : "SLOW", context.remoteAddress,
-                );
-                if (result.length > query.limit) {
-                    result.splice(query.limit);
-                }
-                return result;
-            } catch (error) {
-                await this.statQueryFailed.increment();
-                if (queryProcessing.created) {
-                    const slowReason = explainSlowReason(
+                const queryProcessing = {
+                    created: false,
+                };
+                try {
+                    const accessRights = await request.requireGrantedAccess(args);
+                    const selectionSet = selection.fieldNodes[0].selectionSet;
+                    await this.optimizeSortedQueryWithSingleResult(args, accessRights, request, traceSpan);
+                    const query = QCollectionQuery.create(
                         this.name,
-                        this.indexes,
                         this.docType,
-                        args.filter ?? {},
-                        args.orderBy ?? [],
+                        args,
+                        selectionSet,
+                        accessRights,
+                        required(this.provider).shardingDegree,
+                        request.services.config.queries.filter,
                     );
-                    if (slowReason) {
-                        error.message += `. Query was detected as a slow. ${slowReason.summary}. See error data for details.`;
-                        error.data = {
-                            ...error.data,
-                            slowReason,
-                        };
+                    if (query === null) {
+                        this.log.debug("QUERY", args, 0, "SKIPPED", request.remoteAddress);
+                        return [];
                     }
+                    queryProcessing.created = true;
+                    return await this.fetchRecords(query, args, selectionSet, request, traceSpan);
+                } catch (error) {
+                    await this.statQueryFailed.increment();
+                    if (queryProcessing.created) {
+                        const slowReason = explainSlowReason(
+                            this.name,
+                            this.indexes,
+                            this.docType,
+                            args.filter ?? {},
+                            args.orderBy ?? [],
+                        );
+                        if (slowReason) {
+                            error.message += `. Query was detected as a slow. ${slowReason.summary}. See error data for details.`;
+                            error.data = {
+                                ...error.data,
+                                slowReason,
+                            };
+                        }
+                    }
+                    throw error;
+                } finally {
+                    await this.statQueryTime.report(Date.now() - start);
+                    await this.statQueryActive.decrement();
+                    request.finish();
                 }
-                throw error;
-            } finally {
-                await this.statQueryTime.report(Date.now() - start);
-                await this.statQueryActive.decrement();
-                context.request.finish();
-            }
+            });
         });
     }
 
     async query(
-        text: string,
-        vars: Record<string, unknown>,
-        orderBy: OrderBy[],
-        isFast: boolean,
-        traceParams: Record<string, unknown>,
-        context: GraphQLRequestContext,
+        params: QDataProviderQueryParams & {
+            isFast: boolean,
+            traceParams: Record<string, unknown>,
+        }
     ): Promise<QResult[]> {
-        const impl = async (span: Span) => {
-            if (traceParams) {
-                span.setTag("params", traceParams);
+        const impl = async (span: QTraceSpan) => {
+            if (params.traceParams) {
+                span.log({ params: params.traceParams });
             }
-            return this.queryProvider(text, vars, orderBy, isFast);
+            span.log({
+                text: params.text,
+                vars: params.vars,
+                orderBy: params.orderBy,
+                shards: params.shards,
+            });
+            return this.queryProvider({ ...params, traceSpan: span });
         };
-        return QTracer.trace(this.tracer, `${this.name}.query`, impl, context.parentSpan);
+        return params.traceSpan.traceChildOperation(`${this.name}.query`, impl);
     }
 
     async queryProvider(
-        text: string,
-        vars: Record<string, unknown>,
-        orderBy: OrderBy[],
-        isFast: boolean,
+        params: QDataProviderQueryParams & { isFast: boolean },
     ): Promise<QResult[]> {
-        const provider = isFast ? this.provider : this.slowQueriesProvider;
-        return provider.query(text, vars, orderBy);
+        const traceSpan = params.traceSpan;
+        traceSpan.logEvent("collection_queryProvider_start");
+        const provider = required(params.isFast ? this.provider : this.slowQueriesProvider);
+        const result = await provider.query(params);
+        traceSpan.logEvent("collection_queryProvider_end");
+        return result;
     }
 
 
     async queryWaitFor(
-        q: DatabaseQuery,
+        q: QCollectionQuery,
         isFast: boolean,
         traceParams: Record<string, unknown> | null,
-        context: GraphQLRequestContext,
+        request: QRequestContext,
+        traceSpan: QTraceSpan,
     ): Promise<QDoc[]> {
-        const impl = async (span: Span): Promise<QDoc[]> => {
+        const impl = async (span: QTraceSpan): Promise<QDoc[]> => {
+            request.requestTags.hasWaitFor = true;
             if (traceParams) {
-                span.setTag("params", traceParams);
+                span.log({ params: traceParams });
             }
             let waitFor: ((doc: QDoc) => void) | null = null;
             let forceTimerId: unknown | undefined = undefined;
@@ -705,25 +596,41 @@ export class QDataCollection {
                     resolve(result);
                 }
             };
-            context.request.events.on(RequestEvent.CLOSE, () => {
+            request.events.on(RequestEvent.CLOSE, () => {
                 resolveBy("close", resolveOnClose, []);
             });
             try {
+                const queryTimeoutAt = Date.now() + q.timeout;
                 const onQuery = new Promise<QDoc[]>((resolve, reject) => {
+                    let queryCount = 0;
+                    let period = request.services.config.queries.waitForPeriod;
                     const check = () => {
-                        this.queryProvider(
-                            q.text,
-                            q.params,
-                            q.orderBy,
+                        const checkStart = Date.now();
+                        this.queryProvider({
+                            text: q.text,
+                            vars: q.params,
+                            orderBy: q.orderBy,
+                            shards: q.shards,
+                            request,
+                            traceSpan: span,
                             isFast,
-                        ).then((docs) => {
+                            maxRuntimeInS: Math.ceil((queryTimeoutAt - checkStart) / 1000),
+                        }).then((docs) => {
+                            queryCount += 1;
+                            if (queryCount >= 7) {
+                                period = period * 1.5;
+                            }
                             hasDbResponse = true;
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = undefined;
                                     resolveBy("query", resolve, docs as QDoc[]);
                                 } else {
-                                    forceTimerId = setTimeout(check, 5_000);
+                                    const now = Date.now();
+                                    const checkDuration = now - checkStart;
+                                    const timeLeft = queryTimeoutAt - now;
+                                    const toWait = Math.min(period, timeLeft - 2 * checkDuration, timeLeft - 200);
+                                    forceTimerId = setTimeout(check, Math.max(toWait, 100));
                                 }
                             }
                         }, reject);
@@ -752,7 +659,7 @@ export class QDataCollection {
                     };
                     this.waitForCount += 1;
                     this.docInsertOrUpdate.on("doc", waitFor);
-                    this.statWaitForActive.increment().then(() => {
+                    void this.statWaitForActive.increment().then(() => {
                     });
                 });
                 const onTimeout = new Promise<QDoc[]>((resolve, reject) => {
@@ -788,11 +695,10 @@ export class QDataCollection {
                 }
             }
         };
-        return QTracer.trace(this.tracer, `${this.name}.waitFor`, impl, context.parentSpan);
+        return traceSpan.traceChildOperation(`${this.name}.waitFor`, impl);
     }
 
     //--------------------------------------------------------- Aggregates
-
 
     createAggregationQuery(
         filter: CollectionFilter,
@@ -802,17 +708,21 @@ export class QDataCollection {
         text: string,
         params: Record<string, unknown>,
         queries: AggregationQuery[],
+        shards?: Set<string>,
     } | null {
         const params = new QParams();
-        const condition = this.buildFilterCondition(filter, params, accessRights);
+        const condition = QCollectionQuery.buildFilterCondition(this.name, this.docType, filter, params, accessRights);
         if (condition === null) {
             return null;
         }
+        const shards = QCollectionQuery.getShards(this.name, filter, required(this.provider).shardingDegree);
+        // TODO: consider making query to two collections in one shard if (this.name === "messages" && shard.size === 1)
         const query = AggregationQuery.createForFields(this.name, condition || "", fields);
         return {
             text: query.text,
             params: params.values,
             queries: query.queries,
+            shards: (this.name !== "messages") ? shards : undefined,
         };
     }
 
@@ -852,51 +762,69 @@ export class QDataCollection {
         return async (
             _parent: unknown,
             args: AggregationArgs,
-            context: GraphQLRequestContext,
+            request: QRequestContext,
         ) => wrap(this.log, "AGGREGATE", args, async () => {
-            await this.statQuery.increment();
-            await this.statQueryActive.increment();
-            const start = Date.now();
-            try {
-                const accessRights = await requireGrantedAccess(context, args);
-                const filter = args.filter || {};
-                const fields = Array.isArray(args.fields) && args.fields.length > 0
-                    ? args.fields
-                    : [
-                        {
-                            field: "",
-                            fn: AggregationFn.COUNT,
-                        },
-                    ];
-
-                const q = this.createAggregationQuery(filter, fields, accessRights);
-                if (!q) {
-                    this.log.debug("AGGREGATE", args, 0, "SKIPPED", context.remoteAddress);
-                    return [];
-                }
-                const isFast = await checkIsFast(context.config, () => this.isFastAggregationQuery(
-                    q.text,
-                    filter,
-                    q.queries,
-                ));
+            return await request.trace(`${this.name}.aggregationResolver`, async traceSpan => {
+                request.requestTags.hasAggregations = true;
+                await this.statQuery.increment();
+                await this.statQueryActive.increment();
                 const start = Date.now();
-                const result = await this.queryProvider(q.text, q.params, [], isFast);
-                this.log.debug(
-                    "AGGREGATE",
-                    args,
-                    (Date.now() - start) / 1000,
-                    isFast ? "FAST" : "SLOW", context.remoteAddress,
-                );
-                return AggregationQuery.reduceResults(result, q.queries);
-            } finally {
-                await this.statQueryTime.report(Date.now() - start);
-                await this.statQueryActive.decrement();
-            }
+                try {
+                    const accessRights = await request.requireGrantedAccess(args);
+                    const filter = args.filter || {};
+                    const fields = Array.isArray(args.fields) && args.fields.length > 0
+                        ? args.fields
+                        : [
+                            {
+                                field: "",
+                                fn: AggregationFn.COUNT,
+                            },
+                        ];
+
+                    const q = this.createAggregationQuery(filter, fields, accessRights);
+                    if (!q) {
+                        this.log.debug("AGGREGATE", args, 0, "SKIPPED", request.remoteAddress);
+                        return [];
+                    }
+                    const isFast = await checkIsFast(request.services.config, () => this.isFastAggregationQuery(
+                        q.text,
+                        filter,
+                        q.queries,
+                    ));
+                    traceSpan.log({
+                        text: q.text,
+                        vars: q.params,
+                        isFast,
+                    });
+                    const start = Date.now();
+                    traceSpan.logEvent("ready_to_fetch");
+                    const result = await this.queryProvider({
+                        text: q.text,
+                        vars: q.params,
+                        orderBy: [],
+                        isFast,
+                        request,
+                        traceSpan,
+                        shards: q.shards,
+                    });
+                    traceSpan.logEvent("data_is_fetched");
+                    this.log.debug(
+                        "AGGREGATE",
+                        args,
+                        (Date.now() - start) / 1000,
+                        isFast ? "FAST" : "SLOW", request.remoteAddress,
+                    );
+                    return AggregationQuery.reduceResults(result, q.queries);
+                } finally {
+                    await this.statQueryTime.report(Date.now() - start);
+                    await this.statQueryActive.decrement();
+                }
+            });
         });
     }
 
     async getIndexes(): Promise<QIndexInfo[]> {
-        return this.provider.getCollectionIndexes(this.name);
+        return (await this.provider?.getCollectionIndexes(this.name)) ?? [];
     }
 
     //--------------------------------------------------------- Internals
@@ -931,74 +859,6 @@ export class QDataCollection {
 
     }
 
-    async waitForDoc(
-        fieldValue: string | number | undefined | null,
-        fieldPath: string,
-        args: { timeout?: number },
-        context: GraphQLRequestContext,
-    ): Promise<QDoc | null> {
-        if (fieldValue === undefined || fieldValue === null) {
-            return null;
-        }
-        const queryParams = fieldPath.endsWith("[*]")
-            ? {
-                filter: { [fieldPath.slice(0, -3)]: { any: { eq: fieldValue } } },
-                text: `FOR doc IN ${this.name} FILTER @v IN doc.${fieldPath} RETURN doc`,
-                params: { v: fieldValue },
-            }
-            : {
-                filter: { id: { eq: fieldValue } },
-                text: `FOR doc IN ${this.name} FILTER doc.${fieldPath} == @v RETURN doc`,
-                params: { v: fieldValue },
-            };
-
-        const timeout = (args.timeout === 0) ? 0 : (args.timeout || 40000);
-        if (timeout === 0) {
-            const docs = await this.queryProvider(
-                queryParams.text,
-                queryParams.params,
-                [],
-                true,
-            );
-            return docs[0] as QDoc;
-        }
-
-        const docs = await this.queryWaitFor(
-            {
-                filter: queryParams.filter,
-                selection: [],
-                orderBy: [],
-                limit: 1,
-                timeout,
-                operationId: null,
-                text: queryParams.text,
-                params: queryParams.params,
-                accessRights: accessGranted,
-            },
-            true,
-            null,
-            context,
-        );
-        return docs[0];
-    }
-
-    async waitForDocs(
-        fieldValues: (string | number | undefined | null)[] | undefined | null,
-        fieldPath: string,
-        args: { timeout?: number },
-        context: GraphQLRequestContext,
-    ): Promise<(QDoc | null)[]> {
-        if (fieldValues === undefined || fieldValues === null || fieldValues.length === 0) {
-            return Promise.resolve([]);
-        }
-        return Promise.all(fieldValues.map(value => this.waitForDoc(
-            value,
-            fieldPath,
-            args,
-            context,
-        )));
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     finishOperations(_operationIds: Set<string>): number {
         const toClose = [];
@@ -1015,11 +875,11 @@ export class QDataCollection {
 }
 
 async function checkIsFast(config: QConfig, detector: () => Promise<boolean>): Promise<boolean> {
-    if (config.slowQueries === SlowQueriesMode.ENABLE) {
+    if (config.queries.slowQueries === SlowQueriesMode.ENABLE) {
         return true;
     }
     const isFast = await detector();
-    if (!isFast && config.slowQueries === SlowQueriesMode.DISABLE) {
+    if (!isFast && config.queries.slowQueries === SlowQueriesMode.DISABLE) {
         throw new Error("Slow queries are disabled");
     }
     return isFast;

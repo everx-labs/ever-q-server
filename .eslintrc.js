@@ -1,6 +1,13 @@
 module.exports = {
     root: true,
+    ignorePatterns: [
+        "src/server/graphql/blockchain/resolvers-types-generated.ts"
+    ],
     parser: "@typescript-eslint/parser",
+    parserOptions: {
+        tsconfigRootDir: __dirname,
+        project: ['./tsconfig.json'],
+    },
     plugins: [
         "@typescript-eslint",
     ],
@@ -16,5 +23,7 @@ module.exports = {
         "@typescript-eslint/quotes": ["error", "double"],
         "semi": "off",
         "@typescript-eslint/semi": ["error"],
+        "eol-last": ["error", "always"],
+        "@typescript-eslint/no-floating-promises": ["error"],
     },
 };

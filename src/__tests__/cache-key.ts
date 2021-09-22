@@ -1,11 +1,12 @@
 import { hash } from "../server/utils";
 import TONQServer from "../server/server";
 import {
+    QDatabasePool,
     QDataCombiner,
     QDataPrecachedCombiner,
 } from "../server/data/data-provider";
 import type { QArangoConfig } from "../server/config";
-import { ArangoProvider } from "../server/data/arango-provider";
+import { QShardDatabaseProvider } from "../server/data/shard-database-provider";
 import QLogs from "../server/logs";
 import {
     MockCache,
@@ -15,6 +16,8 @@ import {
     MockProvider,
 } from "./init-tests";
 import { OrderBy } from "../server/filter/filters";
+import { QRequestContext } from "../server/request";
+import { QTraceSpan } from "../server/tracing";
 
 
 jest.mock("arangojs", () => ({
@@ -23,7 +26,8 @@ jest.mock("arangojs", () => ({
 }));
 
 describe("Fingerprint", () => {
-    let provider: ArangoProvider;
+    const pool = new QDatabasePool();
+    let provider: QShardDatabaseProvider;
 
     beforeEach(async () => {
         const logs = new QLogs();
@@ -34,9 +38,10 @@ describe("Fingerprint", () => {
             maxSockets: 0,
             listenerRestartTimeout: 0,
         };
-        provider = new ArangoProvider(
+        provider = new QShardDatabaseProvider(
             logs.create("arango"),
-            config,
+            pool.ensureShard(config, ""),
+            false,
         );
     });
 
@@ -46,8 +51,8 @@ describe("Fingerprint", () => {
             b: 2,
             c: 1,
         };
-        provider.arango.listCollections = jest.fn().mockResolvedValue([{ name: "a" }, { name: "b" }, { name: "c" }]);
-        (provider.arango as { collection: unknown }).collection = jest.fn((x) => {
+        provider.shard.database.listCollections = jest.fn().mockResolvedValue([{ name: "a" }, { name: "b" }, { name: "c" }]);
+        (provider.shard.database as { collection: unknown }).collection = jest.fn((x) => {
             return {
                 count: jest.fn(async () => {
                     return { count: expected[x as keyof typeof expected] };
@@ -136,9 +141,13 @@ describe("DataCache", () => {
             config: testConfig,
             logs,
             data: createTestData({
-                mutable,
-                immutable,
+                blockchain: {
+                    accounts: mutable,
+                    blocks: immutable,
+                    transactions: immutable,
+                },
                 counterparties: mutable,
+                chainRangesVerification: immutable,
             }),
         });
     });
@@ -152,7 +161,7 @@ describe("DataCache", () => {
         expect(firstCold.hotUpdateCount).toEqual(1);
         expect(secondCold.hotUpdateCount).toEqual(1);
 
-        await server.data.providers.immutable.hotUpdate();
+        await server.data.providers.blockchain?.blocks?.hotUpdate();
 
         expect(firstCold.hotUpdateCount).toEqual(2);
         expect(secondCold.hotUpdateCount).toEqual(2);
@@ -209,7 +218,13 @@ describe("DataCache", () => {
         const vars = { b: 2 };
         const orderBy: OrderBy[] = [];
 
-        await server.data.providers.immutable.query(text, vars, orderBy);
+        await server.data.providers.blockchain?.blocks?.query({
+            text,
+            vars,
+            orderBy,
+            request: null as unknown as QRequestContext,
+            traceSpan: QTraceSpan.create(server.tracer, ""),
+        });
         const lastKey = "Q_" + hash(cachedCold.configHash, JSON.stringify({
             text,
             vars,

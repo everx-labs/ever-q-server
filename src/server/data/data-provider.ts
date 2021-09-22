@@ -1,6 +1,117 @@
 import type { OrderBy } from "../filter/filters";
-import { hash } from "../utils";
+import {
+    hash,
+    setHasIntersections,
+} from "../utils";
 import type { QLog } from "../logs";
+import { QRequestContext } from "../request";
+import { QTraceSpan } from "../tracing";
+import { Database } from "arangojs";
+import {
+    ensureProtocol,
+    QArangoConfig,
+} from "../config";
+
+export type QShard = {
+    database: Database,
+    poolIndex: number,
+    config: QArangoConfig,
+    shard: string,
+};
+
+type QDatabasePoolItem = {
+    config: QArangoConfig,
+    shards: QShard[],
+};
+
+export class QDatabasePool {
+    private items: QDatabasePoolItem[] = [];
+
+    static sameConfig(a: QArangoConfig, b: QArangoConfig): boolean {
+        return a.server === b.server
+            && a.name === b.name;
+    }
+
+    ensureShard(config: QArangoConfig, shard: string): QShard {
+        const [poolIndex, poolItem] = this.ensurePoolItem(config);
+        let qShard = poolItem.shards.find(x => x.shard === shard);
+        if (qShard) {
+            return qShard;
+        }
+
+        const database = (poolItem.shards.length > 0)
+            ? poolItem.shards[0].database
+            : this.createDatabaseHandle(poolItem.config);
+        
+        qShard = {
+            database,
+            config: poolItem.config,
+            poolIndex,
+            shard,
+        };
+
+        poolItem.shards.push(qShard);
+        return qShard;
+    }
+
+    private ensurePoolItem(config: QArangoConfig): [number, QDatabasePoolItem] {
+        let poolIndex = this.items.findIndex(x => QDatabasePool.sameConfig(x.config, config));
+        if (poolIndex < 0) {
+            poolIndex = this.items.length;
+            const poolItem = {
+                shards: [],
+                config,
+            };
+            this.items.push(poolItem);
+            return [poolIndex, poolItem];
+        }
+
+        const poolItem = this.items[poolIndex];
+        this.upgradeConfigIfNeeded(poolItem, config);
+        return [poolIndex, poolItem];
+    }
+
+    private upgradeConfigIfNeeded(poolItem: QDatabasePoolItem, config: QArangoConfig): void {
+        if (!QDatabasePool.sameConfig(poolItem.config, config)) {
+            throw new Error("Invalid upgradeDatabaseHandlesIfNeeded use");
+        }
+        if (poolItem.config.maxSockets === config.maxSockets &&
+            poolItem.config.listenerRestartTimeout === config.listenerRestartTimeout) {
+            return;
+        }
+
+        const oldDatabase = poolItem.shards[0].database;
+        oldDatabase.close();
+
+        const newConfig = {
+            ...config,
+            maxSockets: Math.max(config.maxSockets, poolItem.config.maxSockets),
+            listenerRestartTimeout: Math.min(config.listenerRestartTimeout, poolItem.config.listenerRestartTimeout),
+        };
+
+        const database = this.createDatabaseHandle(newConfig);
+        poolItem.config = newConfig;
+        for (const shard of poolItem.shards) {
+            shard.config = newConfig;
+            shard.database = database;
+        }
+    }
+
+    private createDatabaseHandle(config: QArangoConfig): Database {
+        const database = new Database({
+            url: `${ensureProtocol(config.server, "http")}`,
+            agentOptions: {
+                maxSockets: config.maxSockets,
+            },
+        });
+        database.useDatabase(config.name);
+        if (config.auth) {
+            const authParts = config.auth.split(":");
+            database.useBasicAuth(authParts[0], authParts.slice(1).join(":"));
+        }
+        return database;
+    }
+}
 
 export type QIndexInfo = {
     fields: string[],
@@ -20,9 +131,25 @@ export enum QDataEvent {
     UPDATE = "update",
 }
 
+const FETCHING = "FETCHING";
+
 export type QResult = unknown[] | Record<string, unknown> | number | bigint | string | boolean;
+type CacheValue = QResult[] | "FETCHING";
+
+export type QDataProviderQueryParams = {
+    text: string,
+    vars: Record<string, unknown>,
+    orderBy: OrderBy[],
+    request: QRequestContext,
+    shards?: Set<string>,
+    traceSpan: QTraceSpan,
+    maxRuntimeInS?: number,
+};
 
 export interface QDataProvider {
+    shards: QShard[];
+    shardingDegree: number;
+
     start(collectionsForSubscribe: string[]): Promise<void>;
 
     stop(): Promise<void>;
@@ -33,7 +160,7 @@ export interface QDataProvider {
 
     hotUpdate(): Promise<void>;
 
-    query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]>;
+    query(params: QDataProviderQueryParams): Promise<QResult[]>;
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown;
 
@@ -44,14 +171,25 @@ export interface QDataProvider {
 export interface QDataCache {
     get(key: string): Promise<unknown>;
 
-    set(key: string, value: unknown): Promise<void>;
+    set(key: string, value: unknown, expirationTimeout: number): Promise<void>;
 }
 
 export class QDataCombiner implements QDataProvider {
     providers: QDataProvider[];
+    providersShards: Set<string>[] = [];
+    shards: QShard[] = [];
+    shardingDegree: number;
 
     constructor(providers: QDataProvider[]) {
         this.providers = providers;
+        this.shardingDegree = providers.reduce((acc, p) => Math.max(acc, p.shardingDegree), 0);
+
+        for (const provider of providers) {
+            const providerShards = new Set<string>(provider.shards.map(x => x.shard));
+            this.providersShards.push(this.ensureShardingDegree(providerShards));
+            this.shards = this.shards.concat(provider.shards);
+        }
+        this.shards = [...new Set(this.shards)]; // dedupe
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -79,17 +217,68 @@ export class QDataCombiner implements QDataProvider {
         await Promise.all(this.providers.map(provider => provider.hotUpdate()));
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]> {
-        const results = await Promise.all(this.providers.map(x => x.query(text, vars, orderBy)));
-        return combineResults(results, orderBy);
+    async query(params: QDataProviderQueryParams): Promise<QResult[]> {
+        const traceSpan = params.traceSpan;
+        traceSpan.logEvent("QDataCombiner_query_start");
+        const shards = params.shards ? this.ensureShardingDegree(params.shards) : undefined;
+        if (this.shardingDegree > 0 && (!shards || shards.size === Math.pow(2, this.shardingDegree))) {
+            params.request.requestTags.hasRangedQuery = true;
+        }
+        const providers = this.getProvidersForShards(shards);
+        const results = await Promise.all(providers.map(x => x.query(params)));
+        traceSpan.logEvent("QDataCombiner_query_dataIsFetched");
+        const result = combineResults(results, params.orderBy);
+        traceSpan.logEvent("QDataCombiner_query_end");
+        return result;
     }
 
     subscribe(collection: string, listener: (doc: unknown, event: QDataEvent) => void): unknown {
-        return this.providers[0].subscribe(collection, listener);
+        return this.providers.map(p => p.subscribe(collection, listener));
     }
 
     unsubscribe(subscription: unknown): void {
-        this.providers[0].unsubscribe(subscription);
+        (subscription as unknown[]).map((s, i) => this.providers[i].unsubscribe(s));
+    }
+
+    private getProvidersForShards(shards: Set<string> | undefined) {
+        if (!shards) {
+            return this.providers;
+        }
+
+        shards = this.ensureShardingDegree(shards);
+        const providers: QDataProvider[] = [];
+        for (let i = 0; i < this.providers.length; i += 1) {
+            if(setHasIntersections(this.providersShards[i], shards)) {
+                providers.push(this.providers[i]);
+            }
+        }
+        return providers;
+    }
+
+    private ensureShardingDegree(shards: Set<string>): Set<string> {
+        let needToFixShards = false;
+        for (const shard of shards) {
+            needToFixShards = needToFixShards || shard.length !== this.shardingDegree;
+        }
+
+        if (!needToFixShards) {
+            return shards;
+        }
+        
+        const fixedShards = new Set<string>();
+        for (const shard of shards) {
+            const diff = this.shardingDegree - shard.length;
+            if (diff > 0) {
+                // split shards
+                for (const index of Array(diff).keys()) {
+                    const append = index.toString(2).padStart(diff, "0");
+                    fixedShards.add(`${shard}${append}`);
+                }
+            } else {
+                fixedShards.add(shard.slice(0, this.shardingDegree));
+            }
+        }
+        return fixedShards;
     }
 }
 
@@ -100,7 +289,17 @@ export class QDataPrecachedCombiner extends QDataCombiner {
     cacheKeyPrefix: string;
     configHash: string;
 
-    constructor(log: QLog, cache: QDataCache, providers: QDataProvider[], networkName: string, cacheKeyPrefix: string) {
+    constructor(
+        log: QLog,
+        cache: QDataCache,
+        providers: QDataProvider[],
+        networkName: string,
+        cacheKeyPrefix: string,
+        public dataExpirationTimeout = 0,
+        public emptyDataExpirationTimeout = 0,
+        public fetchingPollTimeout = 3,
+        public fetchingExpirationTimeout = 10,
+    ) {
         super(providers);
         this.log = log;
         this.cache = cache;
@@ -120,18 +319,52 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         return this.cacheKeyPrefix + hash(this.configHash, aql);
     }
 
-    async query(text: string, vars: Record<string, unknown>, orderBy: OrderBy[]): Promise<QResult[]> {
+    async query(params: QDataProviderQueryParams): Promise<QResult[]> {
+        const {
+            text,
+            vars,
+            orderBy,
+            traceSpan,
+        } = params;
+        traceSpan.logEvent("QDataPrecachedCombiner_query_start");
         const aql = JSON.stringify({
             text,
             vars,
             orderBy,
         });
         const key = this.cacheKey(aql);
-        let docs = (await this.cache.get(key)) as QResult[];
-        if (isNullOrUndefined(docs)) {
-            docs = await super.query(text, vars, orderBy);
-            await this.cache.set(key, docs);
+        let docs: QResult[] | undefined = undefined;
+        while (docs === undefined) {
+            const value = await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_get", async (span) => {
+                span.setTag("cache_key", key);
+                return await this.cache.get(key) as CacheValue | undefined | null;
+            });
+            if (value === undefined || value === null) {
+                await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_set_fetching", async (span) => {
+                    span.setTag("cache_key", key);
+                    await this.cache.set(key, FETCHING, this.fetchingExpirationTimeout);
+                });
+                docs = await super.query(params);
+                await traceSpan.traceChildOperation("QDataPrecachedCombiner_cache_set_result", async (span) => {
+                    span.setTag("cache_key", key);
+
+                    const expiration = (docs && docs.length > 0)
+                        ? this.dataExpirationTimeout
+                        : Math.min(this.dataExpirationTimeout, this.emptyDataExpirationTimeout);
+
+                    await this.cache.set(key, docs, expiration);
+                });
+                traceSpan.setTag("updated_cache", true);
+            } else if (value === FETCHING) {
+                traceSpan.setTag("waited_for_cache", true);
+                traceSpan.logEvent("QDataPrecachedCombiner_query_waiting");
+                await new Promise(resolve => setTimeout(resolve, this.fetchingPollTimeout * 1000));
+            } else {
+                traceSpan.setTag("fetched_from_cache", true);
+                docs = value;
+            }
         }
+        traceSpan.logEvent("QDataPrecachedCombiner_query_end");
         return docs;
     }
 }
@@ -216,13 +449,3 @@ export function sortedIndex(fields: string[]): QIndexInfo {
         fields,
     };
 }
-
-export const missingDataCache: QDataCache = {
-    get(): Promise<unknown> {
-        return Promise.resolve(null);
-    },
-
-    set(): Promise<void> {
-        return Promise.resolve();
-    },
-};

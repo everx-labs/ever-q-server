@@ -16,7 +16,6 @@ import {
     unixSecondsToString,
 } from "../filter/filters";
 import QBlockchainData from "../data/blockchain";
-import { GraphQLRequestContextEx } from "./context";
 const OtherCurrency = struct({
     currency: scalar,
     value: bigUInt2,
@@ -317,6 +316,7 @@ const ValidatorSetList = struct({
 const ValidatorSetListArray = array(() => ValidatorSetList);
 const ValidatorSet = struct({
     list: ValidatorSetListArray,
+    main: scalar,
     total: scalar,
     total_weight: bigUInt1,
     utime_since: scalar,
@@ -424,6 +424,7 @@ const Block = struct({
     after_split: scalar,
     before_split: scalar,
     boc: scalar,
+    chain_order: stringLowerFilter,
     created_by: scalar,
     end_lt: bigUInt1,
     flags: scalar,
@@ -570,13 +571,15 @@ const Transaction = struct({
     block_id: stringLowerFilter,
     boc: scalar,
     bounce: TransactionBounce,
+    chain_order: stringLowerFilter,
     compute: TransactionCompute,
     credit: TransactionCredit,
     credit_first: scalar,
     destroyed: scalar,
     end_status: scalar,
     end_status_name: enumName("end_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    in_message: join("in_msg", "id", "messages", [], () => Message),
+    ext_in_msg_fee: bigUInt2,
+    in_message: join("in_msg", "id", "messages", ["account_addr"], () => Message),
     in_msg: stringLowerFilter,
     installed: scalar,
     lt: bigUInt1,
@@ -586,7 +589,7 @@ const Transaction = struct({
     old_hash: stringLowerFilter,
     orig_status: scalar,
     orig_status_name: enumName("orig_status", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    out_messages: joinArray("out_msgs", "id", "messages", () => Message),
+    out_messages: joinArray("out_msgs", "id", "messages", ["account_addr"], () => Message),
     out_msgs: StringArray,
     outmsg_cnt: scalar,
     prepare_transaction: stringLowerFilter,
@@ -614,6 +617,7 @@ const Message = struct({
     body_hash: stringLowerFilter,
     bounce: scalar,
     bounced: scalar,
+    chain_order: stringLowerFilter,
     code: scalar,
     code_hash: stringLowerFilter,
     created_at: scalar,
@@ -623,7 +627,7 @@ const Message = struct({
     data_hash: stringLowerFilter,
     dst: stringLowerFilter,
     dst_account: join("dst", "id", "accounts", ["msg_type"], () => Account),
-    dst_transaction: join("id", "in_msg", "transactions", ["msg_type"], () => Transaction),
+    dst_transaction: join("id", "in_msg", "transactions", ["msg_type", "dst"], () => Transaction),
     dst_workchain_id: scalar,
     fwd_fee: bigUInt2,
     ihr_disabled: scalar,
@@ -637,7 +641,7 @@ const Message = struct({
     split_depth: scalar,
     src: stringLowerFilter,
     src_account: join("src", "id", "accounts", ["msg_type"], () => Account),
-    src_transaction: join("id", "out_msgs[*]", "transactions", ["created_lt", "msg_type"], () => Transaction),
+    src_transaction: join("id", "out_msgs[*]", "transactions", ["created_lt", "msg_type", "src"], () => Transaction),
     src_workchain_id: scalar,
     status: scalar,
     status_name: enumName("status", { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
@@ -901,12 +905,6 @@ function createResolvers(data: QBlockchainData) {
             id(parent: { _key: string }) {
                 return parent._key;
             },
-            block(parent: { _key: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !BlockSignatures.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.blocks.waitForDoc(parent._key, "_key", args, context);
-            },
             sig_weight(parent: { sig_weight: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.sig_weight, args);
             },
@@ -917,12 +915,6 @@ function createResolvers(data: QBlockchainData) {
         Block: {
             id(parent: { _key: string }) {
                 return parent._key;
-            },
-            signatures(parent: { _key: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !Block.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.blocks_signatures.waitForDoc(parent._key, "_key", args, context);
             },
             end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
@@ -1014,32 +1006,11 @@ function createResolvers(data: QBlockchainData) {
             id(parent: { _key: string }) {
                 return parent._key;
             },
-            account(parent: { account_addr: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.accounts.waitForDoc(parent.account_addr, "_key", args, context);
-            },
-            block(parent: { block_id: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
-            },
-            in_message(parent: { in_msg: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.messages.waitForDoc(parent.in_msg, "_key", args, context);
-            },
-            out_messages(parent: { out_msgs: string[] }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !Transaction.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.messages.waitForDocs(parent.out_msgs, "_key", args, context);
-            },
             balance_delta(parent: { balance_delta: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance_delta, args);
+            },
+            ext_in_msg_fee(parent: { ext_in_msg_fee: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.ext_in_msg_fee, args);
             },
             lt(parent: { lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.lt, args);
@@ -1061,48 +1032,6 @@ function createResolvers(data: QBlockchainData) {
         Message: {
             id(parent: { _key: string }) {
                 return parent._key;
-            },
-            block(parent: { block_id: string }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.blocks.waitForDoc(parent.block_id, "_key", args, context);
-            },
-            dst_account(parent: { dst: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (!(parent.msg_type !== 2)) {
-                    return null;
-                }
-                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.accounts.waitForDoc(parent.dst, "_key", args, context);
-            },
-            dst_transaction(parent: { _key: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (!(parent.msg_type !== 2)) {
-                    return null;
-                }
-                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.transactions.waitForDoc(parent._key, "in_msg", args, context);
-            },
-            src_account(parent: { src: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (!(parent.msg_type !== 1)) {
-                    return null;
-                }
-                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.accounts.waitForDoc(parent.src, "_key", args, context);
-            },
-            src_transaction(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs, context: GraphQLRequestContextEx) {
-                if (!(parent.created_lt !== "00" && parent.msg_type !== 1)) {
-                    return null;
-                }
-                if (args.when !== undefined && !Message.test(null, parent, args.when)) {
-                    return null;
-                }
-                return context.data.transactions.waitForDoc(parent._key, "out_msgs[*]", args, context);
             },
             created_lt(parent: { created_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.created_lt, args);
@@ -1205,6 +1134,7 @@ scalarFields.set("blocks.after_merge", { type: "boolean", path: "doc.after_merge
 scalarFields.set("blocks.after_split", { type: "boolean", path: "doc.after_split" });
 scalarFields.set("blocks.before_split", { type: "boolean", path: "doc.before_split" });
 scalarFields.set("blocks.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("blocks.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("blocks.created_by", { type: "string", path: "doc.created_by" });
 scalarFields.set("blocks.end_lt", { type: "uint64", path: "doc.end_lt" });
 scalarFields.set("blocks.flags", { type: "number", path: "doc.flags" });
@@ -1353,6 +1283,7 @@ scalarFields.set("blocks.master.config.p31", { type: "string", path: "doc.master
 scalarFields.set("blocks.master.config.p32.list.adnl_addr", { type: "string", path: "doc.master.config.p32.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p32.list.public_key", { type: "string", path: "doc.master.config.p32.list[*].public_key" });
 scalarFields.set("blocks.master.config.p32.list.weight", { type: "uint64", path: "doc.master.config.p32.list[*].weight" });
+scalarFields.set("blocks.master.config.p32.main", { type: "number", path: "doc.master.config.p32.main" });
 scalarFields.set("blocks.master.config.p32.total", { type: "number", path: "doc.master.config.p32.total" });
 scalarFields.set("blocks.master.config.p32.total_weight", { type: "uint64", path: "doc.master.config.p32.total_weight" });
 scalarFields.set("blocks.master.config.p32.utime_since", { type: "number", path: "doc.master.config.p32.utime_since" });
@@ -1360,6 +1291,7 @@ scalarFields.set("blocks.master.config.p32.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p33.list.adnl_addr", { type: "string", path: "doc.master.config.p33.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p33.list.public_key", { type: "string", path: "doc.master.config.p33.list[*].public_key" });
 scalarFields.set("blocks.master.config.p33.list.weight", { type: "uint64", path: "doc.master.config.p33.list[*].weight" });
+scalarFields.set("blocks.master.config.p33.main", { type: "number", path: "doc.master.config.p33.main" });
 scalarFields.set("blocks.master.config.p33.total", { type: "number", path: "doc.master.config.p33.total" });
 scalarFields.set("blocks.master.config.p33.total_weight", { type: "uint64", path: "doc.master.config.p33.total_weight" });
 scalarFields.set("blocks.master.config.p33.utime_since", { type: "number", path: "doc.master.config.p33.utime_since" });
@@ -1367,6 +1299,7 @@ scalarFields.set("blocks.master.config.p33.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p34.list.adnl_addr", { type: "string", path: "doc.master.config.p34.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p34.list.public_key", { type: "string", path: "doc.master.config.p34.list[*].public_key" });
 scalarFields.set("blocks.master.config.p34.list.weight", { type: "uint64", path: "doc.master.config.p34.list[*].weight" });
+scalarFields.set("blocks.master.config.p34.main", { type: "number", path: "doc.master.config.p34.main" });
 scalarFields.set("blocks.master.config.p34.total", { type: "number", path: "doc.master.config.p34.total" });
 scalarFields.set("blocks.master.config.p34.total_weight", { type: "uint64", path: "doc.master.config.p34.total_weight" });
 scalarFields.set("blocks.master.config.p34.utime_since", { type: "number", path: "doc.master.config.p34.utime_since" });
@@ -1374,6 +1307,7 @@ scalarFields.set("blocks.master.config.p34.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p35.list.adnl_addr", { type: "string", path: "doc.master.config.p35.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p35.list.public_key", { type: "string", path: "doc.master.config.p35.list[*].public_key" });
 scalarFields.set("blocks.master.config.p35.list.weight", { type: "uint64", path: "doc.master.config.p35.list[*].weight" });
+scalarFields.set("blocks.master.config.p35.main", { type: "number", path: "doc.master.config.p35.main" });
 scalarFields.set("blocks.master.config.p35.total", { type: "number", path: "doc.master.config.p35.total" });
 scalarFields.set("blocks.master.config.p35.total_weight", { type: "uint64", path: "doc.master.config.p35.total_weight" });
 scalarFields.set("blocks.master.config.p35.utime_since", { type: "number", path: "doc.master.config.p35.utime_since" });
@@ -1381,6 +1315,7 @@ scalarFields.set("blocks.master.config.p35.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p36.list.adnl_addr", { type: "string", path: "doc.master.config.p36.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p36.list.public_key", { type: "string", path: "doc.master.config.p36.list[*].public_key" });
 scalarFields.set("blocks.master.config.p36.list.weight", { type: "uint64", path: "doc.master.config.p36.list[*].weight" });
+scalarFields.set("blocks.master.config.p36.main", { type: "number", path: "doc.master.config.p36.main" });
 scalarFields.set("blocks.master.config.p36.total", { type: "number", path: "doc.master.config.p36.total" });
 scalarFields.set("blocks.master.config.p36.total_weight", { type: "uint64", path: "doc.master.config.p36.total_weight" });
 scalarFields.set("blocks.master.config.p36.utime_since", { type: "number", path: "doc.master.config.p36.utime_since" });
@@ -1388,6 +1323,7 @@ scalarFields.set("blocks.master.config.p36.utime_until", { type: "number", path:
 scalarFields.set("blocks.master.config.p37.list.adnl_addr", { type: "string", path: "doc.master.config.p37.list[*].adnl_addr" });
 scalarFields.set("blocks.master.config.p37.list.public_key", { type: "string", path: "doc.master.config.p37.list[*].public_key" });
 scalarFields.set("blocks.master.config.p37.list.weight", { type: "uint64", path: "doc.master.config.p37.list[*].weight" });
+scalarFields.set("blocks.master.config.p37.main", { type: "number", path: "doc.master.config.p37.main" });
 scalarFields.set("blocks.master.config.p37.total", { type: "number", path: "doc.master.config.p37.total" });
 scalarFields.set("blocks.master.config.p37.total_weight", { type: "uint64", path: "doc.master.config.p37.total_weight" });
 scalarFields.set("blocks.master.config.p37.utime_since", { type: "number", path: "doc.master.config.p37.utime_since" });
@@ -1612,6 +1548,7 @@ scalarFields.set("transactions.bounce.msg_fees", { type: "uint1024", path: "doc.
 scalarFields.set("transactions.bounce.msg_size_bits", { type: "number", path: "doc.bounce.msg_size_bits" });
 scalarFields.set("transactions.bounce.msg_size_cells", { type: "number", path: "doc.bounce.msg_size_cells" });
 scalarFields.set("transactions.bounce.req_fwd_fees", { type: "uint1024", path: "doc.bounce.req_fwd_fees" });
+scalarFields.set("transactions.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("transactions.compute.account_activated", { type: "boolean", path: "doc.compute.account_activated" });
 scalarFields.set("transactions.compute.exit_arg", { type: "number", path: "doc.compute.exit_arg" });
 scalarFields.set("transactions.compute.exit_code", { type: "number", path: "doc.compute.exit_code" });
@@ -1631,6 +1568,7 @@ scalarFields.set("transactions.credit.credit_other.value", { type: "uint1024", p
 scalarFields.set("transactions.credit.due_fees_collected", { type: "uint1024", path: "doc.credit.due_fees_collected" });
 scalarFields.set("transactions.credit_first", { type: "boolean", path: "doc.credit_first" });
 scalarFields.set("transactions.destroyed", { type: "boolean", path: "doc.destroyed" });
+scalarFields.set("transactions.ext_in_msg_fee", { type: "uint1024", path: "doc.ext_in_msg_fee" });
 scalarFields.set("transactions.in_msg", { type: "string", path: "doc.in_msg" });
 scalarFields.set("transactions.installed", { type: "boolean", path: "doc.installed" });
 scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" });
@@ -1661,6 +1599,7 @@ scalarFields.set("messages.body", { type: "string", path: "doc.body" });
 scalarFields.set("messages.body_hash", { type: "string", path: "doc.body_hash" });
 scalarFields.set("messages.bounce", { type: "boolean", path: "doc.bounce" });
 scalarFields.set("messages.bounced", { type: "boolean", path: "doc.bounced" });
+scalarFields.set("messages.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("messages.code", { type: "string", path: "doc.code" });
 scalarFields.set("messages.code_hash", { type: "string", path: "doc.code_hash" });
 scalarFields.set("messages.created_at", { type: "number", path: "doc.created_at" });
@@ -1836,6 +1775,7 @@ scalarFields.set("zerostates.master.config.p31", { type: "string", path: "doc.ma
 scalarFields.set("zerostates.master.config.p32.list.adnl_addr", { type: "string", path: "doc.master.config.p32.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p32.list.public_key", { type: "string", path: "doc.master.config.p32.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p32.list.weight", { type: "uint64", path: "doc.master.config.p32.list[*].weight" });
+scalarFields.set("zerostates.master.config.p32.main", { type: "number", path: "doc.master.config.p32.main" });
 scalarFields.set("zerostates.master.config.p32.total", { type: "number", path: "doc.master.config.p32.total" });
 scalarFields.set("zerostates.master.config.p32.total_weight", { type: "uint64", path: "doc.master.config.p32.total_weight" });
 scalarFields.set("zerostates.master.config.p32.utime_since", { type: "number", path: "doc.master.config.p32.utime_since" });
@@ -1843,6 +1783,7 @@ scalarFields.set("zerostates.master.config.p32.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p33.list.adnl_addr", { type: "string", path: "doc.master.config.p33.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p33.list.public_key", { type: "string", path: "doc.master.config.p33.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p33.list.weight", { type: "uint64", path: "doc.master.config.p33.list[*].weight" });
+scalarFields.set("zerostates.master.config.p33.main", { type: "number", path: "doc.master.config.p33.main" });
 scalarFields.set("zerostates.master.config.p33.total", { type: "number", path: "doc.master.config.p33.total" });
 scalarFields.set("zerostates.master.config.p33.total_weight", { type: "uint64", path: "doc.master.config.p33.total_weight" });
 scalarFields.set("zerostates.master.config.p33.utime_since", { type: "number", path: "doc.master.config.p33.utime_since" });
@@ -1850,6 +1791,7 @@ scalarFields.set("zerostates.master.config.p33.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p34.list.adnl_addr", { type: "string", path: "doc.master.config.p34.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p34.list.public_key", { type: "string", path: "doc.master.config.p34.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p34.list.weight", { type: "uint64", path: "doc.master.config.p34.list[*].weight" });
+scalarFields.set("zerostates.master.config.p34.main", { type: "number", path: "doc.master.config.p34.main" });
 scalarFields.set("zerostates.master.config.p34.total", { type: "number", path: "doc.master.config.p34.total" });
 scalarFields.set("zerostates.master.config.p34.total_weight", { type: "uint64", path: "doc.master.config.p34.total_weight" });
 scalarFields.set("zerostates.master.config.p34.utime_since", { type: "number", path: "doc.master.config.p34.utime_since" });
@@ -1857,6 +1799,7 @@ scalarFields.set("zerostates.master.config.p34.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p35.list.adnl_addr", { type: "string", path: "doc.master.config.p35.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p35.list.public_key", { type: "string", path: "doc.master.config.p35.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p35.list.weight", { type: "uint64", path: "doc.master.config.p35.list[*].weight" });
+scalarFields.set("zerostates.master.config.p35.main", { type: "number", path: "doc.master.config.p35.main" });
 scalarFields.set("zerostates.master.config.p35.total", { type: "number", path: "doc.master.config.p35.total" });
 scalarFields.set("zerostates.master.config.p35.total_weight", { type: "uint64", path: "doc.master.config.p35.total_weight" });
 scalarFields.set("zerostates.master.config.p35.utime_since", { type: "number", path: "doc.master.config.p35.utime_since" });
@@ -1864,6 +1807,7 @@ scalarFields.set("zerostates.master.config.p35.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p36.list.adnl_addr", { type: "string", path: "doc.master.config.p36.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p36.list.public_key", { type: "string", path: "doc.master.config.p36.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p36.list.weight", { type: "uint64", path: "doc.master.config.p36.list[*].weight" });
+scalarFields.set("zerostates.master.config.p36.main", { type: "number", path: "doc.master.config.p36.main" });
 scalarFields.set("zerostates.master.config.p36.total", { type: "number", path: "doc.master.config.p36.total" });
 scalarFields.set("zerostates.master.config.p36.total_weight", { type: "uint64", path: "doc.master.config.p36.total_weight" });
 scalarFields.set("zerostates.master.config.p36.utime_since", { type: "number", path: "doc.master.config.p36.utime_since" });
@@ -1871,6 +1815,7 @@ scalarFields.set("zerostates.master.config.p36.utime_until", { type: "number", p
 scalarFields.set("zerostates.master.config.p37.list.adnl_addr", { type: "string", path: "doc.master.config.p37.list[*].adnl_addr" });
 scalarFields.set("zerostates.master.config.p37.list.public_key", { type: "string", path: "doc.master.config.p37.list[*].public_key" });
 scalarFields.set("zerostates.master.config.p37.list.weight", { type: "uint64", path: "doc.master.config.p37.list[*].weight" });
+scalarFields.set("zerostates.master.config.p37.main", { type: "number", path: "doc.master.config.p37.main" });
 scalarFields.set("zerostates.master.config.p37.total", { type: "number", path: "doc.master.config.p37.total" });
 scalarFields.set("zerostates.master.config.p37.total_weight", { type: "uint64", path: "doc.master.config.p37.total_weight" });
 scalarFields.set("zerostates.master.config.p37.utime_since", { type: "number", path: "doc.master.config.p37.utime_since" });
@@ -1898,8 +1843,114 @@ scalarFields.set("zerostates.total_balance", { type: "uint1024", path: "doc.tota
 scalarFields.set("zerostates.total_balance_other.currency", { type: "number", path: "doc.total_balance_other[*].currency" });
 scalarFields.set("zerostates.total_balance_other.value", { type: "uint1024", path: "doc.total_balance_other[*].value" });
 scalarFields.set("zerostates.workchain_id", { type: "number", path: "doc.workchain_id" });
+const joinFields = new Map();
+joinFields.set("blocks_signatures.block", {
+    on: "id",
+    collection: "blocks",
+    refOn: "id",
+    canJoin(parent: { _key: string }, args: JoinArgs) {
+        return (args.when === undefined || BlockSignatures.test(null, parent, args.when));
+    },
+});
+joinFields.set("blocks.signatures", {
+    on: "id",
+    collection: "blocks_signatures",
+    refOn: "id",
+    canJoin(parent: { _key: string }, args: JoinArgs) {
+        return (args.when === undefined || Block.test(null, parent, args.when));
+    },
+});
+joinFields.set("transactions.account", {
+    on: "account_addr",
+    collection: "accounts",
+    refOn: "id",
+    canJoin(parent: { account_addr: string }, args: JoinArgs) {
+        return (args.when === undefined || Transaction.test(null, parent, args.when));
+    },
+});
+joinFields.set("transactions.block", {
+    on: "block_id",
+    collection: "blocks",
+    refOn: "id",
+    canJoin(parent: { block_id: string }, args: JoinArgs) {
+        return (args.when === undefined || Transaction.test(null, parent, args.when));
+    },
+});
+joinFields.set("transactions.in_message", {
+    on: "in_msg",
+    collection: "messages",
+    refOn: "id",
+    shardOn: "account_addr",
+    canJoin(parent: { in_msg: string }, args: JoinArgs) {
+        return (args.when === undefined || Transaction.test(null, parent, args.when));
+    },
+});
+joinFields.set("transactions.out_messages", {
+    on: "out_msgs",
+    collection: "messages",
+    refOn: "id",
+    shardOn: "account_addr",
+    canJoin(parent: { out_msgs: string[] }, args: JoinArgs) {
+        return (args.when === undefined || Transaction.test(null, parent, args.when));
+    },
+});
+joinFields.set("messages.block", {
+    on: "block_id",
+    collection: "blocks",
+    refOn: "id",
+    canJoin(parent: { block_id: string }, args: JoinArgs) {
+        return (args.when === undefined || Message.test(null, parent, args.when));
+    },
+});
+joinFields.set("messages.dst_account", {
+    on: "dst",
+    collection: "accounts",
+    refOn: "id",
+    canJoin(parent: { dst: string, msg_type: number }, args: JoinArgs) {
+        if (!(parent.msg_type !== 2)) {
+            return false;
+        }
+        return (args.when === undefined || Message.test(null, parent, args.when));
+    },
+});
+joinFields.set("messages.dst_transaction", {
+    on: "id",
+    collection: "transactions",
+    refOn: "in_msg",
+    shardOn: "dst",
+    canJoin(parent: { _key: string, msg_type: number }, args: JoinArgs) {
+        if (!(parent.msg_type !== 2)) {
+            return false;
+        }
+        return (args.when === undefined || Message.test(null, parent, args.when));
+    },
+});
+joinFields.set("messages.src_account", {
+    on: "src",
+    collection: "accounts",
+    refOn: "id",
+    canJoin(parent: { src: string, msg_type: number }, args: JoinArgs) {
+        if (!(parent.msg_type !== 1)) {
+            return false;
+        }
+        return (args.when === undefined || Message.test(null, parent, args.when));
+    },
+});
+joinFields.set("messages.src_transaction", {
+    on: "id",
+    collection: "transactions",
+    refOn: "out_msgs[*]",
+    shardOn: "src",
+    canJoin(parent: { _key: string, created_lt: string, msg_type: number }, args: JoinArgs) {
+        if (!(parent.created_lt !== "00" && parent.msg_type !== 1)) {
+            return false;
+        }
+        return (args.when === undefined || Message.test(null, parent, args.when));
+    },
+});
 export {
     scalarFields,
+    joinFields,
     createResolvers,
     OtherCurrency,
     ExtBlkRef,

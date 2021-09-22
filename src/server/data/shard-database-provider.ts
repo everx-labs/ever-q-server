@@ -1,16 +1,16 @@
-import { Database } from "arangojs";
 import EventEmitter from "events";
 import { ensureProtocol } from "../config";
-import type { QArangoConfig } from "../config";
 import type { QLog } from "../logs";
 import type {
     QDataEvent,
     QDataProvider,
+    QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
+    QShard,
 } from "./data-provider";
-import url from "url";
 import ArangoChair from "arangochair";
+import { QTraceSpan } from "../tracing";
 
 type ArangoCollectionDescr = {
     name: string,
@@ -21,39 +21,24 @@ type Subscription = {
     listener: (doc: QDoc, event: QDataEvent) => void
 };
 
-export class ArangoProvider implements QDataProvider {
-    log: QLog;
-    config: QArangoConfig;
-
+export class QShardDatabaseProvider implements QDataProvider {
     started: boolean;
-    arango: Database;
     collectionsForSubscribe: string[];
     listener: ArangoChair | null;
     listenerSubscribers: EventEmitter;
     listenerSubscribersCount: number;
+    shards: QShard[];
+    shardingDegree: number;
 
-
-    constructor(log: QLog, config: QArangoConfig) {
-        this.log = log;
-        this.config = config;
-
+    constructor(public log: QLog, public shard: QShard, private useListener: boolean) {
         this.started = false;
-        this.arango = new Database({
-            url: `${ensureProtocol(config.server, "http")}`,
-            agentOptions: {
-                maxSockets: config.maxSockets,
-            },
-        });
-        this.arango.useDatabase(config.name);
-        if (config.auth) {
-            const authParts = config.auth.split(":");
-            this.arango.useBasicAuth(authParts[0], authParts.slice(1).join(":"));
-        }
         this.collectionsForSubscribe = [];
         this.listener = null;
         this.listenerSubscribers = new EventEmitter();
         this.listenerSubscribers.setMaxListeners(0);
         this.listenerSubscribersCount = 0;
+        this.shards = [shard];
+        this.shardingDegree = shard.shard.length;
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -72,18 +57,18 @@ export class ArangoProvider implements QDataProvider {
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
-        return this.arango.collection(collection).indexes();
+        return this.shard.database.collection(collection).indexes();
     }
 
     /**
      * Returns object with collection names in keys and collection size in values.
      */
     async loadFingerprint(): Promise<unknown> {
-        const collections: ArangoCollectionDescr[] = await this.arango.listCollections();
+        const collections: ArangoCollectionDescr[] = await this.shard.database.listCollections();
         const collectionNames = collections.map(descr => descr.name);
         // TODO: add this when required a new version arangojs v7.x.x
         // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
-        const results = await Promise.all(collectionNames.map(col => this.arango.collection(col).count()));
+        const results = await Promise.all(collectionNames.map(col => this.shard.database.collection(col).count()));
         const fingerprint: { [name: string]: number } = {};
         collectionNames.forEach((collectionName, i) => {
             fingerprint[collectionName] = results[i].count;
@@ -95,9 +80,42 @@ export class ArangoProvider implements QDataProvider {
         return Promise.resolve();
     }
 
-    async query(text: string, vars: { [name: string]: unknown }): Promise<QDoc[]> {
-        const cursor = await this.arango.query(text, vars);
-        return cursor.all();
+    async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
+        const {
+            shards,
+            text,
+            vars,
+            traceSpan,
+            request,
+        } = params;
+
+        if (shards && !shards.has(this.shard.shard) &&
+            this.shard.shard !== "" && !shards.has("")
+        ) {
+            let shardMatches = false;
+            for (const shard of shards ?? []) {
+                if (this.shard.shard.startsWith(shard) ||
+                    shard.startsWith(this.shard.shard)) {
+                  shardMatches = true;
+                  break;  
+                }
+            }
+
+            if (!shardMatches) {
+                return [];
+            }
+        }
+        const maxRuntime = params.maxRuntimeInS
+            ? Math.min(params.maxRuntimeInS, request.services.config.queries.maxRuntimeInS)
+            : request.services.config.queries.maxRuntimeInS;
+
+        const impl = async (span: QTraceSpan) => {
+            request.requestTags.arangoCalls += 1;
+            const cursor = await this.shard.database.query(text, vars, { maxRuntime });
+            span.logEvent("cursor_obtained");
+            return await cursor.all();
+        };
+        return traceSpan.traceChildOperation(`arango.query.${this.shard.shard}`, impl);
     }
 
     subscribe(collection: string, listener: (doc: QDoc, event: QDataEvent) => void): unknown {
@@ -126,6 +144,9 @@ export class ArangoProvider implements QDataProvider {
     // Internals
 
     checkStartListener() {
+        if (!this.useListener) {
+            return;
+        }
         if (!this.started) {
             return;
         }
@@ -146,18 +167,18 @@ export class ArangoProvider implements QDataProvider {
             server,
             name,
             auth,
-        } = this.config;
+        } = this.shard.config;
         const dbUrl = ensureProtocol(server, "http");
         const listenerUrl = `${dbUrl}/${name}`;
 
         const listener = new ArangoChair(listenerUrl);
-        const parsedDbUrl = url.parse(dbUrl);
+        const parsedDbUrl = new URL(dbUrl);
 
-        const pathPrefix = parsedDbUrl.path !== "/" ? (parsedDbUrl.path || "") : "";
+        const pathPrefix = parsedDbUrl.pathname !== "/" ? (parsedDbUrl.pathname || "") : "";
         listener._loggerStatePath = `${pathPrefix}/_db/${name}/_api/replication/logger-state`;
         listener._loggerFollowPath = `${pathPrefix}/_db/${name}/_api/replication/logger-follow`;
 
-        if (this.config.auth) {
+        if (this.shard.config.auth) {
             const userPassword = Buffer.from(auth).toString("base64");
             listener.req.opts.headers["Authorization"] = `Basic ${userPassword}`;
         }
@@ -179,7 +200,7 @@ export class ArangoProvider implements QDataProvider {
                 error = err;
             }
             this.log.error("FAILED", "LISTEN", `${err}`, error);
-            setTimeout(() => listener.start(), this.config.listenerRestartTimeout || 1000);
+            setTimeout(() => listener.start(), this.shard.config.listenerRestartTimeout || 1000);
         });
         listener.start();
         return listener;

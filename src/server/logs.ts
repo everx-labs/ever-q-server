@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-import { toLog } from "./utils";
+import { toJSON } from "./utils";
 
 export interface QLog {
     error(...args: unknown[]): void,
 
     debug(...args: unknown[]): void,
-}
-
-function toJSON(value: unknown): string {
-    try {
-        return JSON.stringify(toLog(value));
-    } catch (error) {
-        return JSON.stringify(`${value}`);
-    }
 }
 
 function str(arg: unknown): string {
@@ -59,7 +51,7 @@ export default class QLogs {
     create(name: string): QLog {
         return {
             error(...args) {
-                QLogs.error(...args);
+                QLogs.error(format(name, args));
             },
             debug(...args) {
                 QLogs.debug(format(name, args));

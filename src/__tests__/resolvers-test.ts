@@ -207,4 +207,3 @@ test("Select Fields", () => {
         master: { shard_hashes: [{ shard: "1" }, { shard: "2" }] },
     });
 });
-

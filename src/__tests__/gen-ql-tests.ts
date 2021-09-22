@@ -19,6 +19,7 @@ import {
 } from "graphql";
 import { grantedAccess } from "../server/auth";
 import { FilterOrConversion } from "../server/config";
+import { QCollectionQuery } from "../server/data/collection-query";
 
 type Blocks = {
     blocks: {
@@ -106,7 +107,9 @@ return doc
 test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs());
     const withOr = normalized(
-        data.messages.createDatabaseQuery(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
             {
                 filter: {
                     src: { eq: "1" },
@@ -119,6 +122,7 @@ test("OR conversions", () => {
             },
             selectionInfo("src dst"),
             grantedAccess,
+            0,
             {
                 orConversion: FilterOrConversion.OR_OPERATOR,
             },
@@ -135,7 +139,9 @@ test("OR conversions", () => {
     `));
 
     const withSubQueries = normalized(
-        data.messages.createDatabaseQuery(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
             {
                 filter: {
                     src: { eq: "1" },
@@ -148,6 +154,7 @@ test("OR conversions", () => {
             },
             selectionInfo("src dst"),
             grantedAccess,
+            0,
             {
                 orConversion: FilterOrConversion.SUB_QUERIES,
             },
@@ -175,10 +182,114 @@ test("OR conversions", () => {
     `));
 });
 
+test("messages_complement are used for shardingDegree > 0", () => {
+    const data = createLocalArangoTestData(new QLogs());
+    const withOr = normalized(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
+            {
+                filter: {
+                    src: { eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" },
+                    OR: { dst: { eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" } },
+                },
+                orderBy: [{
+                    path: "created_at",
+                    direction: "ASC",
+                }],
+            },
+            selectionInfo("src dst"),
+            grantedAccess,
+            1,
+            {
+                orConversion: FilterOrConversion.OR_OPERATOR,
+            },
+        )?.text ?? "",
+    );
+
+    expect(withOr).toEqual(
+        normalized(`
+        FOR doc IN UNION_DISTINCT(
+            FOR doc IN messages
+            FILTER (doc.src == @v1) OR (doc.dst == @v2)
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at } ,
+            
+            FOR doc IN messages_complement
+            FILTER (doc.src == @v1) OR (doc.dst == @v2)
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+        )
+        SORT doc.created_at
+        LIMIT 50 RETURN doc
+    `));
+
+    const withSubQueries = normalized(
+        QCollectionQuery.create(
+            data.messages.name,
+            data.messages.docType,
+            {
+                filter: {
+                    src: { eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" },
+                    OR: { dst: { eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" } },
+                },
+                orderBy: [{
+                    path: "created_at",
+                    direction: "ASC",
+                }],
+            },
+            selectionInfo("src dst"),
+            grantedAccess,
+            1,
+            {
+                orConversion: FilterOrConversion.SUB_QUERIES,
+            },
+        )?.text ?? "",
+    );
+
+    expect(withSubQueries).toEqual(
+        normalized(`
+        FOR doc IN UNION_DISTINCT(
+            FOR doc IN messages
+            FILTER doc.src == @v1 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages_complement
+            FILTER doc.src == @v1 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages
+            FILTER doc.dst == @v2 
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+            ,
+            FOR doc IN messages_complement
+            FILTER doc.dst == @v2
+            SORT doc.created_at
+            LIMIT 50
+            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
+        )
+        SORT doc.created_at
+        LIMIT 50
+        RETURN doc
+    `));
+});
+
 test("reduced RETURN", () => {
     const data = createLocalArangoTestData(new QLogs());
+    const blocks = data.blocks;
+    const accounts = data.accounts;
+    const transactions = data.transactions;
+    const messages = data.messages;
 
-    expect(queryText(data.blocks, "seq_no", [{
+    expect(queryText(blocks, "seq_no", [{
         path: "gen_utime",
         direction: "ASC",
     }])).toEqual(
@@ -190,14 +301,14 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(data.accounts, "id balance __typename")).toEqual(normalized(`
+    expect(queryText(accounts, "id balance __typename")).toEqual(normalized(`
         FOR doc IN accounts LIMIT 50 RETURN {
             _key: doc._key,
             balance: doc.balance
         }
     `));
 
-    expect(queryText(data.blocks, "value_flow { imported }")).toEqual(normalized(`
+    expect(queryText(blocks, "value_flow { imported }")).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             value_flow: ( doc.value_flow && {
@@ -206,7 +317,7 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(data.blocks, "in_msg_descr { msg_type }")).toEqual(normalized(`
+    expect(queryText(blocks, "in_msg_descr { msg_type }")).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             in_msg_descr: ( doc.in_msg_descr && (
@@ -215,28 +326,30 @@ test("reduced RETURN", () => {
         }
     `));
 
-    expect(queryText(data.transactions, "in_message { id }")).toEqual(normalized(`
+    expect(queryText(transactions, "in_message { id }")).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
-            in_msg: doc.in_msg
+            in_msg: doc.in_msg,
+            account_addr: doc.account_addr
         }
     `));
 
-    expect(queryText(data.transactions, "out_messages { id }")).toEqual(normalized(`
+    expect(queryText(transactions, "out_messages { id }")).toEqual(normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
-            out_msgs: doc.out_msgs
+            out_msgs: doc.out_msgs,
+            account_addr: doc.account_addr
         }
     `));
 
-    expect(queryText(data.messages, "msg_type_name msg_type")).toEqual(normalized(`
+    expect(queryText(messages, "msg_type_name msg_type")).toEqual(normalized(`
         FOR doc IN messages LIMIT 50 RETURN {
             _key: doc._key,
             msg_type: doc.msg_type
         }
     `));
 
-    expect(queryText(data.blocks, "gen_utime_string")).toEqual(normalized(`
+    expect(queryText(blocks, "gen_utime_string")).toEqual(normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             gen_utime: doc.gen_utime
@@ -265,7 +378,7 @@ test("Include join precondition fields", () => {
     const e = Message.returnExpressions("doc", selection("message", [
         selection("dst_transaction", [selection("id", [])]),
     ]));
-    expect(e[0].expression).toEqual("( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type } )");
+    expect(e[0].expression).toEqual("( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )");
 });
 
 

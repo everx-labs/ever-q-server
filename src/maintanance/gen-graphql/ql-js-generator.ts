@@ -318,14 +318,18 @@ function main(schemaDef: TypeDef): {
                     `"${join.refOn}"`,
                     `"${field.type.collection ?? ""}"`,
                 ];
+                const extraFields: string[] = [];
                 if (field.arrayDepth === 0) {
-                    const extraFields = (join.preCondition ?? "")
+                    extraFields.push(...(join.preCondition ?? "")
                         .split(" ")
                         .map(x => x.trim())
                         .filter(x => x.startsWith("parent."))
-                        .map(x => x.substr(7));
-                    params.push(extraFields.length > 0 ? `["${extraFields.join("\", \"")}"]` : "[]");
+                        .map(x => x.substr(7)));
                 }
+                if (join.shardOn !== undefined) {
+                    extraFields.push(join.shardOn);
+                }
+                params.push(extraFields.length > 0 ? `["${extraFields.join("\", \"")}"]` : "[]");
                 params.push(`() => ${field.type.name}`);
                 typeDeclaration = `join${suffix}(${params.join(", ")})`;
             } else if (field.arrayDepth > 0) {
@@ -413,49 +417,6 @@ function main(schemaDef: TypeDef): {
             js.writeLn("                return parent._key;");
             js.writeLn("            },");
         }
-        joinFields.forEach((field) => {
-            const join = field.join;
-            if (join === undefined) {
-                return;
-            }
-            const onField = type.fields.find(x => x.name === join.on);
-            if (onField === undefined) {
-                throw "Join on field does not exist.";
-            }
-            const on = join.on === "id" ? "_key" : (join.on ?? "_key");
-            const refOn = join.refOn === "id" ? "_key" : (join.refOn ?? "_key");
-            const collection = field.type.collection;
-            if (collection === undefined) {
-                throw "Joined type is not a collection.";
-            }
-            const extraFields = (join.preCondition ?? "")
-                .split(" ")
-                .map(x => x.trim())
-                .filter(x => x.startsWith("parent."))
-                .map(x => x.substr(7))
-                .map(x => type.fields.find(y => y.name === x))
-                .filter(x => x !== undefined) as DbField[];
-            const parentFields = [onField, ...extraFields];
-
-            js.writeLn(`            ${field.name}(${parentParam(...parentFields)}, args: JoinArgs, context: GraphQLRequestContextEx) {`);
-            if (join.preCondition !== undefined) {
-                js.writeLn(`                if (!(${join.preCondition})) {`);
-                js.writeLn("                    return null;");
-                js.writeLn("                }");
-            }
-            js.writeLn(`                if (args.when !== undefined && !${type.name}.test(null, parent, args.when)) {`);
-            js.writeLn("                    return null;");
-            js.writeLn("                }");
-
-            if (field.arrayDepth === 0) {
-                js.writeLn(`                return context.data.${collection}.waitForDoc(parent.${on}, "${refOn}", args, context);`);
-            } else if (field.arrayDepth === 1) {
-                js.writeLn(`                return context.data.${collection}.waitForDocs(parent.${on}, "${refOn}", args, context);`);
-            } else {
-                throw "Joins on a nested arrays does not supported.";
-            }
-            js.writeLn("            },");
-        });
         bigUIntFields.forEach((field) => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2;
             js.writeLn(`            ${field.name}(${parentParam(field)}, args: BigIntArgs) {`);
@@ -522,6 +483,52 @@ function main(schemaDef: TypeDef): {
         });
     }
 
+    function genJSJoinFields(type: DbType, parentPath: string, parentDocPath: string) {
+        type.fields.forEach((field: DbField) => {
+            const docName = (type.collection !== undefined && field.name === "id") ? "_key" : field.name;
+            const path = `${parentPath}.${field.name}`;
+            const docPath = `${parentDocPath}.${docName}`;
+            const join = field.join;
+            if (join !== undefined) {
+                const onField = type.fields.find(x => x.name === join.on);
+                if (onField === undefined) {
+                    throw "Join on field does not exist.";
+                }
+                const collection = field.type.collection;
+                if (collection === undefined) {
+                    throw "Joined type is not a collection.";
+                }
+                const extraFields = (join.preCondition ?? "")
+                    .split(" ")
+                    .map(x => x.trim())
+                    .filter(x => x.startsWith("parent."))
+                    .map(x => x.substr(7))
+                    .map(x => type.fields.find(y => y.name === x))
+                    .filter(x => x !== undefined) as DbField[];
+                const parentFields = [onField, ...extraFields];
+
+                js.writeLn(`joinFields.set("${path}", {`);
+                js.writeLn(`    on: "${join.on}",`);
+                js.writeLn(`    collection: "${field.type.collection}",`);
+                js.writeLn(`    refOn: "${join.refOn}",`);
+                if (join.shardOn !== undefined) {
+                    js.writeLn(`    shardOn: "${join.shardOn}",`);
+                }
+                js.writeLn(`    canJoin(${parentParam(...parentFields)}, args: JoinArgs) {`);
+                if (join.preCondition !== undefined) {
+                    js.writeLn(`        if (!(${join.preCondition})) {`);
+                    js.writeLn("            return false;");
+                    js.writeLn("        }");
+                }
+                js.writeLn(`        return (args.when === undefined || ${type.name}.test(null, parent, args.when));`);
+                js.writeLn("    },");
+                js.writeLn("});");
+            } else if (field.type.category === "struct" || field.type.category === "union") {
+                genJSJoinFields(field.type, path, docPath);
+            }
+        });
+    }
+
 
     function genJSTypeResolversForUnion(type: DbType) {
         if (type.category === DbTypeCategory.union) {
@@ -576,7 +583,6 @@ function main(schemaDef: TypeDef): {
             unixSecondsToString,
         } from "../filter/filters";
         import QBlockchainData from "../data/blockchain";
-        import { GraphQLRequestContextEx } from "./context";
         `);
         const jsArrayFilters = new Set<string>();
         types.forEach(type => genJSFilter(type, jsArrayFilters));
@@ -613,8 +619,16 @@ function main(schemaDef: TypeDef): {
         });
 
         js.writeBlockLn(`
+        const joinFields = new Map();
+        `);
+        collections.forEach((type) => {
+            genJSJoinFields(type, type.collection ?? "", "doc");
+        });
+
+        js.writeBlockLn(`
         export {
             scalarFields,
+            joinFields,
             createResolvers,
         `);
         types.forEach(type => js.writeLn(`    ${type.name},`));

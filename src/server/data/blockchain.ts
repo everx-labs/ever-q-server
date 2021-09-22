@@ -19,7 +19,6 @@ import type { QDataOptions } from "./data";
 import QData from "./data";
 import {
     QDataCollection,
-    QDataScope,
 } from "./collection";
 import {
     Account,
@@ -30,10 +29,14 @@ import {
     Zerostate,
 } from "../graphql/resolvers-generated";
 import {
+    QDataProvider,
     QIndexInfo,
     sortedIndex,
 } from "./data-provider";
 import { QType } from "../filter/filters";
+import { required, toU64String } from "../utils";
+import { QRequestContext } from "../request";
+import { Database } from "arangojs";
 
 export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
     blocks: {
@@ -112,30 +115,46 @@ export type Latency = {
     lastBlockTime: number,
 };
 
+type ChainRangesVerificationSummary = {
+    reliable_chain_order_upper_boundary?: string | null,
+};
+
+export type ReliableChainOrderUpperBoundary = {
+    boundary: string,
+    lastCheckTime: number,
+};
+
+const LATENCY_UPDATE_FREQUENCY = 25000;
+const LATENCY_UPDATE_VARIANCE = 10000;
+
 export default class QBlockchainData extends QData {
-    transactions: QDataCollection;
-    messages: QDataCollection;
     accounts: QDataCollection;
     blocks: QDataCollection;
     blocks_signatures: QDataCollection;
+    transactions: QDataCollection;
+    messages: QDataCollection;
     zerostates: QDataCollection;
     counterparties: QDataCollection;
 
     latency: Latency;
     debugLatency: number;
 
+    reliableChainOrderUpperBoundary: ReliableChainOrderUpperBoundary;
+
     constructor(options: QDataOptions) {
         super(options);
-        const add = (name: string, type: QType, scope: QDataScope) => {
-            return this.addCollection(name, type, scope, INDEXES[name].indexes);
+        const fast = options.providers.blockchain;
+        const slow = options.slowQueriesProviders;
+        const add = (name: string, type: QType, provider?: QDataProvider, slowQueriesProvider?: QDataProvider) => {
+            return this.addCollection(name, type, provider, slowQueriesProvider, INDEXES[name].indexes);
         };
-        this.accounts = add("accounts", Account, QDataScope.mutable);
-        this.transactions = add("transactions", Transaction, QDataScope.immutable);
-        this.messages = add("messages", Message, QDataScope.immutable);
-        this.blocks = add("blocks", Block, QDataScope.immutable);
-        this.blocks_signatures = add("blocks_signatures", BlockSignatures, QDataScope.immutable);
-        this.zerostates = add("zerostates", Zerostate, QDataScope.mutable);
-        this.counterparties = add("counterparties", Counterparty, QDataScope.counterparties);
+        this.accounts = add("accounts", Account, fast?.accounts, slow?.accounts);
+        this.blocks = add("blocks", Block, fast?.blocks, slow?.blocks);
+        this.blocks_signatures = add("blocks_signatures", BlockSignatures, fast?.blocks, slow?.blocks);
+        this.transactions = add("transactions", Transaction, fast?.transactions, slow?.transactions);
+        this.messages = add("messages", Message, fast?.transactions, slow?.transactions);
+        this.zerostates = add("zerostates", Zerostate, fast?.zerostate, slow?.zerostate);
+        this.counterparties = add("counterparties", Counterparty, options.providers.counterparties);
 
         this.latency = {
             blocks: {
@@ -168,12 +187,15 @@ export default class QBlockchainData extends QData {
         this.messages.docInsertOrUpdate.on("doc", async (msg) => {
             this.updateLatency(this.latency.messages, msg.created_at);
         });
+
+        this.reliableChainOrderUpperBoundary = {
+            boundary: "",
+            lastCheckTime: 0,
+        };
     }
 
     updateLatency(latency: CollectionLatency, timeInSeconds?: number | null) {
-        if (this.updateCollectionLatency(latency, timeInSeconds)
-
-        ) {
+        if (this.updateCollectionLatency(latency, timeInSeconds)) {
             this.updateLatencySummary();
         }
     }
@@ -187,7 +209,7 @@ export default class QBlockchainData extends QData {
         if (time > latency.maxTime) {
             latency.maxTime = time;
         }
-        latency.nextUpdateTime = now + 30000; // LATENCY_UPDATE_FREQUENCY
+        latency.nextUpdateTime = now + LATENCY_UPDATE_FREQUENCY + Math.random() * LATENCY_UPDATE_VARIANCE;
         latency.latency = Math.max(0, now - latency.maxTime);
         return true;
     }
@@ -211,40 +233,162 @@ export default class QBlockchainData extends QData {
         this.latency.lastBlockTime = blocks.maxTime;
     }
 
-    async updateMaxTime(latency: CollectionLatency, collection: QDataCollection, field: string): Promise<boolean> {
-        if (Date.now() <= latency.nextUpdateTime) {
+    async fetchMaxTimes(
+        collections: { latency: CollectionLatency, collection: QDataCollection, field: string }[],
+        request: QRequestContext,
+    ): Promise<boolean> {
+        const now = Date.now();
+        const updates = collections
+            .filter(x => x.collection.provider !== undefined && now > x.latency.nextUpdateTime)
+            .map(x => ({
+                latency: x.latency,
+                provider: x.collection.provider as QDataProvider,
+                shards: required(x.collection.provider).shards,
+                collection: x.collection.name,
+                field: x.field,
+            }));
+        if (updates.length === 0) {
             return false;
         }
-        const result = (await collection.provider.query(
-            `FOR d IN ${collection.name} SORT d.${field} DESC LIMIT 1 RETURN { maxTime: d.${field} }`,
-            {}, [{
-                path: field,
-                direction: "DESC",
-            }],
-        )) as unknown as (({ maxTime: number }[]) | undefined | null);
-        const maxTime = result?.[0]?.maxTime ?? 0;
-        return this.updateCollectionLatency(latency, maxTime);
+        const fetchersByDatabasePoolIndex = new Map<number, { database: Database, returns: string[] }>();
+        for (const {
+            shards,
+            collection,
+            field
+        } of updates) {
+            const returnExpression =
+                `${collection}: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0]`;
+            for (const shard of shards) {
+                const existing = fetchersByDatabasePoolIndex.get(shard.poolIndex);
+                if (existing !== undefined) {
+                    existing.returns.push(returnExpression);
+                } else {
+                    fetchersByDatabasePoolIndex.set(shard.poolIndex, {
+                        database: shard.database,
+                        returns: [returnExpression],
+                    });
+                }
+                if (shard.shard.length > 0) {
+                    request.requestTags.hasRangedQuery = true;
+                }
+            }
+        }
 
+        const fetchedTimes = await request.trace("fetchLatencyTimes", async () => {
+            const fetchers = [...fetchersByDatabasePoolIndex.values()];
+            request.requestTags.arangoCalls += fetchers.length;
+            return await Promise.all(fetchers.map(async (fetcher) => {
+                const query = `RETURN {${fetcher.returns.join(",\n")}}`;
+                return (await (await fetcher.database.query(query)).all())[0] as Record<string, number | null>;
+            }));
+        });
+
+        let hasUpdates = false;
+        for (const {
+            latency,
+            collection,
+        } of updates) {
+            let maxTime: number | null = null;
+            for (const fetchedTime of fetchedTimes) {
+                const time = fetchedTime[collection];
+                if (time !== undefined && time !== null && (maxTime === null || time > maxTime)) {
+                    maxTime = time;
+                }
+            }
+            if (this.updateCollectionLatency(latency, maxTime)) {
+                hasUpdates = true;
+            }
+        }
+        return hasUpdates;
     }
 
     updateDebugLatency(latency: number) {
         this.debugLatency = latency;
     }
 
-    async getLatency(): Promise<Latency> {
+    async getLatency(request: QRequestContext): Promise<Latency> {
         const latency = this.latency;
         if (Date.now() > latency.nextUpdateTime) {
-            let hasUpdates = await this.updateMaxTime(latency.blocks, this.blocks, "gen_utime");
-            if (await this.updateMaxTime(latency.messages, this.messages, "created_at")) {
-                hasUpdates = true;
-            }
-            if (await this.updateMaxTime(latency.transactions, this.transactions, "now")) {
-                hasUpdates = true;
-            }
+            const hasUpdates = await this.fetchMaxTimes(
+                [
+                    {
+                        latency: latency.blocks,
+                        collection: this.blocks,
+                        field: "gen_utime",
+                    },
+                    {
+                        latency: latency.messages,
+                        collection: this.messages,
+                        field: "created_at",
+                    },
+                    {
+                        latency: latency.transactions,
+                        collection: this.transactions,
+                        field: "now",
+                    },
+                ], request);
             if (hasUpdates) {
                 this.updateLatencySummary();
             }
         }
         return latency;
+    }
+
+    async getReliableChainOrderUpperBoundary(context: QRequestContext): Promise<ReliableChainOrderUpperBoundary> {
+        const now = Date.now();
+        if (now < this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) { // CHAIN_ORDER_UPPER_BOUNDARY_UPDATE_PERIOD
+            return this.reliableChainOrderUpperBoundary;
+        }
+        if (this.providers.chainRangesVerification) {
+            const result = await required(this.providers.chainRangesVerification).query({
+                text: "RETURN DOCUMENT('chain_ranges_verification/summary')",
+                vars: {},
+                orderBy: [],
+                request: context,
+                traceSpan: context.requestSpan,
+            }) as ChainRangesVerificationSummary[];
+            if (result.length > 0) {
+                const boundary =
+                    result.reduce<string>((prev, summary) => {
+                        const curr = summary.reliable_chain_order_upper_boundary ?? "";
+                        return curr < prev ? curr : prev;
+                    }, "z");
+
+                this.reliableChainOrderUpperBoundary = {
+                    boundary,
+                    lastCheckTime: now,
+                };
+            } else {
+                throw new Error("Couldn't get chain_ranges_verification summary");
+            }
+        } else {
+            const gapInSeconds = 120;
+            const result = await required(this.providers.blockchain?.blocks).query({
+                text: `
+                    LET now = DATE_NOW() / 1000
+                    FOR b IN blocks
+                        FILTER b.workchain_id == -1 && b.gen_utime < now - ${gapInSeconds}
+                        SORT b.gen_utime DESC
+                        LIMIT 1
+                        RETURN b.seq_no
+                `,
+                vars: {},
+                orderBy: [],
+                request: context,
+                traceSpan: context.requestSpan,
+            }) as number[];
+            if (result.length > 0) {
+                const mc_seq_no = result.reduce((prev, curr) => Math.max(prev, curr));
+                const boundary = toU64String(mc_seq_no + 1);
+
+                this.reliableChainOrderUpperBoundary = {
+                    boundary,
+                    lastCheckTime: now,
+                };
+            } else {
+                throw new Error("There is something wrong with chain order boundary");
+            }
+        }
+        return this.reliableChainOrderUpperBoundary;
     }
 }
