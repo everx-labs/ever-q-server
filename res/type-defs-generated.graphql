@@ -668,6 +668,8 @@ type Block {
 	created_by: String
 	"Logical creation time automatically set by the block formation end."
 	end_lt(format: BigIntFormat): String
+	"Block file hash"
+	file_hash: String
 	flags: Int
 	gen_catchain_seqno: Float
 	gen_software_capabilities: String
@@ -1333,11 +1335,15 @@ type Zerostate {
 	accounts: [ZerostateAccounts]
 	"Serialized bag of cells of this zerostate encoded with base64"
 	boc: String
+	"Zerostate file hash"
+	file_hash: String
 	"uint32 global network ID"
 	global_id: Int
 	"Initial libraries at the workchain start"
 	libraries: [ZerostateLibraries]
 	master: ZerostateMaster
+	"Zerostate root cell representation hash"
+	root_hash: String
 	"Overall balance of all accounts of the workchain"
 	total_balance(format: BigIntFormat): String
 	"Overall balance of all accounts of the workchain in other currencies"
@@ -2017,6 +2023,8 @@ input BlockFilter {
 	created_by: StringFilter
 	"Logical creation time automatically set by the block formation end."
 	end_lt: StringFilter
+	"Block file hash"
+	file_hash: StringFilter
 	flags: IntFilter
 	gen_catchain_seqno: FloatFilter
 	gen_software_capabilities: StringFilter
@@ -2806,11 +2814,15 @@ input ZerostateFilter {
 	accounts: ZerostateAccountsArrayFilter
 	"Serialized bag of cells of this zerostate encoded with base64"
 	boc: StringFilter
+	"Zerostate file hash"
+	file_hash: StringFilter
 	"uint32 global network ID"
 	global_id: IntFilter
 	"Initial libraries at the workchain start"
 	libraries: ZerostateLibrariesArrayFilter
 	master: ZerostateMasterFilter
+	"Zerostate root cell representation hash"
+	root_hash: StringFilter
 	"Overall balance of all accounts of the workchain"
 	total_balance: StringFilter
 	"Overall balance of all accounts of the workchain in other currencies"
