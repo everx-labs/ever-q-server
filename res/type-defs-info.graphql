@@ -1,0 +1,29 @@
+" GraphQL Server info"
+type Info {
+    " Server version "
+    version: String
+    " Server unix time in ms"
+    time: Float
+    " Blocks latency in ms (server time - max of blocks.gen_utime * 1000)"
+    blocksLatency: Float,
+    " Messages latency in ms (server time - max of messages.created_at * 1000)"
+    messagesLatency: Float,
+    " Transactions latency in ms (server time - max of transactions.now * 1000)"
+    transactionsLatency: Float,
+    " Overall latency (maximum value of blocksLatency, messagesLatency and transactionsLatency)"
+    latency: Float,
+    " Last block time in ms (maximum value of blocks.gen_utime * 1000)"
+    lastBlockTime: Float,
+    " Alternative endpoints of q-server"
+    endpoints: [String]
+    """
+    **EXPERIMENTAL**
+    Reliable upper boundary for pagination by chain_order field. Before this boundary data inserts are almost impossible
+    (work in progress to make them fully impossible when the feature goes into production).
+    """
+    chainOrderBoundary: String
+}
+
+type Query {
+    info: Info
+}
