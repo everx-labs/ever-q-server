@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - `file_hash` in block
 - `file_hash` and `root_hash` in zerostate
 
+### API
+- API functions sorted in logical order
+
 ## [0.43.0] - 2021-09-22
 
 ### New schema fields
