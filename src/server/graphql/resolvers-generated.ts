@@ -427,6 +427,7 @@ const Block = struct({
     chain_order: stringLowerFilter,
     created_by: scalar,
     end_lt: bigUInt1,
+    file_hash: stringLowerFilter,
     flags: scalar,
     gen_catchain_seqno: scalar,
     gen_software_capabilities: scalar,
@@ -698,9 +699,11 @@ const Zerostate = struct({
     id: scalar,
     accounts: ZerostateAccountsArray,
     boc: scalar,
+    file_hash: stringLowerFilter,
     global_id: scalar,
     libraries: ZerostateLibrariesArray,
     master: ZerostateMaster,
+    root_hash: stringLowerFilter,
     total_balance: bigUInt2,
     total_balance_other: OtherCurrencyArray,
     workchain_id: scalar,
@@ -1137,6 +1140,7 @@ scalarFields.set("blocks.boc", { type: "string", path: "doc.boc" });
 scalarFields.set("blocks.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("blocks.created_by", { type: "string", path: "doc.created_by" });
 scalarFields.set("blocks.end_lt", { type: "uint64", path: "doc.end_lt" });
+scalarFields.set("blocks.file_hash", { type: "string", path: "doc.file_hash" });
 scalarFields.set("blocks.flags", { type: "number", path: "doc.flags" });
 scalarFields.set("blocks.gen_catchain_seqno", { type: "number", path: "doc.gen_catchain_seqno" });
 scalarFields.set("blocks.gen_software_capabilities", { type: "string", path: "doc.gen_software_capabilities" });
@@ -1648,6 +1652,7 @@ scalarFields.set("zerostates.accounts.tick", { type: "boolean", path: "doc.accou
 scalarFields.set("zerostates.accounts.tock", { type: "boolean", path: "doc.accounts[*].tock" });
 scalarFields.set("zerostates.accounts.workchain_id", { type: "number", path: "doc.accounts[*].workchain_id" });
 scalarFields.set("zerostates.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("zerostates.file_hash", { type: "string", path: "doc.file_hash" });
 scalarFields.set("zerostates.global_id", { type: "number", path: "doc.global_id" });
 scalarFields.set("zerostates.libraries.hash", { type: "string", path: "doc.libraries[*].hash" });
 scalarFields.set("zerostates.libraries.lib", { type: "string", path: "doc.libraries[*].lib" });
@@ -1839,6 +1844,7 @@ scalarFields.set("zerostates.master.global_balance", { type: "uint1024", path: "
 scalarFields.set("zerostates.master.global_balance_other.currency", { type: "number", path: "doc.master.global_balance_other[*].currency" });
 scalarFields.set("zerostates.master.global_balance_other.value", { type: "uint1024", path: "doc.master.global_balance_other[*].value" });
 scalarFields.set("zerostates.master.validator_list_hash_short", { type: "number", path: "doc.master.validator_list_hash_short" });
+scalarFields.set("zerostates.root_hash", { type: "string", path: "doc.root_hash" });
 scalarFields.set("zerostates.total_balance", { type: "uint1024", path: "doc.total_balance" });
 scalarFields.set("zerostates.total_balance_other.currency", { type: "number", path: "doc.total_balance_other[*].currency" });
 scalarFields.set("zerostates.total_balance_other.value", { type: "uint1024", path: "doc.total_balance_other[*].value" });

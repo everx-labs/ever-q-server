@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.44.0] - 2021-10-11
+
+### New schema fields
+- `file_hash` in block
+- `file_hash` and `root_hash` in zerostate
+
 ## [0.43.0] - 2021-09-22
 
 ### New schema fields
