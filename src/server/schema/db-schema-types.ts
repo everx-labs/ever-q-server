@@ -371,6 +371,23 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
         resolved.set(type.name, type);
     };
     dbTypes.forEach(resolveType);
+
+    function compareCollections(a: DbType, b: DbType): number {
+        if (a.collection) {
+            if (b.collection) {
+                return dbTypes.findIndex((value) => value === a) > dbTypes.findIndex((value) => value === b)
+                    ? 1 : -1;
+            } else {
+                return 1;
+            }
+        } else if (b.collection) {
+            return -1
+        } else {
+            return 0;
+        }
+    }
+
+    orderedResolved.sort(compareCollections);
     return {
         types: orderedResolved,
         enumTypes,
