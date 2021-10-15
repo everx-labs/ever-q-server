@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file.
 ### API
 - API functions sorted in logical order
 
+### Fix
+- `gen_software_capabilities` block field is big integer
+
 ## [0.43.0] - 2021-09-22
 
 ### New schema fields

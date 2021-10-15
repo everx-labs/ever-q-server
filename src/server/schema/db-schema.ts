@@ -644,7 +644,7 @@ const Block: TypeDef = {
     min_ref_mc_seqno: u32(docs.block.min_ref_mc_seqno),
     prev_key_block_seqno: u32(docs.block.prev_key_block_seqno),
     gen_software_version: u32(docs.block.gen_software_version),
-    gen_software_capabilities: string(docs.block.gen_software_capabilities),
+    gen_software_capabilities: u64(docs.block.gen_software_capabilities),
     value_flow: {
         to_next_blk: grams(docs.block.value_flow.to_next_blk),
         to_next_blk_other: otherCurrencyCollection(docs.block.value_flow.to_next_blk_other),
