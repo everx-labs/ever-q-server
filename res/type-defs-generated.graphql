@@ -1251,7 +1251,7 @@ type Block {
 	file_hash: String
 	flags: Int
 	gen_catchain_seqno: Float
-	gen_software_capabilities: String
+	gen_software_capabilities(format: BigIntFormat): String
 	gen_software_version: Float
 	"uint 32 generation time stamp"
 	gen_utime: Float

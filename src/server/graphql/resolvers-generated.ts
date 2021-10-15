@@ -643,7 +643,7 @@ const Block = struct({
     file_hash: stringLowerFilter,
     flags: scalar,
     gen_catchain_seqno: scalar,
-    gen_software_capabilities: scalar,
+    gen_software_capabilities: bigUInt1,
     gen_software_version: scalar,
     gen_utime: scalar,
     gen_utime_string: stringCompanion("gen_utime"),
@@ -1064,6 +1064,9 @@ function createResolvers(data: QBlockchainData) {
             end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args);
             },
+            gen_software_capabilities(parent: { gen_software_capabilities: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gen_software_capabilities, args);
+            },
             start_lt(parent: { start_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.start_lt, args);
             },
@@ -1256,7 +1259,7 @@ scalarFields.set("blocks.end_lt", { type: "uint64", path: "doc.end_lt" });
 scalarFields.set("blocks.file_hash", { type: "string", path: "doc.file_hash" });
 scalarFields.set("blocks.flags", { type: "number", path: "doc.flags" });
 scalarFields.set("blocks.gen_catchain_seqno", { type: "number", path: "doc.gen_catchain_seqno" });
-scalarFields.set("blocks.gen_software_capabilities", { type: "string", path: "doc.gen_software_capabilities" });
+scalarFields.set("blocks.gen_software_capabilities", { type: "uint64", path: "doc.gen_software_capabilities" });
 scalarFields.set("blocks.gen_software_version", { type: "number", path: "doc.gen_software_version" });
 scalarFields.set("blocks.gen_utime", { type: "number", path: "doc.gen_utime" });
 scalarFields.set("blocks.gen_validator_list_hash_short", { type: "number", path: "doc.gen_validator_list_hash_short" });
