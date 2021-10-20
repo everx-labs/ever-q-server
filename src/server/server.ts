@@ -312,12 +312,13 @@ export default class TONQServer {
             path: "/graphql",
             resolvers,
             typeDefFileNames: [
-                "type-defs-generated.graphql",
-                "type-defs-custom.graphql",
-                "type-defs-counterparties.graphql",
+                "type-defs-info.graphql",
                 "type-defs-blockchain/blockchain.graphql",
                 "type-defs-blockchain/common.graphql",
                 "type-defs-blockchain/transaction.graphql",
+                "type-defs-generated.graphql",
+                "type-defs-counterparties.graphql",
+                "type-defs-custom.graphql",
             ],
             supportSubscriptions: true,
         });

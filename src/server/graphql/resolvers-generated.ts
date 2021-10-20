@@ -63,7 +63,296 @@ const OutMsg = struct({
     transaction_id: stringLowerFilter,
 });
 
+const GasLimitsPrices = struct({
+    block_gas_limit: bigUInt1,
+    delete_due_limit: bigUInt1,
+    flat_gas_limit: bigUInt1,
+    flat_gas_price: bigUInt1,
+    freeze_due_limit: bigUInt1,
+    gas_credit: bigUInt1,
+    gas_limit: bigUInt1,
+    gas_price: bigUInt1,
+    special_gas_limit: bigUInt1,
+});
+
+const BlockLimitsBytes = struct({
+    hard_limit: scalar,
+    soft_limit: scalar,
+    underload: scalar,
+});
+
+const BlockLimitsGas = struct({
+    hard_limit: scalar,
+    soft_limit: scalar,
+    underload: scalar,
+});
+
+const BlockLimitsLtDelta = struct({
+    hard_limit: scalar,
+    soft_limit: scalar,
+    underload: scalar,
+});
+
+const BlockLimits = struct({
+    bytes: BlockLimitsBytes,
+    gas: BlockLimitsGas,
+    lt_delta: BlockLimitsLtDelta,
+});
+
+const MsgForwardPrices = struct({
+    bit_price: bigUInt1,
+    cell_price: bigUInt1,
+    first_frac: scalar,
+    ihr_price_factor: scalar,
+    lump_price: bigUInt1,
+    next_frac: scalar,
+});
+
+const ValidatorSetList = struct({
+    adnl_addr: scalar,
+    public_key: stringLowerFilter,
+    weight: bigUInt1,
+});
+
+const ValidatorSetListArray = array(() => ValidatorSetList);
+const ValidatorSet = struct({
+    list: ValidatorSetListArray,
+    main: scalar,
+    total: scalar,
+    total_weight: bigUInt1,
+    utime_since: scalar,
+    utime_since_string: stringCompanion("utime_since"),
+    utime_until: scalar,
+    utime_until_string: stringCompanion("utime_until"),
+});
+
+const ConfigProposalSetup = struct({
+    bit_price: scalar,
+    cell_price: scalar,
+    max_losses: scalar,
+    max_store_sec: scalar,
+    max_tot_rounds: scalar,
+    min_store_sec: scalar,
+    min_tot_rounds: scalar,
+    min_wins: scalar,
+});
+
+const ConfigP6 = struct({
+    mint_add_price: scalar,
+    mint_new_price: scalar,
+});
+
+const ConfigP7 = struct({
+    currency: scalar,
+    value: scalar,
+});
+
+const ConfigP8 = struct({
+    capabilities: bigUInt1,
+    version: scalar,
+});
+
+const ConfigP11 = struct({
+    critical_params: ConfigProposalSetup,
+    normal_params: ConfigProposalSetup,
+});
+
+const ConfigP12 = struct({
+    accept_msgs: scalar,
+    active: scalar,
+    actual_min_split: scalar,
+    addr_len_step: scalar,
+    basic: scalar,
+    enabled_since: scalar,
+    flags: scalar,
+    max_addr_len: scalar,
+    max_split: scalar,
+    min_addr_len: scalar,
+    min_split: scalar,
+    version: scalar,
+    vm_mode: scalar,
+    vm_version: scalar,
+    workchain_id: scalar,
+    workchain_type_id: scalar,
+    zerostate_file_hash: scalar,
+    zerostate_root_hash: scalar,
+});
+
+const ConfigP14 = struct({
+    basechain_block_fee: bigUInt2,
+    masterchain_block_fee: bigUInt2,
+});
+
+const ConfigP15 = struct({
+    elections_end_before: scalar,
+    elections_start_before: scalar,
+    stake_held_for: scalar,
+    validators_elected_for: scalar,
+});
+
+const ConfigP16 = struct({
+    max_main_validators: scalar,
+    max_validators: scalar,
+    min_validators: scalar,
+});
+
+const ConfigP17 = struct({
+    max_stake: bigUInt2,
+    max_stake_factor: scalar,
+    min_stake: bigUInt2,
+    min_total_stake: bigUInt2,
+});
+
+const ConfigP18 = struct({
+    bit_price_ps: bigUInt1,
+    cell_price_ps: bigUInt1,
+    mc_bit_price_ps: bigUInt1,
+    mc_cell_price_ps: bigUInt1,
+    utime_since: scalar,
+    utime_since_string: stringCompanion("utime_since"),
+});
+
+const ConfigP28 = struct({
+    mc_catchain_lifetime: scalar,
+    shard_catchain_lifetime: scalar,
+    shard_validators_lifetime: scalar,
+    shard_validators_num: scalar,
+    shuffle_mc_validators: scalar,
+});
+
+const ConfigP29 = struct({
+    attempt_duration: scalar,
+    catchain_max_deps: scalar,
+    consensus_timeout_ms: scalar,
+    fast_attempts: scalar,
+    max_block_bytes: scalar,
+    max_collated_bytes: scalar,
+    new_catchain_ids: scalar,
+    next_candidate_delay_ms: scalar,
+    round_candidates: scalar,
+});
+
+const ConfigP39 = struct({
+    adnl_addr: scalar,
+    seqno: scalar,
+    signature_r: scalar,
+    signature_s: scalar,
+    temp_public_key: scalar,
+    valid_until: scalar,
+});
+
+const FloatArray = array(() => scalar);
+const ConfigP12Array = array(() => ConfigP12);
+const ConfigP18Array = array(() => ConfigP18);
+const StringArray = array(() => scalar);
+const ConfigP39Array = array(() => ConfigP39);
+const ConfigP7Array = array(() => ConfigP7);
+const Config = struct({
+    p0: scalar,
+    p1: scalar,
+    p10: FloatArray,
+    p11: ConfigP11,
+    p12: ConfigP12Array,
+    p14: ConfigP14,
+    p15: ConfigP15,
+    p16: ConfigP16,
+    p17: ConfigP17,
+    p18: ConfigP18Array,
+    p2: scalar,
+    p20: GasLimitsPrices,
+    p21: GasLimitsPrices,
+    p22: BlockLimits,
+    p23: BlockLimits,
+    p24: MsgForwardPrices,
+    p25: MsgForwardPrices,
+    p28: ConfigP28,
+    p29: ConfigP29,
+    p3: scalar,
+    p31: StringArray,
+    p32: ValidatorSet,
+    p33: ValidatorSet,
+    p34: ValidatorSet,
+    p35: ValidatorSet,
+    p36: ValidatorSet,
+    p37: ValidatorSet,
+    p39: ConfigP39Array,
+    p4: scalar,
+    p6: ConfigP6,
+    p7: ConfigP7Array,
+    p8: ConfigP8,
+    p9: FloatArray,
+});
+
+const TransactionStorage = struct({
+    status_change: scalar,
+    status_change_name: enumName("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+    storage_fees_collected: bigUInt2,
+    storage_fees_due: bigUInt2,
+});
+
 const OtherCurrencyArray = array(() => OtherCurrency);
+const TransactionCredit = struct({
+    credit: bigUInt2,
+    credit_other: OtherCurrencyArray,
+    due_fees_collected: bigUInt2,
+});
+
+const TransactionCompute = struct({
+    account_activated: scalar,
+    compute_type: scalar,
+    compute_type_name: enumName("compute_type", { Skipped: 0, Vm: 1 }),
+    exit_arg: scalar,
+    exit_code: scalar,
+    gas_credit: scalar,
+    gas_fees: bigUInt2,
+    gas_limit: bigUInt1,
+    gas_used: bigUInt1,
+    mode: scalar,
+    msg_state_used: scalar,
+    skipped_reason: scalar,
+    skipped_reason_name: enumName("skipped_reason", { NoState: 0, BadState: 1, NoGas: 2 }),
+    success: scalar,
+    vm_final_state_hash: stringLowerFilter,
+    vm_init_state_hash: stringLowerFilter,
+    vm_steps: scalar,
+});
+
+const TransactionAction = struct({
+    action_list_hash: stringLowerFilter,
+    msgs_created: scalar,
+    no_funds: scalar,
+    result_arg: scalar,
+    result_code: scalar,
+    skipped_actions: scalar,
+    spec_actions: scalar,
+    status_change: scalar,
+    status_change_name: enumName("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+    success: scalar,
+    tot_actions: scalar,
+    total_action_fees: bigUInt2,
+    total_fwd_fees: bigUInt2,
+    total_msg_size_bits: scalar,
+    total_msg_size_cells: scalar,
+    valid: scalar,
+});
+
+const TransactionBounce = struct({
+    bounce_type: scalar,
+    bounce_type_name: enumName("bounce_type", { NegFunds: 0, NoFunds: 1, Ok: 2 }),
+    fwd_fees: bigUInt2,
+    msg_fees: bigUInt2,
+    msg_size_bits: scalar,
+    msg_size_cells: scalar,
+    req_fwd_fees: bigUInt2,
+});
+
+const TransactionSplitInfo = struct({
+    acc_split_depth: scalar,
+    cur_shard_pfx_len: scalar,
+    sibling_addr: stringLowerFilter,
+    this_addr: stringLowerFilter,
+});
+
 const BlockValueFlow = struct({
     created: bigUInt2,
     created_other: OtherCurrencyArray,
@@ -156,226 +445,6 @@ const BlockMasterPrevBlkSignatures = struct({
     s: stringLowerFilter,
 });
 
-const ConfigP6 = struct({
-    mint_add_price: scalar,
-    mint_new_price: scalar,
-});
-
-const ConfigP7 = struct({
-    currency: scalar,
-    value: scalar,
-});
-
-const ConfigP8 = struct({
-    capabilities: bigUInt1,
-    version: scalar,
-});
-
-const ConfigProposalSetup = struct({
-    bit_price: scalar,
-    cell_price: scalar,
-    max_losses: scalar,
-    max_store_sec: scalar,
-    max_tot_rounds: scalar,
-    min_store_sec: scalar,
-    min_tot_rounds: scalar,
-    min_wins: scalar,
-});
-
-const ConfigP11 = struct({
-    critical_params: ConfigProposalSetup,
-    normal_params: ConfigProposalSetup,
-});
-
-const ConfigP12 = struct({
-    accept_msgs: scalar,
-    active: scalar,
-    actual_min_split: scalar,
-    addr_len_step: scalar,
-    basic: scalar,
-    enabled_since: scalar,
-    flags: scalar,
-    max_addr_len: scalar,
-    max_split: scalar,
-    min_addr_len: scalar,
-    min_split: scalar,
-    version: scalar,
-    vm_mode: scalar,
-    vm_version: scalar,
-    workchain_id: scalar,
-    workchain_type_id: scalar,
-    zerostate_file_hash: scalar,
-    zerostate_root_hash: scalar,
-});
-
-const ConfigP14 = struct({
-    basechain_block_fee: bigUInt2,
-    masterchain_block_fee: bigUInt2,
-});
-
-const ConfigP15 = struct({
-    elections_end_before: scalar,
-    elections_start_before: scalar,
-    stake_held_for: scalar,
-    validators_elected_for: scalar,
-});
-
-const ConfigP16 = struct({
-    max_main_validators: scalar,
-    max_validators: scalar,
-    min_validators: scalar,
-});
-
-const ConfigP17 = struct({
-    max_stake: bigUInt2,
-    max_stake_factor: scalar,
-    min_stake: bigUInt2,
-    min_total_stake: bigUInt2,
-});
-
-const ConfigP18 = struct({
-    bit_price_ps: bigUInt1,
-    cell_price_ps: bigUInt1,
-    mc_bit_price_ps: bigUInt1,
-    mc_cell_price_ps: bigUInt1,
-    utime_since: scalar,
-    utime_since_string: stringCompanion("utime_since"),
-});
-
-const GasLimitsPrices = struct({
-    block_gas_limit: bigUInt1,
-    delete_due_limit: bigUInt1,
-    flat_gas_limit: bigUInt1,
-    flat_gas_price: bigUInt1,
-    freeze_due_limit: bigUInt1,
-    gas_credit: bigUInt1,
-    gas_limit: bigUInt1,
-    gas_price: bigUInt1,
-    special_gas_limit: bigUInt1,
-});
-
-const BlockLimitsBytes = struct({
-    hard_limit: scalar,
-    soft_limit: scalar,
-    underload: scalar,
-});
-
-const BlockLimitsGas = struct({
-    hard_limit: scalar,
-    soft_limit: scalar,
-    underload: scalar,
-});
-
-const BlockLimitsLtDelta = struct({
-    hard_limit: scalar,
-    soft_limit: scalar,
-    underload: scalar,
-});
-
-const BlockLimits = struct({
-    bytes: BlockLimitsBytes,
-    gas: BlockLimitsGas,
-    lt_delta: BlockLimitsLtDelta,
-});
-
-const MsgForwardPrices = struct({
-    bit_price: bigUInt1,
-    cell_price: bigUInt1,
-    first_frac: scalar,
-    ihr_price_factor: scalar,
-    lump_price: bigUInt1,
-    next_frac: scalar,
-});
-
-const ConfigP28 = struct({
-    mc_catchain_lifetime: scalar,
-    shard_catchain_lifetime: scalar,
-    shard_validators_lifetime: scalar,
-    shard_validators_num: scalar,
-    shuffle_mc_validators: scalar,
-});
-
-const ConfigP29 = struct({
-    attempt_duration: scalar,
-    catchain_max_deps: scalar,
-    consensus_timeout_ms: scalar,
-    fast_attempts: scalar,
-    max_block_bytes: scalar,
-    max_collated_bytes: scalar,
-    new_catchain_ids: scalar,
-    next_candidate_delay_ms: scalar,
-    round_candidates: scalar,
-});
-
-const ValidatorSetList = struct({
-    adnl_addr: scalar,
-    public_key: stringLowerFilter,
-    weight: bigUInt1,
-});
-
-const ValidatorSetListArray = array(() => ValidatorSetList);
-const ValidatorSet = struct({
-    list: ValidatorSetListArray,
-    main: scalar,
-    total: scalar,
-    total_weight: bigUInt1,
-    utime_since: scalar,
-    utime_since_string: stringCompanion("utime_since"),
-    utime_until: scalar,
-    utime_until_string: stringCompanion("utime_until"),
-});
-
-const ConfigP39 = struct({
-    adnl_addr: scalar,
-    seqno: scalar,
-    signature_r: scalar,
-    signature_s: scalar,
-    temp_public_key: scalar,
-    valid_until: scalar,
-});
-
-const FloatArray = array(() => scalar);
-const ConfigP12Array = array(() => ConfigP12);
-const ConfigP18Array = array(() => ConfigP18);
-const StringArray = array(() => scalar);
-const ConfigP39Array = array(() => ConfigP39);
-const ConfigP7Array = array(() => ConfigP7);
-const Config = struct({
-    p0: scalar,
-    p1: scalar,
-    p10: FloatArray,
-    p11: ConfigP11,
-    p12: ConfigP12Array,
-    p14: ConfigP14,
-    p15: ConfigP15,
-    p16: ConfigP16,
-    p17: ConfigP17,
-    p18: ConfigP18Array,
-    p2: scalar,
-    p20: GasLimitsPrices,
-    p21: GasLimitsPrices,
-    p22: BlockLimits,
-    p23: BlockLimits,
-    p24: MsgForwardPrices,
-    p25: MsgForwardPrices,
-    p28: ConfigP28,
-    p29: ConfigP29,
-    p3: scalar,
-    p31: StringArray,
-    p32: ValidatorSet,
-    p33: ValidatorSet,
-    p34: ValidatorSet,
-    p35: ValidatorSet,
-    p36: ValidatorSet,
-    p37: ValidatorSet,
-    p39: ConfigP39Array,
-    p4: scalar,
-    p6: ConfigP6,
-    p7: ConfigP7Array,
-    p8: ConfigP8,
-    p9: FloatArray,
-});
-
 const BlockMasterPrevBlkSignaturesArray = array(() => BlockMasterPrevBlkSignatures);
 const BlockMasterShardFeesArray = array(() => BlockMasterShardFees);
 const BlockMasterShardHashesArray = array(() => BlockMasterShardHashes);
@@ -398,70 +467,46 @@ const BlockSignaturesSignatures = struct({
     s: stringLowerFilter,
 });
 
-const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
-const BlockSignatures = struct({
-    id: scalar,
-    block: join("id", "id", "blocks", [], () => Block),
-    catchain_seqno: scalar,
-    gen_utime: scalar,
-    gen_utime_string: stringCompanion("gen_utime"),
-    proof: scalar,
-    seq_no: scalar,
-    shard: scalar,
-    sig_weight: bigUInt1,
-    signatures: BlockSignaturesSignaturesArray,
+const ZerostateMaster = struct({
+    config: Config,
+    config_addr: stringLowerFilter,
+    global_balance: bigUInt2,
+    global_balance_other: OtherCurrencyArray,
     validator_list_hash_short: scalar,
-    workchain_id: scalar,
-}, true);
+});
 
-const BlockAccountBlocksArray = array(() => BlockAccountBlocks);
-const InMsgArray = array(() => InMsg);
-const OutMsgArray = array(() => OutMsg);
-const Block = struct({
-    id: scalar,
-    account_blocks: BlockAccountBlocksArray,
-    after_merge: scalar,
-    after_split: scalar,
-    before_split: scalar,
+const ZerostateAccounts = struct({
+    id: stringLowerFilter,
+    acc_type: scalar,
+    acc_type_name: enumName("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
+    balance: bigUInt2,
+    balance_other: OtherCurrencyArray,
+    bits: bigUInt1,
     boc: scalar,
-    chain_order: stringLowerFilter,
-    created_by: scalar,
-    end_lt: bigUInt1,
-    flags: scalar,
-    gen_catchain_seqno: scalar,
-    gen_software_capabilities: scalar,
-    gen_software_version: scalar,
-    gen_utime: scalar,
-    gen_utime_string: stringCompanion("gen_utime"),
-    gen_validator_list_hash_short: scalar,
-    global_id: scalar,
-    in_msg_descr: InMsgArray,
-    key_block: scalar,
-    master: BlockMaster,
-    master_ref: ExtBlkRef,
-    min_ref_mc_seqno: scalar,
-    out_msg_descr: OutMsgArray,
-    prev_alt_ref: ExtBlkRef,
-    prev_key_block_seqno: scalar,
-    prev_ref: ExtBlkRef,
-    prev_vert_alt_ref: ExtBlkRef,
-    prev_vert_ref: ExtBlkRef,
-    rand_seed: scalar,
-    seq_no: scalar,
-    shard: scalar,
-    signatures: join("id", "id", "blocks_signatures", [], () => BlockSignatures),
-    start_lt: bigUInt1,
-    state_update: BlockStateUpdate,
-    status: scalar,
-    status_name: enumName("status", { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
-    tr_count: scalar,
-    value_flow: BlockValueFlow,
-    version: scalar,
-    vert_seq_no: scalar,
-    want_merge: scalar,
-    want_split: scalar,
+    cells: bigUInt1,
+    code: scalar,
+    code_hash: stringLowerFilter,
+    data: scalar,
+    data_hash: stringLowerFilter,
+    due_payment: bigUInt2,
+    last_paid: scalar,
+    last_trans_lt: bigUInt1,
+    library: scalar,
+    library_hash: stringLowerFilter,
+    proof: scalar,
+    public_cells: bigUInt1,
+    split_depth: scalar,
+    state_hash: stringLowerFilter,
+    tick: scalar,
+    tock: scalar,
     workchain_id: scalar,
-}, true);
+});
+
+const ZerostateLibraries = struct({
+    hash: stringLowerFilter,
+    lib: scalar,
+    publishers: StringArray,
+});
 
 const Account = struct({
     id: scalar,
@@ -489,75 +534,6 @@ const Account = struct({
     tock: scalar,
     workchain_id: scalar,
 }, true);
-
-const TransactionStorage = struct({
-    status_change: scalar,
-    status_change_name: enumName("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-    storage_fees_collected: bigUInt2,
-    storage_fees_due: bigUInt2,
-});
-
-const TransactionCredit = struct({
-    credit: bigUInt2,
-    credit_other: OtherCurrencyArray,
-    due_fees_collected: bigUInt2,
-});
-
-const TransactionCompute = struct({
-    account_activated: scalar,
-    compute_type: scalar,
-    compute_type_name: enumName("compute_type", { Skipped: 0, Vm: 1 }),
-    exit_arg: scalar,
-    exit_code: scalar,
-    gas_credit: scalar,
-    gas_fees: bigUInt2,
-    gas_limit: bigUInt1,
-    gas_used: bigUInt1,
-    mode: scalar,
-    msg_state_used: scalar,
-    skipped_reason: scalar,
-    skipped_reason_name: enumName("skipped_reason", { NoState: 0, BadState: 1, NoGas: 2 }),
-    success: scalar,
-    vm_final_state_hash: stringLowerFilter,
-    vm_init_state_hash: stringLowerFilter,
-    vm_steps: scalar,
-});
-
-const TransactionAction = struct({
-    action_list_hash: stringLowerFilter,
-    msgs_created: scalar,
-    no_funds: scalar,
-    result_arg: scalar,
-    result_code: scalar,
-    skipped_actions: scalar,
-    spec_actions: scalar,
-    status_change: scalar,
-    status_change_name: enumName("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-    success: scalar,
-    tot_actions: scalar,
-    total_action_fees: bigUInt2,
-    total_fwd_fees: bigUInt2,
-    total_msg_size_bits: scalar,
-    total_msg_size_cells: scalar,
-    valid: scalar,
-});
-
-const TransactionBounce = struct({
-    bounce_type: scalar,
-    bounce_type_name: enumName("bounce_type", { NegFunds: 0, NoFunds: 1, Ok: 2 }),
-    fwd_fees: bigUInt2,
-    msg_fees: bigUInt2,
-    msg_size_bits: scalar,
-    msg_size_cells: scalar,
-    req_fwd_fees: bigUInt2,
-});
-
-const TransactionSplitInfo = struct({
-    acc_split_depth: scalar,
-    cur_shard_pfx_len: scalar,
-    sibling_addr: stringLowerFilter,
-    this_addr: stringLowerFilter,
-});
 
 const Transaction = struct({
     id: scalar,
@@ -651,46 +627,71 @@ const Message = struct({
     value_other: OtherCurrencyArray,
 }, true);
 
-const ZerostateMaster = struct({
-    config: Config,
-    config_addr: stringLowerFilter,
-    global_balance: bigUInt2,
-    global_balance_other: OtherCurrencyArray,
-    validator_list_hash_short: scalar,
-});
-
-const ZerostateAccounts = struct({
-    id: stringLowerFilter,
-    acc_type: scalar,
-    acc_type_name: enumName("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-    balance: bigUInt2,
-    balance_other: OtherCurrencyArray,
-    bits: bigUInt1,
+const BlockAccountBlocksArray = array(() => BlockAccountBlocks);
+const InMsgArray = array(() => InMsg);
+const OutMsgArray = array(() => OutMsg);
+const Block = struct({
+    id: scalar,
+    account_blocks: BlockAccountBlocksArray,
+    after_merge: scalar,
+    after_split: scalar,
+    before_split: scalar,
     boc: scalar,
-    cells: bigUInt1,
-    code: scalar,
-    code_hash: stringLowerFilter,
-    data: scalar,
-    data_hash: stringLowerFilter,
-    due_payment: bigUInt2,
-    last_paid: scalar,
-    last_trans_lt: bigUInt1,
-    library: scalar,
-    library_hash: stringLowerFilter,
-    proof: scalar,
-    public_cells: bigUInt1,
-    split_depth: scalar,
-    state_hash: stringLowerFilter,
-    tick: scalar,
-    tock: scalar,
+    chain_order: stringLowerFilter,
+    created_by: scalar,
+    end_lt: bigUInt1,
+    file_hash: stringLowerFilter,
+    flags: scalar,
+    gen_catchain_seqno: scalar,
+    gen_software_capabilities: bigUInt1,
+    gen_software_version: scalar,
+    gen_utime: scalar,
+    gen_utime_string: stringCompanion("gen_utime"),
+    gen_validator_list_hash_short: scalar,
+    global_id: scalar,
+    in_msg_descr: InMsgArray,
+    key_block: scalar,
+    master: BlockMaster,
+    master_ref: ExtBlkRef,
+    min_ref_mc_seqno: scalar,
+    out_msg_descr: OutMsgArray,
+    prev_alt_ref: ExtBlkRef,
+    prev_key_block_seqno: scalar,
+    prev_ref: ExtBlkRef,
+    prev_vert_alt_ref: ExtBlkRef,
+    prev_vert_ref: ExtBlkRef,
+    rand_seed: scalar,
+    seq_no: scalar,
+    shard: scalar,
+    signatures: join("id", "id", "blocks_signatures", [], () => BlockSignatures),
+    start_lt: bigUInt1,
+    state_update: BlockStateUpdate,
+    status: scalar,
+    status_name: enumName("status", { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
+    tr_count: scalar,
+    value_flow: BlockValueFlow,
+    version: scalar,
+    vert_seq_no: scalar,
+    want_merge: scalar,
+    want_split: scalar,
     workchain_id: scalar,
-});
+}, true);
 
-const ZerostateLibraries = struct({
-    hash: stringLowerFilter,
-    lib: scalar,
-    publishers: StringArray,
-});
+const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures);
+const BlockSignatures = struct({
+    id: scalar,
+    block: join("id", "id", "blocks", [], () => Block),
+    catchain_seqno: scalar,
+    gen_utime: scalar,
+    gen_utime_string: stringCompanion("gen_utime"),
+    proof: scalar,
+    seq_no: scalar,
+    shard: scalar,
+    sig_weight: bigUInt1,
+    signatures: BlockSignaturesSignaturesArray,
+    validator_list_hash_short: scalar,
+    workchain_id: scalar,
+}, true);
 
 const ZerostateAccountsArray = array(() => ZerostateAccounts);
 const ZerostateLibrariesArray = array(() => ZerostateLibraries);
@@ -698,9 +699,11 @@ const Zerostate = struct({
     id: scalar,
     accounts: ZerostateAccountsArray,
     boc: scalar,
+    file_hash: stringLowerFilter,
     global_id: scalar,
     libraries: ZerostateLibrariesArray,
     master: ZerostateMaster,
+    root_hash: stringLowerFilter,
     total_balance: bigUInt2,
     total_balance_other: OtherCurrencyArray,
     workchain_id: scalar,
@@ -743,6 +746,154 @@ function createResolvers(data: QBlockchainData) {
                 return resolveBigUInt(1, parent.next_addr_pfx, args);
             },
             msg_type_name: createEnumNameResolver("msg_type", { External: 0, Immediately: 1, OutMsgNew: 2, Transit: 3, DequeueImmediately: 4, Dequeue: 5, TransitRequired: 6, DequeueShort: 7, None: -1 }),
+        },
+        GasLimitsPrices: {
+            block_gas_limit(parent: { block_gas_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.block_gas_limit, args);
+            },
+            delete_due_limit(parent: { delete_due_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.delete_due_limit, args);
+            },
+            flat_gas_limit(parent: { flat_gas_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.flat_gas_limit, args);
+            },
+            flat_gas_price(parent: { flat_gas_price: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.flat_gas_price, args);
+            },
+            freeze_due_limit(parent: { freeze_due_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.freeze_due_limit, args);
+            },
+            gas_credit(parent: { gas_credit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gas_credit, args);
+            },
+            gas_limit(parent: { gas_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gas_limit, args);
+            },
+            gas_price(parent: { gas_price: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gas_price, args);
+            },
+            special_gas_limit(parent: { special_gas_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.special_gas_limit, args);
+            },
+        },
+        MsgForwardPrices: {
+            bit_price(parent: { bit_price: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.bit_price, args);
+            },
+            cell_price(parent: { cell_price: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.cell_price, args);
+            },
+            lump_price(parent: { lump_price: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.lump_price, args);
+            },
+        },
+        ValidatorSetList: {
+            weight(parent: { weight: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.weight, args);
+            },
+        },
+        ValidatorSet: {
+            total_weight(parent: { total_weight: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.total_weight, args);
+            },
+            utime_since_string(parent: { utime_since: number }) {
+                return unixSecondsToString(parent.utime_since);
+            },
+            utime_until_string(parent: { utime_until: number }) {
+                return unixSecondsToString(parent.utime_until);
+            },
+        },
+        ConfigP8: {
+            capabilities(parent: { capabilities: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.capabilities, args);
+            },
+        },
+        ConfigP14: {
+            basechain_block_fee(parent: { basechain_block_fee: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.basechain_block_fee, args);
+            },
+            masterchain_block_fee(parent: { masterchain_block_fee: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.masterchain_block_fee, args);
+            },
+        },
+        ConfigP17: {
+            max_stake(parent: { max_stake: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.max_stake, args);
+            },
+            min_stake(parent: { min_stake: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.min_stake, args);
+            },
+            min_total_stake(parent: { min_total_stake: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.min_total_stake, args);
+            },
+        },
+        ConfigP18: {
+            bit_price_ps(parent: { bit_price_ps: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.bit_price_ps, args);
+            },
+            cell_price_ps(parent: { cell_price_ps: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.cell_price_ps, args);
+            },
+            mc_bit_price_ps(parent: { mc_bit_price_ps: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.mc_bit_price_ps, args);
+            },
+            mc_cell_price_ps(parent: { mc_cell_price_ps: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.mc_cell_price_ps, args);
+            },
+            utime_since_string(parent: { utime_since: number }) {
+                return unixSecondsToString(parent.utime_since);
+            },
+        },
+        TransactionStorage: {
+            storage_fees_collected(parent: { storage_fees_collected: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.storage_fees_collected, args);
+            },
+            storage_fees_due(parent: { storage_fees_due: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.storage_fees_due, args);
+            },
+            status_change_name: createEnumNameResolver("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+        },
+        TransactionCredit: {
+            credit(parent: { credit: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.credit, args);
+            },
+            due_fees_collected(parent: { due_fees_collected: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.due_fees_collected, args);
+            },
+        },
+        TransactionCompute: {
+            gas_fees(parent: { gas_fees: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.gas_fees, args);
+            },
+            gas_limit(parent: { gas_limit: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gas_limit, args);
+            },
+            gas_used(parent: { gas_used: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gas_used, args);
+            },
+            compute_type_name: createEnumNameResolver("compute_type", { Skipped: 0, Vm: 1 }),
+            skipped_reason_name: createEnumNameResolver("skipped_reason", { NoState: 0, BadState: 1, NoGas: 2 }),
+        },
+        TransactionAction: {
+            total_action_fees(parent: { total_action_fees: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.total_action_fees, args);
+            },
+            total_fwd_fees(parent: { total_fwd_fees: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.total_fwd_fees, args);
+            },
+            status_change_name: createEnumNameResolver("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
+        },
+        TransactionBounce: {
+            fwd_fees(parent: { fwd_fees: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.fwd_fees, args);
+            },
+            msg_fees(parent: { msg_fees: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.msg_fees, args);
+            },
+            req_fwd_fees(parent: { req_fwd_fees: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.req_fwd_fees, args);
+            },
+            bounce_type_name: createEnumNameResolver("bounce_type", { NegFunds: 0, NoFunds: 1, Ok: 2 }),
         },
         BlockValueFlow: {
             created(parent: { created: string }, args: BigIntArgs) {
@@ -804,128 +955,31 @@ function createResolvers(data: QBlockchainData) {
                 return resolveBigUInt(2, parent.fees, args);
             },
         },
-        ConfigP8: {
-            capabilities(parent: { capabilities: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.capabilities, args);
+        ZerostateMaster: {
+            global_balance(parent: { global_balance: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.global_balance, args);
             },
         },
-        ConfigP14: {
-            basechain_block_fee(parent: { basechain_block_fee: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.basechain_block_fee, args);
+        ZerostateAccounts: {
+            balance(parent: { balance: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.balance, args);
             },
-            masterchain_block_fee(parent: { masterchain_block_fee: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.masterchain_block_fee, args);
+            bits(parent: { bits: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.bits, args);
             },
-        },
-        ConfigP17: {
-            max_stake(parent: { max_stake: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.max_stake, args);
+            cells(parent: { cells: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.cells, args);
             },
-            min_stake(parent: { min_stake: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.min_stake, args);
+            due_payment(parent: { due_payment: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.due_payment, args);
             },
-            min_total_stake(parent: { min_total_stake: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.min_total_stake, args);
+            last_trans_lt(parent: { last_trans_lt: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.last_trans_lt, args);
             },
-        },
-        ConfigP18: {
-            bit_price_ps(parent: { bit_price_ps: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.bit_price_ps, args);
+            public_cells(parent: { public_cells: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.public_cells, args);
             },
-            cell_price_ps(parent: { cell_price_ps: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.cell_price_ps, args);
-            },
-            mc_bit_price_ps(parent: { mc_bit_price_ps: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.mc_bit_price_ps, args);
-            },
-            mc_cell_price_ps(parent: { mc_cell_price_ps: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.mc_cell_price_ps, args);
-            },
-            utime_since_string(parent: { utime_since: number }) {
-                return unixSecondsToString(parent.utime_since);
-            },
-        },
-        GasLimitsPrices: {
-            block_gas_limit(parent: { block_gas_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.block_gas_limit, args);
-            },
-            delete_due_limit(parent: { delete_due_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.delete_due_limit, args);
-            },
-            flat_gas_limit(parent: { flat_gas_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.flat_gas_limit, args);
-            },
-            flat_gas_price(parent: { flat_gas_price: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.flat_gas_price, args);
-            },
-            freeze_due_limit(parent: { freeze_due_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.freeze_due_limit, args);
-            },
-            gas_credit(parent: { gas_credit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.gas_credit, args);
-            },
-            gas_limit(parent: { gas_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.gas_limit, args);
-            },
-            gas_price(parent: { gas_price: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.gas_price, args);
-            },
-            special_gas_limit(parent: { special_gas_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.special_gas_limit, args);
-            },
-        },
-        MsgForwardPrices: {
-            bit_price(parent: { bit_price: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.bit_price, args);
-            },
-            cell_price(parent: { cell_price: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.cell_price, args);
-            },
-            lump_price(parent: { lump_price: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.lump_price, args);
-            },
-        },
-        ValidatorSetList: {
-            weight(parent: { weight: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.weight, args);
-            },
-        },
-        ValidatorSet: {
-            total_weight(parent: { total_weight: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.total_weight, args);
-            },
-            utime_since_string(parent: { utime_since: number }) {
-                return unixSecondsToString(parent.utime_since);
-            },
-            utime_until_string(parent: { utime_until: number }) {
-                return unixSecondsToString(parent.utime_until);
-            },
-        },
-        BlockSignatures: {
-            id(parent: { _key: string }) {
-                return parent._key;
-            },
-            sig_weight(parent: { sig_weight: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.sig_weight, args);
-            },
-            gen_utime_string(parent: { gen_utime: number }) {
-                return unixSecondsToString(parent.gen_utime);
-            },
-        },
-        Block: {
-            id(parent: { _key: string }) {
-                return parent._key;
-            },
-            end_lt(parent: { end_lt: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.end_lt, args);
-            },
-            start_lt(parent: { start_lt: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.start_lt, args);
-            },
-            gen_utime_string(parent: { gen_utime: number }) {
-                return unixSecondsToString(parent.gen_utime);
-            },
-            status_name: createEnumNameResolver("status", { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
+            acc_type_name: createEnumNameResolver("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Account: {
             id(parent: { _key: string }) {
@@ -950,57 +1004,6 @@ function createResolvers(data: QBlockchainData) {
                 return resolveBigUInt(1, parent.public_cells, args);
             },
             acc_type_name: createEnumNameResolver("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
-        },
-        TransactionStorage: {
-            storage_fees_collected(parent: { storage_fees_collected: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.storage_fees_collected, args);
-            },
-            storage_fees_due(parent: { storage_fees_due: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.storage_fees_due, args);
-            },
-            status_change_name: createEnumNameResolver("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-        },
-        TransactionCredit: {
-            credit(parent: { credit: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.credit, args);
-            },
-            due_fees_collected(parent: { due_fees_collected: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.due_fees_collected, args);
-            },
-        },
-        TransactionCompute: {
-            gas_fees(parent: { gas_fees: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.gas_fees, args);
-            },
-            gas_limit(parent: { gas_limit: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.gas_limit, args);
-            },
-            gas_used(parent: { gas_used: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.gas_used, args);
-            },
-            compute_type_name: createEnumNameResolver("compute_type", { Skipped: 0, Vm: 1 }),
-            skipped_reason_name: createEnumNameResolver("skipped_reason", { NoState: 0, BadState: 1, NoGas: 2 }),
-        },
-        TransactionAction: {
-            total_action_fees(parent: { total_action_fees: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.total_action_fees, args);
-            },
-            total_fwd_fees(parent: { total_fwd_fees: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.total_fwd_fees, args);
-            },
-            status_change_name: createEnumNameResolver("status_change", { Unchanged: 0, Frozen: 1, Deleted: 2 }),
-        },
-        TransactionBounce: {
-            fwd_fees(parent: { fwd_fees: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.fwd_fees, args);
-            },
-            msg_fees(parent: { msg_fees: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.msg_fees, args);
-            },
-            req_fwd_fees(parent: { req_fwd_fees: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.req_fwd_fees, args);
-            },
-            bounce_type_name: createEnumNameResolver("bounce_type", { NegFunds: 0, NoFunds: 1, Ok: 2 }),
         },
         Transaction: {
             id(parent: { _key: string }) {
@@ -1054,31 +1057,34 @@ function createResolvers(data: QBlockchainData) {
             msg_type_name: createEnumNameResolver("msg_type", { Internal: 0, ExtIn: 1, ExtOut: 2 }),
             status_name: createEnumNameResolver("status", { Unknown: 0, Queued: 1, Processing: 2, Preliminary: 3, Proposed: 4, Finalized: 5, Refused: 6, Transiting: 7 }),
         },
-        ZerostateMaster: {
-            global_balance(parent: { global_balance: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.global_balance, args);
+        Block: {
+            id(parent: { _key: string }) {
+                return parent._key;
             },
+            end_lt(parent: { end_lt: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.end_lt, args);
+            },
+            gen_software_capabilities(parent: { gen_software_capabilities: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.gen_software_capabilities, args);
+            },
+            start_lt(parent: { start_lt: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.start_lt, args);
+            },
+            gen_utime_string(parent: { gen_utime: number }) {
+                return unixSecondsToString(parent.gen_utime);
+            },
+            status_name: createEnumNameResolver("status", { Unknown: 0, Proposed: 1, Finalized: 2, Refused: 3 }),
         },
-        ZerostateAccounts: {
-            balance(parent: { balance: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.balance, args);
+        BlockSignatures: {
+            id(parent: { _key: string }) {
+                return parent._key;
             },
-            bits(parent: { bits: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.bits, args);
+            sig_weight(parent: { sig_weight: string }, args: BigIntArgs) {
+                return resolveBigUInt(1, parent.sig_weight, args);
             },
-            cells(parent: { cells: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.cells, args);
+            gen_utime_string(parent: { gen_utime: number }) {
+                return unixSecondsToString(parent.gen_utime);
             },
-            due_payment(parent: { due_payment: string }, args: BigIntArgs) {
-                return resolveBigUInt(2, parent.due_payment, args);
-            },
-            last_trans_lt(parent: { last_trans_lt: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.last_trans_lt, args);
-            },
-            public_cells(parent: { public_cells: string }, args: BigIntArgs) {
-                return resolveBigUInt(1, parent.public_cells, args);
-            },
-            acc_type_name: createEnumNameResolver("acc_type", { Uninit: 0, Active: 1, Frozen: 2, NonExist: 3 }),
         },
         Zerostate: {
             id(parent: { _key: string }) {
@@ -1089,37 +1095,150 @@ function createResolvers(data: QBlockchainData) {
             },
         },
         Query: {
-            blocks_signatures: data.blocks_signatures.queryResolver(),
-            blocks: data.blocks.queryResolver(),
             accounts: data.accounts.queryResolver(),
             transactions: data.transactions.queryResolver(),
             messages: data.messages.queryResolver(),
+            blocks: data.blocks.queryResolver(),
+            blocks_signatures: data.blocks_signatures.queryResolver(),
             zerostates: data.zerostates.queryResolver(),
         },
         Subscription: {
-            blocks_signatures: data.blocks_signatures.subscriptionResolver(),
-            blocks: data.blocks.subscriptionResolver(),
             accounts: data.accounts.subscriptionResolver(),
             transactions: data.transactions.subscriptionResolver(),
             messages: data.messages.subscriptionResolver(),
+            blocks: data.blocks.subscriptionResolver(),
+            blocks_signatures: data.blocks_signatures.subscriptionResolver(),
             zerostates: data.zerostates.subscriptionResolver(),
         }
     };
 }
 
 const scalarFields = new Map();
-scalarFields.set("blocks_signatures.id", { type: "string", path: "doc._key" });
-scalarFields.set("blocks_signatures.catchain_seqno", { type: "number", path: "doc.catchain_seqno" });
-scalarFields.set("blocks_signatures.gen_utime", { type: "number", path: "doc.gen_utime" });
-scalarFields.set("blocks_signatures.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("blocks_signatures.seq_no", { type: "number", path: "doc.seq_no" });
-scalarFields.set("blocks_signatures.shard", { type: "string", path: "doc.shard" });
-scalarFields.set("blocks_signatures.sig_weight", { type: "uint64", path: "doc.sig_weight" });
-scalarFields.set("blocks_signatures.signatures.node_id", { type: "string", path: "doc.signatures[*].node_id" });
-scalarFields.set("blocks_signatures.signatures.r", { type: "string", path: "doc.signatures[*].r" });
-scalarFields.set("blocks_signatures.signatures.s", { type: "string", path: "doc.signatures[*].s" });
-scalarFields.set("blocks_signatures.validator_list_hash_short", { type: "number", path: "doc.validator_list_hash_short" });
-scalarFields.set("blocks_signatures.workchain_id", { type: "number", path: "doc.workchain_id" });
+scalarFields.set("accounts.id", { type: "string", path: "doc._key" });
+scalarFields.set("accounts.balance", { type: "uint1024", path: "doc.balance" });
+scalarFields.set("accounts.balance_other.currency", { type: "number", path: "doc.balance_other[*].currency" });
+scalarFields.set("accounts.balance_other.value", { type: "uint1024", path: "doc.balance_other[*].value" });
+scalarFields.set("accounts.bits", { type: "uint64", path: "doc.bits" });
+scalarFields.set("accounts.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("accounts.cells", { type: "uint64", path: "doc.cells" });
+scalarFields.set("accounts.code", { type: "string", path: "doc.code" });
+scalarFields.set("accounts.code_hash", { type: "string", path: "doc.code_hash" });
+scalarFields.set("accounts.data", { type: "string", path: "doc.data" });
+scalarFields.set("accounts.data_hash", { type: "string", path: "doc.data_hash" });
+scalarFields.set("accounts.due_payment", { type: "uint1024", path: "doc.due_payment" });
+scalarFields.set("accounts.last_paid", { type: "number", path: "doc.last_paid" });
+scalarFields.set("accounts.last_trans_lt", { type: "uint64", path: "doc.last_trans_lt" });
+scalarFields.set("accounts.library", { type: "string", path: "doc.library" });
+scalarFields.set("accounts.library_hash", { type: "string", path: "doc.library_hash" });
+scalarFields.set("accounts.proof", { type: "string", path: "doc.proof" });
+scalarFields.set("accounts.public_cells", { type: "uint64", path: "doc.public_cells" });
+scalarFields.set("accounts.split_depth", { type: "number", path: "doc.split_depth" });
+scalarFields.set("accounts.state_hash", { type: "string", path: "doc.state_hash" });
+scalarFields.set("accounts.tick", { type: "boolean", path: "doc.tick" });
+scalarFields.set("accounts.tock", { type: "boolean", path: "doc.tock" });
+scalarFields.set("accounts.workchain_id", { type: "number", path: "doc.workchain_id" });
+scalarFields.set("transactions.id", { type: "string", path: "doc._key" });
+scalarFields.set("transactions.aborted", { type: "boolean", path: "doc.aborted" });
+scalarFields.set("transactions.account_addr", { type: "string", path: "doc.account_addr" });
+scalarFields.set("transactions.action.action_list_hash", { type: "string", path: "doc.action.action_list_hash" });
+scalarFields.set("transactions.action.msgs_created", { type: "number", path: "doc.action.msgs_created" });
+scalarFields.set("transactions.action.no_funds", { type: "boolean", path: "doc.action.no_funds" });
+scalarFields.set("transactions.action.result_arg", { type: "number", path: "doc.action.result_arg" });
+scalarFields.set("transactions.action.result_code", { type: "number", path: "doc.action.result_code" });
+scalarFields.set("transactions.action.skipped_actions", { type: "number", path: "doc.action.skipped_actions" });
+scalarFields.set("transactions.action.spec_actions", { type: "number", path: "doc.action.spec_actions" });
+scalarFields.set("transactions.action.success", { type: "boolean", path: "doc.action.success" });
+scalarFields.set("transactions.action.tot_actions", { type: "number", path: "doc.action.tot_actions" });
+scalarFields.set("transactions.action.total_action_fees", { type: "uint1024", path: "doc.action.total_action_fees" });
+scalarFields.set("transactions.action.total_fwd_fees", { type: "uint1024", path: "doc.action.total_fwd_fees" });
+scalarFields.set("transactions.action.total_msg_size_bits", { type: "number", path: "doc.action.total_msg_size_bits" });
+scalarFields.set("transactions.action.total_msg_size_cells", { type: "number", path: "doc.action.total_msg_size_cells" });
+scalarFields.set("transactions.action.valid", { type: "boolean", path: "doc.action.valid" });
+scalarFields.set("transactions.balance_delta", { type: "uint1024", path: "doc.balance_delta" });
+scalarFields.set("transactions.balance_delta_other.currency", { type: "number", path: "doc.balance_delta_other[*].currency" });
+scalarFields.set("transactions.balance_delta_other.value", { type: "uint1024", path: "doc.balance_delta_other[*].value" });
+scalarFields.set("transactions.block_id", { type: "string", path: "doc.block_id" });
+scalarFields.set("transactions.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("transactions.bounce.fwd_fees", { type: "uint1024", path: "doc.bounce.fwd_fees" });
+scalarFields.set("transactions.bounce.msg_fees", { type: "uint1024", path: "doc.bounce.msg_fees" });
+scalarFields.set("transactions.bounce.msg_size_bits", { type: "number", path: "doc.bounce.msg_size_bits" });
+scalarFields.set("transactions.bounce.msg_size_cells", { type: "number", path: "doc.bounce.msg_size_cells" });
+scalarFields.set("transactions.bounce.req_fwd_fees", { type: "uint1024", path: "doc.bounce.req_fwd_fees" });
+scalarFields.set("transactions.chain_order", { type: "string", path: "doc.chain_order" });
+scalarFields.set("transactions.compute.account_activated", { type: "boolean", path: "doc.compute.account_activated" });
+scalarFields.set("transactions.compute.exit_arg", { type: "number", path: "doc.compute.exit_arg" });
+scalarFields.set("transactions.compute.exit_code", { type: "number", path: "doc.compute.exit_code" });
+scalarFields.set("transactions.compute.gas_credit", { type: "number", path: "doc.compute.gas_credit" });
+scalarFields.set("transactions.compute.gas_fees", { type: "uint1024", path: "doc.compute.gas_fees" });
+scalarFields.set("transactions.compute.gas_limit", { type: "uint64", path: "doc.compute.gas_limit" });
+scalarFields.set("transactions.compute.gas_used", { type: "uint64", path: "doc.compute.gas_used" });
+scalarFields.set("transactions.compute.mode", { type: "number", path: "doc.compute.mode" });
+scalarFields.set("transactions.compute.msg_state_used", { type: "boolean", path: "doc.compute.msg_state_used" });
+scalarFields.set("transactions.compute.success", { type: "boolean", path: "doc.compute.success" });
+scalarFields.set("transactions.compute.vm_final_state_hash", { type: "string", path: "doc.compute.vm_final_state_hash" });
+scalarFields.set("transactions.compute.vm_init_state_hash", { type: "string", path: "doc.compute.vm_init_state_hash" });
+scalarFields.set("transactions.compute.vm_steps", { type: "number", path: "doc.compute.vm_steps" });
+scalarFields.set("transactions.credit.credit", { type: "uint1024", path: "doc.credit.credit" });
+scalarFields.set("transactions.credit.credit_other.currency", { type: "number", path: "doc.credit.credit_other[*].currency" });
+scalarFields.set("transactions.credit.credit_other.value", { type: "uint1024", path: "doc.credit.credit_other[*].value" });
+scalarFields.set("transactions.credit.due_fees_collected", { type: "uint1024", path: "doc.credit.due_fees_collected" });
+scalarFields.set("transactions.credit_first", { type: "boolean", path: "doc.credit_first" });
+scalarFields.set("transactions.destroyed", { type: "boolean", path: "doc.destroyed" });
+scalarFields.set("transactions.ext_in_msg_fee", { type: "uint1024", path: "doc.ext_in_msg_fee" });
+scalarFields.set("transactions.in_msg", { type: "string", path: "doc.in_msg" });
+scalarFields.set("transactions.installed", { type: "boolean", path: "doc.installed" });
+scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" });
+scalarFields.set("transactions.new_hash", { type: "string", path: "doc.new_hash" });
+scalarFields.set("transactions.now", { type: "number", path: "doc.now" });
+scalarFields.set("transactions.old_hash", { type: "string", path: "doc.old_hash" });
+scalarFields.set("transactions.out_msgs", { type: "string", path: "doc.out_msgs[*]" });
+scalarFields.set("transactions.outmsg_cnt", { type: "number", path: "doc.outmsg_cnt" });
+scalarFields.set("transactions.prepare_transaction", { type: "string", path: "doc.prepare_transaction" });
+scalarFields.set("transactions.prev_trans_hash", { type: "string", path: "doc.prev_trans_hash" });
+scalarFields.set("transactions.prev_trans_lt", { type: "uint64", path: "doc.prev_trans_lt" });
+scalarFields.set("transactions.proof", { type: "string", path: "doc.proof" });
+scalarFields.set("transactions.split_info.acc_split_depth", { type: "number", path: "doc.split_info.acc_split_depth" });
+scalarFields.set("transactions.split_info.cur_shard_pfx_len", { type: "number", path: "doc.split_info.cur_shard_pfx_len" });
+scalarFields.set("transactions.split_info.sibling_addr", { type: "string", path: "doc.split_info.sibling_addr" });
+scalarFields.set("transactions.split_info.this_addr", { type: "string", path: "doc.split_info.this_addr" });
+scalarFields.set("transactions.storage.storage_fees_collected", { type: "uint1024", path: "doc.storage.storage_fees_collected" });
+scalarFields.set("transactions.storage.storage_fees_due", { type: "uint1024", path: "doc.storage.storage_fees_due" });
+scalarFields.set("transactions.total_fees", { type: "uint1024", path: "doc.total_fees" });
+scalarFields.set("transactions.total_fees_other.currency", { type: "number", path: "doc.total_fees_other[*].currency" });
+scalarFields.set("transactions.total_fees_other.value", { type: "uint1024", path: "doc.total_fees_other[*].value" });
+scalarFields.set("transactions.tt", { type: "string", path: "doc.tt" });
+scalarFields.set("transactions.workchain_id", { type: "number", path: "doc.workchain_id" });
+scalarFields.set("messages.id", { type: "string", path: "doc._key" });
+scalarFields.set("messages.block_id", { type: "string", path: "doc.block_id" });
+scalarFields.set("messages.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("messages.body", { type: "string", path: "doc.body" });
+scalarFields.set("messages.body_hash", { type: "string", path: "doc.body_hash" });
+scalarFields.set("messages.bounce", { type: "boolean", path: "doc.bounce" });
+scalarFields.set("messages.bounced", { type: "boolean", path: "doc.bounced" });
+scalarFields.set("messages.chain_order", { type: "string", path: "doc.chain_order" });
+scalarFields.set("messages.code", { type: "string", path: "doc.code" });
+scalarFields.set("messages.code_hash", { type: "string", path: "doc.code_hash" });
+scalarFields.set("messages.created_at", { type: "number", path: "doc.created_at" });
+scalarFields.set("messages.created_lt", { type: "uint64", path: "doc.created_lt" });
+scalarFields.set("messages.data", { type: "string", path: "doc.data" });
+scalarFields.set("messages.data_hash", { type: "string", path: "doc.data_hash" });
+scalarFields.set("messages.dst", { type: "string", path: "doc.dst" });
+scalarFields.set("messages.dst_workchain_id", { type: "number", path: "doc.dst_workchain_id" });
+scalarFields.set("messages.fwd_fee", { type: "uint1024", path: "doc.fwd_fee" });
+scalarFields.set("messages.ihr_disabled", { type: "boolean", path: "doc.ihr_disabled" });
+scalarFields.set("messages.ihr_fee", { type: "uint1024", path: "doc.ihr_fee" });
+scalarFields.set("messages.import_fee", { type: "uint1024", path: "doc.import_fee" });
+scalarFields.set("messages.library", { type: "string", path: "doc.library" });
+scalarFields.set("messages.library_hash", { type: "string", path: "doc.library_hash" });
+scalarFields.set("messages.proof", { type: "string", path: "doc.proof" });
+scalarFields.set("messages.split_depth", { type: "number", path: "doc.split_depth" });
+scalarFields.set("messages.src", { type: "string", path: "doc.src" });
+scalarFields.set("messages.src_workchain_id", { type: "number", path: "doc.src_workchain_id" });
+scalarFields.set("messages.tick", { type: "boolean", path: "doc.tick" });
+scalarFields.set("messages.tock", { type: "boolean", path: "doc.tock" });
+scalarFields.set("messages.value", { type: "uint1024", path: "doc.value" });
+scalarFields.set("messages.value_other.currency", { type: "number", path: "doc.value_other[*].currency" });
+scalarFields.set("messages.value_other.value", { type: "uint1024", path: "doc.value_other[*].value" });
 scalarFields.set("blocks.id", { type: "string", path: "doc._key" });
 scalarFields.set("blocks.account_blocks.account_addr", { type: "string", path: "doc.account_blocks[*].account_addr" });
 scalarFields.set("blocks.account_blocks.new_hash", { type: "string", path: "doc.account_blocks[*].new_hash" });
@@ -1137,9 +1256,10 @@ scalarFields.set("blocks.boc", { type: "string", path: "doc.boc" });
 scalarFields.set("blocks.chain_order", { type: "string", path: "doc.chain_order" });
 scalarFields.set("blocks.created_by", { type: "string", path: "doc.created_by" });
 scalarFields.set("blocks.end_lt", { type: "uint64", path: "doc.end_lt" });
+scalarFields.set("blocks.file_hash", { type: "string", path: "doc.file_hash" });
 scalarFields.set("blocks.flags", { type: "number", path: "doc.flags" });
 scalarFields.set("blocks.gen_catchain_seqno", { type: "number", path: "doc.gen_catchain_seqno" });
-scalarFields.set("blocks.gen_software_capabilities", { type: "string", path: "doc.gen_software_capabilities" });
+scalarFields.set("blocks.gen_software_capabilities", { type: "uint64", path: "doc.gen_software_capabilities" });
 scalarFields.set("blocks.gen_software_version", { type: "number", path: "doc.gen_software_version" });
 scalarFields.set("blocks.gen_utime", { type: "number", path: "doc.gen_utime" });
 scalarFields.set("blocks.gen_validator_list_hash_short", { type: "number", path: "doc.gen_validator_list_hash_short" });
@@ -1498,131 +1618,18 @@ scalarFields.set("blocks.vert_seq_no", { type: "number", path: "doc.vert_seq_no"
 scalarFields.set("blocks.want_merge", { type: "boolean", path: "doc.want_merge" });
 scalarFields.set("blocks.want_split", { type: "boolean", path: "doc.want_split" });
 scalarFields.set("blocks.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("accounts.id", { type: "string", path: "doc._key" });
-scalarFields.set("accounts.balance", { type: "uint1024", path: "doc.balance" });
-scalarFields.set("accounts.balance_other.currency", { type: "number", path: "doc.balance_other[*].currency" });
-scalarFields.set("accounts.balance_other.value", { type: "uint1024", path: "doc.balance_other[*].value" });
-scalarFields.set("accounts.bits", { type: "uint64", path: "doc.bits" });
-scalarFields.set("accounts.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("accounts.cells", { type: "uint64", path: "doc.cells" });
-scalarFields.set("accounts.code", { type: "string", path: "doc.code" });
-scalarFields.set("accounts.code_hash", { type: "string", path: "doc.code_hash" });
-scalarFields.set("accounts.data", { type: "string", path: "doc.data" });
-scalarFields.set("accounts.data_hash", { type: "string", path: "doc.data_hash" });
-scalarFields.set("accounts.due_payment", { type: "uint1024", path: "doc.due_payment" });
-scalarFields.set("accounts.last_paid", { type: "number", path: "doc.last_paid" });
-scalarFields.set("accounts.last_trans_lt", { type: "uint64", path: "doc.last_trans_lt" });
-scalarFields.set("accounts.library", { type: "string", path: "doc.library" });
-scalarFields.set("accounts.library_hash", { type: "string", path: "doc.library_hash" });
-scalarFields.set("accounts.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("accounts.public_cells", { type: "uint64", path: "doc.public_cells" });
-scalarFields.set("accounts.split_depth", { type: "number", path: "doc.split_depth" });
-scalarFields.set("accounts.state_hash", { type: "string", path: "doc.state_hash" });
-scalarFields.set("accounts.tick", { type: "boolean", path: "doc.tick" });
-scalarFields.set("accounts.tock", { type: "boolean", path: "doc.tock" });
-scalarFields.set("accounts.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("transactions.id", { type: "string", path: "doc._key" });
-scalarFields.set("transactions.aborted", { type: "boolean", path: "doc.aborted" });
-scalarFields.set("transactions.account_addr", { type: "string", path: "doc.account_addr" });
-scalarFields.set("transactions.action.action_list_hash", { type: "string", path: "doc.action.action_list_hash" });
-scalarFields.set("transactions.action.msgs_created", { type: "number", path: "doc.action.msgs_created" });
-scalarFields.set("transactions.action.no_funds", { type: "boolean", path: "doc.action.no_funds" });
-scalarFields.set("transactions.action.result_arg", { type: "number", path: "doc.action.result_arg" });
-scalarFields.set("transactions.action.result_code", { type: "number", path: "doc.action.result_code" });
-scalarFields.set("transactions.action.skipped_actions", { type: "number", path: "doc.action.skipped_actions" });
-scalarFields.set("transactions.action.spec_actions", { type: "number", path: "doc.action.spec_actions" });
-scalarFields.set("transactions.action.success", { type: "boolean", path: "doc.action.success" });
-scalarFields.set("transactions.action.tot_actions", { type: "number", path: "doc.action.tot_actions" });
-scalarFields.set("transactions.action.total_action_fees", { type: "uint1024", path: "doc.action.total_action_fees" });
-scalarFields.set("transactions.action.total_fwd_fees", { type: "uint1024", path: "doc.action.total_fwd_fees" });
-scalarFields.set("transactions.action.total_msg_size_bits", { type: "number", path: "doc.action.total_msg_size_bits" });
-scalarFields.set("transactions.action.total_msg_size_cells", { type: "number", path: "doc.action.total_msg_size_cells" });
-scalarFields.set("transactions.action.valid", { type: "boolean", path: "doc.action.valid" });
-scalarFields.set("transactions.balance_delta", { type: "uint1024", path: "doc.balance_delta" });
-scalarFields.set("transactions.balance_delta_other.currency", { type: "number", path: "doc.balance_delta_other[*].currency" });
-scalarFields.set("transactions.balance_delta_other.value", { type: "uint1024", path: "doc.balance_delta_other[*].value" });
-scalarFields.set("transactions.block_id", { type: "string", path: "doc.block_id" });
-scalarFields.set("transactions.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("transactions.bounce.fwd_fees", { type: "uint1024", path: "doc.bounce.fwd_fees" });
-scalarFields.set("transactions.bounce.msg_fees", { type: "uint1024", path: "doc.bounce.msg_fees" });
-scalarFields.set("transactions.bounce.msg_size_bits", { type: "number", path: "doc.bounce.msg_size_bits" });
-scalarFields.set("transactions.bounce.msg_size_cells", { type: "number", path: "doc.bounce.msg_size_cells" });
-scalarFields.set("transactions.bounce.req_fwd_fees", { type: "uint1024", path: "doc.bounce.req_fwd_fees" });
-scalarFields.set("transactions.chain_order", { type: "string", path: "doc.chain_order" });
-scalarFields.set("transactions.compute.account_activated", { type: "boolean", path: "doc.compute.account_activated" });
-scalarFields.set("transactions.compute.exit_arg", { type: "number", path: "doc.compute.exit_arg" });
-scalarFields.set("transactions.compute.exit_code", { type: "number", path: "doc.compute.exit_code" });
-scalarFields.set("transactions.compute.gas_credit", { type: "number", path: "doc.compute.gas_credit" });
-scalarFields.set("transactions.compute.gas_fees", { type: "uint1024", path: "doc.compute.gas_fees" });
-scalarFields.set("transactions.compute.gas_limit", { type: "uint64", path: "doc.compute.gas_limit" });
-scalarFields.set("transactions.compute.gas_used", { type: "uint64", path: "doc.compute.gas_used" });
-scalarFields.set("transactions.compute.mode", { type: "number", path: "doc.compute.mode" });
-scalarFields.set("transactions.compute.msg_state_used", { type: "boolean", path: "doc.compute.msg_state_used" });
-scalarFields.set("transactions.compute.success", { type: "boolean", path: "doc.compute.success" });
-scalarFields.set("transactions.compute.vm_final_state_hash", { type: "string", path: "doc.compute.vm_final_state_hash" });
-scalarFields.set("transactions.compute.vm_init_state_hash", { type: "string", path: "doc.compute.vm_init_state_hash" });
-scalarFields.set("transactions.compute.vm_steps", { type: "number", path: "doc.compute.vm_steps" });
-scalarFields.set("transactions.credit.credit", { type: "uint1024", path: "doc.credit.credit" });
-scalarFields.set("transactions.credit.credit_other.currency", { type: "number", path: "doc.credit.credit_other[*].currency" });
-scalarFields.set("transactions.credit.credit_other.value", { type: "uint1024", path: "doc.credit.credit_other[*].value" });
-scalarFields.set("transactions.credit.due_fees_collected", { type: "uint1024", path: "doc.credit.due_fees_collected" });
-scalarFields.set("transactions.credit_first", { type: "boolean", path: "doc.credit_first" });
-scalarFields.set("transactions.destroyed", { type: "boolean", path: "doc.destroyed" });
-scalarFields.set("transactions.ext_in_msg_fee", { type: "uint1024", path: "doc.ext_in_msg_fee" });
-scalarFields.set("transactions.in_msg", { type: "string", path: "doc.in_msg" });
-scalarFields.set("transactions.installed", { type: "boolean", path: "doc.installed" });
-scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" });
-scalarFields.set("transactions.new_hash", { type: "string", path: "doc.new_hash" });
-scalarFields.set("transactions.now", { type: "number", path: "doc.now" });
-scalarFields.set("transactions.old_hash", { type: "string", path: "doc.old_hash" });
-scalarFields.set("transactions.out_msgs", { type: "string", path: "doc.out_msgs[*]" });
-scalarFields.set("transactions.outmsg_cnt", { type: "number", path: "doc.outmsg_cnt" });
-scalarFields.set("transactions.prepare_transaction", { type: "string", path: "doc.prepare_transaction" });
-scalarFields.set("transactions.prev_trans_hash", { type: "string", path: "doc.prev_trans_hash" });
-scalarFields.set("transactions.prev_trans_lt", { type: "uint64", path: "doc.prev_trans_lt" });
-scalarFields.set("transactions.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("transactions.split_info.acc_split_depth", { type: "number", path: "doc.split_info.acc_split_depth" });
-scalarFields.set("transactions.split_info.cur_shard_pfx_len", { type: "number", path: "doc.split_info.cur_shard_pfx_len" });
-scalarFields.set("transactions.split_info.sibling_addr", { type: "string", path: "doc.split_info.sibling_addr" });
-scalarFields.set("transactions.split_info.this_addr", { type: "string", path: "doc.split_info.this_addr" });
-scalarFields.set("transactions.storage.storage_fees_collected", { type: "uint1024", path: "doc.storage.storage_fees_collected" });
-scalarFields.set("transactions.storage.storage_fees_due", { type: "uint1024", path: "doc.storage.storage_fees_due" });
-scalarFields.set("transactions.total_fees", { type: "uint1024", path: "doc.total_fees" });
-scalarFields.set("transactions.total_fees_other.currency", { type: "number", path: "doc.total_fees_other[*].currency" });
-scalarFields.set("transactions.total_fees_other.value", { type: "uint1024", path: "doc.total_fees_other[*].value" });
-scalarFields.set("transactions.tt", { type: "string", path: "doc.tt" });
-scalarFields.set("transactions.workchain_id", { type: "number", path: "doc.workchain_id" });
-scalarFields.set("messages.id", { type: "string", path: "doc._key" });
-scalarFields.set("messages.block_id", { type: "string", path: "doc.block_id" });
-scalarFields.set("messages.boc", { type: "string", path: "doc.boc" });
-scalarFields.set("messages.body", { type: "string", path: "doc.body" });
-scalarFields.set("messages.body_hash", { type: "string", path: "doc.body_hash" });
-scalarFields.set("messages.bounce", { type: "boolean", path: "doc.bounce" });
-scalarFields.set("messages.bounced", { type: "boolean", path: "doc.bounced" });
-scalarFields.set("messages.chain_order", { type: "string", path: "doc.chain_order" });
-scalarFields.set("messages.code", { type: "string", path: "doc.code" });
-scalarFields.set("messages.code_hash", { type: "string", path: "doc.code_hash" });
-scalarFields.set("messages.created_at", { type: "number", path: "doc.created_at" });
-scalarFields.set("messages.created_lt", { type: "uint64", path: "doc.created_lt" });
-scalarFields.set("messages.data", { type: "string", path: "doc.data" });
-scalarFields.set("messages.data_hash", { type: "string", path: "doc.data_hash" });
-scalarFields.set("messages.dst", { type: "string", path: "doc.dst" });
-scalarFields.set("messages.dst_workchain_id", { type: "number", path: "doc.dst_workchain_id" });
-scalarFields.set("messages.fwd_fee", { type: "uint1024", path: "doc.fwd_fee" });
-scalarFields.set("messages.ihr_disabled", { type: "boolean", path: "doc.ihr_disabled" });
-scalarFields.set("messages.ihr_fee", { type: "uint1024", path: "doc.ihr_fee" });
-scalarFields.set("messages.import_fee", { type: "uint1024", path: "doc.import_fee" });
-scalarFields.set("messages.library", { type: "string", path: "doc.library" });
-scalarFields.set("messages.library_hash", { type: "string", path: "doc.library_hash" });
-scalarFields.set("messages.proof", { type: "string", path: "doc.proof" });
-scalarFields.set("messages.split_depth", { type: "number", path: "doc.split_depth" });
-scalarFields.set("messages.src", { type: "string", path: "doc.src" });
-scalarFields.set("messages.src_workchain_id", { type: "number", path: "doc.src_workchain_id" });
-scalarFields.set("messages.tick", { type: "boolean", path: "doc.tick" });
-scalarFields.set("messages.tock", { type: "boolean", path: "doc.tock" });
-scalarFields.set("messages.value", { type: "uint1024", path: "doc.value" });
-scalarFields.set("messages.value_other.currency", { type: "number", path: "doc.value_other[*].currency" });
-scalarFields.set("messages.value_other.value", { type: "uint1024", path: "doc.value_other[*].value" });
+scalarFields.set("blocks_signatures.id", { type: "string", path: "doc._key" });
+scalarFields.set("blocks_signatures.catchain_seqno", { type: "number", path: "doc.catchain_seqno" });
+scalarFields.set("blocks_signatures.gen_utime", { type: "number", path: "doc.gen_utime" });
+scalarFields.set("blocks_signatures.proof", { type: "string", path: "doc.proof" });
+scalarFields.set("blocks_signatures.seq_no", { type: "number", path: "doc.seq_no" });
+scalarFields.set("blocks_signatures.shard", { type: "string", path: "doc.shard" });
+scalarFields.set("blocks_signatures.sig_weight", { type: "uint64", path: "doc.sig_weight" });
+scalarFields.set("blocks_signatures.signatures.node_id", { type: "string", path: "doc.signatures[*].node_id" });
+scalarFields.set("blocks_signatures.signatures.r", { type: "string", path: "doc.signatures[*].r" });
+scalarFields.set("blocks_signatures.signatures.s", { type: "string", path: "doc.signatures[*].s" });
+scalarFields.set("blocks_signatures.validator_list_hash_short", { type: "number", path: "doc.validator_list_hash_short" });
+scalarFields.set("blocks_signatures.workchain_id", { type: "number", path: "doc.workchain_id" });
 scalarFields.set("zerostates.id", { type: "string", path: "doc._key" });
 scalarFields.set("zerostates.accounts.id", { type: "string", path: "doc.accounts[*].id" });
 scalarFields.set("zerostates.accounts.balance", { type: "uint1024", path: "doc.accounts[*].balance" });
@@ -1648,6 +1655,7 @@ scalarFields.set("zerostates.accounts.tick", { type: "boolean", path: "doc.accou
 scalarFields.set("zerostates.accounts.tock", { type: "boolean", path: "doc.accounts[*].tock" });
 scalarFields.set("zerostates.accounts.workchain_id", { type: "number", path: "doc.accounts[*].workchain_id" });
 scalarFields.set("zerostates.boc", { type: "string", path: "doc.boc" });
+scalarFields.set("zerostates.file_hash", { type: "string", path: "doc.file_hash" });
 scalarFields.set("zerostates.global_id", { type: "number", path: "doc.global_id" });
 scalarFields.set("zerostates.libraries.hash", { type: "string", path: "doc.libraries[*].hash" });
 scalarFields.set("zerostates.libraries.lib", { type: "string", path: "doc.libraries[*].lib" });
@@ -1839,27 +1847,12 @@ scalarFields.set("zerostates.master.global_balance", { type: "uint1024", path: "
 scalarFields.set("zerostates.master.global_balance_other.currency", { type: "number", path: "doc.master.global_balance_other[*].currency" });
 scalarFields.set("zerostates.master.global_balance_other.value", { type: "uint1024", path: "doc.master.global_balance_other[*].value" });
 scalarFields.set("zerostates.master.validator_list_hash_short", { type: "number", path: "doc.master.validator_list_hash_short" });
+scalarFields.set("zerostates.root_hash", { type: "string", path: "doc.root_hash" });
 scalarFields.set("zerostates.total_balance", { type: "uint1024", path: "doc.total_balance" });
 scalarFields.set("zerostates.total_balance_other.currency", { type: "number", path: "doc.total_balance_other[*].currency" });
 scalarFields.set("zerostates.total_balance_other.value", { type: "uint1024", path: "doc.total_balance_other[*].value" });
 scalarFields.set("zerostates.workchain_id", { type: "number", path: "doc.workchain_id" });
 const joinFields = new Map();
-joinFields.set("blocks_signatures.block", {
-    on: "id",
-    collection: "blocks",
-    refOn: "id",
-    canJoin(parent: { _key: string }, args: JoinArgs) {
-        return (args.when === undefined || BlockSignatures.test(null, parent, args.when));
-    },
-});
-joinFields.set("blocks.signatures", {
-    on: "id",
-    collection: "blocks_signatures",
-    refOn: "id",
-    canJoin(parent: { _key: string }, args: JoinArgs) {
-        return (args.when === undefined || Block.test(null, parent, args.when));
-    },
-});
 joinFields.set("transactions.account", {
     on: "account_addr",
     collection: "accounts",
@@ -1948,6 +1941,22 @@ joinFields.set("messages.src_transaction", {
         return (args.when === undefined || Message.test(null, parent, args.when));
     },
 });
+joinFields.set("blocks.signatures", {
+    on: "id",
+    collection: "blocks_signatures",
+    refOn: "id",
+    canJoin(parent: { _key: string }, args: JoinArgs) {
+        return (args.when === undefined || Block.test(null, parent, args.when));
+    },
+});
+joinFields.set("blocks_signatures.block", {
+    on: "id",
+    collection: "blocks",
+    refOn: "id",
+    canJoin(parent: { _key: string }, args: JoinArgs) {
+        return (args.when === undefined || BlockSignatures.test(null, parent, args.when));
+    },
+});
 export {
     scalarFields,
     joinFields,
@@ -1957,6 +1966,35 @@ export {
     MsgEnvelope,
     InMsg,
     OutMsg,
+    GasLimitsPrices,
+    BlockLimitsBytes,
+    BlockLimitsGas,
+    BlockLimitsLtDelta,
+    BlockLimits,
+    MsgForwardPrices,
+    ValidatorSetList,
+    ValidatorSet,
+    ConfigProposalSetup,
+    ConfigP6,
+    ConfigP7,
+    ConfigP8,
+    ConfigP11,
+    ConfigP12,
+    ConfigP14,
+    ConfigP15,
+    ConfigP16,
+    ConfigP17,
+    ConfigP18,
+    ConfigP28,
+    ConfigP29,
+    ConfigP39,
+    Config,
+    TransactionStorage,
+    TransactionCredit,
+    TransactionCompute,
+    TransactionAction,
+    TransactionBounce,
+    TransactionSplitInfo,
     BlockValueFlow,
     BlockAccountBlocksTransactions,
     BlockAccountBlocks,
@@ -1965,44 +2003,15 @@ export {
     BlockMasterShardHashes,
     BlockMasterShardFees,
     BlockMasterPrevBlkSignatures,
-    ConfigP6,
-    ConfigP7,
-    ConfigP8,
-    ConfigProposalSetup,
-    ConfigP11,
-    ConfigP12,
-    ConfigP14,
-    ConfigP15,
-    ConfigP16,
-    ConfigP17,
-    ConfigP18,
-    GasLimitsPrices,
-    BlockLimitsBytes,
-    BlockLimitsGas,
-    BlockLimitsLtDelta,
-    BlockLimits,
-    MsgForwardPrices,
-    ConfigP28,
-    ConfigP29,
-    ValidatorSetList,
-    ValidatorSet,
-    ConfigP39,
-    Config,
     BlockMaster,
     BlockSignaturesSignatures,
-    BlockSignatures,
-    Block,
-    Account,
-    TransactionStorage,
-    TransactionCredit,
-    TransactionCompute,
-    TransactionAction,
-    TransactionBounce,
-    TransactionSplitInfo,
-    Transaction,
-    Message,
     ZerostateMaster,
     ZerostateAccounts,
     ZerostateLibraries,
+    Account,
+    Transaction,
+    Message,
+    Block,
+    BlockSignatures,
     Zerostate,
 };

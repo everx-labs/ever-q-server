@@ -249,7 +249,7 @@ function main(schemaDef: TypeDef): {
             direction: QueryOrderByDirection
         }
 
-        type Query {
+        extend type Query {
         `);
 
         types.forEach((type: DbType) => {

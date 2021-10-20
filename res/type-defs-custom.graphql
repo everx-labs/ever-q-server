@@ -8,32 +8,6 @@ input Request {
     expireAt: Float
 }
 
-" GraphQL Server info"
-type Info {
-    " Server version "
-    version: String
-    " Server unix time in ms"
-    time: Float
-    " Blocks latency in ms (server time - max of blocks.gen_utime * 1000)"
-    blocksLatency: Float,
-    " Messages latency in ms (server time - max of messages.created_at * 1000)"
-    messagesLatency: Float,
-    " Transactions latency in ms (server time - max of transactions.now * 1000)"
-    transactionsLatency: Float,
-    " Overall latency (maximum value of blocksLatency, messagesLatency and transactionsLatency)"
-    latency: Float,
-    " Last block time in ms (maximum value of blocks.gen_utime * 1000)"
-    lastBlockTime: Float,
-    " Alternative endpoints of q-server"
-    endpoints: [String]
-    """
-    **EXPERIMENTAL**
-    Reliable upper boundary for pagination by chain_order field. Before this boundary data inserts are almost impossible
-    (work in progress to make them fully impossible when the feature goes into production).
-    """
-    chainOrderBoundary: String
-}
-
 "Aggregation function used to collect aggregated value"
 enum AggregationFn {
     "Returns count of filtered record"
@@ -70,31 +44,10 @@ type QueryExplanation {
 }
 
 extend type Query {
-    info: Info
-    "Obsolete. Use aggregation queries instead."
-    getAccountsCount(accessKey: String): Float
-    "Obsolete. Use aggregation queries instead."
-    getTransactionsCount(accessKey: String): Float
-    "Obsolete. Use aggregation queries instead."
-    getAccountsTotalBalance(accessKey: String): String
-
-    "Returns one time access key for management functions"
-    getManagementAccessKey: String
-
     "Compute aggregated values for specified fields"
-    aggregateBlockSignatures(
+    aggregateAccounts(
         "Specify filter for records to aggregate"
-        filter: BlockSignaturesFilter,
-        "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation],
-        "Specify access key if required"
-        accessKey: String
-    ): [String]
-
-    "Compute aggregated values for specified fields"
-    aggregateBlocks(
-        "Specify filter for records to aggregate"
-        filter: BlockFilter,
+        filter: AccountFilter,
         "Specify list of fields to collect aggregated values"
         fields: [FieldAggregation],
         "Specify access key if required"
@@ -122,27 +75,47 @@ extend type Query {
     ): [String]
 
     "Compute aggregated values for specified fields"
-    aggregateAccounts(
+    aggregateBlocks(
         "Specify filter for records to aggregate"
-        filter: AccountFilter,
+        filter: BlockFilter,
         "Specify list of fields to collect aggregated values"
         fields: [FieldAggregation],
         "Specify access key if required"
         accessKey: String
     ): [String]
 
-    "Determine if specified block signatures query is fast or slow"
-	explainQueryBlockSignatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy]): QueryExplanation
-    "Determine if specified blocks query is fast or slow"
-	explainQueryBlocks(filter: BlockFilter, orderBy: [QueryOrderBy]): QueryExplanation
+    "Compute aggregated values for specified fields"
+    aggregateBlockSignatures(
+        "Specify filter for records to aggregate"
+        filter: BlockSignaturesFilter,
+        "Specify list of fields to collect aggregated values"
+        fields: [FieldAggregation],
+        "Specify access key if required"
+        accessKey: String
+    ): [String]
+
+    "Determine if specified accounts query is fast or slow"
+	explainQueryAccounts(filter: AccountFilter, orderBy: [QueryOrderBy]): QueryExplanation
     "Determine if specified transactions query is fast or slow"
 	explainQueryTransactions(filter: TransactionFilter, orderBy: [QueryOrderBy]): QueryExplanation
     "Determine if specified messages query is fast or slow"
 	explainQueryMessages(filter: MessageFilter, orderBy: [QueryOrderBy]): QueryExplanation
-    "Determine if specified accounts query is fast or slow"
-	explainQueryAccounts(filter: AccountFilter, orderBy: [QueryOrderBy]): QueryExplanation
+    "Determine if specified blocks query is fast or slow"
+	explainQueryBlocks(filter: BlockFilter, orderBy: [QueryOrderBy]): QueryExplanation
+    "Determine if specified block signatures query is fast or slow"
+	explainQueryBlockSignatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy]): QueryExplanation
     "Determine if specified zerostates query is fast or slow"
 	explainQueryZerostates(filter: ZerostateFilter, orderBy: [QueryOrderBy]): QueryExplanation
+
+    "Returns one time access key for management functions"
+    getManagementAccessKey: String
+
+    "Obsolete. Use aggregation queries instead."
+    getAccountsCount(accessKey: String): Float
+    "Obsolete. Use aggregation queries instead."
+    getTransactionsCount(accessKey: String): Float
+    "Obsolete. Use aggregation queries instead."
+    getAccountsTotalBalance(accessKey: String): String
 }
 
 input AccessKey {
