@@ -1053,15 +1053,22 @@ export function selectFields(doc: QDoc | unknown[], selection: FieldSelection[])
         selected.id = doc._key;
     }
     for (const item of selection) {
-        const requiredForJoin = {
+        let companionFields = {
             in_message: ["in_msg"],
             out_messages: ["out_msg"],
             signatures: ["id"],
             src_transaction: ["id", "msg_type"],
             dst_transaction: ["id", "msg_type"],
         }[item.name];
-        if (requiredForJoin !== undefined) {
-            requiredForJoin.forEach((field) => {
+        if (companionFields === undefined) {
+            if (item.name.endsWith("_name")) {
+                companionFields = [item.name.slice(0, -5)];
+            } else if (item.name.endsWith("_string")) {
+                companionFields = [item.name.slice(0, -7)];
+            }
+        }
+        if (companionFields !== undefined) {
+            companionFields.forEach((field) => {
                 if (doc[field] !== undefined) {
                     selected[field] = doc[field];
                 }
