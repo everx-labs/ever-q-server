@@ -52,6 +52,7 @@ import {
     QParams,
     QType,
     QueryStat,
+    selectFields,
     selectionToString,
 } from "../filter/filters";
 import QLogs, { QLog } from "../logs";
@@ -252,18 +253,36 @@ export class QDataCollection {
                     args.filter ?? {},
                     parseSelectionSet(info.operation.selectionSet, this.name),
                 );
+                const fieldSelection: FieldNode =
+                    (info.operation.selectionSet.selections.find(x => x.kind === "Field" && x.name.value === this.name)
+                        ?? info.operation.selectionSet.selections[0]) as FieldNode;
+                const parentSpan = QTraceSpan.create(request.services.tracer, "subscription", request.parentSpan);
                 const eventListener = (doc: QDoc) => {
-                    try {
-                        subscription.pushDocument(doc);
-                    } catch (error) {
-                        this.log.error(
-                            Date.now(),
-                            this.name,
-                            "SUBSCRIPTION\tFAILED",
-                            JSON.stringify(args.filter),
-                            error.toString(),
-                        );
-                    }
+                    void (async () => {
+                        try {
+                            if (subscription.isFiltered(doc) && !subscription.isQueueOverflow()) {
+                                const reduced = selectFields(doc, subscription.selection) as Record<string, unknown>;
+                                await QJoinQuery.fetchJoinedRecords(
+                                    this,
+                                    [reduced],
+                                    fieldSelection.selectionSet,
+                                    accessRights,
+                                    40000,
+                                    request,
+                                    parentSpan,
+                                );
+                                subscription.pushValue({ [this.name]: reduced as QDoc });
+                            }
+                        } catch (error) {
+                            this.log.error(
+                                Date.now(),
+                                this.name,
+                                "SUBSCRIPTION\tFAILED",
+                                JSON.stringify(args.filter),
+                                error.toString(),
+                            );
+                        }
+                    })();
                 };
                 this.docInsertOrUpdate.on("doc", eventListener);
                 this.subscriptionCount += 1;
@@ -543,7 +562,7 @@ export class QDataCollection {
         params: QDataProviderQueryParams & {
             isFast: boolean,
             traceParams: Record<string, unknown>,
-        }
+        },
     ): Promise<QResult[]> {
         const impl = async (span: QTraceSpan) => {
             if (params.traceParams) {
@@ -555,7 +574,10 @@ export class QDataCollection {
                 orderBy: params.orderBy,
                 shards: params.shards,
             });
-            return this.queryProvider({ ...params, traceSpan: span });
+            return this.queryProvider({
+                ...params,
+                traceSpan: span,
+            });
         };
         return params.traceSpan.traceChildOperation(`${this.name}.query`, impl);
     }
