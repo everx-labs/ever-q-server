@@ -43,17 +43,22 @@ export class QShardDatabaseProvider implements QDataProvider {
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
         this.started = true;
-        this.collectionsForSubscribe = collectionsForSubscribe;
+        let subscriptionsChanged = false;
+        for (const collection of collectionsForSubscribe) {
+            if (!this.collectionsForSubscribe.find(x => x.toLowerCase() === collection.toLowerCase())) {
+                subscriptionsChanged = true;
+                this.collectionsForSubscribe.push(collection);
+            }
+        }
+        if (subscriptionsChanged) {
+            this.checkStopListener();
+        }
         this.checkStartListener();
         return Promise.resolve();
     }
 
     async stop() {
-        if (this.listener) {
-            this.listener.removeAllListeners();
-            this.listener.stop();
-            this.listener = null;
-        }
+        this.checkStopListener();
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
@@ -96,8 +101,8 @@ export class QShardDatabaseProvider implements QDataProvider {
             for (const shard of shards ?? []) {
                 if (this.shard.shard.startsWith(shard) ||
                     shard.startsWith(this.shard.shard)) {
-                  shardMatches = true;
-                  break;  
+                    shardMatches = true;
+                    break;
                 }
             }
 
@@ -142,6 +147,14 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     // Internals
+
+    checkStopListener() {
+        if (this.listener) {
+            this.listener.removeAllListeners();
+            this.listener.stop();
+            this.listener = null;
+        }
+    }
 
     checkStartListener() {
         if (!this.useListener) {
