@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fix
 
 - subscriptions with joins didn't work
-- subscriptions for companion fields (`*_name`, `*_string`) didn't 
+- subscriptions for companion fields (`*_name`, `*_string`) didn't work
 
 ## [0.44.1] - 2021-10-22
 
