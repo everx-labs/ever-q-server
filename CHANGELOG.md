@@ -2,12 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.44.2] - 2021-10-22
+
+### Fix
+
+- subscriptions with joins didn't work
+
 ## [0.44.1] - 2021-10-22
 
 ### Fix
 
 - subscriptions for accounts didn't work
-- subscriptions with joins didn't work
 
 ## [0.44.0] - 2021-10-11
 
