@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.44.3] - 2021-10-25
+
+### Fix
+
+- q-server didn't write error messages to log
+
 ## [0.44.2] - 2021-10-22
 
 ### Fix
