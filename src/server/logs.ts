@@ -23,7 +23,14 @@ export interface QLog {
 }
 
 function str(arg: unknown): string {
-    const s = typeof arg === "string" ? arg : toJSON(arg);
+    let s;
+    if (arg instanceof Error) {
+        s = arg.message || arg.toString();
+    } else if (typeof arg === "string") {
+        s = arg;
+    } else {
+        s = toJSON(arg);
+    }
     return s.split("\n").join("\\n").split("\t").join("\\t");
 }
 
