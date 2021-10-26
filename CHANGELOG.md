@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.44.4] - 2021-10-25
+
+### Fix
+
+- diagnostic timeout added to statsD reporting
+- "Cannot read property 'length' of null" error 
+
 ## [0.44.3] - 2021-10-25
 
 ### Fix

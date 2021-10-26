@@ -14,8 +14,8 @@ import {required} from "../utils";
 
 type CounterpartiesArgs = {
     accessKey?: string | null,
-    first?: number,
-    after?: string,
+    first?: number | null,
+    after?: string | null,
     account: string,
 };
 
