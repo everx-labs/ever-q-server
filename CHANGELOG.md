@@ -6,8 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 
-- add diagnostic timeout to statsD reporting
-- fix "Cannot read property 'length' of null" error 
+- diagnostic timeout added to statsD reporting
+- "Cannot read property 'length' of null" error 
 
 ## [0.44.3] - 2021-10-25
 
