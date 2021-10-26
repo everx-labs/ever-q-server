@@ -90,9 +90,9 @@ import { QJoinQuery } from "./collection-joins";
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
 
 export type AggregationArgs = {
-    filter: CollectionFilter,
-    fields?: FieldAggregation[],
-    accessKey?: string,
+    filter?: CollectionFilter | null,
+    fields?: FieldAggregation[] | null,
+    accessKey?: string | null,
 };
 
 export type QCollectionOptions = {
@@ -237,7 +237,7 @@ export class QDataCollection {
         return {
             subscribe: async (
                 _: unknown,
-                args: AccessArgs & { filter: CollectionFilter },
+                args: AccessArgs & { filter: CollectionFilter | null },
                 request: QRequestContext,
                 info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
@@ -328,8 +328,8 @@ export class QDataCollection {
         return async (
             _parent: unknown,
             args: {
-                filter?: CollectionFilter,
-                orderBy?: OrderBy[],
+                filter?: CollectionFilter | null,
+                orderBy?: OrderBy[] | null,
             },
         ) => {
             await this.checkRefreshInfo();
@@ -354,17 +354,20 @@ export class QDataCollection {
     async optimizeSortedQueryWithSingleResult(
         args: {
             accessKey?: string | null,
-            filter?: CollectionFilter,
-            orderBy?: OrderBy[],
-            limit?: number,
-            timeout?: number,
-            operationId?: string,
+            filter?: CollectionFilter | null,
+            orderBy?: OrderBy[] | null,
+            limit?: number | null,
+            timeout?: number | null,
+            operationId?: string | null,
         },
         accessRights: AccessRights,
         request: QRequestContext,
         traceSpan: QTraceSpan,
     ) {
-        if (args.orderBy === undefined || args.orderBy.length === 0) {
+        if (!args.orderBy || args.orderBy.length === 0) {
+            return;
+        }
+        if (!args.orderBy || args.orderBy.length === 0) {
             return;
         }
         if (args.limit === undefined || args.limit !== 1) {
@@ -411,11 +414,11 @@ export class QDataCollection {
         query: QCollectionQuery,
         args: {
             accessKey?: string | null,
-            filter?: CollectionFilter,
-            orderBy?: OrderBy[],
-            limit?: number,
-            timeout?: number,
-            operationId?: string,
+            filter?: CollectionFilter | null,
+            orderBy?: OrderBy[] | null,
+            limit?: number | null,
+            timeout?: number | null,
+            operationId?: string | null,
         },
         selection: SelectionSetNode | undefined,
         request: QRequestContext,
@@ -493,11 +496,11 @@ export class QDataCollection {
             _parent: unknown,
             args: {
                 accessKey?: string | null,
-                filter?: CollectionFilter,
-                orderBy?: OrderBy[],
-                limit?: number,
-                timeout?: number,
-                operationId?: string,
+                filter?: CollectionFilter | null,
+                orderBy?: OrderBy[] | null,
+                limit?: number | null,
+                timeout?: number | null,
+                operationId?: string | null,
             },
             request: QRequestContext,
             selection: {
