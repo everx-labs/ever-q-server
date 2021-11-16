@@ -112,6 +112,10 @@ async function prepareChainOrderFilter(
     if (start_chain_order) {
         const paramName = params.add(start_chain_order);
         filters.push(`doc.chain_order > @${paramName}`);
+    } else {
+        // Next line is equivalent to "chain_order != null", but the ">" is better:
+        // we doesn't have to rely on arangodb to convert "!= null" to index scan boundary
+        filters.push(`doc.chain_order > ""`);
     }
 
     const paramName = params.add(end_chain_order);
