@@ -1,13 +1,16 @@
-import { FieldNode, GraphQLResolveInfo } from "graphql";
-import { AccessRights } from "../../auth";
-import { QParams } from "../../filter/filters";
+import { GraphQLResolveInfo, SelectionSetNode } from "graphql";
+import { convertBigUInt, QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
-import { QError, required, toU64String } from "../../utils";
+import { QError, required } from "../../utils";
 
 import {
+    BlockchainBlock,
+    BlockchainBlocksConnection,
     BlockchainQuery,
     BlockchainQueryAccount_TransactionsArgs,
+    BlockchainQueryKey_BlocksArgs,
     BlockchainQueryMaster_Seq_No_RangeArgs,
+    BlockchainQueryWorkchain_BlocksArgs,
     BlockchainQueryWorkchain_TransactionsArgs,
     BlockchainTransaction,
     BlockchainTransactionsConnection,
@@ -15,11 +18,7 @@ import {
 } from "./resolvers-types-generated";
 import { QCollectionQuery } from "../../data/collection-query";
 import { QTraceSpan } from "../../tracing";
-
-const enum Direction {
-    Forward,
-    Backward,
-}
+import { Direction, getNodeSelectionSetForConnection, prepareChainOrderFilter, processPaginatedQueryResult, processPaginationArgs } from "./helpers";
 
 function parseMasterSeqNo(chain_order: string) {
     const length = parseInt(chain_order[0], 16) + 1;
@@ -31,11 +30,41 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
         throw QError.invalidQuery("time_start should not be greater than time_end");
     }
 
+    // For the start we are:
+    // - searching the closest master block at or before time_start - all later blocks will have bigger chain_order
+    // - searching the minimum chain_order as a backup plan
+    // For the end we are:
+    // - trying to reduce amount of blocks to process via end_query_limiter
+    // - getting the max chain_order for a blocks at or before time_end
     const text = `
+        // ArangoDB most likely will execute all of the queries, but we will give it a chance to optimize
+        LET end_query_limiter = @time_end
+            ? /* min_gen_utime_for_range_ending_after_time_end */ (
+                FOR b IN blocks 
+                FILTER b.workchain_id == -1 && b.gen_utime > @time_end 
+                SORT b.gen_utime ASC 
+                LIMIT 1 
+                RETURN MIN(b.master.shard_hashes[*].descr.gen_utime)
+            )[0]
+            : null
+            
+        LET end_query_limiter2 = @time_end && (end_query_limiter > @time_end || end_query_limiter == null)
+            ? /* min_gen_utime_for_range_ending_right_before_time_end */ (
+                FOR b IN blocks 
+                FILTER b.workchain_id == -1 && b.gen_utime <= @time_end 
+                SORT b.gen_utime DESC 
+                LIMIT 1 
+                RETURN MIN(b.master.shard_hashes[*].descr.gen_utime)
+            )[0]
+            : end_query_limiter
+            
+        LET end_query_limiter3 = end_query_limiter2 || 1
+            
         RETURN {
             _key: UUID(),
-            start: @time_start ? (FOR b IN blocks FILTER b.gen_utime >= @time_start SORT b.chain_order ASC LIMIT 1 RETURN b.chain_order)[0] : null,
-            end: @time_end ? (FOR b IN blocks FILTER b.gen_utime <= @time_end SORT b.chain_order DESC LIMIT 1 RETURN b.chain_order)[0] : null
+            first: @time_start ? (FOR b IN blocks SORT b.chain_order ASC LIMIT 1 RETURN b.chain_order)[0] : null,
+            start: @time_start ? (FOR b IN blocks FILTER b.workchain_id == -1 && b.gen_utime <= @time_start SORT b.gen_utime DESC LIMIT 1 RETURN b.chain_order)[0] : null,
+            end: @time_end ? MAX(FOR b IN blocks FILTER b.gen_utime >= end_query_limiter3 && b.gen_utime <= @time_end SORT b.gen_utime DESC RETURN b.chain_order) : null
         }
     `; // UUID is a hack to bypass QDataCombiner deduplication
     const vars: Record<string, unknown> = {
@@ -51,17 +80,24 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
             request: context,
             traceSpan,
         },
-    ) as { start: string | null, end: string | null }[];
+    ) as { first: string | null, start: string | null, end: string | null }[];
 
+    let first: string | null = null;
     let start: string | null = null;
     let end: string | null = null;
     for (const r of result) {
-        if (r.start && (!start || r.start < start)) {
+        if (r.first && (!first || r.first < first)) {
+            first = r.first;
+        }
+        if (r.start && (!start || r.start > start)) {
             start = r.start;
         }
         if (r.end && (!end || r.end > end)) {
             end = r.end;
         }
+    }
+    if (!start && first) {
+        start = first;
     }
     if (args.time_end && !end) {
         start = null;
@@ -73,7 +109,7 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     // reliable boundary
     const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
-        throw QError.internalServerError();
+        throw QError.create(500, "Could not determine reliable upper boundary");;
     }
 
     return {
@@ -82,63 +118,142 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     };
 }
 
-async function prepareChainOrderFilter(
-    args: BlockchainQueryAccount_TransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs,
-    params: QParams,
-    filters: string[],
-    context: QRequestContext,
-) {
-    // master_seq_no
-    let start_chain_order = args.master_seq_no?.start ? toU64String(args.master_seq_no.start) : null;
-    let end_chain_order = args.master_seq_no?.end ? toU64String(args.master_seq_no.end) : null;
-
-    // before, after
-    start_chain_order = args.after && (!start_chain_order || args.after > start_chain_order)
-        ? args.after
-        : start_chain_order;
-    end_chain_order = args.before && (!end_chain_order || args.before < end_chain_order)
-        ? args.before
-        : end_chain_order;
-
-    // reliable boundary
-    const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
-    if (reliable.boundary == "") {
-        throw QError.internalServerError();
+function buildBlockReturnExpression(selectionSet: SelectionSetNode | undefined, context: QRequestContext) {
+    // filter out hash field
+    if (selectionSet && selectionSet.selections.find(s => s.kind == "Field" && s.name.value == "hash")) {
+        selectionSet = Object.assign({}, selectionSet);
+        selectionSet.selections = selectionSet.selections
+            .filter(s => !(s.kind == "Field" && s.name.value == "hash"));
     }
 
-    end_chain_order = (end_chain_order && end_chain_order < reliable.boundary) ? end_chain_order : reliable.boundary;
-
-    // apply
-    if (start_chain_order) {
-        const paramName = params.add(start_chain_order);
-        filters.push(`doc.chain_order > @${paramName}`);
-    } else {
-        // Next line is equivalent to "chain_order != null", but the ">" is better:
-        // we doesn't have to rely on arangodb to convert "!= null" to index scan boundary
-        filters.push(`doc.chain_order > ""`);
-    }
-
-    const paramName = params.add(end_chain_order);
-    filters.push(`doc.chain_order < @${paramName}`);
+    // build return expression
+    return QCollectionQuery.buildReturnExpression(
+        context.services.data.blocks.docType,
+        selectionSet,
+        [{ path: "chain_order", direction: "ASC" }],
+    );
 }
 
-function getAccountAccessRestictionCondition(accessRights: AccessRights, params: QParams) {
-    const accounts = accessRights.restrictToAccounts;
-    if (accounts.length === 0) {
-        return "";
-    }
-    const condition = accounts.length === 1
-        ? `== @${params.add(accounts[0])}`
-        : `IN @${params.add(accounts)}`;
-    return `doc.account_addr ${condition}`;
-}
-
-async function resolve_transactions(
-    parent: BlockchainQuery,
-    args: BlockchainQueryAccount_TransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs,
+async function resolve_key_blocks(
+    args: BlockchainQueryKey_BlocksArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
-    prepareAccountFilter: (params: QParams, filters: string[]) => void,
+    traceSpan: QTraceSpan,
+) {
+    // filters
+    const filters: string[] = [];
+    const params = new QParams();
+
+    const rename_seq_no = ({ seq_no, ...remainder}: BlockchainQueryKey_BlocksArgs) => ({master_seq_no: seq_no, ...remainder});
+    await prepareChainOrderFilter(rename_seq_no(args), params, filters, context);
+    filters.push(`doc.key_block == true`);
+
+    const { direction, limit } = processPaginationArgs(args);
+
+    let selectionSet = getNodeSelectionSetForConnection(info);
+    let returnExpression = buildBlockReturnExpression(selectionSet, context);
+
+    // query
+    const query = `
+        FOR doc IN blocks
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
+        LIMIT ${limit}
+        RETURN ${returnExpression}
+    `;
+    const queryResult = await context.services.data.query(
+        required(context.services.data.blocks.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [{ path: "chain_order", direction: "ASC" }],
+            request: context,
+            traceSpan,
+        },
+    ) as BlockchainBlock[];
+
+    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainBlocksConnection;
+}
+
+function isDefined<T>(value: T | null | undefined): boolean {
+    return value !== undefined && value !== null;
+}
+
+async function resolve_workchain_blocks(
+    args: BlockchainQueryWorkchain_BlocksArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    // validate args
+    if (args.thread && !isDefined(args.workchain)) {
+        throw QError.invalidQuery("Workchain is required for the thread filter");
+    }
+
+    // filters
+    const filters: string[] = [];
+    const params = new QParams();
+
+    await prepareChainOrderFilter(args, params, filters, context);
+    if (isDefined(args.workchain)) {
+        filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
+    }
+    if (isDefined(args.thread)) {
+        filters.push(`doc.shard == @${params.add(args.thread)}`);
+    }
+    if (isDefined(args.min_tr_count)) {
+        filters.push(`doc.tr_count >= @${params.add(args.min_tr_count)}`);
+    }
+    if (isDefined(args.max_tr_count)) {
+        filters.push(`doc.tr_count <= @${params.add(args.max_tr_count)}`);
+    }
+
+    const { direction, limit } = processPaginationArgs(args);
+
+    let selectionSet = getNodeSelectionSetForConnection(info);
+    let returnExpression = buildBlockReturnExpression(selectionSet, context);
+
+    // query
+    const query = `
+        FOR doc IN blocks
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
+        LIMIT ${limit}
+        RETURN ${returnExpression}
+    `;
+    const queryResult = await context.services.data.query(
+        required(context.services.data.blocks.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [{ path: "chain_order", direction: "ASC" }],
+            request: context,
+            traceSpan,
+        },
+    ) as BlockchainBlock[];
+
+    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainBlocksConnection;
+}
+
+function buildTransactionReturnExpression(selectionSet: SelectionSetNode | undefined, context: QRequestContext) {
+    // filter out hash field
+    if (selectionSet && selectionSet.selections.find(s => s.kind == "Field" && s.name.value == "hash")) {
+        selectionSet = Object.assign({}, selectionSet);
+        selectionSet.selections = selectionSet.selections
+            .filter(s => !(s.kind == "Field" && s.name.value == "hash"));
+    }
+
+    return QCollectionQuery.buildReturnExpression(
+        context.services.data.transactions.docType,
+        selectionSet,
+        [{ path: "chain_order", direction: "ASC" }],
+    );
+}
+
+async function resolve_workchain_transactions(
+    args: BlockchainQueryWorkchain_TransactionsArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
     // filters
@@ -146,55 +261,23 @@ async function resolve_transactions(
     const params = new QParams();
 
     await prepareChainOrderFilter(args, params, filters, context);
-    prepareAccountFilter(params, filters);
-
-    const accessFilter = getAccountAccessRestictionCondition(parent.accessRights, params);
-    if (accessFilter) {
-        filters.push(accessFilter);
+    
+    if (isDefined(args.workchain)) {
+        filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
+    }
+    if (isDefined(args.min_balance_delta)) {
+        const min_balance_delta = convertBigUInt(2, args.min_balance_delta);
+        filters.push(`doc.balance_delta >= @${params.add(min_balance_delta)}`);
+    }
+    if (isDefined(args.max_balance_delta)) {
+        const max_balance_delta = convertBigUInt(2, args.max_balance_delta);
+        filters.push(`doc.balance_delta <= @${params.add(max_balance_delta)}`);
     }
 
-    // first, last
-    if (args.first && args.last) {
-        throw QError.invalidQuery("\"first\" and \"last\" shouldn't be used simultaneously");
-    }
-    if (args.first && args.before) {
-        throw QError.invalidQuery("\"first\" should not be used with \"before\"");
-    }
-    if (args.last && args.after) {
-        throw QError.invalidQuery("\"last\" should not be used with \"after\"");
-    }
-    if (args.first && args.first < 1) {
-        throw QError.invalidQuery("\"first\" should not be less than than 1");
-    }
-    if (args.last && args.last < 1) {
-        throw QError.invalidQuery("\"last\" should not be less than than 1");
-    }
-    const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
-    const direction = (args.last || args.before) ? Direction.Backward : Direction.Forward;
+    const { direction, limit } = processPaginationArgs(args);
 
-    // get node selection set
-    const edgesNode =
-        info.fieldNodes[0].selectionSet?.selections
-            .find(s => s.kind == "Field" && s.name.value == "edges") as FieldNode | undefined;
-    const nodeNode =
-        edgesNode?.selectionSet?.selections
-            .find(s => s.kind == "Field" && s.name.value == "node") as FieldNode | undefined;
-    let selectionSet = nodeNode?.selectionSet;
-
-    // filter out "hash" field
-    if (selectionSet && selectionSet.selections.find(s =>s.kind == "Field" && s.name.value == "hash")) {
-        selectionSet = Object.assign({}, selectionSet);
-        selectionSet.selections = selectionSet.selections
-            .filter(s => !(s.kind == "Field" && s.name.value == "hash"));
-    }
-
-    // build return expression
-    const orderBy = [{ path: "chain_order", direction: "ASC" }];
-    const returnExpression = QCollectionQuery.buildReturnExpression(
-        context.services.data.transactions.docType,
-        selectionSet,
-        orderBy,
-    );
+    let selectionSet = getNodeSelectionSetForConnection(info);
+    let returnExpression = buildTransactionReturnExpression(selectionSet, context);
 
     // query
     const query = `
@@ -209,53 +292,71 @@ async function resolve_transactions(
         {
             text: query,
             vars: params.values,
-            orderBy,
+            orderBy: [{ path: "chain_order", direction: "ASC" }],
             request: context,
             traceSpan,
         },
     ) as BlockchainTransaction[];
 
-    // sort query result by chain_order ASC
-    queryResult.sort((a, b) => {
-        if (!a.chain_order || !b.chain_order) {
-            throw QError.internalServerError();
-        }
-        if (a.chain_order > b.chain_order) {
-            return 1;
-        }
-        if (a.chain_order < b.chain_order) {
-            return -1;
-        }
-        throw QError.internalServerError();
-    });
+    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainTransactionsConnection;
+}
 
-    // limit result length
-    const hasMore = queryResult.length >= limit;
-    if (hasMore) {
-        switch (direction) {
-            case Direction.Forward:
-                queryResult.splice(limit - 1);
-                break;
-            case Direction.Backward:
-                queryResult.splice(0, queryResult.length - limit + 1);
-                break;
-        }
+async function resolve_account_transactions(
+    parent: BlockchainQuery,
+    args: BlockchainQueryAccount_TransactionsArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    // validate args
+    const restrictToAccounts = parent.accessRights.restrictToAccounts;
+    if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(args.account_address)) {
+        throw QError.invalidQuery("This account_addr is not allowed");
     }
 
-    return {
-        edges: queryResult.map(t => {
-            return {
-                node: t,
-                cursor: t.chain_order,
-            };
-        }),
-        pageInfo: {
-            startCursor: queryResult.length > 0 ? queryResult[0].chain_order : "",
-            endCursor: queryResult.length > 0 ? queryResult[queryResult.length - 1].chain_order : "",
-            hasNextPage: (direction == Direction.Forward) ? hasMore : false,
-            hasPreviousPage: (direction == Direction.Backward) ? hasMore : false,
+    // filters
+    const filters: string[] = [];
+    const params = new QParams();
+
+    await prepareChainOrderFilter(args, params, filters, context);
+    filters.push(`doc.account_addr == @${params.add(args.account_address)}`);
+    if (isDefined(args.aborted)) {
+        filters.push(`doc.aborted == @${params.add(args.aborted)}`);
+    }
+    if (isDefined(args.min_balance_delta)) {
+        const min_balance_delta = convertBigUInt(2, args.min_balance_delta);
+        filters.push(`doc.balance_delta >= @${params.add(min_balance_delta)}`);
+    }
+    if (isDefined(args.max_balance_delta)) {
+        const max_balance_delta = convertBigUInt(2, args.max_balance_delta);
+        filters.push(`doc.balance_delta <= @${params.add(max_balance_delta)}`);
+    }
+
+    const { direction, limit } = processPaginationArgs(args);
+
+    let selectionSet = getNodeSelectionSetForConnection(info);
+    let returnExpression = buildTransactionReturnExpression(selectionSet, context);
+
+    // query
+    const query = `
+        FOR doc IN transactions
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
+        LIMIT ${limit}
+        RETURN ${returnExpression}
+    `;
+    const queryResult = await context.services.data.query(
+        required(context.services.data.transactions.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [{ path: "chain_order", direction: "ASC" }],
+            request: context,
+            traceSpan,
         },
-    } as BlockchainTransactionsConnection;
+    ) as BlockchainTransaction[];
+
+    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainTransactionsConnection;
 }
 
 export const resolvers: Resolvers<QRequestContext> = {
@@ -272,39 +373,24 @@ export const resolvers: Resolvers<QRequestContext> = {
                 return await resolve_maser_seq_no_range(args, context, traceSpan);
             });
         },
-        account_transactions: async (parent, args, context, info) => {
-            return context.trace("blockchain-account_transactions", async traceSpan => {
-                return await resolve_transactions(
-                    parent,
-                    args,
-                    context,
-                    info,
-                    (params, filters) => {
-                        if (args.account_addresses) {
-                            const paramName = params.add(args.account_addresses);
-                            filters.push(`doc.account_addr IN @${paramName}`);
-                        }
-                    },
-                    traceSpan,
-                );
+        key_blocks: async (_parent, args, context, info) => {
+            return context.trace("blockchain-resolve_key_blocks", async traceSpan => {
+                return await resolve_key_blocks(args, context, info, traceSpan);
             });
         },
-        workchain_transactions: async (parent, args, context, info) => {
+        workchain_blocks: async (_parent, args, context, info) => {
+            return context.trace("blockchain-resolve_workchain_blocks", async traceSpan => {
+                return await resolve_workchain_blocks(args, context, info, traceSpan);
+            });
+        },
+        workchain_transactions: async (_parent, args, context, info) => {
             return context.trace("blockchain-workchain_transactions", async traceSpan => {
-                return await resolve_transactions(
-                    parent,
-                    args,
-                    context,
-                    info,
-                    (params, filters) => {
-                        if (args.workchains) {
-                            const paramName = params.add(args.workchains);
-                            filters.push(`doc.workchain_id IN @${paramName}`);
-                            // we could probably use (doc.account_addr > "{w}:" AND doc.account_addr < "{w};")
-                        }
-                    },
-                    traceSpan,
-                );
+                return await resolve_workchain_transactions(args, context, info, traceSpan);
+            });
+        },
+        account_transactions: async (parent, args, context, info) => {
+            return context.trace("blockchain-account_transactions", async traceSpan => {
+                return await resolve_account_transactions(parent, args, context, info, traceSpan);
             });
         },
     },

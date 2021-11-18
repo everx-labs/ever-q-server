@@ -1,14 +1,14 @@
 """
-**EXPERIMENTAL**
-TON Transaction
+**UNSTABLE**
+Transaction
 """
 type BlockchainTransaction implements Node {
-    """
-    BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
-    For id without prefix see "hash".
-    """
+	"""
+	BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
+	For id without prefix see "hash".
+	"""
 	id: ID!
-    hash: String
+	hash: String
 	aborted: Boolean
 	account_addr: String
 	action: TransactionAction
