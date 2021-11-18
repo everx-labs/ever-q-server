@@ -99,12 +99,10 @@ export class QStats implements IStats {
     withImpl(f: (impl: IStatsImpl, callback: StatsCallback) => void): Promise<void> {
         return new Promise((resolve) => {
             const timeoutTimer = setTimeout(() => {
-                // TODO: Replace `logStatsError` with `this.dropImpl` in next line
-                // and reduce timeout
-                // when (and if) this error will be observed in the log.
-                logStatsError({ name: "", message: "timeouted (should be impossible, report to Q Server authors)"});
+                // It was confirmed that StatsD lib sometimes hangs and we need this timeout
+                this.dropImpl({ name: "", message: "timeouted"});
                 resolve();
-            }, 10000); // 10 seconds should be more than enough
+            }, 1000);
 
             try {
                 if (this.resetTime > 0) {
