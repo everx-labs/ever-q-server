@@ -10,9 +10,6 @@ All notable changes to this project will be documented in this file.
 ### Optimized
 - Without chain ranges verification database the verified boundary now 10 seconds ago instead of 120.
 
-### Fix
-- `gen_software_capabilities` block field is big integer
-
 ## [0.44.4] - 2021-10-25
 
 ### Fix
