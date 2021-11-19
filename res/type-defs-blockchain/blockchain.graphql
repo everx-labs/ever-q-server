@@ -133,7 +133,7 @@ type BlockchainQuery {
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
         min_balance_delta: Int,
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-		max_balance_delta: Int,
+        max_balance_delta: Int,
 
         "This field is mutually exclusive with 'last'"
         first: Int 
@@ -163,7 +163,7 @@ type BlockchainQuery {
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
         min_balance_delta: Int,
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-		max_balance_delta: Int,
+        max_balance_delta: Int,
 
 
         "This field is mutually exclusive with 'last'"
