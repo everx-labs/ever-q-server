@@ -54,6 +54,10 @@ import { QCollectionQuery } from "../server/data/collection-query";
 
 jest.setTimeout(100000);
 
+if (!process.env.Q_DATA_MUT) {
+    process.env.Q_DATA_MUT = "http://localhost:8901";
+}
+
 export const testConfig = resolveConfig(
     {},
     {},

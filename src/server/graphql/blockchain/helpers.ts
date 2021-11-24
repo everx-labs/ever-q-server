@@ -99,7 +99,7 @@ export function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scal
     // sort query result by chain_order ASC
     queryResult.sort((a, b) => {
         if (!a.chain_order || !b.chain_order) {
-            throw QError.internalServerError();
+            throw QError.create(500, "chain_order field not found");
         }
         if (a.chain_order > b.chain_order) {
             return 1;
@@ -107,7 +107,7 @@ export function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scal
         if (a.chain_order < b.chain_order) {
             return -1;
         }
-        throw QError.internalServerError();
+        throw QError.create(500, "two entities with the same chain_order");
     });
 
     // limit result length
