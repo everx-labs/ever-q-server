@@ -159,8 +159,6 @@ pipeline {
 									-e 'Q_REQUESTS_SERVER=localhost'
 									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
 									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
-									-e 'Q_SLOW_QUERIES_HOT=${Q_DATABASE_URI}'
-									-e 'Q_SLOW_QUERIES_MUT=${Q_DATABASE_URI}'
 								""") {
 								    sshagent (credentials: [G_gitcred]) {
                                         sh (
@@ -172,7 +170,7 @@ pipeline {
                                                 npm --versions
                                                 npm ci
                                                 npm run tsc
-                                                npm test
+                                                npm test -- --bail --runInBand
                                             """
                                         )
                                     }

@@ -218,6 +218,8 @@ test("Balance delta sum", async () => {
         query: gql`query { accounts(filter: { workchain_id: { eq: 0 }} limit: 1){id balance} }`,
     })).data.accounts[0];
 
+    console.log(account.id);
+
     const aggregated: (string | number)[] = (await client.query({
         query: gql`${`query { aggregateTransactions(
             filter: {account_addr: {eq: "${account.id}"}}

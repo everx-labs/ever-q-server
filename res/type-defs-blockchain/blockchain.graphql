@@ -1,5 +1,5 @@
 """
-This type is experimental
+This type is unstable
 """
 type BlockchainMasterSeqNoRange {
     "Minimum inclusive seq_no of corresponding master blocks"
@@ -9,7 +9,7 @@ type BlockchainMasterSeqNoRange {
 }
 
 """
-This type is experimental
+This type is unstable
 """
 input BlockchainMasterSeqNoFilter {
     "Minimum inclusive seq_no of corresponding master blocks"
@@ -19,7 +19,23 @@ input BlockchainMasterSeqNoFilter {
 }
 
 """
-This type is experimental
+This type is unstable
+"""
+type BlockchainBlocksConnection {
+    edges: [BlockchainBlocksEdge!]!
+    pageInfo: PageInfo!
+}
+
+"""
+This type is unstable
+"""
+type BlockchainBlocksEdge {
+    node: BlockchainBlock!
+    cursor: String!
+}
+
+"""
+This type is unstable
 """
 type BlockchainTransactionsConnection {
     edges: [BlockchainTransactionEdge!]!
@@ -27,7 +43,7 @@ type BlockchainTransactionsConnection {
 }
 
 """
-This type is experimental
+This type is unstable
 """
 type BlockchainTransactionEdge {
     node: BlockchainTransaction!
@@ -35,11 +51,11 @@ type BlockchainTransactionEdge {
 }
 
 """
-This type is experimental
+This type is unstable
 """
 type BlockchainQuery {
     """
-    **EXPERIMENTAL**
+    **UNSTABLE**
     Returns seq_no range such that:
     1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
     2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
@@ -52,20 +68,72 @@ type BlockchainQuery {
     ): BlockchainMasterSeqNoRange
 
     """
-    **EXPERIMENTAL**
-    This node could be used for a cursor-based pagination of transactions filtered by account addresses.
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of key blocks.
     """
-    account_transactions(
+    key_blocks(
+        """
+        Filter by seq_no.
+        """
+        seq_no: BlockchainMasterSeqNoFilter
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainBlocksConnection
+
+    """
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
+    """
+    workchain_blocks(
+        """
+        The blocks could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockсhain { master_seq_no_range }
+        """
+        master_seq_no: BlockchainMasterSeqNoFilter
+
+        "Optional filter by workchain"
+        workchain: Int
+        "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
+        thread: String,
+
+        "Optional filter by minimum transactions in a block (unoptimized, query could be dropped by timeout)"
+        min_tr_count: Int,
+        "Optional filter by maximum transactions in a block (unoptimized, query could be dropped by timeout)"
+        max_tr_count: Int,
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainBlocksConnection
+
+    """
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of transactions filtered by workchains.
+    """
+    workchain_transactions(
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: blockchain { master_seq_no_range }
         """
         master_seq_no: BlockchainMasterSeqNoFilter
 
-        """
-        The transactions could be filtered by the list of addresses.
-        """
-        account_addresses: [String!]
+        "Optional filter by workchain"
+        workchain: Int
+
+        "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
+        min_balance_delta: Int,
+        "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
+        max_balance_delta: Int,
 
         "This field is mutually exclusive with 'last'"
         first: Int 
@@ -77,20 +145,26 @@ type BlockchainQuery {
     ): BlockchainTransactionsConnection
 
     """
-    **EXPERIMENTAL**
-    This node could be used for a cursor-based pagination of transactions filtered by workchains.
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of transactions filtered by account addresses.
     """
-    workchain_transactions(
+    account_transactions(
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: blockchain { master_seq_no_range }
         """
         master_seq_no: BlockchainMasterSeqNoFilter
 
-        """
-        The transactions could be filtered by the list of workchains.
-        """
-        workchains: [Int!]
+        "Account address is required (64 hex symbols)"
+        account_address: String!
+
+        aborted: Boolean
+
+        "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
+        min_balance_delta: Int,
+        "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
+        max_balance_delta: Int,
+
 
         "This field is mutually exclusive with 'last'"
         first: Int 
@@ -103,6 +177,6 @@ type BlockchainQuery {
 }
 
 extend type Query {
-    "This node is experimental"
+    "This node is unstable"
     blockchain(accessKey: String): BlockchainQuery
 }

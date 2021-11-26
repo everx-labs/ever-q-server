@@ -7,6 +7,10 @@ type BlockchainTransaction {
 	_key: String!
 }
 
+type BlockchainBlock {
+	_key: String!
+}
+
 type BlockchainQuery {
 	accessRights: AccessRights!
 }
@@ -193,4 +197,504 @@ enum BigIntFormat {
 type OtherCurrency {
 	currency: Float
 	value(format: BigIntFormat): String
+}
+
+type BlockAccountBlocksTransactions {
+	lt(format: BigIntFormat): String
+	total_fees(format: BigIntFormat): String
+	total_fees_other: [OtherCurrency]
+	transaction_id: String
+}
+
+type BlockAccountBlocks {
+	account_addr: String
+	"new version of block hashes"
+	new_hash: String
+	"old version of block hashes"
+	old_hash: String
+	tr_count: Int
+	transactions: [BlockAccountBlocksTransactions]
+}
+
+type InMsg {
+	fwd_fee(format: BigIntFormat): String
+	ihr_fee(format: BigIntFormat): String
+	in_msg: MsgEnvelope
+	msg_id: String
+	"""
+	- 0 – external
+	- 1 – ihr
+	- 2 – immediately
+	- 3 – final
+	- 4 – transit
+	- 5 – discardedFinal
+	- 6 – discardedTransit
+	"""
+	msg_type: Int
+	msg_type_name: InMsgTypeEnum
+	out_msg: MsgEnvelope
+	proof_created: String
+	proof_delivered: String
+	transaction_id: String
+	transit_fee(format: BigIntFormat): String
+}
+
+type BlockMasterShardHashes {
+	"Shard description"
+	descr: BlockMasterShardHashesDescr
+	"Shard ID"
+	shard: String
+	"Uint32 workchain ID"
+	workchain_id: Int
+}
+
+type BlockMasterShardFees {
+	"Amount of fees created during shard"
+	create(format: BigIntFormat): String
+	"Amount of non gram fees created in non gram crypto currencies during the block."
+	create_other: [OtherCurrency]
+	"Amount of fees in grams"
+	fees(format: BigIntFormat): String
+	"Array of fees in non gram crypto currencies"
+	fees_other: [OtherCurrency]
+	shard: String
+	workchain_id: Int
+}
+
+type BlockMasterPrevBlkSignatures {
+	node_id: String
+	r: String
+	s: String
+}
+
+type BlockMaster {
+	config: Config
+	config_addr: String
+	"Max block generation time of shards"
+	max_shard_gen_utime: Float
+	max_shard_gen_utime_string: String
+	"Min block generation time of shards"
+	min_shard_gen_utime: Float
+	min_shard_gen_utime_string: String
+	prev_blk_signatures: [BlockMasterPrevBlkSignatures]
+	recover_create_msg: InMsg
+	shard_fees: [BlockMasterShardFees]
+	shard_hashes: [BlockMasterShardHashes]
+}
+
+"Configuration parameter 6"
+type ConfigP6 {
+	mint_add_price: String
+	mint_new_price: String
+}
+
+type ConfigP7 {
+	currency: Float
+	value: String
+}
+
+"Global version"
+type ConfigP8 {
+	capabilities(format: BigIntFormat): String
+	version: Float
+}
+
+"Config voting setup"
+type ConfigP11 {
+	critical_params: ConfigProposalSetup
+	normal_params: ConfigProposalSetup
+}
+
+type ConfigP12 {
+	accept_msgs: Boolean
+	active: Boolean
+	actual_min_split: Int
+	addr_len_step: Int
+	basic: Boolean
+	enabled_since: Float
+	flags: Int
+	max_addr_len: Int
+	max_split: Int
+	min_addr_len: Int
+	min_split: Int
+	version: Float
+	vm_mode: String
+	vm_version: Int
+	workchain_id: Int
+	workchain_type_id: Float
+	zerostate_file_hash: String
+	zerostate_root_hash: String
+}
+
+"Block create fees"
+type ConfigP14 {
+	basechain_block_fee(format: BigIntFormat): String
+	masterchain_block_fee(format: BigIntFormat): String
+}
+
+"Election parameters"
+type ConfigP15 {
+	elections_end_before: Float
+	elections_start_before: Float
+	stake_held_for: Float
+	validators_elected_for: Float
+}
+
+"Validators count"
+type ConfigP16 {
+	max_main_validators: Int
+	max_validators: Int
+	min_validators: Int
+}
+
+"Validator stake parameters"
+type ConfigP17 {
+	max_stake(format: BigIntFormat): String
+	max_stake_factor: Float
+	min_stake(format: BigIntFormat): String
+	min_total_stake(format: BigIntFormat): String
+}
+
+type ConfigP18 {
+	bit_price_ps(format: BigIntFormat): String
+	cell_price_ps(format: BigIntFormat): String
+	mc_bit_price_ps(format: BigIntFormat): String
+	mc_cell_price_ps(format: BigIntFormat): String
+	utime_since: Float
+	utime_since_string: String
+}
+
+"Catchain config"
+type ConfigP28 {
+	mc_catchain_lifetime: Float
+	shard_catchain_lifetime: Float
+	shard_validators_lifetime: Float
+	shard_validators_num: Float
+	shuffle_mc_validators: Boolean
+}
+
+"Consensus config"
+type ConfigP29 {
+	attempt_duration: Float
+	catchain_max_deps: Float
+	consensus_timeout_ms: Float
+	fast_attempts: Float
+	max_block_bytes: Float
+	max_collated_bytes: Float
+	new_catchain_ids: Boolean
+	next_candidate_delay_ms: Float
+	round_candidates: Float
+}
+
+type ConfigP39 {
+	adnl_addr: String
+	seqno: Float
+	signature_r: String
+	signature_s: String
+	temp_public_key: String
+	valid_until: Float
+}
+
+type Config {
+	"Address of config smart contract in the masterchain"
+	p0: String
+	"Address of elector smart contract in the masterchain"
+	p1: String
+	"Critical params"
+	p10: [Float]
+	"Config voting setup"
+	p11: ConfigP11
+	"Array of all workchains descriptions"
+	p12: [ConfigP12]
+	"Block create fees"
+	p14: ConfigP14
+	"Election parameters"
+	p15: ConfigP15
+	"Validators count"
+	p16: ConfigP16
+	"Validator stake parameters"
+	p17: ConfigP17
+	"Storage prices"
+	p18: [ConfigP18]
+	"Address of minter smart contract in the masterchain"
+	p2: String
+	"Gas limits and prices in the masterchain"
+	p20: GasLimitsPrices
+	"Gas limits and prices in workchains"
+	p21: GasLimitsPrices
+	"Block limits in the masterchain"
+	p22: BlockLimits
+	"Block limits in workchains"
+	p23: BlockLimits
+	"Message forward prices in the masterchain"
+	p24: MsgForwardPrices
+	"Message forward prices in workchains"
+	p25: MsgForwardPrices
+	"Catchain config"
+	p28: ConfigP28
+	"Consensus config"
+	p29: ConfigP29
+	"Address of fee collector smart contract in the masterchain"
+	p3: String
+	"Array of fundamental smart contracts addresses"
+	p31: [String]
+	"Previous validators set"
+	p32: ValidatorSet
+	"Previous temporary validators set"
+	p33: ValidatorSet
+	"Current validators set"
+	p34: ValidatorSet
+	"Current temporary validators set"
+	p35: ValidatorSet
+	"Next validators set"
+	p36: ValidatorSet
+	"Next temporary validators set"
+	p37: ValidatorSet
+	"Array of validator signed temporary keys"
+	p39: [ConfigP39]
+	"Address of TON DNS root smart contract in the masterchain"
+	p4: String
+	"Configuration parameter 6"
+	p6: ConfigP6
+	"Configuration parameter 7"
+	p7: [ConfigP7]
+	"Global version"
+	p8: ConfigP8
+	"Mandatory params"
+	p9: [Float]
+}
+
+"Shard description"
+type BlockMasterShardHashesDescr {
+	before_merge: Boolean
+	"""
+	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
+	A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
+	The masterchain cannot be split or merged.
+	"""
+	before_split: Boolean
+	"Logical time of the shardchain end"
+	end_lt(format: BigIntFormat): String
+	"Amount of fees collected int his shard in grams."
+	fees_collected(format: BigIntFormat): String
+	"Amount of fees collected int his shard in non gram currencies."
+	fees_collected_other: [OtherCurrency]
+	"Shard block file hash."
+	file_hash: String
+	flags: Int
+	"Amount of funds created in this shard in grams."
+	funds_created(format: BigIntFormat): String
+	"Amount of funds created in this shard in non gram currencies."
+	funds_created_other: [OtherCurrency]
+	"Generation time in uint32"
+	gen_utime: Float
+	gen_utime_string: String
+	min_ref_mc_seqno: Float
+	next_catchain_seqno: Float
+	next_validator_shard: String
+	nx_cc_updated: Boolean
+	"Returns last known master block at the time of shard generation."
+	reg_mc_seqno: Float
+	"Returns last known master block at the time of shard generation. The shard block configuration is derived from that block."
+	root_hash: String
+	"uint32 sequence number"
+	seq_no: Float
+	split: Float
+	"""
+	- 0 – none
+	- 2 – split
+	- 3 – merge
+	"""
+	split_type: Int
+	split_type_name: SplitTypeEnum
+	"Logical time of the shardchain start"
+	start_lt(format: BigIntFormat): String
+	want_merge: Boolean
+	want_split: Boolean
+}
+
+enum SplitTypeEnum {
+    None
+    Split
+    Merge
+}
+
+type ExtBlkRef {
+	end_lt(format: BigIntFormat): String
+	file_hash: String
+	root_hash: String
+	seq_no: Float
+}
+
+type OutMsg {
+	import_block_lt(format: BigIntFormat): String
+	imported: InMsg
+	msg_env_hash: String
+	msg_id: String
+	"""
+	- 0 – external
+	- 1 – immediately
+	- 2 – outMsgNew
+	- 3 – transit
+	- 4 – dequeueImmediately
+	- 5 – dequeue
+	- 6 – transitRequired
+	- 7 – dequeueShort
+	- -1 – none
+	"""
+	msg_type: Int
+	msg_type_name: OutMsgTypeEnum
+	next_addr_pfx(format: BigIntFormat): String
+	next_workchain: Int
+	out_msg: MsgEnvelope
+	reimport: InMsg
+	transaction_id: String
+}
+
+type BlockStateUpdate {
+	new: String
+	new_depth: Int
+	new_hash: String
+	old: String
+	old_depth: Int
+	old_hash: String
+}
+
+enum BlockProcessingStatusEnum {
+    Unknown
+    Proposed
+    Finalized
+    Refused
+}
+
+type BlockValueFlow {
+	created(format: BigIntFormat): String
+	created_other: [OtherCurrency]
+	"Amount of grams exported."
+	exported(format: BigIntFormat): String
+	"Amount of non gram cryptocurrencies exported."
+	exported_other: [OtherCurrency]
+	fees_collected(format: BigIntFormat): String
+	fees_collected_other: [OtherCurrency]
+	"Amount of import fees in grams"
+	fees_imported(format: BigIntFormat): String
+	"Amount of import fees in non gram currencies."
+	fees_imported_other: [OtherCurrency]
+	"Amount of grams transferred from previous block."
+	from_prev_blk(format: BigIntFormat): String
+	"Amount of non gram cryptocurrencies transferred from previous block."
+	from_prev_blk_other: [OtherCurrency]
+	"Amount of grams imported."
+	imported(format: BigIntFormat): String
+	"Amount of non gram cryptocurrencies imported."
+	imported_other: [OtherCurrency]
+	"Amount of grams minted in this block."
+	minted(format: BigIntFormat): String
+	minted_other: [OtherCurrency]
+	"Amount of grams amount to the next block."
+	to_next_blk(format: BigIntFormat): String
+	"Amount of non gram cryptocurrencies to the next block."
+	to_next_blk_other: [OtherCurrency]
+}
+
+type GasLimitsPrices {
+	block_gas_limit(format: BigIntFormat): String
+	delete_due_limit(format: BigIntFormat): String
+	flat_gas_limit(format: BigIntFormat): String
+	flat_gas_price(format: BigIntFormat): String
+	freeze_due_limit(format: BigIntFormat): String
+	gas_credit(format: BigIntFormat): String
+	gas_limit(format: BigIntFormat): String
+	gas_price(format: BigIntFormat): String
+	special_gas_limit(format: BigIntFormat): String
+}
+
+type BlockLimitsBytes {
+	hard_limit: Float
+	soft_limit: Float
+	underload: Float
+}
+
+type BlockLimitsGas {
+	hard_limit: Float
+	soft_limit: Float
+	underload: Float
+}
+
+type BlockLimitsLtDelta {
+	hard_limit: Float
+	soft_limit: Float
+	underload: Float
+}
+
+type BlockLimits {
+	bytes: BlockLimitsBytes
+	gas: BlockLimitsGas
+	lt_delta: BlockLimitsLtDelta
+}
+
+type MsgForwardPrices {
+	bit_price(format: BigIntFormat): String
+	cell_price(format: BigIntFormat): String
+	first_frac: Int
+	ihr_price_factor: Float
+	lump_price(format: BigIntFormat): String
+	next_frac: Int
+}
+
+type ValidatorSetList {
+	adnl_addr: String
+	public_key: String
+	weight(format: BigIntFormat): String
+}
+
+type ValidatorSet {
+	list: [ValidatorSetList]
+	main: Int
+	total: Int
+	total_weight(format: BigIntFormat): String
+	utime_since: Float
+	utime_since_string: String
+	utime_until: Float
+	utime_until_string: String
+}
+
+type MsgEnvelope {
+	cur_addr: String
+	fwd_fee_remaining(format: BigIntFormat): String
+	msg_id: String
+	next_addr: String
+}
+
+type ConfigProposalSetup {
+	bit_price: Float
+	cell_price: Float
+	max_losses: Int
+	max_store_sec: Float
+	max_tot_rounds: Int
+	min_store_sec: Float
+	min_tot_rounds: Int
+	min_wins: Int
+}
+
+enum InMsgTypeEnum {
+    External
+    Ihr
+    Immediately
+    Final
+    Transit
+    DiscardedFinal
+    DiscardedTransit
+}
+
+enum OutMsgTypeEnum {
+    External
+    Immediately
+    OutMsgNew
+    Transit
+    DequeueImmediately
+    Dequeue
+    TransitRequired
+    DequeueShort
+    None
 }
