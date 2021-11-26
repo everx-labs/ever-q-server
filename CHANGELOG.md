@@ -5,10 +5,18 @@ All notable changes to this project will be documented in this file.
 ## [0.45.0] - 2021-11-18
 
 ### New
-- New `blockchain` GraphQL subgraph, which features reliable pagination of blocks, messages and transactions.
+- New `blockchain` GraphQL subgraph (unstable), which features reliable pagination of blocks and transactions:
+    - `master_seq_no_range` to transform time range into masterchain seq_no range
+    - `key_blocks`
+    - `workchain_blocks` with optional filter by thread (former 'shard')
+    - `workchain_transactions`
+    - `account_transactions` 
 
 ### Optimized
 - Without chain ranges verification database the verified boundary now 10 seconds ago instead of 120.
+
+### Fix
+- StatsD reporting now has timeout to tackle with rare freeze problem
 
 ## [0.44.4] - 2021-10-25
 
