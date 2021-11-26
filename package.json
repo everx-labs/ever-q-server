@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.44.4",
+	"version": "0.44.5",
 	"description": "TON Q Server – realtime queries over TON blockchain.",
 	"main": "index.js",
 	"repository": "git@github.com:tonlabs/ton-q-server.git",
@@ -34,7 +34,7 @@
 		"apollo-link-context": "1.0.20",
 		"apollo-link-http": "1.5.17",
 		"apollo-link-ws": "1.0.20",
-		"apollo-server": "2.16.1",
+		"apollo-server": "2.25.3",
 		"apollo-server-express": "2.16.1",
 		"apollo-utilities": "1.3.4",
 		"arangochair": "git+https://github.com/tonlabs/arangochair.git",
