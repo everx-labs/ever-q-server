@@ -43,7 +43,407 @@ export enum BigIntFormat {
   Dec = 'DEC'
 }
 
-/** This type is experimental */
+export type BlockAccountBlocks = {
+  __typename?: 'BlockAccountBlocks';
+  account_addr?: Maybe<Scalars['String']>;
+  /** new version of block hashes */
+  new_hash?: Maybe<Scalars['String']>;
+  /** old version of block hashes */
+  old_hash?: Maybe<Scalars['String']>;
+  tr_count?: Maybe<Scalars['Int']>;
+  transactions?: Maybe<Array<Maybe<BlockAccountBlocksTransactions>>>;
+};
+
+export type BlockAccountBlocksTransactions = {
+  __typename?: 'BlockAccountBlocksTransactions';
+  lt?: Maybe<Scalars['String']>;
+  total_fees?: Maybe<Scalars['String']>;
+  total_fees_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  transaction_id?: Maybe<Scalars['String']>;
+};
+
+
+export type BlockAccountBlocksTransactionsLtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockAccountBlocksTransactionsTotal_FeesArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type BlockLimits = {
+  __typename?: 'BlockLimits';
+  bytes?: Maybe<BlockLimitsBytes>;
+  gas?: Maybe<BlockLimitsGas>;
+  lt_delta?: Maybe<BlockLimitsLtDelta>;
+};
+
+export type BlockLimitsBytes = {
+  __typename?: 'BlockLimitsBytes';
+  hard_limit?: Maybe<Scalars['Float']>;
+  soft_limit?: Maybe<Scalars['Float']>;
+  underload?: Maybe<Scalars['Float']>;
+};
+
+export type BlockLimitsGas = {
+  __typename?: 'BlockLimitsGas';
+  hard_limit?: Maybe<Scalars['Float']>;
+  soft_limit?: Maybe<Scalars['Float']>;
+  underload?: Maybe<Scalars['Float']>;
+};
+
+export type BlockLimitsLtDelta = {
+  __typename?: 'BlockLimitsLtDelta';
+  hard_limit?: Maybe<Scalars['Float']>;
+  soft_limit?: Maybe<Scalars['Float']>;
+  underload?: Maybe<Scalars['Float']>;
+};
+
+export type BlockMaster = {
+  __typename?: 'BlockMaster';
+  config?: Maybe<Config>;
+  config_addr?: Maybe<Scalars['String']>;
+  /** Max block generation time of shards */
+  max_shard_gen_utime?: Maybe<Scalars['Float']>;
+  max_shard_gen_utime_string?: Maybe<Scalars['String']>;
+  /** Min block generation time of shards */
+  min_shard_gen_utime?: Maybe<Scalars['Float']>;
+  min_shard_gen_utime_string?: Maybe<Scalars['String']>;
+  prev_blk_signatures?: Maybe<Array<Maybe<BlockMasterPrevBlkSignatures>>>;
+  recover_create_msg?: Maybe<InMsg>;
+  shard_fees?: Maybe<Array<Maybe<BlockMasterShardFees>>>;
+  shard_hashes?: Maybe<Array<Maybe<BlockMasterShardHashes>>>;
+};
+
+export type BlockMasterPrevBlkSignatures = {
+  __typename?: 'BlockMasterPrevBlkSignatures';
+  node_id?: Maybe<Scalars['String']>;
+  r?: Maybe<Scalars['String']>;
+  s?: Maybe<Scalars['String']>;
+};
+
+export type BlockMasterShardFees = {
+  __typename?: 'BlockMasterShardFees';
+  /** Amount of fees created during shard */
+  create?: Maybe<Scalars['String']>;
+  /** Amount of non gram fees created in non gram crypto currencies during the block. */
+  create_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of fees in grams */
+  fees?: Maybe<Scalars['String']>;
+  /** Array of fees in non gram crypto currencies */
+  fees_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  shard?: Maybe<Scalars['String']>;
+  workchain_id?: Maybe<Scalars['Int']>;
+};
+
+
+export type BlockMasterShardFeesCreateArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockMasterShardFeesFeesArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type BlockMasterShardHashes = {
+  __typename?: 'BlockMasterShardHashes';
+  /** Shard description */
+  descr?: Maybe<BlockMasterShardHashesDescr>;
+  /** Shard ID */
+  shard?: Maybe<Scalars['String']>;
+  /** Uint32 workchain ID */
+  workchain_id?: Maybe<Scalars['Int']>;
+};
+
+/** Shard description */
+export type BlockMasterShardHashesDescr = {
+  __typename?: 'BlockMasterShardHashesDescr';
+  before_merge?: Maybe<Scalars['Boolean']>;
+  /**
+   * TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
+   * A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
+   * The masterchain cannot be split or merged.
+   */
+  before_split?: Maybe<Scalars['Boolean']>;
+  /** Logical time of the shardchain end */
+  end_lt?: Maybe<Scalars['String']>;
+  /** Amount of fees collected int his shard in grams. */
+  fees_collected?: Maybe<Scalars['String']>;
+  /** Amount of fees collected int his shard in non gram currencies. */
+  fees_collected_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Shard block file hash. */
+  file_hash?: Maybe<Scalars['String']>;
+  flags?: Maybe<Scalars['Int']>;
+  /** Amount of funds created in this shard in grams. */
+  funds_created?: Maybe<Scalars['String']>;
+  /** Amount of funds created in this shard in non gram currencies. */
+  funds_created_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Generation time in uint32 */
+  gen_utime?: Maybe<Scalars['Float']>;
+  gen_utime_string?: Maybe<Scalars['String']>;
+  min_ref_mc_seqno?: Maybe<Scalars['Float']>;
+  next_catchain_seqno?: Maybe<Scalars['Float']>;
+  next_validator_shard?: Maybe<Scalars['String']>;
+  nx_cc_updated?: Maybe<Scalars['Boolean']>;
+  /** Returns last known master block at the time of shard generation. */
+  reg_mc_seqno?: Maybe<Scalars['Float']>;
+  /** Returns last known master block at the time of shard generation. The shard block configuration is derived from that block. */
+  root_hash?: Maybe<Scalars['String']>;
+  /** uint32 sequence number */
+  seq_no?: Maybe<Scalars['Float']>;
+  split?: Maybe<Scalars['Float']>;
+  /**
+   * - 0 – none
+   * - 2 – split
+   * - 3 – merge
+   */
+  split_type?: Maybe<Scalars['Int']>;
+  split_type_name?: Maybe<SplitTypeEnum>;
+  /** Logical time of the shardchain start */
+  start_lt?: Maybe<Scalars['String']>;
+  want_merge?: Maybe<Scalars['Boolean']>;
+  want_split?: Maybe<Scalars['Boolean']>;
+};
+
+
+/** Shard description */
+export type BlockMasterShardHashesDescrEnd_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/** Shard description */
+export type BlockMasterShardHashesDescrFees_CollectedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/** Shard description */
+export type BlockMasterShardHashesDescrFunds_CreatedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/** Shard description */
+export type BlockMasterShardHashesDescrStart_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export enum BlockProcessingStatusEnum {
+  Unknown = 'Unknown',
+  Proposed = 'Proposed',
+  Finalized = 'Finalized',
+  Refused = 'Refused'
+}
+
+export type BlockStateUpdate = {
+  __typename?: 'BlockStateUpdate';
+  new?: Maybe<Scalars['String']>;
+  new_depth?: Maybe<Scalars['Int']>;
+  new_hash?: Maybe<Scalars['String']>;
+  old?: Maybe<Scalars['String']>;
+  old_depth?: Maybe<Scalars['Int']>;
+  old_hash?: Maybe<Scalars['String']>;
+};
+
+export type BlockValueFlow = {
+  __typename?: 'BlockValueFlow';
+  created?: Maybe<Scalars['String']>;
+  created_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of grams exported. */
+  exported?: Maybe<Scalars['String']>;
+  /** Amount of non gram cryptocurrencies exported. */
+  exported_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  fees_collected?: Maybe<Scalars['String']>;
+  fees_collected_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of import fees in grams */
+  fees_imported?: Maybe<Scalars['String']>;
+  /** Amount of import fees in non gram currencies. */
+  fees_imported_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of grams transferred from previous block. */
+  from_prev_blk?: Maybe<Scalars['String']>;
+  /** Amount of non gram cryptocurrencies transferred from previous block. */
+  from_prev_blk_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of grams imported. */
+  imported?: Maybe<Scalars['String']>;
+  /** Amount of non gram cryptocurrencies imported. */
+  imported_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of grams minted in this block. */
+  minted?: Maybe<Scalars['String']>;
+  minted_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Amount of grams amount to the next block. */
+  to_next_blk?: Maybe<Scalars['String']>;
+  /** Amount of non gram cryptocurrencies to the next block. */
+  to_next_blk_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+};
+
+
+export type BlockValueFlowCreatedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowExportedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowFees_CollectedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowFees_ImportedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowFrom_Prev_BlkArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowImportedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowMintedArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type BlockValueFlowTo_Next_BlkArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+/**
+ * **UNSTABLE**
+ * Block
+ */
+export type BlockchainBlock = Node & {
+  __typename?: 'BlockchainBlock';
+  _key: Scalars['String'];
+  account_blocks?: Maybe<Array<Maybe<BlockAccountBlocks>>>;
+  after_merge?: Maybe<Scalars['Boolean']>;
+  after_split?: Maybe<Scalars['Boolean']>;
+  before_split?: Maybe<Scalars['Boolean']>;
+  /** Serialized bag of cells of this block encoded with base64 */
+  boc?: Maybe<Scalars['String']>;
+  /** Collection-unique field for pagination and sorting. This field is designed to retain logical order. */
+  chain_order?: Maybe<Scalars['String']>;
+  /** Public key of the collator who produced this block. */
+  created_by?: Maybe<Scalars['String']>;
+  /** Logical creation time automatically set by the block formation end. */
+  end_lt?: Maybe<Scalars['String']>;
+  /** Block file hash */
+  file_hash?: Maybe<Scalars['String']>;
+  flags?: Maybe<Scalars['Int']>;
+  gen_catchain_seqno?: Maybe<Scalars['Float']>;
+  gen_software_capabilities?: Maybe<Scalars['String']>;
+  gen_software_version?: Maybe<Scalars['Float']>;
+  /** uint 32 generation time stamp */
+  gen_utime?: Maybe<Scalars['Float']>;
+  gen_utime_string?: Maybe<Scalars['String']>;
+  gen_validator_list_hash_short?: Maybe<Scalars['Float']>;
+  /** uint32 global block ID */
+  global_id?: Maybe<Scalars['Int']>;
+  hash?: Maybe<Scalars['String']>;
+  /**
+   * BlockchainBlock.id is "block/"-prefixed Block.id.
+   * For id without prefix see "hash".
+   */
+  id: Scalars['ID'];
+  in_msg_descr?: Maybe<Array<Maybe<InMsg>>>;
+  /** true if this block is a key block */
+  key_block?: Maybe<Scalars['Boolean']>;
+  master?: Maybe<BlockMaster>;
+  master_ref?: Maybe<ExtBlkRef>;
+  /** Returns last known master block at the time of shard generation. */
+  min_ref_mc_seqno?: Maybe<Scalars['Float']>;
+  out_msg_descr?: Maybe<Array<Maybe<OutMsg>>>;
+  /** External block reference for previous block in case of shard merge. */
+  prev_alt_ref?: Maybe<ExtBlkRef>;
+  /** Returns a number of a previous key block. */
+  prev_key_block_seqno?: Maybe<Scalars['Float']>;
+  /** External block reference for previous block. */
+  prev_ref?: Maybe<ExtBlkRef>;
+  prev_vert_alt_ref?: Maybe<ExtBlkRef>;
+  /** External block reference for previous block in case of vertical blocks. */
+  prev_vert_ref?: Maybe<ExtBlkRef>;
+  rand_seed?: Maybe<Scalars['String']>;
+  seq_no?: Maybe<Scalars['Float']>;
+  shard?: Maybe<Scalars['String']>;
+  /**
+   * Logical creation time automatically set by the block formation start.
+   * Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
+   */
+  start_lt?: Maybe<Scalars['String']>;
+  state_update?: Maybe<BlockStateUpdate>;
+  /**
+   * Returns block processing status
+   * - 0 – unknown
+   * - 1 – proposed
+   * - 2 – finalized
+   * - 3 – refused
+   */
+  status?: Maybe<Scalars['Int']>;
+  status_name?: Maybe<BlockProcessingStatusEnum>;
+  tr_count?: Maybe<Scalars['Int']>;
+  value_flow?: Maybe<BlockValueFlow>;
+  /** uin32 block version identifier */
+  version?: Maybe<Scalars['Float']>;
+  vert_seq_no?: Maybe<Scalars['Float']>;
+  want_merge?: Maybe<Scalars['Boolean']>;
+  want_split?: Maybe<Scalars['Boolean']>;
+  /** uint32 workchain identifier */
+  workchain_id?: Maybe<Scalars['Int']>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * Block
+ */
+export type BlockchainBlockEnd_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * Block
+ */
+export type BlockchainBlockGen_Software_CapabilitiesArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * Block
+ */
+export type BlockchainBlockStart_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+/** This type is unstable */
+export type BlockchainBlocksConnection = {
+  __typename?: 'BlockchainBlocksConnection';
+  edges: Array<BlockchainBlocksEdge>;
+  pageInfo: PageInfo;
+};
+
+/** This type is unstable */
+export type BlockchainBlocksEdge = {
+  __typename?: 'BlockchainBlocksEdge';
+  node: BlockchainBlock;
+  cursor: Scalars['String'];
+};
+
+/** This type is unstable */
 export type BlockchainMasterSeqNoFilter = {
   /** Minimum inclusive seq_no of corresponding master blocks */
   start?: Maybe<Scalars['Int']>;
@@ -51,7 +451,7 @@ export type BlockchainMasterSeqNoFilter = {
   end?: Maybe<Scalars['Int']>;
 };
 
-/** This type is experimental */
+/** This type is unstable */
 export type BlockchainMasterSeqNoRange = {
   __typename?: 'BlockchainMasterSeqNoRange';
   /** Minimum inclusive seq_no of corresponding master blocks */
@@ -60,17 +460,22 @@ export type BlockchainMasterSeqNoRange = {
   end?: Maybe<Scalars['Int']>;
 };
 
-/** This type is experimental */
+/** This type is unstable */
 export type BlockchainQuery = {
   __typename?: 'BlockchainQuery';
   accessRights: AccessRights;
   /**
-   * **EXPERIMENTAL**
+   * **UNSTABLE**
    * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
    */
   account_transactions?: Maybe<BlockchainTransactionsConnection>;
   /**
-   * **EXPERIMENTAL**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of key blocks.
+   */
+  key_blocks?: Maybe<BlockchainBlocksConnection>;
+  /**
+   * **UNSTABLE**
    * Returns seq_no range such that:
    * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
    * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
@@ -79,17 +484,25 @@ export type BlockchainQuery = {
    */
   master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
   /**
-   * **EXPERIMENTAL**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
+   */
+  workchain_blocks?: Maybe<BlockchainBlocksConnection>;
+  /**
+   * **UNSTABLE**
    * This node could be used for a cursor-based pagination of transactions filtered by workchains.
    */
   workchain_transactions?: Maybe<BlockchainTransactionsConnection>;
 };
 
 
-/** This type is experimental */
+/** This type is unstable */
 export type BlockchainQueryAccount_TransactionsArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
-  account_addresses?: Maybe<Array<Scalars['String']>>;
+  account_address: Scalars['String'];
+  aborted?: Maybe<Scalars['Boolean']>;
+  min_balance_delta?: Maybe<Scalars['Int']>;
+  max_balance_delta?: Maybe<Scalars['Int']>;
   first?: Maybe<Scalars['Int']>;
   after?: Maybe<Scalars['String']>;
   last?: Maybe<Scalars['Int']>;
@@ -97,17 +510,43 @@ export type BlockchainQueryAccount_TransactionsArgs = {
 };
 
 
-/** This type is experimental */
+/** This type is unstable */
+export type BlockchainQueryKey_BlocksArgs = {
+  seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+/** This type is unstable */
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {
   time_start?: Maybe<Scalars['Int']>;
   time_end?: Maybe<Scalars['Int']>;
 };
 
 
-/** This type is experimental */
+/** This type is unstable */
+export type BlockchainQueryWorkchain_BlocksArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  workchain?: Maybe<Scalars['Int']>;
+  thread?: Maybe<Scalars['String']>;
+  min_tr_count?: Maybe<Scalars['Int']>;
+  max_tr_count?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+/** This type is unstable */
 export type BlockchainQueryWorkchain_TransactionsArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
-  workchains?: Maybe<Array<Scalars['Int']>>;
+  workchain?: Maybe<Scalars['Int']>;
+  min_balance_delta?: Maybe<Scalars['Int']>;
+  max_balance_delta?: Maybe<Scalars['Int']>;
   first?: Maybe<Scalars['Int']>;
   after?: Maybe<Scalars['String']>;
   last?: Maybe<Scalars['Int']>;
@@ -115,8 +554,8 @@ export type BlockchainQueryWorkchain_TransactionsArgs = {
 };
 
 /**
- * **EXPERIMENTAL**
- * TON Transaction
+ * **UNSTABLE**
+ * Transaction
  */
 export type BlockchainTransaction = Node & {
   __typename?: 'BlockchainTransaction';
@@ -214,8 +653,8 @@ export type BlockchainTransaction = Node & {
 
 
 /**
- * **EXPERIMENTAL**
- * TON Transaction
+ * **UNSTABLE**
+ * Transaction
  */
 export type BlockchainTransactionBalance_DeltaArgs = {
   format?: Maybe<BigIntFormat>;
@@ -223,8 +662,8 @@ export type BlockchainTransactionBalance_DeltaArgs = {
 
 
 /**
- * **EXPERIMENTAL**
- * TON Transaction
+ * **UNSTABLE**
+ * Transaction
  */
 export type BlockchainTransactionLtArgs = {
   format?: Maybe<BigIntFormat>;
@@ -232,8 +671,8 @@ export type BlockchainTransactionLtArgs = {
 
 
 /**
- * **EXPERIMENTAL**
- * TON Transaction
+ * **UNSTABLE**
+ * Transaction
  */
 export type BlockchainTransactionPrev_Trans_LtArgs = {
   format?: Maybe<BigIntFormat>;
@@ -241,21 +680,21 @@ export type BlockchainTransactionPrev_Trans_LtArgs = {
 
 
 /**
- * **EXPERIMENTAL**
- * TON Transaction
+ * **UNSTABLE**
+ * Transaction
  */
 export type BlockchainTransactionTotal_FeesArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
-/** This type is experimental */
+/** This type is unstable */
 export type BlockchainTransactionEdge = {
   __typename?: 'BlockchainTransactionEdge';
   node: BlockchainTransaction;
   cursor: Scalars['String'];
 };
 
-/** This type is experimental */
+/** This type is unstable */
 export type BlockchainTransactionsConnection = {
   __typename?: 'BlockchainTransactionsConnection';
   edges: Array<BlockchainTransactionEdge>;
@@ -273,7 +712,429 @@ export enum ComputeTypeEnum {
   Vm = 'Vm'
 }
 
-/** This type is experimental */
+export type Config = {
+  __typename?: 'Config';
+  /** Address of config smart contract in the masterchain */
+  p0?: Maybe<Scalars['String']>;
+  /** Address of elector smart contract in the masterchain */
+  p1?: Maybe<Scalars['String']>;
+  /** Critical params */
+  p10?: Maybe<Array<Maybe<Scalars['Float']>>>;
+  /** Config voting setup */
+  p11?: Maybe<ConfigP11>;
+  /** Array of all workchains descriptions */
+  p12?: Maybe<Array<Maybe<ConfigP12>>>;
+  /** Block create fees */
+  p14?: Maybe<ConfigP14>;
+  /** Election parameters */
+  p15?: Maybe<ConfigP15>;
+  /** Validators count */
+  p16?: Maybe<ConfigP16>;
+  /** Validator stake parameters */
+  p17?: Maybe<ConfigP17>;
+  /** Storage prices */
+  p18?: Maybe<Array<Maybe<ConfigP18>>>;
+  /** Address of minter smart contract in the masterchain */
+  p2?: Maybe<Scalars['String']>;
+  /** Gas limits and prices in the masterchain */
+  p20?: Maybe<GasLimitsPrices>;
+  /** Gas limits and prices in workchains */
+  p21?: Maybe<GasLimitsPrices>;
+  /** Block limits in the masterchain */
+  p22?: Maybe<BlockLimits>;
+  /** Block limits in workchains */
+  p23?: Maybe<BlockLimits>;
+  /** Message forward prices in the masterchain */
+  p24?: Maybe<MsgForwardPrices>;
+  /** Message forward prices in workchains */
+  p25?: Maybe<MsgForwardPrices>;
+  /** Catchain config */
+  p28?: Maybe<ConfigP28>;
+  /** Consensus config */
+  p29?: Maybe<ConfigP29>;
+  /** Address of fee collector smart contract in the masterchain */
+  p3?: Maybe<Scalars['String']>;
+  /** Array of fundamental smart contracts addresses */
+  p31?: Maybe<Array<Maybe<Scalars['String']>>>;
+  /** Previous validators set */
+  p32?: Maybe<ValidatorSet>;
+  /** Previous temporary validators set */
+  p33?: Maybe<ValidatorSet>;
+  /** Current validators set */
+  p34?: Maybe<ValidatorSet>;
+  /** Current temporary validators set */
+  p35?: Maybe<ValidatorSet>;
+  /** Next validators set */
+  p36?: Maybe<ValidatorSet>;
+  /** Next temporary validators set */
+  p37?: Maybe<ValidatorSet>;
+  /** Array of validator signed temporary keys */
+  p39?: Maybe<Array<Maybe<ConfigP39>>>;
+  /** Address of TON DNS root smart contract in the masterchain */
+  p4?: Maybe<Scalars['String']>;
+  /** Configuration parameter 6 */
+  p6?: Maybe<ConfigP6>;
+  /** Configuration parameter 7 */
+  p7?: Maybe<Array<Maybe<ConfigP7>>>;
+  /** Global version */
+  p8?: Maybe<ConfigP8>;
+  /** Mandatory params */
+  p9?: Maybe<Array<Maybe<Scalars['Float']>>>;
+};
+
+/** Config voting setup */
+export type ConfigP11 = {
+  __typename?: 'ConfigP11';
+  critical_params?: Maybe<ConfigProposalSetup>;
+  normal_params?: Maybe<ConfigProposalSetup>;
+};
+
+export type ConfigP12 = {
+  __typename?: 'ConfigP12';
+  accept_msgs?: Maybe<Scalars['Boolean']>;
+  active?: Maybe<Scalars['Boolean']>;
+  actual_min_split?: Maybe<Scalars['Int']>;
+  addr_len_step?: Maybe<Scalars['Int']>;
+  basic?: Maybe<Scalars['Boolean']>;
+  enabled_since?: Maybe<Scalars['Float']>;
+  flags?: Maybe<Scalars['Int']>;
+  max_addr_len?: Maybe<Scalars['Int']>;
+  max_split?: Maybe<Scalars['Int']>;
+  min_addr_len?: Maybe<Scalars['Int']>;
+  min_split?: Maybe<Scalars['Int']>;
+  version?: Maybe<Scalars['Float']>;
+  vm_mode?: Maybe<Scalars['String']>;
+  vm_version?: Maybe<Scalars['Int']>;
+  workchain_id?: Maybe<Scalars['Int']>;
+  workchain_type_id?: Maybe<Scalars['Float']>;
+  zerostate_file_hash?: Maybe<Scalars['String']>;
+  zerostate_root_hash?: Maybe<Scalars['String']>;
+};
+
+/** Block create fees */
+export type ConfigP14 = {
+  __typename?: 'ConfigP14';
+  basechain_block_fee?: Maybe<Scalars['String']>;
+  masterchain_block_fee?: Maybe<Scalars['String']>;
+};
+
+
+/** Block create fees */
+export type ConfigP14Basechain_Block_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/** Block create fees */
+export type ConfigP14Masterchain_Block_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+/** Election parameters */
+export type ConfigP15 = {
+  __typename?: 'ConfigP15';
+  elections_end_before?: Maybe<Scalars['Float']>;
+  elections_start_before?: Maybe<Scalars['Float']>;
+  stake_held_for?: Maybe<Scalars['Float']>;
+  validators_elected_for?: Maybe<Scalars['Float']>;
+};
+
+/** Validators count */
+export type ConfigP16 = {
+  __typename?: 'ConfigP16';
+  max_main_validators?: Maybe<Scalars['Int']>;
+  max_validators?: Maybe<Scalars['Int']>;
+  min_validators?: Maybe<Scalars['Int']>;
+};
+
+/** Validator stake parameters */
+export type ConfigP17 = {
+  __typename?: 'ConfigP17';
+  max_stake?: Maybe<Scalars['String']>;
+  max_stake_factor?: Maybe<Scalars['Float']>;
+  min_stake?: Maybe<Scalars['String']>;
+  min_total_stake?: Maybe<Scalars['String']>;
+};
+
+
+/** Validator stake parameters */
+export type ConfigP17Max_StakeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/** Validator stake parameters */
+export type ConfigP17Min_StakeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/** Validator stake parameters */
+export type ConfigP17Min_Total_StakeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type ConfigP18 = {
+  __typename?: 'ConfigP18';
+  bit_price_ps?: Maybe<Scalars['String']>;
+  cell_price_ps?: Maybe<Scalars['String']>;
+  mc_bit_price_ps?: Maybe<Scalars['String']>;
+  mc_cell_price_ps?: Maybe<Scalars['String']>;
+  utime_since?: Maybe<Scalars['Float']>;
+  utime_since_string?: Maybe<Scalars['String']>;
+};
+
+
+export type ConfigP18Bit_Price_PsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type ConfigP18Cell_Price_PsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type ConfigP18Mc_Bit_Price_PsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type ConfigP18Mc_Cell_Price_PsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+/** Catchain config */
+export type ConfigP28 = {
+  __typename?: 'ConfigP28';
+  mc_catchain_lifetime?: Maybe<Scalars['Float']>;
+  shard_catchain_lifetime?: Maybe<Scalars['Float']>;
+  shard_validators_lifetime?: Maybe<Scalars['Float']>;
+  shard_validators_num?: Maybe<Scalars['Float']>;
+  shuffle_mc_validators?: Maybe<Scalars['Boolean']>;
+};
+
+/** Consensus config */
+export type ConfigP29 = {
+  __typename?: 'ConfigP29';
+  attempt_duration?: Maybe<Scalars['Float']>;
+  catchain_max_deps?: Maybe<Scalars['Float']>;
+  consensus_timeout_ms?: Maybe<Scalars['Float']>;
+  fast_attempts?: Maybe<Scalars['Float']>;
+  max_block_bytes?: Maybe<Scalars['Float']>;
+  max_collated_bytes?: Maybe<Scalars['Float']>;
+  new_catchain_ids?: Maybe<Scalars['Boolean']>;
+  next_candidate_delay_ms?: Maybe<Scalars['Float']>;
+  round_candidates?: Maybe<Scalars['Float']>;
+};
+
+export type ConfigP39 = {
+  __typename?: 'ConfigP39';
+  adnl_addr?: Maybe<Scalars['String']>;
+  seqno?: Maybe<Scalars['Float']>;
+  signature_r?: Maybe<Scalars['String']>;
+  signature_s?: Maybe<Scalars['String']>;
+  temp_public_key?: Maybe<Scalars['String']>;
+  valid_until?: Maybe<Scalars['Float']>;
+};
+
+/** Configuration parameter 6 */
+export type ConfigP6 = {
+  __typename?: 'ConfigP6';
+  mint_add_price?: Maybe<Scalars['String']>;
+  mint_new_price?: Maybe<Scalars['String']>;
+};
+
+export type ConfigP7 = {
+  __typename?: 'ConfigP7';
+  currency?: Maybe<Scalars['Float']>;
+  value?: Maybe<Scalars['String']>;
+};
+
+/** Global version */
+export type ConfigP8 = {
+  __typename?: 'ConfigP8';
+  capabilities?: Maybe<Scalars['String']>;
+  version?: Maybe<Scalars['Float']>;
+};
+
+
+/** Global version */
+export type ConfigP8CapabilitiesArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type ConfigProposalSetup = {
+  __typename?: 'ConfigProposalSetup';
+  bit_price?: Maybe<Scalars['Float']>;
+  cell_price?: Maybe<Scalars['Float']>;
+  max_losses?: Maybe<Scalars['Int']>;
+  max_store_sec?: Maybe<Scalars['Float']>;
+  max_tot_rounds?: Maybe<Scalars['Int']>;
+  min_store_sec?: Maybe<Scalars['Float']>;
+  min_tot_rounds?: Maybe<Scalars['Int']>;
+  min_wins?: Maybe<Scalars['Int']>;
+};
+
+export type ExtBlkRef = {
+  __typename?: 'ExtBlkRef';
+  end_lt?: Maybe<Scalars['String']>;
+  file_hash?: Maybe<Scalars['String']>;
+  root_hash?: Maybe<Scalars['String']>;
+  seq_no?: Maybe<Scalars['Float']>;
+};
+
+
+export type ExtBlkRefEnd_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type GasLimitsPrices = {
+  __typename?: 'GasLimitsPrices';
+  block_gas_limit?: Maybe<Scalars['String']>;
+  delete_due_limit?: Maybe<Scalars['String']>;
+  flat_gas_limit?: Maybe<Scalars['String']>;
+  flat_gas_price?: Maybe<Scalars['String']>;
+  freeze_due_limit?: Maybe<Scalars['String']>;
+  gas_credit?: Maybe<Scalars['String']>;
+  gas_limit?: Maybe<Scalars['String']>;
+  gas_price?: Maybe<Scalars['String']>;
+  special_gas_limit?: Maybe<Scalars['String']>;
+};
+
+
+export type GasLimitsPricesBlock_Gas_LimitArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesDelete_Due_LimitArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesFlat_Gas_LimitArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesFlat_Gas_PriceArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesFreeze_Due_LimitArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesGas_CreditArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesGas_LimitArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesGas_PriceArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type GasLimitsPricesSpecial_Gas_LimitArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type InMsg = {
+  __typename?: 'InMsg';
+  fwd_fee?: Maybe<Scalars['String']>;
+  ihr_fee?: Maybe<Scalars['String']>;
+  in_msg?: Maybe<MsgEnvelope>;
+  msg_id?: Maybe<Scalars['String']>;
+  /**
+   * - 0 – external
+   * - 1 – ihr
+   * - 2 – immediately
+   * - 3 – final
+   * - 4 – transit
+   * - 5 – discardedFinal
+   * - 6 – discardedTransit
+   */
+  msg_type?: Maybe<Scalars['Int']>;
+  msg_type_name?: Maybe<InMsgTypeEnum>;
+  out_msg?: Maybe<MsgEnvelope>;
+  proof_created?: Maybe<Scalars['String']>;
+  proof_delivered?: Maybe<Scalars['String']>;
+  transaction_id?: Maybe<Scalars['String']>;
+  transit_fee?: Maybe<Scalars['String']>;
+};
+
+
+export type InMsgFwd_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type InMsgIhr_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type InMsgTransit_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export enum InMsgTypeEnum {
+  External = 'External',
+  Ihr = 'Ihr',
+  Immediately = 'Immediately',
+  Final = 'Final',
+  Transit = 'Transit',
+  DiscardedFinal = 'DiscardedFinal',
+  DiscardedTransit = 'DiscardedTransit'
+}
+
+export type MsgEnvelope = {
+  __typename?: 'MsgEnvelope';
+  cur_addr?: Maybe<Scalars['String']>;
+  fwd_fee_remaining?: Maybe<Scalars['String']>;
+  msg_id?: Maybe<Scalars['String']>;
+  next_addr?: Maybe<Scalars['String']>;
+};
+
+
+export type MsgEnvelopeFwd_Fee_RemainingArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type MsgForwardPrices = {
+  __typename?: 'MsgForwardPrices';
+  bit_price?: Maybe<Scalars['String']>;
+  cell_price?: Maybe<Scalars['String']>;
+  first_frac?: Maybe<Scalars['Int']>;
+  ihr_price_factor?: Maybe<Scalars['Float']>;
+  lump_price?: Maybe<Scalars['String']>;
+  next_frac?: Maybe<Scalars['Int']>;
+};
+
+
+export type MsgForwardPricesBit_PriceArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type MsgForwardPricesCell_PriceArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type MsgForwardPricesLump_PriceArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+/** This type is unstable */
 export type Node = {
   id: Scalars['ID'];
 };
@@ -289,7 +1150,55 @@ export type OtherCurrencyValueArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
-/** This type is experimental */
+export type OutMsg = {
+  __typename?: 'OutMsg';
+  import_block_lt?: Maybe<Scalars['String']>;
+  imported?: Maybe<InMsg>;
+  msg_env_hash?: Maybe<Scalars['String']>;
+  msg_id?: Maybe<Scalars['String']>;
+  /**
+   * - 0 – external
+   * - 1 – immediately
+   * - 2 – outMsgNew
+   * - 3 – transit
+   * - 4 – dequeueImmediately
+   * - 5 – dequeue
+   * - 6 – transitRequired
+   * - 7 – dequeueShort
+   * - -1 – none
+   */
+  msg_type?: Maybe<Scalars['Int']>;
+  msg_type_name?: Maybe<OutMsgTypeEnum>;
+  next_addr_pfx?: Maybe<Scalars['String']>;
+  next_workchain?: Maybe<Scalars['Int']>;
+  out_msg?: Maybe<MsgEnvelope>;
+  reimport?: Maybe<InMsg>;
+  transaction_id?: Maybe<Scalars['String']>;
+};
+
+
+export type OutMsgImport_Block_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+export type OutMsgNext_Addr_PfxArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export enum OutMsgTypeEnum {
+  External = 'External',
+  Immediately = 'Immediately',
+  OutMsgNew = 'OutMsgNew',
+  Transit = 'Transit',
+  DequeueImmediately = 'DequeueImmediately',
+  Dequeue = 'Dequeue',
+  TransitRequired = 'TransitRequired',
+  DequeueShort = 'DequeueShort',
+  None = 'None'
+}
+
+/** This type is unstable */
 export type PageInfo = {
   __typename?: 'PageInfo';
   startCursor: Scalars['String'];
@@ -300,7 +1209,7 @@ export type PageInfo = {
 
 export type Query = {
   __typename?: 'Query';
-  /** This node is experimental */
+  /** This node is unstable */
   blockchain?: Maybe<BlockchainQuery>;
 };
 
@@ -313,6 +1222,12 @@ export enum SkipReasonEnum {
   NoState = 'NoState',
   BadState = 'BadState',
   NoGas = 'NoGas'
+}
+
+export enum SplitTypeEnum {
+  None = 'None',
+  Split = 'Split',
+  Merge = 'Merge'
 }
 
 export type TransactionAction = {
@@ -510,6 +1425,35 @@ export enum TransactionTypeEnum {
   MergeInstall = 'MergeInstall'
 }
 
+export type ValidatorSet = {
+  __typename?: 'ValidatorSet';
+  list?: Maybe<Array<Maybe<ValidatorSetList>>>;
+  main?: Maybe<Scalars['Int']>;
+  total?: Maybe<Scalars['Int']>;
+  total_weight?: Maybe<Scalars['String']>;
+  utime_since?: Maybe<Scalars['Float']>;
+  utime_since_string?: Maybe<Scalars['String']>;
+  utime_until?: Maybe<Scalars['Float']>;
+  utime_until_string?: Maybe<Scalars['String']>;
+};
+
+
+export type ValidatorSetTotal_WeightArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+export type ValidatorSetList = {
+  __typename?: 'ValidatorSetList';
+  adnl_addr?: Maybe<Scalars['String']>;
+  public_key?: Maybe<Scalars['String']>;
+  weight?: Maybe<Scalars['String']>;
+};
+
+
+export type ValidatorSetListWeightArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
 
 
 export type ResolverTypeWrapper<T> = Promise<T> | T;
@@ -585,22 +1529,63 @@ export type ResolversTypes = {
   AccountStatusChangeEnum: AccountStatusChangeEnum;
   AccountStatusEnum: AccountStatusEnum;
   BigIntFormat: BigIntFormat;
-  BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
+  BlockAccountBlocks: ResolverTypeWrapper<BlockAccountBlocks>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
+  BlockAccountBlocksTransactions: ResolverTypeWrapper<BlockAccountBlocksTransactions>;
+  BlockLimits: ResolverTypeWrapper<BlockLimits>;
+  BlockLimitsBytes: ResolverTypeWrapper<BlockLimitsBytes>;
+  Float: ResolverTypeWrapper<Scalars['Float']>;
+  BlockLimitsGas: ResolverTypeWrapper<BlockLimitsGas>;
+  BlockLimitsLtDelta: ResolverTypeWrapper<BlockLimitsLtDelta>;
+  BlockMaster: ResolverTypeWrapper<BlockMaster>;
+  BlockMasterPrevBlkSignatures: ResolverTypeWrapper<BlockMasterPrevBlkSignatures>;
+  BlockMasterShardFees: ResolverTypeWrapper<BlockMasterShardFees>;
+  BlockMasterShardHashes: ResolverTypeWrapper<BlockMasterShardHashes>;
+  BlockMasterShardHashesDescr: ResolverTypeWrapper<BlockMasterShardHashesDescr>;
+  BlockProcessingStatusEnum: BlockProcessingStatusEnum;
+  BlockStateUpdate: ResolverTypeWrapper<BlockStateUpdate>;
+  BlockValueFlow: ResolverTypeWrapper<BlockValueFlow>;
+  BlockchainBlock: ResolverTypeWrapper<BlockchainBlock>;
+  ID: ResolverTypeWrapper<Scalars['ID']>;
+  BlockchainBlocksConnection: ResolverTypeWrapper<BlockchainBlocksConnection>;
+  BlockchainBlocksEdge: ResolverTypeWrapper<BlockchainBlocksEdge>;
+  BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   BlockchainMasterSeqNoRange: ResolverTypeWrapper<BlockchainMasterSeqNoRange>;
   BlockchainQuery: ResolverTypeWrapper<BlockchainQuery>;
   BlockchainTransaction: ResolverTypeWrapper<BlockchainTransaction>;
-  ID: ResolverTypeWrapper<Scalars['ID']>;
-  Float: ResolverTypeWrapper<Scalars['Float']>;
   BlockchainTransactionEdge: ResolverTypeWrapper<BlockchainTransactionEdge>;
   BlockchainTransactionsConnection: ResolverTypeWrapper<BlockchainTransactionsConnection>;
   BounceTypeEnum: BounceTypeEnum;
   ComputeTypeEnum: ComputeTypeEnum;
-  Node: ResolversTypes['BlockchainTransaction'];
+  Config: ResolverTypeWrapper<Config>;
+  ConfigP11: ResolverTypeWrapper<ConfigP11>;
+  ConfigP12: ResolverTypeWrapper<ConfigP12>;
+  ConfigP14: ResolverTypeWrapper<ConfigP14>;
+  ConfigP15: ResolverTypeWrapper<ConfigP15>;
+  ConfigP16: ResolverTypeWrapper<ConfigP16>;
+  ConfigP17: ResolverTypeWrapper<ConfigP17>;
+  ConfigP18: ResolverTypeWrapper<ConfigP18>;
+  ConfigP28: ResolverTypeWrapper<ConfigP28>;
+  ConfigP29: ResolverTypeWrapper<ConfigP29>;
+  ConfigP39: ResolverTypeWrapper<ConfigP39>;
+  ConfigP6: ResolverTypeWrapper<ConfigP6>;
+  ConfigP7: ResolverTypeWrapper<ConfigP7>;
+  ConfigP8: ResolverTypeWrapper<ConfigP8>;
+  ConfigProposalSetup: ResolverTypeWrapper<ConfigProposalSetup>;
+  ExtBlkRef: ResolverTypeWrapper<ExtBlkRef>;
+  GasLimitsPrices: ResolverTypeWrapper<GasLimitsPrices>;
+  InMsg: ResolverTypeWrapper<InMsg>;
+  InMsgTypeEnum: InMsgTypeEnum;
+  MsgEnvelope: ResolverTypeWrapper<MsgEnvelope>;
+  MsgForwardPrices: ResolverTypeWrapper<MsgForwardPrices>;
+  Node: ResolversTypes['BlockchainBlock'] | ResolversTypes['BlockchainTransaction'];
   OtherCurrency: ResolverTypeWrapper<OtherCurrency>;
+  OutMsg: ResolverTypeWrapper<OutMsg>;
+  OutMsgTypeEnum: OutMsgTypeEnum;
   PageInfo: ResolverTypeWrapper<PageInfo>;
   Query: ResolverTypeWrapper<{}>;
   SkipReasonEnum: SkipReasonEnum;
+  SplitTypeEnum: SplitTypeEnum;
   TransactionAction: ResolverTypeWrapper<TransactionAction>;
   TransactionBounce: ResolverTypeWrapper<TransactionBounce>;
   TransactionCompute: ResolverTypeWrapper<TransactionCompute>;
@@ -609,6 +1594,8 @@ export type ResolversTypes = {
   TransactionSplitInfo: ResolverTypeWrapper<TransactionSplitInfo>;
   TransactionStorage: ResolverTypeWrapper<TransactionStorage>;
   TransactionTypeEnum: TransactionTypeEnum;
+  ValidatorSet: ResolverTypeWrapper<ValidatorSet>;
+  ValidatorSetList: ResolverTypeWrapper<ValidatorSetList>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -616,17 +1603,54 @@ export type ResolversParentTypes = {
   AccessRights: AccessRights;
   Boolean: Scalars['Boolean'];
   String: Scalars['String'];
-  BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
+  BlockAccountBlocks: BlockAccountBlocks;
   Int: Scalars['Int'];
+  BlockAccountBlocksTransactions: BlockAccountBlocksTransactions;
+  BlockLimits: BlockLimits;
+  BlockLimitsBytes: BlockLimitsBytes;
+  Float: Scalars['Float'];
+  BlockLimitsGas: BlockLimitsGas;
+  BlockLimitsLtDelta: BlockLimitsLtDelta;
+  BlockMaster: BlockMaster;
+  BlockMasterPrevBlkSignatures: BlockMasterPrevBlkSignatures;
+  BlockMasterShardFees: BlockMasterShardFees;
+  BlockMasterShardHashes: BlockMasterShardHashes;
+  BlockMasterShardHashesDescr: BlockMasterShardHashesDescr;
+  BlockStateUpdate: BlockStateUpdate;
+  BlockValueFlow: BlockValueFlow;
+  BlockchainBlock: BlockchainBlock;
+  ID: Scalars['ID'];
+  BlockchainBlocksConnection: BlockchainBlocksConnection;
+  BlockchainBlocksEdge: BlockchainBlocksEdge;
+  BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   BlockchainMasterSeqNoRange: BlockchainMasterSeqNoRange;
   BlockchainQuery: BlockchainQuery;
   BlockchainTransaction: BlockchainTransaction;
-  ID: Scalars['ID'];
-  Float: Scalars['Float'];
   BlockchainTransactionEdge: BlockchainTransactionEdge;
   BlockchainTransactionsConnection: BlockchainTransactionsConnection;
-  Node: ResolversParentTypes['BlockchainTransaction'];
+  Config: Config;
+  ConfigP11: ConfigP11;
+  ConfigP12: ConfigP12;
+  ConfigP14: ConfigP14;
+  ConfigP15: ConfigP15;
+  ConfigP16: ConfigP16;
+  ConfigP17: ConfigP17;
+  ConfigP18: ConfigP18;
+  ConfigP28: ConfigP28;
+  ConfigP29: ConfigP29;
+  ConfigP39: ConfigP39;
+  ConfigP6: ConfigP6;
+  ConfigP7: ConfigP7;
+  ConfigP8: ConfigP8;
+  ConfigProposalSetup: ConfigProposalSetup;
+  ExtBlkRef: ExtBlkRef;
+  GasLimitsPrices: GasLimitsPrices;
+  InMsg: InMsg;
+  MsgEnvelope: MsgEnvelope;
+  MsgForwardPrices: MsgForwardPrices;
+  Node: ResolversParentTypes['BlockchainBlock'] | ResolversParentTypes['BlockchainTransaction'];
   OtherCurrency: OtherCurrency;
+  OutMsg: OutMsg;
   PageInfo: PageInfo;
   Query: {};
   TransactionAction: TransactionAction;
@@ -635,11 +1659,215 @@ export type ResolversParentTypes = {
   TransactionCredit: TransactionCredit;
   TransactionSplitInfo: TransactionSplitInfo;
   TransactionStorage: TransactionStorage;
+  ValidatorSet: ValidatorSet;
+  ValidatorSetList: ValidatorSetList;
 };
 
 export type AccessRightsResolvers<ContextType = any, ParentType extends ResolversParentTypes['AccessRights'] = ResolversParentTypes['AccessRights']> = {
   granted?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   restrictToAccounts?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockAccountBlocksResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockAccountBlocks'] = ResolversParentTypes['BlockAccountBlocks']> = {
+  account_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  new_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  old_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  tr_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  transactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockAccountBlocksTransactions']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockAccountBlocksTransactionsResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockAccountBlocksTransactions'] = ResolversParentTypes['BlockAccountBlocksTransactions']> = {
+  lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockAccountBlocksTransactionsLtArgs, never>>;
+  total_fees?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockAccountBlocksTransactionsTotal_FeesArgs, never>>;
+  total_fees_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  transaction_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockLimitsResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockLimits'] = ResolversParentTypes['BlockLimits']> = {
+  bytes?: Resolver<Maybe<ResolversTypes['BlockLimitsBytes']>, ParentType, ContextType>;
+  gas?: Resolver<Maybe<ResolversTypes['BlockLimitsGas']>, ParentType, ContextType>;
+  lt_delta?: Resolver<Maybe<ResolversTypes['BlockLimitsLtDelta']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockLimitsBytesResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockLimitsBytes'] = ResolversParentTypes['BlockLimitsBytes']> = {
+  hard_limit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  soft_limit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  underload?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockLimitsGasResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockLimitsGas'] = ResolversParentTypes['BlockLimitsGas']> = {
+  hard_limit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  soft_limit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  underload?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockLimitsLtDeltaResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockLimitsLtDelta'] = ResolversParentTypes['BlockLimitsLtDelta']> = {
+  hard_limit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  soft_limit?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  underload?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockMasterResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockMaster'] = ResolversParentTypes['BlockMaster']> = {
+  config?: Resolver<Maybe<ResolversTypes['Config']>, ParentType, ContextType>;
+  config_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  max_shard_gen_utime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  max_shard_gen_utime_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  min_shard_gen_utime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  min_shard_gen_utime_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  prev_blk_signatures?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockMasterPrevBlkSignatures']>>>, ParentType, ContextType>;
+  recover_create_msg?: Resolver<Maybe<ResolversTypes['InMsg']>, ParentType, ContextType>;
+  shard_fees?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockMasterShardFees']>>>, ParentType, ContextType>;
+  shard_hashes?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockMasterShardHashes']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockMasterPrevBlkSignaturesResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockMasterPrevBlkSignatures'] = ResolversParentTypes['BlockMasterPrevBlkSignatures']> = {
+  node_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  r?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  s?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockMasterShardFeesResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockMasterShardFees'] = ResolversParentTypes['BlockMasterShardFees']> = {
+  create?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockMasterShardFeesCreateArgs, never>>;
+  create_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  fees?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockMasterShardFeesFeesArgs, never>>;
+  fees_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockMasterShardHashesResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockMasterShardHashes'] = ResolversParentTypes['BlockMasterShardHashes']> = {
+  descr?: Resolver<Maybe<ResolversTypes['BlockMasterShardHashesDescr']>, ParentType, ContextType>;
+  shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockMasterShardHashesDescrResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockMasterShardHashesDescr'] = ResolversParentTypes['BlockMasterShardHashesDescr']> = {
+  before_merge?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  before_split?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  end_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockMasterShardHashesDescrEnd_LtArgs, never>>;
+  fees_collected?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockMasterShardHashesDescrFees_CollectedArgs, never>>;
+  fees_collected_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  file_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  flags?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  funds_created?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockMasterShardHashesDescrFunds_CreatedArgs, never>>;
+  funds_created_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  gen_utime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  gen_utime_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  min_ref_mc_seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  next_catchain_seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  next_validator_shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  nx_cc_updated?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  reg_mc_seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  root_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  split?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  split_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  split_type_name?: Resolver<Maybe<ResolversTypes['SplitTypeEnum']>, ParentType, ContextType>;
+  start_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockMasterShardHashesDescrStart_LtArgs, never>>;
+  want_merge?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  want_split?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockStateUpdateResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockStateUpdate'] = ResolversParentTypes['BlockStateUpdate']> = {
+  new?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  new_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  new_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  old?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  old_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  old_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockValueFlowResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockValueFlow'] = ResolversParentTypes['BlockValueFlow']> = {
+  created?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowCreatedArgs, never>>;
+  created_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  exported?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowExportedArgs, never>>;
+  exported_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  fees_collected?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowFees_CollectedArgs, never>>;
+  fees_collected_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  fees_imported?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowFees_ImportedArgs, never>>;
+  fees_imported_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  from_prev_blk?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowFrom_Prev_BlkArgs, never>>;
+  from_prev_blk_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  imported?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowImportedArgs, never>>;
+  imported_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  minted?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowMintedArgs, never>>;
+  minted_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  to_next_blk?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockValueFlowTo_Next_BlkArgs, never>>;
+  to_next_blk_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockchainBlockResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainBlock'] = ResolversParentTypes['BlockchainBlock']> = {
+  _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  account_blocks?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockAccountBlocks']>>>, ParentType, ContextType>;
+  after_merge?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  after_split?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  before_split?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  chain_order?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  created_by?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  end_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainBlockEnd_LtArgs, never>>;
+  file_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  flags?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  gen_catchain_seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  gen_software_capabilities?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainBlockGen_Software_CapabilitiesArgs, never>>;
+  gen_software_version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  gen_utime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  gen_utime_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  gen_validator_list_hash_short?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  global_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  in_msg_descr?: Resolver<Maybe<Array<Maybe<ResolversTypes['InMsg']>>>, ParentType, ContextType>;
+  key_block?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  master?: Resolver<Maybe<ResolversTypes['BlockMaster']>, ParentType, ContextType>;
+  master_ref?: Resolver<Maybe<ResolversTypes['ExtBlkRef']>, ParentType, ContextType>;
+  min_ref_mc_seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  out_msg_descr?: Resolver<Maybe<Array<Maybe<ResolversTypes['OutMsg']>>>, ParentType, ContextType>;
+  prev_alt_ref?: Resolver<Maybe<ResolversTypes['ExtBlkRef']>, ParentType, ContextType>;
+  prev_key_block_seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  prev_ref?: Resolver<Maybe<ResolversTypes['ExtBlkRef']>, ParentType, ContextType>;
+  prev_vert_alt_ref?: Resolver<Maybe<ResolversTypes['ExtBlkRef']>, ParentType, ContextType>;
+  prev_vert_ref?: Resolver<Maybe<ResolversTypes['ExtBlkRef']>, ParentType, ContextType>;
+  rand_seed?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  start_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainBlockStart_LtArgs, never>>;
+  state_update?: Resolver<Maybe<ResolversTypes['BlockStateUpdate']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  status_name?: Resolver<Maybe<ResolversTypes['BlockProcessingStatusEnum']>, ParentType, ContextType>;
+  tr_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  value_flow?: Resolver<Maybe<ResolversTypes['BlockValueFlow']>, ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  vert_seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  want_merge?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  want_split?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockchainBlocksConnectionResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainBlocksConnection'] = ResolversParentTypes['BlockchainBlocksConnection']> = {
+  edges?: Resolver<Array<ResolversTypes['BlockchainBlocksEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockchainBlocksEdgeResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainBlocksEdge'] = ResolversParentTypes['BlockchainBlocksEdge']> = {
+  node?: Resolver<ResolversTypes['BlockchainBlock'], ParentType, ContextType>;
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -651,8 +1879,10 @@ export type BlockchainMasterSeqNoRangeResolvers<ContextType = any, ParentType ex
 
 export type BlockchainQueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainQuery'] = ResolversParentTypes['BlockchainQuery']> = {
   accessRights?: Resolver<ResolversTypes['AccessRights'], ParentType, ContextType>;
-  account_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryAccount_TransactionsArgs, never>>;
+  account_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryAccount_TransactionsArgs, 'account_address'>>;
+  key_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryKey_BlocksArgs, never>>;
   master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<BlockchainQueryMaster_Seq_No_RangeArgs, never>>;
+  workchain_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryWorkchain_BlocksArgs, never>>;
   workchain_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryWorkchain_TransactionsArgs, never>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -716,14 +1946,249 @@ export type BlockchainTransactionsConnectionResolvers<ContextType = any, ParentT
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ConfigResolvers<ContextType = any, ParentType extends ResolversParentTypes['Config'] = ResolversParentTypes['Config']> = {
+  p0?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  p1?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  p10?: Resolver<Maybe<Array<Maybe<ResolversTypes['Float']>>>, ParentType, ContextType>;
+  p11?: Resolver<Maybe<ResolversTypes['ConfigP11']>, ParentType, ContextType>;
+  p12?: Resolver<Maybe<Array<Maybe<ResolversTypes['ConfigP12']>>>, ParentType, ContextType>;
+  p14?: Resolver<Maybe<ResolversTypes['ConfigP14']>, ParentType, ContextType>;
+  p15?: Resolver<Maybe<ResolversTypes['ConfigP15']>, ParentType, ContextType>;
+  p16?: Resolver<Maybe<ResolversTypes['ConfigP16']>, ParentType, ContextType>;
+  p17?: Resolver<Maybe<ResolversTypes['ConfigP17']>, ParentType, ContextType>;
+  p18?: Resolver<Maybe<Array<Maybe<ResolversTypes['ConfigP18']>>>, ParentType, ContextType>;
+  p2?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  p20?: Resolver<Maybe<ResolversTypes['GasLimitsPrices']>, ParentType, ContextType>;
+  p21?: Resolver<Maybe<ResolversTypes['GasLimitsPrices']>, ParentType, ContextType>;
+  p22?: Resolver<Maybe<ResolversTypes['BlockLimits']>, ParentType, ContextType>;
+  p23?: Resolver<Maybe<ResolversTypes['BlockLimits']>, ParentType, ContextType>;
+  p24?: Resolver<Maybe<ResolversTypes['MsgForwardPrices']>, ParentType, ContextType>;
+  p25?: Resolver<Maybe<ResolversTypes['MsgForwardPrices']>, ParentType, ContextType>;
+  p28?: Resolver<Maybe<ResolversTypes['ConfigP28']>, ParentType, ContextType>;
+  p29?: Resolver<Maybe<ResolversTypes['ConfigP29']>, ParentType, ContextType>;
+  p3?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  p31?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  p32?: Resolver<Maybe<ResolversTypes['ValidatorSet']>, ParentType, ContextType>;
+  p33?: Resolver<Maybe<ResolversTypes['ValidatorSet']>, ParentType, ContextType>;
+  p34?: Resolver<Maybe<ResolversTypes['ValidatorSet']>, ParentType, ContextType>;
+  p35?: Resolver<Maybe<ResolversTypes['ValidatorSet']>, ParentType, ContextType>;
+  p36?: Resolver<Maybe<ResolversTypes['ValidatorSet']>, ParentType, ContextType>;
+  p37?: Resolver<Maybe<ResolversTypes['ValidatorSet']>, ParentType, ContextType>;
+  p39?: Resolver<Maybe<Array<Maybe<ResolversTypes['ConfigP39']>>>, ParentType, ContextType>;
+  p4?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  p6?: Resolver<Maybe<ResolversTypes['ConfigP6']>, ParentType, ContextType>;
+  p7?: Resolver<Maybe<Array<Maybe<ResolversTypes['ConfigP7']>>>, ParentType, ContextType>;
+  p8?: Resolver<Maybe<ResolversTypes['ConfigP8']>, ParentType, ContextType>;
+  p9?: Resolver<Maybe<Array<Maybe<ResolversTypes['Float']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP11Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP11'] = ResolversParentTypes['ConfigP11']> = {
+  critical_params?: Resolver<Maybe<ResolversTypes['ConfigProposalSetup']>, ParentType, ContextType>;
+  normal_params?: Resolver<Maybe<ResolversTypes['ConfigProposalSetup']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP12Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP12'] = ResolversParentTypes['ConfigP12']> = {
+  accept_msgs?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  active?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  actual_min_split?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  addr_len_step?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  basic?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  enabled_since?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  flags?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  max_addr_len?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  max_split?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  min_addr_len?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  min_split?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  vm_mode?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  vm_version?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  workchain_type_id?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  zerostate_file_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  zerostate_root_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP14Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP14'] = ResolversParentTypes['ConfigP14']> = {
+  basechain_block_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP14Basechain_Block_FeeArgs, never>>;
+  masterchain_block_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP14Masterchain_Block_FeeArgs, never>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP15Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP15'] = ResolversParentTypes['ConfigP15']> = {
+  elections_end_before?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  elections_start_before?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  stake_held_for?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  validators_elected_for?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP16Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP16'] = ResolversParentTypes['ConfigP16']> = {
+  max_main_validators?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  max_validators?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  min_validators?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP17Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP17'] = ResolversParentTypes['ConfigP17']> = {
+  max_stake?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP17Max_StakeArgs, never>>;
+  max_stake_factor?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  min_stake?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP17Min_StakeArgs, never>>;
+  min_total_stake?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP17Min_Total_StakeArgs, never>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP18Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP18'] = ResolversParentTypes['ConfigP18']> = {
+  bit_price_ps?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP18Bit_Price_PsArgs, never>>;
+  cell_price_ps?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP18Cell_Price_PsArgs, never>>;
+  mc_bit_price_ps?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP18Mc_Bit_Price_PsArgs, never>>;
+  mc_cell_price_ps?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP18Mc_Cell_Price_PsArgs, never>>;
+  utime_since?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  utime_since_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP28Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP28'] = ResolversParentTypes['ConfigP28']> = {
+  mc_catchain_lifetime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  shard_catchain_lifetime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  shard_validators_lifetime?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  shard_validators_num?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  shuffle_mc_validators?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP29Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP29'] = ResolversParentTypes['ConfigP29']> = {
+  attempt_duration?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  catchain_max_deps?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  consensus_timeout_ms?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  fast_attempts?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  max_block_bytes?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  max_collated_bytes?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  new_catchain_ids?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  next_candidate_delay_ms?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  round_candidates?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP39Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP39'] = ResolversParentTypes['ConfigP39']> = {
+  adnl_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  signature_r?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  signature_s?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  temp_public_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  valid_until?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP6Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP6'] = ResolversParentTypes['ConfigP6']> = {
+  mint_add_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  mint_new_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP7Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP7'] = ResolversParentTypes['ConfigP7']> = {
+  currency?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigP8Resolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigP8'] = ResolversParentTypes['ConfigP8']> = {
+  capabilities?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ConfigP8CapabilitiesArgs, never>>;
+  version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ConfigProposalSetupResolvers<ContextType = any, ParentType extends ResolversParentTypes['ConfigProposalSetup'] = ResolversParentTypes['ConfigProposalSetup']> = {
+  bit_price?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  cell_price?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  max_losses?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  max_store_sec?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  max_tot_rounds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  min_store_sec?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  min_tot_rounds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  min_wins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ExtBlkRefResolvers<ContextType = any, ParentType extends ResolversParentTypes['ExtBlkRef'] = ResolversParentTypes['ExtBlkRef']> = {
+  end_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ExtBlkRefEnd_LtArgs, never>>;
+  file_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  root_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type GasLimitsPricesResolvers<ContextType = any, ParentType extends ResolversParentTypes['GasLimitsPrices'] = ResolversParentTypes['GasLimitsPrices']> = {
+  block_gas_limit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesBlock_Gas_LimitArgs, never>>;
+  delete_due_limit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesDelete_Due_LimitArgs, never>>;
+  flat_gas_limit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesFlat_Gas_LimitArgs, never>>;
+  flat_gas_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesFlat_Gas_PriceArgs, never>>;
+  freeze_due_limit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesFreeze_Due_LimitArgs, never>>;
+  gas_credit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesGas_CreditArgs, never>>;
+  gas_limit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesGas_LimitArgs, never>>;
+  gas_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesGas_PriceArgs, never>>;
+  special_gas_limit?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<GasLimitsPricesSpecial_Gas_LimitArgs, never>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type InMsgResolvers<ContextType = any, ParentType extends ResolversParentTypes['InMsg'] = ResolversParentTypes['InMsg']> = {
+  fwd_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<InMsgFwd_FeeArgs, never>>;
+  ihr_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<InMsgIhr_FeeArgs, never>>;
+  in_msg?: Resolver<Maybe<ResolversTypes['MsgEnvelope']>, ParentType, ContextType>;
+  msg_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  msg_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  msg_type_name?: Resolver<Maybe<ResolversTypes['InMsgTypeEnum']>, ParentType, ContextType>;
+  out_msg?: Resolver<Maybe<ResolversTypes['MsgEnvelope']>, ParentType, ContextType>;
+  proof_created?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  proof_delivered?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  transaction_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  transit_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<InMsgTransit_FeeArgs, never>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MsgEnvelopeResolvers<ContextType = any, ParentType extends ResolversParentTypes['MsgEnvelope'] = ResolversParentTypes['MsgEnvelope']> = {
+  cur_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  fwd_fee_remaining?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MsgEnvelopeFwd_Fee_RemainingArgs, never>>;
+  msg_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  next_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type MsgForwardPricesResolvers<ContextType = any, ParentType extends ResolversParentTypes['MsgForwardPrices'] = ResolversParentTypes['MsgForwardPrices']> = {
+  bit_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MsgForwardPricesBit_PriceArgs, never>>;
+  cell_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MsgForwardPricesCell_PriceArgs, never>>;
+  first_frac?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  ihr_price_factor?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  lump_price?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MsgForwardPricesLump_PriceArgs, never>>;
+  next_frac?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type NodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['Node'] = ResolversParentTypes['Node']> = {
-  __resolveType: TypeResolveFn<'BlockchainTransaction', ParentType, ContextType>;
+  __resolveType: TypeResolveFn<'BlockchainBlock' | 'BlockchainTransaction', ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 };
 
 export type OtherCurrencyResolvers<ContextType = any, ParentType extends ResolversParentTypes['OtherCurrency'] = ResolversParentTypes['OtherCurrency']> = {
   currency?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<OtherCurrencyValueArgs, never>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type OutMsgResolvers<ContextType = any, ParentType extends ResolversParentTypes['OutMsg'] = ResolversParentTypes['OutMsg']> = {
+  import_block_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<OutMsgImport_Block_LtArgs, never>>;
+  imported?: Resolver<Maybe<ResolversTypes['InMsg']>, ParentType, ContextType>;
+  msg_env_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  msg_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  msg_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  msg_type_name?: Resolver<Maybe<ResolversTypes['OutMsgTypeEnum']>, ParentType, ContextType>;
+  next_addr_pfx?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<OutMsgNext_Addr_PfxArgs, never>>;
+  next_workchain?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  out_msg?: Resolver<Maybe<ResolversTypes['MsgEnvelope']>, ParentType, ContextType>;
+  reimport?: Resolver<Maybe<ResolversTypes['InMsg']>, ParentType, ContextType>;
+  transaction_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -814,15 +2279,71 @@ export type TransactionStorageResolvers<ContextType = any, ParentType extends Re
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ValidatorSetResolvers<ContextType = any, ParentType extends ResolversParentTypes['ValidatorSet'] = ResolversParentTypes['ValidatorSet']> = {
+  list?: Resolver<Maybe<Array<Maybe<ResolversTypes['ValidatorSetList']>>>, ParentType, ContextType>;
+  main?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  total?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  total_weight?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ValidatorSetTotal_WeightArgs, never>>;
+  utime_since?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  utime_since_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  utime_until?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  utime_until_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ValidatorSetListResolvers<ContextType = any, ParentType extends ResolversParentTypes['ValidatorSetList'] = ResolversParentTypes['ValidatorSetList']> = {
+  adnl_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  public_key?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  weight?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<ValidatorSetListWeightArgs, never>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = any> = {
   AccessRights?: AccessRightsResolvers<ContextType>;
+  BlockAccountBlocks?: BlockAccountBlocksResolvers<ContextType>;
+  BlockAccountBlocksTransactions?: BlockAccountBlocksTransactionsResolvers<ContextType>;
+  BlockLimits?: BlockLimitsResolvers<ContextType>;
+  BlockLimitsBytes?: BlockLimitsBytesResolvers<ContextType>;
+  BlockLimitsGas?: BlockLimitsGasResolvers<ContextType>;
+  BlockLimitsLtDelta?: BlockLimitsLtDeltaResolvers<ContextType>;
+  BlockMaster?: BlockMasterResolvers<ContextType>;
+  BlockMasterPrevBlkSignatures?: BlockMasterPrevBlkSignaturesResolvers<ContextType>;
+  BlockMasterShardFees?: BlockMasterShardFeesResolvers<ContextType>;
+  BlockMasterShardHashes?: BlockMasterShardHashesResolvers<ContextType>;
+  BlockMasterShardHashesDescr?: BlockMasterShardHashesDescrResolvers<ContextType>;
+  BlockStateUpdate?: BlockStateUpdateResolvers<ContextType>;
+  BlockValueFlow?: BlockValueFlowResolvers<ContextType>;
+  BlockchainBlock?: BlockchainBlockResolvers<ContextType>;
+  BlockchainBlocksConnection?: BlockchainBlocksConnectionResolvers<ContextType>;
+  BlockchainBlocksEdge?: BlockchainBlocksEdgeResolvers<ContextType>;
   BlockchainMasterSeqNoRange?: BlockchainMasterSeqNoRangeResolvers<ContextType>;
   BlockchainQuery?: BlockchainQueryResolvers<ContextType>;
   BlockchainTransaction?: BlockchainTransactionResolvers<ContextType>;
   BlockchainTransactionEdge?: BlockchainTransactionEdgeResolvers<ContextType>;
   BlockchainTransactionsConnection?: BlockchainTransactionsConnectionResolvers<ContextType>;
+  Config?: ConfigResolvers<ContextType>;
+  ConfigP11?: ConfigP11Resolvers<ContextType>;
+  ConfigP12?: ConfigP12Resolvers<ContextType>;
+  ConfigP14?: ConfigP14Resolvers<ContextType>;
+  ConfigP15?: ConfigP15Resolvers<ContextType>;
+  ConfigP16?: ConfigP16Resolvers<ContextType>;
+  ConfigP17?: ConfigP17Resolvers<ContextType>;
+  ConfigP18?: ConfigP18Resolvers<ContextType>;
+  ConfigP28?: ConfigP28Resolvers<ContextType>;
+  ConfigP29?: ConfigP29Resolvers<ContextType>;
+  ConfigP39?: ConfigP39Resolvers<ContextType>;
+  ConfigP6?: ConfigP6Resolvers<ContextType>;
+  ConfigP7?: ConfigP7Resolvers<ContextType>;
+  ConfigP8?: ConfigP8Resolvers<ContextType>;
+  ConfigProposalSetup?: ConfigProposalSetupResolvers<ContextType>;
+  ExtBlkRef?: ExtBlkRefResolvers<ContextType>;
+  GasLimitsPrices?: GasLimitsPricesResolvers<ContextType>;
+  InMsg?: InMsgResolvers<ContextType>;
+  MsgEnvelope?: MsgEnvelopeResolvers<ContextType>;
+  MsgForwardPrices?: MsgForwardPricesResolvers<ContextType>;
   Node?: NodeResolvers<ContextType>;
   OtherCurrency?: OtherCurrencyResolvers<ContextType>;
+  OutMsg?: OutMsgResolvers<ContextType>;
   PageInfo?: PageInfoResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   TransactionAction?: TransactionActionResolvers<ContextType>;
@@ -831,5 +2352,7 @@ export type Resolvers<ContextType = any> = {
   TransactionCredit?: TransactionCreditResolvers<ContextType>;
   TransactionSplitInfo?: TransactionSplitInfoResolvers<ContextType>;
   TransactionStorage?: TransactionStorageResolvers<ContextType>;
+  ValidatorSet?: ValidatorSetResolvers<ContextType>;
+  ValidatorSetList?: ValidatorSetListResolvers<ContextType>;
 };
 

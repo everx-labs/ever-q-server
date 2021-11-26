@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.0] - 2021-11-18
+
+### New
+- New `blockchain` GraphQL subgraph, which features reliable pagination of blocks, messages and transactions.
+
+### Optimized
+- Without chain ranges verification database the verified boundary now 10 seconds ago instead of 120.
+
 ## [0.44.4] - 2021-10-25
 
 ### Fix

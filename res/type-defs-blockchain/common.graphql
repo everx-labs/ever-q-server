@@ -1,12 +1,12 @@
 """
-This type is experimental
+This type is unstable
 """
 interface Node {
     id: ID!
 }
 
 """
-This type is experimental
+This type is unstable
 """
 type PageInfo {
     startCursor: String!

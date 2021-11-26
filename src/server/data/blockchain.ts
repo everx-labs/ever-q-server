@@ -362,7 +362,7 @@ export default class QBlockchainData extends QData {
                 throw new Error("Couldn't get chain_ranges_verification summary");
             }
         } else {
-            const gapInSeconds = 120;
+            const gapInSeconds = 10; // 4 seconds for master block + 6 seconds for eventual consistency with enough margin
             const result = await required(this.providers.blockchain?.blocks).query({
                 text: `
                     LET now = DATE_NOW() / 1000
