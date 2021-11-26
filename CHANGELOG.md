@@ -18,6 +18,12 @@ All notable changes to this project will be documented in this file.
 ### Fix
 - StatsD reporting now has timeout to tackle with rare freeze problem
 
+## [0.44.5] - 2021-11-15
+
+### Fix
+
+- Bump apollo-server from 2.16.1 to 2.25.3
+
 ## [0.44.4] - 2021-10-25
 
 ### Fix
