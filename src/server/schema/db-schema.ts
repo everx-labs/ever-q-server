@@ -161,6 +161,7 @@ const AccountBase: TypeDef = {
     public_cells: u64(docs.account.public_cells),
     due_payment: grams(docs.account.due_payment),
     last_trans_lt: required(u64(docs.account.last_trans_lt)), // index
+    last_trans_block_id: stringWithLowerFilter(docs.account.last_trans_block_id),
     balance: required(grams(docs.account.balance)), // index
     balance_other: otherCurrencyCollection(docs.account.balance_other),
     split_depth: u8(docs.account.split_depth),

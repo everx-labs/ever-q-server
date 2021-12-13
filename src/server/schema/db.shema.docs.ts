@@ -54,6 +54,7 @@ If present, accumulates the storage payments that could not be exacted from the 
 \`\`\`
         `,
         last_trans_lt: " ",
+        last_trans_block_id: "Id of the last block which has updated this account",
         balance: `
 \`\`\`
 {

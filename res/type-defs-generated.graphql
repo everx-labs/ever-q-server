@@ -842,6 +842,8 @@ type ZerostateAccounts {
 	                
 	"""
 	last_paid: Float
+	"Id of the last block which has updated this account"
+	last_trans_block_id: String
 	last_trans_lt(format: BigIntFormat): String
 	"If present, contains library code used in smart-contract."
 	library: String
@@ -990,6 +992,8 @@ type Account {
 	                
 	"""
 	last_paid: Float
+	"Id of the last block which has updated this account"
+	last_trans_block_id: String
 	last_trans_lt(format: BigIntFormat): String
 	"If present, contains library code used in smart-contract."
 	library: String
@@ -2228,6 +2232,8 @@ input ZerostateAccountsFilter {
 	                
 	"""
 	last_paid: FloatFilter
+	"Id of the last block which has updated this account"
+	last_trans_block_id: StringFilter
 	last_trans_lt: StringFilter
 	"If present, contains library code used in smart-contract."
 	library: StringFilter
@@ -2378,6 +2384,8 @@ input AccountFilter {
 	                
 	"""
 	last_paid: FloatFilter
+	"Id of the last block which has updated this account"
+	last_trans_block_id: StringFilter
 	last_trans_lt: StringFilter
 	"If present, contains library code used in smart-contract."
 	library: StringFilter

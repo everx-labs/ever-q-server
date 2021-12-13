@@ -490,6 +490,7 @@ const ZerostateAccounts = struct({
     data_hash: stringLowerFilter,
     due_payment: bigUInt2,
     last_paid: scalar,
+    last_trans_block_id: stringLowerFilter,
     last_trans_lt: bigUInt1,
     library: scalar,
     library_hash: stringLowerFilter,
@@ -523,6 +524,7 @@ const Account = struct({
     data_hash: stringLowerFilter,
     due_payment: bigUInt2,
     last_paid: scalar,
+    last_trans_block_id: stringLowerFilter,
     last_trans_lt: bigUInt1,
     library: scalar,
     library_hash: stringLowerFilter,
@@ -1127,6 +1129,7 @@ scalarFields.set("accounts.data", { type: "string", path: "doc.data" });
 scalarFields.set("accounts.data_hash", { type: "string", path: "doc.data_hash" });
 scalarFields.set("accounts.due_payment", { type: "uint1024", path: "doc.due_payment" });
 scalarFields.set("accounts.last_paid", { type: "number", path: "doc.last_paid" });
+scalarFields.set("accounts.last_trans_block_id", { type: "string", path: "doc.last_trans_block_id" });
 scalarFields.set("accounts.last_trans_lt", { type: "uint64", path: "doc.last_trans_lt" });
 scalarFields.set("accounts.library", { type: "string", path: "doc.library" });
 scalarFields.set("accounts.library_hash", { type: "string", path: "doc.library_hash" });
@@ -1644,6 +1647,7 @@ scalarFields.set("zerostates.accounts.data", { type: "string", path: "doc.accoun
 scalarFields.set("zerostates.accounts.data_hash", { type: "string", path: "doc.accounts[*].data_hash" });
 scalarFields.set("zerostates.accounts.due_payment", { type: "uint1024", path: "doc.accounts[*].due_payment" });
 scalarFields.set("zerostates.accounts.last_paid", { type: "number", path: "doc.accounts[*].last_paid" });
+scalarFields.set("zerostates.accounts.last_trans_block_id", { type: "string", path: "doc.accounts[*].last_trans_block_id" });
 scalarFields.set("zerostates.accounts.last_trans_lt", { type: "uint64", path: "doc.accounts[*].last_trans_lt" });
 scalarFields.set("zerostates.accounts.library", { type: "string", path: "doc.accounts[*].library" });
 scalarFields.set("zerostates.accounts.library_hash", { type: "string", path: "doc.accounts[*].library_hash" });
