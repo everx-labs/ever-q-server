@@ -17,7 +17,7 @@ import {
 import QData from "./data";
 import QBlockchainData from "./blockchain";
 import { QTraceSpan } from "../tracing";
-import { required } from "../utils";
+import { arraysAreEqual, required } from "../utils";
 
 export class QJoinQuery {
     on: string;
@@ -189,8 +189,14 @@ export class QJoinQuery {
             if (shardPlan === undefined) {
                 throw new Error("This error should be impossible in join fetcher");
             }
+            let prevPortionOnValues = [] as string[];
             while (shardPlan.size > 0) {
                 const portionOnValues =[...shardPlan.keys()].slice(0, 100);
+                if (arraysAreEqual(portionOnValues, prevPortionOnValues)) {
+                    // throttle repeated queries to 5 times per second
+                    await new Promise((resolve) => setTimeout(resolve, 200));
+                }
+                prevPortionOnValues = portionOnValues;
                 const joinQuery = QCollectionQuery.createForJoin(
                     portionOnValues,
                     this.refCollection.name,
