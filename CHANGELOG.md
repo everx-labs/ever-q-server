@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.45.1] - 2022-02-04
+
+### Fix
+- Fix recurring join queries  when trying to fetch non-existent documents
+
 ## [0.45.0] - 2021-11-18
 
 ### New

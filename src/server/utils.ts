@@ -240,6 +240,18 @@ export function setHasIntersections<T>(a: Set<T>, b: Set<T>): boolean {
     return false;
 }
 
+export function arraysAreEqual<T>(a: Array<T>, b: Array<T>): boolean {
+    if (a.length != b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] != b[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 export function toU64String(value: number): string {
     const hex = value.toString(16);
     return `${(hex.length - 1).toString(16)}${hex}`;
