@@ -147,33 +147,41 @@ pipeline {
 				}
 
 				stage ('Unit Tests') {
+					agent {
+						node {
+							label G_node
+						}
+					}
 					steps {
 						script {
 							withCredentials ([
 								string(credentialsId: 'cinet_arango_uri', variable: 'Q_DATABASE_URI'),
 							]) {
-								builtImage.inside ("""
-									--entrypoint=''
-									-u root
-									-e 'Q_REQUESTS_MODE=rest'
-									-e 'Q_REQUESTS_SERVER=localhost'
-									-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
-									-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
-								""") {
-								    sshagent (credentials: [G_gitcred]) {
-                                        sh (
-                                            label: 'Run unit tests',
-                                            script: """
-                                                mkdir -p ~/.ssh;
-                                                ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-                                                cd /home/node
-                                                npm --versions
-                                                npm ci
-                                                npm run tsc
-                                                npm test -- --bail --runInBand
-                                            """
-                                        )
-                                    }
+								docker.withRegistry('', G_dockerCred) {
+									docker.image(G_gqlimage).pull()
+									docker.image(G_gqlimage).inside ("""
+										--entrypoint=''
+										-u root
+										-e 'Q_REQUESTS_MODE=rest'
+										-e 'Q_REQUESTS_SERVER=localhost'
+										-e 'Q_DATA_MUT=${Q_DATABASE_URI}'
+										-e 'Q_DATA_HOT=${Q_DATABASE_URI}'
+									""") {
+										sshagent (credentials: [G_gitcred]) {
+											sh (
+												label: 'Run unit tests',
+												script: """
+													mkdir -p ~/.ssh;
+													ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+													cd /home/node
+													npm --versions
+													npm ci
+													npm run tsc
+													npm test -- --bail --runInBand
+												"""
+											)
+										}
+									}
 								}
 							}
 
