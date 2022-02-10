@@ -1,0 +1,95 @@
+"""
+**UNSTABLE**
+# Message type
+
+Message layout queries.  A message consists of its header followed by its
+body or payload. The body is essentially arbitrary, to be interpreted by the
+destination smart contract. It can be queried with the following fields:
+"""
+type BlockchainMessage {
+	"""
+	BlockchainMessage.id is "message/"-prefixed Message.id.
+	For id without prefix see "hash".
+	"""
+	id: ID!
+	hash: String
+	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
+	block_id: String
+	"A bag of cells with the message structure encoded as base64."
+	boc: String
+	"Bag of cells with the message body encoded as base64."
+	body: String
+	"`body` field root hash."
+	body_hash: String
+	"Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
+	bounce: Boolean
+	"Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender."
+	bounced: Boolean
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	chain_order: String
+	"Represents contract code in deploy messages."
+	code: String
+	"`code` field root hash."
+	code_hash: String
+	"Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction."
+	created_at: Float
+	created_at_string: String
+	"Logical creation time automatically set by the generating transaction."
+	created_lt(format: BigIntFormat): String
+	"Represents initial data for a contract in deploy messages"
+	data: String
+	"`data` field root hash."
+	data_hash: String
+	"Returns destination address string"
+	dst: String
+	"Workchain id of the destination address (dst field)"
+	dst_workchain_id: Int
+	"Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated."
+	fwd_fee(format: BigIntFormat): String
+	"IHR is disabled for the message."
+	ihr_disabled: Boolean
+	"This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism."
+	ihr_fee(format: BigIntFormat): String
+	import_fee(format: BigIntFormat): String
+	"Represents contract library in deploy messages"
+	library: String
+	"`library` field root hash."
+	library_hash: String
+	"""
+	Returns the type of message.
+	- 0 – internal
+	- 1 – extIn
+	- 2 – extOut
+	"""
+	msg_type: Int
+	msg_type_name: MessageTypeEnum
+	"Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64."
+	proof: String
+	"This is only used for special contracts in masterchain to deploy messages."
+	split_depth: Int
+	"Returns source address string"
+	src: String
+	"Workchain id of the source address (src field)"
+	src_workchain_id: Int
+	"""
+	Returns internal processing status according to the numbers shown.
+	- 0 – unknown
+	- 1 – queued
+	- 2 – processing
+	- 3 – preliminary
+	- 4 – proposed
+	- 5 – finalized
+	- 6 – refused
+	- 7 – transiting
+	"""
+	status: Int
+	status_name: MessageProcessingStatusEnum
+	"This is only used for special contracts in masterchain to deploy messages."
+	tick: Boolean
+	"This is only used for special contracts in masterchain to deploy messages"
+	tock: Boolean
+	"May or may not be present"
+	value(format: BigIntFormat): String
+	"May or may not be present."
+	value_other: [OtherCurrency]
+}

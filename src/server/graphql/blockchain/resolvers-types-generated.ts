@@ -321,6 +321,212 @@ export type BlockValueFlowTo_Next_BlkArgs = {
 
 /**
  * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccount = Node & {
+  __typename?: 'BlockchainAccount';
+  _key: Scalars['String'];
+  /**
+   * Returns the current status of the account.
+   *
+   * - 0 – uninit
+   * - 1 – active
+   * - 2 – frozen
+   * - 3 – nonExist
+   */
+  acc_type?: Maybe<Scalars['Int']>;
+  acc_type_name?: Maybe<AccountStatusEnum>;
+  address?: Maybe<Scalars['String']>;
+  balance?: Maybe<Scalars['String']>;
+  balance_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+  /** Contains sum of all the bits used by the cells of the account. Used in storage fee calculation */
+  bits?: Maybe<Scalars['String']>;
+  /** Bag of cells with the account struct encoded as base64. */
+  boc?: Maybe<Scalars['String']>;
+  /** Contains number of the cells of the account. Used in storage fee calculation */
+  cells?: Maybe<Scalars['String']>;
+  /** If present, contains smart-contract code encoded with in base64. */
+  code?: Maybe<Scalars['String']>;
+  /** `code` field root hash. */
+  code_hash?: Maybe<Scalars['String']>;
+  /** If present, contains smart-contract data encoded with in base64. */
+  data?: Maybe<Scalars['String']>;
+  /** `data` field root hash. */
+  data_hash?: Maybe<Scalars['String']>;
+  /**
+   * If present, accumulates the storage payments that could not be exacted from
+   * the balance of the account, represented by a strictly positive amount of nano
+   * tokens; it can be present only for uninitialized or frozen accounts that have
+   * a balance of zero Grams (but may have non-zero balances in non gram
+   * cryptocurrencies). When due_payment becomes larger than the value of a
+   * configurable parameter of the blockchain, the ac- count is destroyed
+   * altogether, and its balance, if any, is transferred to the zero account.
+   */
+  due_payment?: Maybe<Scalars['String']>;
+  /**
+   * BlockchainAccount.id is "account/"-prefixed Account.id.
+   * For id without prefix see "address".
+   */
+  id: Scalars['ID'];
+  /**
+   * Contains either the unixtime of the most recent storage payment
+   * collected (usually this is the unixtime of the most recent transaction),
+   * or the unixtime when the account was created (again, by a transaction).
+   */
+  last_paid?: Maybe<Scalars['Float']>;
+  last_trans_lt?: Maybe<Scalars['String']>;
+  /** If present, contains library code used in smart-contract. */
+  library?: Maybe<Scalars['String']>;
+  /** `library` field root hash. */
+  library_hash?: Maybe<Scalars['String']>;
+  /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
+  proof?: Maybe<Scalars['String']>;
+  /** Contains the number of public cells of the account. Used in storage fee calculation. */
+  public_cells?: Maybe<Scalars['String']>;
+  /** Is present and non-zero only in instances of large smart contracts. */
+  split_depth?: Maybe<Scalars['Int']>;
+  /** Contains the representation hash of an instance of `StateInit` when an account is frozen. */
+  state_hash?: Maybe<Scalars['String']>;
+  /**
+   * May be present only in the masterchain—and within the masterchain, only in some
+   * fundamental smart contracts required for the whole system to function.
+   */
+  tick?: Maybe<Scalars['Boolean']>;
+  /**
+   * May be present only in the masterchain—and within the masterchain, only in some
+   *  fundamental smart contracts required for the whole system to function.
+   */
+  tock?: Maybe<Scalars['Boolean']>;
+  /** Workchain id of the account address (id field). */
+  workchain_id?: Maybe<Scalars['Int']>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountBalanceArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountBitsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountCellsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountDue_PaymentArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountLast_Trans_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountPublic_CellsArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+/**
+ * **UNSTABLE**
  * Block
  */
 export type BlockchainBlock = Node & {
@@ -460,6 +666,169 @@ export type BlockchainMasterSeqNoRange = {
   end?: Maybe<Scalars['Int']>;
 };
 
+/**
+ * **UNSTABLE**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessage = {
+  __typename?: 'BlockchainMessage';
+  _key: Scalars['String'];
+  /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
+  block_id?: Maybe<Scalars['String']>;
+  /** A bag of cells with the message structure encoded as base64. */
+  boc?: Maybe<Scalars['String']>;
+  /** Bag of cells with the message body encoded as base64. */
+  body?: Maybe<Scalars['String']>;
+  /** `body` field root hash. */
+  body_hash?: Maybe<Scalars['String']>;
+  /** Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender. */
+  bounce?: Maybe<Scalars['Boolean']>;
+  /** Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender. */
+  bounced?: Maybe<Scalars['Boolean']>;
+  /** Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message). */
+  chain_order?: Maybe<Scalars['String']>;
+  /** Represents contract code in deploy messages. */
+  code?: Maybe<Scalars['String']>;
+  /** `code` field root hash. */
+  code_hash?: Maybe<Scalars['String']>;
+  /** Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction. */
+  created_at?: Maybe<Scalars['Float']>;
+  created_at_string?: Maybe<Scalars['String']>;
+  /** Logical creation time automatically set by the generating transaction. */
+  created_lt?: Maybe<Scalars['String']>;
+  /** Represents initial data for a contract in deploy messages */
+  data?: Maybe<Scalars['String']>;
+  /** `data` field root hash. */
+  data_hash?: Maybe<Scalars['String']>;
+  /** Returns destination address string */
+  dst?: Maybe<Scalars['String']>;
+  /** Workchain id of the destination address (dst field) */
+  dst_workchain_id?: Maybe<Scalars['Int']>;
+  /** Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated. */
+  fwd_fee?: Maybe<Scalars['String']>;
+  hash?: Maybe<Scalars['String']>;
+  /**
+   * BlockchainMessage.id is "message/"-prefixed Message.id.
+   * For id without prefix see "hash".
+   */
+  id: Scalars['ID'];
+  /** IHR is disabled for the message. */
+  ihr_disabled?: Maybe<Scalars['Boolean']>;
+  /** This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism. */
+  ihr_fee?: Maybe<Scalars['String']>;
+  import_fee?: Maybe<Scalars['String']>;
+  /** Represents contract library in deploy messages */
+  library?: Maybe<Scalars['String']>;
+  /** `library` field root hash. */
+  library_hash?: Maybe<Scalars['String']>;
+  /**
+   * Returns the type of message.
+   * - 0 – internal
+   * - 1 – extIn
+   * - 2 – extOut
+   */
+  msg_type?: Maybe<Scalars['Int']>;
+  msg_type_name?: Maybe<MessageTypeEnum>;
+  /** Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64. */
+  proof?: Maybe<Scalars['String']>;
+  /** This is only used for special contracts in masterchain to deploy messages. */
+  split_depth?: Maybe<Scalars['Int']>;
+  /** Returns source address string */
+  src?: Maybe<Scalars['String']>;
+  /** Workchain id of the source address (src field) */
+  src_workchain_id?: Maybe<Scalars['Int']>;
+  /**
+   * Returns internal processing status according to the numbers shown.
+   * - 0 – unknown
+   * - 1 – queued
+   * - 2 – processing
+   * - 3 – preliminary
+   * - 4 – proposed
+   * - 5 – finalized
+   * - 6 – refused
+   * - 7 – transiting
+   */
+  status?: Maybe<Scalars['Int']>;
+  status_name?: Maybe<MessageProcessingStatusEnum>;
+  /** This is only used for special contracts in masterchain to deploy messages. */
+  tick?: Maybe<Scalars['Boolean']>;
+  /** This is only used for special contracts in masterchain to deploy messages */
+  tock?: Maybe<Scalars['Boolean']>;
+  /** May or may not be present */
+  value?: Maybe<Scalars['String']>;
+  /** May or may not be present. */
+  value_other?: Maybe<Array<Maybe<OtherCurrency>>>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessageCreated_LtArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessageFwd_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessageIhr_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessageImport_FeeArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessageValueArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
 /** This type is unstable */
 export type BlockchainQuery = {
   __typename?: 'BlockchainQuery';
@@ -561,6 +930,7 @@ export type BlockchainTransaction = Node & {
   __typename?: 'BlockchainTransaction';
   _key: Scalars['String'];
   aborted?: Maybe<Scalars['Boolean']>;
+  account?: Maybe<BlockchainAccount>;
   account_addr?: Maybe<Scalars['String']>;
   action?: Maybe<TransactionAction>;
   /** Account balance change after transaction */
@@ -591,6 +961,7 @@ export type BlockchainTransaction = Node & {
    * For id without prefix see "hash".
    */
   id: Scalars['ID'];
+  in_message?: Maybe<BlockchainMessage>;
   in_msg?: Maybe<Scalars['String']>;
   installed?: Maybe<Scalars['Boolean']>;
   /** Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf). */
@@ -610,6 +981,7 @@ export type BlockchainTransaction = Node & {
    */
   orig_status?: Maybe<Scalars['Int']>;
   orig_status_name?: Maybe<AccountStatusEnum>;
+  out_messages?: Maybe<Array<Maybe<BlockchainMessage>>>;
   out_msgs?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** The number of generated outbound messages (one of the common transaction parameters defined by the specification) */
   outmsg_cnt?: Maybe<Scalars['Int']>;
@@ -1096,6 +1468,23 @@ export enum InMsgTypeEnum {
   DiscardedTransit = 'DiscardedTransit'
 }
 
+export enum MessageProcessingStatusEnum {
+  Unknown = 'Unknown',
+  Queued = 'Queued',
+  Processing = 'Processing',
+  Preliminary = 'Preliminary',
+  Proposed = 'Proposed',
+  Finalized = 'Finalized',
+  Refused = 'Refused',
+  Transiting = 'Transiting'
+}
+
+export enum MessageTypeEnum {
+  Internal = 'Internal',
+  ExtIn = 'ExtIn',
+  ExtOut = 'ExtOut'
+}
+
 export type MsgEnvelope = {
   __typename?: 'MsgEnvelope';
   cur_addr?: Maybe<Scalars['String']>;
@@ -1211,10 +1600,93 @@ export type Query = {
   __typename?: 'Query';
   /** This node is unstable */
   blockchain?: Maybe<BlockchainQuery>;
+  /**
+   * **UNSTABLE**
+   * Returns seq_no range such that:
+   * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
+   * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
+   * If time_start is null, then start is null. If time_end is null, then end is null.
+   * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
+   */
+  master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of key blocks.
+   */
+  key_blocks?: Maybe<BlockchainBlocksConnection>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
+   */
+  workchain_blocks?: Maybe<BlockchainBlocksConnection>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of transactions filtered by workchains.
+   */
+  workchain_transactions?: Maybe<BlockchainTransactionsConnection>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
+   */
+  account_transactions?: Maybe<BlockchainTransactionsConnection>;
 };
 
 
 export type QueryBlockchainArgs = {
+  accessKey?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryMaster_Seq_No_RangeArgs = {
+  time_start?: Maybe<Scalars['Int']>;
+  time_end?: Maybe<Scalars['Int']>;
+};
+
+
+export type QueryKey_BlocksArgs = {
+  seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryWorkchain_BlocksArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  workchain?: Maybe<Scalars['Int']>;
+  thread?: Maybe<Scalars['String']>;
+  min_tr_count?: Maybe<Scalars['Int']>;
+  max_tr_count?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryWorkchain_TransactionsArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  workchain?: Maybe<Scalars['Int']>;
+  min_balance_delta?: Maybe<Scalars['Int']>;
+  max_balance_delta?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryAccount_TransactionsArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  account_address: Scalars['String'];
+  aborted?: Maybe<Scalars['Boolean']>;
+  min_balance_delta?: Maybe<Scalars['Int']>;
+  max_balance_delta?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
   accessKey?: Maybe<Scalars['String']>;
 };
 
@@ -1545,12 +2017,14 @@ export type ResolversTypes = {
   BlockProcessingStatusEnum: BlockProcessingStatusEnum;
   BlockStateUpdate: ResolverTypeWrapper<BlockStateUpdate>;
   BlockValueFlow: ResolverTypeWrapper<BlockValueFlow>;
-  BlockchainBlock: ResolverTypeWrapper<BlockchainBlock>;
+  BlockchainAccount: ResolverTypeWrapper<BlockchainAccount>;
   ID: ResolverTypeWrapper<Scalars['ID']>;
+  BlockchainBlock: ResolverTypeWrapper<BlockchainBlock>;
   BlockchainBlocksConnection: ResolverTypeWrapper<BlockchainBlocksConnection>;
   BlockchainBlocksEdge: ResolverTypeWrapper<BlockchainBlocksEdge>;
   BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   BlockchainMasterSeqNoRange: ResolverTypeWrapper<BlockchainMasterSeqNoRange>;
+  BlockchainMessage: ResolverTypeWrapper<BlockchainMessage>;
   BlockchainQuery: ResolverTypeWrapper<BlockchainQuery>;
   BlockchainTransaction: ResolverTypeWrapper<BlockchainTransaction>;
   BlockchainTransactionEdge: ResolverTypeWrapper<BlockchainTransactionEdge>;
@@ -1576,9 +2050,11 @@ export type ResolversTypes = {
   GasLimitsPrices: ResolverTypeWrapper<GasLimitsPrices>;
   InMsg: ResolverTypeWrapper<InMsg>;
   InMsgTypeEnum: InMsgTypeEnum;
+  MessageProcessingStatusEnum: MessageProcessingStatusEnum;
+  MessageTypeEnum: MessageTypeEnum;
   MsgEnvelope: ResolverTypeWrapper<MsgEnvelope>;
   MsgForwardPrices: ResolverTypeWrapper<MsgForwardPrices>;
-  Node: ResolversTypes['BlockchainBlock'] | ResolversTypes['BlockchainTransaction'];
+  Node: ResolversTypes['BlockchainAccount'] | ResolversTypes['BlockchainBlock'] | ResolversTypes['BlockchainTransaction'];
   OtherCurrency: ResolverTypeWrapper<OtherCurrency>;
   OutMsg: ResolverTypeWrapper<OutMsg>;
   OutMsgTypeEnum: OutMsgTypeEnum;
@@ -1618,12 +2094,14 @@ export type ResolversParentTypes = {
   BlockMasterShardHashesDescr: BlockMasterShardHashesDescr;
   BlockStateUpdate: BlockStateUpdate;
   BlockValueFlow: BlockValueFlow;
-  BlockchainBlock: BlockchainBlock;
+  BlockchainAccount: BlockchainAccount;
   ID: Scalars['ID'];
+  BlockchainBlock: BlockchainBlock;
   BlockchainBlocksConnection: BlockchainBlocksConnection;
   BlockchainBlocksEdge: BlockchainBlocksEdge;
   BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   BlockchainMasterSeqNoRange: BlockchainMasterSeqNoRange;
+  BlockchainMessage: BlockchainMessage;
   BlockchainQuery: BlockchainQuery;
   BlockchainTransaction: BlockchainTransaction;
   BlockchainTransactionEdge: BlockchainTransactionEdge;
@@ -1648,7 +2126,7 @@ export type ResolversParentTypes = {
   InMsg: InMsg;
   MsgEnvelope: MsgEnvelope;
   MsgForwardPrices: MsgForwardPrices;
-  Node: ResolversParentTypes['BlockchainBlock'] | ResolversParentTypes['BlockchainTransaction'];
+  Node: ResolversParentTypes['BlockchainAccount'] | ResolversParentTypes['BlockchainBlock'] | ResolversParentTypes['BlockchainTransaction'];
   OtherCurrency: OtherCurrency;
   OutMsg: OutMsg;
   PageInfo: PageInfo;
@@ -1810,6 +2288,36 @@ export type BlockValueFlowResolvers<ContextType = any, ParentType extends Resolv
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type BlockchainAccountResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainAccount'] = ResolversParentTypes['BlockchainAccount']> = {
+  _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  acc_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  acc_type_name?: Resolver<Maybe<ResolversTypes['AccountStatusEnum']>, ParentType, ContextType>;
+  address?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  balance?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountBalanceArgs, never>>;
+  balance_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  bits?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountBitsArgs, never>>;
+  boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  cells?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountCellsArgs, never>>;
+  code?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  code_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  data_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  due_payment?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountDue_PaymentArgs, never>>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  last_paid?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  last_trans_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountLast_Trans_LtArgs, never>>;
+  library?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  library_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  proof?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  public_cells?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountPublic_CellsArgs, never>>;
+  split_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  state_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  tick?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  tock?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BlockchainBlockResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainBlock'] = ResolversParentTypes['BlockchainBlock']> = {
   _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   account_blocks?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockAccountBlocks']>>>, ParentType, ContextType>;
@@ -1877,6 +2385,47 @@ export type BlockchainMasterSeqNoRangeResolvers<ContextType = any, ParentType ex
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type BlockchainMessageResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainMessage'] = ResolversParentTypes['BlockchainMessage']> = {
+  _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  block_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  body?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  body_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  bounce?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  bounced?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  chain_order?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  code?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  code_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  created_at?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  created_at_string?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  created_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainMessageCreated_LtArgs, never>>;
+  data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  data_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dst?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dst_workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  fwd_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainMessageFwd_FeeArgs, never>>;
+  hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  ihr_disabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  ihr_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainMessageIhr_FeeArgs, never>>;
+  import_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainMessageImport_FeeArgs, never>>;
+  library?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  library_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  msg_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  msg_type_name?: Resolver<Maybe<ResolversTypes['MessageTypeEnum']>, ParentType, ContextType>;
+  proof?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  split_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  src?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  src_workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  status_name?: Resolver<Maybe<ResolversTypes['MessageProcessingStatusEnum']>, ParentType, ContextType>;
+  tick?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  tock?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainMessageValueArgs, never>>;
+  value_other?: Resolver<Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BlockchainQueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainQuery'] = ResolversParentTypes['BlockchainQuery']> = {
   accessRights?: Resolver<ResolversTypes['AccessRights'], ParentType, ContextType>;
   account_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryAccount_TransactionsArgs, 'account_address'>>;
@@ -1890,6 +2439,7 @@ export type BlockchainQueryResolvers<ContextType = any, ParentType extends Resol
 export type BlockchainTransactionResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainTransaction'] = ResolversParentTypes['BlockchainTransaction']> = {
   _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   aborted?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  account?: Resolver<Maybe<ResolversTypes['BlockchainAccount']>, ParentType, ContextType>;
   account_addr?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   action?: Resolver<Maybe<ResolversTypes['TransactionAction']>, ParentType, ContextType>;
   balance_delta?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainTransactionBalance_DeltaArgs, never>>;
@@ -1906,6 +2456,7 @@ export type BlockchainTransactionResolvers<ContextType = any, ParentType extends
   end_status_name?: Resolver<Maybe<ResolversTypes['AccountStatusEnum']>, ParentType, ContextType>;
   hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  in_message?: Resolver<Maybe<ResolversTypes['BlockchainMessage']>, ParentType, ContextType>;
   in_msg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   installed?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainTransactionLtArgs, never>>;
@@ -1915,6 +2466,7 @@ export type BlockchainTransactionResolvers<ContextType = any, ParentType extends
   old_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   orig_status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   orig_status_name?: Resolver<Maybe<ResolversTypes['AccountStatusEnum']>, ParentType, ContextType>;
+  out_messages?: Resolver<Maybe<Array<Maybe<ResolversTypes['BlockchainMessage']>>>, ParentType, ContextType>;
   out_msgs?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   outmsg_cnt?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   prepare_transaction?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2167,7 +2719,7 @@ export type MsgForwardPricesResolvers<ContextType = any, ParentType extends Reso
 };
 
 export type NodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['Node'] = ResolversParentTypes['Node']> = {
-  __resolveType: TypeResolveFn<'BlockchainBlock' | 'BlockchainTransaction', ParentType, ContextType>;
+  __resolveType: TypeResolveFn<'BlockchainAccount' | 'BlockchainBlock' | 'BlockchainTransaction', ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 };
 
@@ -2202,6 +2754,11 @@ export type PageInfoResolvers<ContextType = any, ParentType extends ResolversPar
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   blockchain?: Resolver<Maybe<ResolversTypes['BlockchainQuery']>, ParentType, ContextType, RequireFields<QueryBlockchainArgs, never>>;
+  master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<QueryMaster_Seq_No_RangeArgs, never>>;
+  key_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<QueryKey_BlocksArgs, never>>;
+  workchain_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<QueryWorkchain_BlocksArgs, never>>;
+  workchain_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<QueryWorkchain_TransactionsArgs, never>>;
+  account_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<QueryAccount_TransactionsArgs, 'account_address'>>;
 };
 
 export type TransactionActionResolvers<ContextType = any, ParentType extends ResolversParentTypes['TransactionAction'] = ResolversParentTypes['TransactionAction']> = {
@@ -2313,10 +2870,12 @@ export type Resolvers<ContextType = any> = {
   BlockMasterShardHashesDescr?: BlockMasterShardHashesDescrResolvers<ContextType>;
   BlockStateUpdate?: BlockStateUpdateResolvers<ContextType>;
   BlockValueFlow?: BlockValueFlowResolvers<ContextType>;
+  BlockchainAccount?: BlockchainAccountResolvers<ContextType>;
   BlockchainBlock?: BlockchainBlockResolvers<ContextType>;
   BlockchainBlocksConnection?: BlockchainBlocksConnectionResolvers<ContextType>;
   BlockchainBlocksEdge?: BlockchainBlocksEdgeResolvers<ContextType>;
   BlockchainMasterSeqNoRange?: BlockchainMasterSeqNoRangeResolvers<ContextType>;
+  BlockchainMessage?: BlockchainMessageResolvers<ContextType>;
   BlockchainQuery?: BlockchainQueryResolvers<ContextType>;
   BlockchainTransaction?: BlockchainTransactionResolvers<ContextType>;
   BlockchainTransactionEdge?: BlockchainTransactionEdgeResolvers<ContextType>;

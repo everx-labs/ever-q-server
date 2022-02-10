@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.46.0] - 2022-02-xx
+
+### New
+- Add join fields to `blockchain.account_transactions` and `blockchain.workchain_transactions`:
+    - `account`
+    - `in_message`
+    - `out_messages`
+- Duplicate contents of `blockchain` root query to root query:
+    - `master_seq_no_range`
+    - `key_blocks`
+    - `workchain_blocks`
+    - `workchain_transactions`
+    - `account_transactions` 
+
 ## [0.45.1] - 2022-02-04
 
 ### Fix
