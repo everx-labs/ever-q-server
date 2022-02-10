@@ -238,7 +238,7 @@ function buildTransactionReturnExpression(selectionSet: SelectionSetNode | undef
     const outMessagesSelectionSet = undefined; //getFieldSelectionSet(selectionSet, "out_messages");
     if (!accountSelectionSet && !inMessageSelectionSet && !outMessagesSelectionSet) {
         return buildReturnExpression({
-            type: context.services.data.accounts.docType,
+            type: context.services.data.transactions.docType,
             selectionSet,
             orderBy: [{ path: "chain_order", direction: "ASC" }],
             excludedFields: ["hash"],
