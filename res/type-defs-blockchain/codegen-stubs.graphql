@@ -3,6 +3,14 @@ type AccessRights {
     restrictToAccounts: [String!]!
 }
 
+type BlockchainAccount {
+	_key: String!
+}
+
+type BlockchainMessage {
+	_key: String!
+}
+
 type BlockchainTransaction {
 	_key: String!
 }
@@ -697,4 +705,23 @@ enum OutMsgTypeEnum {
     TransitRequired
     DequeueShort
     None
+}
+
+# -----------------------------------------------------------------------------------
+
+enum MessageTypeEnum {
+    Internal
+    ExtIn
+    ExtOut
+}
+
+enum MessageProcessingStatusEnum {
+    Unknown
+    Queued
+    Processing
+    Preliminary
+    Proposed
+    Finalized
+    Refused
+    Transiting
 }

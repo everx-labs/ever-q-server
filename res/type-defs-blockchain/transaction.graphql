@@ -10,6 +10,7 @@ type BlockchainTransaction implements Node {
 	id: ID!
 	hash: String
 	aborted: Boolean
+	account: BlockchainAccount
 	account_addr: String
 	action: TransactionAction
 	"Account balance change after transaction"
@@ -34,6 +35,7 @@ type BlockchainTransaction implements Node {
 	"""
 	end_status: Int
 	end_status_name: AccountStatusEnum
+	in_message: BlockchainMessage
 	in_msg: String
 	installed: Boolean
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
@@ -53,6 +55,7 @@ type BlockchainTransaction implements Node {
 	"""
 	orig_status: Int
 	orig_status_name: AccountStatusEnum
+	out_messages: [BlockchainMessage]
 	out_msgs: [String]
 	"The number of generated outbound messages (one of the common transaction parameters defined by the specification)"
 	outmsg_cnt: Int

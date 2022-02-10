@@ -243,12 +243,14 @@ export class QCollectionQuery {
         collectionDocType: QType,
         selectionSet: SelectionSetNode | undefined,
         orderBy: OrderBy[],
+        path = "doc",
+        overrides: Map<string, string> | undefined = undefined,
     ): string {
         const expressions = new Map();
-        expressions.set("_key", "doc._key");
+        expressions.set("_key", `${path}._key`);
         const fields = collectionDocType.fields;
         if (fields) {
-            collectReturnExpressions(expressions, "doc", selectionSet, fields);
+            collectReturnExpressions(expressions, path, selectionSet, fields);
             if (orderBy.length > 0) {
                 let orderBySelectionSet: SelectionSetNode | undefined = undefined;
                 for (const item of orderBy) {
@@ -256,13 +258,18 @@ export class QCollectionQuery {
                 }
                 collectReturnExpressions(
                     expressions,
-                    "doc",
+                    path,
                     orderBySelectionSet,
                     fields,
                 );
             }
         }
         expressions.delete("id");
+        if (overrides) {
+            overrides.forEach((value, key) => {
+                expressions.set(key, value);
+            })
+        }
         return combineReturnExpressions(expressions);
     }
 
