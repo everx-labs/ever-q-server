@@ -8,7 +8,6 @@ import {
     BlockchainBlock,
     BlockchainBlocksConnection,
     BlockchainMessage,
-    BlockchainQuery,
     BlockchainQueryAccount_TransactionsArgs,
     BlockchainQueryKey_BlocksArgs,
     BlockchainQueryMaster_Seq_No_RangeArgs,
@@ -21,6 +20,7 @@ import {
 } from "./resolvers-types-generated";
 import { QTraceSpan } from "../../tracing";
 import { buildReturnExpression, Direction, getFieldSelectionSet, getNodeSelectionSetForConnection, prepareChainOrderFilter, processPaginatedQueryResult, processPaginationArgs } from "./helpers";
+import { AccessRights } from "../../../server/auth";
 
 function parseMasterSeqNo(chain_order: string) {
     const length = parseInt(chain_order[0], 16) + 1;
@@ -547,14 +547,14 @@ async function resolve_workchain_transactions(
 }
 
 async function resolve_account_transactions(
-    parent: BlockchainQuery,
+    accessRights: AccessRights,
     args: BlockchainQueryAccount_TransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
     // validate args
-    const restrictToAccounts = parent.accessRights.restrictToAccounts;
+    const restrictToAccounts = accessRights.restrictToAccounts;
     if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(args.account_address)) {
         throw QError.invalidQuery("This account_addr is not allowed");
     }
@@ -614,6 +614,32 @@ async function resolve_account_transactions(
 
 export const resolvers: Resolvers<QRequestContext> = {
     Query: {
+        master_seq_no_range: (_parent, args, context) => {
+            return context.trace("master_seq_no_range", async traceSpan => {
+                return await resolve_maser_seq_no_range(args, context, traceSpan);
+            });
+        },
+        key_blocks: async (_parent, args, context, info) => {
+            return context.trace("resolve_key_blocks", async traceSpan => {
+                return await resolve_key_blocks(args, context, info, traceSpan);
+            });
+        },
+        workchain_blocks: async (_parent, args, context, info) => {
+            return context.trace("resolve_workchain_blocks", async traceSpan => {
+                return await resolve_workchain_blocks(args, context, info, traceSpan);
+            });
+        },
+        workchain_transactions: async (_parent, args, context, info) => {
+            return context.trace("workchain_transactions", async traceSpan => {
+                return await resolve_workchain_transactions(args, context, info, traceSpan);
+            });
+        },
+        account_transactions: async (_parent, args, context, info) => {
+            const accessRights = await context.requireGrantedAccess(args);
+            return context.trace("account_transactions", async traceSpan => {
+                return await resolve_account_transactions(accessRights, args, context, info, traceSpan);
+            });
+        },
         blockchain: async (_parent, args, context) => {
             return {
                 accessRights: await context.requireGrantedAccess(args)
@@ -643,7 +669,7 @@ export const resolvers: Resolvers<QRequestContext> = {
         },
         account_transactions: async (parent, args, context, info) => {
             return context.trace("blockchain-account_transactions", async traceSpan => {
-                return await resolve_account_transactions(parent, args, context, info, traceSpan);
+                return await resolve_account_transactions(parent.accessRights, args, context, info, traceSpan);
             });
         },
     },

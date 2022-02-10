@@ -1600,10 +1600,93 @@ export type Query = {
   __typename?: 'Query';
   /** This node is unstable */
   blockchain?: Maybe<BlockchainQuery>;
+  /**
+   * **UNSTABLE**
+   * Returns seq_no range such that:
+   * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
+   * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
+   * If time_start is null, then start is null. If time_end is null, then end is null.
+   * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
+   */
+  master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of key blocks.
+   */
+  key_blocks?: Maybe<BlockchainBlocksConnection>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
+   */
+  workchain_blocks?: Maybe<BlockchainBlocksConnection>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of transactions filtered by workchains.
+   */
+  workchain_transactions?: Maybe<BlockchainTransactionsConnection>;
+  /**
+   * **UNSTABLE**
+   * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
+   */
+  account_transactions?: Maybe<BlockchainTransactionsConnection>;
 };
 
 
 export type QueryBlockchainArgs = {
+  accessKey?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryMaster_Seq_No_RangeArgs = {
+  time_start?: Maybe<Scalars['Int']>;
+  time_end?: Maybe<Scalars['Int']>;
+};
+
+
+export type QueryKey_BlocksArgs = {
+  seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryWorkchain_BlocksArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  workchain?: Maybe<Scalars['Int']>;
+  thread?: Maybe<Scalars['String']>;
+  min_tr_count?: Maybe<Scalars['Int']>;
+  max_tr_count?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryWorkchain_TransactionsArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  workchain?: Maybe<Scalars['Int']>;
+  min_balance_delta?: Maybe<Scalars['Int']>;
+  max_balance_delta?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
+};
+
+
+export type QueryAccount_TransactionsArgs = {
+  master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+  account_address: Scalars['String'];
+  aborted?: Maybe<Scalars['Boolean']>;
+  min_balance_delta?: Maybe<Scalars['Int']>;
+  max_balance_delta?: Maybe<Scalars['Int']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
   accessKey?: Maybe<Scalars['String']>;
 };
 
@@ -2671,6 +2754,11 @@ export type PageInfoResolvers<ContextType = any, ParentType extends ResolversPar
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   blockchain?: Resolver<Maybe<ResolversTypes['BlockchainQuery']>, ParentType, ContextType, RequireFields<QueryBlockchainArgs, never>>;
+  master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<QueryMaster_Seq_No_RangeArgs, never>>;
+  key_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<QueryKey_BlocksArgs, never>>;
+  workchain_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<QueryWorkchain_BlocksArgs, never>>;
+  workchain_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<QueryWorkchain_TransactionsArgs, never>>;
+  account_transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<QueryAccount_TransactionsArgs, 'account_address'>>;
 };
 
 export type TransactionActionResolvers<ContextType = any, ParentType extends ResolversParentTypes['TransactionAction'] = ResolversParentTypes['TransactionAction']> = {
