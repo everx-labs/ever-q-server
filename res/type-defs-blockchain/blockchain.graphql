@@ -51,7 +51,7 @@ type BlockchainTransactionEdge {
 }
 
 """
-This type is unstable
+**DEPRECATED** (all subqueries were moved to root query)
 """
 type BlockchainQuery {
     """

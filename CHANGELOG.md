@@ -16,6 +16,21 @@ All notable changes to this project will be documented in this file.
     - `workchain_transactions`
     - `account_transactions` 
 
+### Deprecated
+- `when` agrument in joins
+- the following root queries:
+    - `blockchain` (can be replaced by the same API in the root query)
+    - `explainQueryAccounts`
+    - `explainQueryTransactions`
+    - `explainQueryMessages`
+    - `explainQueryBlocks`
+    - `explainQueryBlockSignatures`
+    - `explainQueryZerostates`
+    - `getAccountsCount`
+    - `getTransactionsCount`
+    - `getAccountsTotalBalance`
+- `QueryExplanation` type
+
 ## [0.45.1] - 2022-02-04
 
 ### Fix
