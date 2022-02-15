@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
     - `workchain_transactions`
     - `account_transactions` 
 
+### Fixed
+- Collection filters should allow incorrect ids in the setup with multiple hot databases. Example affected query: `blocks(filter:{id:{eq:"a"}}) { id }`.
+
 ## [0.45.1] - 2022-02-04
 
 ### Fix
