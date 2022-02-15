@@ -129,11 +129,11 @@ extend type Query {
     "Returns one time access key for management functions"
     getManagementAccessKey: String
 
-    "**DEPRECATED**. Use aggregation queries instead."
+    "**DEPRECATED**. Use statistics query instead."
     getAccountsCount(accessKey: String): Float
-    "**DEPRECATED**. Use aggregation queries instead."
+    "**DEPRECATED**. Use statistics query instead."
     getTransactionsCount(accessKey: String): Float
-    "**DEPRECATED**. Use aggregation queries instead."
+    "**DEPRECATED**. Use statistics query instead."
     getAccountsTotalBalance(accessKey: String): String
 }
 
