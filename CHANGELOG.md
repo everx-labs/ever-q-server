@@ -34,6 +34,9 @@ All notable changes to this project will be documented in this file.
 Check the deprecation schedule, policy and migration guides for more info
 https://tonlabs.gitbook.io/evernode-platform/reference/breaking-changes/deprecation-schedule
 
+### Fixed
+- Collection filters should allow incorrect ids in the setup with multiple hot databases. Example affected query: `blocks(filter:{id:{eq:"a"}}) { id }`.
+
 ## [0.45.1] - 2022-02-04
 
 ### Fixed
