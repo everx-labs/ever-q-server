@@ -829,7 +829,7 @@ export type BlockchainMessageValueArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
-/** This type is unstable */
+/** **DEPRECATED** (all subqueries were moved to root query) */
 export type BlockchainQuery = {
   __typename?: 'BlockchainQuery';
   accessRights: AccessRights;
@@ -865,7 +865,7 @@ export type BlockchainQuery = {
 };
 
 
-/** This type is unstable */
+/** **DEPRECATED** (all subqueries were moved to root query) */
 export type BlockchainQueryAccount_TransactionsArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
   account_address: Scalars['String'];
@@ -879,7 +879,7 @@ export type BlockchainQueryAccount_TransactionsArgs = {
 };
 
 
-/** This type is unstable */
+/** **DEPRECATED** (all subqueries were moved to root query) */
 export type BlockchainQueryKey_BlocksArgs = {
   seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
   first?: Maybe<Scalars['Int']>;
@@ -889,14 +889,14 @@ export type BlockchainQueryKey_BlocksArgs = {
 };
 
 
-/** This type is unstable */
+/** **DEPRECATED** (all subqueries were moved to root query) */
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {
   time_start?: Maybe<Scalars['Int']>;
   time_end?: Maybe<Scalars['Int']>;
 };
 
 
-/** This type is unstable */
+/** **DEPRECATED** (all subqueries were moved to root query) */
 export type BlockchainQueryWorkchain_BlocksArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
   workchain?: Maybe<Scalars['Int']>;
@@ -910,7 +910,7 @@ export type BlockchainQueryWorkchain_BlocksArgs = {
 };
 
 
-/** This type is unstable */
+/** **DEPRECATED** (all subqueries were moved to root query) */
 export type BlockchainQueryWorkchain_TransactionsArgs = {
   master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
   workchain?: Maybe<Scalars['Int']>;

@@ -5,23 +5,41 @@ All notable changes to this project will be documented in this file.
 ## [0.46.0] - 2022-02-xx
 
 ### New
-- Add join fields to `blockchain.account_transactions` and `blockchain.workchain_transactions`:
+- Add joined fields to `blockchain.account_transactions` and `blockchain.workchain_transactions`:
     - `account`
     - `in_message`
     - `out_messages`
-- Duplicate contents of `blockchain` root query to root query:
+- Duplicate functions inside `blockchain` query to api root:
     - `master_seq_no_range`
     - `key_blocks`
     - `workchain_blocks`
     - `workchain_transactions`
     - `account_transactions` 
 
+### Deprecated
+- `when` argument in all joined fields (for example, transaction.in_message's `when` argument)
+- the following root queries:
+    - `blockchain` (usage of all internal functions must be replaced with the same API in the root Query)
+    - `explainQueryAccounts`
+    - `explainQueryTransactions`
+    - `explainQueryMessages`
+    - `explainQueryBlocks`
+    - `explainQueryBlockSignatures`
+    - `explainQueryZerostates`
+    - `getAccountsCount`
+    - `getTransactionsCount`
+    - `getAccountsTotalBalance`
+- `QueryExplanation` type
+
+Check the deprecation schedule, policy and migration guides for more info
+https://tonlabs.gitbook.io/evernode-platform/reference/breaking-changes/deprecation-schedule
+
 ### Fixed
 - Collection filters should allow incorrect ids in the setup with multiple hot databases. Example affected query: `blocks(filter:{id:{eq:"a"}}) { id }`.
 
 ## [0.45.1] - 2022-02-04
 
-### Fix
+### Fixed
 - Fix recurring join queries  when trying to fetch non-existent documents
 
 ## [0.45.0] - 2021-11-18
@@ -39,18 +57,18 @@ Later, it will be expanded with messages pagination.
 ### Optimized
 - Without chain ranges verification database the verified boundary now 10 seconds ago instead of 120.
 
-### Fix
+### Fixed
 - StatsD reporting now has timeout to tackle with rare freeze problem
 
 ## [0.44.5] - 2021-11-15
 
-### Fix
+### Fixed
 
 - Bump apollo-server from 2.16.1 to 2.25.3
 
 ## [0.44.4] - 2021-10-25
 
-### Fix
+### Fixed
 
 - diagnostic timeout added to statsD reporting
 - "Cannot read property 'length' of null" error 
