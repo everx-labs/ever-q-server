@@ -21,7 +21,6 @@ import {
     FilterOrConversion,
     QConfig,
 } from "../config";
-import { QError } from "../utils";
 
 export class QCollectionQuery {
     private constructor(
@@ -322,14 +321,14 @@ function getMessageAddressShard(address: string, shardingDegree: number): number
 function getAccountShard(address: string, shardingDegree: number): number | undefined {
     const addressWithoutPrefix = address.split(":")[1];
     if (addressWithoutPrefix === undefined || addressWithoutPrefix.length !== 64) {
-        throw QError.invalidQuery(`Unsupported address in filter: ${address}`);
+        return undefined; // some users depend on the absence of errors for incorrect ids
     }
     return getShardFromHexString(addressWithoutPrefix, shardingDegree);
 }
 
 function getBlockShard(id: string, shardingDegree: number): number | undefined {
     if (id.length !== 64) {
-        throw QError.invalidQuery(`Unsupported id in filter: ${id}`);
+        return undefined; // some users depend on the absence of errors for incorrect ids
     }
     return getShardFromHexString(id, shardingDegree);
 }
