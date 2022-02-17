@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.46.0] - 2022-02-xx
+## [0.46.0] - 2022-02-17
 
 ### New
 - Add joined fields to `blockchain.account_transactions` and `blockchain.workchain_transactions`:

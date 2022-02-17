@@ -1613,24 +1613,24 @@
 			"dev": true,
 			"requires": {
 				"@graphql-tools/utils": "8.0.2",
-				"cross-fetch": "3.1.4",
+				"cross-fetch": "3.1.5",
 				"sync-fetch": "0.3.0",
 				"tslib": "~2.3.0"
 			},
 			"dependencies": {
 				"cross-fetch": {
-					"version": "3.1.4",
-					"resolved": "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.4.tgz",
-					"integrity": "sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==",
+					"version": "3.1.5",
+					"resolved": "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.5.tgz",
+					"integrity": "sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==",
 					"dev": true,
 					"requires": {
-						"node-fetch": "2.6.1"
+						"node-fetch": "2.6.7"
 					}
 				},
 				"node-fetch": {
-					"version": "2.6.1",
-					"resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.1.tgz",
-					"integrity": "sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==",
+          "version": "2.6.7",
+          "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.7.tgz",
+          "integrity": "sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==",
 					"dev": true
 				},
 				"tslib": {
@@ -1735,23 +1735,23 @@
 			"requires": {
 				"@graphql-tools/graphql-tag-pluck": "^7.0.2",
 				"@graphql-tools/utils": "8.0.2",
-				"cross-fetch": "3.1.4",
+				"cross-fetch": "3.1.5",
 				"tslib": "~2.3.0"
 			},
 			"dependencies": {
 				"cross-fetch": {
-					"version": "3.1.4",
-					"resolved": "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.4.tgz",
-					"integrity": "sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==",
+					"version": "3.1.5",
+					"resolved": "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.5.tgz",
+					"integrity": "sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==",
 					"dev": true,
 					"requires": {
-						"node-fetch": "2.6.1"
+						"node-fetch": "2.6.7"
 					}
 				},
 				"node-fetch": {
-					"version": "2.6.1",
-					"resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.1.tgz",
-					"integrity": "sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==",
+          "version": "2.6.7",
+          "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.7.tgz",
+          "integrity": "sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==",
 					"dev": true
 				},
 				"tslib": {
@@ -2179,7 +2179,7 @@
 				"@n1ru4l/graphql-live-query": "0.7.1",
 				"@types/websocket": "1.0.4",
 				"abort-controller": "3.0.0",
-				"cross-fetch": "3.1.4",
+				"cross-fetch": "3.1.5",
 				"extract-files": "11.0.0",
 				"form-data": "4.0.0",
 				"graphql-ws": "^5.0.0",
@@ -2196,12 +2196,12 @@
 			},
 			"dependencies": {
 				"cross-fetch": {
-					"version": "3.1.4",
-					"resolved": "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.4.tgz",
-					"integrity": "sha512-1eAtFWdIubi6T4XPy6ei9iUFoKpUkIF971QLN8lIvvvwueI65+Nw5haMNKUwfJxabqlIIDODJKGrQ66gxC0PbQ==",
+					"version": "3.1.5",
+					"resolved": "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.5.tgz",
+					"integrity": "sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw==",
 					"dev": true,
 					"requires": {
-						"node-fetch": "2.6.1"
+						"node-fetch": "2.6.7"
 					}
 				},
 				"form-data": {
@@ -2216,9 +2216,9 @@
 					}
 				},
 				"node-fetch": {
-					"version": "2.6.1",
-					"resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.1.tgz",
-					"integrity": "sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==",
+          "version": "2.6.7",
+          "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.7.tgz",
+          "integrity": "sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==",
 					"dev": true
 				},
 				"subscriptions-transport-ws": {
@@ -4380,7 +4380,7 @@
 			"resolved": "https://registry.npmjs.org/apollo-server-env/-/apollo-server-env-3.1.0.tgz",
 			"integrity": "sha512-iGdZgEOAuVop3vb0F2J3+kaBVi4caMoxefHosxmgzAbbSpvWehB8Y1QiSyyMeouYC38XNVk5wnZl+jdGSsWsIQ==",
 			"requires": {
-				"node-fetch": "^2.6.1",
+				"node-fetch": "2.6.7",
 				"util.promisify": "^1.0.0"
 			}
 		},
@@ -4458,7 +4458,7 @@
 					"resolved": "https://registry.npmjs.org/apollo-server-env/-/apollo-server-env-2.4.5.tgz",
 					"integrity": "sha512-nfNhmGPzbq3xCEWT8eRpoHXIPNcNy3QcEoBlzVMjeglrBGryLG2LXwBSPnVmTRRrzUYugX0ULBtgE3rBFNoUgA==",
 					"requires": {
-						"node-fetch": "^2.1.2",
+						"node-fetch": "2.6.7",
 						"util.promisify": "^1.0.0"
 					}
 				},
@@ -7551,7 +7551,7 @@
 			"integrity": "sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==",
 			"dev": true,
 			"requires": {
-				"node-fetch": "^2.6.1",
+				"node-fetch": "2.6.7",
 				"whatwg-fetch": "^3.4.1"
 			}
 		},
@@ -12431,7 +12431,7 @@
 			"dev": true,
 			"requires": {
 				"buffer": "^5.7.0",
-				"node-fetch": "^2.6.1"
+				"node-fetch": "2.6.7"
 			}
 		},
 		"table": {
