@@ -1027,7 +1027,7 @@ type Account {
 type Transaction {
 	id: String
 	aborted: Boolean
-	account(timeout: Int, when: TransactionFilter): Account
+	account(timeout: Int, "**DEPRECATED**" when: TransactionFilter): Account
 	account_addr: String
 	action: TransactionAction
 	"""
@@ -1048,7 +1048,7 @@ type Transaction {
 	balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
 	"""
 	balance_delta_other: [OtherCurrency]
-	block(timeout: Int, when: TransactionFilter): Block
+	block(timeout: Int, "**DEPRECATED**" when: TransactionFilter): Block
 	block_id: String
 	boc: String
 	bounce: TransactionBounce
@@ -1069,7 +1069,7 @@ type Transaction {
 	end_status_name: AccountStatusEnum
 	"Fee for inbound external message import."
 	ext_in_msg_fee(format: BigIntFormat): String
-	in_message(timeout: Int, when: TransactionFilter): Message
+	in_message(timeout: Int, "**DEPRECATED**" when: TransactionFilter): Message
 	in_msg: String
 	installed: Boolean
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
@@ -1089,7 +1089,7 @@ type Transaction {
 	"""
 	orig_status: Int
 	orig_status_name: AccountStatusEnum
-	out_messages(timeout: Int, when: TransactionFilter): [Message]
+	out_messages(timeout: Int, "**DEPRECATED**" when: TransactionFilter): [Message]
 	out_msgs: [String]
 	"The number of generated outbound messages (one of the common transaction parameters defined by the specification)"
 	outmsg_cnt: Int
@@ -1146,7 +1146,7 @@ destination smart contract. It can be queried with the following fields:
 """
 type Message {
 	id: String
-	block(timeout: Int, when: MessageFilter): Block
+	block(timeout: Int, "**DEPRECATED**" when: MessageFilter): Block
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	block_id: String
 	"A bag of cells with the message structure encoded as base64."
@@ -1176,8 +1176,8 @@ type Message {
 	data_hash: String
 	"Returns destination address string"
 	dst: String
-	dst_account(timeout: Int, when: MessageFilter): Account
-	dst_transaction(timeout: Int, when: MessageFilter): Transaction
+	dst_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
+	dst_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: Int
 	"Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated."
@@ -1205,8 +1205,8 @@ type Message {
 	split_depth: Int
 	"Returns source address string"
 	src: String
-	src_account(timeout: Int, when: MessageFilter): Account
-	src_transaction(timeout: Int, when: MessageFilter): Transaction
+	src_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
+	src_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the source address (src field)"
 	src_workchain_id: Int
 	"""
@@ -1279,7 +1279,7 @@ type Block {
 	rand_seed: String
 	seq_no: Float
 	shard: String
-	signatures(timeout: Int, when: BlockFilter): BlockSignatures
+	signatures(timeout: Int, "**DEPRECATED**" when: BlockFilter): BlockSignatures
 	"""
 	Logical creation time automatically set by the block formation start.
 	Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
@@ -1309,7 +1309,7 @@ type Block {
 "Set of validator's signatures for the Block with correspond id"
 type BlockSignatures {
 	id: String
-	block(timeout: Int, when: BlockSignaturesFilter): Block
+	block(timeout: Int, "**DEPRECATED**" when: BlockSignaturesFilter): Block
 	catchain_seqno: Float
 	"Signed block's gen_utime"
 	gen_utime: Float

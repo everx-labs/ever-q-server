@@ -313,9 +313,11 @@ export default class TONQServer {
             resolvers,
             typeDefFileNames: [
                 "type-defs-info.graphql",
+                "type-defs-blockchain/account.graphql",
                 "type-defs-blockchain/block.graphql",
                 "type-defs-blockchain/blockchain.graphql",
                 "type-defs-blockchain/common.graphql",
+                "type-defs-blockchain/message.graphql",
                 "type-defs-blockchain/transaction.graphql",
                 "type-defs-generated.graphql",
                 "type-defs-counterparties.graphql",

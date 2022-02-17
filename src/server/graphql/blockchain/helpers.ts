@@ -1,5 +1,6 @@
-import { FieldNode, GraphQLResolveInfo } from "graphql";
-import { QParams } from "../../filter/filters";
+import { FieldNode, GraphQLResolveInfo, SelectionNode, SelectionSetNode } from "graphql";
+import { QCollectionQuery } from "../../../server/data/collection-query";
+import { OrderBy, QParams, QType } from "../../filter/filters";
 import { QRequestContext } from "../../request";
 import { QError, toU64String } from "../../utils";
 import { BlockchainMasterSeqNoFilter, Maybe, Scalars } from "./resolvers-types-generated";
@@ -91,10 +92,51 @@ export function getNodeSelectionSetForConnection(info: GraphQLResolveInfo) {
     return nodeNode?.selectionSet;
 }
 
-export function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scalars['String']> }>(
+export function getFieldSelectionSet(
+    selectionSet: SelectionSetNode | undefined,
+    fieldName: string
+): SelectionSetNode | undefined {
+    return (selectionSet?.selections
+        ?.find(s => s.kind == "Field" && s.name.value == fieldName) as FieldNode)
+        ?.selectionSet;
+}
+
+export function buildReturnExpression(params: {
+        type: QType,
+        selectionSet: SelectionSetNode | undefined,
+        orderBy?: OrderBy[],
+        excludedFields?: string[],
+        path?: string,
+        overrides?: Map<string, string>,
+    }
+) {
+    // filter out excluded fields
+    // (this is needed for fields, which exist in new API and doesn't exist in old API)
+    const shouldBeExcluded = (s: SelectionNode) => 
+        s.kind == "Field" && params.excludedFields?.includes(s.name.value);
+    if (params.excludedFields &&
+        params.excludedFields.length > 0 && 
+        params.selectionSet?.selections.find(s => shouldBeExcluded(s))
+    ) {
+        params.selectionSet = Object.assign({}, params.selectionSet);
+        params.selectionSet.selections = params.selectionSet.selections
+            .filter(s => !shouldBeExcluded(s));
+    }
+
+    return QCollectionQuery.buildReturnExpression(
+        params.type,
+        params.selectionSet,
+        params.orderBy ?? [],
+        params.path ?? "doc",
+        params.overrides
+    );
+}
+
+export async function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scalars['String']> }>(
     queryResult: T[],
     limit: number,
-    direction: Direction
+    direction: Direction,
+    afterFilterCallback?: (result: T[]) => Promise<void>,
 ) {
     // sort query result by chain_order ASC
     queryResult.sort((a, b) => {
@@ -121,6 +163,10 @@ export function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scal
                 queryResult.splice(0, queryResult.length - limit + 1);
                 break;
         }
+    }
+
+    if (afterFilterCallback) {
+        await afterFilterCallback(queryResult);
     }
 
     let result = {

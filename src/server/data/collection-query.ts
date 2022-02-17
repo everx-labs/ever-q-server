@@ -21,7 +21,6 @@ import {
     FilterOrConversion,
     QConfig,
 } from "../config";
-import { QError } from "../utils";
 
 export class QCollectionQuery {
     private constructor(
@@ -243,12 +242,14 @@ export class QCollectionQuery {
         collectionDocType: QType,
         selectionSet: SelectionSetNode | undefined,
         orderBy: OrderBy[],
+        path = "doc",
+        overrides: Map<string, string> | undefined = undefined,
     ): string {
         const expressions = new Map();
-        expressions.set("_key", "doc._key");
+        expressions.set("_key", `${path}._key`);
         const fields = collectionDocType.fields;
         if (fields) {
-            collectReturnExpressions(expressions, "doc", selectionSet, fields);
+            collectReturnExpressions(expressions, path, selectionSet, fields);
             if (orderBy.length > 0) {
                 let orderBySelectionSet: SelectionSetNode | undefined = undefined;
                 for (const item of orderBy) {
@@ -256,13 +257,18 @@ export class QCollectionQuery {
                 }
                 collectReturnExpressions(
                     expressions,
-                    "doc",
+                    path,
                     orderBySelectionSet,
                     fields,
                 );
             }
         }
         expressions.delete("id");
+        if (overrides) {
+            overrides.forEach((value, key) => {
+                expressions.set(key, value);
+            })
+        }
         return combineReturnExpressions(expressions);
     }
 
@@ -315,14 +321,14 @@ function getMessageAddressShard(address: string, shardingDegree: number): number
 function getAccountShard(address: string, shardingDegree: number): number | undefined {
     const addressWithoutPrefix = address.split(":")[1];
     if (addressWithoutPrefix === undefined || addressWithoutPrefix.length !== 64) {
-        throw QError.invalidQuery(`Unsupported address in filter: ${address}`);
+        return undefined; // some users depend on the absence of errors for incorrect ids
     }
     return getShardFromHexString(addressWithoutPrefix, shardingDegree);
 }
 
 function getBlockShard(id: string, shardingDegree: number): number | undefined {
     if (id.length !== 64) {
-        throw QError.invalidQuery(`Unsupported id in filter: ${id}`);
+        return undefined; // some users depend on the absence of errors for incorrect ids
     }
     return getShardFromHexString(id, shardingDegree);
 }

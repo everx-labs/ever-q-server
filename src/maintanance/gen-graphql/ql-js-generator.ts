@@ -136,7 +136,7 @@ function main(schemaDef: TypeDef): {
                 if (isBigInt(field.type)) {
                     params = "(format: BigIntFormat)";
                 } else if (field.join !== undefined) {
-                    params = `(timeout: Int, when: ${type.name}Filter)`;
+                    params = `(timeout: Int, "**DEPRECATED**" when: ${type.name}Filter)`;
                 }
 
                 g.writeLn(`\t${field.name}${params}: ${typeDeclaration}`);

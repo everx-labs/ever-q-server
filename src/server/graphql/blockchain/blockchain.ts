@@ -4,9 +4,10 @@ import { QRequestContext } from "../../request";
 import { QError, required } from "../../utils";
 
 import {
+    BlockchainAccount,
     BlockchainBlock,
     BlockchainBlocksConnection,
-    BlockchainQuery,
+    BlockchainMessage,
     BlockchainQueryAccount_TransactionsArgs,
     BlockchainQueryKey_BlocksArgs,
     BlockchainQueryMaster_Seq_No_RangeArgs,
@@ -14,11 +15,12 @@ import {
     BlockchainQueryWorkchain_TransactionsArgs,
     BlockchainTransaction,
     BlockchainTransactionsConnection,
+    Maybe,
     Resolvers,
 } from "./resolvers-types-generated";
-import { QCollectionQuery } from "../../data/collection-query";
 import { QTraceSpan } from "../../tracing";
-import { Direction, getNodeSelectionSetForConnection, prepareChainOrderFilter, processPaginatedQueryResult, processPaginationArgs } from "./helpers";
+import { buildReturnExpression, Direction, getFieldSelectionSet, getNodeSelectionSetForConnection, prepareChainOrderFilter, processPaginatedQueryResult, processPaginationArgs } from "./helpers";
+import { AccessRights } from "../../../server/auth";
 
 function parseMasterSeqNo(chain_order: string) {
     const length = parseInt(chain_order[0], 16) + 1;
@@ -109,29 +111,13 @@ async function resolve_maser_seq_no_range(args: BlockchainQueryMaster_Seq_No_Ran
     // reliable boundary
     const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
-        throw QError.create(500, "Could not determine reliable upper boundary");;
+        throw QError.create(500, "Could not determine reliable upper boundary");
     }
 
     return {
         start: start ? parseMasterSeqNo(start) : null,
         end: end ? Math.min(parseMasterSeqNo(end) + 1, parseMasterSeqNo(reliable.boundary)) : null,
     };
-}
-
-function buildBlockReturnExpression(selectionSet: SelectionSetNode | undefined, context: QRequestContext) {
-    // filter out hash field
-    if (selectionSet && selectionSet.selections.find(s => s.kind == "Field" && s.name.value == "hash")) {
-        selectionSet = Object.assign({}, selectionSet);
-        selectionSet.selections = selectionSet.selections
-            .filter(s => !(s.kind == "Field" && s.name.value == "hash"));
-    }
-
-    // build return expression
-    return QCollectionQuery.buildReturnExpression(
-        context.services.data.blocks.docType,
-        selectionSet,
-        [{ path: "chain_order", direction: "ASC" }],
-    );
 }
 
 async function resolve_key_blocks(
@@ -150,8 +136,13 @@ async function resolve_key_blocks(
 
     const { direction, limit } = processPaginationArgs(args);
 
-    let selectionSet = getNodeSelectionSetForConnection(info);
-    let returnExpression = buildBlockReturnExpression(selectionSet, context);
+    const selectionSet = getNodeSelectionSetForConnection(info);
+    const returnExpression = buildReturnExpression({
+        type: context.services.data.blocks.docType,
+        selectionSet,
+        orderBy: [{ path: "chain_order", direction: "ASC" }],
+        excludedFields: ["hash"],
+    });
 
     // query
     const query = `
@@ -172,7 +163,7 @@ async function resolve_key_blocks(
         },
     ) as BlockchainBlock[];
 
-    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainBlocksConnection;
+    return await processPaginatedQueryResult(queryResult, limit, direction) as BlockchainBlocksConnection;
 }
 
 function isDefined<T>(value: T | null | undefined): boolean {
@@ -210,8 +201,14 @@ async function resolve_workchain_blocks(
 
     const { direction, limit } = processPaginationArgs(args);
 
-    let selectionSet = getNodeSelectionSetForConnection(info);
-    let returnExpression = buildBlockReturnExpression(selectionSet, context);
+    const selectionSet = getNodeSelectionSetForConnection(info); 
+    const returnExpression = buildReturnExpression({
+        type: context.services.data.blocks.docType,
+        selectionSet,
+        orderBy: [{ path: "chain_order", direction: "ASC" }],
+        excludedFields: ["hash"],
+    });
+
 
     // query
     const query = `
@@ -232,22 +229,262 @@ async function resolve_workchain_blocks(
         },
     ) as BlockchainBlock[];
 
-    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainBlocksConnection;
+    return await processPaginatedQueryResult(queryResult, limit, direction) as BlockchainBlocksConnection;
 }
 
 function buildTransactionReturnExpression(selectionSet: SelectionSetNode | undefined, context: QRequestContext) {
-    // filter out hash field
-    if (selectionSet && selectionSet.selections.find(s => s.kind == "Field" && s.name.value == "hash")) {
-        selectionSet = Object.assign({}, selectionSet);
-        selectionSet.selections = selectionSet.selections
-            .filter(s => !(s.kind == "Field" && s.name.value == "hash"));
+    const accountSelectionSet = getFieldSelectionSet(selectionSet, "account");
+    const inMessageSelectionSet = undefined; //getFieldSelectionSet(selectionSet, "in_message");
+    const outMessagesSelectionSet = undefined; //getFieldSelectionSet(selectionSet, "out_messages");
+    if (!accountSelectionSet && !inMessageSelectionSet && !outMessagesSelectionSet) {
+        return buildReturnExpression({
+            type: context.services.data.transactions.docType,
+            selectionSet,
+            orderBy: [{ path: "chain_order", direction: "ASC" }],
+            excludedFields: ["hash"],
+        });
     }
 
-    return QCollectionQuery.buildReturnExpression(
-        context.services.data.transactions.docType,
+    // CAUTION: We also rely on buildReturnExpression to add account_addr, in_msg and out_msgs
+    const joinReturnExpressions = new Map();
+    if (accountSelectionSet) {
+        const accountReturnExpression = buildReturnExpression({
+            type: context.services.data.accounts.docType,
+            selectionSet: accountSelectionSet,
+            excludedFields: ["address"],
+            path: "acc",
+        });
+        const accountQuery = 
+            `(FOR acc IN accounts ` +
+            `FILTER acc._key == doc.account_addr ` +
+            `RETURN ${accountReturnExpression})[0]`;
+        joinReturnExpressions.set("account", accountQuery);
+    }
+
+    if (inMessageSelectionSet) {
+        const inMessageReturnExpression = buildReturnExpression({
+            type: context.services.data.messages.docType,
+            selectionSet: inMessageSelectionSet,
+            excludedFields: ["hash"],
+            path: "msg",
+        });
+        const inMessageQuery = 
+            `(FOR msg IN messages ` +
+            `FILTER msg._key == doc.in_msg ` +
+            `RETURN ${inMessageReturnExpression})[0]`;
+        joinReturnExpressions.set("in_message", inMessageQuery);
+    }
+
+    if (outMessagesSelectionSet) {
+        const outMessagesReturnExpression = buildReturnExpression({
+            type: context.services.data.messages.docType,
+            selectionSet: outMessagesSelectionSet,
+            excludedFields: ["hash"],
+            path: "msg",
+        });
+        const outMessagesQuery = 
+            `(FOR msg IN messages ` +
+            `FILTER msg._key IN doc.out_msgs ` +
+            `RETURN ${outMessagesReturnExpression})`;
+        joinReturnExpressions.set("out_messages", outMessagesQuery);
+    }
+
+    return buildReturnExpression({
+        type: context.services.data.transactions.docType,
         selectionSet,
-        [{ path: "chain_order", direction: "ASC" }],
-    );
+        orderBy: [{ path: "chain_order", direction: "ASC" }],
+        excludedFields: ["hash"],
+        overrides: joinReturnExpressions,
+    });
+}
+
+async function fetchMessagesForTransactionsIfNeeded(
+    result: BlockchainTransaction[],
+    selectionSet: SelectionSetNode | undefined,
+    context: QRequestContext,
+    traceSpan: QTraceSpan,
+) {
+    function getFetchPlan(
+        joinedFieldName: string,
+        onField: (t: BlockchainTransaction) => Maybe<string> | Maybe<string>[],
+        joinNotNeeded: (t: BlockchainTransaction) => boolean,
+    ): [SelectionSetNode, Map<string, BlockchainTransaction[]>] | [undefined, undefined] {
+        const fieldSelectionSet = getFieldSelectionSet(selectionSet, joinedFieldName);
+        if (!fieldSelectionSet || result.every(t => joinNotNeeded(t))) {
+            return [undefined, undefined];
+        }
+        
+        const map = new Map<string, BlockchainTransaction[]>();
+        result.forEach(t => {
+            if (joinNotNeeded(t)) {
+                return;
+            }
+
+            const onFieldValue = onField(t);
+            if (!onFieldValue) {
+                // TODO: Consider metric for unexpected errors
+                throw QError.create(500, "join field is missing from query result");    
+            }
+
+            function addToMap(fieldValue: string) {
+                const record = map.get(fieldValue);
+                if (record) {
+                    record.push(t);
+                } else {
+                    map.set(fieldValue, [t]);
+                }
+            }
+
+            if (typeof onFieldValue === "string") {
+                addToMap(onFieldValue);
+            } else {
+                for (const fv of onFieldValue) {
+                    if (fv) {
+                        addToMap(fv);
+                    } // TODO: Else metric?
+                }
+            }
+        });
+
+        return [fieldSelectionSet, map];
+    }
+
+    const [inMessageSelectionSet, inMessageTransactionMap] =
+        getFetchPlan("in_message", t => t.in_msg, t => !!t.in_message == !!t.in_msg);
+    const [outMessagesSelectionSet, outMessagesTransactionMap] =
+        getFetchPlan("out_messages", t => t.out_msgs, t => t.out_messages?.length == t.out_msgs?.length);
+
+    if (!inMessageSelectionSet && !outMessagesSelectionSet) {
+        return;
+    }
+
+    const params = new QParams();
+    const queries = [];
+    if (inMessageSelectionSet && inMessageTransactionMap) {
+        const inMessageReturnExpression = buildReturnExpression({
+            type: context.services.data.messages.docType,
+            selectionSet: inMessageSelectionSet,
+            excludedFields: ["hash"],
+            path: "msg",
+        });
+        const query = `in_messages:` +
+            `(FOR msg IN messages ` +
+            `FILTER msg._key IN @${params.add([...inMessageTransactionMap.keys()])} ` +
+            `RETURN ${inMessageReturnExpression})`;
+        queries.push(query);
+    }
+    if (outMessagesSelectionSet && outMessagesTransactionMap) {
+        const outMessagesReturnExpression = buildReturnExpression({
+            type: context.services.data.messages.docType,
+            selectionSet: outMessagesSelectionSet,
+            excludedFields: ["hash"],
+            path: "msg",
+        });
+        const query = `out_messages:` +
+            `(FOR msg IN messages ` +
+            `FILTER msg._key IN @${params.add([...outMessagesTransactionMap.keys()])} ` +
+            `RETURN ${outMessagesReturnExpression})`;
+        queries.push(query);
+    }
+
+    const queryResult = await context.services.data.query(
+        required(context.services.data.messages.provider),
+        {
+            text: `RETURN {${queries.join(',')}}`,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+        },
+    ) as unknown as { in_messages: BlockchainMessage[], out_messages: BlockchainMessage[] }[];
+
+    if (inMessageTransactionMap) {
+        for (const message of queryResult.flatMap(r => r.in_messages)) {
+            const transactions = inMessageTransactionMap.get(message._key)
+            if (!transactions) {
+                continue; // this code branch is expected to never be hit
+            }
+            for (const transaction of transactions) {
+                transaction.in_message = message;
+            }
+        }
+    }
+    if (outMessagesTransactionMap) {
+        for (const message of queryResult.flatMap(r => r.out_messages)) {
+            const transactions = outMessagesTransactionMap.get(message._key)
+            if (!transactions) {
+                continue; // this code branch is expected to never be hit
+            }
+            for (const transaction of transactions) {
+                if (transaction.out_messages) {
+                    transaction.out_messages.push(message);
+                } else {
+                    transaction.out_messages = [message];
+                }
+            }
+        }
+    }
+}
+
+async function fetchAccountForTransactionsIfNeeded(
+    result: BlockchainTransaction[],
+    selectionSet: SelectionSetNode | undefined,
+    context: QRequestContext,
+    traceSpan: QTraceSpan,
+) {
+    const accountSelectionSet = getFieldSelectionSet(selectionSet, "account");
+    if (!accountSelectionSet || result.every(t => isDefined(t.account))) {
+        return;
+    }
+    const transactionsToFix = new Map<string, BlockchainTransaction[]>();
+    result.forEach(t => {
+        if (isDefined(t.account)) {
+            return;
+        }
+        if (!t.account_addr) {
+            throw QError.create(500, "account_addr is missing from query result");
+        }
+        const arr = transactionsToFix.get(t.account_addr);
+        if (arr) {
+            arr.push(t);
+        } else {
+            transactionsToFix.set(t.account_addr, [t]);
+        }
+    });
+
+    // TODO: Add metric: we want to know if this code branch was hit
+    const accountReturnExpression = buildReturnExpression({
+        type: context.services.data.accounts.docType,
+        selectionSet: accountSelectionSet,
+        excludedFields: ["address"],
+        path: "acc",
+    });
+    const params = new QParams();
+    const query = `
+        FOR acc IN accounts
+        FILTER acc._key IN @${params.add([...transactionsToFix.keys()])}
+        RETURN ${accountReturnExpression}
+    `;
+    const queryResult = await context.services.data.query(
+        required(context.services.data.accounts.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+        },
+    ) as BlockchainAccount[];
+
+    for (const account of queryResult) {
+        const transactions = transactionsToFix.get(account._key)
+        if (!transactions) {
+            continue; // this code branch is expected to never be hit
+        }
+        for (const transaction of transactions) {
+            transaction.account = account;
+        }
+    }
 }
 
 async function resolve_workchain_transactions(
@@ -276,8 +513,8 @@ async function resolve_workchain_transactions(
 
     const { direction, limit } = processPaginationArgs(args);
 
-    let selectionSet = getNodeSelectionSetForConnection(info);
-    let returnExpression = buildTransactionReturnExpression(selectionSet, context);
+    const selectionSet = getNodeSelectionSetForConnection(info);
+    const returnExpression = buildTransactionReturnExpression(selectionSet, context);
 
     // query
     const query = `
@@ -298,18 +535,26 @@ async function resolve_workchain_transactions(
         },
     ) as BlockchainTransaction[];
 
-    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainTransactionsConnection;
+    return await processPaginatedQueryResult(
+        queryResult,
+        limit,
+        direction,
+        async r => {
+            await fetchAccountForTransactionsIfNeeded(r, selectionSet, context, traceSpan);
+            await fetchMessagesForTransactionsIfNeeded(r, selectionSet, context, traceSpan);
+        },
+    ) as BlockchainTransactionsConnection;
 }
 
 async function resolve_account_transactions(
-    parent: BlockchainQuery,
+    accessRights: AccessRights,
     args: BlockchainQueryAccount_TransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
     // validate args
-    const restrictToAccounts = parent.accessRights.restrictToAccounts;
+    const restrictToAccounts = accessRights.restrictToAccounts;
     if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(args.account_address)) {
         throw QError.invalidQuery("This account_addr is not allowed");
     }
@@ -356,11 +601,45 @@ async function resolve_account_transactions(
         },
     ) as BlockchainTransaction[];
 
-    return processPaginatedQueryResult(queryResult, limit, direction) as BlockchainTransactionsConnection;
+    return await processPaginatedQueryResult(
+        queryResult,
+        limit,
+        direction,
+        async r => {
+            await fetchAccountForTransactionsIfNeeded(r, selectionSet, context, traceSpan);
+            await fetchMessagesForTransactionsIfNeeded(r, selectionSet, context, traceSpan);
+        },
+    ) as BlockchainTransactionsConnection;
 }
 
 export const resolvers: Resolvers<QRequestContext> = {
     Query: {
+        master_seq_no_range: (_parent, args, context) => {
+            return context.trace("master_seq_no_range", async traceSpan => {
+                return await resolve_maser_seq_no_range(args, context, traceSpan);
+            });
+        },
+        key_blocks: async (_parent, args, context, info) => {
+            return context.trace("resolve_key_blocks", async traceSpan => {
+                return await resolve_key_blocks(args, context, info, traceSpan);
+            });
+        },
+        workchain_blocks: async (_parent, args, context, info) => {
+            return context.trace("resolve_workchain_blocks", async traceSpan => {
+                return await resolve_workchain_blocks(args, context, info, traceSpan);
+            });
+        },
+        workchain_transactions: async (_parent, args, context, info) => {
+            return context.trace("workchain_transactions", async traceSpan => {
+                return await resolve_workchain_transactions(args, context, info, traceSpan);
+            });
+        },
+        account_transactions: async (_parent, args, context, info) => {
+            const accessRights = await context.requireGrantedAccess(args);
+            return context.trace("account_transactions", async traceSpan => {
+                return await resolve_account_transactions(accessRights, args, context, info, traceSpan);
+            });
+        },
         blockchain: async (_parent, args, context) => {
             return {
                 accessRights: await context.requireGrantedAccess(args)
@@ -390,7 +669,7 @@ export const resolvers: Resolvers<QRequestContext> = {
         },
         account_transactions: async (parent, args, context, info) => {
             return context.trace("blockchain-account_transactions", async traceSpan => {
-                return await resolve_account_transactions(parent, args, context, info, traceSpan);
+                return await resolve_account_transactions(parent.accessRights, args, context, info, traceSpan);
             });
         },
     },
