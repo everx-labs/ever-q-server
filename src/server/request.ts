@@ -3,7 +3,6 @@ import {
     AccessArgs,
     AccessRights,
     Auth,
-    RequestWithAccessHeaders,
 } from "./auth";
 import {
     Span,
@@ -18,10 +17,11 @@ import { TonClient } from "@tonclient/core";
 import QLogs from "./logs";
 import QBlockchainData from "./data/blockchain";
 import EventEmitter from "events";
-import { QError } from "./utils";
+import { extractHeader, QError, RequestWithHeaders } from "./utils";
 import express from "express";
 import { ExecutionParams } from "subscriptions-transport-ws";
 import { IStats } from "./stats";
+import { QRequestParams } from "./filter/filters";
 
 export class QRequestServices {
     constructor(
@@ -42,11 +42,12 @@ export const RequestEvent = {
     FINISH: "finish",
 };
 
-export class QRequestContext {
+export class QRequestContext implements QRequestParams {
     start: number;
     events: EventEmitter;
     remoteAddress: string;
     accessKey: string;
+    expectedAccountBocVersion: number;
     usedAccessKey?: string = undefined;
     usedMamAccessKey?: string = undefined;
     multipleAccessKeysDetected = false;
@@ -72,8 +73,17 @@ export class QRequestContext {
             this.emitClose();
         });
         this.remoteAddress = req?.socket?.remoteAddress ?? "";
-        this.accessKey = Auth.extractAccessKey(req as RequestWithAccessHeaders, connection);
-        this.parentSpan = QTracer.extractParentSpan(services.tracer, connection ?? req) ?? undefined;
+        this.expectedAccountBocVersion = Number.parseInt(extractHeader(
+            req as RequestWithHeaders,
+            connection,
+            "X-Evernode-Expected-Account-Boc-Version",
+            "1",
+        ));
+        this.accessKey = Auth.extractAccessKey(req as RequestWithHeaders, connection);
+        this.parentSpan = QTracer.extractParentSpan(
+            services.tracer,
+            connection ?? req,
+        ) ?? undefined;
         this.requestSpan = QTraceSpan.create(services.tracer, "q-request", this.parentSpan);
         this.requestSpan.log({
             event: "QRequestContext_created",

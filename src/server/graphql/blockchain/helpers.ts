@@ -1,5 +1,5 @@
 import { FieldNode, GraphQLResolveInfo, SelectionNode, SelectionSetNode } from "graphql";
-import { QCollectionQuery } from "../../../server/data/collection-query";
+import { QCollectionQuery } from "../../data/collection-query";
 import { OrderBy, QParams, QType } from "../../filter/filters";
 import { QRequestContext } from "../../request";
 import { QError, toU64String } from "../../utils";
@@ -11,11 +11,11 @@ export const enum Direction {
 }
 
 export type PaginationArgs = {
-    first?: Maybe<Scalars['Int']>;
-    after?: Maybe<Scalars['String']>;
-    last?: Maybe<Scalars['Int']>;
-    before?: Maybe<Scalars['String']>;
-}
+    first?: Maybe<Scalars["Int"]>;
+    after?: Maybe<Scalars["String"]>;
+    last?: Maybe<Scalars["Int"]>;
+    before?: Maybe<Scalars["String"]>;
+};
 
 export function processPaginationArgs(args: PaginationArgs) {
     if (args.first && args.last) {
@@ -35,14 +35,17 @@ export function processPaginationArgs(args: PaginationArgs) {
     }
     const limit = 1 + Math.min(50, args.first ?? 50, args.last ?? 50);
     const direction = (args.last || args.before) ? Direction.Backward : Direction.Forward;
-    return { direction, limit };
+    return {
+        direction,
+        limit,
+    };
 }
 
 export type ChainOrderFilterArgs = {
     master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
-    after?: Maybe<Scalars['String']>;
-    before?: Maybe<Scalars['String']>;
-}
+    after?: Maybe<Scalars["String"]>;
+    before?: Maybe<Scalars["String"]>;
+};
 
 export async function prepareChainOrderFilter(
     args: ChainOrderFilterArgs,
@@ -51,9 +54,11 @@ export async function prepareChainOrderFilter(
     context: QRequestContext,
 ) {
     // master_seq_no
-    let start_chain_order = args.master_seq_no?.start ? toU64String(args.master_seq_no.start) : null;
+    let start_chain_order = args.master_seq_no?.start
+        ? toU64String(args.master_seq_no.start)
+        : null;
     let end_chain_order = args.master_seq_no?.end ? toU64String(args.master_seq_no.end) : null;
-    
+
     // before, after
     start_chain_order = args.after && (!start_chain_order || args.after > start_chain_order)
         ? args.after
@@ -61,15 +66,17 @@ export async function prepareChainOrderFilter(
     end_chain_order = args.before && (!end_chain_order || args.before < end_chain_order)
         ? args.before
         : end_chain_order;
-    
+
     // reliable boundary
     const reliable = await context.services.data.getReliableChainOrderUpperBoundary(context);
     if (reliable.boundary == "") {
         throw QError.internalServerError();
     }
-    
-    end_chain_order = (end_chain_order && end_chain_order < reliable.boundary) ? end_chain_order : reliable.boundary;
-    
+
+    end_chain_order = (end_chain_order && end_chain_order < reliable.boundary)
+        ? end_chain_order
+        : reliable.boundary;
+
     // apply
     if (start_chain_order) {
         const paramName = params.add(start_chain_order);
@@ -77,9 +84,9 @@ export async function prepareChainOrderFilter(
     } else {
         // Next line is equivalent to "chain_order != null", but the ">=" is better:
         // we doesn't have to rely on arangodb to convert "!= null" to index scan boundary
-        filters.push(`doc.chain_order >= ""`);
+        filters.push("doc.chain_order >= \"\"");
     }
-    
+
     const paramName = params.add(end_chain_order);
     filters.push(`doc.chain_order < @${paramName}`);
 }
@@ -94,28 +101,30 @@ export function getNodeSelectionSetForConnection(info: GraphQLResolveInfo) {
 
 export function getFieldSelectionSet(
     selectionSet: SelectionSetNode | undefined,
-    fieldName: string
+    fieldName: string,
 ): SelectionSetNode | undefined {
     return (selectionSet?.selections
         ?.find(s => s.kind == "Field" && s.name.value == fieldName) as FieldNode)
         ?.selectionSet;
 }
 
-export function buildReturnExpression(params: {
+export function buildReturnExpression(
+    params: {
+        request: QRequestContext,
         type: QType,
         selectionSet: SelectionSetNode | undefined,
         orderBy?: OrderBy[],
         excludedFields?: string[],
         path?: string,
         overrides?: Map<string, string>,
-    }
+    },
 ) {
     // filter out excluded fields
     // (this is needed for fields, which exist in new API and doesn't exist in old API)
-    const shouldBeExcluded = (s: SelectionNode) => 
+    const shouldBeExcluded = (s: SelectionNode) =>
         s.kind == "Field" && params.excludedFields?.includes(s.name.value);
     if (params.excludedFields &&
-        params.excludedFields.length > 0 && 
+        params.excludedFields.length > 0 &&
         params.selectionSet?.selections.find(s => shouldBeExcluded(s))
     ) {
         params.selectionSet = Object.assign({}, params.selectionSet);
@@ -124,15 +133,16 @@ export function buildReturnExpression(params: {
     }
 
     return QCollectionQuery.buildReturnExpression(
+        params.request,
         params.type,
         params.selectionSet,
         params.orderBy ?? [],
         params.path ?? "doc",
-        params.overrides
+        params.overrides,
     );
 }
 
-export async function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scalars['String']> }>(
+export async function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scalars["String"]> }>(
     queryResult: T[],
     limit: number,
     direction: Direction,
@@ -156,12 +166,12 @@ export async function processPaginatedQueryResult<T extends { chain_order?: Mayb
     const hasMore = queryResult.length >= limit;
     if (hasMore) {
         switch (direction) {
-            case Direction.Forward:
-                queryResult.splice(limit - 1);
-                break;
-            case Direction.Backward:
-                queryResult.splice(0, queryResult.length - limit + 1);
-                break;
+        case Direction.Forward:
+            queryResult.splice(limit - 1);
+            break;
+        case Direction.Backward:
+            queryResult.splice(0, queryResult.length - limit + 1);
+            break;
         }
     }
 
@@ -169,7 +179,7 @@ export async function processPaginatedQueryResult<T extends { chain_order?: Mayb
         await afterFilterCallback(queryResult);
     }
 
-    let result = {
+    return {
         edges: queryResult.map(t => {
             return {
                 node: t,
@@ -178,10 +188,11 @@ export async function processPaginatedQueryResult<T extends { chain_order?: Mayb
         }),
         pageInfo: {
             startCursor: queryResult.length > 0 ? queryResult[0].chain_order : "",
-            endCursor: queryResult.length > 0 ? queryResult[queryResult.length - 1].chain_order : "",
+            endCursor: queryResult.length > 0
+                ? queryResult[queryResult.length - 1].chain_order
+                : "",
             hasNextPage: (direction == Direction.Forward) ? hasMore : false,
             hasPreviousPage: (direction == Direction.Backward) ? hasMore : false,
         },
     };
-    return result;
 }

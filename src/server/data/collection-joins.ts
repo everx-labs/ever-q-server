@@ -198,6 +198,7 @@ export class QJoinQuery {
                 }
                 prevPortionOnValues = portionOnValues;
                 const joinQuery = QCollectionQuery.createForJoin(
+                    request,
                     portionOnValues,
                     this.refCollection.name,
                     this.refCollection.docType,

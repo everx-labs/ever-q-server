@@ -90,6 +90,7 @@ import {
     QRequestServices,
     RequestEvent,
 } from "./request";
+import { overrideAccountBoc } from "./graphql/account-boc";
 
 type QServerOptions = {
     config: QConfig,
@@ -297,6 +298,7 @@ export default class TONQServer {
             typeDefFileNames: ["type-defs-mam.graphql"],
             supportSubscriptions: false,
         });
+        overrideAccountBoc();
         const resolvers = createResolvers(this.data) as IResolvers;
         [
             infoResolvers,
