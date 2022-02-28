@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - Support `boc1` field in accounts collection. `boc` field contains new `2` version, 
   `boc` contains downgraded to `1` version.
 
-- `Block.init_code_hash` – account 's initial code hash (when it was deployed).
+- `account.init_code_hash` – account 's initial code hash (when it was deployed).
 
 ## [0.46.0] - 2022-02-17
 
