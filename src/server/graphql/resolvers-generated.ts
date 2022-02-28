@@ -489,6 +489,7 @@ const ZerostateAccounts = struct({
     data: scalar,
     data_hash: stringLowerFilter,
     due_payment: bigUInt2,
+    init_code_hash: stringLowerFilter,
     last_paid: scalar,
     last_trans_lt: bigUInt1,
     library: scalar,
@@ -522,6 +523,7 @@ const Account = struct({
     data: scalar,
     data_hash: stringLowerFilter,
     due_payment: bigUInt2,
+    init_code_hash: stringLowerFilter,
     last_paid: scalar,
     last_trans_lt: bigUInt1,
     library: scalar,
@@ -1126,6 +1128,7 @@ scalarFields.set("accounts.code_hash", { type: "string", path: "doc.code_hash" }
 scalarFields.set("accounts.data", { type: "string", path: "doc.data" });
 scalarFields.set("accounts.data_hash", { type: "string", path: "doc.data_hash" });
 scalarFields.set("accounts.due_payment", { type: "uint1024", path: "doc.due_payment" });
+scalarFields.set("accounts.init_code_hash", { type: "string", path: "doc.init_code_hash" });
 scalarFields.set("accounts.last_paid", { type: "number", path: "doc.last_paid" });
 scalarFields.set("accounts.last_trans_lt", { type: "uint64", path: "doc.last_trans_lt" });
 scalarFields.set("accounts.library", { type: "string", path: "doc.library" });
@@ -1643,6 +1646,7 @@ scalarFields.set("zerostates.accounts.code_hash", { type: "string", path: "doc.a
 scalarFields.set("zerostates.accounts.data", { type: "string", path: "doc.accounts[*].data" });
 scalarFields.set("zerostates.accounts.data_hash", { type: "string", path: "doc.accounts[*].data_hash" });
 scalarFields.set("zerostates.accounts.due_payment", { type: "uint1024", path: "doc.accounts[*].due_payment" });
+scalarFields.set("zerostates.accounts.init_code_hash", { type: "string", path: "doc.accounts[*].init_code_hash" });
 scalarFields.set("zerostates.accounts.last_paid", { type: "number", path: "doc.accounts[*].last_paid" });
 scalarFields.set("zerostates.accounts.last_trans_lt", { type: "uint64", path: "doc.accounts[*].last_trans_lt" });
 scalarFields.set("zerostates.accounts.library", { type: "string", path: "doc.accounts[*].library" });

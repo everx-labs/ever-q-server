@@ -7,7 +7,7 @@ import {
     mergeFieldWithSelectionSet,
     OrderBy,
     parseSelectionSet,
-    QParams,
+    QParams, QRequestParams,
     QType,
     ScalarFilter,
     splitOr,
@@ -38,6 +38,7 @@ export class QCollectionQuery {
     }
 
     static create(
+        request: QRequestParams,
         collectionName: string,
         collectionDocType: QType,
         args: {
@@ -75,10 +76,21 @@ export class QCollectionQuery {
         const texts: string[] = [];
 
         for (const subFilter of subFilters) {
-            const condition = QCollectionQuery.buildFilterCondition(collectionName, collectionDocType, subFilter, params, accessRights);
+            const condition = QCollectionQuery.buildFilterCondition(
+                collectionName,
+                collectionDocType,
+                subFilter,
+                params,
+                accessRights,
+            );
             if (condition !== null) {
                 const filterSection = condition ? `FILTER ${condition}` : "";
-                const returnExpression = QCollectionQuery.buildReturnExpression(collectionDocType, selectionSet, orderBy);
+                const returnExpression = QCollectionQuery.buildReturnExpression(
+                    request,
+                    collectionDocType,
+                    selectionSet,
+                    orderBy,
+                );
                 texts.push(`
                     FOR doc IN ${collectionName}
                     ${filterSection}
@@ -128,6 +140,7 @@ export class QCollectionQuery {
     }
 
     static createForJoin(
+        request: QRequestParams,
         onValues: string[],
         refCollectionName: string,
         refCollectionDocType: QType,
@@ -140,6 +153,7 @@ export class QCollectionQuery {
     ): QCollectionQuery | null {
         if (!refOnIsArray) {
             return QCollectionQuery.create(
+                request,
                 refCollectionName,
                 refCollectionDocType,
                 {
@@ -153,7 +167,12 @@ export class QCollectionQuery {
                 config.queries.filter,
             );
         }
-        const returnExpression = QCollectionQuery.buildReturnExpression(refCollectionDocType, fieldSelection, []);
+        const returnExpression = QCollectionQuery.buildReturnExpression(
+            request,
+            refCollectionDocType,
+            fieldSelection,
+            [],
+        );
         let filterSection = "";
         const params = new QParams();
         for (const onValue of onValues) {
@@ -198,7 +217,11 @@ export class QCollectionQuery {
         );
     }
 
-    static getAdditionalCondition(collectionName: string, accessRights: AccessRights, params: QParams) {
+    static getAdditionalCondition(
+        collectionName: string,
+        accessRights: AccessRights,
+        params: QParams,
+    ) {
         const accounts = accessRights.restrictToAccounts;
         if (accounts.length === 0) {
             return "";
@@ -228,7 +251,11 @@ export class QCollectionQuery {
         const primaryCondition = Object.keys(filter).length > 0
             ? collectionDocType.filterCondition(params, "doc", filter)
             : "";
-        const additionalCondition = QCollectionQuery.getAdditionalCondition(collectionName, accessRights, params);
+        const additionalCondition = QCollectionQuery.getAdditionalCondition(
+            collectionName,
+            accessRights,
+            params,
+        );
         if (primaryCondition === "false" || additionalCondition === "false") {
             return null;
         }
@@ -239,6 +266,7 @@ export class QCollectionQuery {
     }
 
     static buildReturnExpression(
+        request: QRequestParams,
         collectionDocType: QType,
         selectionSet: SelectionSetNode | undefined,
         orderBy: OrderBy[],
@@ -249,13 +277,17 @@ export class QCollectionQuery {
         expressions.set("_key", `${path}._key`);
         const fields = collectionDocType.fields;
         if (fields) {
-            collectReturnExpressions(expressions, path, selectionSet, fields);
+            collectReturnExpressions(request, expressions, path, selectionSet, fields);
             if (orderBy.length > 0) {
                 let orderBySelectionSet: SelectionSetNode | undefined = undefined;
                 for (const item of orderBy) {
-                    orderBySelectionSet = mergeFieldWithSelectionSet(item.path, orderBySelectionSet);
+                    orderBySelectionSet = mergeFieldWithSelectionSet(
+                        item.path,
+                        orderBySelectionSet,
+                    );
                 }
                 collectReturnExpressions(
+                    request,
                     expressions,
                     path,
                     orderBySelectionSet,
@@ -267,12 +299,16 @@ export class QCollectionQuery {
         if (overrides) {
             overrides.forEach((value, key) => {
                 expressions.set(key, value);
-            })
+            });
         }
         return combineReturnExpressions(expressions);
     }
 
-    static getShards(collectionName: string, filter: CollectionFilter, shardingDegree: number): Set<string> | undefined {
+    static getShards(
+        collectionName: string,
+        filter: CollectionFilter,
+        shardingDegree: number,
+    ): Set<string> | undefined {
         const shards = new Set<string>();
         const getShards = {
             "accounts": getAccountsShards,
@@ -292,17 +328,37 @@ export class QCollectionQuery {
     }
 }
 
-function getAccountsShards(filter: StructFilter, shards: Set<string>, shardingDegree: number): boolean {
+function getAccountsShards(
+    filter: StructFilter,
+    shards: Set<string>,
+    shardingDegree: number,
+): boolean {
     return getShardsForEqOrIn(filter, "id", shards, shardingDegree, getAccountShard);
 }
 
-function getBlocksShards(filter: StructFilter, shards: Set<string>, shardingDegree: number): boolean {
+function getBlocksShards(
+    filter: StructFilter,
+    shards: Set<string>,
+    shardingDegree: number,
+): boolean {
     return getShardsForEqOrIn(filter, "id", shards, shardingDegree, getBlockShard);
 }
 
 function getMessagesShards(filter: StructFilter, shards: Set<string>, shardingDegree: number) {
-    const srcUsed = getShardsForEqOrIn(filter, "src", shards, shardingDegree, getMessageAddressShard);
-    const dstUsed = getShardsForEqOrIn(filter, "dst", shards, shardingDegree, getMessageAddressShard);
+    const srcUsed = getShardsForEqOrIn(
+        filter,
+        "src",
+        shards,
+        shardingDegree,
+        getMessageAddressShard,
+    );
+    const dstUsed = getShardsForEqOrIn(
+        filter,
+        "dst",
+        shards,
+        shardingDegree,
+        getMessageAddressShard,
+    );
     return srcUsed || dstUsed;
 }
 
@@ -344,7 +400,7 @@ function getShardsForEqOrIn(
     field: string,
     shards: Set<string>,
     shardingDegree: number,
-    shardFromValue: (value: string, shardingDegree: number) => number | undefined
+    shardFromValue: (value: string, shardingDegree: number) => number | undefined,
 ): boolean {
     const fieldFilter = filter[field] as ScalarFilter | undefined;
     if (fieldFilter === undefined) {

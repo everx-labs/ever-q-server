@@ -256,12 +256,19 @@ export class QDataCollection {
                 const fieldSelection: FieldNode =
                     (info.operation.selectionSet.selections.find(x => x.kind === "Field" && x.name.value === this.name)
                         ?? info.operation.selectionSet.selections[0]) as FieldNode;
-                const parentSpan = QTraceSpan.create(request.services.tracer, "subscription", request.parentSpan);
+                const parentSpan = QTraceSpan.create(
+                    request.services.tracer,
+                    "subscription",
+                    request.parentSpan,
+                );
                 const eventListener = (doc: QDoc) => {
                     void (async () => {
                         try {
                             if (subscription.isFiltered(doc) && !subscription.isQueueOverflow()) {
-                                const reduced = selectFields(doc, subscription.selection) as Record<string, unknown>;
+                                const reduced = selectFields(
+                                    doc,
+                                    subscription.selection,
+                                ) as Record<string, unknown>;
                                 await QJoinQuery.fetchJoinedRecords(
                                     this,
                                     [reduced],
@@ -333,7 +340,15 @@ export class QDataCollection {
             },
         ) => {
             await this.checkRefreshInfo();
-            const q = QCollectionQuery.create(this.name, this.docType, args, undefined, grantedAccess, 0);
+            const q = QCollectionQuery.create(
+                { expectedAccountBocVersion: 1 },
+                this.name,
+                this.docType,
+                args,
+                undefined,
+                grantedAccess,
+                0,
+            );
             if (!q) {
                 return { isFast: true };
             }
@@ -386,6 +401,7 @@ export class QDataCollection {
             ],
         };
         const query = QCollectionQuery.create(
+            request,
             this.name,
             this.docType,
             args,
@@ -517,8 +533,14 @@ export class QDataCollection {
                 try {
                     const accessRights = await request.requireGrantedAccess(args);
                     const selectionSet = selection.fieldNodes[0].selectionSet;
-                    await this.optimizeSortedQueryWithSingleResult(args, accessRights, request, traceSpan);
+                    await this.optimizeSortedQueryWithSingleResult(
+                        args,
+                        accessRights,
+                        request,
+                        traceSpan,
+                    );
                     const query = QCollectionQuery.create(
+                        request,
                         this.name,
                         this.docType,
                         args,
@@ -615,7 +637,11 @@ export class QDataCollection {
             let hasDbResponse = false;
             let resolveOnClose: ((doc: QDoc[]) => void) = () => {
             };
-            const resolveBy = (reason: string, resolve: (result: QDoc[]) => void, result: QDoc[]) => {
+            const resolveBy = (
+                reason: string,
+                resolve: (result: QDoc[]) => void,
+                result: QDoc[],
+            ) => {
                 if (!resolvedBy) {
                     resolvedBy = reason;
                     resolve(result);
@@ -654,7 +680,11 @@ export class QDataCollection {
                                     const now = Date.now();
                                     const checkDuration = now - checkStart;
                                     const timeLeft = queryTimeoutAt - now;
-                                    const toWait = Math.min(period, timeLeft - 2 * checkDuration, timeLeft - 200);
+                                    const toWait = Math.min(
+                                        period,
+                                        timeLeft - 2 * checkDuration,
+                                        timeLeft - 200,
+                                    );
                                     forceTimerId = setTimeout(check, Math.max(toWait, 100));
                                 }
                             }
@@ -736,11 +766,21 @@ export class QDataCollection {
         shards?: Set<string>,
     } | null {
         const params = new QParams();
-        const condition = QCollectionQuery.buildFilterCondition(this.name, this.docType, filter, params, accessRights);
+        const condition = QCollectionQuery.buildFilterCondition(
+            this.name,
+            this.docType,
+            filter,
+            params,
+            accessRights,
+        );
         if (condition === null) {
             return null;
         }
-        const shards = QCollectionQuery.getShards(this.name, filter, required(this.provider).shardingDegree);
+        const shards = QCollectionQuery.getShards(
+            this.name,
+            filter,
+            required(this.provider).shardingDegree,
+        );
         // TODO: consider making query to two collections in one shard if (this.name === "messages" && shard.size === 1)
         const query = AggregationQuery.createForFields(this.name, condition || "", fields);
         return {
@@ -811,11 +851,14 @@ export class QDataCollection {
                         this.log.debug("AGGREGATE", args, 0, "SKIPPED", request.remoteAddress);
                         return [];
                     }
-                    const isFast = await checkIsFast(request.services.config, () => this.isFastAggregationQuery(
-                        q.text,
-                        filter,
-                        q.queries,
-                    ));
+                    const isFast = await checkIsFast(
+                        request.services.config,
+                        () => this.isFastAggregationQuery(
+                            q.text,
+                            filter,
+                            q.queries,
+                        ),
+                    );
                     traceSpan.log({
                         text: q.text,
                         vars: q.params,

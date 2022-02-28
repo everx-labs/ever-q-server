@@ -57,7 +57,7 @@ export type QFieldExplanation = {
     operations: Set<string>,
 };
 
-function invalidSelection(info: string): Error {
+export function invalidSelection(info: string): Error {
     return new Error(`Invalid selection field: ${info}`);
 }
 
@@ -132,10 +132,14 @@ export class QParams {
     }
 }
 
-type QReturnExpression = {
+export type QReturnExpression = {
     name: string,
     expression: string,
 };
+
+export interface QRequestParams {
+    expectedAccountBocVersion: number;
+}
 
 /**
  * Abstract interface for objects that acts as a helpers to perform queries over documents
@@ -157,7 +161,11 @@ type QType = {
     /**
      * Generates AQL expression for return section.
      */
-    returnExpressions: (path: string, def: SelectionNode) => QReturnExpression[],
+    returnExpressions: (
+        request: QRequestParams,
+        path: string,
+        def: SelectionNode,
+    ) => QReturnExpression[],
 
     /**
      * Tests value in document from Arango DB against specified filter.
@@ -179,7 +187,7 @@ type QType = {
  * @param {function} filterConditionForField Function that generates condition for a concrete field.
  * @return {string} AQL condition
  */
-function filterConditionForFields(
+export function filterConditionForFields(
     path: string,
     filter: StructFilter,
     fieldTypes: Record<string, QType>,
@@ -203,6 +211,7 @@ function filterConditionForFields(
 }
 
 export function collectReturnExpressions(
+    request: QRequestParams,
     expressions: Map<string, string>,
     path: string,
     selectionSet: SelectionSetNode | undefined,
@@ -224,7 +233,7 @@ export function collectReturnExpressions(
         if (!fieldType) {
             throw invalidSelection(name);
         }
-        for (const returned of fieldType.returnExpressions(path, fieldDef)) {
+        for (const returned of fieldType.returnExpressions(request, path, fieldDef)) {
             expressions.set(returned.name, returned.expression);
         }
     });
@@ -247,11 +256,16 @@ export function combineReturnExpressions(expressions: Map<string, string>): stri
  * @param {function} testField Function that performs test value against a selected field.
  * @return {string} AQL condition
  */
-function testFields(
+export function testFields(
     value: unknown,
     filter: CollectionFilter,
     fieldTypes: Record<string, QType>,
-    testField: (fieldType: QType, value: unknown, filterKey: string, filterValue: unknown) => boolean,
+    testField: (
+        fieldType: QType,
+        value: unknown,
+        filterKey: string,
+        filterValue: unknown,
+    ) => boolean,
 ): boolean {
     const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
@@ -307,13 +321,19 @@ function filterConditionForIn(
     filter: unknown[],
     explainOp?: string,
 ): string {
-    const conditions = filter.map(value => filterConditionOp(params, path, "==", value as CollectionFilter, explainOp));
+    const conditions = filter.map(value => filterConditionOp(
+        params,
+        path,
+        "==",
+        value as CollectionFilter,
+        explainOp,
+    ));
     return combineFilterConditions(conditions, "OR", "false");
 }
 
 //------------------------------------------------------------- Scalars
 
-function undefinedToNull(v: unknown | undefined): unknown | null {
+export function undefinedToNull(v: unknown | undefined): unknown | null {
     return v !== undefined ? v : null;
 }
 
@@ -413,7 +433,7 @@ const scalarNotIn: QType = {
     },
 };
 
-const scalarOps = {
+export const scalarOps = {
     eq: scalarEq,
     ne: scalarNe,
     lt: scalarLt,
@@ -424,7 +444,11 @@ const scalarOps = {
     notIn: scalarNotIn,
 };
 
-function convertFilterValue(value: unknown, op: QType, converter?: (value: unknown) => unknown): unknown {
+export function convertFilterValue(
+    value: unknown,
+    op: QType,
+    converter?: (value: unknown) => unknown,
+): unknown {
     if (converter) {
         const conv = converter;
         return (op === scalarOps.in || op === scalarOps.notIn)
@@ -447,7 +471,11 @@ function createScalar(filterValueConverter?: (value: unknown) => unknown): QType
                 },
             );
         },
-        returnExpressions(path: string, def: SelectionNode): QReturnExpression[] {
+        returnExpressions(
+            _request: QRequestParams,
+            path: string,
+            def: SelectionNode,
+        ): QReturnExpression[] {
             if (def.kind !== "Field") {
                 throw invalidSelection(def.kind);
             }
@@ -456,10 +484,12 @@ function createScalar(filterValueConverter?: (value: unknown) => unknown): QType
             if (isCollection && name === "id") {
                 name = "_key";
             }
-            return [{
-                name,
-                expression: `${path}.${name}`,
-            }];
+            return [
+                {
+                    name,
+                    expression: `${path}.${name}`,
+                },
+            ];
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, value, _filterKey, filterValue) => {
@@ -537,7 +567,10 @@ export function resolveBigUInt(
     return `${neg ? "-" : ""}${(format === BigNumberFormat.HEX) ? hex : BigInt(hex).toString()}`;
 }
 
-export function convertBigUInt(prefixLength: number, value: NumericScalar): string | null | undefined {
+export function convertBigUInt(
+    prefixLength: number,
+    value: NumericScalar,
+): string | null | undefined {
     if (value === null || value === undefined) {
         return value;
     }
@@ -602,22 +635,29 @@ export function struct(fields: { [name: string]: QType }, isCollection?: boolean
             });
             return (orOperands.length > 1) ? `(${orOperands.join(") OR (")})` : orOperands[0];
         },
-        returnExpressions(path: string, def: SelectionNode): QReturnExpression[] {
+        returnExpressions(
+            request: QRequestParams,
+            path: string,
+            def: SelectionNode,
+        ): QReturnExpression[] {
             if (def.kind !== "Field") {
                 throw invalidSelection(def.kind);
             }
             const name = def.name.value;
             const expressions = new Map();
             collectReturnExpressions(
+                request,
                 expressions,
                 `${path}.${name}`,
                 def.selectionSet,
                 fields,
             );
-            return [{
-                name,
-                expression: `( ${path}.${name} && ${combineReturnExpressions(expressions)} )`,
-            }];
+            return [
+                {
+                    name,
+                    expression: `( ${path}.${name} && ${combineReturnExpressions(expressions)} )`,
+                },
+            ];
         },
         test(_parent, value, filter) {
             if (!value) {
@@ -631,7 +671,11 @@ export function struct(fields: { [name: string]: QType }, isCollection?: boolean
                     fields,
                     (fieldType, value, filterKey, filterValue) => {
                         const fieldName = isCollection && (filterKey === "id") ? "_key" : filterKey;
-                        return fieldType.test(value, (value as { [name: string]: unknown })[fieldName], filterValue as CollectionFilter);
+                        return fieldType.test(
+                            value,
+                            (value as { [name: string]: unknown })[fieldName],
+                            filterValue as CollectionFilter,
+                        );
                     },
                 )) {
                     return true;
@@ -682,7 +726,11 @@ function isFieldPath(test: string): boolean {
     return true;
 }
 
-function tryOptimizeArrayAny(path: string, itemFilterCondition: string, params: QParams): string | null {
+function tryOptimizeArrayAny(
+    path: string,
+    itemFilterCondition: string,
+    params: QParams,
+): string | null {
     function tryOptimize(filterCondition: string, paramIndex: number): string | null {
         const paramName = `@v${paramIndex + 1}`;
         const suffix = ` == ${paramName}`;
@@ -728,7 +776,11 @@ export function array(resolveItemType: () => QType): QType {
             },
             test(parent: unknown, value: unknown, filter: CollectionFilter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const failedIndex = (value as unknown[]).findIndex(x => !itemType.test(parent, x, filter));
+                const failedIndex = (value as unknown[]).findIndex(x => !itemType.test(
+                    parent,
+                    x,
+                    filter,
+                ));
                 return failedIndex < 0;
             },
         },
@@ -751,7 +803,11 @@ export function array(resolveItemType: () => QType): QType {
             },
             test(parent: unknown, value: unknown, filter: CollectionFilter) {
                 const itemType = resolved || (resolved = resolveItemType());
-                const succeededIndex = (value as unknown[]).findIndex(x => itemType.test(parent, x, filter));
+                const succeededIndex = (value as unknown[]).findIndex(x => itemType.test(
+                    parent,
+                    x,
+                    filter,
+                ));
                 return succeededIndex >= 0;
             },
         },
@@ -767,7 +823,11 @@ export function array(resolveItemType: () => QType): QType {
                 },
             );
         },
-        returnExpressions(path: string, def: SelectionNode): QReturnExpression[] {
+        returnExpressions(
+            request: QRequestParams,
+            path: string,
+            def: SelectionNode,
+        ): QReturnExpression[] {
             if (def.kind !== "Field") {
                 throw invalidSelection(def.kind);
             }
@@ -778,16 +838,24 @@ export function array(resolveItemType: () => QType): QType {
                 const fieldPath = `${path}.${name}`;
                 const alias = fieldPath.split(".").join("__");
                 const expressions = new Map();
-                collectReturnExpressions(expressions, alias, def.selectionSet, itemType.fields || {});
+                collectReturnExpressions(
+                    request,
+                    expressions,
+                    alias,
+                    def.selectionSet,
+                    itemType.fields || {},
+                );
                 const itemExpression = combineReturnExpressions(expressions);
                 expression = `( ${fieldPath} && ( FOR ${alias} IN ${fieldPath} || [] RETURN ${itemExpression} ) )`;
             } else {
                 expression = `${path}.${name}`;
             }
-            return [{
-                name,
-                expression,
-            }];
+            return [
+                {
+                    name,
+                    expression,
+                },
+            ];
         },
         test(parent, value, filter) {
             if (!value) {
@@ -834,18 +902,24 @@ export function enumName(onField: string, values: { [name: string]: number }): Q
                 },
             );
         },
-        returnExpressions(path: string): QReturnExpression[] {
-            return [{
-                name: onField,
-                expression: `${path}.${onField}`,
-            }];
+        returnExpressions(_request: QRequestParams, path: string): QReturnExpression[] {
+            return [
+                {
+                    name: onField,
+                    expression: `${path}.${onField}`,
+                },
+            ];
         },
         test(parent, value, filter) {
             return testFields(value, filter, scalarOps, (op, _value, _filterKey, filterValue) => {
                 const resolved = (op === scalarOps.in || op === scalarOps.notIn)
                     ? (filterValue as string[]).map(resolveValue)
                     : resolveValue(filterValue as string);
-                return op.test(parent, (parent as { [name: string]: unknown })[onField], resolved as CollectionFilter);
+                return op.test(
+                    parent,
+                    (parent as { [name: string]: unknown })[onField],
+                    resolved as CollectionFilter,
+                );
             });
         },
     };
@@ -870,11 +944,13 @@ export function stringCompanion(onField: string): QType {
         filterCondition() {
             return "false";
         },
-        returnExpressions(path: string) {
-            return [{
-                name: onField,
-                expression: `${path}.${onField}`,
-            }];
+        returnExpressions(_request: QRequestParams, path: string) {
+            return [
+                {
+                    name: onField,
+                    expression: `${path}.${onField}`,
+                },
+            ];
         },
         test() {
             return false;
@@ -908,14 +984,16 @@ export function join(
                     RETURN 1
                 ) > 0`;
         },
-        returnExpressions(path: string): QReturnExpression[] {
-            return [{
-                name,
-                expression: `${path}.${name}`,
-            }, ...extraFields.map(x => ({
-                name: x,
-                expression: `${path}.${x}`,
-            }))];
+        returnExpressions(_request: QRequestParams, path: string): QReturnExpression[] {
+            return [
+                {
+                    name,
+                    expression: `${path}.${name}`,
+                }, ...extraFields.map(x => ({
+                    name: x,
+                    expression: `${path}.${x}`,
+                })),
+            ];
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -950,14 +1028,16 @@ export function joinArray(
                     RETURN 1
                 ) ${all ? `== LENGTH(${on_path})` : "> 0"})`;
         },
-        returnExpressions(path: string): QReturnExpression[] {
-            return [{
-                name: onField,
-                expression: `${path}.${onField}`,
-            }, ...extraFields.map(x => ({
-                name: x,
-                expression: `${path}.${x}`,
-            }))];
+        returnExpressions(_request: QRequestParams, path: string): QReturnExpression[] {
+            return [
+                {
+                    name: onField,
+                    expression: `${path}.${onField}`,
+                }, ...extraFields.map(x => ({
+                    name: x,
+                    expression: `${path}.${x}`,
+                })),
+            ];
         },
         test(parent, value, filter) {
             const refType = resolved || (resolved = resolveRefType());
@@ -979,7 +1059,10 @@ function isFieldWithName(def: SelectionNode, name: string): boolean {
     return def.kind === "Field" && def.name.value.toLowerCase() === name.toLowerCase();
 }
 
-export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: SelectionSetNode | undefined): SelectionSetNode {
+export function mergeFieldWithSelectionSet(
+    fieldPath: string,
+    selectionSet: SelectionSetNode | undefined,
+): SelectionSetNode {
     const dotPos = fieldPath.indexOf(".");
     const name = dotPos >= 0 ? fieldPath.substr(0, dotPos) : fieldPath;
     const tail = dotPos >= 0 ? fieldPath.substr(dotPos + 1) : "";
@@ -1011,7 +1094,10 @@ export function mergeFieldWithSelectionSet(fieldPath: string, selectionSet: Sele
     };
 }
 
-export function parseSelectionSet(selectionSet: SelectionSetNode | undefined, returnFieldSelection: string): FieldSelection[] {
+export function parseSelectionSet(
+    selectionSet: SelectionSetNode | undefined,
+    returnFieldSelection: string,
+): FieldSelection[] {
     const fields: FieldSelection[] = [];
     const selections = selectionSet?.selections;
     if (selections !== undefined) {

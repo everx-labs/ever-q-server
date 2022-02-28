@@ -59,9 +59,13 @@ export class QError extends Error {
     }
 
     static queryTerminatedOnTimeout(): Error {
-        return QError.create(QErrorCode.QUERY_TERMINATED_ON_TIMEOUT, "Query terminated on timeout", {
-            now: Date.now(),
-        });
+        return QError.create(
+            QErrorCode.QUERY_TERMINATED_ON_TIMEOUT,
+            "Query terminated on timeout",
+            {
+                now: Date.now(),
+            },
+        );
     }
 
     static create(code: number, message: string, data?: Record<string, unknown>): Error {
@@ -84,7 +88,8 @@ export class QError extends Error {
     }
 
     static auth(error: QError) {
-        return QError.create(QErrorCode.AUTH_FAILED,
+        return QError.create(
+            QErrorCode.AUTH_FAILED,
             error.message ?? (error as { description?: string }).description ?? "",
             { authErrorCode: error.code },
         );
@@ -194,7 +199,10 @@ function isObject(test: unknown): boolean {
     return (test !== null && test !== undefined && typeof test === "object" && !Array.isArray(test));
 }
 
-export function assignDeep(target: Record<string, unknown>, source: Record<string, unknown> | undefined) {
+export function assignDeep(
+    target: Record<string, unknown>,
+    source: Record<string, unknown> | undefined,
+) {
     if (!source) {
         return;
     }
@@ -232,7 +240,7 @@ export function required<T>(value: T | undefined): T {
 
 export function setHasIntersections<T>(a: Set<T>, b: Set<T>): boolean {
     const [c, d] = a.size < b.size ? [a, b] : [b, a];
-    for(const x of c) {
+    for (const x of c) {
         if (d.has(x)) {
             return true;
         }
@@ -255,4 +263,26 @@ export function arraysAreEqual<T>(a: Array<T>, b: Array<T>): boolean {
 export function toU64String(value: number): string {
     const hex = value.toString(16);
     return `${(hex.length - 1).toString(16)}${hex}`;
+}
+
+export type RequestWithHeaders = {
+    headers?: {
+        [name: string]: string
+    }
+};
+
+export type GraphQLConnection = {
+    context?: {
+        [name: string]: string
+    }
+};
+
+
+export function extractHeader(
+    req: RequestWithHeaders | undefined,
+    connection: GraphQLConnection | undefined,
+    name: string,
+    def: string,
+): string {
+    return req?.headers?.[name] ?? connection?.context?.[name] ?? def;
 }

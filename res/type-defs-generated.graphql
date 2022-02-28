@@ -825,6 +825,8 @@ type ZerostateAccounts {
 	        
 	"""
 	due_payment(format: BigIntFormat): String
+	"account 's initial code hash (when it was deployed)"
+	init_code_hash: String
 	"""
 	
 	Contains either the unixtime of the most recent storage payment
@@ -973,6 +975,8 @@ type Account {
 	        
 	"""
 	due_payment(format: BigIntFormat): String
+	"account 's initial code hash (when it was deployed)"
+	init_code_hash: String
 	"""
 	
 	Contains either the unixtime of the most recent storage payment
@@ -2211,6 +2215,8 @@ input ZerostateAccountsFilter {
 	        
 	"""
 	due_payment: StringFilter
+	"account 's initial code hash (when it was deployed)"
+	init_code_hash: StringFilter
 	"""
 	
 	Contains either the unixtime of the most recent storage payment
@@ -2361,6 +2367,8 @@ input AccountFilter {
 	        
 	"""
 	due_payment: StringFilter
+	"account 's initial code hash (when it was deployed)"
+	init_code_hash: StringFilter
 	"""
 	
 	Contains either the unixtime of the most recent storage payment
