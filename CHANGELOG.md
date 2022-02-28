@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [0.47.0] - 2022-02-28
 
+### New
+
+- Support `X-Evernode-Expected-Account-Boc-Version` header. 
+  `1` (default) means old version, `2` – new.
+- Support `boc1` field in accounts collection. `boc` field contains new `2` version, 
+  `boc` contains downgraded to `1` version.
 
 ## [0.46.0] - 2022-02-17
 
