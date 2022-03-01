@@ -36,7 +36,7 @@ import {
 } from "../server/auth";
 import { QDataCollection } from "../server/data/collection";
 import {
-    OrderBy,
+    OrderBy, QRequestParams,
 } from "../server/filter/filters";
 import { gql } from "apollo-server";
 import { FieldAggregation } from "../server/data/aggregations";
@@ -53,10 +53,6 @@ import fetch from "node-fetch";
 import { QCollectionQuery } from "../server/data/collection-query";
 
 jest.setTimeout(100000);
-
-if (!process.env.Q_DATA_MUT) {
-    process.env.Q_DATA_MUT = "http://localhost:8901";
-}
 
 export const testConfig = resolveConfig(
     {},
@@ -83,9 +79,15 @@ export function selectionInfo(r: string) {
     return collection.selectionSet;
 }
 
-export function queryText(collection: QDataCollection, result: string, orderBy?: OrderBy[]): string {
+export function queryText(
+    collection: QDataCollection,
+    result: string,
+    orderBy?: OrderBy[],
+    request?: QRequestParams,
+): string {
     return normalized(
         QCollectionQuery.create(
+            request ?? { expectedAccountBocVersion: 1 },
             collection.name,
             collection.docType,
             {
@@ -99,7 +101,10 @@ export function queryText(collection: QDataCollection, result: string, orderBy?:
     );
 }
 
-export function aggregationQueryText(collection: QDataCollection, fields: FieldAggregation[]): string {
+export function aggregationQueryText(
+    collection: QDataCollection,
+    fields: FieldAggregation[],
+): string {
     return normalized(
         collection.createAggregationQuery(
             {},
@@ -176,20 +181,27 @@ export async function testServerRequired(override?: Record<string, unknown>): Pr
     return testServer;
 }
 
-export async function testServerQuery<T>(query: string, variables?: Record<string, unknown>, fetchOptions?: RequestInit): Promise<T> {
+export async function testServerQuery<T>(
+    query: string,
+    variables?: Record<string, unknown>,
+    fetchOptions?: RequestInit,
+): Promise<T> {
     await testServerRequired();
     try {
-        const response = await fetch(httpUrl(`${testConfig.server.host}:${testConfig.server.port}/graphql`), {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
+        const response = await fetch(
+            httpUrl(`${testConfig.server.host}:${testConfig.server.port}/graphql`),
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    query,
+                    variables: variables ?? {},
+                }),
+                ...fetchOptions,
             },
-            body: JSON.stringify({
-                query,
-                variables: variables ?? {},
-            }),
-            ...fetchOptions,
-        });
+        );
         const responseJson = await response.json();
         const errors = responseJson.errors;
         if (errors) {

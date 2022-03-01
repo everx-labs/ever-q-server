@@ -1,6 +1,6 @@
 import type { QConfig } from "./config";
 import fetch from "node-fetch";
-import { QError } from "./utils";
+import { extractHeader, GraphQLConnection, QError, RequestWithHeaders } from "./utils";
 
 export type AccessKey = {
     key: string,
@@ -22,19 +22,6 @@ export const deniedAccess: AccessRights = Object.freeze({
     restrictToAccounts: [],
 });
 
-export type RequestWithAccessHeaders = {
-    headers?: {
-        accesskey?: string,
-        accessKey?: string,
-    }
-};
-
-type GraphQLConnection = {
-    context?: {
-        accessKey?: string,
-    }
-};
-
 export type AccessArgs = {
     accessKey?: string | null | undefined
 };
@@ -54,10 +41,16 @@ export class Auth {
     };
 
 
-    static extractAccessKey(req: RequestWithAccessHeaders | undefined, connection: GraphQLConnection | undefined): string {
-        return req?.headers?.accessKey ??
-            req?.headers?.accesskey ??
-            connection?.context?.accessKey ?? "";
+    static extractAccessKey(
+        req: RequestWithHeaders | undefined,
+        connection: GraphQLConnection | undefined,
+    ): string {
+        return extractHeader(
+            req,
+            connection,
+            "accessKey",
+            extractHeader(req, connection, "accesskey", ""),
+        );
     }
 
     static unauthorizedError(): Error {

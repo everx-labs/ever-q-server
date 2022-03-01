@@ -172,6 +172,7 @@ const AccountBase: TypeDef = {
     data_hash: stringWithLowerFilter(docs.account.data_hash),
     library: string(docs.account.library),
     library_hash: stringWithLowerFilter(docs.account.library_hash),
+    init_code_hash: stringWithLowerFilter(docs.account.init_code_hash),
     proof: string(docs.account.proof),
     boc: string(docs.account.boc),
     state_hash: stringWithLowerFilter(docs.account.state_hash),

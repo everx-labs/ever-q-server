@@ -22,7 +22,7 @@ let server: TONQServer | null = null;
 
 beforeAll(async () => {
     let serverAddress = process.env.Q_DATA_MUT ?? "http://localhost:8901";
-    
+
     // prepare db
     const db = new Database(serverAddress);
     try {
@@ -48,7 +48,7 @@ beforeAll(async () => {
     serverAddress = url.toString();
 
     const config = resolveConfig(
-        {}, 
+        {},
         {
             blockchain: {
                 blocks: {
@@ -113,7 +113,7 @@ test("master_seq_no_range", async () => {
         }`,
     });
     expect(queryResult2.data.blockchain.master_seq_no_range).toMatchObject({ start: 8898619, end: 8898622 });
-    
+
     // is limited by reliable boundary
     const queryResult3 = await client.query({
         query: gql`{
@@ -336,7 +336,7 @@ test("account_transactions", async () => {
         throw new Error("server is null");
     }
     const client = createTestClient({ useWebSockets: true });
-    
+
     // filter by account_addresses
     const queryResult = await client.query({
         query: gql`{
@@ -706,7 +706,7 @@ test("workchain_transactions", async () => {
         throw new Error("server is null");
     }
     const client = createTestClient({ useWebSockets: true });
-    
+
     await testTransactionsPagination(client, "workchain_transactions");
 
     // filter by account_addresses

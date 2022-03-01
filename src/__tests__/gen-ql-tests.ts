@@ -20,6 +20,7 @@ import {
 import { grantedAccess } from "../server/auth";
 import { FilterOrConversion } from "../server/config";
 import { QCollectionQuery } from "../server/data/collection-query";
+import { overrideAccountBoc } from "../server/graphql/account-boc";
 
 type Blocks = {
     blocks: {
@@ -28,7 +29,8 @@ type Blocks = {
     }[]
 };
 test("remove nulls", async () => {
-    const data = await testServerQuery<Blocks>("query { blocks { id master { min_shard_gen_utime } } }");
+    const data = await testServerQuery<Blocks>(
+        "query { blocks { id master { min_shard_gen_utime } } }");
     expect(data.blocks.length).toBeGreaterThan(0);
 
     let block = (await testServerQuery<Blocks>(`
@@ -108,6 +110,7 @@ test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs());
     const withOr = normalized(
         QCollectionQuery.create(
+            { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
             {
@@ -115,10 +118,12 @@ test("OR conversions", () => {
                     src: { eq: "1" },
                     OR: { dst: { eq: "1" } },
                 },
-                orderBy: [{
-                    path: "created_at",
-                    direction: "ASC",
-                }],
+                orderBy: [
+                    {
+                        path: "created_at",
+                        direction: "ASC",
+                    },
+                ],
             },
             selectionInfo("src dst"),
             grantedAccess,
@@ -140,6 +145,7 @@ test("OR conversions", () => {
 
     const withSubQueries = normalized(
         QCollectionQuery.create(
+            { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
             {
@@ -147,10 +153,12 @@ test("OR conversions", () => {
                     src: { eq: "1" },
                     OR: { dst: { eq: "1" } },
                 },
-                orderBy: [{
-                    path: "created_at",
-                    direction: "ASC",
-                }],
+                orderBy: [
+                    {
+                        path: "created_at",
+                        direction: "ASC",
+                    },
+                ],
             },
             selectionInfo("src dst"),
             grantedAccess,
@@ -186,6 +194,7 @@ test("messages_complement are used for shardingDegree > 0", () => {
     const data = createLocalArangoTestData(new QLogs());
     const withOr = normalized(
         QCollectionQuery.create(
+            { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
             {
@@ -193,10 +202,12 @@ test("messages_complement are used for shardingDegree > 0", () => {
                     src: { eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" },
                     OR: { dst: { eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" } },
                 },
-                orderBy: [{
-                    path: "created_at",
-                    direction: "ASC",
-                }],
+                orderBy: [
+                    {
+                        path: "created_at",
+                        direction: "ASC",
+                    },
+                ],
             },
             selectionInfo("src dst"),
             grantedAccess,
@@ -228,6 +239,7 @@ test("messages_complement are used for shardingDegree > 0", () => {
 
     const withSubQueries = normalized(
         QCollectionQuery.create(
+            { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
             {
@@ -235,10 +247,12 @@ test("messages_complement are used for shardingDegree > 0", () => {
                     src: { eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" },
                     OR: { dst: { eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d" } },
                 },
-                orderBy: [{
-                    path: "created_at",
-                    direction: "ASC",
-                }],
+                orderBy: [
+                    {
+                        path: "created_at",
+                        direction: "ASC",
+                    },
+                ],
             },
             selectionInfo("src dst"),
             grantedAccess,
@@ -289,10 +303,12 @@ test("reduced RETURN", () => {
     const transactions = data.transactions;
     const messages = data.messages;
 
-    expect(queryText(blocks, "seq_no", [{
-        path: "gen_utime",
-        direction: "ASC",
-    }])).toEqual(
+    expect(queryText(blocks, "seq_no", [
+        {
+            path: "gen_utime",
+            direction: "ASC",
+        },
+    ])).toEqual(
         normalized(`
         FOR doc IN blocks SORT doc.gen_utime LIMIT 50 RETURN {
             _key: doc._key,
@@ -375,10 +391,18 @@ function selection(name: string, selections: SelectionNode[]): FieldNode {
 }
 
 test("Include join precondition fields", () => {
-    const e = Message.returnExpressions("doc", selection("message", [
-        selection("dst_transaction", [selection("id", [])]),
-    ]));
-    expect(e[0].expression).toEqual("( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )");
+    const e = Message.returnExpressions(
+        {
+            expectedAccountBocVersion: 1,
+        },
+        "doc",
+        selection("message", [
+            selection("dst_transaction", [selection("id", [])]),
+        ]),
+    );
+    expect(e[0].expression)
+        .toEqual(
+            "( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )");
 });
 
 
@@ -421,7 +445,8 @@ test("Generate AQL", () => {
         },
     });
     expect(ql)
-        .toEqual("((doc.gen_utime >= @v1) AND (doc.gen_utime <= @v2)) AND ((@v3 IN doc.signatures[*].node_id) OR (@v4 IN doc.signatures[*].node_id))");
+        .toEqual(
+            "((doc.gen_utime >= @v1) AND (doc.gen_utime <= @v2)) AND ((@v3 IN doc.signatures[*].node_id) OR (@v4 IN doc.signatures[*].node_id))");
     expect(params.values.v1).toEqual(1);
     expect(params.values.v2).toEqual(2);
     expect(params.values.v3).toEqual("3");
@@ -486,9 +511,37 @@ test("Generate AQL", () => {
             dst: { eq: "1" },
         },
     });
-    expect(ql).toEqual("((doc.src == @v1) AND (doc.dst == @v2)) OR ((doc.src == @v3) AND (doc.dst == @v4))");
+    expect(ql)
+        .toEqual(
+            "((doc.src == @v1) AND (doc.dst == @v2)) OR ((doc.src == @v3) AND (doc.dst == @v4))");
     expect(params.values.v1).toEqual("1");
     expect(params.values.v2).toEqual("2");
     expect(params.values.v3).toEqual("2");
     expect(params.values.v4).toEqual("1");
 });
+
+test("Account BOC versioning", () => {
+    overrideAccountBoc();
+    const e2 = Account.returnExpressions(
+        {
+            expectedAccountBocVersion: 2,
+        },
+        "doc",
+        selection("account", [selection("boc", [])]),
+    );
+    expect(e2[0].expression)
+        .toEqual(
+            "( doc.account && { boc: doc.account.boc } )");
+    const e1 = Account.returnExpressions(
+        {
+            expectedAccountBocVersion: 1,
+        },
+        "doc",
+        selection("account", [selection("boc", [])]),
+    );
+    expect(e1[0].expression)
+        .toEqual(
+            "( doc.account && { boc: doc.account.boc1 || doc.account.boc } )");
+});
+
+
