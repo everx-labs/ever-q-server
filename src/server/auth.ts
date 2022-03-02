@@ -45,12 +45,7 @@ export class Auth {
         req: RequestWithHeaders | undefined,
         connection: GraphQLConnection | undefined,
     ): string {
-        return extractHeader(
-            req,
-            connection,
-            "accessKey",
-            extractHeader(req, connection, "accesskey", ""),
-        );
+        return extractHeader(req, connection, "accessKey", "");
     }
 
     static unauthorizedError(): Error {

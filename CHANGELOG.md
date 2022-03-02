@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.47.1] - 2022-03-02
+
+### Fixed
+
+- `X-Evernode-Expected-Account-Boc-Version` header handler was not handled lower 
+  cased version of the header. 
+
 ## [0.47.0] - 2022-02-28
 
 ### New
