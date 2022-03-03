@@ -6,15 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `X-Evernode-Expected-Account-Boc-Version` header handler was not handled lower 
-  cased version of the header. 
+- `X-Evernode-Expected-Account-Boc-Version` header handler did not handle lowercase version of the header. 
 
 ## [0.47.0] - 2022-02-28
 
 ### New
 
 - Support `X-Evernode-Expected-Account-Boc-Version` header. 
-  `1` (default) means old version, `2` – new.
+  `1` (default) means old version, `2` – new (with `init_code_hash` field).
 
 - Support `boc1` field in accounts collection. `boc` field contains new `2` version, 
   `boc1` contains downgraded to `1` version.
