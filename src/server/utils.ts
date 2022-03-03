@@ -278,11 +278,23 @@ export type GraphQLConnection = {
 };
 
 
+function tryExtractHeader(
+    req: RequestWithHeaders | undefined,
+    connection: GraphQLConnection | undefined,
+    name: string,
+): string | undefined {
+    return req?.headers?.[name] ?? connection?.context?.[name];
+}
+
 export function extractHeader(
     req: RequestWithHeaders | undefined,
     connection: GraphQLConnection | undefined,
     name: string,
     def: string,
 ): string {
-    return req?.headers?.[name] ?? connection?.context?.[name] ?? def;
+    return tryExtractHeader(req, connection, name) ?? tryExtractHeader(
+        req,
+        connection,
+        name.toLowerCase(),
+    ) ?? def;
 }
