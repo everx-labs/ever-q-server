@@ -773,9 +773,6 @@ export class QDataCollection {
             params,
             accessRights,
         );
-        if (condition === null) {
-            return null;
-        }
         const shards = QCollectionQuery.getShards(
             this.name,
             filter,

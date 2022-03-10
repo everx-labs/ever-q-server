@@ -545,3 +545,15 @@ test("Account BOC versioning", () => {
 });
 
 
+test("Use null in queries", () => {
+    const params = new QParams();
+
+    params.clear();
+    const ql = Account.filterCondition(
+        params,
+        "doc",
+        { last_paid: null },
+    );
+    expect(ql).toBeNull();
+});
+

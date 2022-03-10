@@ -32,7 +32,7 @@ export interface StructFilter {
     [name: string]: CollectionFilter,
 }
 
-export type CollectionFilter = StructFilter | ScalarFilter | ArrayFilter;
+export type CollectionFilter = StructFilter | ScalarFilter | ArrayFilter | null;
 
 
 export type ScalarFilter = {
@@ -156,7 +156,7 @@ type QType = {
      * @param {any} filter Filter that will be applied to this field
      * @return {string} Arango QL condition text
      */
-    filterCondition: (params: QParams, path: string, filter: CollectionFilter) => string,
+    filterCondition: (params: QParams, path: string, filter: CollectionFilter) => string | null,
 
     /**
      * Generates AQL expression for return section.
@@ -189,25 +189,31 @@ type QType = {
  */
 export function filterConditionForFields(
     path: string,
-    filter: StructFilter,
+    filter: StructFilter | null,
     fieldTypes: Record<string, QType>,
     filterConditionForField: (
         field: QType,
         path: string,
         filterKey: string,
         filterValue: CollectionFilter,
-    ) => string,
-): string {
+    ) => string | null,
+): string | null {
+    if (filter === null) {
+        return null;
+    }
     const conditions: string[] = [];
     Object.entries(filter).forEach(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
         if (fieldType) {
-            conditions.push(filterConditionForField(fieldType, path, filterKey, filterValue));
+            const fieldCondition = filterConditionForField(fieldType, path, filterKey, filterValue);
+            if (fieldCondition !== null) {
+                conditions.push(fieldCondition);
+            }
         } else {
             throw new Error(`Invalid filter field: ${filterKey}`);
         }
     });
-    return combineFilterConditions(conditions, "AND", "false");
+    return combineFilterConditions(conditions, "AND");
 }
 
 export function collectReturnExpressions(
@@ -267,6 +273,9 @@ export function testFields(
         filterValue: unknown,
     ) => boolean,
 ): boolean {
+    if (filter === null) {
+        return true;
+    }
     const failed = Object.entries(filter).find(([filterKey, filterValue]) => {
         const fieldType = fieldTypes[filterKey];
         if (!fieldType) {
@@ -304,10 +313,9 @@ function filterConditionOp(
 function combineFilterConditions(
     conditions: string[],
     op: string,
-    defaultConditions: string,
-): string {
+): string | null {
     if (conditions.length === 0) {
-        return defaultConditions;
+        return null;
     }
     if (conditions.length === 1) {
         return conditions[0];
@@ -320,7 +328,7 @@ function filterConditionForIn(
     path: string,
     filter: unknown[],
     explainOp?: string,
-): string {
+): string | null {
     const conditions = filter.map(value => filterConditionOp(
         params,
         path,
@@ -328,7 +336,7 @@ function filterConditionForIn(
         value as CollectionFilter,
         explainOp,
     ));
-    return combineFilterConditions(conditions, "OR", "false");
+    return combineFilterConditions(conditions, "OR");
 }
 
 //------------------------------------------------------------- Scalars
@@ -693,8 +701,8 @@ function getItemFilterCondition(
     params: QParams,
     path: string,
     filter: CollectionFilter,
-): string {
-    let itemFilterCondition: string;
+): string | null {
+    let itemFilterCondition: string | null;
     const explanation = params.explanation;
     if (explanation) {
         const saveParentPath = explanation.parentPath;
@@ -728,7 +736,7 @@ function isFieldPath(test: string): boolean {
 
 function tryOptimizeArrayAny(
     path: string,
-    itemFilterCondition: string,
+    itemFilterCondition: string | null,
     params: QParams,
 ): string | null {
     function tryOptimize(filterCondition: string, paramIndex: number): string | null {
@@ -746,6 +754,9 @@ function tryOptimizeArrayAny(
         return null;
     }
 
+    if (itemFilterCondition === null) {
+        return null;
+    }
     if (!itemFilterCondition.startsWith("(") || !itemFilterCondition.endsWith(")")) {
         return tryOptimize(itemFilterCondition, params.count - 1);
     }

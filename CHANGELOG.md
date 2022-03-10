@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.47.2] - 2022-03-10
+
+### New
+
+- Support for `null` in scalar filter. e.g. `filter: { last_paid: null }`. Means missing filter.  
+
 ## [0.47.1] - 2022-03-02
 
 ### Fixed
