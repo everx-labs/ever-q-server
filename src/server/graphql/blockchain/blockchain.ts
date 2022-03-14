@@ -1,6 +1,5 @@
 import { GraphQLResolveInfo } from "graphql";
 
-import { AccessRights } from "../../auth";
 import { convertBigUInt, QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
 import { QTraceSpan } from "../../tracing";
@@ -15,9 +14,11 @@ import {
     processPaginationArgs,
 } from "./helpers";
 import {
+    BlockchainAccount,
     BlockchainBlock,
     BlockchainBlocksConnection,
     BlockchainQueryAccount_TransactionsArgs,
+    BlockchainQueryArgs,
     BlockchainQueryKey_BlocksArgs,
     BlockchainQueryMaster_Seq_No_RangeArgs,
     BlockchainQueryWorkchain_BlocksArgs,
@@ -135,10 +136,23 @@ async function resolve_key_blocks(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    parentArgs: BlockchainQueryArgs,
 ) {
     // filters
     const filters: string[] = [];
     const params = new QParams();
+
+    if (parentArgs.workchains &&
+        parentArgs.workchains.length > 0 &&
+        !parentArgs.workchains.includes(-1)
+    ) {
+        throw QError.invalidQuery("key_blocks are available only for workchain -1 (masterchain)");
+    }
+
+    if (args.seq_no && parentArgs.time_range) {
+        throw QError.invalidQuery("seq_no in key_blocks and time_range in blockchain should not be used simultaneously");
+    }
+    args.seq_no = args.seq_no || parentArgs.time_range;
 
     const rename_seq_no = ({
         seq_no,
@@ -196,11 +210,17 @@ async function resolve_workchain_blocks(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    parentArgs: BlockchainQueryArgs,
 ) {
     // validate args
     if (args.thread && !isDefined(args.workchain)) {
         throw QError.invalidQuery("Workchain is required for the thread filter");
     }
+
+    if (args.master_seq_no && parentArgs.time_range) {
+        throw QError.invalidQuery("master_seq_no in resolve_workchain_blocks and time_range in blockchain should not be used simultaneously");
+    }
+    args.master_seq_no = args.master_seq_no || parentArgs.time_range;
 
     // filters
     const filters: string[] = [];
@@ -209,6 +229,10 @@ async function resolve_workchain_blocks(
     await prepareChainOrderFilter(args, params, filters, context);
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
+    }
+    if (parentArgs.workchains && parentArgs.workchains.length > 0) {
+        // TODO: Optimize
+        filters.push(`doc.workchain_id IN @${params.add(parentArgs.workchains)}`);
     }
     if (isDefined(args.thread)) {
         filters.push(`doc.shard == @${params.add(args.thread)}`);
@@ -270,8 +294,15 @@ async function resolve_workchain_transactions(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    parentArgs: BlockchainQueryArgs,
 ) {
     const maxJoinDepth = 1;
+
+    if (args.master_seq_no && parentArgs.time_range) {
+        throw QError.invalidQuery("master_seq_no in resolve_workchain_blocks and time_range in blockchain should not be used simultaneously");
+    }
+    args.master_seq_no = args.master_seq_no || parentArgs.time_range;
+
     // filters
     const filters: string[] = [];
     const params = new QParams();
@@ -280,6 +311,9 @@ async function resolve_workchain_transactions(
 
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
+    }
+    if (parentArgs.workchains && parentArgs.workchains.length > 0) {
+        filters.push(`doc.workchain_id IN @${params.add(parentArgs.workchains)}`);
     }
     if (isDefined(args.min_balance_delta)) {
         const min_balance_delta = convertBigUInt(2, args.min_balance_delta);
@@ -338,7 +372,6 @@ async function resolve_workchain_transactions(
 }
 
 async function resolve_account_transactions(
-    accessRights: AccessRights,
     args: BlockchainQueryAccount_TransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
@@ -346,7 +379,7 @@ async function resolve_account_transactions(
 ) {
     const maxJoinDepth = 1;
     // validate args
-    const restrictToAccounts = accessRights.restrictToAccounts;
+    const restrictToAccounts = (await context.requireGrantedAccess({})).restrictToAccounts;
     if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(args.account_address)) {
         throw QError.invalidQuery("This account_addr is not allowed");
     }
@@ -417,6 +450,43 @@ async function resolve_account_transactions(
     ) as BlockchainTransactionsConnection;
 }
 
+async function resolve_account(
+    address: String,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    const maxJoinDepth = 1;
+
+    const selectionSet = getNodeSelectionSetForConnection(info);
+    const returnExpression = config.accounts.buildReturnExpression(
+        selectionSet,
+        context,
+        maxJoinDepth,
+        "doc"
+    );
+
+    // query
+    const params = new QParams();
+    const query =
+        "FOR doc IN accounts " +
+        `FILTER doc._key == @${params.add(address)} ` +
+        `RETURN ${returnExpression}`;
+    const queryResult = await context.services.data.query(
+        required(context.services.data.accounts.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+            // TODO: shard
+        },
+    ) as BlockchainAccount[];
+
+    return queryResult[0];
+}
+
 export const resolvers: Resolvers<QRequestContext> = {
     Query: {
         master_seq_no_range: (_parent, args, context) => {
@@ -424,38 +494,27 @@ export const resolvers: Resolvers<QRequestContext> = {
                 return await resolve_maser_seq_no_range(args, context, traceSpan);
             });
         },
-        key_blocks: async (_parent, args, context, info) => {
-            return context.trace("resolve_key_blocks", async traceSpan => {
-                return await resolve_key_blocks(args, context, info, traceSpan);
-            });
-        },
-        workchain_blocks: async (_parent, args, context, info) => {
-            return context.trace("resolve_workchain_blocks", async traceSpan => {
-                return await resolve_workchain_blocks(args, context, info, traceSpan);
-            });
-        },
-        workchain_transactions: async (_parent, args, context, info) => {
-            return context.trace("workchain_transactions", async traceSpan => {
-                return await resolve_workchain_transactions(args, context, info, traceSpan);
-            });
-        },
-        account_transactions: async (_parent, args, context, info) => {
-            const accessRights = await context.requireGrantedAccess(args);
-            return context.trace("account_transactions", async traceSpan => {
-                return await resolve_account_transactions(
-                    accessRights,
-                    args,
-                    context,
-                    info,
-                    traceSpan,
-                );
-            });
-        },
-        blockchain: async (_parent, args, context) => {
+        blockchain: async (_parent, args) => {
+            if (args.workchains && args.workchains.length > 3) {
+                throw QError.invalidQuery("workchains filter is limited by 3 workchains");
+            }
             return {
-                accessRights: await context.requireGrantedAccess(args),
+                args,
             };
         },
+        account: async (_parent, args, context) => {
+            const addressWithoutPrefix = args.address.split(":")[1];
+            if (addressWithoutPrefix === undefined || addressWithoutPrefix.length !== 64) {
+                throw QError.invalidQuery("Invalid account address");
+            }
+            const restrictToAccounts = (await context.requireGrantedAccess({})).restrictToAccounts;
+            if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(args.address)) {
+                throw QError.invalidQuery("This account address is not allowed");
+            }
+            return {
+                address: args.address
+            }
+        }
     },
     BlockchainQuery: {
         master_seq_no_range: (_parent, args, context) => {
@@ -463,26 +522,84 @@ export const resolvers: Resolvers<QRequestContext> = {
                 return await resolve_maser_seq_no_range(args, context, traceSpan);
             });
         },
-        key_blocks: async (_parent, args, context, info) => {
+        key_blocks: async (parent, args, context, info) => {
             return context.trace("blockchain-resolve_key_blocks", async traceSpan => {
-                return await resolve_key_blocks(args, context, info, traceSpan);
+                return await resolve_key_blocks(args, context, info, traceSpan, parent.args);
             });
         },
-        workchain_blocks: async (_parent, args, context, info) => {
+        workchain_blocks: async (parent, args, context, info) => {
             return context.trace("blockchain-resolve_workchain_blocks", async traceSpan => {
-                return await resolve_workchain_blocks(args, context, info, traceSpan);
+                return await resolve_workchain_blocks(
+                    args,
+                    context,
+                    info,
+                    traceSpan,
+                    parent.args,
+                );
             });
         },
-        workchain_transactions: async (_parent, args, context, info) => {
+        workchain_transactions: async (parent, args, context, info) => {
             return context.trace("blockchain-workchain_transactions", async traceSpan => {
-                return await resolve_workchain_transactions(args, context, info, traceSpan);
+                return await resolve_workchain_transactions(
+                    args,
+                    context,
+                    info,
+                    traceSpan,
+                    parent.args,
+                );
             });
         },
         account_transactions: async (parent, args, context, info) => {
+            if (parent.args.time_range || parent.args.workchains) {
+                throw QError.invalidQuery(
+                    "account_transactions should not be used with time_range or workchain in blockchain args." +
+                    "Use query { account(address) { transactions }} instead");
+            }
             return context.trace("blockchain-account_transactions", async traceSpan => {
                 return await resolve_account_transactions(
-                    parent.accessRights,
                     args,
+                    context,
+                    info,
+                    traceSpan,
+                );
+            });
+        },
+        blocks: async (parent, args, context, info) => {
+            return context.trace("blockchain-resolve_workchain_blocks", async traceSpan => {
+                return await resolve_workchain_blocks(
+                    args,
+                    context,
+                    info,
+                    traceSpan,
+                    parent.args,
+                );
+            });
+        },
+        transactions: async (parent, args, context, info) => {
+            return context.trace("blockchain-workchain_transactions", async traceSpan => {
+                return await resolve_workchain_transactions(
+                    args,
+                    context,
+                    info,
+                    traceSpan,
+                    parent.args,
+                );
+            });
+        },
+    },
+    BlockchainAccountQuery: {
+        info: async (parent, _args, context, info) => {
+            return context.trace("account-info", async traceSpan => {
+                return resolve_account(parent.address, context, info, traceSpan);
+            });
+        }, 
+        transactions: async (parent, args, context, info) => {
+            return context.trace("account-transactions", async traceSpan => {
+                return await resolve_account_transactions(
+                    {
+                        account_address: parent.address,
+                        ...args,
+                    },
                     context,
                     info,
                     traceSpan,

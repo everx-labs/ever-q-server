@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.0] - 2022-03-14
+
+### New
+
+- Add new `account` query which allows:
+    - to fetch account info (e.g. boc) via `info` field
+    - to fetch transaction info via `transactions` (similar to now deprecated `blockchain.account_transactions`)
+- Add `workchains` and `time_range` parameters to `blockchain` query
+- Add new fields to `blockchain` query:
+    - `blocks` (is similar to now deprecated `workchain_blocks`)
+    - `transactions` (is similar to now deprecated `workchain_transactions`)
+- Cancel `blockchain.key_blocks` deprecation (except `seq_no` argument)
+
+### Internal
+- Prepare code for messages joins in TBD `blockchain` and `account` messages queries.
+
+### Removed
+- Functions in query api root:
+    - `key_blocks`
+    - `workchain_blocks`
+    - `workchain_transactions`
+    - `account_transactions` 
+
 ## [0.47.1] - 2022-03-02
 
 ### Fixed

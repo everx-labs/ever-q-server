@@ -1,8 +1,3 @@
-type AccessRights {
-	granted: Boolean!
-    restrictToAccounts: [String!]!
-}
-
 type BlockchainAccount {
 	_key: String!
 }
@@ -21,8 +16,17 @@ type BlockchainBlock {
 	_key: String!
 }
 
+type BlockchainQueryArgs {
+	workchains: [Int!]
+	time_range: BlockchainMasterSeqNoFilter
+}
+
 type BlockchainQuery {
-	accessRights: AccessRights!
+	args: BlockchainQueryArgs!
+}
+
+type BlockchainAccountQuery {
+	address: String!
 }
 
 # -----------------------------------------------------------------------------------
