@@ -522,6 +522,10 @@ export type BlockchainAccountPublic_CellsArgs = {
 export type BlockchainAccountQuery = {
   __typename?: 'BlockchainAccountQuery';
   address: Scalars['String'];
+  /**
+   * **UNSTABLE**
+   * Account information (e.g. boc).
+   */
   info?: Maybe<BlockchainAccount>;
   /**
    * **UNSTABLE**

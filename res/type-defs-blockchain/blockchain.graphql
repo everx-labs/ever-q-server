@@ -220,6 +220,10 @@ type BlockchainQuery {
 }
 
 type BlockchainAccountQuery {
+    """
+    **UNSTABLE**
+    Account information (e.g. boc).
+    """
     info: BlockchainAccount
     
     """
