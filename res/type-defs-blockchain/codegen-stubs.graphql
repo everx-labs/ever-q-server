@@ -9,6 +9,8 @@ type BlockchainAccount {
 
 type BlockchainMessage {
 	_key: String!
+	src_chain_order: String
+	dst_chain_order: String
 }
 
 type BlockchainTransaction {

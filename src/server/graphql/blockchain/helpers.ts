@@ -1,6 +1,5 @@
-import { FieldNode, GraphQLResolveInfo, SelectionNode, SelectionSetNode } from "graphql";
-import { QCollectionQuery } from "../../data/collection-query";
-import { OrderBy, QParams, QType } from "../../filter/filters";
+import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql";
+import { QParams } from "../../filter/filters";
 import { QRequestContext } from "../../request";
 import { QError, toU64String } from "../../utils";
 import { BlockchainMasterSeqNoFilter, Maybe, Scalars } from "./resolvers-types-generated";
@@ -108,40 +107,6 @@ export function getFieldSelectionSet(
         ?.selectionSet;
 }
 
-export function buildReturnExpression(
-    params: {
-        request: QRequestContext,
-        type: QType,
-        selectionSet: SelectionSetNode | undefined,
-        orderBy?: OrderBy[],
-        excludedFields?: string[],
-        path?: string,
-        overrides?: Map<string, string>,
-    },
-) {
-    // filter out excluded fields
-    // (this is needed for fields, which exist in new API and doesn't exist in old API)
-    const shouldBeExcluded = (s: SelectionNode) =>
-        s.kind == "Field" && params.excludedFields?.includes(s.name.value);
-    if (params.excludedFields &&
-        params.excludedFields.length > 0 &&
-        params.selectionSet?.selections.find(s => shouldBeExcluded(s))
-    ) {
-        params.selectionSet = Object.assign({}, params.selectionSet);
-        params.selectionSet.selections = params.selectionSet.selections
-            .filter(s => !shouldBeExcluded(s));
-    }
-
-    return QCollectionQuery.buildReturnExpression(
-        params.request,
-        params.type,
-        params.selectionSet,
-        params.orderBy ?? [],
-        params.path ?? "doc",
-        params.overrides,
-    );
-}
-
 export async function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scalars["String"]> }>(
     queryResult: T[],
     limit: number,
@@ -195,4 +160,8 @@ export async function processPaginatedQueryResult<T extends { chain_order?: Mayb
             hasPreviousPage: (direction == Direction.Backward) ? hasMore : false,
         },
     };
+}
+
+export function isDefined<T>(value: T | null | undefined): boolean {
+    return value !== undefined && value !== null;
 }

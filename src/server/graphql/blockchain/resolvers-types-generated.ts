@@ -706,6 +706,9 @@ export type BlockchainMessage = {
   data_hash?: Maybe<Scalars['String']>;
   /** Returns destination address string */
   dst?: Maybe<Scalars['String']>;
+  dst_chain_order?: Maybe<Scalars['String']>;
+  /** The transaction in which this message is in_msg */
+  dst_transaction?: Maybe<BlockchainTransaction>;
   /** Workchain id of the destination address (dst field) */
   dst_workchain_id?: Maybe<Scalars['Int']>;
   /** Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated. */
@@ -739,6 +742,9 @@ export type BlockchainMessage = {
   split_depth?: Maybe<Scalars['Int']>;
   /** Returns source address string */
   src?: Maybe<Scalars['String']>;
+  src_chain_order?: Maybe<Scalars['String']>;
+  /** The transaction in which this message is included to out_msgs */
+  src_transaction?: Maybe<BlockchainTransaction>;
   /** Workchain id of the source address (src field) */
   src_workchain_id?: Maybe<Scalars['Int']>;
   /**
@@ -2402,6 +2408,8 @@ export type BlockchainMessageResolvers<ContextType = any, ParentType extends Res
   data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   data_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   dst?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dst_chain_order?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  dst_transaction?: Resolver<Maybe<ResolversTypes['BlockchainTransaction']>, ParentType, ContextType>;
   dst_workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   fwd_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainMessageFwd_FeeArgs, never>>;
   hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2416,6 +2424,8 @@ export type BlockchainMessageResolvers<ContextType = any, ParentType extends Res
   proof?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   split_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   src?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  src_chain_order?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  src_transaction?: Resolver<Maybe<ResolversTypes['BlockchainTransaction']>, ParentType, ContextType>;
   src_workchain_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   status_name?: Resolver<Maybe<ResolversTypes['MessageProcessingStatusEnum']>, ParentType, ContextType>;
