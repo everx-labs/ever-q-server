@@ -695,7 +695,7 @@ export type BlockchainMasterSeqNoRange = {
  * body or payload. The body is essentially arbitrary, to be interpreted by the
  * destination smart contract. It can be queried with the following fields:
  */
-export type BlockchainMessage = {
+export type BlockchainMessage = Node & {
   __typename?: 'BlockchainMessage';
   _key: Scalars['String'];
   /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
@@ -2063,7 +2063,7 @@ export type ResolversTypes = {
   MessageTypeEnum: MessageTypeEnum;
   MsgEnvelope: ResolverTypeWrapper<MsgEnvelope>;
   MsgForwardPrices: ResolverTypeWrapper<MsgForwardPrices>;
-  Node: ResolversTypes['BlockchainAccount'] | ResolversTypes['BlockchainBlock'] | ResolversTypes['BlockchainTransaction'];
+  Node: ResolversTypes['BlockchainAccount'] | ResolversTypes['BlockchainBlock'] | ResolversTypes['BlockchainMessage'] | ResolversTypes['BlockchainTransaction'];
   OtherCurrency: ResolverTypeWrapper<OtherCurrency>;
   OutMsg: ResolverTypeWrapper<OutMsg>;
   OutMsgTypeEnum: OutMsgTypeEnum;
@@ -2136,7 +2136,7 @@ export type ResolversParentTypes = {
   InMsg: InMsg;
   MsgEnvelope: MsgEnvelope;
   MsgForwardPrices: MsgForwardPrices;
-  Node: ResolversParentTypes['BlockchainAccount'] | ResolversParentTypes['BlockchainBlock'] | ResolversParentTypes['BlockchainTransaction'];
+  Node: ResolversParentTypes['BlockchainAccount'] | ResolversParentTypes['BlockchainBlock'] | ResolversParentTypes['BlockchainMessage'] | ResolversParentTypes['BlockchainTransaction'];
   OtherCurrency: OtherCurrency;
   OutMsg: OutMsg;
   PageInfo: PageInfo;
@@ -2742,7 +2742,7 @@ export type MsgForwardPricesResolvers<ContextType = any, ParentType extends Reso
 };
 
 export type NodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['Node'] = ResolversParentTypes['Node']> = {
-  __resolveType: TypeResolveFn<'BlockchainAccount' | 'BlockchainBlock' | 'BlockchainTransaction', ParentType, ContextType>;
+  __resolveType: TypeResolveFn<'BlockchainAccount' | 'BlockchainBlock' | 'BlockchainMessage' | 'BlockchainTransaction', ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
 };
 

@@ -6,7 +6,7 @@ Message layout queries.  A message consists of its header followed by its
 body or payload. The body is essentially arbitrary, to be interpreted by the
 destination smart contract. It can be queried with the following fields:
 """
-type BlockchainMessage {
+type BlockchainMessage implements Node {
 	"""
 	BlockchainMessage.id is "message/"-prefixed Message.id.
 	For id without prefix see "hash".
