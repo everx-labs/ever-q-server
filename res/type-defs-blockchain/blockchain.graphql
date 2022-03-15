@@ -61,7 +61,6 @@ type BlockchainQuery {
     ): BlockchainAccountQuery
 
     """
-    **DEPRECATED** (is moved to root query)
     **UNSTABLE**
     Returns seq_no range such that:
     1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
@@ -286,17 +285,4 @@ extend type Query {
     Blockchain-related information (blocks, transactions, etc.)
     """
     blockchain: BlockchainQuery
-
-    """
-    **UNSTABLE**
-    Returns seq_no range such that:
-    1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-    2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-    If time_start is null, then start is null. If time_end is null, then end is null.
-    **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
-    """
-    master_seq_no_range(
-         time_start: Int,
-         time_end: Int,
-    ): BlockchainMasterSeqNoRange
 }

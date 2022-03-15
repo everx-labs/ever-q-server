@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
     - `blocks` (is similar to now deprecated `workchain_blocks`)
     - `transactions` (is similar to now deprecated `workchain_transactions`)
 - Cancel `blockchain.key_blocks` deprecation
+- Cancel `blockchain.master_seq_no_range` deprecation
 
 ### Breaking
 
@@ -25,6 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 - Functions in query api root:
+    - `master_seq_no_range`
     - `key_blocks`
     - `workchain_blocks`
     - `workchain_transactions`

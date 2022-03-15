@@ -864,7 +864,6 @@ export type BlockchainQuery = {
    */
   account?: Maybe<BlockchainAccountQuery>;
   /**
-   * **DEPRECATED** (is moved to root query)
    * **UNSTABLE**
    * Returns seq_no range such that:
    * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
@@ -1672,21 +1671,6 @@ export type Query = {
    * Blockchain-related information (blocks, transactions, etc.)
    */
   blockchain?: Maybe<BlockchainQuery>;
-  /**
-   * **UNSTABLE**
-   * Returns seq_no range such that:
-   * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-   * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-   * If time_start is null, then start is null. If time_end is null, then end is null.
-   * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
-   */
-  master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>;
-};
-
-
-export type QueryMaster_Seq_No_RangeArgs = {
-  time_start?: Maybe<Scalars['Int']>;
-  time_end?: Maybe<Scalars['Int']>;
 };
 
 export enum SkipReasonEnum {
@@ -2760,7 +2744,6 @@ export type PageInfoResolvers<ContextType = any, ParentType extends ResolversPar
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   blockchain?: Resolver<Maybe<ResolversTypes['BlockchainQuery']>, ParentType, ContextType>;
-  master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<QueryMaster_Seq_No_RangeArgs, never>>;
 };
 
 export type TransactionActionResolvers<ContextType = any, ParentType extends ResolversParentTypes['TransactionAction'] = ResolversParentTypes['TransactionAction']> = {

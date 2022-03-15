@@ -117,13 +117,6 @@ async function resolve_maser_seq_no_range(
 }
 
 export const resolvers: Resolvers<QRequestContext> = {
-    Query: {
-        master_seq_no_range: (_parent, args, context) => {
-            return context.trace("master_seq_no_range", async traceSpan => {
-                return await resolve_maser_seq_no_range(args, context, traceSpan);
-            });
-        },
-    },
     BlockchainQuery: {
         account: async (_parent, args, context) => {
             const addressWithoutPrefix = args.address.split(":")[1];
