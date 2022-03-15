@@ -117,6 +117,9 @@ async function resolve_maser_seq_no_range(
 }
 
 export const resolvers: Resolvers<QRequestContext> = {
+    Query: {
+        blockchain: () => ({}),
+    },
     BlockchainQuery: {
         account: async (_parent, args, context) => {
             const addressWithoutPrefix = args.address.split(":")[1];
