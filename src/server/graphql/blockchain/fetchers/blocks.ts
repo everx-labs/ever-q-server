@@ -17,9 +17,8 @@ import {
 import {
     BlockchainBlock,
     BlockchainBlocksConnection,
-    BlockchainQueryArgs,
+    BlockchainQueryBlocksArgs,
     BlockchainQueryKey_BlocksArgs,
-    BlockchainQueryWorkchain_BlocksArgs,
 } from "../resolvers-types-generated";
 
 
@@ -28,29 +27,12 @@ export async function resolve_key_blocks(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
-    parentArgs: BlockchainQueryArgs,
 ) {
     // filters
     const filters: string[] = [];
     const params = new QParams();
 
-    if (parentArgs.workchains &&
-        parentArgs.workchains.length > 0 &&
-        !parentArgs.workchains.includes(-1)
-    ) {
-        throw QError.invalidQuery("key_blocks are available only for workchain -1 (masterchain)");
-    }
-
-    if (args.seq_no && parentArgs.time_range) {
-        throw QError.invalidQuery("seq_no in key_blocks and time_range in blockchain should not be used simultaneously");
-    }
-    args.seq_no = args.seq_no || parentArgs.time_range;
-
-    const rename_seq_no = ({
-        seq_no,
-        ...remainder
-    }: BlockchainQueryKey_BlocksArgs) => ({ master_seq_no: seq_no, ...remainder });
-    await prepareChainOrderFilter(rename_seq_no(args), params, filters, context);
+    await prepareChainOrderFilter(args, params, filters, context);
     filters.push("doc.key_block == true");
 
     const {
@@ -97,22 +79,16 @@ export async function resolve_key_blocks(
     ) as BlockchainBlocksConnection;
 }
 
-export async function resolve_workchain_blocks(
-    args: BlockchainQueryWorkchain_BlocksArgs,
+export async function resolve_blockchain_blocks(
+    args: BlockchainQueryBlocksArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
-    parentArgs: BlockchainQueryArgs,
 ) {
     // validate args
     if (args.thread && !isDefined(args.workchain)) {
         throw QError.invalidQuery("Workchain is required for the thread filter");
     }
-
-    if (args.master_seq_no && parentArgs.time_range) {
-        throw QError.invalidQuery("master_seq_no in resolve_workchain_blocks and time_range in blockchain should not be used simultaneously");
-    }
-    args.master_seq_no = args.master_seq_no || parentArgs.time_range;
 
     // filters
     const filters: string[] = [];
@@ -121,10 +97,6 @@ export async function resolve_workchain_blocks(
     await prepareChainOrderFilter(args, params, filters, context);
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
-    }
-    if (parentArgs.workchains && parentArgs.workchains.length > 0) {
-        // TODO: Optimize
-        filters.push(`doc.workchain_id IN @${params.add(parentArgs.workchains)}`);
     }
     if (isDefined(args.thread)) {
         filters.push(`doc.shard == @${params.add(args.thread)}`);

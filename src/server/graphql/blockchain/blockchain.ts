@@ -10,8 +10,8 @@ import {
     resolve_account,
     resolve_account_transactions,
     resolve_key_blocks,
-    resolve_workchain_blocks,
-    resolve_workchain_transactions,
+    resolve_blockchain_blocks,
+    resolve_blockchain_transactions,
 } from "./fetchers";
 
 function parseMasterSeqNo(chain_order: string) {
@@ -123,14 +123,8 @@ export const resolvers: Resolvers<QRequestContext> = {
                 return await resolve_maser_seq_no_range(args, context, traceSpan);
             });
         },
-        blockchain: async (_parent, args) => {
-            if (args.workchains && args.workchains.length > 3) {
-                throw QError.invalidQuery("workchains filter is limited by 3 workchains");
-            }
-            return {
-                args,
-            };
-        },
+    },
+    BlockchainQuery: {
         account: async (_parent, args, context) => {
             const addressWithoutPrefix = args.address.split(":")[1];
             if (addressWithoutPrefix === undefined || addressWithoutPrefix.length !== 64) {
@@ -143,76 +137,43 @@ export const resolvers: Resolvers<QRequestContext> = {
             return {
                 address: args.address
             }
-        }
-    },
-    BlockchainQuery: {
+        },
         master_seq_no_range: (_parent, args, context) => {
             return context.trace("blockchain-master_seq_no_range", async traceSpan => {
                 return await resolve_maser_seq_no_range(args, context, traceSpan);
             });
         },
-        key_blocks: async (parent, args, context, info) => {
+        key_blocks: async (_parent, args, context, info) => {
             return context.trace("blockchain-resolve_key_blocks", async traceSpan => {
-                return await resolve_key_blocks(args, context, info, traceSpan, parent.args);
+                return await resolve_key_blocks(args, context, info, traceSpan);
             });
         },
-        workchain_blocks: async (parent, args, context, info) => {
+        workchain_blocks: async (_parent, args, context, info) => {
             return context.trace("blockchain-resolve_workchain_blocks", async traceSpan => {
-                return await resolve_workchain_blocks(
-                    args,
-                    context,
-                    info,
-                    traceSpan,
-                    parent.args,
-                );
+                const repaired_args = { master_seq_no_range: args.master_seq_no, ...args };
+                return await resolve_blockchain_blocks(repaired_args, context, info, traceSpan);
             });
         },
-        workchain_transactions: async (parent, args, context, info) => {
+        workchain_transactions: async (_parent, args, context, info) => {
             return context.trace("blockchain-workchain_transactions", async traceSpan => {
-                return await resolve_workchain_transactions(
-                    args,
-                    context,
-                    info,
-                    traceSpan,
-                    parent.args,
-                );
+                const repaired_args = { master_seq_no_range: args.master_seq_no, ...args };
+                return await resolve_blockchain_transactions(repaired_args, context, info, traceSpan);
             });
         },
-        account_transactions: async (parent, args, context, info) => {
-            if (parent.args.time_range || parent.args.workchains) {
-                throw QError.invalidQuery(
-                    "account_transactions should not be used with time_range or workchain in blockchain args." +
-                    "Use query { account(address) { transactions }} instead");
-            }
+        account_transactions: async (_parent, args, context, info) => {
             return context.trace("blockchain-account_transactions", async traceSpan => {
-                return await resolve_account_transactions(
-                    args,
-                    context,
-                    info,
-                    traceSpan,
-                );
+                const repaired_args = { master_seq_no_range: args.master_seq_no, ...args };
+                return await resolve_account_transactions(args.account_address, repaired_args, context, info, traceSpan);
             });
         },
-        blocks: async (parent, args, context, info) => {
+        blocks: async (_parent, args, context, info) => {
             return context.trace("blockchain-resolve_workchain_blocks", async traceSpan => {
-                return await resolve_workchain_blocks(
-                    args,
-                    context,
-                    info,
-                    traceSpan,
-                    parent.args,
-                );
+                return await resolve_blockchain_blocks(args, context, info, traceSpan);
             });
         },
-        transactions: async (parent, args, context, info) => {
+        transactions: async (_parent, args, context, info) => {
             return context.trace("blockchain-workchain_transactions", async traceSpan => {
-                return await resolve_workchain_transactions(
-                    args,
-                    context,
-                    info,
-                    traceSpan,
-                    parent.args,
-                );
+                return await resolve_blockchain_transactions(args, context, info, traceSpan);
             });
         },
     },
@@ -224,15 +185,7 @@ export const resolvers: Resolvers<QRequestContext> = {
         }, 
         transactions: async (parent, args, context, info) => {
             return context.trace("account-transactions", async traceSpan => {
-                return await resolve_account_transactions(
-                    {
-                        account_address: parent.address,
-                        ...args,
-                    },
-                    context,
-                    info,
-                    traceSpan,
-                );
+                return await resolve_account_transactions(parent.address, args, context, info, traceSpan);
             });
         },
     },

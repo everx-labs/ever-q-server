@@ -16,15 +16,6 @@ type BlockchainBlock {
 	_key: String!
 }
 
-type BlockchainQueryArgs {
-	workchains: [Int!]
-	time_range: BlockchainMasterSeqNoFilter
-}
-
-type BlockchainQuery {
-	args: BlockchainQueryArgs!
-}
-
 type BlockchainAccountQuery {
 	address: String!
 }

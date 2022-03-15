@@ -52,6 +52,15 @@ type BlockchainTransactionEdge {
 
 type BlockchainQuery {
     """
+    **UNSTABLE**
+    Account-related information
+    """
+    account(
+        "Account address is required (64 hex symbols)"
+        address: String!
+    ): BlockchainAccountQuery
+
+    """
     **DEPRECATED** (is moved to root query)
     **UNSTABLE**
     Returns seq_no range such that:
@@ -71,10 +80,9 @@ type BlockchainQuery {
     """
     key_blocks(
         """
-        **DEPRECATED** (is moved to upper level as "time_range")
-        Filter by seq_no.
+        Filter by master blocks seq_no.
         """
-        seq_no: BlockchainMasterSeqNoFilter
+        master_seq_no_range: BlockchainMasterSeqNoFilter
 
         "This field is mutually exclusive with 'last'"
         first: Int 
@@ -90,6 +98,14 @@ type BlockchainQuery {
     This node could be used for a cursor-based pagination of blocks.
     """
     blocks(
+        """
+        The blocks could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockсhain { master_seq_no_range }
+        """
+        master_seq_no_range: BlockchainMasterSeqNoFilter
+
+        "Optional filter by workchain"
+        workchain: Int
         "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
         thread: String,
 
@@ -112,6 +128,15 @@ type BlockchainQuery {
     This node could be used for a cursor-based pagination of transactions.
     """
     transactions(
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockchain { master_seq_no_range }
+        """
+        master_seq_no_range: BlockchainMasterSeqNoFilter
+
+        "Optional filter by workchain"
+        workchain: Int
+
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
         min_balance_delta: Int,
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
@@ -235,7 +260,7 @@ type BlockchainAccountQuery {
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
         """
-        time_range: BlockchainMasterSeqNoFilter
+        master_seq_no_range: BlockchainMasterSeqNoFilter
 
         aborted: Boolean
 
@@ -258,26 +283,9 @@ type BlockchainAccountQuery {
 extend type Query {
     """
     **UNSTABLE**
-    Account-related information
-    """
-    account(
-        "Account address is required (64 hex symbols)"
-        address: String!
-    ): BlockchainAccountQuery
-
-    """
-    **UNSTABLE**
     Blockchain-related information (blocks, transactions, etc.)
     """
-    blockchain(
-        "Optional filter by workchains. Max array length is 3."
-        workchains: [Int!]
-        """
-        Optional filter by seq_no of corresponding masterchain blocks.
-        See also: master_seq_no_range
-        """
-        time_range: BlockchainMasterSeqNoFilter
-    ): BlockchainQuery
+    blockchain: BlockchainQuery
 
     """
     **UNSTABLE**

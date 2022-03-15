@@ -41,7 +41,7 @@ export function processPaginationArgs(args: PaginationArgs) {
 }
 
 export type ChainOrderFilterArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>;
+    master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>;
     after?: Maybe<Scalars["String"]>;
     before?: Maybe<Scalars["String"]>;
 };
@@ -53,10 +53,10 @@ export async function prepareChainOrderFilter(
     context: QRequestContext,
 ) {
     // master_seq_no
-    let start_chain_order = args.master_seq_no?.start
-        ? toU64String(args.master_seq_no.start)
+    let start_chain_order = args.master_seq_no_range?.start
+        ? toU64String(args.master_seq_no_range.start)
         : null;
-    let end_chain_order = args.master_seq_no?.end ? toU64String(args.master_seq_no.end) : null;
+    let end_chain_order = args.master_seq_no_range?.end ? toU64String(args.master_seq_no_range.end) : null;
 
     // before, after
     start_chain_order = args.after && (!start_chain_order || args.after > start_chain_order)

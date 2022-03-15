@@ -17,26 +17,19 @@ import {
     processPaginationArgs
 } from "../helpers";
 import {
-    BlockchainQueryAccount_TransactionsArgs,
-    BlockchainQueryArgs,
-    BlockchainQueryWorkchain_TransactionsArgs,
+    BlockchainAccountQueryTransactionsArgs,
+    BlockchainQueryTransactionsArgs,
     BlockchainTransaction,
     BlockchainTransactionsConnection
 } from "../resolvers-types-generated";
 
-export async function resolve_workchain_transactions(
-    args: BlockchainQueryWorkchain_TransactionsArgs,
+export async function resolve_blockchain_transactions(
+    args: BlockchainQueryTransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
-    parentArgs: BlockchainQueryArgs,
 ) {
     const maxJoinDepth = 1;
-
-    if (args.master_seq_no && parentArgs.time_range) {
-        throw QError.invalidQuery("master_seq_no in resolve_workchain_blocks and time_range in blockchain should not be used simultaneously");
-    }
-    args.master_seq_no = args.master_seq_no || parentArgs.time_range;
 
     // filters
     const filters: string[] = [];
@@ -46,9 +39,6 @@ export async function resolve_workchain_transactions(
 
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
-    }
-    if (parentArgs.workchains && parentArgs.workchains.length > 0) {
-        filters.push(`doc.workchain_id IN @${params.add(parentArgs.workchains)}`);
     }
     if (isDefined(args.min_balance_delta)) {
         const min_balance_delta = convertBigUInt(2, args.min_balance_delta);
@@ -107,7 +97,8 @@ export async function resolve_workchain_transactions(
 }
 
 export async function resolve_account_transactions(
-    args: BlockchainQueryAccount_TransactionsArgs,
+    account_address: string,
+    args: BlockchainAccountQueryTransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
@@ -115,7 +106,7 @@ export async function resolve_account_transactions(
     const maxJoinDepth = 1;
     // validate args
     const restrictToAccounts = (await context.requireGrantedAccess({})).restrictToAccounts;
-    if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(args.account_address)) {
+    if (restrictToAccounts.length != 0 && !restrictToAccounts.includes(account_address)) {
         throw QError.invalidQuery("This account_addr is not allowed");
     }
 
@@ -124,7 +115,7 @@ export async function resolve_account_transactions(
     const params = new QParams();
 
     await prepareChainOrderFilter(args, params, filters, context);
-    filters.push(`doc.account_addr == @${params.add(args.account_address)}`);
+    filters.push(`doc.account_addr == @${params.add(account_address)}`);
     if (isDefined(args.aborted)) {
         filters.push(`doc.aborted == @${params.add(args.aborted)}`);
     }
