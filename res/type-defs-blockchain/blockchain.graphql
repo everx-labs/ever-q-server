@@ -137,9 +137,9 @@ type BlockchainQuery {
         workchain: Int
 
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: Int,
+        min_balance_delta: String,
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: Int,
+        max_balance_delta: String,
 
         "This field is mutually exclusive with 'last'"
         first: Int 
@@ -264,9 +264,9 @@ type BlockchainAccountQuery {
         aborted: Boolean
 
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: Int,
+        min_balance_delta: String,
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: Int,
+        max_balance_delta: String,
 
 
         "This field is mutually exclusive with 'last'"

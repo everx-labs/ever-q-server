@@ -538,8 +538,8 @@ export type BlockchainAccountQuery = {
 export type BlockchainAccountQueryTransactionsArgs = {
   master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>;
   aborted?: Maybe<Scalars['Boolean']>;
-  min_balance_delta?: Maybe<Scalars['Int']>;
-  max_balance_delta?: Maybe<Scalars['Int']>;
+  min_balance_delta?: Maybe<Scalars['String']>;
+  max_balance_delta?: Maybe<Scalars['String']>;
   first?: Maybe<Scalars['Int']>;
   after?: Maybe<Scalars['String']>;
   last?: Maybe<Scalars['Int']>;
@@ -944,8 +944,8 @@ export type BlockchainQueryBlocksArgs = {
 export type BlockchainQueryTransactionsArgs = {
   master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>;
   workchain?: Maybe<Scalars['Int']>;
-  min_balance_delta?: Maybe<Scalars['Int']>;
-  max_balance_delta?: Maybe<Scalars['Int']>;
+  min_balance_delta?: Maybe<Scalars['String']>;
+  max_balance_delta?: Maybe<Scalars['String']>;
   first?: Maybe<Scalars['Int']>;
   after?: Maybe<Scalars['String']>;
   last?: Maybe<Scalars['Int']>;
