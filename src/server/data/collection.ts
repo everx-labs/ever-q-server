@@ -378,15 +378,15 @@ export class QDataCollection {
         accessRights: AccessRights,
         request: QRequestContext,
         traceSpan: QTraceSpan,
-    ) {
+    ): Promise<boolean> {
         if (!args.orderBy || args.orderBy.length === 0) {
-            return;
+            return true;
         }
         if (!args.orderBy || args.orderBy.length === 0) {
-            return;
+            return true;
         }
         if (args.limit === undefined || args.limit !== 1) {
-            return;
+            return true;
         }
         const selection: SelectionSetNode = {
             kind: "SelectionSet",
@@ -411,19 +411,19 @@ export class QDataCollection {
             request.services.config.queries.filter,
         );
         if (query === null) {
-            args.filter = { id: { in: [] } };
-            return;
+            return false;
         }
         const records = await this.fetchRecords(query, args, selection, request, traceSpan);
-        if (records.length !== 1) {
-            if (records.length === 0) {
-                args.filter = { id: { in: [] } };
-            }
-            return;
+        if (records.length === 0) {
+            return false;
+        }
+        if (records.length > 1) {
+            return true;
         }
         const id = (records[0] as Record<string, unknown>)["_key"] as string;
         args.filter = { id: { eq: id } };
         args.orderBy = undefined;
+        return true;
     }
 
     async fetchRecords(
@@ -533,22 +533,24 @@ export class QDataCollection {
                 try {
                     const accessRights = await request.requireGrantedAccess(args);
                     const selectionSet = selection.fieldNodes[0].selectionSet;
-                    await this.optimizeSortedQueryWithSingleResult(
+                    const optimizationPassed = await this.optimizeSortedQueryWithSingleResult(
                         args,
                         accessRights,
                         request,
                         traceSpan,
                     );
-                    const query = QCollectionQuery.create(
-                        request,
-                        this.name,
-                        this.docType,
-                        args,
-                        selectionSet,
-                        accessRights,
-                        required(this.provider).shardingDegree,
-                        request.services.config.queries.filter,
-                    );
+                    const query = optimizationPassed
+                        ? QCollectionQuery.create(
+                            request,
+                            this.name,
+                            this.docType,
+                            args,
+                            selectionSet,
+                            accessRights,
+                            required(this.provider).shardingDegree,
+                            request.services.config.queries.filter,
+                        )
+                        : null;
                     if (query === null) {
                         this.log.debug("QUERY", args, 0, "SKIPPED", request.remoteAddress);
                         return [];
