@@ -24,14 +24,6 @@ All notable changes to this project will be documented in this file.
 
 - Prepare code for messages joins in TBD `blockchain` and `account` messages queries.
 
-### Removed
-
-- Functions in query api root:
-    - `master_seq_no_range`
-    - `key_blocks`
-    - `workchain_blocks`
-    - `workchain_transactions`
-    - `account_transactions` 
 
 ## [0.47.1] - 2022-03-02
 
@@ -58,12 +50,6 @@ All notable changes to this project will be documented in this file.
     - `account`
     - `in_message`
     - `out_messages`
-- Duplicate functions inside `blockchain` query to api root:
-    - `master_seq_no_range`
-    - `key_blocks`
-    - `workchain_blocks`
-    - `workchain_transactions`
-    - `account_transactions` 
 
 ### Deprecated
 - `when` argument in all joined fields (for example, transaction.in_message's `when` argument)
