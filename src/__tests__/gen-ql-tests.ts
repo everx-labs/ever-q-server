@@ -372,6 +372,30 @@ test("reduced RETURN", () => {
         }
     `));
 
+    expect(queryText(
+        blocks,
+        "id",
+        [
+            {
+                path: "seq_no",
+                direction: "DESC",
+            },
+        ],
+        undefined,
+        {
+            workchain_id: { eq: -1 },
+        },
+        1,
+    )).toEqual(normalized(`
+        FOR doc IN blocks 
+        FILTER doc.workchain_id == @v1 SORT doc.seq_no DESC
+        LIMIT 1 
+        RETURN {
+            _key: doc._key,
+            seq_no: doc.seq_no
+        }
+    `));
+
 });
 
 function selection(name: string, selections: SelectionNode[]): FieldNode {
@@ -544,4 +568,16 @@ test("Account BOC versioning", () => {
             "( doc.account && { boc: doc.account.boc1 || doc.account.boc } )");
 });
 
+
+test("Use null in queries", () => {
+    const params = new QParams();
+
+    params.clear();
+    const ql = Account.filterCondition(
+        params,
+        "doc",
+        { last_paid: null },
+    );
+    expect(ql).toBeNull();
+});
 

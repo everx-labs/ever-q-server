@@ -87,7 +87,10 @@ export const stringWithLowerFilter = (doc?: string) => withDoc({
     },
 }, doc);
 
-export const unixSeconds = (doc?: string) => u32WithFormatter(ToStringFormatter.unixSecondsToString, doc);
+export const unixSeconds = (doc?: string) => u32WithFormatter(
+    ToStringFormatter.unixSecondsToString,
+    doc,
+);
 
 export const grams = u128;
 
@@ -121,7 +124,10 @@ export const OtherCurrency = {
     value: u256(),
 };
 
-export const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf(ref({ OtherCurrency }), doc);
+export const otherCurrencyCollection = (doc?: string): TypeDef => arrayOf(
+    ref({ OtherCurrency }),
+    doc,
+);
 
 export enum DbTypeCategory {
     unresolved = "unresolved",
@@ -381,7 +387,7 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
                 return 1;
             }
         } else if (b.collection) {
-            return -1
+            return -1;
         } else {
             return 0;
         }
