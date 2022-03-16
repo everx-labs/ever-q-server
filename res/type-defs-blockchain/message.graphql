@@ -6,7 +6,7 @@ Message layout queries.  A message consists of its header followed by its
 body or payload. The body is essentially arbitrary, to be interpreted by the
 destination smart contract. It can be queried with the following fields:
 """
-type BlockchainMessage {
+type BlockchainMessage implements Node {
 	"""
 	BlockchainMessage.id is "message/"-prefixed Message.id.
 	For id without prefix see "hash".
@@ -42,6 +42,8 @@ type BlockchainMessage {
 	data_hash: String
 	"Returns destination address string"
 	dst: String
+	"The transaction in which this message is in_msg"
+	dst_transaction: BlockchainTransaction
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: Int
 	"Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated."
@@ -69,6 +71,8 @@ type BlockchainMessage {
 	split_depth: Int
 	"Returns source address string"
 	src: String
+	"The transaction in which this message is included to out_msgs"
+	src_transaction: BlockchainTransaction
 	"Workchain id of the source address (src field)"
 	src_workchain_id: Int
 	"""

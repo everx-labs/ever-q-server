@@ -2,9 +2,9 @@ import {
     BigIntArgs,
     resolveBigUInt,
     unixSecondsToString,
-} from "../../filter/filters";
-import { QRequestContext } from "../../request";
-import { AccountStatusEnum, Resolvers, TransactionProcessingStatusEnum, TransactionTypeEnum } from "./resolvers-types-generated";
+} from "../../../filter/filters";
+import { QRequestContext } from "../../../request";
+import { AccountStatusEnum, Resolvers, TransactionProcessingStatusEnum, TransactionTypeEnum } from "../resolvers-types-generated";
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainTransaction: {

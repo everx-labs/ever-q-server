@@ -1,14 +1,11 @@
-type AccessRights {
-	granted: Boolean!
-    restrictToAccounts: [String!]!
-}
-
 type BlockchainAccount {
 	_key: String!
 }
 
 type BlockchainMessage {
 	_key: String!
+	src_chain_order: String
+	dst_chain_order: String
 }
 
 type BlockchainTransaction {
@@ -19,8 +16,8 @@ type BlockchainBlock {
 	_key: String!
 }
 
-type BlockchainQuery {
-	accessRights: AccessRights!
+type BlockchainAccountQuery {
+	address: String!
 }
 
 # -----------------------------------------------------------------------------------
