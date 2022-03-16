@@ -50,10 +50,16 @@ type BlockchainTransactionEdge {
     cursor: String!
 }
 
-"""
-**DEPRECATED** (all subqueries were moved to root query)
-"""
 type BlockchainQuery {
+    """
+    **UNSTABLE**
+    Account-related information
+    """
+    account(
+        "Account address is required (64 hex symbols)"
+        address: String!
+    ): BlockchainAccountQuery
+
     """
     **UNSTABLE**
     Returns seq_no range such that:
@@ -73,9 +79,9 @@ type BlockchainQuery {
     """
     key_blocks(
         """
-        Filter by seq_no.
+        Filter by master blocks seq_no.
         """
-        seq_no: BlockchainMasterSeqNoFilter
+        master_seq_no_range: BlockchainMasterSeqNoFilter
 
         "This field is mutually exclusive with 'last'"
         first: Int 
@@ -87,6 +93,65 @@ type BlockchainQuery {
     ): BlockchainBlocksConnection
 
     """
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of blocks.
+    """
+    blocks(
+        """
+        The blocks could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockсhain { master_seq_no_range }
+        """
+        master_seq_no_range: BlockchainMasterSeqNoFilter
+
+        "Optional filter by workchain"
+        workchain: Int
+        "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
+        thread: String,
+
+        "Optional filter by minimum transactions in a block (unoptimized, query could be dropped by timeout)"
+        min_tr_count: Int,
+        "Optional filter by maximum transactions in a block (unoptimized, query could be dropped by timeout)"
+        max_tr_count: Int,
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainBlocksConnection
+
+    """
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of transactions.
+    """
+    transactions(
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: blockchain { master_seq_no_range }
+        """
+        master_seq_no_range: BlockchainMasterSeqNoFilter
+
+        "Optional filter by workchain"
+        workchain: Int
+
+        "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
+        min_balance_delta: String,
+        "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
+        max_balance_delta: String,
+
+        "This field is mutually exclusive with 'last'"
+        first: Int 
+        after: String
+        
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+    ): BlockchainTransactionsConnection
+
+    """
+    **DEPRECATED** (is moved to root query)
     **UNSTABLE**
     This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
     """
@@ -117,6 +182,7 @@ type BlockchainQuery {
     ): BlockchainBlocksConnection
 
     """
+    **DEPRECATED** (is moved to root query)
     **UNSTABLE**
     This node could be used for a cursor-based pagination of transactions filtered by workchains.
     """
@@ -145,6 +211,7 @@ type BlockchainQuery {
     ): BlockchainTransactionsConnection
 
     """
+    **DEPRECATED** (is moved to root query)
     **UNSTABLE**
     This node could be used for a cursor-based pagination of transactions filtered by account addresses.
     """
@@ -176,120 +243,30 @@ type BlockchainQuery {
     ): BlockchainTransactionsConnection
 }
 
-extend type Query {
-    "This node is unstable"
-    blockchain(accessKey: String): BlockchainQuery
-
+type BlockchainAccountQuery {
     """
     **UNSTABLE**
-    Returns seq_no range such that:
-    1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-    2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-    If time_start is null, then start is null. If time_end is null, then end is null.
-    **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
+    Account information (e.g. boc).
     """
-    master_seq_no_range(
-         time_start: Int,
-         time_end: Int,
-    ): BlockchainMasterSeqNoRange
-
+    info: BlockchainAccount
+    
     """
     **UNSTABLE**
-    This node could be used for a cursor-based pagination of key blocks.
+    This node could be used for a cursor-based pagination of account transactions.
     """
-    key_blocks(
-        """
-        Filter by seq_no.
-        """
-        seq_no: BlockchainMasterSeqNoFilter
-
-        "This field is mutually exclusive with 'last'"
-        first: Int 
-        after: String
-        
-        "This field is mutually exclusive with 'first'"
-        last: Int
-        before: String
-    ): BlockchainBlocksConnection
-
-    """
-    **UNSTABLE**
-    This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
-    """
-    workchain_blocks(
-        """
-        The blocks could be filtered by seq_no of corresponding masterchain blocks.
-        See also: blockсhain { master_seq_no_range }
-        """
-        master_seq_no: BlockchainMasterSeqNoFilter
-
-        "Optional filter by workchain"
-        workchain: Int
-        "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
-        thread: String,
-
-        "Optional filter by minimum transactions in a block (unoptimized, query could be dropped by timeout)"
-        min_tr_count: Int,
-        "Optional filter by maximum transactions in a block (unoptimized, query could be dropped by timeout)"
-        max_tr_count: Int,
-
-        "This field is mutually exclusive with 'last'"
-        first: Int 
-        after: String
-        
-        "This field is mutually exclusive with 'first'"
-        last: Int
-        before: String
-    ): BlockchainBlocksConnection
-
-    """
-    **UNSTABLE**
-    This node could be used for a cursor-based pagination of transactions filtered by workchains.
-    """
-    workchain_transactions(
+    transactions(
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
-        See also: blockchain { master_seq_no_range }
+        See also: "master_seq_no_range"
         """
-        master_seq_no: BlockchainMasterSeqNoFilter
-
-        "Optional filter by workchain"
-        workchain: Int
-
-        "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: Int,
-        "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: Int,
-
-        "This field is mutually exclusive with 'last'"
-        first: Int 
-        after: String
-        
-        "This field is mutually exclusive with 'first'"
-        last: Int
-        before: String
-    ): BlockchainTransactionsConnection
-
-    """
-    **UNSTABLE**
-    This node could be used for a cursor-based pagination of transactions filtered by account addresses.
-    """
-    account_transactions(
-        """
-        The transactions could be filtered by seq_no of corresponding masterchain blocks.
-        See also: blockchain { master_seq_no_range }
-        """
-        master_seq_no: BlockchainMasterSeqNoFilter
-
-        "Account address is required (64 hex symbols)"
-        account_address: String!
+        master_seq_no_range: BlockchainMasterSeqNoFilter
 
         aborted: Boolean
 
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: Int,
+        min_balance_delta: String,
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: Int,
+        max_balance_delta: String,
 
 
         "This field is mutually exclusive with 'last'"
@@ -299,7 +276,13 @@ extend type Query {
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
-
-        accessKey: String
     ): BlockchainTransactionsConnection
+}
+
+extend type Query {
+    """
+    **UNSTABLE**
+    Blockchain-related information (blocks, transactions, etc.)
+    """
+    blockchain: BlockchainQuery
 }

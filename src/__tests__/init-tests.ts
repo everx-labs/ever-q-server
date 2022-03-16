@@ -36,6 +36,7 @@ import {
 } from "../server/auth";
 import { QDataCollection } from "../server/data/collection";
 import {
+    CollectionFilter,
     OrderBy, QRequestParams,
 } from "../server/filter/filters";
 import { gql } from "apollo-server";
@@ -84,6 +85,8 @@ export function queryText(
     result: string,
     orderBy?: OrderBy[],
     request?: QRequestParams,
+    filter?: CollectionFilter,
+    limit?: number | null,
 ): string {
     return normalized(
         QCollectionQuery.create(
@@ -91,7 +94,8 @@ export function queryText(
             collection.name,
             collection.docType,
             {
-                filter: {},
+                filter: filter ?? {},
+                limit,
                 orderBy,
             },
             selectionInfo(result),

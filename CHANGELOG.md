@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.48.0] - 2022-03-16
+
+### New
+
+- Support for `null` in scalar filter. e.g. `filter: { last_paid: null }`. Means missing filter.  
+- Add new fields to `blockchain` query:
+    - `account`, allows:
+        - to fetch account info (e.g. boc) via `info` field
+        - to fetch transaction info via `transactions` (similar to now deprecated `blockchain.account_transactions`)
+    - `blocks` (is similar to now deprecated `workchain_blocks`)
+    - `transactions` (is similar to now deprecated `workchain_transactions`)
+- Cancel `blockchain.key_blocks` deprecation
+- Cancel `blockchain.master_seq_no_range` deprecation
+
+### Breaking
+
+- In `blockchain.key_blocks` rename `seq_no` argument to `master_seq_no_range`.
+
+### Internal
+
+- Prepare code for messages joins in TBD `blockchain` and `account` messages queries.
+
+
 ## [0.47.1] - 2022-03-02
 
 ### Fixed
@@ -27,12 +50,6 @@ All notable changes to this project will be documented in this file.
     - `account`
     - `in_message`
     - `out_messages`
-- Duplicate functions inside `blockchain` query to api root:
-    - `master_seq_no_range`
-    - `key_blocks`
-    - `workchain_blocks`
-    - `workchain_transactions`
-    - `account_transactions` 
 
 ### Deprecated
 - `when` argument in all joined fields (for example, transaction.in_message's `when` argument)
