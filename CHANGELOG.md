@@ -2,10 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.48.0] - 2022-03-15
+## [0.48.0] - 2022-03-16
 
 ### New
 
+- Support for `null` in scalar filter. e.g. `filter: { last_paid: null }`. Means missing filter.  
 - Add new fields to `blockchain` query:
     - `account`, allows:
         - to fetch account info (e.g. boc) via `info` field

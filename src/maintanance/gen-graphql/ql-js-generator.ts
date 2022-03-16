@@ -1,8 +1,5 @@
 import { Writer } from "./gen";
-import type {
-    DbField,
-    DbType,
-} from "../../server/schema/db-schema-types";
+import type { DbField, DbType } from "../../server/schema/db-schema-types";
 import {
     DbTypeCategory,
     isBigInt,
@@ -12,6 +9,9 @@ import {
     toEnumStyle,
 } from "../../server/schema/db-schema-types";
 import { TypeDef } from "../../server/schema/schema-def";
+import fs from "fs";
+import path from "path";
+import { DbJoin, IntEnumDef, ToStringFormatter } from "../../server/schema/schema";
 
 function compareFields(a: DbField, b: DbField): number {
     if (a.name === "id") {
@@ -46,7 +46,8 @@ function tsTypeDecl(field: DbField): string {
 }
 
 function parentParam(...fields: DbField[]): string {
-    return `parent: { ${fields.map(x => `${x.name === "id" ? "_key" : x.name}: ${tsTypeDecl(x)}`).join(", ")} }`;
+    return `parent: { ${fields.map(x => `${x.name === "id" ? "_key" : x.name}: ${tsTypeDecl(x)}`)
+        .join(", ")} }`;
 }
 
 const keyField: DbField = {
@@ -345,7 +346,8 @@ function main(schemaDef: TypeDef): {
                 js.writeLn(`    ${field.name}: ${typeDeclaration},`);
                 const enumDef = field.enumDef;
                 if (enumDef !== undefined) {
-                    js.writeLn(`    ${field.name}_name: enumName("${field.name}", ${stringifyEnumValues(enumDef.values)}),`);
+                    js.writeLn(`    ${field.name}_name: enumName("${field.name}", ${stringifyEnumValues(
+                        enumDef.values)}),`);
                 }
                 if (field.formatter !== undefined) {
                     js.writeLn(`    ${field.name}_string: stringCompanion("${field.name}"),`);
@@ -431,7 +433,8 @@ function main(schemaDef: TypeDef): {
         enumFields.forEach((field) => {
             const enumDef = field.enumDef;
             if (enumDef !== undefined) {
-                js.writeLn(`            ${field.name}_name: createEnumNameResolver("${field.name}", ${stringifyEnumValues(enumDef.values)}),`);
+                js.writeLn(`            ${field.name}_name: createEnumNameResolver("${field.name}", ${stringifyEnumValues(
+                    enumDef.values)}),`);
             }
         });
         js.writeLn("        },");
@@ -442,7 +445,9 @@ function main(schemaDef: TypeDef): {
             if (field.join !== undefined || field.enumDef !== undefined) {
                 return;
             }
-            const docName = (type.collection !== undefined && field.name === "id") ? "_key" : field.name;
+            const docName = (type.collection !== undefined && field.name === "id")
+                ? "_key"
+                : field.name;
             const path = `${parentPath}.${field.name}`;
             let docPath = `${parentDocPath}.${docName}`;
             if (field.arrayDepth > 0) {
@@ -485,7 +490,9 @@ function main(schemaDef: TypeDef): {
 
     function genJSJoinFields(type: DbType, parentPath: string, parentDocPath: string) {
         type.fields.forEach((field: DbField) => {
-            const docName = (type.collection !== undefined && field.name === "id") ? "_key" : field.name;
+            const docName = (type.collection !== undefined && field.name === "id")
+                ? "_key"
+                : field.name;
             const path = `${parentPath}.${field.name}`;
             const docPath = `${parentDocPath}.${docName}`;
             const join = field.join;
@@ -647,10 +654,71 @@ function main(schemaDef: TypeDef): {
         console.log("};\n");
     }
 
+    const dbTypesPath = path.resolve(__dirname, "..", "..", "..", "db-types.json");
+    fs.writeFileSync(dbTypesPath, JSON.stringify(getDbSchemaInfo(dbTypes), undefined, "    "));
+    console.log(`Db Types written to: ${dbTypesPath}`);
     return {
         ql: g.generated(),
         js: js.generated(),
     };
+}
+
+type DbTypeInfo = {
+    name: string,
+    fields: DbFieldInfo[],
+    collection?: string,
+};
+
+type DbFieldInfo = {
+    name: string,
+    type: string,
+    arrayDepth: number,
+    join?: DbJoin,
+    enumDef?: IntEnumDef,
+    formatter?: ToStringFormatter,
+    lowerFilter?: boolean,
+};
+
+function getDbTypeInfo(dbType: DbType): DbTypeInfo {
+    return {
+        name: dbType.name,
+        fields: dbType.fields.map(getDbFieldInfo),
+        collection: dbType.collection,
+    };
+}
+
+function getDbFieldInfo(field: DbField): DbFieldInfo {
+    let type: string;
+    if (field.type.category === DbTypeCategory.scalar) {
+        if (field.type === scalarTypes.boolean) {
+            type = "Boolean";
+        } else if (field.type === scalarTypes.float) {
+            type = "Float";
+        } else if (field.type === scalarTypes.int) {
+            type = "Int";
+        } else if (field.type === scalarTypes.uint64) {
+            type = "UInt64";
+        } else if (field.type === scalarTypes.uint1024) {
+            type = "UInt1024";
+        } else {
+            type = "String";
+        }
+    } else {
+        type = field.type.name;
+    }
+    return {
+        name: field.name,
+        type,
+        arrayDepth: field.arrayDepth,
+        enumDef: field.enumDef,
+        join: field.join,
+        formatter: field.formatter,
+        lowerFilter: field.lowerFilter,
+    };
+}
+
+function getDbSchemaInfo(dbTypes: DbType[]): DbTypeInfo[] {
+    return dbTypes.map(getDbTypeInfo);
 }
 
 export default main;

@@ -83,30 +83,28 @@ export class QCollectionQuery {
                 params,
                 accessRights,
             );
-            if (condition !== null) {
-                const filterSection = condition ? `FILTER ${condition}` : "";
-                const returnExpression = QCollectionQuery.buildReturnExpression(
-                    request,
-                    collectionDocType,
-                    selectionSet,
-                    orderBy,
-                );
+            const filterSection = condition ? `FILTER ${condition}` : "";
+            const returnExpression = QCollectionQuery.buildReturnExpression(
+                request,
+                collectionDocType,
+                selectionSet,
+                orderBy,
+            );
+            texts.push(`
+                FOR doc IN ${collectionName}
+                ${filterSection}
+                ${sortSection}
+                ${limitSection}
+                RETURN ${returnExpression}
+            `);
+            if (collectionName === "messages" && shardingDegree > 0) {
                 texts.push(`
-                    FOR doc IN ${collectionName}
+                    FOR doc IN messages_complement
                     ${filterSection}
                     ${sortSection}
                     ${limitSection}
                     RETURN ${returnExpression}
                 `);
-                if (collectionName === "messages" && shardingDegree > 0) {
-                    texts.push(`
-                        FOR doc IN messages_complement
-                        ${filterSection}
-                        ${sortSection}
-                        ${limitSection}
-                        RETURN ${returnExpression}
-                    `);
-                }
             }
         }
 
@@ -221,10 +219,10 @@ export class QCollectionQuery {
         collectionName: string,
         accessRights: AccessRights,
         params: QParams,
-    ) {
+    ): string | null {
         const accounts = accessRights.restrictToAccounts;
         if (accounts.length === 0) {
-            return "";
+            return null;
         }
         const condition = accounts.length === 1
             ? `== @${params.add(accounts[0])}`
@@ -237,28 +235,25 @@ export class QCollectionQuery {
         case "messages":
             return `(doc.src ${condition}) OR (doc.dst ${condition})`;
         default:
-            return "";
+            return null;
         }
     }
 
     static buildFilterCondition(
         collectionName: string,
         collectionDocType: QType,
-        filter: { [name: string]: unknown },
+        filter: { [name: string]: unknown } | null,
         params: QParams,
         accessRights: AccessRights,
     ): string | null {
-        const primaryCondition = Object.keys(filter).length > 0
+        const primaryCondition = filter !== null && Object.keys(filter).length > 0
             ? collectionDocType.filterCondition(params, "doc", filter)
-            : "";
+            : null;
         const additionalCondition = QCollectionQuery.getAdditionalCondition(
             collectionName,
             accessRights,
             params,
         );
-        if (primaryCondition === "false" || additionalCondition === "false") {
-            return null;
-        }
         return (primaryCondition && additionalCondition)
             ? `(${primaryCondition}) AND (${additionalCondition})`
             : (primaryCondition || additionalCondition);
