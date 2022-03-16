@@ -6,7 +6,6 @@ import { QTraceSpan } from "../../../tracing";
 import { required } from "../../../utils";
 
 import { config } from "../config";
-import { getNodeSelectionSetForConnection } from "../helpers";
 import { BlockchainAccount } from "../resolvers-types-generated";
 
 export async function resolve_account(
@@ -17,7 +16,7 @@ export async function resolve_account(
 ) {
     const maxJoinDepth = 1;
 
-    const selectionSet = getNodeSelectionSetForConnection(info);
+    const selectionSet = info.fieldNodes[0].selectionSet;
     const returnExpression = config.accounts.buildReturnExpression(
         selectionSet,
         context,
