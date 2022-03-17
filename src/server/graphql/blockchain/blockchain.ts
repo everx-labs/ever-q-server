@@ -11,8 +11,10 @@ import {
     resolve_account_transactions,
     resolve_key_blocks,
     resolve_blockchain_blocks,
+    resolve_account_messages,
     resolve_blockchain_transactions,
 } from "./fetchers";
+
 
 function parseMasterSeqNo(chain_order: string) {
     const length = parseInt(chain_order[0], 16) + 1;
@@ -184,6 +186,11 @@ export const resolvers: Resolvers<QRequestContext> = {
                 return await resolve_account_transactions(parent.address, args, context, info, traceSpan);
             });
         },
+        messages: async (parent, args, context, info) => {
+            return context.trace("account-messages", async traceSpan => {
+                return await resolve_account_messages(parent, args, context, info, traceSpan);
+            });
+        }
     },
     Node: {
         __resolveType: (parent) => {

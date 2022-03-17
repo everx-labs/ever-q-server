@@ -13,6 +13,7 @@ import { QTracer } from "../server/tracing";
 import { createTestClient, testConfig } from "./init-tests";
 import {
     blocks as blocksData,
+    messages as messagesData,
     transactions as transactionsData,
     summary as chainRangesVerificationSummary
 } from "./blockchain-data";
@@ -27,7 +28,8 @@ beforeAll(async () => {
     const db = new Database(serverAddress);
     try {
         await db.dropDatabase(TEST_DB_NAME);
-    } catch {
+    } catch(err) {
+        console.log(err);
         // do nothing
     }
     await db.createDatabase(TEST_DB_NAME);
@@ -35,6 +37,9 @@ beforeAll(async () => {
     const blocks = db.collection("blocks");
     await blocks.create();
     await blocks.save(blocksData);
+    const messages = db.collection("messages");
+    await messages.create();
+    await messages.save(messagesData);
     const transactions = db.collection("transactions");
     await transactions.create();
     await transactions.save(transactionsData);
@@ -798,6 +803,549 @@ test("workchain_transactions", async () => {
               "hasNextPage": false
             }
           }
+        }
+    });
+});
+
+test("blockchain.account.messages", async () => {
+    if (!server) {
+        throw new Error("server is null");
+    }
+    const client = createTestClient({ useWebSockets: true });
+    let queryResult: ReturnType<typeof client.query> extends Promise<infer T> ? T : never;
+
+    // no filter
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "32c75632aebfb890145477374cb265e2572d513fccbc7f5f58e108531fa42022",
+                                "created_lt": "0xd36a6edd706",
+                            },
+                            "cursor": "587c83d005c622df1180000",
+                        },
+                        {
+                            "node": {
+                                "hash": "7a1234b3331c9ac515501c0ab46d480d68a066e402f445fd6592a07a9e7c79f2",
+                                "created_lt": "0xd36a70c5b82",
+                            },
+                            "cursor": "587c83d005c622df1180001",
+                        },
+                        {
+                            "node": {
+                                "hash": "f195c12dbf145f6d050d824a2b984da6b7c38795ddd0ce1f6bd881c8cd883ec3",
+                                "created_lt": "0xd36a70c5b83",
+                            },
+                            "cursor": "587c83d005c622df1180002",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180000",
+                        "endCursor": "587c83d005c622df1180002",
+                        "hasNextPage": true,
+                    }
+                }
+            }
+        }
+    });
+
+    // IntIn
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        msg_type: [IntIn]
+                        first: 3
+                        after: "587c83d005c622df1180500"
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "06f2ed90879d6a067bbbc4546844bdc84fbe49b9c114484df1e798bbc4c2e709",
+                                "created_lt": "0xd36a70c5b8c",
+                            },
+                            "cursor": "587c83d005c622df1180600",
+                        },
+                        {
+                            "node": {
+                                "hash": "3cba5d7893ad386410f2982aae45f683850fbcf40c19fcbffdf818f1c9b5248e",
+                                "created_lt": "0xd36a70c5b93",
+                            },
+                            "cursor": "587c83d005c622df1180700",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180600",
+                        "endCursor": "587c83d005c622df1180700",
+                        "hasNextPage": false,
+                    }
+                }
+            }
+        }
+    });
+
+    // ExtIn
+    const queryResult3 = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        msg_type: [ExtIn]
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult3.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "34cd2e7055f09a01bc7143751366dbb6ab24eb08536d8eee347fbb78455d2ad9",
+                                "created_lt": "0xd36a70c5b98",
+                            },
+                            "cursor": "587c83d005c622df1180702",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180702",
+                        "endCursor": "587c83d005c622df1180702",
+                        "hasNextPage": false,
+                    }
+                }
+            }
+        }
+    });
+
+    // IntOut
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        msg_type: [IntOut]
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "7a1234b3331c9ac515501c0ab46d480d68a066e402f445fd6592a07a9e7c79f2",
+                                "created_lt": "0xd36a70c5b82",
+                            },
+                            "cursor": "587c83d005c622df1180001",
+                        },
+                        {
+                            "node": {
+                                "hash": "f195c12dbf145f6d050d824a2b984da6b7c38795ddd0ce1f6bd881c8cd883ec3",
+                                "created_lt": "0xd36a70c5b83",
+                            },
+                            "cursor": "587c83d005c622df1180002",
+                        },
+                        {
+                            "node": {
+                                "hash": "4b2707f00c3c35c288ccc3acfbc9fb1b6e0fd89e60f25ed6b86bed653c3a9757",
+                                "created_lt": "0xd36a70c5b87",
+                            },
+                            "cursor": "587c83d005c622df1180201",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180001",
+                        "endCursor": "587c83d005c622df1180201",
+                        "hasNextPage": true,
+                    }
+                }
+            }
+        }
+    });
+
+    // ExtOut
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        msg_type: [ExtOut]
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "f7d8071627d9f236a2329082c4d859ac95cb1be24dbc40d45f07684676bb8a2f",
+                                "created_lt": "0xd36a70c5b84",
+                            },
+                            "cursor": "587c83d005c622df1180003",
+                        },
+                        {
+                            "node": {
+                                "hash": "64cd2e7055f09a01bc7143751366dbb6ab24eb08536d8eee347fbb78455d2ad9",
+                                "created_lt": "0xd36a70c5b97",
+                            },
+                            "cursor": "587c83d005c622df1180701",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180003",
+                        "endCursor": "587c83d005c622df1180701",
+                        "hasNextPage": false,
+                    }
+                }
+            }
+        }
+    });
+
+    // Inbound
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        msg_type: [ExtIn, IntIn]
+                        first: 3
+                        after: "587c83d005c622df1180500"
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "06f2ed90879d6a067bbbc4546844bdc84fbe49b9c114484df1e798bbc4c2e709",
+                                "created_lt": "0xd36a70c5b8c",
+                            },
+                            "cursor": "587c83d005c622df1180600",
+                        },
+                        {
+                            "node": {
+                                "hash": "3cba5d7893ad386410f2982aae45f683850fbcf40c19fcbffdf818f1c9b5248e",
+                                "created_lt": "0xd36a70c5b93",
+                            },
+                            "cursor": "587c83d005c622df1180700",
+                        },
+                        {
+                            "node": {
+                                "hash": "34cd2e7055f09a01bc7143751366dbb6ab24eb08536d8eee347fbb78455d2ad9",
+                                "created_lt": "0xd36a70c5b98",
+                            },
+                            "cursor": "587c83d005c622df1180702",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180600",
+                        "endCursor": "587c83d005c622df1180702",
+                        "hasNextPage": false,
+                    }
+                }
+            }
+        }
+    });
+
+    // Outbound
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        msg_type: [ExtOut,IntOut]
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "7a1234b3331c9ac515501c0ab46d480d68a066e402f445fd6592a07a9e7c79f2",
+                                "created_lt": "0xd36a70c5b82",
+                            },
+                            "cursor": "587c83d005c622df1180001",
+                        },
+                        {
+                            "node": {
+                                "hash": "f195c12dbf145f6d050d824a2b984da6b7c38795ddd0ce1f6bd881c8cd883ec3",
+                                "created_lt": "0xd36a70c5b83",
+                            },
+                            "cursor": "587c83d005c622df1180002",
+                        },
+                        {
+                            "node": {
+                                "hash": "f7d8071627d9f236a2329082c4d859ac95cb1be24dbc40d45f07684676bb8a2f",
+                                "created_lt": "0xd36a70c5b84",
+                            },
+                            "cursor": "587c83d005c622df1180003",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180001",
+                        "endCursor": "587c83d005c622df1180003",
+                        "hasNextPage": true,
+                    }
+                }
+            }
+        }
+    });
+
+    // counterparty
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        counterparties: ["0:61de96fd3796674103210d92f26de76e4ef5de1878eafc9b5d5f13f3a92bbe58"]
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "607ba96c3460736e8b9ce4d95100249e1e4d2d1a8eb106a60ebba5315bad84d8",
+                                "created_lt": "0xd36a70c5b8f",
+                            },
+                            "cursor": "587c83d005c622df1180402",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180402",
+                        "endCursor": "587c83d005c622df1180402",
+                        "hasNextPage": false,
+                    }
+                }
+            }
+        }
+    });
+
+    // check self messages duplication (with different cursors)
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206") {
+                    messages(
+                        counterparties: ["0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206"]
+                        first: 3
+                    ) {
+                        edges {
+                            node {
+                                hash
+                                created_lt
+                            }
+                            cursor
+                        }
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "messages": {
+                    "edges": [
+                        {
+                            "node": {
+                                "hash": "f195c12dbf145f6d050d824a2b984da6b7c38795ddd0ce1f6bd881c8cd883ec3",
+                                "created_lt": "0xd36a70c5b83",
+                            },
+                            "cursor": "587c83d005c622df1180002",
+                        },
+                        {
+                            "node": {
+                                "hash": "f195c12dbf145f6d050d824a2b984da6b7c38795ddd0ce1f6bd881c8cd883ec3",
+                                "created_lt": "0xd36a70c5b83",
+                            },
+                            "cursor": "587c83d005c622df1180200",
+                        },
+                        {
+                            "node": {
+                                "hash": "4b2707f00c3c35c288ccc3acfbc9fb1b6e0fd89e60f25ed6b86bed653c3a9757",
+                                "created_lt": "0xd36a70c5b87",
+                            },
+                            "cursor": "587c83d005c622df1180201",
+                        },
+                    ],
+                    "pageInfo": {
+                        "startCursor": "587c83d005c622df1180002",
+                        "endCursor": "587c83d005c622df1180201",
+                        "hasNextPage": true,
+                    }
+                }
+            }
         }
     });
 });

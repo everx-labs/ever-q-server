@@ -50,6 +50,33 @@ type BlockchainTransactionEdge {
     cursor: String!
 }
 
+enum BlockchainMessageTypeFilterEnum {
+    "External inbound"
+    ExtIn
+    "External outbound"
+    ExtOut
+    "Internal inbound"
+    IntIn
+    "Internal outbound"
+    IntOut
+}
+
+"""
+This type is unstable
+"""
+type BlockchainMessagesConnection {
+    edges: [BlockchainMessageEdge!]!
+    pageInfo: PageInfo!
+}
+
+"""
+This type is unstable
+"""
+type BlockchainMessageEdge {
+    node: BlockchainMessage!
+    cursor: String!
+}
+
 type BlockchainQuery {
     """
     **UNSTABLE**
@@ -277,6 +304,31 @@ type BlockchainAccountQuery {
         last: Int
         before: String
     ): BlockchainTransactionsConnection
+
+    messages(        
+        """
+        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        See also: "master_seq_no_range"
+        """			
+        time_range: BlockchainMasterSeqNoFilter
+
+        "Filter messages by counterparties (max - 5 counterparties)."
+        counterparties: [String!]
+        
+        "Filter messages by type (multiple are allowed, all messages if not specified)."
+        msg_type: [BlockchainMessageTypeFilterEnum!]
+
+        "Optional filter by min value (unoptimized, query could be dropped by timeout)"
+        min_value: String
+
+        "This field is mutually exclusive with 'last'"
+        first: Int
+        after: String,
+
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String,
+    ): BlockchainMessagesConnection
 }
 
 extend type Query {

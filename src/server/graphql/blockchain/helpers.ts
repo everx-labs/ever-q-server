@@ -51,6 +51,7 @@ export async function prepareChainOrderFilter(
     params: QParams,
     filters: string[],
     context: QRequestContext,
+    chainOrderFieldName = "chain_order",
 ) {
     // master_seq_no
     let start_chain_order = args.master_seq_no_range?.start
@@ -79,15 +80,15 @@ export async function prepareChainOrderFilter(
     // apply
     if (start_chain_order) {
         const paramName = params.add(start_chain_order);
-        filters.push(`doc.chain_order > @${paramName}`);
+        filters.push(`doc.${chainOrderFieldName} > @${paramName}`);
     } else {
         // Next line is equivalent to "chain_order != null", but the ">=" is better:
         // we doesn't have to rely on arangodb to convert "!= null" to index scan boundary
-        filters.push("doc.chain_order >= \"\"");
+        filters.push(`doc.${chainOrderFieldName} >= \"\"`);
     }
 
     const paramName = params.add(end_chain_order);
-    filters.push(`doc.chain_order < @${paramName}`);
+    filters.push(`doc.${chainOrderFieldName} < @${paramName}`);
 }
 
 export function getNodeSelectionSetForConnection(info: GraphQLResolveInfo) {
@@ -107,24 +108,25 @@ export function getFieldSelectionSet(
         ?.selectionSet;
 }
 
-export async function processPaginatedQueryResult<T extends { chain_order?: Maybe<Scalars["String"]> }>(
+export async function processPaginatedQueryResult<T>(
     queryResult: T[],
     limit: number,
     direction: Direction,
+    sortField: KeyOfWithValueOf<T, Maybe<Scalars["String"]>>,
     afterFilterCallback?: (result: T[]) => Promise<void>,
 ) {
     // sort query result by chain_order ASC
     queryResult.sort((a, b) => {
-        if (!a.chain_order || !b.chain_order) {
-            throw QError.create(500, "chain_order field not found");
+        if (!a[sortField] || !b[sortField]) {
+            throw QError.create(500, "sort field not found");
         }
-        if (a.chain_order > b.chain_order) {
+        if (a[sortField] > b[sortField]) {
             return 1;
         }
-        if (a.chain_order < b.chain_order) {
+        if (a[sortField] < b[sortField]) {
             return -1;
         }
-        throw QError.create(500, "two entities with the same chain_order");
+        throw QError.create(500, "two entities with the same sort field");
     });
 
     // limit result length
@@ -148,13 +150,13 @@ export async function processPaginatedQueryResult<T extends { chain_order?: Mayb
         edges: queryResult.map(t => {
             return {
                 node: t,
-                cursor: t.chain_order,
+                cursor: t[sortField],
             };
         }),
         pageInfo: {
-            startCursor: queryResult.length > 0 ? queryResult[0].chain_order : "",
+            startCursor: queryResult.length > 0 ? queryResult[0][sortField] : "",
             endCursor: queryResult.length > 0
-                ? queryResult[queryResult.length - 1].chain_order
+                ? queryResult[queryResult.length - 1][sortField]
                 : "",
             hasNextPage: (direction == Direction.Forward) ? hasMore : false,
             hasPreviousPage: (direction == Direction.Backward) ? hasMore : false,
@@ -165,3 +167,6 @@ export async function processPaginatedQueryResult<T extends { chain_order?: Mayb
 export function isDefined<T>(value: T | null | undefined): boolean {
     return value !== undefined && value !== null;
 }
+
+export type KeyOf<T> = Extract<keyof T, string>;
+export type KeyOfWithValueOf<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];
