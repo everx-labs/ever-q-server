@@ -92,6 +92,7 @@ export async function resolve_blockchain_transactions(
         queryResult,
         limit,
         direction,
+        "chain_order",
         async r => {
             await config.transactions.fetchJoins(r, selectionSet, context, traceSpan, maxJoinDepth);
         },
@@ -172,6 +173,7 @@ export async function resolve_account_transactions(
         queryResult,
         limit,
         direction,
+        "chain_order",
         async r => {
             await config.transactions.fetchJoins(r, selectionSet, context, traceSpan, maxJoinDepth);
         },

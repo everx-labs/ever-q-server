@@ -10,6 +10,8 @@ import { QError, required } from "../../utils";
 import {
     getFieldSelectionSet,
     isDefined,
+    KeyOf,
+    KeyOfWithValueOf,
 } from "./helpers";
 import {
     BlockchainAccount,
@@ -145,6 +147,7 @@ export type CompiledCollectionConfig<TItem> = {
         maxJoinDepth: number,
         path: string,
         additionalFields?: KeyOf<TItem>[],
+        overridenFields?: [fieldName:string,fetcher:string][],
     ) => string,
     fetchJoins: (
         data: TItem[],
@@ -192,6 +195,7 @@ export function compileCollectionConfig<TItem>(collection: CollectionConfig<TIte
         maxJoinDepth: number,
         path: string,
         additionalFields?: KeyOf<TItem>[],
+        overridenFields?: [fieldName:string,fetcher:string][],
     ) => {
         const returnExpressionsOverrides = new Map();
         for (const field of collection.alwaysFetchFields ?? []) {
@@ -233,6 +237,10 @@ export function compileCollectionConfig<TItem>(collection: CollectionConfig<TIte
             selectionSet = Object.assign({}, selectionSet);
             selectionSet.selections = selectionSet.selections
                 .filter(s => !shouldBeExcluded(s));
+        }
+
+        for(let override of overridenFields ?? []) {
+            returnExpressionsOverrides.set(override[0], override[1]);
         }
 
         return QCollectionQuery.buildReturnExpression(
@@ -362,6 +370,3 @@ export function compileCollectionConfig<TItem>(collection: CollectionConfig<TIte
         qDataCollectionSelector: collection.qDataCollectionSelector,
     };
 }
-
-export type KeyOf<T> = Extract<keyof T, string>;
-export type KeyOfWithValueOf<T, V> = {[K in keyof T]-?: T[K] extends V ? K : never}[keyof T];

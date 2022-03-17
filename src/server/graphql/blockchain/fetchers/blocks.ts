@@ -76,6 +76,7 @@ export async function resolve_key_blocks(
         queryResult,
         limit,
         direction,
+        "chain_order",
     ) as BlockchainBlocksConnection;
 }
 
@@ -121,7 +122,6 @@ export async function resolve_blockchain_blocks(
         "doc",
     );
 
-
     // query
     const query = `
         FOR doc IN blocks
@@ -150,5 +150,6 @@ export async function resolve_blockchain_blocks(
         queryResult,
         limit,
         direction,
+        "chain_order",
     ) as BlockchainBlocksConnection;
 }
