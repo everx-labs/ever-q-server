@@ -19,11 +19,12 @@ All notable changes to this project will be documented in this file.
         - to fetch transaction info via `transactions` (similar to now deprecated `blockchain.account_transactions`)
     - `blocks` (is similar to now deprecated `workchain_blocks`)
     - `transactions` (is similar to now deprecated `workchain_transactions`)
+  
 ### Deprecation
 
-    - `blockchain.workchain_blocks` 
-    - `blockchain.workchain_transactions`
-    - `blockchain.account_transactions` 
+- `blockchain.workchain_blocks`. Use `blockchain.blocks` instead. 
+- `blockchain.workchain_transactions`. Use `blockchain.transactions` instead. 
+- `blockchain.account_transactions`. Use `account.transactions` instead. 
 
 ### Breaking
 
