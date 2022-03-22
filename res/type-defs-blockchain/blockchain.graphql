@@ -87,6 +87,13 @@ type BlockchainQuery {
         address: String!
     ): BlockchainAccountQuery
 
+    "**UNSTABLE**"
+    block(hash: String!): BlockchainBlock
+    "**UNSTABLE**"
+    transaction(hash: String!): BlockchainTransaction
+    "**UNSTABLE**"
+    message(hash: String!): BlockchainMessage
+
     """
     **UNSTABLE**
     Returns seq_no range such that:

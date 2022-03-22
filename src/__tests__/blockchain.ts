@@ -12,6 +12,7 @@ import { QTracer } from "../server/tracing";
 
 import { createTestClient, testConfig } from "./init-tests";
 import {
+    accounts as accountsData,
     blocks as blocksData,
     messages as messagesData,
     transactions as transactionsData,
@@ -43,6 +44,9 @@ beforeAll(async () => {
     const transactions = db.collection("transactions");
     await transactions.create();
     await transactions.save(transactionsData);
+    const accounts = db.collection("accounts");
+    await accounts.create();
+    await accounts.save(accountsData);
     const crv = db.collection("chain_ranges_verification");
     await crv.create();
     await crv.save(chainRangesVerificationSummary);
@@ -56,6 +60,7 @@ beforeAll(async () => {
         {},
         {
             blockchain: {
+                accounts: [serverAddress],
                 blocks: {
                     hot: [serverAddress],
                 },
@@ -1345,6 +1350,110 @@ test("blockchain.account.messages", async () => {
                         "hasNextPage": true,
                     }
                 }
+            }
+        }
+    });
+});
+
+test("blockchain fetchers", async () => {
+    if (!server) {
+        throw new Error("server is null");
+    }
+    const client = createTestClient({ useWebSockets: true });
+    let queryResult: ReturnType<typeof client.query> extends Promise<infer T> ? T : never;
+
+    // account
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                account(address:"0:3d3442a1de0c4f720ee64546ef9714fe0dd83d848115652253b2d7a782c2c954") {
+                    info {
+                        id
+                        address
+                        code_hash
+                    }
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "account": {
+                "info": {
+                    "id": "account/0:3d3442a1de0c4f720ee64546ef9714fe0dd83d848115652253b2d7a782c2c954",
+                    "address": "0:3d3442a1de0c4f720ee64546ef9714fe0dd83d848115652253b2d7a782c2c954",
+                    "code_hash": "80d6c47c4a25543c9b397b71716f3fae1e2c5d247174c52e2c19bd896442b105",
+                }
+            }
+        }
+    });
+
+    // block
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                block(hash:"52cba78cf9ddc27995031456677141fdf679aa22057bdcec3f55a62556c7dda5") {
+                    id
+                    hash
+                    created_by
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "block": {
+                "id": "block/52cba78cf9ddc27995031456677141fdf679aa22057bdcec3f55a62556c7dda5",
+                "hash": "52cba78cf9ddc27995031456677141fdf679aa22057bdcec3f55a62556c7dda5",
+                "created_by": "edccfb0fcd990bac6f8ece14c9323e8bddf0d8fb9d9895bd0f02fc5d50d8af39",
+            }
+        }
+    });
+    
+    // transaction
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                transaction(hash:"d80e4a907b2405a1141e6f9953abbd175a2393ca04ac1e59aae07297c1637afc") {
+                    id
+                    hash
+                    account_addr
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "transaction": {
+                "id": "transaction/d80e4a907b2405a1141e6f9953abbd175a2393ca04ac1e59aae07297c1637afc",
+                "hash": "d80e4a907b2405a1141e6f9953abbd175a2393ca04ac1e59aae07297c1637afc",
+                "account_addr": "-1:04f64c6afbff3dd10d8ba6707790ac9670d540f37a9448b0337baa6a5a92acac",
+            }
+        }
+    });
+    
+    // message
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                message(hash:"32c75632aebfb890145477374cb265e2572d513fccbc7f5f58e108531fa42022") {
+                    id
+                    hash
+                    dst
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "message": {
+                "id": "message/32c75632aebfb890145477374cb265e2572d513fccbc7f5f58e108531fa42022",
+                "hash": "32c75632aebfb890145477374cb265e2572d513fccbc7f5f58e108531fa42022",
+                "dst": "0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206",
             }
         }
     });

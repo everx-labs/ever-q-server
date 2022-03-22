@@ -13,6 +13,9 @@ import {
     resolve_blockchain_blocks,
     resolve_account_messages,
     resolve_blockchain_transactions,
+    resolve_block,
+    resolve_transaction,
+    resolve_message,
 } from "./fetchers";
 
 
@@ -136,6 +139,21 @@ export const resolvers: Resolvers<QRequestContext> = {
                 address: args.address
             }
         },
+        block: async (_parent, args, context, info) => {
+            return context.trace("blockchain-block", async traceSpan => {
+                return resolve_block(args.hash, context, info, traceSpan);
+            });
+        },
+        transaction: async (_parent, args, context, info) => {
+            return context.trace("blockchain-transaction", async traceSpan => {
+                return resolve_transaction(args.hash, context, info, traceSpan);
+            });
+        },
+        message: async (_parent, args, context, info) => {
+            return context.trace("blockchain-message", async traceSpan => {
+                return resolve_message(args.hash, context, info, traceSpan);
+            });
+        },
         master_seq_no_range: (_parent, args, context) => {
             return context.trace("blockchain-master_seq_no_range", async traceSpan => {
                 return await resolve_maser_seq_no_range(args, context, traceSpan);
@@ -177,17 +195,17 @@ export const resolvers: Resolvers<QRequestContext> = {
     },
     BlockchainAccountQuery: {
         info: async (parent, _args, context, info) => {
-            return context.trace("account-info", async traceSpan => {
+            return context.trace("blockchain-account-info", async traceSpan => {
                 return resolve_account(parent.address, context, info, traceSpan);
             });
         }, 
         transactions: async (parent, args, context, info) => {
-            return context.trace("account-transactions", async traceSpan => {
+            return context.trace("blockchain-account-transactions", async traceSpan => {
                 return await resolve_account_transactions(parent.address, args, context, info, traceSpan);
             });
         },
         messages: async (parent, args, context, info) => {
-            return context.trace("account-messages", async traceSpan => {
+            return context.trace("blockchain-account-messages", async traceSpan => {
                 return await resolve_account_messages(parent, args, context, info, traceSpan);
             });
         }
