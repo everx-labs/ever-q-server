@@ -13,14 +13,18 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - Support for `null` in scalar filter. e.g. `filter: { last_paid: null }`. Means missing filter.  
-- Add new fields to `blockchain` query:
+- Add new functions to `blockchain` root api:
     - `account`, allows:
         - to fetch account info (e.g. boc) via `info` field
         - to fetch transaction info via `transactions` (similar to now deprecated `blockchain.account_transactions`)
     - `blocks` (is similar to now deprecated `workchain_blocks`)
     - `transactions` (is similar to now deprecated `workchain_transactions`)
-- Cancel `blockchain.key_blocks` deprecation
-- Cancel `blockchain.master_seq_no_range` deprecation
+  
+### Deprecation
+
+- `blockchain.workchain_blocks`. Use `blockchain{ blocks }` instead. 
+- `blockchain.workchain_transactions`. Use `blockchain{ transactions } ` instead. 
+- `blockchain.account_transactions`. Use `blockchain{ account{ transactions } }` instead. 
 
 ### Breaking
 
@@ -60,7 +64,6 @@ All notable changes to this project will be documented in this file.
 ### Deprecated
 - `when` argument in all joined fields (for example, transaction.in_message's `when` argument)
 - the following root queries:
-    - `blockchain` (usage of all internal functions must be replaced with the same API in the root Query)
     - `explainQueryAccounts`
     - `explainQueryTransactions`
     - `explainQueryMessages`
