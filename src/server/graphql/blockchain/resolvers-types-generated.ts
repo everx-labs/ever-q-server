@@ -901,6 +901,12 @@ export type BlockchainQuery = {
    * Account-related information
    */
   account?: Maybe<BlockchainAccountQuery>;
+  /** **UNSTABLE** */
+  block?: Maybe<BlockchainBlock>;
+  /** **UNSTABLE** */
+  transaction?: Maybe<BlockchainTransaction>;
+  /** **UNSTABLE** */
+  message?: Maybe<BlockchainMessage>;
   /**
    * **UNSTABLE**
    * Returns seq_no range such that:
@@ -948,6 +954,21 @@ export type BlockchainQuery = {
 
 export type BlockchainQueryAccountArgs = {
   address: Scalars['String'];
+};
+
+
+export type BlockchainQueryBlockArgs = {
+  hash: Scalars['String'];
+};
+
+
+export type BlockchainQueryTransactionArgs = {
+  hash: Scalars['String'];
+};
+
+
+export type BlockchainQueryMessageArgs = {
+  hash: Scalars['String'];
 };
 
 
@@ -2472,6 +2493,9 @@ export type BlockchainMessagesConnectionResolvers<ContextType = any, ParentType 
 
 export type BlockchainQueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainQuery'] = ResolversParentTypes['BlockchainQuery']> = {
   account?: Resolver<Maybe<ResolversTypes['BlockchainAccountQuery']>, ParentType, ContextType, RequireFields<BlockchainQueryAccountArgs, 'address'>>;
+  block?: Resolver<Maybe<ResolversTypes['BlockchainBlock']>, ParentType, ContextType, RequireFields<BlockchainQueryBlockArgs, 'hash'>>;
+  transaction?: Resolver<Maybe<ResolversTypes['BlockchainTransaction']>, ParentType, ContextType, RequireFields<BlockchainQueryTransactionArgs, 'hash'>>;
+  message?: Resolver<Maybe<ResolversTypes['BlockchainMessage']>, ParentType, ContextType, RequireFields<BlockchainQueryMessageArgs, 'hash'>>;
   master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<BlockchainQueryMaster_Seq_No_RangeArgs, never>>;
   key_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryKey_BlocksArgs, never>>;
   blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryBlocksArgs, never>>;

@@ -25,6 +25,43 @@ import {
     BlockchainTransactionsConnection
 } from "../resolvers-types-generated";
 
+
+export async function resolve_transaction(
+    hash: String,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    const maxJoinDepth = 1;
+
+    const selectionSet = info.fieldNodes[0].selectionSet;
+    const returnExpression = config.transactions.buildReturnExpression(
+        selectionSet,
+        context,
+        maxJoinDepth,
+        "doc"
+    );
+
+    // query
+    const params = new QParams();
+    const query =
+        "FOR doc IN transactions " +
+        `FILTER doc._key == @${params.add(hash)} ` +
+        `RETURN ${returnExpression}`;
+    const queryResult = await context.services.data.query(
+        required(context.services.data.transactions.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+        },
+    ) as BlockchainTransaction[];
+
+    return queryResult[0];
+}
+
 export async function resolve_blockchain_transactions(
     args: BlockchainQueryTransactionsArgs | BlockchainQueryWorkchain_TransactionsArgs,
     context: QRequestContext,

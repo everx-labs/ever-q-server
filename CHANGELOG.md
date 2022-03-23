@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.49.0] - 2022-XX-XX
+
+- Add new functions:
+    - `blockchain { account { messages }}` to fetch account messages
+    - `blockchain { block }` to fetch block by hash
+    - `blockchain { transaction }` to fetch transaction by hash
+    - `blockchain { message }` to fetch message by hash
+
 ## [0.48.1] - 2022-03-16
 
 ### Fix

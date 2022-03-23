@@ -19443,6 +19443,35 @@ export const messages = [
     },
 ];
 
+export const accounts = [
+    {
+        "_key": "0:3d3442a1de0c4f720ee64546ef9714fe0dd83d848115652253b2d7a782c2c954",
+        "_id": "accounts/0:3d3442a1de0c4f720ee64546ef9714fe0dd83d848115652253b2d7a782c2c954",
+        "_rev": "_d5F6M7---A",
+        "acc_type": 1,
+        "balance": "09504e92f56a",
+        "balance_dec": "344915637610",
+        "bits": "3860b",
+        "bits_dec": "34315",
+        "boc": "te6ccg..boc..",
+        "cells": "14a",
+        "cells_dec": "74",
+        "code": "te6ccg..code..",
+        "code_hash": "80d6c47c4a25543c9b397b71716f3fae1e2c5d247174c52e2c19bd896442b105",
+        "data": "te6ccg..data..",
+        "data_hash": "ade3c3fb095d33e8958d93245fc6b02dbd9a805a0405b295e0aa76497bf27d52",
+        "id": "0:3d3442a1de0c4f720ee64546ef9714fe0dd83d848115652253b2d7a782c2c954",
+        "json_version": 8,
+        "last_paid": 1647958564,
+        "last_trans_lt": "b1699bfd1b902",
+        "last_trans_lt_dec": "24849604000002",
+        "prev_code_hash": "80d6c47c4a25543c9b397b71716f3fae1e2c5d247174c52e2c19bd896442b105",
+        "public_cells": "00",
+        "public_cells_dec": "0",
+        "workchain_id": 0
+    }
+];
+
 export const summary = {
     "_key": "summary",
     "last_verified_master_seq_no": 8898622,
