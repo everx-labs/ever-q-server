@@ -4,11 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [0.49.0] - 2022-XX-XX
 
-- Add new functions:
+### New
+
+- New functions:
     - `blockchain { account { messages }}` to fetch account messages
     - `blockchain { block }` to fetch block by hash
     - `blockchain { transaction }` to fetch transaction by hash
     - `blockchain { message }` to fetch message by hash
+
+### Tweaked
+
+- Tweaked messages subscriptions to ignore patch records
+
+### Fixed
+
+- Fixed `created_at_string` and `status_name` fields resolvers in BlockchainMessage
 
 ## [0.48.1] - 2022-03-16
 
