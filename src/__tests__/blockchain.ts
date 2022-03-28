@@ -1411,6 +1411,33 @@ test("blockchain fetchers", async () => {
             }
         }
     });
+
+    // block by seq_no
+    queryResult = await client.query({
+        query: gql`{
+            blockchain {
+                block_by_seq_no(
+                    workchain: 0
+                    thread: "9800000000000000"
+                    seq_no: 12987363
+                ) {
+                    id
+                    hash
+                    created_by
+                }
+                
+            }
+        }`,
+    });
+    expect(queryResult.data).toMatchObject({
+        "blockchain": {
+            "block_by_seq_no": {
+                "id": "block/32ec85d6913b2add9763c86b62e381a8675e4a7b1d565de6f948fec7cb49fd05",
+                "hash": "32ec85d6913b2add9763c86b62e381a8675e4a7b1d565de6f948fec7cb49fd05",
+                "created_by": "a308a2b0b0a5b888227d592b593c9aca91f7a0ce2c8b70b9e7a726775d116cf1",
+            }
+        }
+    });
     
     // transaction
     queryResult = await client.query({
