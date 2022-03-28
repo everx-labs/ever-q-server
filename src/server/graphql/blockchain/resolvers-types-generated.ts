@@ -537,7 +537,7 @@ export type BlockchainAccountQuery = {
 
 
 export type BlockchainAccountQueryMessagesArgs = {
-  time_range?: Maybe<BlockchainMasterSeqNoFilter>;
+  master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>;
   counterparties?: Maybe<Array<Scalars['String']>>;
   msg_type?: Maybe<Array<BlockchainMessageTypeFilterEnum>>;
   min_value?: Maybe<Scalars['String']>;

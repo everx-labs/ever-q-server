@@ -319,7 +319,7 @@ type BlockchainAccountQuery {
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
         """			
-        time_range: BlockchainMasterSeqNoFilter
+        master_seq_no_range: BlockchainMasterSeqNoFilter
 
         "Filter messages by counterparties (max - 5 counterparties)."
         counterparties: [String!]
