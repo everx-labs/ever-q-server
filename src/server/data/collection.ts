@@ -17,6 +17,10 @@
 import {
     Tracer,
 } from "opentracing";
+import md5 from "md5";
+import Redis from "ioredis";
+import { RedisPubSub } from "graphql-redis-subscriptions";
+import postSubscription from "../graphql/post-subscription";
 import {
     AggregationFn,
     AggregationQuery,
@@ -31,7 +35,6 @@ import {
 } from "./data-provider";
 import {
     QDataListener,
-    QDataSubscription,
 } from "./listener";
 import {
     AccessArgs,
@@ -48,11 +51,9 @@ import {
     CollectionFilter,
     indexToString,
     OrderBy,
-    parseSelectionSet,
     QParams,
     QType,
     QueryStat,
-    selectFields,
     selectionToString,
 } from "../filter/filters";
 import QLogs, { QLog } from "../logs";
@@ -68,7 +69,6 @@ import {
 } from "../stats";
 import {
     QTraceSpan,
-    QTracer,
 } from "../tracing";
 import {
     QError,
@@ -88,6 +88,8 @@ import { QCollectionQuery } from "./collection-query";
 import { QJoinQuery } from "./collection-joins";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
+
+let pubsub: RedisPubSub;
 
 export type AggregationArgs = {
     filter?: CollectionFilter | null,
@@ -189,6 +191,8 @@ export class QDataCollection {
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
 
+        /*
+         * TODO: DISCUSS
         const provider = options.provider;
         if (provider !== undefined) {
             void (async () => {
@@ -198,14 +202,17 @@ export class QDataCollection {
                 );
             })();
         }
+       */
     }
 
     close() {
+        /*
         if (this.provider !== undefined && this.hotSubscription) {
             this.provider.unsubscribe(this.hotSubscription);
             this.hotSubscription = null;
             this.provider = undefined;
         }
+        */
     }
 
     dropCachedDbInfo() {
@@ -214,90 +221,45 @@ export class QDataCollection {
 
     // Subscriptions
 
-    onDocumentInsertOrUpdate(doc: QDoc) {
-        void this.statDoc.increment().then(() => {
-            this.docInsertOrUpdate.emit("doc", doc);
-            const isExternalInboundFinalizedMessage = this.name === "messages"
-                && doc._key
-                && doc.msg_type === 1
-                && doc.status === 5;
-            if (isExternalInboundFinalizedMessage) {
-                const span = this.tracer.startSpan("messageDbNotification", {
-                    childOf: QTracer.messageRootSpanContext(doc._key),
-                });
-                span.addTags({
-                    messageId: doc._key,
-                });
-                span.finish();
-            }
-        });
-    }
-
     subscriptionResolver() {
         return {
             subscribe: async (
                 _: unknown,
                 args: AccessArgs & { filter: CollectionFilter | null },
                 request: QRequestContext,
-                info: { operation: { selectionSet: SelectionSetNode } },
+                info: Record<string, unknown>
             ) => {
                 if (!request.services.config.useListeners) {
                     throw new Error("Disabled");
                 }
-                const accessRights = await request.requireGrantedAccess(args);
+
+                if (!pubsub) {
+                    const {redisOptions} = request.services.config.subscriptions;
+                    redisOptions.retryStrategy =  (times: number) => Math.min(times * 50, 2000);
+                    pubsub = new RedisPubSub({
+                        publisher: new Redis(redisOptions),
+                        subscriber: new Redis(redisOptions),
+                    });
+                }
+
+                // const accessRights = await request.requireGrantedAccess(args);
                 await this.statSubscription.increment();
-                const subscription = new QDataSubscription(
-                    this.name,
-                    this.docType,
-                    accessRights,
-                    args.filter ?? {},
-                    parseSelectionSet(info.operation.selectionSet, this.name),
-                );
-                const fieldSelection: FieldNode =
-                    (info.operation.selectionSet.selections.find(x => x.kind === "Field" && x.name.value === this.name)
-                        ?? info.operation.selectionSet.selections[0]) as FieldNode;
-                const parentSpan = QTraceSpan.create(
-                    request.services.tracer,
-                    "subscription",
-                    request.parentSpan,
-                );
-                const eventListener = (doc: QDoc) => {
-                    void (async () => {
-                        try {
-                            if (subscription.isFiltered(doc) && !subscription.isQueueOverflow()) {
-                                const reduced = selectFields(
-                                    doc,
-                                    subscription.selection,
-                                ) as Record<string, unknown>;
-                                await QJoinQuery.fetchJoinedRecords(
-                                    this,
-                                    [reduced],
-                                    fieldSelection.selectionSet,
-                                    accessRights,
-                                    40000,
-                                    request,
-                                    parentSpan,
-                                );
-                                subscription.pushValue({ [this.name]: reduced as QDoc });
-                            }
-                        } catch (error) {
-                            this.log.error(
-                                Date.now(),
-                                this.name,
-                                "SUBSCRIPTION\tFAILED",
-                                JSON.stringify(args.filter),
-                                error.toString(),
-                            );
-                        }
-                    })();
-                };
-                this.docInsertOrUpdate.on("doc", eventListener);
-                this.subscriptionCount += 1;
-                subscription.onClose = () => {
-                    this.docInsertOrUpdate.removeListener("doc", eventListener);
-                    this.subscriptionCount = Math.max(0, this.subscriptionCount - 1);
-                };
-                return subscription;
+
+                const value = JSON.stringify(args.filter);
+                const key = info.fieldName + md5(value);
+
+                await postSubscription(request, { key, value });
+
+                return pubsub.asyncIterator([key]);
+            },
+
+            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+            resolve: (payload: any) => {
+                // Add _key to mimic "old" behavior
+                if (payload?.id !== undefined) {
+                    payload._key = payload.id;
+                }
+                return payload;
             },
         };
     }
@@ -557,7 +519,7 @@ export class QDataCollection {
                     }
                     queryProcessing.created = true;
                     return await this.fetchRecords(query, args, selectionSet, request, traceSpan);
-                } catch (error) {
+                } catch (error: any) {
                     await this.statQueryFailed.increment();
                     if (queryProcessing.created) {
                         const slowReason = explainSlowReason(
@@ -704,7 +666,7 @@ export class QDataCollection {
                             if (this.docType.test(null, doc, q.filter)) {
                                 resolveBy("listener", resolve, [doc]);
                             }
-                        } catch (error) {
+                        } catch (error: any) {
                             this.log.error(
                                 Date.now(),
                                 this.name,

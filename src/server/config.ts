@@ -38,6 +38,16 @@ export type QConfig = {
         topic: string,
         maxSize: number,
     },
+    subscriptions: {
+        server: string,
+        topic: string,
+        maxSize: number,
+        redisOptions: {
+            port: number,
+            host: string,
+            retryStrategy?: (times: number) => number,
+        }
+    },
     queries: {
         filter: FilterConfig,
         maxRuntimeInS: number,
@@ -135,6 +145,15 @@ export const configParams = {
         server: ConfigParam.string("requests-server", "kafka:9092", "Requests server url"),
         topic: ConfigParam.string("requests-topic", "requests", "Requests topic name"),
         maxSize: ConfigParam.integer("requests-max-size", 16383, "Maximum request message size in bytes"),
+    },
+    subscriptions: {
+        server: ConfigParam.string("subscriptions-server", "kafka:9092", "Subscriptions server url"),
+        topic: ConfigParam.string("subscriptions-topic", "subscriptions", "Subscriptions topic name"),
+        maxSize: ConfigParam.integer("subscriptions-max-size", 16383, "Maximum subscription message size in bytes"),
+        redisOptions: {
+            port: ConfigParam.integer("redis-port", 6379, "Redis port"),
+            host: ConfigParam.string("redis-host", "redis", "Redis host"),
+        }
     },
     queries: {
         filter: {
