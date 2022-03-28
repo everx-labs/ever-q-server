@@ -216,6 +216,12 @@ export class QDataCollection {
 
     onDocumentInsertOrUpdate(doc: QDoc) {
         void this.statDoc.increment().then(() => {
+            const isMessagePatch = this.name === "messages"
+                && (doc.src === undefined && doc.dst === undefined);
+            if (isMessagePatch) {
+                return; //skip
+            }
+
             this.docInsertOrUpdate.emit("doc", doc);
             const isExternalInboundFinalizedMessage = this.name === "messages"
                 && doc._key

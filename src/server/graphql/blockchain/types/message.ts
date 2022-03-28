@@ -19,7 +19,7 @@ export const resolvers: Resolvers<QRequestContext> = {
         ihr_fee: (parent, args) => resolveBigUInt(2, parent.ihr_fee, args as BigIntArgs),
         import_fee: (parent, args) => resolveBigUInt(2, parent.import_fee, args as BigIntArgs),
         value: (parent, args) => resolveBigUInt(2, parent.value, args as BigIntArgs),
-        created_at_string: parent => unixSecondsToString(parent.created_at_string),
+        created_at_string: parent => unixSecondsToString(parent.created_at),
         msg_type_name: parent => {
             switch(parent.msg_type) {
                 case 0: return MessageTypeEnum.Internal;
@@ -29,7 +29,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             }
         },
         status_name: parent => {
-            switch(parent.msg_type) {
+            switch(parent.status) {
                 case 0: return MessageProcessingStatusEnum.Unknown;
                 case 1: return MessageProcessingStatusEnum.Queued;
                 case 2: return MessageProcessingStatusEnum.Processing;
