@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Add new functions:
     - `blockchain { account { messages }}` to fetch account messages
     - `blockchain { block }` to fetch block by hash
+    - `blockchain { block_by_seq_no }` to fetch block by (workchain, thread, seq_no) triplet
     - `blockchain { transaction }` to fetch transaction by hash
     - `blockchain { message }` to fetch message by hash
 

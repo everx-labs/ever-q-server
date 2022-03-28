@@ -90,6 +90,8 @@ type BlockchainQuery {
     "**UNSTABLE**"
     block(hash: String!): BlockchainBlock
     "**UNSTABLE**"
+    block_by_seq_no(workchain: Int!, thread: String!, seq_no: Float!): BlockchainBlock
+    "**UNSTABLE**"
     transaction(hash: String!): BlockchainTransaction
     "**UNSTABLE**"
     message(hash: String!): BlockchainMessage

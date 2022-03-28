@@ -18,18 +18,18 @@ import {
     BlockchainBlock,
     BlockchainBlocksConnection,
     BlockchainQueryBlocksArgs,
+    BlockchainQueryBlock_By_Seq_NoArgs,
     BlockchainQueryKey_BlocksArgs,
 } from "../resolvers-types-generated";
 
-
-export async function resolve_block(
-    hash: String,
+async function fetch_block(
+    filterBuilder: (params: QParams) => String,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    maxJoinDepth = 1,
+    shards?: Set<string>,
 ) {
-    const maxJoinDepth = 1;
-
     const selectionSet = info.fieldNodes[0].selectionSet;
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
@@ -42,7 +42,7 @@ export async function resolve_block(
     const params = new QParams();
     const query =
         "FOR doc IN blocks " +
-        `FILTER doc._key == @${params.add(hash)} ` +
+        `FILTER ${filterBuilder(params)} ` +
         `RETURN ${returnExpression}`;
     const queryResult = await context.services.data.query(
         required(context.services.data.blocks.provider),
@@ -52,7 +52,7 @@ export async function resolve_block(
             orderBy: [],
             request: context,
             traceSpan,
-            // TODO: shard
+            shards,
         },
     ) as BlockchainBlock[];
 
@@ -65,6 +65,38 @@ export async function resolve_block(
     );
 
     return queryResult[0];
+}
+
+export async function resolve_block(
+    hash: String,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    return fetch_block(
+        (params) => `doc._key == @${params.add(hash)}`,
+        context,
+        info,
+        traceSpan,
+        // TODO: shard
+    );
+}
+
+export async function resolve_block_by_seq_no(
+    args: BlockchainQueryBlock_By_Seq_NoArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    return fetch_block(
+        (params) => 
+            `doc.workchain_id == @${params.add(args.workchain)} AND ` +
+            `doc.shard == @${params.add(args.thread)} AND ` +
+            `doc.seq_no == @${params.add(args.seq_no)}`,
+        context,
+        info,
+        traceSpan,
+    );
 }
 
 export async function resolve_key_blocks(

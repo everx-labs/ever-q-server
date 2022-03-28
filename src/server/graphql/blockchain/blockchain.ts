@@ -16,6 +16,7 @@ import {
     resolve_block,
     resolve_transaction,
     resolve_message,
+    resolve_block_by_seq_no,
 } from "./fetchers";
 
 
@@ -142,6 +143,11 @@ export const resolvers: Resolvers<QRequestContext> = {
         block: async (_parent, args, context, info) => {
             return context.trace("blockchain-block", async traceSpan => {
                 return resolve_block(args.hash, context, info, traceSpan);
+            });
+        },
+        block_by_seq_no: async (_parent, args, context, info) => {
+            return context.trace("blockchain-block-by-seq-no", async traceSpan => {
+                return resolve_block_by_seq_no(args, context, info, traceSpan);
             });
         },
         transaction: async (_parent, args, context, info) => {
