@@ -42,5 +42,13 @@ export async function resolve_account(
         },
     ) as BlockchainAccount[];
 
+    await config.accounts.fetchJoins(
+        queryResult,
+        selectionSet,
+        context,
+        traceSpan,
+        maxJoinDepth,
+    );
+
     return queryResult[0];
 }

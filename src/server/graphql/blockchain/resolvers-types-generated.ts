@@ -527,11 +527,24 @@ export type BlockchainAccountQuery = {
    * Account information (e.g. boc).
    */
   info?: Maybe<BlockchainAccount>;
+  messages?: Maybe<BlockchainMessagesConnection>;
   /**
    * **UNSTABLE**
    * This node could be used for a cursor-based pagination of account transactions.
    */
   transactions?: Maybe<BlockchainTransactionsConnection>;
+};
+
+
+export type BlockchainAccountQueryMessagesArgs = {
+  master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>;
+  counterparties?: Maybe<Array<Scalars['String']>>;
+  msg_type?: Maybe<Array<BlockchainMessageTypeFilterEnum>>;
+  min_value?: Maybe<Scalars['String']>;
+  first?: Maybe<Scalars['Int']>;
+  after?: Maybe<Scalars['String']>;
+  last?: Maybe<Scalars['Int']>;
+  before?: Maybe<Scalars['String']>;
 };
 
 
@@ -856,6 +869,31 @@ export type BlockchainMessageValueArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
+/** This type is unstable */
+export type BlockchainMessageEdge = {
+  __typename?: 'BlockchainMessageEdge';
+  node: BlockchainMessage;
+  cursor: Scalars['String'];
+};
+
+export enum BlockchainMessageTypeFilterEnum {
+  /** External inbound */
+  ExtIn = 'ExtIn',
+  /** External outbound */
+  ExtOut = 'ExtOut',
+  /** Internal inbound */
+  IntIn = 'IntIn',
+  /** Internal outbound */
+  IntOut = 'IntOut'
+}
+
+/** This type is unstable */
+export type BlockchainMessagesConnection = {
+  __typename?: 'BlockchainMessagesConnection';
+  edges: Array<BlockchainMessageEdge>;
+  pageInfo: PageInfo;
+};
+
 export type BlockchainQuery = {
   __typename?: 'BlockchainQuery';
   /**
@@ -863,6 +901,14 @@ export type BlockchainQuery = {
    * Account-related information
    */
   account?: Maybe<BlockchainAccountQuery>;
+  /** **UNSTABLE** */
+  block?: Maybe<BlockchainBlock>;
+  /** **UNSTABLE** */
+  block_by_seq_no?: Maybe<BlockchainBlock>;
+  /** **UNSTABLE** */
+  transaction?: Maybe<BlockchainTransaction>;
+  /** **UNSTABLE** */
+  message?: Maybe<BlockchainMessage>;
   /**
    * **UNSTABLE**
    * Returns seq_no range such that:
@@ -910,6 +956,28 @@ export type BlockchainQuery = {
 
 export type BlockchainQueryAccountArgs = {
   address: Scalars['String'];
+};
+
+
+export type BlockchainQueryBlockArgs = {
+  hash: Scalars['String'];
+};
+
+
+export type BlockchainQueryBlock_By_Seq_NoArgs = {
+  workchain: Scalars['Int'];
+  thread: Scalars['String'];
+  seq_no: Scalars['Float'];
+};
+
+
+export type BlockchainQueryTransactionArgs = {
+  hash: Scalars['String'];
+};
+
+
+export type BlockchainQueryMessageArgs = {
+  hash: Scalars['String'];
 };
 
 
@@ -2008,6 +2076,9 @@ export type ResolversTypes = {
   BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   BlockchainMasterSeqNoRange: ResolverTypeWrapper<BlockchainMasterSeqNoRange>;
   BlockchainMessage: ResolverTypeWrapper<BlockchainMessage>;
+  BlockchainMessageEdge: ResolverTypeWrapper<BlockchainMessageEdge>;
+  BlockchainMessageTypeFilterEnum: BlockchainMessageTypeFilterEnum;
+  BlockchainMessagesConnection: ResolverTypeWrapper<BlockchainMessagesConnection>;
   BlockchainQuery: ResolverTypeWrapper<BlockchainQuery>;
   BlockchainTransaction: ResolverTypeWrapper<BlockchainTransaction>;
   BlockchainTransactionEdge: ResolverTypeWrapper<BlockchainTransactionEdge>;
@@ -2085,6 +2156,8 @@ export type ResolversParentTypes = {
   BlockchainMasterSeqNoFilter: BlockchainMasterSeqNoFilter;
   BlockchainMasterSeqNoRange: BlockchainMasterSeqNoRange;
   BlockchainMessage: BlockchainMessage;
+  BlockchainMessageEdge: BlockchainMessageEdge;
+  BlockchainMessagesConnection: BlockchainMessagesConnection;
   BlockchainQuery: BlockchainQuery;
   BlockchainTransaction: BlockchainTransaction;
   BlockchainTransactionEdge: BlockchainTransactionEdge;
@@ -2298,6 +2371,7 @@ export type BlockchainAccountResolvers<ContextType = any, ParentType extends Res
 export type BlockchainAccountQueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainAccountQuery'] = ResolversParentTypes['BlockchainAccountQuery']> = {
   address?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   info?: Resolver<Maybe<ResolversTypes['BlockchainAccount']>, ParentType, ContextType>;
+  messages?: Resolver<Maybe<ResolversTypes['BlockchainMessagesConnection']>, ParentType, ContextType, RequireFields<BlockchainAccountQueryMessagesArgs, never>>;
   transactions?: Resolver<Maybe<ResolversTypes['BlockchainTransactionsConnection']>, ParentType, ContextType, RequireFields<BlockchainAccountQueryTransactionsArgs, never>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2414,8 +2488,24 @@ export type BlockchainMessageResolvers<ContextType = any, ParentType extends Res
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type BlockchainMessageEdgeResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainMessageEdge'] = ResolversParentTypes['BlockchainMessageEdge']> = {
+  node?: Resolver<ResolversTypes['BlockchainMessage'], ParentType, ContextType>;
+  cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type BlockchainMessagesConnectionResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainMessagesConnection'] = ResolversParentTypes['BlockchainMessagesConnection']> = {
+  edges?: Resolver<Array<ResolversTypes['BlockchainMessageEdge']>, ParentType, ContextType>;
+  pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BlockchainQueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['BlockchainQuery'] = ResolversParentTypes['BlockchainQuery']> = {
   account?: Resolver<Maybe<ResolversTypes['BlockchainAccountQuery']>, ParentType, ContextType, RequireFields<BlockchainQueryAccountArgs, 'address'>>;
+  block?: Resolver<Maybe<ResolversTypes['BlockchainBlock']>, ParentType, ContextType, RequireFields<BlockchainQueryBlockArgs, 'hash'>>;
+  block_by_seq_no?: Resolver<Maybe<ResolversTypes['BlockchainBlock']>, ParentType, ContextType, RequireFields<BlockchainQueryBlock_By_Seq_NoArgs, 'workchain' | 'thread' | 'seq_no'>>;
+  transaction?: Resolver<Maybe<ResolversTypes['BlockchainTransaction']>, ParentType, ContextType, RequireFields<BlockchainQueryTransactionArgs, 'hash'>>;
+  message?: Resolver<Maybe<ResolversTypes['BlockchainMessage']>, ParentType, ContextType, RequireFields<BlockchainQueryMessageArgs, 'hash'>>;
   master_seq_no_range?: Resolver<Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>, ParentType, ContextType, RequireFields<BlockchainQueryMaster_Seq_No_RangeArgs, never>>;
   key_blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryKey_BlocksArgs, never>>;
   blocks?: Resolver<Maybe<ResolversTypes['BlockchainBlocksConnection']>, ParentType, ContextType, RequireFields<BlockchainQueryBlocksArgs, never>>;
@@ -2861,6 +2951,8 @@ export type Resolvers<ContextType = any> = {
   BlockchainBlocksEdge?: BlockchainBlocksEdgeResolvers<ContextType>;
   BlockchainMasterSeqNoRange?: BlockchainMasterSeqNoRangeResolvers<ContextType>;
   BlockchainMessage?: BlockchainMessageResolvers<ContextType>;
+  BlockchainMessageEdge?: BlockchainMessageEdgeResolvers<ContextType>;
+  BlockchainMessagesConnection?: BlockchainMessagesConnectionResolvers<ContextType>;
   BlockchainQuery?: BlockchainQueryResolvers<ContextType>;
   BlockchainTransaction?: BlockchainTransactionResolvers<ContextType>;
   BlockchainTransactionEdge?: BlockchainTransactionEdgeResolvers<ContextType>;
