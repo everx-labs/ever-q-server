@@ -140,6 +140,7 @@ export type QDataProviderQueryParams = {
     text: string,
     vars: Record<string, unknown>,
     orderBy: OrderBy[],
+    distinctBy?: string,
     request: QRequestContext,
     shards?: Set<string>,
     traceSpan: QTraceSpan,
@@ -227,7 +228,7 @@ export class QDataCombiner implements QDataProvider {
         const providers = this.getProvidersForShards(shards);
         const results = await Promise.all(providers.map(x => x.query(params)));
         traceSpan.logEvent("QDataCombiner_query_dataIsFetched");
-        const result = combineResults(results, params.orderBy);
+        const result = combineResults(results, params.orderBy, params.distinctBy);
         traceSpan.logEvent("QDataCombiner_query_end");
         return result;
     }
@@ -369,8 +370,12 @@ export class QDataPrecachedCombiner extends QDataCombiner {
     }
 }
 
-export function combineResults(results: QResult[][], orderBy: OrderBy[]): QResult[] {
-    const docs = collectDistinctDocs(results);
+export function combineResults(
+    results: QResult[][],
+    orderBy: OrderBy[],
+    distinctBy = "_key",
+): QResult[] {
+    const docs = collectDistinctDocs(results, distinctBy);
     if (orderBy.length > 0) {
         docs.sort((a: QResult, b: QResult) => compareResults(a, b, orderBy));
     }
@@ -378,7 +383,7 @@ export function combineResults(results: QResult[][], orderBy: OrderBy[]): QResul
 }
 
 
-function collectDistinctDocs(source: QResult[][]): QResult[] {
+function collectDistinctDocs(source: QResult[][], key: string): QResult[] {
     const distinctDocs: QResult[] = [];
     const distinctKeys = new Set();
     source.forEach((docs) => {
@@ -387,12 +392,12 @@ function collectDistinctDocs(source: QResult[][]): QResult[] {
                 typeof doc === "bigint" ||
                 typeof doc === "boolean" ||
                 typeof doc === "number" ||
-                Array.isArray(doc) || !("_key" in doc)
+                Array.isArray(doc) || !(key in doc)
             ) {
                 distinctDocs.push(doc);
-            } else if (!distinctKeys.has(doc._key)) {
+            } else if (!distinctKeys.has(doc[key])) {
                 distinctDocs.push(doc);
-                distinctKeys.add(doc._key);
+                distinctKeys.add(doc[key]);
             }
         });
     });

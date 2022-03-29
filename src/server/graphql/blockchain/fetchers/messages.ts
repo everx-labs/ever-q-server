@@ -213,6 +213,7 @@ export async function resolve_account_messages(
                     direction: "ASC",
                 },
             ],
+            distinctBy: "account_chain_order",
             request: context,
             traceSpan,
             // TODO: shard and complement_messages usage
