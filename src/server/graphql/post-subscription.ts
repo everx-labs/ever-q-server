@@ -5,7 +5,6 @@ const postSubscription = async (
     context: QRequestContext,
     message: { key: string; value: string }
 ) => {
-    console.log("YOU CALL SENT MESSAGE", message);
     const cfg = context.services.config.subscriptions;
     const size = message.value.length;
     if (size > cfg.maxSize) {
@@ -21,12 +20,12 @@ const postSubscription = async (
         return value;
     };
 
-    const producer: Producer = await ensureShared("producer", async () => {
+    const producer: Producer = await ensureShared("subscr-producer", async () => {
         const kafka: Kafka = await ensureShared(
-            "kafka",
+            "subscr-kafka",
             async () =>
                 new Kafka({
-                    clientId: "q-server",
+                    clientId: "subscr-q-server",
                     brokers: [cfg.server],
                 })
         );
@@ -39,7 +38,6 @@ const postSubscription = async (
         topic: cfg.topic,
         messages: [message],
     });
-    console.log("MESSAGE SENT:", message, "\nTopic:", cfg.topic);
 };
 
 export default postSubscription;

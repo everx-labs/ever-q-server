@@ -88,6 +88,7 @@ import { QCollectionQuery } from "./collection-query";
 import { QJoinQuery } from "./collection-joins";
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000; // 60 minutes
+const KEEP_ALIVE_INTERVAL = 30000; // every 30 secs
 
 let pubsub: RedisPubSub;
 
@@ -190,29 +191,9 @@ export class QDataCollection {
         this.docInsertOrUpdate.setMaxListeners(0);
         this.queryStats = new Map<string, QueryStat>();
         this.maxQueueSize = 0;
-
-        /*
-         * TODO: DISCUSS
-        const provider = options.provider;
-        if (provider !== undefined) {
-            void (async () => {
-                this.hotSubscription = await provider.subscribe(
-                    name,
-                    doc => this.onDocumentInsertOrUpdate(doc as QDoc),
-                );
-            })();
-        }
-       */
     }
 
     close() {
-        /*
-        if (this.provider !== undefined && this.hotSubscription) {
-            this.provider.unsubscribe(this.hotSubscription);
-            this.hotSubscription = null;
-            this.provider = undefined;
-        }
-        */
     }
 
     dropCachedDbInfo() {
@@ -250,7 +231,27 @@ export class QDataCollection {
 
                 await postSubscription(request, { key, value });
 
-                return pubsub.asyncIterator([key]);
+                const timerId = setInterval(() => {
+                    postSubscription(request, { key, value: "" }).catch((err) => {
+                        // Can't help, can log an error only
+                        this.log.error("SUBSCRIPTIONS", err);
+                    });
+                }, KEEP_ALIVE_INTERVAL);
+
+                const asyncIterator =  pubsub.asyncIterator([key]);
+                //
+                // For explanations, see https://github.com/apollographql/graphql-subscriptions/issues/99
+                //
+                if (!asyncIterator.return) {
+                    asyncIterator.return = () => Promise.resolve({ value: undefined, done: true });
+                }
+
+                const savedReturn = asyncIterator.return.bind(asyncIterator);
+                asyncIterator.return = () => {
+                    clearInterval(timerId);
+                    return savedReturn();
+                };
+                return asyncIterator;
             },
 
             // eslint-disable-next-line  @typescript-eslint/no-explicit-any
