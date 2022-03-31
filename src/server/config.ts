@@ -133,7 +133,7 @@ export const configParams = {
     server: {
         host: ConfigParam.string("host", "{ip}", "Listening address"),
         port: ConfigParam.integer("port", 4000, "Listening port"),
-        keepAlive: ConfigParam.integer("keep-alive", 60000, "GraphQL keep alive ms"),
+        keepAlive: ConfigParam.integer("keep-alive", 5000, "GraphQL keep alive ms"),
     },
     requests: {
         mode: ConfigParam.string(
