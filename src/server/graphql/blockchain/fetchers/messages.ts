@@ -96,6 +96,11 @@ export async function resolve_account_messages(
                 "Don't use counterparties filter together with extIn/ExtOut message types."
             );
         }
+        if (args.counterparties.length > 5) {
+            throw QError.invalidQuery(
+                "Only up to 5 counterparties are allowed in account messages filter."
+            );
+        }
     }
     
     const { direction, limit } = processPaginationArgs(args);
