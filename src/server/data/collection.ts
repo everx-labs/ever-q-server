@@ -257,7 +257,7 @@ export class QDataCollection {
             // eslint-disable-next-line  @typescript-eslint/no-explicit-any
             resolve: (payload: any) => {
                 // Add _key to mimic "old" behavior
-                if (payload?.id !== undefined) {
+                if (payload._key === undefined && payload?.id !== undefined) {
                     payload._key = payload.id;
                 }
                 return payload;
