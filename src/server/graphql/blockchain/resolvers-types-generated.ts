@@ -398,7 +398,7 @@ export type BlockchainAccount = Node & {
   tick?: Maybe<Scalars['Boolean']>;
   /**
    * May be present only in the masterchain—and within the masterchain, only in some
-   *  fundamental smart contracts required for the whole system to function.
+   * fundamental smart contracts required for the whole system to function.
    */
   tock?: Maybe<Scalars['Boolean']>;
   /** Workchain id of the account address (id field). */
@@ -522,11 +522,12 @@ export type BlockchainAccountPublic_CellsArgs = {
 export type BlockchainAccountQuery = {
   __typename?: 'BlockchainAccountQuery';
   address: Scalars['String'];
+  /** Account information (e.g. boc). */
+  info?: Maybe<BlockchainAccount>;
   /**
    * **UNSTABLE**
-   * Account information (e.g. boc).
+   * This node could be used for a cursor-based pagination of account messages.
    */
-  info?: Maybe<BlockchainAccount>;
   messages?: Maybe<BlockchainMessagesConnection>;
   /**
    * **UNSTABLE**
@@ -901,13 +902,9 @@ export type BlockchainQuery = {
    * Account-related information
    */
   account?: Maybe<BlockchainAccountQuery>;
-  /** **UNSTABLE** */
   block?: Maybe<BlockchainBlock>;
-  /** **UNSTABLE** */
   block_by_seq_no?: Maybe<BlockchainBlock>;
-  /** **UNSTABLE** */
   transaction?: Maybe<BlockchainTransaction>;
-  /** **UNSTABLE** */
   message?: Maybe<BlockchainMessage>;
   /**
    * **UNSTABLE**
@@ -934,20 +931,17 @@ export type BlockchainQuery = {
    */
   transactions?: Maybe<BlockchainTransactionsConnection>;
   /**
-   * **DEPRECATED** (is moved to root query)
-   * **UNSTABLE**
+   * **DEPRECATED**: will be removed soon after May 1
    * This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
    */
   workchain_blocks?: Maybe<BlockchainBlocksConnection>;
   /**
-   * **DEPRECATED** (is moved to root query)
-   * **UNSTABLE**
+   * **DEPRECATED**: will be removed soon after May 1
    * This node could be used for a cursor-based pagination of transactions filtered by workchains.
    */
   workchain_transactions?: Maybe<BlockchainTransactionsConnection>;
   /**
-   * **DEPRECATED** (is moved to root query)
-   * **UNSTABLE**
+   * **DEPRECATED**: will be removed soon after May 1
    * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
    */
   account_transactions?: Maybe<BlockchainTransactionsConnection>;
