@@ -226,7 +226,7 @@ export class QDataCollection {
                 // const accessRights = await request.requireGrantedAccess(args);
                 await this.statSubscription.increment();
 
-                const value = JSON.stringify(args.filter);
+                const value = JSON.stringify(args.filter || {});
                 const key = info.fieldName + md5(value);
 
                 await postSubscription(request, { key, value });
