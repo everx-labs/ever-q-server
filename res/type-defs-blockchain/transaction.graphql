@@ -35,6 +35,8 @@ type BlockchainTransaction implements Node {
 	"""
 	end_status: Int
 	end_status_name: AccountStatusEnum
+	"Fee for inbound external message import."
+	ext_in_msg_fee(format: BigIntFormat): String
 	in_message: BlockchainMessage
 	in_msg: String
 	installed: Boolean
@@ -75,7 +77,13 @@ type BlockchainTransaction implements Node {
 	status: Int
 	status_name: TransactionProcessingStatusEnum
 	storage: TransactionStorage
-	"Total amount of fees that entails account state change and used in Merkle update"
+	"""
+	Total amount of fees collected by the validators. 
+	Because fwd_fee is collected by the validators of the receiving shard, 
+	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
+	The formula is:
+	total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
+	"""
 	total_fees(format: BigIntFormat): String
 	"Same as above, but reserved for non gram coins that may appear in the blockchain"
 	total_fees_other: [OtherCurrency]
