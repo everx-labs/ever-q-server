@@ -56,7 +56,7 @@ type BlockchainAccount implements Node {
     """
     due_payment(format: BigIntFormat): String
     "account 's initial code hash (when it was deployed)"
-	init_code_hash: String
+    init_code_hash: String
     """
     Contains either the unixtime of the most recent storage payment
     collected (usually this is the unixtime of the most recent transaction),
