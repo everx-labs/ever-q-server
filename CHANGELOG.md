@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.49.1] - 2022-04-07
+
+### Fixed
+
+- Fixed documentation about deprecated and soon to be removed API parts
+- Added `init_code_hash` to BlockchainAccount and `ext_in_msg_fee` to BlockchainTransaction types (affected queries are `blockchain {...}`)
+
 ## [0.49.0] - 2022-03-29
 
 ### New
