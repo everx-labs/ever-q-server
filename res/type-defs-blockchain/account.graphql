@@ -55,6 +55,8 @@ type BlockchainAccount implements Node {
     altogether, and its balance, if any, is transferred to the zero account.
     """
     due_payment(format: BigIntFormat): String
+    "account 's initial code hash (when it was deployed)"
+    init_code_hash: String
     """
     Contains either the unixtime of the most recent storage payment
     collected (usually this is the unixtime of the most recent transaction),

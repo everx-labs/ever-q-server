@@ -372,6 +372,8 @@ export type BlockchainAccount = Node & {
    * For id without prefix see "address".
    */
   id: Scalars['ID'];
+  /** account 's initial code hash (when it was deployed) */
+  init_code_hash?: Maybe<Scalars['String']>;
   /**
    * Contains either the unixtime of the most recent storage payment
    * collected (usually this is the unixtime of the most recent transaction),
@@ -1085,6 +1087,8 @@ export type BlockchainTransaction = Node & {
    */
   end_status?: Maybe<Scalars['Int']>;
   end_status_name?: Maybe<AccountStatusEnum>;
+  /** Fee for inbound external message import. */
+  ext_in_msg_fee?: Maybe<Scalars['String']>;
   hash?: Maybe<Scalars['String']>;
   /**
    * BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
@@ -1131,7 +1135,13 @@ export type BlockchainTransaction = Node & {
   status?: Maybe<Scalars['Int']>;
   status_name?: Maybe<TransactionProcessingStatusEnum>;
   storage?: Maybe<TransactionStorage>;
-  /** Total amount of fees that entails account state change and used in Merkle update */
+  /**
+   * Total amount of fees collected by the validators.
+   * Because fwd_fee is collected by the validators of the receiving shard,
+   * total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
+   * The formula is:
+   * total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
+   */
   total_fees?: Maybe<Scalars['String']>;
   /** Same as above, but reserved for non gram coins that may appear in the blockchain */
   total_fees_other?: Maybe<Array<Maybe<OtherCurrency>>>;
@@ -1159,6 +1169,15 @@ export type BlockchainTransaction = Node & {
  * Transaction
  */
 export type BlockchainTransactionBalance_DeltaArgs = {
+  format?: Maybe<BigIntFormat>;
+};
+
+
+/**
+ * **UNSTABLE**
+ * Transaction
+ */
+export type BlockchainTransactionExt_In_Msg_FeeArgs = {
   format?: Maybe<BigIntFormat>;
 };
 
@@ -2348,6 +2367,7 @@ export type BlockchainAccountResolvers<ContextType = any, ParentType extends Res
   data_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   due_payment?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountDue_PaymentArgs, never>>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  init_code_hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   last_paid?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   last_trans_lt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainAccountLast_Trans_LtArgs, never>>;
   library?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2528,6 +2548,7 @@ export type BlockchainTransactionResolvers<ContextType = any, ParentType extends
   destroyed?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   end_status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   end_status_name?: Resolver<Maybe<ResolversTypes['AccountStatusEnum']>, ParentType, ContextType>;
+  ext_in_msg_fee?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<BlockchainTransactionExt_In_Msg_FeeArgs, never>>;
   hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   in_message?: Resolver<Maybe<ResolversTypes['BlockchainMessage']>, ParentType, ContextType>;

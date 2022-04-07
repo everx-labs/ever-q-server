@@ -11,6 +11,7 @@ export const resolvers: Resolvers<QRequestContext> = {
         id: parent => `transaction/${parent._key}`,
         hash: parent => parent._key,
         balance_delta: (parent, args) => resolveBigUInt(2, parent.balance_delta, args as BigIntArgs),
+        ext_in_msg_fee: (parent, args) => resolveBigUInt(2, parent.ext_in_msg_fee, args as BigIntArgs),
         lt: (parent, args) => resolveBigUInt(1, parent.lt, args as BigIntArgs),
         prev_trans_lt: (parent, args) => resolveBigUInt(1, parent.prev_trans_lt, args as BigIntArgs),
         total_fees: (parent, args) => resolveBigUInt(2, parent.total_fees, args as BigIntArgs),
