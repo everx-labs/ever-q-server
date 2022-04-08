@@ -87,13 +87,9 @@ type BlockchainQuery {
         address: String!
     ): BlockchainAccountQuery
 
-    "**UNSTABLE**"
     block(hash: String!): BlockchainBlock
-    "**UNSTABLE**"
     block_by_seq_no(workchain: Int!, thread: String!, seq_no: Float!): BlockchainBlock
-    "**UNSTABLE**"
     transaction(hash: String!): BlockchainTransaction
-    "**UNSTABLE**"
     message(hash: String!): BlockchainMessage
 
     """
@@ -187,8 +183,7 @@ type BlockchainQuery {
     ): BlockchainTransactionsConnection
 
     """
-    **DEPRECATED** (is moved to root query)
-    **UNSTABLE**
+    **DEPRECATED**: will be removed soon after May 1
     This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
     """
     workchain_blocks(
@@ -218,8 +213,7 @@ type BlockchainQuery {
     ): BlockchainBlocksConnection
 
     """
-    **DEPRECATED** (is moved to root query)
-    **UNSTABLE**
+    **DEPRECATED**: will be removed soon after May 1
     This node could be used for a cursor-based pagination of transactions filtered by workchains.
     """
     workchain_transactions(
@@ -247,8 +241,7 @@ type BlockchainQuery {
     ): BlockchainTransactionsConnection
 
     """
-    **DEPRECATED** (is moved to root query)
-    **UNSTABLE**
+    **DEPRECATED**: will be removed soon after May 1
     This node could be used for a cursor-based pagination of transactions filtered by account addresses.
     """
     account_transactions(
@@ -281,7 +274,6 @@ type BlockchainQuery {
 
 type BlockchainAccountQuery {
     """
-    **UNSTABLE**
     Account information (e.g. boc).
     """
     info: BlockchainAccount
@@ -314,9 +306,13 @@ type BlockchainAccountQuery {
         before: String
     ): BlockchainTransactionsConnection
 
+    """
+    **UNSTABLE**
+    This node could be used for a cursor-based pagination of account messages.
+    """
     messages(        
         """
-        The transactions could be filtered by seq_no of corresponding masterchain blocks.
+        The messages could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
         """			
         master_seq_no_range: BlockchainMasterSeqNoFilter

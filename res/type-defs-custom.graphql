@@ -31,6 +31,7 @@ input FieldAggregation {
     fn: AggregationFn
 }
 
+"**DEPRECATED**: will be removed soon after May 1"
 type SlowReason {
     summary: String
     fields: [String]
@@ -38,7 +39,7 @@ type SlowReason {
     availableIndexes: [String],
 }
 
-"**DEPRECATED**"
+"**DEPRECATED**: will be removed soon after May 1"
 type QueryExplanation {
     isFast: Boolean
     slowReason: SlowReason
@@ -96,32 +97,32 @@ extend type Query {
     ): [String]
 
     """
-    **DEPRECATED**
+    **DEPRECATED**: will be removed soon after May 1
     Determine if specified accounts query is fast or slow
     """
 	explainQueryAccounts(filter: AccountFilter, orderBy: [QueryOrderBy]): QueryExplanation
     """
-    **DEPRECATED**
+    **DEPRECATED**: will be removed soon after May 1
     Determine if specified transactions query is fast or slow
     """
 	explainQueryTransactions(filter: TransactionFilter, orderBy: [QueryOrderBy]): QueryExplanation
     """
-    **DEPRECATED**
+    **DEPRECATED**: will be removed soon after May 1
     Determine if specified messages query is fast or slow
     """
 	explainQueryMessages(filter: MessageFilter, orderBy: [QueryOrderBy]): QueryExplanation
     """
-    **DEPRECATED**
+    **DEPRECATED**: will be removed soon after May 1
     Determine if specified blocks query is fast or slow
     """
 	explainQueryBlocks(filter: BlockFilter, orderBy: [QueryOrderBy]): QueryExplanation
     """
-    **DEPRECATED**
+    **DEPRECATED**: will be removed soon after May 1
     Determine if specified block signatures query is fast or slow
     """
 	explainQueryBlockSignatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy]): QueryExplanation
     """
-    **DEPRECATED**
+    **DEPRECATED**: will be removed soon after May 1
     Determine if specified zerostates query is fast or slow
     """
 	explainQueryZerostates(filter: ZerostateFilter, orderBy: [QueryOrderBy]): QueryExplanation
@@ -129,11 +130,20 @@ extend type Query {
     "Returns one time access key for management functions"
     getManagementAccessKey: String
 
-    "**DEPRECATED**. Use statistics query instead."
+    """
+    "**DEPRECATED**: will be removed soon after May 1
+    Use statistics query instead.
+    """
     getAccountsCount(accessKey: String): Float
-    "**DEPRECATED**. Use statistics query instead."
+    """
+    "**DEPRECATED**: will be removed soon after May 1
+    Use statistics query instead.
+    """
     getTransactionsCount(accessKey: String): Float
-    "**DEPRECATED**. Use statistics query instead."
+    """
+    "**DEPRECATED**: will be removed soon after May 1
+    Use statistics query instead.
+    """
     getAccountsTotalBalance(accessKey: String): String
 }
 
