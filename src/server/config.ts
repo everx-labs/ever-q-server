@@ -46,6 +46,8 @@ export type QConfig = {
             port: number,
             host: string,
             retryStrategy?: (times: number) => number,
+            maxRetriesPerRequest?: number,
+            commandTimeout?: number,
         }
     },
     queries: {
@@ -132,7 +134,7 @@ export const configParams = {
     config: ConfigParam.string("config", "", "Path to JSON configuration file"),
     server: {
         host: ConfigParam.string("host", "{ip}", "Listening address"),
-        port: ConfigParam.integer("port", 4000, "Listening port"),
+        port: ConfigParam.integer("port", 4011, "Listening port"),
         keepAlive: ConfigParam.integer("keep-alive", 5000, "GraphQL keep alive ms"),
     },
     requests: {

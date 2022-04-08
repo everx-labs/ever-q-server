@@ -366,6 +366,9 @@ export default class TONQServer {
         const typeDefs = endPoint.typeDefFileNames
             .map(x => fs.readFileSync(path.join("res", x), "utf-8"))
             .join("\n");
+
+        const subscrWSSet = new Set(); 
+
         const config: ApolloServerExpressConfig = {
             debug: false,
             typeDefs,
@@ -378,11 +381,17 @@ export default class TONQServer {
                         activeRequests.forEach(x => x.emitClose());
                         context.activeRequests = [];
                     }
+                    subscrWSSet.delete(_webSocket);
                 },
                 onConnect(connectionParams: QConnectionParams, _webSocket: WebSocket, context: QConnectionContext): Record<string, unknown> {
                     const activeRequests: QRequestContext[] = [];
                     context.activeRequests = activeRequests;
+
+                    subscrWSSet.add(_webSocket);
+
                     return {
+                        subscrWSSet,
+                        subscrWS: _webSocket,
                         activeRequests,
                         accessKey: connectionParams.accessKey ?? connectionParams.accesskey,
                     };

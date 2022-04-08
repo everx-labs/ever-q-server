@@ -13,12 +13,12 @@
 * See the License for the specific TON DEV software governing permissions and
 * limitations under the License.
 */
-
 import {
     Tracer,
 } from "opentracing";
+import WebSocket from "ws";
 import md5 from "md5";
-import Redis from "ioredis";
+// import Redis from "ioredis";
 import { RedisPubSub } from "graphql-redis-subscriptions";
 import postSubscription from "../graphql/post-subscription";
 import {
@@ -215,13 +215,33 @@ export class QDataCollection {
                 }
 
                 if (!pubsub) {
-                    const {redisOptions} = request.services.config.subscriptions;
-                    redisOptions.retryStrategy =  (times: number) => Math.min(times * 50, 2000);
+                    const { redisOptions } = request.services.config.subscriptions;
+                    const retryStrategy = (times: number): number => {
+                        if ( times > 10)  {
+                            if ( request?.connection?.context?.ws ) {
+                                for (const ws of  request.connection.context.ws) {
+                                    if (ws.readyState === WebSocket.OPEN) {
+                                        console.log( "============CLOSING WS===============request====" );
+                                        ws.close();
+                                    }
+                                }
+                            }
+                        }
+                        return Math.min(times * 200, 2000);
+                    };
+
                     pubsub = new RedisPubSub({
-                        publisher: new Redis(redisOptions),
-                        subscriber: new Redis(redisOptions),
+                        connection: {
+                            ...redisOptions, 
+                            retryStrategy,
+                            maxRetriesPerRequest: null
+                        },
+                        // connectionListener: (err: Error) => {
+                        //    console.log("==========================================================INSIDE CONNECTION LISTENER", err);
+                        // },
                     });
                 }
+
 
                 // const accessRights = await request.requireGrantedAccess(args);
                 await this.statSubscription.increment();
@@ -248,6 +268,7 @@ export class QDataCollection {
 
                 const savedReturn = asyncIterator.return.bind(asyncIterator);
                 asyncIterator.return = () => {
+                    console.log(" ASYNC_ITERATORN_RETURN WAS CALLED");
                     clearInterval(timerId);
                     return savedReturn();
                 };
@@ -255,9 +276,18 @@ export class QDataCollection {
             },
 
             // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-            resolve: (payload: any) => {
+            resolve: (payload: any, _: unknown, context:  Record<string, any>) => {
+                console.log("GOT PAYLAD", payload );
+
+                if (payload === "STOP") {  // Subscription was abruptly aborted by streams application
+                    if (context?.connection?.context?.subscrWS?.close) {
+                        context.connection.context.subscrWS.close();
+                        return;
+                    }
+                }
+
                 // Add _key to mimic "old" behavior
-                if (payload._key === undefined && payload?.id !== undefined) {
+                if (payload._key === undefined && payload.id !== undefined) {
                     payload._key = payload.id;
                 }
                 return payload;
