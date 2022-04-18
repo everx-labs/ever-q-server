@@ -32,13 +32,28 @@ export type QConfig = {
         topic: string
         maxSize: number
     }
+    subscriptions: {
+        kafkaOptions: {
+            server: string
+            topic: string
+            maxSize: number
+            keepAliveInterval: number
+        }
+        redisOptions: {
+            port: number
+            host: string
+            retryStrategy?: (times: number) => number
+            maxRetriesPerRequest?: number
+            commandTimeout?: number
+        }
+    }
     queries: {
         filter: FilterConfig
         maxRuntimeInS: number
         slowQueries: SlowQueriesMode
         waitForPeriod: number
     }
-    useListeners: boolean
+    subscriptionsMode: number
     blockchain: QBlockchainDataConfig
     counterparties: string[]
     chainRangesVerification: string[]
@@ -119,7 +134,7 @@ export const configParams = {
         port: ConfigParam.integer('port', 4000, 'Listening port'),
         keepAlive: ConfigParam.integer(
             'keep-alive',
-            60000,
+            5000,
             'GraphQL keep alive ms',
         ),
     },
@@ -147,6 +162,44 @@ export const configParams = {
             'Maximum request message size in bytes',
         ),
     },
+
+    subscriptions: {
+        kafkaOptions: {
+            server: ConfigParam.string(
+                'subscriptions-kafka-server',
+                'kafka:9092',
+                'Subscriptions server url',
+            ),
+            topic: ConfigParam.string(
+                'subscriptions-kafka-topic',
+                'subscriptions',
+                'Subscriptions topic name',
+            ),
+            maxSize: ConfigParam.integer(
+                'subscriptions-max-filter-size',
+                16383,
+                "maximum subscription's filter size in bytes",
+            ),
+            keepAliveInterval: ConfigParam.integer(
+                'subscriptions-filters-millis',
+                30000,
+                'Keep alive for filters in millisecons',
+            ),
+        },
+        redisOptions: {
+            port: ConfigParam.integer(
+                'subscriptions-redis-port',
+                6379,
+                'Redis port',
+            ),
+            host: ConfigParam.string(
+                'subscriptions-redis-host',
+                'redis',
+                'Redis host',
+            ),
+        },
+    },
+
     queries: {
         filter: {
             orConversion: ConfigParam.string(
@@ -179,10 +232,18 @@ export const configParams = {
                 '(collection queries with timeout) in ms',
         ),
     },
+
+    /* Depricated, use `subscriptionsMode = 0 | 1 | 2`
     useListeners: ConfigParam.boolean(
         'use-listeners',
         true,
         'Use database listeners for subscriptions',
+    ),
+    */
+    subscriptionsMode: ConfigParam.integer(
+        'subscriptions-mode',
+        2,
+        '0 - Disabled, 1 - Arango, 2 -External',
     ),
     blockchain: ConfigParam.blockchain(''),
     counterparties: ConfigParam.databases('counterparties'),

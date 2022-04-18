@@ -210,7 +210,7 @@ export async function testServerQuery<T>(
                   }
         }
         return responseJson.data
-    } catch (error) {
+    } catch (error: any) {
         if (error.name === 'AbortError') {
             console.log('>>>', 'Request aborted.')
             return undefined as unknown as T
@@ -256,6 +256,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         tracer: QTracer.create(testConfig),
         stats: QStats.create('', [], 0),
         isTests: true,
+        subscriptionsMode: 0,
     })
 }
 
@@ -339,6 +340,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         tracer: QTracer.create(testConfig),
         stats: QStats.create('', [], 0),
         isTests: true,
+        subscriptionsMode: 0,
     })
 }
 

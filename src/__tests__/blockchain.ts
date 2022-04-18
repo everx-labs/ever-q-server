@@ -80,6 +80,7 @@ beforeAll(async () => {
         tracer: QTracer.create(testConfig),
         stats: QStats.create('', [], 0),
         isTests: true,
+        subscriptionsMode: 0,
     })
 
     server = new TONQServer({

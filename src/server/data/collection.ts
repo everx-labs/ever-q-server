@@ -15,6 +15,12 @@
  */
 
 import { Tracer } from 'opentracing'
+
+import WebSocket from 'ws'
+import md5 from 'md5'
+import { RedisPubSub } from 'graphql-redis-subscriptions'
+import postSubscription from '../graphql/post-subscription'
+
 import {
     AggregationFn,
     AggregationQuery,
@@ -54,6 +60,8 @@ import { QJoinQuery } from './collection-joins'
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000 // 60 minutes
 
+let pubsub: RedisPubSub
+
 export type AggregationArgs = {
     filter?: CollectionFilter | null
     fields?: FieldAggregation[] | null
@@ -71,6 +79,7 @@ export type QCollectionOptions = {
     auth: Auth
     tracer: Tracer
     stats: IStats
+    subscriptionsMode: number
 
     isTests: boolean
 }
@@ -88,6 +97,7 @@ export class QDataCollection {
     auth: Auth
     tracer: Tracer
     isTests: boolean
+    subscriptionsMode: number
 
     // Own
     statDoc: StatsCounter
@@ -122,7 +132,10 @@ export class QDataCollection {
         this.auth = options.auth
         this.tracer = options.tracer
         this.isTests = options.isTests
-
+        this.subscriptionsMode = // maybe it is not a proper place to validate arguments
+            options.subscriptionsMode >= 0 && options.subscriptionsMode <= 2
+                ? options.subscriptionsMode
+                : 0
         this.waitForCount = 0
         this.subscriptionCount = 0
 
@@ -165,7 +178,7 @@ export class QDataCollection {
         this.maxQueueSize = 0
 
         const provider = options.provider
-        if (provider !== undefined) {
+        if (this.subscriptionsMode === 1 && provider !== undefined) {
             void (async () => {
                 this.hotSubscription = await provider.subscribe(name, doc =>
                     this.onDocumentInsertOrUpdate(doc as QDoc),
@@ -175,7 +188,11 @@ export class QDataCollection {
     }
 
     close() {
-        if (this.provider !== undefined && this.hotSubscription) {
+        if (
+            this.subscriptionsMode === 1 &&
+            this.provider !== undefined &&
+            this.hotSubscription
+        ) {
             this.provider.unsubscribe(this.hotSubscription)
             this.hotSubscription = null
             this.provider = undefined
@@ -222,13 +239,76 @@ export class QDataCollection {
                 _: unknown,
                 args: AccessArgs & { filter: CollectionFilter | null },
                 request: QRequestContext,
-                info: { operation: { selectionSet: SelectionSetNode } },
+                info: {
+                    operation: { selectionSet: SelectionSetNode }
+                    fieldName: string
+                },
             ) => {
-                if (!request.services.config.useListeners) {
+                if (this.subscriptionsMode === 0) {
                     throw new Error('Disabled')
                 }
                 const accessRights = await request.requireGrantedAccess(args)
                 await this.statSubscription.increment()
+
+                if (this.subscriptionsMode === 2) {
+                    if (!pubsub) {
+                        const retryStrategy = (times: number): number => {
+                            if (times > 10) {
+                                if (request?.connection?.context?.ws) {
+                                    for (const ws of request.connection.context
+                                        .ws) {
+                                        if (ws.readyState === WebSocket.OPEN) {
+                                            this.log.debug('CLOSING WS request') // TODO remove
+                                            ws.close()
+                                        }
+                                    }
+                                }
+                            }
+                            return Math.min(times * 200, 2000)
+                        }
+
+                        pubsub = new RedisPubSub({
+                            connection: {
+                                ...request.services.config.subscriptions
+                                    .redisOptions,
+                                retryStrategy,
+                                maxRetriesPerRequest: null,
+                            },
+                        })
+                    }
+
+                    const value = JSON.stringify(args.filter || {})
+                    const key = info.fieldName + md5(value)
+
+                    await postSubscription(request, { key, value })
+
+                    const timerId = setInterval(() => {
+                        postSubscription(request, { key, value: '' }).catch(
+                            (err: any) => {
+                                // Can't help, can log an error only
+                                this.log.error('SUBSCRIPTIONS', err)
+                            },
+                        )
+                    }, request.services.config.subscriptions.kafkaOptions.keepAliveInterval)
+
+                    const asyncIterator = pubsub.asyncIterator([key])
+                    //
+                    // For explanations, see https://github.com/apollographql/graphql-subscriptions/issues/99
+                    //
+                    if (!asyncIterator.return) {
+                        asyncIterator.return = () =>
+                            Promise.resolve({ value: undefined, done: true })
+                    }
+
+                    const savedReturn = asyncIterator.return.bind(asyncIterator)
+                    asyncIterator.return = () => {
+                        console.log(' ASYNC_ITERATORN_RETURN WAS CALLED') // TODO remove
+                        clearInterval(timerId)
+                        return savedReturn()
+                    }
+                    return asyncIterator
+                }
+
                 const subscription = new QDataSubscription(
                     this.name,
                     this.docType,
@@ -269,7 +349,7 @@ export class QDataCollection {
                                     [this.name]: reduced as QDoc,
                                 })
                             }
-                        } catch (error) {
+                        } catch (error: any) {
                             this.log.error(
                                 Date.now(),
                                 this.name,
@@ -290,6 +370,25 @@ export class QDataCollection {
                     )
                 }
                 return subscription
+            },
+            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
+            resolve: (payload: any, _: unknown, context: QRequestContext) => {
+                if (this.subscriptionsMode === 2) {
+                    this.log.debug('!!! GOT PAYLAD', payload) // TODO remove, Please, use this.log... for logging
+
+                    if (payload === 'STOP') {
+                        // Subscription was abruptly aborted by streams application
+                        if (context?.connection?.context?.subscrWS?.close) {
+                            context.connection.context.subscrWS.close()
+                            return
+                        }
+                    }
+                    // Add _key to mimic "old" behavior
+                    if (payload._key === undefined) {
+                        payload._key = payload.id
+                    }
+                }
+                return payload
             },
         }
     }
@@ -582,7 +681,7 @@ export class QDataCollection {
                                 request,
                                 traceSpan,
                             )
-                        } catch (error) {
+                        } catch (error: any) {
                             await this.statQueryFailed.increment()
                             if (queryProcessing.created) {
                                 const slowReason = explainSlowReason(
@@ -738,7 +837,7 @@ export class QDataCollection {
                             if (this.docType.test(null, doc, q.filter)) {
                                 resolveBy('listener', resolve, [doc])
                             }
-                        } catch (error) {
+                        } catch (error: any) {
                             this.log.error(
                                 Date.now(),
                                 this.name,
