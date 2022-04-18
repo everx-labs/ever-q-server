@@ -8,11 +8,11 @@ import { resolvers as blockchainResolvers } from './blockchain'
 
 const resolvers = {} as IResolvers
 ;[
-  accountResolvers,
-  blockchainResolvers,
-  blockResolvers,
-  messageResolvers,
-  transactionResolvers,
+    accountResolvers,
+    blockchainResolvers,
+    blockResolvers,
+    messageResolvers,
+    transactionResolvers,
 ].forEach(x => assignDeep(resolvers, x))
 
 export { resolvers as blockchainResolvers }
