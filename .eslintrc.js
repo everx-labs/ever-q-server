@@ -1,29 +1,28 @@
 module.exports = {
-    root: true,
-    ignorePatterns: [
-        "src/server/graphql/blockchain/resolvers-types-generated.ts"
-    ],
-    parser: "@typescript-eslint/parser",
-    parserOptions: {
-        tsconfigRootDir: __dirname,
-        project: ['./tsconfig.json'],
-    },
-    plugins: [
-        "@typescript-eslint",
-    ],
-    extends: [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "prettier",
-    ],
-    rules: {
-        "@typescript-eslint/no-empty-function": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off",
-        "quotes": "off",
-        "@typescript-eslint/quotes": ["error", "double"],
-        "semi": "off",
-        "@typescript-eslint/semi": ["error"],
-        "eol-last": ["error", "always"],
-        "@typescript-eslint/no-floating-promises": ["error"],
-    },
-};
+  root: true,
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: './tsconfig.json',
+    tsconfigRootDir: __dirname,
+  },
+  plugins: ['@typescript-eslint', 'prettier', 'jest'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    // "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    'prettier',
+  ],
+  rules: {
+    'prettier/prettier': 2,
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/ban-types': 'off',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    'eol-last': ['error', 'always'],
+    '@typescript-eslint/no-floating-promises': ['error'],
+  },
+  env: {
+    node: true,
+    'jest/globals': true,
+  },
+}

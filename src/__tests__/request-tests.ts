@@ -1,36 +1,37 @@
-import { ApolloClient } from "apollo-client";
-import gql from "graphql-tag";
+import { ApolloClient } from 'apollo-client'
+import gql from 'graphql-tag'
 import {
-    createTestClient,
-    testServerRequired,
-    testServerStop,
-} from "./init-tests";
+  createTestClient,
+  testServerRequired,
+  testServerStop,
+} from './init-tests'
 
-import AbortController from "node-abort-controller";
-import { required } from "../server/utils";
+import AbortController from 'node-abort-controller'
+import { required } from '../server/utils'
 
-const sleep = async (ms: number) => new Promise(x => setTimeout(x, ms));
+const sleep = async (ms: number) => new Promise(x => setTimeout(x, ms))
 
 interface Closable {
-    close(): void
+  close(): void
 }
 
 class TestQuery {
-    abortController: AbortController;
-    client: ApolloClient<unknown>;
+  abortController: AbortController
+  client: ApolloClient<unknown>
 
-    constructor(options: { useWebSockets: boolean }) {
-        this.abortController = new AbortController();
-        this.client = createTestClient(options);
-    }
+  constructor(options: { useWebSockets: boolean }) {
+    this.abortController = new AbortController()
+    this.client = createTestClient(options)
+  }
 
-    sendQuery() {
-        // Wait for non existing transaction.
-        // We are using here Date.now as a nonexisting transaction id
-        // to prevent apollo optimization on joining same requests.
-        //
-        this.client.query({
-            query: gql`
+  sendQuery() {
+    // Wait for non existing transaction.
+    // We are using here Date.now as a nonexisting transaction id
+    // to prevent apollo optimization on joining same requests.
+    //
+    this.client
+      .query({
+        query: gql`
                 query {
                     transactions(
                         timeout:60000
@@ -42,114 +43,120 @@ class TestQuery {
                     }
                 }
             `,
-            context: {
-                fetchOptions: {
-                    signal: this.abortController.signal,
-                },
-            },
-        }).catch((error) => {
-            console.log(">>>", error);
-        });
-    }
+        context: {
+          fetchOptions: {
+            signal: this.abortController.signal,
+          },
+        },
+      })
+      .catch(error => {
+        console.log('>>>', error)
+      })
+  }
 
-    abort() {
-        this.abortController.abort();
-        (this.client as unknown as Closable).close();
-    }
+  abort() {
+    this.abortController.abort()
+    ;(this.client as unknown as Closable).close()
+  }
 }
 
-test.each([true, false])("Release Aborted Requests (webSockets: %s)", async (useWebSockets) => {
-    const server = await testServerRequired();
-    const collection = required(server.data.transactions);
-    const q1 = new TestQuery({ useWebSockets });
-    const q2 = new TestQuery({ useWebSockets });
-    q1.sendQuery();
-    q2.sendQuery();
-    await sleep(1000);
-    expect(collection.waitForCount).toEqual(2);
-    q1.abort();
-    await sleep(500);
-    expect(collection.waitForCount).toEqual(1);
-    q2.abort();
-    await sleep(500);
-    expect(collection.waitForCount).toEqual(0);
-    const client = createTestClient({ useWebSockets });
+test.each([true, false])(
+  'Release Aborted Requests (webSockets: %s)',
+  async useWebSockets => {
+    const server = await testServerRequired()
+    const collection = required(server.data.transactions)
+    const q1 = new TestQuery({ useWebSockets })
+    const q2 = new TestQuery({ useWebSockets })
+    q1.sendQuery()
+    q2.sendQuery()
+    await sleep(1000)
+    expect(collection.waitForCount).toEqual(2)
+    q1.abort()
+    await sleep(500)
+    expect(collection.waitForCount).toEqual(1)
+    q2.abort()
+    await sleep(500)
+    expect(collection.waitForCount).toEqual(0)
+    const client = createTestClient({ useWebSockets })
     const transactions = await client.query({
-        query: gql`
-            query {
-                transactions(orderBy: [{path: "now" direction: DESC}] limit: 1) {
-                    id
-                    in_message { id }
-                    block { id }
-                    tr_type_name
-                }
+      query: gql`
+        query {
+          transactions(orderBy: [{ path: "now", direction: DESC }], limit: 1) {
+            id
+            in_message {
+              id
             }
-        `,
-    });
-    expect(transactions.data.transactions.length).toBeGreaterThan(0);
-    (client as unknown as Closable).close();
-});
+            block {
+              id
+            }
+            tr_type_name
+          }
+        }
+      `,
+    })
+    expect(transactions.data.transactions.length).toBeGreaterThan(0)
+    ;(client as unknown as Closable).close()
+  },
+)
 
-test("Many concurrent requests over web socket", async () => {
-    await testServerRequired();
-    const client = createTestClient({ useWebSockets: true });
-    let output = "";
+test('Many concurrent requests over web socket', async () => {
+  await testServerRequired()
+  const client = createTestClient({ useWebSockets: true })
+  let output = ''
 
-    const originalStdoutWrite = process.stderr.write.bind(process.stderr);
+  const originalStdoutWrite = process.stderr.write.bind(process.stderr)
 
-    (process.stderr as { write: unknown }).write = (
-        chunk: Parameters<typeof originalStdoutWrite>[0],
-        encoding: Parameters<typeof originalStdoutWrite>[1],
-        callback: Parameters<typeof originalStdoutWrite>[2],
-    ) => {
-        output += chunk;
+  ;(process.stderr as { write: unknown }).write = (
+    chunk: Parameters<typeof originalStdoutWrite>[0],
+    encoding: Parameters<typeof originalStdoutWrite>[1],
+    callback: Parameters<typeof originalStdoutWrite>[2],
+  ) => {
+    output += chunk
 
-        return originalStdoutWrite(chunk, encoding, callback);
-    };
-    await client.query({
-        query: gql`
-            query {
-                transactions(orderBy: [{path: "now" direction: DESC}] limit:1){
-                    in_message{
-                        dst_transaction{
-                            in_message{
-                                dst_transaction{
-                                    in_message{
-                                        dst_transaction{
-                                            in_message{
-                                                dst_transaction{
-                                                    id
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+    return originalStdoutWrite(chunk, encoding, callback)
+  }
+  await client.query({
+    query: gql`
+      query {
+        transactions(orderBy: [{ path: "now", direction: DESC }], limit: 1) {
+          in_message {
+            dst_transaction {
+              in_message {
+                dst_transaction {
+                  in_message {
+                    dst_transaction {
+                      in_message {
+                        dst_transaction {
+                          id
                         }
+                      }
                     }
+                  }
                 }
-
+              }
             }
-        `,
-    });
+          }
+        }
+      }
+    `,
+  })
+  ;(process.stderr as { write: unknown }).write = originalStdoutWrite
+  expect(output.includes('MaxListenersExceededWarning')).toBeFalsy()
+  ;(client as unknown as Closable).close()
+})
 
-    (process.stderr as { write: unknown }).write = originalStdoutWrite;
-    expect(output.includes("MaxListenersExceededWarning")).toBeFalsy();
-    (client as unknown as Closable).close();
-});
-
-function randomRequest(size: number): { id: string, body: string } {
-    return {
-        id: Buffer.alloc(32, 1).toString("base64"),
-        body: Buffer.alloc(size, 0).toString("base64"),
-    };
+function randomRequest(size: number): { id: string; body: string } {
+  return {
+    id: Buffer.alloc(32, 1).toString('base64'),
+    body: Buffer.alloc(size, 0).toString('base64'),
+  }
 }
 
-async function postRequest(request: { id: string, body: string }) {
-    const client = createTestClient({ useWebSockets: false });
-    try {
-        await client.mutate({
-            mutation: gql`
+async function postRequest(request: { id: string; body: string }) {
+  const client = createTestClient({ useWebSockets: false })
+  try {
+    await client.mutate({
+      mutation: gql`
                 mutation {
                     postRequests(requests: [{
                         id: "${request.id}",
@@ -157,10 +164,10 @@ async function postRequest(request: { id: string, body: string }) {
                     }])
                 }
             `,
-        });
-    } finally {
-        (client as unknown as Closable).close();
-    }
+    })
+  } finally {
+    ;(client as unknown as Closable).close()
+  }
 }
 
 // test('Post request', async () => {
@@ -171,26 +178,26 @@ async function postRequest(request: { id: string, body: string }) {
 //     });
 // });
 
-test("Post extra large request with default limit", async () => {
-    await testServerStop();
-    await testServerRequired();
-    try {
-        await postRequest(randomRequest(65000));
-    } catch (error) {
-        expect(error.message.includes("is too large")).toBeTruthy();
-    }
-});
+test('Post extra large request with default limit', async () => {
+  await testServerStop()
+  await testServerRequired()
+  try {
+    await postRequest(randomRequest(65000))
+  } catch (error) {
+    expect(error.message.includes('is too large')).toBeTruthy()
+  }
+})
 
-test("Post extra large request with configured limit", async () => {
-    await testServerStop();
-    await testServerRequired({
-        requests: {
-            maxSize: 8000,
-        },
-    });
-    try {
-        await postRequest(randomRequest(10000));
-    } catch (error) {
-        expect(error.message.includes("is too large")).toBeTruthy();
-    }
-});
+test('Post extra large request with configured limit', async () => {
+  await testServerStop()
+  await testServerRequired({
+    requests: {
+      maxSize: 8000,
+    },
+  })
+  try {
+    await postRequest(randomRequest(10000))
+  } catch (error) {
+    expect(error.message.includes('is too large')).toBeTruthy()
+  }
+})
