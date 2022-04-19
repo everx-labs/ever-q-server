@@ -1,14 +1,14 @@
-import { TonClient } from '@tonclient/core'
-import { Kafka, Producer } from 'kafkajs'
-import { FORMAT_TEXT_MAP } from 'opentracing'
-import type { QConfig } from '../config'
-import { ensureProtocol, RequestsMode } from '../config'
-import type { AccessArgs, AccessRights } from '../auth'
-import { Auth } from '../auth'
-import fetch, { RequestInit } from 'node-fetch'
-import { QTraceSpan, QTracer } from '../tracing'
-import { QError } from '../utils'
-import { QRequestContext } from '../request'
+import { TonClient } from "@tonclient/core"
+import { Kafka, Producer } from "kafkajs"
+import { FORMAT_TEXT_MAP } from "opentracing"
+import type { QConfig } from "../config"
+import { ensureProtocol, RequestsMode } from "../config"
+import type { AccessArgs, AccessRights } from "../auth"
+import { Auth } from "../auth"
+import fetch, { RequestInit } from "node-fetch"
+import { QTraceSpan, QTracer } from "../tracing"
+import { QError } from "../utils"
+import { QRequestContext } from "../request"
 
 type Request = {
     id: string
@@ -28,19 +28,19 @@ async function postRequestsUsingRest(
     context: QRequestContext,
 ): Promise<void> {
     const config = context.services.config.requests
-    const url = `${ensureProtocol(config.server, 'http')}/topics/${
+    const url = `${ensureProtocol(config.server, "http")}/topics/${
         config.topic
     }`
     const request: RequestInitEx = {
-        method: 'POST',
-        mode: 'cors',
-        cache: 'no-cache',
-        credentials: 'same-origin',
+        method: "POST",
+        mode: "cors",
+        cache: "no-cache",
+        credentials: "same-origin",
         headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
         },
-        redirect: 'follow',
-        referrer: 'no-referrer',
+        redirect: "follow",
+        referrer: "no-referrer",
         body: JSON.stringify({
             records: requests.map(request => ({
                 key: request.id,
@@ -74,22 +74,22 @@ async function postRequestsUsingKafka(
     }
 
     const config = context.services.config.requests
-    const producer: Producer = await ensureShared('producer', async () => {
+    const producer: Producer = await ensureShared("producer", async () => {
         const kafka: Kafka = await ensureShared(
-            'kafka',
+            "kafka",
             async () =>
                 new Kafka({
-                    clientId: 'q-server',
+                    clientId: "q-server",
                     brokers: [config.server],
                 }),
         )
         const newProducer = kafka.producer()
         await newProducer.connect()
-        span.logEvent('kafka_producer_connected')
+        span.logEvent("kafka_producer_connected")
         return newProducer
     })
 
-    span.logEvent('kafka_message_preparation_start')
+    span.logEvent("kafka_message_preparation_start")
     const messages = requests.map(request => {
         const traceInfo = {}
         context.services.data.tracer.inject(
@@ -97,24 +97,24 @@ async function postRequestsUsingKafka(
             FORMAT_TEXT_MAP,
             traceInfo,
         )
-        const keyBuffer = Buffer.from(request.id, 'base64')
+        const keyBuffer = Buffer.from(request.id, "base64")
         const traceBuffer =
             Object.keys(traceInfo).length > 0
-                ? Buffer.from(JSON.stringify(traceInfo), 'utf8')
+                ? Buffer.from(JSON.stringify(traceInfo), "utf8")
                 : Buffer.from([])
         const key = Buffer.concat([keyBuffer, traceBuffer])
-        const value = Buffer.from(request.body, 'base64')
+        const value = Buffer.from(request.body, "base64")
         return {
             key,
             value,
         }
     })
-    span.logEvent('kafka_ready_to_send')
+    span.logEvent("kafka_ready_to_send")
     const send = producer.send({
         topic: config.topic,
         messages,
     })
-    span.logEvent('kafka_sent')
+    span.logEvent("kafka_sent")
     await send
 }
 
@@ -160,8 +160,8 @@ async function postRequests(
     }
 
     const { tracer, client, data, config } = context.services
-    return context.trace('postRequests', async (span: QTraceSpan) => {
-        span.logEvent('start', { requests })
+    return context.trace("postRequests", async (span: QTraceSpan) => {
+        span.logEvent("start", { requests })
         const accessRights = await context.requireGrantedAccess(args)
         await checkPostRestrictions(config, client, requests, accessRights)
 
@@ -173,8 +173,8 @@ async function postRequests(
         }
 
         const messageTraceSpans = requests.map(request => {
-            const messageId = Buffer.from(request.id, 'base64').toString('hex')
-            const postSpan = tracer.startSpan('postRequest', {
+            const messageId = Buffer.from(request.id, "base64").toString("hex")
+            const postSpan = tracer.startSpan("postRequest", {
                 childOf: QTracer.messageRootSpanContext(messageId),
             })
             postSpan.addTags({
@@ -183,7 +183,7 @@ async function postRequests(
             })
 
             // ----- This is a hack to be able to link messageId with requestContext -----
-            const postSpan2 = span.createChildSpan('postRequests_postRequest')
+            const postSpan2 = span.createChildSpan("postRequests_postRequest")
             postSpan2.addTags({
                 messageId,
                 messageSize: Math.ceil((request.body.length * 3) / 4),
@@ -193,7 +193,7 @@ async function postRequests(
             return [postSpan, postSpan2]
         })
         try {
-            span.logEvent('ready_to_send')
+            span.logEvent("ready_to_send")
             if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context)
             } else {
@@ -201,17 +201,17 @@ async function postRequests(
             }
             await data.statPostCount.increment()
             data.log.debug(
-                'postRequests',
-                'POSTED',
+                "postRequests",
+                "POSTED",
                 args,
                 context.remoteAddress,
             )
-            span.logEvent('sent', { remoteAddress: context.remoteAddress })
+            span.logEvent("sent", { remoteAddress: context.remoteAddress })
         } catch (error) {
             await data.statPostFailed.increment()
             data.log.debug(
-                'postRequests',
-                'FAILED',
+                "postRequests",
+                "FAILED",
                 args,
                 context.remoteAddress,
             )

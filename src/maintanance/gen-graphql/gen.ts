@@ -1,36 +1,36 @@
 export function leadingSpacesCount(s: string): number {
     let count = 0
-    while (count < s.length && (s[count] === ' ' || s[count] === '\t')) {
+    while (count < s.length && (s[count] === " " || s[count] === "\t")) {
         count += 1
     }
     return count
 }
 
 export function multiline(s: string): string {
-    s = s.replace('\r\n', '\n').replace('\n\r', '\n').replace('\r', '\n')
-    if (!s.startsWith('\n')) {
+    s = s.replace("\r\n", "\n").replace("\n\r", "\n").replace("\r", "\n")
+    if (!s.startsWith("\n")) {
         return s
     }
-    const lines: string[] = s.split('\n')
+    const lines: string[] = s.split("\n")
     if (lines.length < 2) {
         return s
     }
     const leadingSpacesToRemove = Math.min(
-        ...lines.filter(l => l.trim() !== '').map(leadingSpacesCount),
+        ...lines.filter(l => l.trim() !== "").map(leadingSpacesCount),
     )
     for (let i = 1; i < lines.length; i += 1) {
         const leadingSpaces = leadingSpacesCount(lines[i])
         if (leadingSpaces === lines[i].length) {
-            lines[i] = ''
+            lines[i] = ""
         } else if (leadingSpaces >= leadingSpacesToRemove) {
             lines[i] = lines[i].substr(leadingSpacesToRemove)
         }
     }
-    if (lines[lines.length - 1] === '') {
+    if (lines[lines.length - 1] === "") {
         lines.splice(lines.length - 1, 1)
     }
     lines.splice(0, 1)
-    return lines.join('\n')
+    return lines.join("\n")
 }
 
 export class Writer {
@@ -41,7 +41,7 @@ export class Writer {
     }
 
     generated(): string {
-        return this.parts.join('')
+        return this.parts.join("")
     }
 
     write(...strings: string[]) {
@@ -49,7 +49,7 @@ export class Writer {
     }
 
     writeLn(...strings: string[]) {
-        this.write(...strings, '\n')
+        this.write(...strings, "\n")
     }
 
     writeBlockLn(text: string) {
@@ -58,11 +58,11 @@ export class Writer {
 }
 
 function convertFirstLetterToUpperCase(s: string): string {
-    return s !== '' ? `${s.substr(0, 1).toUpperCase()}${s.substr(1)}` : s
+    return s !== "" ? `${s.substr(0, 1).toUpperCase()}${s.substr(1)}` : s
 }
 
 function toPascalStyle(s: string): string {
-    return s.split('_').map(convertFirstLetterToUpperCase).join('')
+    return s.split("_").map(convertFirstLetterToUpperCase).join("")
 }
 
 export function makeFieldTypeName(typeName: string, fieldName: string): string {

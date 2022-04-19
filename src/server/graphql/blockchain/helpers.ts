@@ -1,12 +1,12 @@
-import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from 'graphql'
-import { QParams } from '../../filter/filters'
-import { QRequestContext } from '../../request'
-import { QError, toU64String } from '../../utils'
+import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql"
+import { QParams } from "../../filter/filters"
+import { QRequestContext } from "../../request"
+import { QError, toU64String } from "../../utils"
 import {
     BlockchainMasterSeqNoFilter,
     Maybe,
     Scalars,
-} from './resolvers-types-generated'
+} from "./resolvers-types-generated"
 
 export const enum Direction {
     Forward,
@@ -14,10 +14,10 @@ export const enum Direction {
 }
 
 export type PaginationArgs = {
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export function processPaginationArgs(args: PaginationArgs) {
@@ -49,8 +49,8 @@ export function processPaginationArgs(args: PaginationArgs) {
 
 export type ChainOrderFilterArgs = {
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
-    after?: Maybe<Scalars['String']>
-    before?: Maybe<Scalars['String']>
+    after?: Maybe<Scalars["String"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export async function prepareChainOrderFilter(
@@ -58,7 +58,7 @@ export async function prepareChainOrderFilter(
     params: QParams,
     filters: string[],
     context: QRequestContext,
-    chainOrderFieldName = 'chain_order',
+    chainOrderFieldName = "chain_order",
 ) {
     // master_seq_no
     let start_chain_order = args.master_seq_no_range?.start
@@ -81,7 +81,7 @@ export async function prepareChainOrderFilter(
     // reliable boundary
     const reliable =
         await context.services.data.getReliableChainOrderUpperBoundary(context)
-    if (reliable.boundary == '') {
+    if (reliable.boundary == "") {
         throw QError.internalServerError()
     }
 
@@ -107,10 +107,10 @@ export async function prepareChainOrderFilter(
 
 export function getNodeSelectionSetForConnection(info: GraphQLResolveInfo) {
     const edgesNode = info.fieldNodes[0].selectionSet?.selections.find(
-        s => s.kind == 'Field' && s.name.value == 'edges',
+        s => s.kind == "Field" && s.name.value == "edges",
     ) as FieldNode | undefined
     const nodeNode = edgesNode?.selectionSet?.selections.find(
-        s => s.kind == 'Field' && s.name.value == 'node',
+        s => s.kind == "Field" && s.name.value == "node",
     ) as FieldNode | undefined
     return nodeNode?.selectionSet
 }
@@ -121,7 +121,7 @@ export function getFieldSelectionSet(
 ): SelectionSetNode | undefined {
     return (
         selectionSet?.selections?.find(
-            s => s.kind == 'Field' && s.name.value == fieldName,
+            s => s.kind == "Field" && s.name.value == fieldName,
         ) as FieldNode
     )?.selectionSet
 }
@@ -130,13 +130,13 @@ export async function processPaginatedQueryResult<T>(
     queryResult: T[],
     limit: number,
     direction: Direction,
-    sortField: KeyOfWithValueOf<T, Maybe<Scalars['String']>>,
+    sortField: KeyOfWithValueOf<T, Maybe<Scalars["String"]>>,
     afterFilterCallback?: (result: T[]) => Promise<void>,
 ) {
     // sort query result by chain_order ASC
     queryResult.sort((a, b) => {
         if (!a[sortField] || !b[sortField]) {
-            throw QError.create(500, 'sort field not found')
+            throw QError.create(500, "sort field not found")
         }
         if (a[sortField] > b[sortField]) {
             return 1
@@ -144,7 +144,7 @@ export async function processPaginatedQueryResult<T>(
         if (a[sortField] < b[sortField]) {
             return -1
         }
-        throw QError.create(500, 'two entities with the same sort field')
+        throw QError.create(500, "two entities with the same sort field")
     })
 
     // limit result length
@@ -173,11 +173,11 @@ export async function processPaginatedQueryResult<T>(
         }),
         pageInfo: {
             startCursor:
-                queryResult.length > 0 ? queryResult[0][sortField] : '',
+                queryResult.length > 0 ? queryResult[0][sortField] : "",
             endCursor:
                 queryResult.length > 0
                     ? queryResult[queryResult.length - 1][sortField]
-                    : '',
+                    : "",
             hasNextPage: direction == Direction.Forward ? hasMore : false,
             hasPreviousPage: direction == Direction.Backward ? hasMore : false,
         },

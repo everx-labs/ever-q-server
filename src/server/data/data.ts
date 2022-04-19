@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-import { QDataCollection } from './collection'
-import { Auth } from '../auth'
-import { STATS } from '../config'
-import type { QLog } from '../logs'
-import QLogs from '../logs'
-import type { QType } from '../filter/filters'
-import { Tracer } from 'opentracing'
-import { StatsCounter } from '../stats'
-import type { IStats } from '../stats'
-import { wrap } from '../utils'
+import { QDataCollection } from "./collection"
+import { Auth } from "../auth"
+import { STATS } from "../config"
+import type { QLog } from "../logs"
+import QLogs from "../logs"
+import type { QType } from "../filter/filters"
+import { Tracer } from "opentracing"
+import { StatsCounter } from "../stats"
+import type { IStats } from "../stats"
+import { wrap } from "../utils"
 import type {
     QDataProvider,
     QDataProviderQueryParams,
     QIndexInfo,
-} from './data-provider'
+} from "./data-provider"
 
 export type QBlockchainDataProvider = {
     blocks?: QDataProvider
@@ -96,7 +96,7 @@ export default class QData {
         this.tracer = options.tracer
         this.isTests = options.isTests
 
-        this.log = this.logs.create('data')
+        this.log = this.logs.create("data")
 
         this.statPostCount = new StatsCounter(this.stats, STATS.post.count, [])
         this.statPostFailed = new StatsCounter(
@@ -183,7 +183,7 @@ export default class QData {
     ) {
         return wrap(
             this.log,
-            'QUERY',
+            "QUERY",
             {
                 text: queryParams.text,
                 vars: queryParams.vars,

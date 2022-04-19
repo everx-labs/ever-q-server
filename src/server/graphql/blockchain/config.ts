@@ -1,25 +1,25 @@
-import { SelectionNode, SelectionSetNode } from 'graphql'
+import { SelectionNode, SelectionSetNode } from "graphql"
 
-import { QDataCollection } from '../../data/collection'
-import { QCollectionQuery } from '../../data/collection-query'
-import { QParams } from '../../filter/filters'
-import { QRequestContext } from '../../request'
-import { QTraceSpan } from '../../tracing'
-import { QError, required } from '../../utils'
+import { QDataCollection } from "../../data/collection"
+import { QCollectionQuery } from "../../data/collection-query"
+import { QParams } from "../../filter/filters"
+import { QRequestContext } from "../../request"
+import { QTraceSpan } from "../../tracing"
+import { QError, required } from "../../utils"
 
 import {
     getFieldSelectionSet,
     isDefined,
     KeyOf,
     KeyOfWithValueOf,
-} from './helpers'
+} from "./helpers"
 import {
     BlockchainAccount,
     BlockchainBlock,
     BlockchainMessage,
     BlockchainTransaction,
     Maybe,
-} from './resolvers-types-generated'
+} from "./resolvers-types-generated"
 
 export type Config = {
     accounts: CompiledCollectionConfig<BlockchainAccount>
@@ -30,28 +30,28 @@ export type Config = {
 
 export const config: Config = {
     blocks: compileCollectionConfig({
-        alwaysFetchFields: ['chain_order'],
-        excludeFields: ['hash'],
+        alwaysFetchFields: ["chain_order"],
+        excludeFields: ["hash"],
         qDataCollectionSelector: ctx => ctx.services.data.blocks,
     }),
     accounts: compileCollectionConfig({
-        excludeFields: ['address'],
+        excludeFields: ["address"],
         qDataCollectionSelector: ctx => ctx.services.data.accounts,
     }),
     messages: compileCollectionConfig({
         alwaysFetchFields: [
-            'chain_order',
-            'src_chain_order',
-            'dst_chain_order',
+            "chain_order",
+            "src_chain_order",
+            "dst_chain_order",
         ],
-        excludeFields: ['hash'],
+        excludeFields: ["hash"],
         qDataCollectionSelector: ctx => ctx.services.data.messages,
         joins: [
             {
-                targetField: 'src_transaction',
-                additionalFields: ['msg_type'],
-                pathForQuery: 'tr',
-                joinedCollection: 'transactions',
+                targetField: "src_transaction",
+                additionalFields: ["msg_type"],
+                pathForQuery: "tr",
+                joinedCollection: "transactions",
                 prefetchQueryBuilder: (
                     parentPath,
                     joinPath,
@@ -61,8 +61,8 @@ export const config: Config = {
                     `FILTER ${parentPath}._key IN ${joinPath}.out_msgs ` +
                     `RETURN ${returnExpression})[0]`,
                 needFetch: m => !m.src_transaction && m.msg_type != 1,
-                onField: '_key',
-                refOnField: 'out_msgs',
+                onField: "_key",
+                refOnField: "out_msgs",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR key IN @${onFieldParam} ` +
                     `FOR ${path} in transactions ` +
@@ -70,10 +70,10 @@ export const config: Config = {
                     `RETURN DISTINCT ${returnExpression}`,
             },
             {
-                targetField: 'dst_transaction',
-                additionalFields: ['msg_type'],
-                pathForQuery: 'tr',
-                joinedCollection: 'transactions',
+                targetField: "dst_transaction",
+                additionalFields: ["msg_type"],
+                pathForQuery: "tr",
+                joinedCollection: "transactions",
                 prefetchQueryBuilder: (
                     parentPath,
                     joinPath,
@@ -83,8 +83,8 @@ export const config: Config = {
                     `FILTER ${parentPath}._key == ${joinPath}.in_msg ` +
                     `RETURN ${returnExpression})[0]`,
                 needFetch: m => !m.dst_transaction && m.msg_type != 2,
-                onField: '_key',
-                refOnField: 'in_msg',
+                onField: "_key",
+                refOnField: "in_msg",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR ${path} in transactions ` +
                     `FILTER ${path}.in_msg IN @${onFieldParam} ` +
@@ -93,15 +93,15 @@ export const config: Config = {
         ],
     }),
     transactions: compileCollectionConfig({
-        alwaysFetchFields: ['chain_order'],
-        excludeFields: ['hash'],
+        alwaysFetchFields: ["chain_order"],
+        excludeFields: ["hash"],
         qDataCollectionSelector: ctx => ctx.services.data.transactions,
         joins: [
             {
-                targetField: 'account',
-                additionalFields: ['account_addr'],
-                pathForQuery: 'acc',
-                joinedCollection: 'accounts',
+                targetField: "account",
+                additionalFields: ["account_addr"],
+                pathForQuery: "acc",
+                joinedCollection: "accounts",
                 prefetchQueryBuilder: (
                     parentPath,
                     joinPath,
@@ -111,18 +111,18 @@ export const config: Config = {
                     `FILTER ${joinPath}._key == ${parentPath}.account_addr ` +
                     `RETURN ${returnExpression})[0]`,
                 needFetch: t => !isDefined(t.account),
-                onField: 'account_addr',
-                refOnField: '_key',
+                onField: "account_addr",
+                refOnField: "_key",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR ${path} in accounts ` +
                     `FILTER ${path}._key IN @${onFieldParam} ` +
                     `RETURN ${returnExpression}`,
             },
             {
-                targetField: 'in_message',
-                additionalFields: ['in_msg'],
-                pathForQuery: 'msg',
-                joinedCollection: 'messages',
+                targetField: "in_message",
+                additionalFields: ["in_msg"],
+                pathForQuery: "msg",
+                joinedCollection: "messages",
                 prefetchQueryBuilder: (
                     parentPath,
                     joinPath,
@@ -132,18 +132,18 @@ export const config: Config = {
                     `FILTER ${joinPath}._key == ${parentPath}.in_msg ` +
                     `RETURN ${returnExpression})[0]`,
                 needFetch: t => !!t.in_message != !!t.in_msg,
-                onField: 'in_msg',
-                refOnField: '_key',
+                onField: "in_msg",
+                refOnField: "_key",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR ${path} in messages ` +
                     `FILTER ${path}._key IN @${onFieldParam} ` +
                     `RETURN ${returnExpression}`,
             },
             {
-                targetField: 'out_messages',
-                additionalFields: ['out_msgs'],
-                pathForQuery: 'msg',
-                joinedCollection: 'messages',
+                targetField: "out_messages",
+                additionalFields: ["out_msgs"],
+                pathForQuery: "msg",
+                joinedCollection: "messages",
                 prefetchQueryBuilder: (
                     parentPath,
                     joinPath,
@@ -153,8 +153,8 @@ export const config: Config = {
                     `FILTER ${joinPath}._key IN ${parentPath}.out_msgs ` +
                     `RETURN ${returnExpression})`,
                 needFetch: t => t.out_messages?.length != t.out_msgs?.length,
-                onField: 'out_msgs',
-                refOnField: '_key',
+                onField: "out_msgs",
+                refOnField: "_key",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR ${path} in messages ` +
                     `FILTER ${path}._key IN @${onFieldParam} ` +
@@ -217,15 +217,15 @@ export type AllowedJoinOnTypes = Maybe<string> | Maybe<string>[]
 export function compileCollectionConfig<TItem>(
     collection: CollectionConfig<TItem>,
 ): CompiledCollectionConfig<TItem> {
-    if ('buildReturnExpression' in collection) {
+    if ("buildReturnExpression" in collection) {
         return collection
     }
 
     const joinDepthIsExceededError = collection.joins
         ? `Allowed joins depth is exceeded (hint: ${collection.joins
               .map(j => j.targetField)
-              .join(', ')})`
-        : ''
+              .join(", ")})`
+        : ""
 
     const returnExpressionBuilder = (
         selectionSet: SelectionSetNode | undefined,
@@ -276,7 +276,7 @@ export function compileCollectionConfig<TItem>(
         }
 
         const shouldBeExcluded = (s: SelectionNode) =>
-            s.kind == 'Field' &&
+            s.kind == "Field" &&
             (collection.excludeFields as Maybe<string[]>)?.includes(
                 s.name.value,
             )
@@ -338,7 +338,7 @@ export function compileCollectionConfig<TItem>(
                     // TODO: Consider metric for unexpected errors
                     throw QError.create(
                         500,
-                        'error during join fetching (no join field)',
+                        "error during join fetching (no join field)",
                     )
                 }
 
@@ -351,7 +351,7 @@ export function compileCollectionConfig<TItem>(
                     }
                 }
 
-                if (typeof onFieldValue === 'string') {
+                if (typeof onFieldValue === "string") {
                     addToMap(onFieldValue)
                     onFieldIsArray = false
                 } else {
@@ -403,7 +403,7 @@ export function compileCollectionConfig<TItem>(
             )) as any[][]
             for (const joinItem of queryResult.flat()) {
                 const refOn = joinItem[join.refOnField]
-                if (typeof refOn === 'string') {
+                if (typeof refOn === "string") {
                     addToParent(refOn)
                 } else {
                     for (const ro of refOn) {

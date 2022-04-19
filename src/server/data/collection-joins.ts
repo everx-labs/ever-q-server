@@ -1,14 +1,14 @@
-import { JoinArgs, mergeFieldWithSelectionSet } from '../filter/filters'
-import { FieldNode, SelectionSetNode, ValueNode } from 'graphql'
-import { QRequestContext } from '../request'
-import { AccessRights } from '../auth'
-import { QCollectionQuery } from './collection-query'
-import { QDataCollection } from './collection'
-import { joinFields } from '../graphql/resolvers-generated'
-import QData from './data'
-import QBlockchainData from './blockchain'
-import { QTraceSpan } from '../tracing'
-import { arraysAreEqual, required } from '../utils'
+import { JoinArgs, mergeFieldWithSelectionSet } from "../filter/filters"
+import { FieldNode, SelectionSetNode, ValueNode } from "graphql"
+import { QRequestContext } from "../request"
+import { AccessRights } from "../auth"
+import { QCollectionQuery } from "./collection-query"
+import { QDataCollection } from "./collection"
+import { joinFields } from "../graphql/resolvers-generated"
+import QData from "./data"
+import QBlockchainData from "./blockchain"
+import { QTraceSpan } from "../tracing"
+import { arraysAreEqual, required } from "../utils"
 
 export class QJoinQuery {
     on: string
@@ -37,15 +37,15 @@ export class QJoinQuery {
         public mainCollectionName: string,
     ) {
         this.on = join.on
-        this.onAttr = join.on === 'id' ? '_key' : join.on
+        this.onAttr = join.on === "id" ? "_key" : join.on
         this.joinField = field.name.value
         this.args = QJoinQuery.parseArgs(field) as JoinArgs
         this.refCollection =
             data.collectionsByName.get(join.collection) ?? data.collections[0]
-        this.refOnIsArray = join.refOn.endsWith('[*]')
+        this.refOnIsArray = join.refOn.endsWith("[*]")
         this.refOn = this.refOnIsArray ? join.refOn.slice(0, -3) : join.refOn
-        this.refOnAttr = this.refOn === 'id' ? '_key' : this.refOn
-        this.shardOn = join.shardOn === 'id' ? '_key' : join.shardOn
+        this.refOnAttr = this.refOn === "id" ? "_key" : this.refOn
+        this.shardOn = join.shardOn === "id" ? "_key" : join.shardOn
         this.canJoin = join.canJoin
         this.fieldSelection = mergeFieldWithSelectionSet(
             this.refOn,
@@ -72,7 +72,7 @@ export class QJoinQuery {
         const joins: QJoinQuery[] = []
 
         for (const field of mainSelection?.selections ?? []) {
-            if (field.kind === 'Field') {
+            if (field.kind === "Field") {
                 const join = joinFields.get(
                     `${mainCollectionName}.${field.name.value}`,
                 )
@@ -209,7 +209,7 @@ export class QJoinQuery {
             const shardPlan = joinPlan.get(shard)
             if (shardPlan === undefined) {
                 throw new Error(
-                    'This error should be impossible in join fetcher',
+                    "This error should be impossible in join fetcher",
                 )
             }
             let prevPortionOnValues = [] as string[]
@@ -305,26 +305,26 @@ export class QJoinQuery {
 
     static parseValue(node: ValueNode): unknown {
         switch (node.kind) {
-            case 'StringValue':
+            case "StringValue":
                 return node.value
-            case 'IntValue':
+            case "IntValue":
                 return parseInt(node.value)
-            case 'ObjectValue': {
+            case "ObjectValue": {
                 const obj: Record<string, unknown> = {}
                 for (const field of node.fields) {
                     obj[field.name.value] = this.parseValue(field.value)
                 }
                 return obj
             }
-            case 'BooleanValue':
+            case "BooleanValue":
                 return node.value
-            case 'EnumValue':
+            case "EnumValue":
                 return node.value
-            case 'FloatValue':
+            case "FloatValue":
                 return Number(node.value)
-            case 'NullValue':
+            case "NullValue":
                 return null
-            case 'ListValue': {
+            case "ListValue": {
                 const list = []
                 for (const item of node.values) {
                     list.push(this.parseValue(item))

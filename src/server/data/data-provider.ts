@@ -1,10 +1,10 @@
-import type { OrderBy } from '../filter/filters'
-import { hash, setHasIntersections } from '../utils'
-import type { QLog } from '../logs'
-import { QRequestContext } from '../request'
-import { QTraceSpan } from '../tracing'
-import { Database } from 'arangojs'
-import { ensureProtocol, QArangoConfig } from '../config'
+import type { OrderBy } from "../filter/filters"
+import { hash, setHasIntersections } from "../utils"
+import type { QLog } from "../logs"
+import { QRequestContext } from "../request"
+import { QTraceSpan } from "../tracing"
+import { Database } from "arangojs"
+import { ensureProtocol, QArangoConfig } from "../config"
 
 export type QShard = {
     database: Database
@@ -72,7 +72,7 @@ export class QDatabasePool {
         config: QArangoConfig,
     ): void {
         if (!QDatabasePool.sameConfig(poolItem.config, config)) {
-            throw new Error('Invalid upgradeDatabaseHandlesIfNeeded use')
+            throw new Error("Invalid upgradeDatabaseHandlesIfNeeded use")
         }
         if (
             poolItem.config.maxSockets === config.maxSockets &&
@@ -104,15 +104,15 @@ export class QDatabasePool {
 
     private createDatabaseHandle(config: QArangoConfig): Database {
         const database = new Database({
-            url: `${ensureProtocol(config.server, 'http')}`,
+            url: `${ensureProtocol(config.server, "http")}`,
             agentOptions: {
                 maxSockets: config.maxSockets,
             },
         })
         database.useDatabase(config.name)
         if (config.auth) {
-            const authParts = config.auth.split(':')
-            database.useBasicAuth(authParts[0], authParts.slice(1).join(':'))
+            const authParts = config.auth.split(":")
+            database.useBasicAuth(authParts[0], authParts.slice(1).join(":"))
         }
         return database
     }
@@ -129,12 +129,12 @@ export type QDoc = {
 }
 
 export enum QDataEvent {
-    UPSERT = 'insert/update',
-    INSERT = 'insert',
-    UPDATE = 'update',
+    UPSERT = "insert/update",
+    INSERT = "insert",
+    UPDATE = "update",
 }
 
-const FETCHING = 'FETCHING'
+const FETCHING = "FETCHING"
 
 export type QResult =
     | unknown[]
@@ -143,7 +143,7 @@ export type QResult =
     | bigint
     | string
     | boolean
-type CacheValue = QResult[] | 'FETCHING'
+type CacheValue = QResult[] | "FETCHING"
 
 export type QDataProviderQueryParams = {
     text: string
@@ -242,7 +242,7 @@ export class QDataCombiner implements QDataProvider {
 
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
         const traceSpan = params.traceSpan
-        traceSpan.logEvent('QDataCombiner_query_start')
+        traceSpan.logEvent("QDataCombiner_query_start")
         const shards = params.shards
             ? this.ensureShardingDegree(params.shards)
             : undefined
@@ -254,13 +254,13 @@ export class QDataCombiner implements QDataProvider {
         }
         const providers = this.getProvidersForShards(shards)
         const results = await Promise.all(providers.map(x => x.query(params)))
-        traceSpan.logEvent('QDataCombiner_query_dataIsFetched')
+        traceSpan.logEvent("QDataCombiner_query_dataIsFetched")
         const result = combineResults(
             results,
             params.orderBy,
             params.distinctBy,
         )
-        traceSpan.logEvent('QDataCombiner_query_end')
+        traceSpan.logEvent("QDataCombiner_query_end")
         return result
     }
 
@@ -309,7 +309,7 @@ export class QDataCombiner implements QDataProvider {
             if (diff > 0) {
                 // split shards
                 for (const index of Array(diff).keys()) {
-                    const append = index.toString(2).padStart(diff, '0')
+                    const append = index.toString(2).padStart(diff, "0")
                     fixedShards.add(`${shard}${append}`)
                 }
             } else {
@@ -343,12 +343,12 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         this.cache = cache
         this.networkName = networkName
         this.cacheKeyPrefix = cacheKeyPrefix
-        this.configHash = ''
+        this.configHash = ""
     }
 
     async hotUpdate(): Promise<void> {
         const fingerprint = JSON.stringify(await this.loadFingerprint())
-        this.log.debug('FINGERPRINT', fingerprint)
+        this.log.debug("FINGERPRINT", fingerprint)
         this.configHash = hash(this.networkName, fingerprint)
         await super.hotUpdate()
     }
@@ -359,7 +359,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
 
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
         const { text, vars, orderBy, traceSpan } = params
-        traceSpan.logEvent('QDataPrecachedCombiner_query_start')
+        traceSpan.logEvent("QDataPrecachedCombiner_query_start")
         const aql = JSON.stringify({
             text,
             vars,
@@ -369,9 +369,9 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         let docs: QResult[] | undefined = undefined
         while (docs === undefined) {
             const value = await traceSpan.traceChildOperation(
-                'QDataPrecachedCombiner_cache_get',
+                "QDataPrecachedCombiner_cache_get",
                 async span => {
-                    span.setTag('cache_key', key)
+                    span.setTag("cache_key", key)
                     return (await this.cache.get(key)) as
                         | CacheValue
                         | undefined
@@ -380,9 +380,9 @@ export class QDataPrecachedCombiner extends QDataCombiner {
             )
             if (value === undefined || value === null) {
                 await traceSpan.traceChildOperation(
-                    'QDataPrecachedCombiner_cache_set_fetching',
+                    "QDataPrecachedCombiner_cache_set_fetching",
                     async span => {
-                        span.setTag('cache_key', key)
+                        span.setTag("cache_key", key)
                         await this.cache.set(
                             key,
                             FETCHING,
@@ -392,9 +392,9 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                 )
                 docs = await super.query(params)
                 await traceSpan.traceChildOperation(
-                    'QDataPrecachedCombiner_cache_set_result',
+                    "QDataPrecachedCombiner_cache_set_result",
                     async span => {
-                        span.setTag('cache_key', key)
+                        span.setTag("cache_key", key)
 
                         const expiration =
                             docs && docs.length > 0
@@ -407,19 +407,19 @@ export class QDataPrecachedCombiner extends QDataCombiner {
                         await this.cache.set(key, docs, expiration)
                     },
                 )
-                traceSpan.setTag('updated_cache', true)
+                traceSpan.setTag("updated_cache", true)
             } else if (value === FETCHING) {
-                traceSpan.setTag('waited_for_cache', true)
-                traceSpan.logEvent('QDataPrecachedCombiner_query_waiting')
+                traceSpan.setTag("waited_for_cache", true)
+                traceSpan.logEvent("QDataPrecachedCombiner_query_waiting")
                 await new Promise(resolve =>
                     setTimeout(resolve, this.fetchingPollTimeout * 1000),
                 )
             } else {
-                traceSpan.setTag('fetched_from_cache', true)
+                traceSpan.setTag("fetched_from_cache", true)
                 docs = value
             }
         }
-        traceSpan.logEvent('QDataPrecachedCombiner_query_end')
+        traceSpan.logEvent("QDataPrecachedCombiner_query_end")
         return docs
     }
 }
@@ -427,7 +427,7 @@ export class QDataPrecachedCombiner extends QDataCombiner {
 export function combineResults(
     results: QResult[][],
     orderBy: OrderBy[],
-    distinctBy = '_key',
+    distinctBy = "_key",
 ): QResult[] {
     const docs = collectDistinctDocs(results, distinctBy)
     if (orderBy.length > 0) {
@@ -442,10 +442,10 @@ function collectDistinctDocs(source: QResult[][], key: string): QResult[] {
     source.forEach(docs => {
         docs.forEach(doc => {
             if (
-                typeof doc === 'string' ||
-                typeof doc === 'bigint' ||
-                typeof doc === 'boolean' ||
-                typeof doc === 'number' ||
+                typeof doc === "string" ||
+                typeof doc === "bigint" ||
+                typeof doc === "boolean" ||
+                typeof doc === "number" ||
                 Array.isArray(doc) ||
                 !(key in doc)
             ) {
@@ -462,12 +462,12 @@ function collectDistinctDocs(source: QResult[][], key: string): QResult[] {
 function compareResults(a: QResult, b: QResult, orderBy: OrderBy[]) {
     for (let i = 0; i < orderBy.length; i += 1) {
         const field = orderBy[i]
-        const path = field.path.split('.')
+        const path = field.path.split(".")
         const aValue = getValue(a, path, 0)
         const bValue = getValue(b, path, 0)
         const comparison = compareValues(aValue, bValue)
         if (comparison !== 0) {
-            return field.direction === 'DESC' ? -comparison : comparison
+            return field.direction === "DESC" ? -comparison : comparison
         }
     }
     return 0
@@ -479,7 +479,7 @@ function getValue(value: unknown, path: string[], pathIndex: number): unknown {
     }
     const isCollection = pathIndex === 0
     const name =
-        isCollection && path[pathIndex] === 'id' ? '_key' : path[pathIndex]
+        isCollection && path[pathIndex] === "id" ? "_key" : path[pathIndex]
     return getValue(
         (value as { [name: string]: unknown })[name],
         path,
@@ -502,12 +502,12 @@ function compareValues(a: unknown, b: unknown): number {
 }
 
 function isNullOrUndefined(v: unknown): boolean {
-    return v === null || typeof v === 'undefined'
+    return v === null || typeof v === "undefined"
 }
 
 export function sortedIndex(fields: string[]): QIndexInfo {
     return {
-        type: 'persistent',
+        type: "persistent",
         fields,
     }
 }

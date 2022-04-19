@@ -1,7 +1,7 @@
-import { QDataCollection } from '../data/collection'
-import { packageJson } from '../utils'
-import { AccessArgs } from '../auth'
-import { QRequestContext } from '../request'
+import { QDataCollection } from "../data/collection"
+import { packageJson } from "../utils"
+import { AccessArgs } from "../auth"
+import { QRequestContext } from "../request"
 
 const { version } = packageJson()
 
@@ -85,7 +85,7 @@ async function getCollections(
     for (const collection of data.collections) {
         const indexes: string[] = []
         for (const index of await collection.getIndexes()) {
-            indexes.push(index.fields.join(', '))
+            indexes.push(index.fields.join(", "))
         }
         collections.push({
             name: collection.name,

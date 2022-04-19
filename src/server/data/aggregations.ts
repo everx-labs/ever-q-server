@@ -1,12 +1,12 @@
-import { scalarFields } from '../graphql/resolvers-generated'
-import { QResult, Scalar } from './data-provider'
+import { scalarFields } from "../graphql/resolvers-generated"
+import { QResult, Scalar } from "./data-provider"
 
 export enum AggregationFn {
-    COUNT = 'COUNT',
-    MIN = 'MIN',
-    MAX = 'MAX',
-    SUM = 'SUM',
-    AVERAGE = 'AVERAGE',
+    COUNT = "COUNT",
+    MIN = "MIN",
+    MAX = "MAX",
+    SUM = "SUM",
+    AVERAGE = "AVERAGE",
 }
 
 export type FieldAggregation = {
@@ -29,7 +29,7 @@ export abstract class AggregationQuery {
         text: string
         queries: AggregationQuery[]
     } {
-        const filter = filterText ? `FILTER ${filterText}` : ''
+        const filter = filterText ? `FILTER ${filterText}` : ""
         const queries: AggregationQuery[] = fields.map(aggregation => {
             const fn = aggregation.fn ?? AggregationFn.COUNT
             if (fn === AggregationFn.COUNT) {
@@ -43,14 +43,14 @@ export abstract class AggregationQuery {
                 throw new Error(`Unknown field [${aggregation.field}]`)
             }
 
-            if (scalar.path === '') {
+            if (scalar.path === "") {
                 throw new Error(`[${aggregation.field}] can't be aggregated`)
             }
 
             const bigIntPrefix =
-                scalar.type === 'uint1024'
+                scalar.type === "uint1024"
                     ? 2
-                    : scalar.type === 'uint64'
+                    : scalar.type === "uint64"
                     ? 1
                     : 0
             if (fn === AggregationFn.MIN || fn === AggregationFn.MAX) {
@@ -63,7 +63,7 @@ export abstract class AggregationQuery {
                 )
             }
 
-            if (scalar.type === 'number') {
+            if (scalar.type === "number") {
                 return new NumberQuery(fn, scalar.path, collection, filter)
             }
 
@@ -81,7 +81,7 @@ export abstract class AggregationQuery {
 
         const text = `
             RETURN [
-            ${queries.map(x => x.getQueryText()).join(',\n')}
+            ${queries.map(x => x.getQueryText()).join(",\n")}
             ]
         `
         return {
@@ -105,11 +105,11 @@ export abstract class AggregationQuery {
 
 class CountQuery extends AggregationQuery {
     constructor(public collection: string, public filter: string) {
-        super(AggregationFn.COUNT, '')
+        super(AggregationFn.COUNT, "")
     }
 
     getQueryText(): string {
-        return this.filter !== ''
+        return this.filter !== ""
             ? `
                 (FOR doc IN ${this.collection}
                 ${this.filter}
@@ -146,7 +146,7 @@ class MinMaxQuery extends AggregationQuery {
             (FOR doc IN ${this.collection}
             ${this.filter}
             LET a = ${collectExpr}
-            SORT a ${this.fn === AggregationFn.MIN ? 'ASC' : 'DESC'}
+            SORT a ${this.fn === AggregationFn.MIN ? "ASC" : "DESC"}
             LIMIT 1
             RETURN a)[0]
         `
@@ -213,13 +213,13 @@ class BigIntQuery extends AggregationQuery {
         )
         const c = isArrayPath(this.path)
             ? `SUM(COUNT(${this.path}))`
-            : 'COUNT(doc)'
+            : "COUNT(doc)"
         const collectExpr =
             this.fn === AggregationFn.AVERAGE
                 ? `a = ${a}, b = ${b}, c = ${c}`
                 : `a = ${a}, b = ${b}`
         const returnExpr =
-            this.fn === AggregationFn.AVERAGE ? '{ a, b, c }' : '{ a, b }'
+            this.fn === AggregationFn.AVERAGE ? "{ a, b, c }" : "{ a, b }"
         return `
             (FOR doc IN ${this.collection}
             ${this.filter}
@@ -247,19 +247,19 @@ function bigIntStringToDecimalString(
     value: unknown,
     bigIntPrefix: number,
 ): string | bigint {
-    if (typeof value === 'number') {
+    if (typeof value === "number") {
         return value.toString()
     }
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
         throw new Error(`Invalid bigint value: ${value}`)
     }
-    return value.substr(0, 1) === '-'
+    return value.substr(0, 1) === "-"
         ? BigInt(`-0x${value.substr(bigIntPrefix + 1)}`).toString()
         : BigInt(`0x${value.substr(bigIntPrefix)}`).toString()
 }
 
 function isArrayPath(path: string): boolean {
-    return path.includes('[*]')
+    return path.includes("[*]")
 }
 
 // Converters
@@ -275,11 +275,11 @@ function reduceValues(
     let reduced = values[0]
     for (let i = 1; i < values.length; i += 1) {
         const value = values[i]
-        if (fn === 'MIN') {
+        if (fn === "MIN") {
             if ((value as Scalar) < (reduced as Scalar)) {
                 reduced = value
             }
-        } else if (fn === 'MAX') {
+        } else if (fn === "MAX") {
             if ((value as Scalar) > (reduced as Scalar)) {
                 reduced = value
             }
@@ -287,7 +287,7 @@ function reduceValues(
             ;(reduced as number) += value as number
         }
     }
-    if (fn === 'AVERAGE') {
+    if (fn === "AVERAGE") {
         if (bigIntPrefix > 0) {
             reduced = (reduced as bigint) / BigInt(values.length)
         } else {
@@ -352,6 +352,6 @@ function bigIntSumExpr(
     bigIntPrefix: number,
 ) {
     return isArrayPath(path)
-        ? `SUM(SUM((${path})[* RETURN ${part('CURRENT', bigIntPrefix)}]))`
+        ? `SUM(SUM((${path})[* RETURN ${part("CURRENT", bigIntPrefix)}]))`
         : `SUM(${part(path, bigIntPrefix)})`
 }

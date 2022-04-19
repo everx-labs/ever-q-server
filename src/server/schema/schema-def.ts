@@ -7,7 +7,7 @@ import {
     SchemaEx,
     SchemaMember,
     SchemaType,
-} from './schema'
+} from "./schema"
 
 export type ClassDef = {
     types?: MembersDef<TypeDef>
@@ -77,7 +77,7 @@ export const Def = {
         doc?: SchemaDoc,
     ): ExplicitDef {
         const name =
-            typeof nameOrType === 'string'
+            typeof nameOrType === "string"
                 ? nameOrType
                 : Object.keys(nameOrType)[0]
         return { _ref: name, ...(doc ? { _doc: doc } : {}) }
@@ -88,14 +88,14 @@ export const Def = {
 }
 
 function isReservedKey(key: string): boolean {
-    return key === '_doc' || key === '_'
+    return key === "_doc" || key === "_"
 }
 
 // Parser
 
 export function parseTypeDef(def: TypeDef): SchemaType {
     const parser = new SchemaParser()
-    return parser.parseTypeDef(def, '')
+    return parser.parseTypeDef(def, "")
 }
 
 // Internals
@@ -106,7 +106,7 @@ type ParsingType = {
 }
 
 function combineName(base: string, name: string): string {
-    return base !== '' ? `${base}.${name}` : name
+    return base !== "" ? `${base}.${name}` : name
 }
 
 const UnresolvedType: SchemaType = {
@@ -121,7 +121,7 @@ class SchemaParser {
     }
 
     typeRef(def: ExplicitDef): SchemaType {
-        const defRef = def._ref || ''
+        const defRef = def._ref || ""
         const existing = this.types[defRef]
         if (existing) {
             if (existing.type !== UnresolvedType) {
@@ -233,20 +233,20 @@ class SchemaParser {
 
     parseTypeDef(def: TypeDef, name: string): SchemaType {
         const scalarTypes = [
-            '_void',
-            '_any',
-            '_int',
-            '_float',
-            '_string',
-            '_bool',
-            '_time',
+            "_void",
+            "_any",
+            "_int",
+            "_float",
+            "_string",
+            "_bool",
+            "_time",
         ]
         if (!def) {
-            console.log('>>>', name, def)
+            console.log(">>>", name, def)
         }
         const type: Record<string, unknown> = {
             def,
-            doc: def._doc || '',
+            doc: def._doc || "",
             _: def._ || {},
         }
         const scalarType = scalarTypes.find(t => t in def)
@@ -261,7 +261,7 @@ class SchemaParser {
         } else if (explicit._array) {
             type.array = this.parseTypeDef(
                 explicit._array,
-                combineName(name, 'item'),
+                combineName(name, "item"),
             )
         } else if (explicit._struct) {
             type.struct = this.typedNamedMembers(explicit._struct, name)
@@ -292,7 +292,7 @@ class SchemaParser {
                           (functionName, functionDef: FunctionDef) => {
                               return {
                                   def: functionDef,
-                                  doc: functionDef._doc || '',
+                                  doc: functionDef._doc || "",
                                   args: functionDef.args
                                       ? this.typedNamedOrderedMembers(
                                             functionDef.args,
@@ -302,10 +302,10 @@ class SchemaParser {
                                   result: functionDef.result
                                       ? this.parseTypeDef(
                                             functionDef.result,
-                                            combineName(name, 'Result'),
+                                            combineName(name, "Result"),
                                         )
                                       : {
-                                            doc: '',
+                                            doc: "",
                                             void: {},
                                         },
                               }
@@ -315,7 +315,7 @@ class SchemaParser {
             }
         } else if (Array.isArray(def)) {
             type.struct = this.typedNamedMembers(def, name)
-        } else if (typeof def === 'object') {
+        } else if (typeof def === "object") {
             const filteredDef: UnorderedMembersDef<TypeDef | StructDef> = {}
             Object.keys(def as StructDef).forEach(key => {
                 if (!isReservedKey(key)) {
@@ -326,7 +326,7 @@ class SchemaParser {
             })
             type.struct = this.typedNamedMembers(filteredDef, name)
         } else {
-            console.log('>>>', name)
+            console.log(">>>", name)
         }
         this.resolveType(name, type)
         return type

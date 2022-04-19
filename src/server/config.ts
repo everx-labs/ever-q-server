@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { URL } from 'url'
-import { readFileSync } from 'fs'
-import { ConfigParam, ConfigValue, DeepPartial } from './config-param'
-import { QError } from './utils'
+import { URL } from "url"
+import { readFileSync } from "fs"
+import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
+import { QError } from "./utils"
 
 export type QConfig = {
     config: string
@@ -97,158 +97,158 @@ export type QDeprecatedDataConfig = {
 }
 
 export enum SlowQueriesMode {
-    ENABLE = 'enable',
-    REDIRECT = 'redirect',
-    DISABLE = 'disable',
+    ENABLE = "enable",
+    REDIRECT = "redirect",
+    DISABLE = "disable",
 }
 
 export enum RequestsMode {
-    KAFKA = 'kafka',
-    REST = 'rest',
+    KAFKA = "kafka",
+    REST = "rest",
 }
 
 export enum FilterOrConversion {
-    OR_OPERATOR = 'or-operator',
-    SUB_QUERIES = 'sub-queries',
+    OR_OPERATOR = "or-operator",
+    SUB_QUERIES = "sub-queries",
 }
 
 export const configParams = {
-    config: ConfigParam.string('config', '', 'Path to JSON configuration file'),
+    config: ConfigParam.string("config", "", "Path to JSON configuration file"),
     server: {
-        host: ConfigParam.string('host', '{ip}', 'Listening address'),
-        port: ConfigParam.integer('port', 4000, 'Listening port'),
+        host: ConfigParam.string("host", "{ip}", "Listening address"),
+        port: ConfigParam.integer("port", 4000, "Listening port"),
         keepAlive: ConfigParam.integer(
-            'keep-alive',
+            "keep-alive",
             60000,
-            'GraphQL keep alive ms',
+            "GraphQL keep alive ms",
         ),
     },
     requests: {
         mode: ConfigParam.string(
-            'requests-mode',
-            'kafka',
-            'Requests mode:\n' +
-                '`kafka` – writes external messages to kafka topic\n' +
-                '`rest` – posts external messages to REST endpoint',
+            "requests-mode",
+            "kafka",
+            "Requests mode:\n" +
+                "`kafka` – writes external messages to kafka topic\n" +
+                "`rest` – posts external messages to REST endpoint",
         ),
         server: ConfigParam.string(
-            'requests-server',
-            'kafka:9092',
-            'Requests server url',
+            "requests-server",
+            "kafka:9092",
+            "Requests server url",
         ),
         topic: ConfigParam.string(
-            'requests-topic',
-            'requests',
-            'Requests topic name',
+            "requests-topic",
+            "requests",
+            "Requests topic name",
         ),
         maxSize: ConfigParam.integer(
-            'requests-max-size',
+            "requests-max-size",
             16383,
-            'Maximum request message size in bytes',
+            "Maximum request message size in bytes",
         ),
     },
     queries: {
         filter: {
             orConversion: ConfigParam.string(
-                'filter-or-conversion',
-                'sub-queries',
-                'Filter OR conversion:\n' +
-                    '`or-operator` – q-server uses AQL with OR\n' +
-                    '`sub-queries` – q-server performs parallel queries for each OR operand\n' +
-                    ' and combines results (this option provides faster execution\n' +
-                    ' than OR operator in AQL)',
+                "filter-or-conversion",
+                "sub-queries",
+                "Filter OR conversion:\n" +
+                    "`or-operator` – q-server uses AQL with OR\n" +
+                    "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
+                    " and combines results (this option provides faster execution\n" +
+                    " than OR operator in AQL)",
             ),
         },
         maxRuntimeInS: ConfigParam.integer(
-            'query-max-runtime',
+            "query-max-runtime",
             600,
-            'Max allowed execution time for ArangoDb queries in seconds',
+            "Max allowed execution time for ArangoDb queries in seconds",
         ),
         slowQueries: ConfigParam.string(
-            'slow-queries',
-            'redirect',
-            'Slow queries handling:\n' +
-                '`enable` – process slow queries on the main database\n' +
-                '`redirect` – redirect slow queries to slow-queries database\n' +
-                '`disable` – fail on slow queries',
+            "slow-queries",
+            "redirect",
+            "Slow queries handling:\n" +
+                "`enable` – process slow queries on the main database\n" +
+                "`redirect` – redirect slow queries to slow-queries database\n" +
+                "`disable` – fail on slow queries",
         ),
         waitForPeriod: ConfigParam.integer(
-            'query-wait-for-period',
+            "query-wait-for-period",
             1000,
-            'Collection polling period for wait-for queries\n' +
-                '(collection queries with timeout) in ms',
+            "Collection polling period for wait-for queries\n" +
+                "(collection queries with timeout) in ms",
         ),
     },
     useListeners: ConfigParam.boolean(
-        'use-listeners',
+        "use-listeners",
         true,
-        'Use database listeners for subscriptions',
+        "Use database listeners for subscriptions",
     ),
-    blockchain: ConfigParam.blockchain(''),
-    counterparties: ConfigParam.databases('counterparties'),
-    chainRangesVerification: ConfigParam.databases('chain ranges verification'),
-    slowQueriesBlockchain: ConfigParam.blockchain('slow queries'),
+    blockchain: ConfigParam.blockchain(""),
+    counterparties: ConfigParam.databases("counterparties"),
+    chainRangesVerification: ConfigParam.databases("chain ranges verification"),
+    slowQueriesBlockchain: ConfigParam.blockchain("slow queries"),
 
-    data: ConfigParam.dataDeprecated('data'),
-    slowQueriesData: ConfigParam.dataDeprecated('slow-queries'),
+    data: ConfigParam.dataDeprecated("data"),
+    slowQueriesData: ConfigParam.dataDeprecated("slow-queries"),
 
     authorization: {
-        endpoint: ConfigParam.string('auth-endpoint', '', 'Auth endpoint'),
+        endpoint: ConfigParam.string("auth-endpoint", "", "Auth endpoint"),
     },
     jaeger: {
-        endpoint: ConfigParam.string('jaeger-endpoint', '', 'Jaeger endpoint'),
+        endpoint: ConfigParam.string("jaeger-endpoint", "", "Jaeger endpoint"),
         service: ConfigParam.string(
-            'trace-service',
-            'Q Server',
-            'Trace service name',
+            "trace-service",
+            "Q Server",
+            "Trace service name",
         ),
         tags: ConfigParam.map(
-            'trace-tags',
+            "trace-tags",
             {},
-            'Additional trace tags (comma separated name=value pairs)',
+            "Additional trace tags (comma separated name=value pairs)",
         ),
     },
     statsd: {
         server: ConfigParam.string(
-            'statsd-server',
-            '',
-            'StatsD server (host:port)',
+            "statsd-server",
+            "",
+            "StatsD server (host:port)",
         ),
         tags: ConfigParam.map(
-            'statsd-tags',
+            "statsd-tags",
             {},
-            'Additional StatsD tags (comma separated name=value pairs)',
+            "Additional StatsD tags (comma separated name=value pairs)",
         ),
         resetInterval: ConfigParam.integer(
-            'statsd-reset-interval',
+            "statsd-reset-interval",
             0,
-            'Interval between statsd reconnects.\nIf it is zero – no reconnects.',
+            "Interval between statsd reconnects.\nIf it is zero – no reconnects.",
         ),
     },
     mamAccessKeys: ConfigParam.array(
-        'mam-access-keys',
+        "mam-access-keys",
         [],
-        'Access keys used to authorize mam endpoint access',
+        "Access keys used to authorize mam endpoint access",
     ),
     isTests: ConfigParam.boolean(
-        'is-tests',
+        "is-tests",
         false,
-        'Determines that q-server runs in unit tests mode.',
+        "Determines that q-server runs in unit tests mode.",
     ),
     networkName: ConfigParam.string(
-        'network-name',
-        'cinet.tonlabs.io',
-        'Define the name of the network q-server is working with',
+        "network-name",
+        "cinet.tonlabs.io",
+        "Define the name of the network q-server is working with",
     ),
     cacheKeyPrefix: ConfigParam.string(
-        'cache-key-prefix',
-        'Q_',
-        'Prefix string to identify q-server keys in data cache',
+        "cache-key-prefix",
+        "Q_",
+        "Prefix string to identify q-server keys in data cache",
     ),
     endpoints: ConfigParam.array(
-        'endpoints',
+        "endpoints",
         [],
-        'Alternative endpoints of q-server (comma separated addresses)',
+        "Alternative endpoints of q-server (comma separated addresses)",
     ),
 }
 
@@ -271,31 +271,31 @@ const DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS = 3
 // Stats Schema
 
 export const STATS = {
-    start: 'start',
-    prefix: 'qserver.',
+    start: "start",
+    prefix: "qserver.",
     doc: {
-        count: 'doc.count',
+        count: "doc.count",
     },
     post: {
-        count: 'post.count',
-        failed: 'post.failed',
+        count: "post.count",
+        failed: "post.failed",
     },
     query: {
-        count: 'query.count',
-        time: 'query.time',
-        active: 'query.active',
-        failed: 'query.failed',
-        slow: 'query.slow',
+        count: "query.count",
+        time: "query.time",
+        active: "query.active",
+        failed: "query.failed",
+        slow: "query.slow",
     },
     subscription: {
-        count: 'subscription.count',
-        active: 'subscription.active',
+        count: "subscription.count",
+        active: "subscription.active",
     },
     waitFor: {
-        active: 'waitfor.active',
+        active: "waitfor.active",
     },
     errors: {
-        internal: 'errors.internal',
+        internal: "errors.internal",
     },
 }
 
@@ -314,7 +314,7 @@ export function readConfigFile(configFile: string): DeepPartial<QConfig> {
             readFileSync(configFile).toString(),
         ) as DeepPartial<QConfig>
     } catch (error) {
-        console.error('Error while reading config file:', error)
+        console.error("Error while reading config file:", error)
         return {}
     }
 }
@@ -322,23 +322,23 @@ export function readConfigFile(configFile: string): DeepPartial<QConfig> {
 export function parseArangoConfig(config: string): QArangoConfig {
     const lowerCased = config.toLowerCase().trim()
     const hasProtocol =
-        lowerCased.startsWith('http:') || lowerCased.startsWith('https:')
+        lowerCased.startsWith("http:") || lowerCased.startsWith("https:")
     const url = new URL(hasProtocol ? config : `https://${config}`)
-    const protocol = url.protocol || 'https:'
+    const protocol = url.protocol || "https:"
     const host =
-        url.port || protocol.toLowerCase() === 'https:'
+        url.port || protocol.toLowerCase() === "https:"
             ? url.host
             : `${url.host}:8529`
-    const path = url.pathname !== '/' ? url.pathname : ''
-    const param = (name: string) => url.searchParams.get(name) || ''
+    const path = url.pathname !== "/" ? url.pathname : ""
+    const param = (name: string) => url.searchParams.get(name) || ""
     return {
         server: `${protocol}//${host}${path}`,
         auth: url.username && `${url.username}:${url.password}`,
-        name: param('name') || 'blockchain',
+        name: param("name") || "blockchain",
         maxSockets:
-            Number.parseInt(param('maxSockets')) || DEFAULT_ARANGO_MAX_SOCKETS,
+            Number.parseInt(param("maxSockets")) || DEFAULT_ARANGO_MAX_SOCKETS,
         listenerRestartTimeout:
-            Number.parseInt(param('listenerRestartTimeout')) ||
+            Number.parseInt(param("listenerRestartTimeout")) ||
             DEFAULT_LISTENER_RESTART_TIMEOUT,
     }
 }
@@ -346,11 +346,11 @@ export function parseArangoConfig(config: string): QArangoConfig {
 function resolveMaxSockets(config: string, defMaxSockets: number): string {
     const lowerCased = config.toLowerCase().trim()
     const hasProtocol =
-        lowerCased.startsWith('http:') || lowerCased.startsWith('https:')
+        lowerCased.startsWith("http:") || lowerCased.startsWith("https:")
     const url = new URL(hasProtocol ? config : `https://${config}`)
-    if ((url.searchParams.get('maxSockets') || '') === '') {
+    if ((url.searchParams.get("maxSockets") || "") === "") {
         url.search = `${
-            url.search !== '' ? `${url.search}&` : ''
+            url.search !== "" ? `${url.search}&` : ""
         }maxSockets=${defMaxSockets}`
     }
     return url.toString()
@@ -370,10 +370,10 @@ function resolveMaxSocketsFor(
 }
 
 function upgradeDatabases(deprecated: string | undefined): string[] {
-    return (deprecated ?? '')
-        .split(',')
+    return (deprecated ?? "")
+        .split(",")
         .map(x => x.trim())
-        .filter(x => x !== '')
+        .filter(x => x !== "")
 }
 
 function upgradeHotCold(
@@ -395,7 +395,7 @@ function upgradeBlockchain(
         accounts: upgradeDatabases(deprecated.mut),
         blocks,
         transactions: upgradeHotCold(deprecated, deprecated.mut),
-        zerostate: blocks.hot[0] ?? '',
+        zerostate: blocks.hot[0] ?? "",
         hotCacheExpiration:
             configParams.blockchain.hotCacheExpiration.defaultValue,
         hotCacheEmptyDataExpiration:
@@ -483,13 +483,13 @@ export function resolveConfig(
         )
     }
     if (
-        config.blockchain.zerostate === '' &&
+        config.blockchain.zerostate === "" &&
         !specified.includes(configParams.blockchain.zerostate)
     ) {
         config.blockchain.zerostate =
             config.blockchain.blocks.hot[0] ??
             config.blockchain.blocks.cold[0] ??
-            ''
+            ""
     }
     return config
 }

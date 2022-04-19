@@ -1,51 +1,51 @@
-import { hash } from '../server/utils'
-import TONQServer from '../server/server'
+import { hash } from "../server/utils"
+import TONQServer from "../server/server"
 import {
     QDatabasePool,
     QDataCombiner,
     QDataPrecachedCombiner,
-} from '../server/data/data-provider'
-import type { QArangoConfig } from '../server/config'
-import { QShardDatabaseProvider } from '../server/data/shard-database-provider'
-import QLogs from '../server/logs'
+} from "../server/data/data-provider"
+import type { QArangoConfig } from "../server/config"
+import { QShardDatabaseProvider } from "../server/data/shard-database-provider"
+import QLogs from "../server/logs"
 import {
     MockCache,
     testConfig,
     mock,
     createTestData,
     MockProvider,
-} from './init-tests'
-import { OrderBy } from '../server/filter/filters'
-import { QRequestContext } from '../server/request'
-import { QTraceSpan } from '../server/tracing'
+} from "./init-tests"
+import { OrderBy } from "../server/filter/filters"
+import { QRequestContext } from "../server/request"
+import { QTraceSpan } from "../server/tracing"
 
-jest.mock('arangojs', () => ({
+jest.mock("arangojs", () => ({
     __esModule: true,
-    Database: (jest.genMockFromModule('arangojs') as { Database: unknown })
+    Database: (jest.genMockFromModule("arangojs") as { Database: unknown })
         .Database,
 }))
 
-describe('Fingerprint', () => {
+describe("Fingerprint", () => {
     const pool = new QDatabasePool()
     let provider: QShardDatabaseProvider
 
     beforeEach(async () => {
         const logs = new QLogs()
         const config: QArangoConfig = {
-            server: 'mock',
-            name: 'mock',
-            auth: 'mock',
+            server: "mock",
+            name: "mock",
+            auth: "mock",
             maxSockets: 0,
             listenerRestartTimeout: 0,
         }
         provider = new QShardDatabaseProvider(
-            logs.create('arango'),
-            pool.ensureShard(config, ''),
+            logs.create("arango"),
+            pool.ensureShard(config, ""),
             false,
         )
     })
 
-    it('should calculated by size of collections', async () => {
+    it("should calculated by size of collections", async () => {
         const expected = {
             a: 3,
             b: 2,
@@ -53,7 +53,7 @@ describe('Fingerprint', () => {
         }
         provider.shard.database.listCollections = jest
             .fn()
-            .mockResolvedValue([{ name: 'a' }, { name: 'b' }, { name: 'c' }])
+            .mockResolvedValue([{ name: "a" }, { name: "b" }, { name: "c" }])
         ;(provider.shard.database as { collection: unknown }).collection =
             jest.fn(x => {
                 return {
@@ -67,7 +67,7 @@ describe('Fingerprint', () => {
     })
 })
 
-describe('DataCache', () => {
+describe("DataCache", () => {
     let server: TONQServer
     let cachedCold: QDataPrecachedCombiner
     let cache: MockCache<unknown>
@@ -77,57 +77,57 @@ describe('DataCache', () => {
     beforeEach(async () => {
         const mutable = mock([
             {
-                _key: 'a1',
-                balance: '4',
+                _key: "a1",
+                balance: "4",
             },
             {
-                _key: 'a2',
-                balance: '3',
+                _key: "a2",
+                balance: "3",
             },
             {
-                _key: 'a3',
-                balance: '2',
+                _key: "a3",
+                balance: "2",
             },
             {
-                _key: 'a4',
-                balance: '1',
+                _key: "a4",
+                balance: "1",
             },
         ])
         cache = new MockCache()
         const hot = mock([
             {
-                _key: 't1',
-                lt: '6',
+                _key: "t1",
+                lt: "6",
             },
             {
-                _key: 't6',
-                lt: '1',
+                _key: "t6",
+                lt: "1",
             },
         ])
         firstCold = mock([
             {
-                _key: 't5',
-                lt: '2',
+                _key: "t5",
+                lt: "2",
             },
             {
-                _key: 't4',
-                lt: '3',
+                _key: "t4",
+                lt: "3",
             },
             {
-                _key: 't3',
-                lt: '4',
+                _key: "t3",
+                lt: "4",
             },
         ])
         secondCold = mock([
             {
-                _key: 't2',
-                lt: '5',
+                _key: "t2",
+                lt: "5",
             },
         ])
         const cold = [firstCold, secondCold]
         const logs = new QLogs()
         cachedCold = new QDataPrecachedCombiner(
-            logs.create('cache'),
+            logs.create("cache"),
             cache,
             cold,
             testConfig.networkName,
@@ -150,7 +150,7 @@ describe('DataCache', () => {
         })
     })
 
-    it('should trigger hotUpdate on each data providers', async () => {
+    it("should trigger hotUpdate on each data providers", async () => {
         expect(firstCold.hotUpdateCount).toEqual(0)
         expect(secondCold.hotUpdateCount).toEqual(0)
 
@@ -165,8 +165,8 @@ describe('DataCache', () => {
         expect(secondCold.hotUpdateCount).toEqual(2)
     })
 
-    it('should change configHash after start', async () => {
-        expect(cachedCold.configHash).toEqual('')
+    it("should change configHash after start", async () => {
+        expect(cachedCold.configHash).toEqual("")
 
         await server.start()
 
@@ -176,7 +176,7 @@ describe('DataCache', () => {
         expect(cachedCold.configHash).toEqual(configHash)
     })
 
-    it('should not changed after dropCachedDbInfo', async () => {
+    it("should not changed after dropCachedDbInfo", async () => {
         await server.start()
 
         const old = cachedCold.configHash
@@ -185,20 +185,20 @@ describe('DataCache', () => {
         expect(cachedCold.configHash).toEqual(old)
     })
 
-    it('should change after new counts and dropCachedDbInfo', async () => {
+    it("should change after new counts and dropCachedDbInfo", async () => {
         await server.start()
 
         const old = cachedCold.configHash
         firstCold.data.push({
-            _key: 't6',
-            lt: '1',
+            _key: "t6",
+            lt: "1",
         })
         await server.data.dropCachedDbInfo()
 
         expect(cachedCold.configHash).not.toEqual(old)
     })
 
-    it('should collect fingerprint from providers', async () => {
+    it("should collect fingerprint from providers", async () => {
         await server.start()
 
         const fingerprint = await cachedCold.loadFingerprint()
@@ -210,10 +210,10 @@ describe('DataCache', () => {
         ])
     })
 
-    it('should use cacheKeyPrefix', async () => {
+    it("should use cacheKeyPrefix", async () => {
         await server.start()
 
-        const text = 'q1'
+        const text = "q1"
         const vars = { b: 2 }
         const orderBy: OrderBy[] = []
 
@@ -222,10 +222,10 @@ describe('DataCache', () => {
             vars,
             orderBy,
             request: null as unknown as QRequestContext,
-            traceSpan: QTraceSpan.create(server.tracer, ''),
+            traceSpan: QTraceSpan.create(server.tracer, ""),
         })
         const lastKey =
-            'Q_' +
+            "Q_" +
             hash(
                 cachedCold.configHash,
                 JSON.stringify({

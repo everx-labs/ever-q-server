@@ -1,8 +1,8 @@
-import { $$asyncIterator } from 'iterall'
-import type { AccessRights } from '../auth'
-import { CollectionFilter, selectFields } from '../filter/filters'
-import type { FieldSelection, QType } from '../filter/filters'
-import { QDoc } from './data-provider'
+import { $$asyncIterator } from "iterall"
+import type { AccessRights } from "../auth"
+import { CollectionFilter, selectFields } from "../filter/filters"
+import type { FieldSelection, QType } from "../filter/filters"
+import { QDoc } from "./data-provider"
 
 type QDocTransaction = {
     account_addr: string
@@ -41,14 +41,14 @@ export class QDataListener {
         }
         const accounts = new Set(accessRights.restrictToAccounts)
         switch (collectionName) {
-            case 'accounts':
+            case "accounts":
                 return doc => accounts.has(doc._key)
-            case 'transactions':
+            case "transactions":
                 return doc =>
                     accounts.has(
                         (doc as unknown as QDocTransaction).account_addr,
                     )
-            case 'messages':
+            case "messages":
                 return doc =>
                     accounts.has((doc as unknown as QDocMessage).src) ||
                     accounts.has((doc as unknown as QDocMessage).dst)

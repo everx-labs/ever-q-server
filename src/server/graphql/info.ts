@@ -1,6 +1,6 @@
-import { packageJson } from '../utils'
-import { QRequestContext } from '../request'
-import { FieldNode } from 'graphql'
+import { packageJson } from "../utils"
+import { QRequestContext } from "../request"
+import { FieldNode } from "graphql"
 
 const { version } = packageJson()
 
@@ -24,7 +24,7 @@ async function info(
 ): Promise<Info> {
     const fields = new Set<string>()
     for (const field of info.fieldNodes[0].selectionSet?.selections ?? []) {
-        if (field.kind === 'Field') {
+        if (field.kind === "Field") {
             fields.add(field.name.value)
         }
     }
@@ -33,7 +33,7 @@ async function info(
         time: Date.now(),
         endpoints: context.services.config.endpoints,
     }
-    if (fields.has('chainOrderBoundary')) {
+    if (fields.has("chainOrderBoundary")) {
         try {
             result.chainOrderBoundary = (
                 await context.services.data.getReliableChainOrderUpperBoundary(
@@ -45,11 +45,11 @@ async function info(
         }
     }
     const latencyFieldsSelected =
-        fields.has('latency') ||
-        fields.has('blocksLatency') ||
-        fields.has('transactionsLatency') ||
-        fields.has('messagesLatency') ||
-        fields.has('lastBlockTime')
+        fields.has("latency") ||
+        fields.has("blocksLatency") ||
+        fields.has("transactionsLatency") ||
+        fields.has("messagesLatency") ||
+        fields.has("lastBlockTime")
     if (latencyFieldsSelected) {
         const data = context.services.data
         const latency = await data.getLatency(context)

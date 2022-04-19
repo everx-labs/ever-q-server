@@ -1,5 +1,5 @@
-import v8 from 'v8'
-import { IStats } from './stats'
+import v8 from "v8"
+import { IStats } from "./stats"
 
 export class MemStats {
     stats: IStats
@@ -18,17 +18,17 @@ export class MemStats {
                 space_used_size: number
             }) => {
                 const spaceName = space.space_name
-                    .replace('space_', '')
-                    .replace('_space', '')
+                    .replace("space_", "")
+                    .replace("_space", "")
                 const gauge = (metric: string, value: number) => {
                     void this.stats
                         .gauge(`heap.space.${spaceName}.${metric}`, value, [])
                         .then(() => {})
                 }
-                gauge('physical_size', space.physical_space_size)
-                gauge('available_size', space.space_available_size)
-                gauge('size', space.space_size)
-                gauge('used_size', space.space_used_size)
+                gauge("physical_size", space.physical_space_size)
+                gauge("available_size", space.space_available_size)
+                gauge("size", space.space_size)
+                gauge("used_size", space.space_used_size)
             },
         )
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Def, TypeDef } from './schema-def'
+import { Def, TypeDef } from "./schema-def"
 
 import {
     grams,
@@ -33,38 +33,38 @@ import {
     unixSeconds,
     withDoc,
     stringWithLowerFilter,
-} from './db-schema-types'
+} from "./db-schema-types"
 
-import { docs } from './db.shema.docs'
+import { docs } from "./db.shema.docs"
 
 const { string, bool, ref, arrayOf } = Def
 
-const accountStatus = u8enum('AccountStatus', {
+const accountStatus = u8enum("AccountStatus", {
     uninit: 0,
     active: 1,
     frozen: 2,
     nonExist: 3,
 })
 
-const accountStatusChange = u8enum('AccountStatusChange', {
+const accountStatusChange = u8enum("AccountStatusChange", {
     unchanged: 0,
     frozen: 1,
     deleted: 2,
 })
 
-const skipReason = u8enum('SkipReason', {
+const skipReason = u8enum("SkipReason", {
     noState: 0,
     badState: 1,
     noGas: 2,
 })
 
-const messageType = u8enum('MessageType', {
+const messageType = u8enum("MessageType", {
     internal: 0,
     extIn: 1,
     extOut: 2,
 })
 
-const messageProcessingStatus = u8enum('MessageProcessingStatus', {
+const messageProcessingStatus = u8enum("MessageProcessingStatus", {
     unknown: 0,
     queued: 1,
     processing: 2,
@@ -75,7 +75,7 @@ const messageProcessingStatus = u8enum('MessageProcessingStatus', {
     transiting: 7,
 })
 
-const transactionType = u8enum('TransactionType', {
+const transactionType = u8enum("TransactionType", {
     ordinary: 0,
     storage: 1,
     tick: 2,
@@ -86,7 +86,7 @@ const transactionType = u8enum('TransactionType', {
     mergeInstall: 7,
 })
 
-const transactionProcessingStatus = u8enum('TransactionProcessingStatus', {
+const transactionProcessingStatus = u8enum("TransactionProcessingStatus", {
     unknown: 0,
     preliminary: 1,
     proposed: 2,
@@ -94,25 +94,25 @@ const transactionProcessingStatus = u8enum('TransactionProcessingStatus', {
     refused: 4,
 })
 
-const computeType = u8enum('ComputeType', {
+const computeType = u8enum("ComputeType", {
     skipped: 0,
     vm: 1,
 })
 
-const bounceType = u8enum('BounceType', {
+const bounceType = u8enum("BounceType", {
     negFunds: 0,
     noFunds: 1,
     ok: 2,
 })
 
-const blockProcessingStatus = u8enum('BlockProcessingStatus', {
+const blockProcessingStatus = u8enum("BlockProcessingStatus", {
     unknown: 0,
     proposed: 1,
     finalized: 2,
     refused: 3,
 })
 
-const inMsgType = u8enum('InMsgType', {
+const inMsgType = u8enum("InMsgType", {
     external: 0,
     ihr: 1,
     immediately: 2,
@@ -122,7 +122,7 @@ const inMsgType = u8enum('InMsgType', {
     discardedTransit: 6,
 })
 
-const outMsgType = u8enum('OutMsgType', {
+const outMsgType = u8enum("OutMsgType", {
     external: 0,
     immediately: 1,
     outMsgNew: 2,
@@ -134,7 +134,7 @@ const outMsgType = u8enum('OutMsgType', {
     none: -1,
 })
 
-const splitType = u8enum('SplitType', {
+const splitType = u8enum("SplitType", {
     none: 0,
     split: 2,
     merge: 3,
@@ -169,16 +169,16 @@ const AccountBase: TypeDef = {
 const Account: TypeDef = {
     ...AccountBase,
     _doc: docs.account._doc,
-    _: { collection: 'accounts' },
+    _: { collection: "accounts" },
 }
 
 const Message: TypeDef = {
     _doc: docs.message._doc,
-    _: { collection: 'messages' },
+    _: { collection: "messages" },
     msg_type: required(messageType(docs.message.msg_type)),
     status: required(messageProcessingStatus(docs.message.status)),
     block_id: required(stringWithLowerFilter(docs.message.block_id)),
-    block: join('Block', 'block_id', 'id'),
+    block: join("Block", "block_id", "id"),
     body: string(docs.message.body),
     body_hash: stringWithLowerFilter(docs.message.body_hash),
     split_depth: u8(docs.message.split_depth),
@@ -207,33 +207,33 @@ const Message: TypeDef = {
     proof: string(docs.message.proof),
     boc: string(docs.message.boc),
     src_transaction: join(
-        'Transaction',
-        'id',
-        'out_msgs[*]',
+        "Transaction",
+        "id",
+        "out_msgs[*]",
         'parent.created_lt !== "00" && parent.msg_type !== 1',
-        'src',
+        "src",
     ),
     dst_transaction: join(
-        'Transaction',
-        'id',
-        'in_msg',
-        'parent.msg_type !== 2',
-        'dst',
+        "Transaction",
+        "id",
+        "in_msg",
+        "parent.msg_type !== 2",
+        "dst",
     ),
-    src_account: join('Account', 'src', 'id', 'parent.msg_type !== 1'),
-    dst_account: join('Account', 'dst', 'id', 'parent.msg_type !== 2'),
+    src_account: join("Account", "src", "id", "parent.msg_type !== 1"),
+    dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
     chain_order: stringWithLowerFilter(docs.message.chain_order),
 }
 
 const Transaction: TypeDef = {
     _doc: docs.transaction._doc,
-    _: { collection: 'transactions' },
+    _: { collection: "transactions" },
     tr_type: required(transactionType(docs.transaction.tr_type)),
     status: required(transactionProcessingStatus(docs.transaction.status)),
     block_id: stringWithLowerFilter(docs.transaction.block_id),
-    block: join('Block', 'block_id', 'id'),
+    block: join("Block", "block_id", "id"),
     account_addr: stringWithLowerFilter(docs.transaction.account_addr),
-    account: join('Account', 'account_addr', 'id'),
+    account: join("Account", "account_addr", "id"),
     workchain_id: i32(docs.transaction.workchain_id),
     lt: u64(docs.transaction.lt),
     prev_trans_hash: stringWithLowerFilter(docs.transaction.prev_trans_hash),
@@ -243,10 +243,10 @@ const Transaction: TypeDef = {
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
     in_msg: stringWithLowerFilter(docs.transaction.in_msg),
-    in_message: join({ Message }, 'in_msg', 'id', undefined, 'account_addr'),
+    in_message: join({ Message }, "in_msg", "id", undefined, "account_addr"),
     out_msgs: arrayOf(stringWithLowerFilter(docs.transaction.out_msgs)),
     out_messages: arrayOf(
-        join({ Message }, 'out_msgs', 'id', undefined, 'account_addr'),
+        join({ Message }, "out_msgs", "id", undefined, "account_addr"),
     ),
     total_fees: grams(docs.transaction.total_fees),
     total_fees_other: otherCurrencyCollection(
@@ -352,7 +352,7 @@ const Transaction: TypeDef = {
 
 const BlockSignatures = {
     _doc: docs.blockSignatures._doc,
-    _: { collection: 'blocks_signatures' },
+    _: { collection: "blocks_signatures" },
     gen_utime: unixSeconds(docs.blockSignatures.gen_utime),
     seq_no: u32(docs.blockSignatures.seq_no),
     shard: string(docs.blockSignatures.shard),
@@ -371,7 +371,7 @@ const BlockSignatures = {
         },
         docs.blockSignatures.signatures._doc,
     ),
-    block: join('Block', 'id', 'id'),
+    block: join("Block", "id", "id"),
 }
 
 // BLOCK
@@ -672,7 +672,7 @@ const config = (doc?: string) => ref({ Config }, doc)
 
 const Block: TypeDef = {
     _doc: docs.block._doc,
-    _: { collection: 'blocks' },
+    _: { collection: "blocks" },
     status: blockProcessingStatus(docs.block.status),
     global_id: i32(docs.block.global_id),
     want_split: bool(docs.block.want_split),
@@ -803,14 +803,14 @@ const Block: TypeDef = {
     },
     key_block: bool(docs.block.key_block),
     boc: string(docs.block.boc),
-    signatures: join({ BlockSignatures }, 'id', 'id'),
+    signatures: join({ BlockSignatures }, "id", "id"),
     chain_order: stringWithLowerFilter(docs.block.chain_order),
     file_hash: stringWithLowerFilter(docs.block.file_hash),
 }
 
 const Zerostate: TypeDef = {
     _doc: docs.zerostate._doc,
-    _: { collection: 'zerostates' },
+    _: { collection: "zerostates" },
     workchain_id: i32(docs.zerostate.workchain_id),
     global_id: i32(docs.zerostate.global_id),
     total_balance: grams(docs.zerostate.total_balance),

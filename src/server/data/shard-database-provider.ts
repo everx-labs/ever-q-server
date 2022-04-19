@@ -1,6 +1,6 @@
-import EventEmitter from 'events'
-import { ensureProtocol } from '../config'
-import type { QLog } from '../logs'
+import EventEmitter from "events"
+import { ensureProtocol } from "../config"
+import type { QLog } from "../logs"
 import type {
     QDataEvent,
     QDataProvider,
@@ -8,9 +8,9 @@ import type {
     QDoc,
     QIndexInfo,
     QShard,
-} from './data-provider'
-import ArangoChair from 'arangochair'
-import { QTraceSpan } from '../tracing'
+} from "./data-provider"
+import ArangoChair from "arangochair"
+import { QTraceSpan } from "../tracing"
 
 type ArangoCollectionDescr = {
     name: string
@@ -104,8 +104,8 @@ export class QShardDatabaseProvider implements QDataProvider {
         if (
             shards &&
             !shards.has(this.shard.shard) &&
-            this.shard.shard !== '' &&
-            !shards.has('')
+            this.shard.shard !== "" &&
+            !shards.has("")
         ) {
             let shardMatches = false
             for (const shard of shards ?? []) {
@@ -134,7 +134,7 @@ export class QShardDatabaseProvider implements QDataProvider {
             const cursor = await this.shard.database.query(text, vars, {
                 maxRuntime,
             })
-            span.logEvent('cursor_obtained')
+            span.logEvent("cursor_obtained")
             return await cursor.all()
         }
         return traceSpan.traceChildOperation(
@@ -202,29 +202,29 @@ export class QShardDatabaseProvider implements QDataProvider {
 
     createAndStartListener(): ArangoChair {
         const { server, name, auth } = this.shard.config
-        const dbUrl = ensureProtocol(server, 'http')
+        const dbUrl = ensureProtocol(server, "http")
         const listenerUrl = `${dbUrl}/${name}`
 
         const listener = new ArangoChair(listenerUrl)
         const parsedDbUrl = new URL(dbUrl)
 
         const pathPrefix =
-            parsedDbUrl.pathname !== '/' ? parsedDbUrl.pathname || '' : ''
+            parsedDbUrl.pathname !== "/" ? parsedDbUrl.pathname || "" : ""
         listener._loggerStatePath = `${pathPrefix}/_db/${name}/_api/replication/logger-state`
         listener._loggerFollowPath = `${pathPrefix}/_db/${name}/_api/replication/logger-follow`
 
         if (this.shard.config.auth) {
-            const userPassword = Buffer.from(auth).toString('base64')
-            listener.req.opts.headers['Authorization'] = `Basic ${userPassword}`
+            const userPassword = Buffer.from(auth).toString("base64")
+            listener.req.opts.headers["Authorization"] = `Basic ${userPassword}`
         }
 
         this.collectionsForSubscribe.forEach(collectionName => {
             listener.subscribe({ collection: collectionName })
             listener.on(collectionName, (docJson: QDoc, type: QDataEvent) => {
                 if (
-                    type === 'insert/update' ||
-                    type === 'insert' ||
-                    type === 'update'
+                    type === "insert/update" ||
+                    type === "insert" ||
+                    type === "update"
                 ) {
                     this.onDataEvent(type, collectionName, docJson)
                 }
@@ -232,7 +232,7 @@ export class QShardDatabaseProvider implements QDataProvider {
         })
 
         listener.on(
-            'error',
+            "error",
             (err: Error, _status: unknown, _headers: unknown, body: string) => {
                 let error
                 try {
@@ -240,7 +240,7 @@ export class QShardDatabaseProvider implements QDataProvider {
                 } catch {
                     error = err
                 }
-                this.log.error('FAILED', 'LISTEN', `${err}`, error)
+                this.log.error("FAILED", "LISTEN", `${err}`, error)
                 setTimeout(
                     () => listener.start(),
                     this.shard.config.listenerRestartTimeout || 1000,

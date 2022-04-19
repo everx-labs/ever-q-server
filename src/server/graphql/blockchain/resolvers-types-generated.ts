@@ -1,4 +1,4 @@
-import { GraphQLResolveInfo } from 'graphql'
+import { GraphQLResolveInfo } from "graphql"
 export type Maybe<T> = T | null | undefined
 export type Exact<T extends { [key: string]: unknown }> = {
     [K in keyof T]: T[K]
@@ -21,16 +21,16 @@ export type Scalars = {
 }
 
 export enum AccountStatusChangeEnum {
-    Deleted = 'Deleted',
-    Frozen = 'Frozen',
-    Unchanged = 'Unchanged',
+    Deleted = "Deleted",
+    Frozen = "Frozen",
+    Unchanged = "Unchanged",
 }
 
 export enum AccountStatusEnum {
-    Uninit = 'Uninit',
-    Active = 'Active',
-    Frozen = 'Frozen',
-    NonExist = 'NonExist',
+    Uninit = "Uninit",
+    Active = "Active",
+    Frozen = "Frozen",
+    NonExist = "NonExist",
 }
 
 /**
@@ -39,28 +39,28 @@ export enum AccountStatusEnum {
  */
 export enum BigIntFormat {
     /**  Hexadecimal representation started with 0x (default)  */
-    Hex = 'HEX',
+    Hex = "HEX",
     /**  Decimal representation  */
-    Dec = 'DEC',
+    Dec = "DEC",
 }
 
 export type BlockAccountBlocks = {
-    __typename?: 'BlockAccountBlocks'
-    account_addr?: Maybe<Scalars['String']>
+    __typename?: "BlockAccountBlocks"
+    account_addr?: Maybe<Scalars["String"]>
     /** new version of block hashes */
-    new_hash?: Maybe<Scalars['String']>
+    new_hash?: Maybe<Scalars["String"]>
     /** old version of block hashes */
-    old_hash?: Maybe<Scalars['String']>
-    tr_count?: Maybe<Scalars['Int']>
+    old_hash?: Maybe<Scalars["String"]>
+    tr_count?: Maybe<Scalars["Int"]>
     transactions?: Maybe<Array<Maybe<BlockAccountBlocksTransactions>>>
 }
 
 export type BlockAccountBlocksTransactions = {
-    __typename?: 'BlockAccountBlocksTransactions'
-    lt?: Maybe<Scalars['String']>
-    total_fees?: Maybe<Scalars['String']>
+    __typename?: "BlockAccountBlocksTransactions"
+    lt?: Maybe<Scalars["String"]>
+    total_fees?: Maybe<Scalars["String"]>
     total_fees_other?: Maybe<Array<Maybe<OtherCurrency>>>
-    transaction_id?: Maybe<Scalars['String']>
+    transaction_id?: Maybe<Scalars["String"]>
 }
 
 export type BlockAccountBlocksTransactionsLtArgs = {
@@ -72,43 +72,43 @@ export type BlockAccountBlocksTransactionsTotal_FeesArgs = {
 }
 
 export type BlockLimits = {
-    __typename?: 'BlockLimits'
+    __typename?: "BlockLimits"
     bytes?: Maybe<BlockLimitsBytes>
     gas?: Maybe<BlockLimitsGas>
     lt_delta?: Maybe<BlockLimitsLtDelta>
 }
 
 export type BlockLimitsBytes = {
-    __typename?: 'BlockLimitsBytes'
-    hard_limit?: Maybe<Scalars['Float']>
-    soft_limit?: Maybe<Scalars['Float']>
-    underload?: Maybe<Scalars['Float']>
+    __typename?: "BlockLimitsBytes"
+    hard_limit?: Maybe<Scalars["Float"]>
+    soft_limit?: Maybe<Scalars["Float"]>
+    underload?: Maybe<Scalars["Float"]>
 }
 
 export type BlockLimitsGas = {
-    __typename?: 'BlockLimitsGas'
-    hard_limit?: Maybe<Scalars['Float']>
-    soft_limit?: Maybe<Scalars['Float']>
-    underload?: Maybe<Scalars['Float']>
+    __typename?: "BlockLimitsGas"
+    hard_limit?: Maybe<Scalars["Float"]>
+    soft_limit?: Maybe<Scalars["Float"]>
+    underload?: Maybe<Scalars["Float"]>
 }
 
 export type BlockLimitsLtDelta = {
-    __typename?: 'BlockLimitsLtDelta'
-    hard_limit?: Maybe<Scalars['Float']>
-    soft_limit?: Maybe<Scalars['Float']>
-    underload?: Maybe<Scalars['Float']>
+    __typename?: "BlockLimitsLtDelta"
+    hard_limit?: Maybe<Scalars["Float"]>
+    soft_limit?: Maybe<Scalars["Float"]>
+    underload?: Maybe<Scalars["Float"]>
 }
 
 export type BlockMaster = {
-    __typename?: 'BlockMaster'
+    __typename?: "BlockMaster"
     config?: Maybe<Config>
-    config_addr?: Maybe<Scalars['String']>
+    config_addr?: Maybe<Scalars["String"]>
     /** Max block generation time of shards */
-    max_shard_gen_utime?: Maybe<Scalars['Float']>
-    max_shard_gen_utime_string?: Maybe<Scalars['String']>
+    max_shard_gen_utime?: Maybe<Scalars["Float"]>
+    max_shard_gen_utime_string?: Maybe<Scalars["String"]>
     /** Min block generation time of shards */
-    min_shard_gen_utime?: Maybe<Scalars['Float']>
-    min_shard_gen_utime_string?: Maybe<Scalars['String']>
+    min_shard_gen_utime?: Maybe<Scalars["Float"]>
+    min_shard_gen_utime_string?: Maybe<Scalars["String"]>
     prev_blk_signatures?: Maybe<Array<Maybe<BlockMasterPrevBlkSignatures>>>
     recover_create_msg?: Maybe<InMsg>
     shard_fees?: Maybe<Array<Maybe<BlockMasterShardFees>>>
@@ -116,24 +116,24 @@ export type BlockMaster = {
 }
 
 export type BlockMasterPrevBlkSignatures = {
-    __typename?: 'BlockMasterPrevBlkSignatures'
-    node_id?: Maybe<Scalars['String']>
-    r?: Maybe<Scalars['String']>
-    s?: Maybe<Scalars['String']>
+    __typename?: "BlockMasterPrevBlkSignatures"
+    node_id?: Maybe<Scalars["String"]>
+    r?: Maybe<Scalars["String"]>
+    s?: Maybe<Scalars["String"]>
 }
 
 export type BlockMasterShardFees = {
-    __typename?: 'BlockMasterShardFees'
+    __typename?: "BlockMasterShardFees"
     /** Amount of fees created during shard */
-    create?: Maybe<Scalars['String']>
+    create?: Maybe<Scalars["String"]>
     /** Amount of non gram fees created in non gram crypto currencies during the block. */
     create_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of fees in grams */
-    fees?: Maybe<Scalars['String']>
+    fees?: Maybe<Scalars["String"]>
     /** Array of fees in non gram crypto currencies */
     fees_other?: Maybe<Array<Maybe<OtherCurrency>>>
-    shard?: Maybe<Scalars['String']>
-    workchain_id?: Maybe<Scalars['Int']>
+    shard?: Maybe<Scalars["String"]>
+    workchain_id?: Maybe<Scalars["Int"]>
 }
 
 export type BlockMasterShardFeesCreateArgs = {
@@ -145,63 +145,63 @@ export type BlockMasterShardFeesFeesArgs = {
 }
 
 export type BlockMasterShardHashes = {
-    __typename?: 'BlockMasterShardHashes'
+    __typename?: "BlockMasterShardHashes"
     /** Shard description */
     descr?: Maybe<BlockMasterShardHashesDescr>
     /** Shard ID */
-    shard?: Maybe<Scalars['String']>
+    shard?: Maybe<Scalars["String"]>
     /** Uint32 workchain ID */
-    workchain_id?: Maybe<Scalars['Int']>
+    workchain_id?: Maybe<Scalars["Int"]>
 }
 
 /** Shard description */
 export type BlockMasterShardHashesDescr = {
-    __typename?: 'BlockMasterShardHashesDescr'
-    before_merge?: Maybe<Scalars['Boolean']>
+    __typename?: "BlockMasterShardHashesDescr"
+    before_merge?: Maybe<Scalars["Boolean"]>
     /**
      * TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
      * A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
      * The masterchain cannot be split or merged.
      */
-    before_split?: Maybe<Scalars['Boolean']>
+    before_split?: Maybe<Scalars["Boolean"]>
     /** Logical time of the shardchain end */
-    end_lt?: Maybe<Scalars['String']>
+    end_lt?: Maybe<Scalars["String"]>
     /** Amount of fees collected int his shard in grams. */
-    fees_collected?: Maybe<Scalars['String']>
+    fees_collected?: Maybe<Scalars["String"]>
     /** Amount of fees collected int his shard in non gram currencies. */
     fees_collected_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Shard block file hash. */
-    file_hash?: Maybe<Scalars['String']>
-    flags?: Maybe<Scalars['Int']>
+    file_hash?: Maybe<Scalars["String"]>
+    flags?: Maybe<Scalars["Int"]>
     /** Amount of funds created in this shard in grams. */
-    funds_created?: Maybe<Scalars['String']>
+    funds_created?: Maybe<Scalars["String"]>
     /** Amount of funds created in this shard in non gram currencies. */
     funds_created_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Generation time in uint32 */
-    gen_utime?: Maybe<Scalars['Float']>
-    gen_utime_string?: Maybe<Scalars['String']>
-    min_ref_mc_seqno?: Maybe<Scalars['Float']>
-    next_catchain_seqno?: Maybe<Scalars['Float']>
-    next_validator_shard?: Maybe<Scalars['String']>
-    nx_cc_updated?: Maybe<Scalars['Boolean']>
+    gen_utime?: Maybe<Scalars["Float"]>
+    gen_utime_string?: Maybe<Scalars["String"]>
+    min_ref_mc_seqno?: Maybe<Scalars["Float"]>
+    next_catchain_seqno?: Maybe<Scalars["Float"]>
+    next_validator_shard?: Maybe<Scalars["String"]>
+    nx_cc_updated?: Maybe<Scalars["Boolean"]>
     /** Returns last known master block at the time of shard generation. */
-    reg_mc_seqno?: Maybe<Scalars['Float']>
+    reg_mc_seqno?: Maybe<Scalars["Float"]>
     /** Returns last known master block at the time of shard generation. The shard block configuration is derived from that block. */
-    root_hash?: Maybe<Scalars['String']>
+    root_hash?: Maybe<Scalars["String"]>
     /** uint32 sequence number */
-    seq_no?: Maybe<Scalars['Float']>
-    split?: Maybe<Scalars['Float']>
+    seq_no?: Maybe<Scalars["Float"]>
+    split?: Maybe<Scalars["Float"]>
     /**
      * - 0 – none
      * - 2 – split
      * - 3 – merge
      */
-    split_type?: Maybe<Scalars['Int']>
+    split_type?: Maybe<Scalars["Int"]>
     split_type_name?: Maybe<SplitTypeEnum>
     /** Logical time of the shardchain start */
-    start_lt?: Maybe<Scalars['String']>
-    want_merge?: Maybe<Scalars['Boolean']>
-    want_split?: Maybe<Scalars['Boolean']>
+    start_lt?: Maybe<Scalars["String"]>
+    want_merge?: Maybe<Scalars["Boolean"]>
+    want_split?: Maybe<Scalars["Boolean"]>
 }
 
 /** Shard description */
@@ -225,49 +225,49 @@ export type BlockMasterShardHashesDescrStart_LtArgs = {
 }
 
 export enum BlockProcessingStatusEnum {
-    Unknown = 'Unknown',
-    Proposed = 'Proposed',
-    Finalized = 'Finalized',
-    Refused = 'Refused',
+    Unknown = "Unknown",
+    Proposed = "Proposed",
+    Finalized = "Finalized",
+    Refused = "Refused",
 }
 
 export type BlockStateUpdate = {
-    __typename?: 'BlockStateUpdate'
-    new?: Maybe<Scalars['String']>
-    new_depth?: Maybe<Scalars['Int']>
-    new_hash?: Maybe<Scalars['String']>
-    old?: Maybe<Scalars['String']>
-    old_depth?: Maybe<Scalars['Int']>
-    old_hash?: Maybe<Scalars['String']>
+    __typename?: "BlockStateUpdate"
+    new?: Maybe<Scalars["String"]>
+    new_depth?: Maybe<Scalars["Int"]>
+    new_hash?: Maybe<Scalars["String"]>
+    old?: Maybe<Scalars["String"]>
+    old_depth?: Maybe<Scalars["Int"]>
+    old_hash?: Maybe<Scalars["String"]>
 }
 
 export type BlockValueFlow = {
-    __typename?: 'BlockValueFlow'
-    created?: Maybe<Scalars['String']>
+    __typename?: "BlockValueFlow"
+    created?: Maybe<Scalars["String"]>
     created_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of grams exported. */
-    exported?: Maybe<Scalars['String']>
+    exported?: Maybe<Scalars["String"]>
     /** Amount of non gram cryptocurrencies exported. */
     exported_other?: Maybe<Array<Maybe<OtherCurrency>>>
-    fees_collected?: Maybe<Scalars['String']>
+    fees_collected?: Maybe<Scalars["String"]>
     fees_collected_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of import fees in grams */
-    fees_imported?: Maybe<Scalars['String']>
+    fees_imported?: Maybe<Scalars["String"]>
     /** Amount of import fees in non gram currencies. */
     fees_imported_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of grams transferred from previous block. */
-    from_prev_blk?: Maybe<Scalars['String']>
+    from_prev_blk?: Maybe<Scalars["String"]>
     /** Amount of non gram cryptocurrencies transferred from previous block. */
     from_prev_blk_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of grams imported. */
-    imported?: Maybe<Scalars['String']>
+    imported?: Maybe<Scalars["String"]>
     /** Amount of non gram cryptocurrencies imported. */
     imported_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of grams minted in this block. */
-    minted?: Maybe<Scalars['String']>
+    minted?: Maybe<Scalars["String"]>
     minted_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Amount of grams amount to the next block. */
-    to_next_blk?: Maybe<Scalars['String']>
+    to_next_blk?: Maybe<Scalars["String"]>
     /** Amount of non gram cryptocurrencies to the next block. */
     to_next_blk_other?: Maybe<Array<Maybe<OtherCurrency>>>
 }
@@ -319,8 +319,8 @@ export type BlockValueFlowTo_Next_BlkArgs = {
  * address and state.
  */
 export type BlockchainAccount = Node & {
-    __typename?: 'BlockchainAccount'
-    _key: Scalars['String']
+    __typename?: "BlockchainAccount"
+    _key: Scalars["String"]
     /**
      * Returns the current status of the account.
      *
@@ -329,25 +329,25 @@ export type BlockchainAccount = Node & {
      * - 2 – frozen
      * - 3 – nonExist
      */
-    acc_type?: Maybe<Scalars['Int']>
+    acc_type?: Maybe<Scalars["Int"]>
     acc_type_name?: Maybe<AccountStatusEnum>
-    address?: Maybe<Scalars['String']>
-    balance?: Maybe<Scalars['String']>
+    address?: Maybe<Scalars["String"]>
+    balance?: Maybe<Scalars["String"]>
     balance_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** Contains sum of all the bits used by the cells of the account. Used in storage fee calculation */
-    bits?: Maybe<Scalars['String']>
+    bits?: Maybe<Scalars["String"]>
     /** Bag of cells with the account struct encoded as base64. */
-    boc?: Maybe<Scalars['String']>
+    boc?: Maybe<Scalars["String"]>
     /** Contains number of the cells of the account. Used in storage fee calculation */
-    cells?: Maybe<Scalars['String']>
+    cells?: Maybe<Scalars["String"]>
     /** If present, contains smart-contract code encoded with in base64. */
-    code?: Maybe<Scalars['String']>
+    code?: Maybe<Scalars["String"]>
     /** `code` field root hash. */
-    code_hash?: Maybe<Scalars['String']>
+    code_hash?: Maybe<Scalars["String"]>
     /** If present, contains smart-contract data encoded with in base64. */
-    data?: Maybe<Scalars['String']>
+    data?: Maybe<Scalars["String"]>
     /** `data` field root hash. */
-    data_hash?: Maybe<Scalars['String']>
+    data_hash?: Maybe<Scalars["String"]>
     /**
      * If present, accumulates the storage payments that could not be exacted from
      * the balance of the account, represented by a strictly positive amount of nano
@@ -357,45 +357,45 @@ export type BlockchainAccount = Node & {
      * configurable parameter of the blockchain, the ac- count is destroyed
      * altogether, and its balance, if any, is transferred to the zero account.
      */
-    due_payment?: Maybe<Scalars['String']>
+    due_payment?: Maybe<Scalars["String"]>
     /**
      * BlockchainAccount.id is "account/"-prefixed Account.id.
      * For id without prefix see "address".
      */
-    id: Scalars['ID']
+    id: Scalars["ID"]
     /** account 's initial code hash (when it was deployed) */
-    init_code_hash?: Maybe<Scalars['String']>
+    init_code_hash?: Maybe<Scalars["String"]>
     /**
      * Contains either the unixtime of the most recent storage payment
      * collected (usually this is the unixtime of the most recent transaction),
      * or the unixtime when the account was created (again, by a transaction).
      */
-    last_paid?: Maybe<Scalars['Float']>
-    last_trans_lt?: Maybe<Scalars['String']>
+    last_paid?: Maybe<Scalars["Float"]>
+    last_trans_lt?: Maybe<Scalars["String"]>
     /** If present, contains library code used in smart-contract. */
-    library?: Maybe<Scalars['String']>
+    library?: Maybe<Scalars["String"]>
     /** `library` field root hash. */
-    library_hash?: Maybe<Scalars['String']>
+    library_hash?: Maybe<Scalars["String"]>
     /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
-    proof?: Maybe<Scalars['String']>
+    proof?: Maybe<Scalars["String"]>
     /** Contains the number of public cells of the account. Used in storage fee calculation. */
-    public_cells?: Maybe<Scalars['String']>
+    public_cells?: Maybe<Scalars["String"]>
     /** Is present and non-zero only in instances of large smart contracts. */
-    split_depth?: Maybe<Scalars['Int']>
+    split_depth?: Maybe<Scalars["Int"]>
     /** Contains the representation hash of an instance of `StateInit` when an account is frozen. */
-    state_hash?: Maybe<Scalars['String']>
+    state_hash?: Maybe<Scalars["String"]>
     /**
      * May be present only in the masterchain—and within the masterchain, only in some
      * fundamental smart contracts required for the whole system to function.
      */
-    tick?: Maybe<Scalars['Boolean']>
+    tick?: Maybe<Scalars["Boolean"]>
     /**
      * May be present only in the masterchain—and within the masterchain, only in some
      * fundamental smart contracts required for the whole system to function.
      */
-    tock?: Maybe<Scalars['Boolean']>
+    tock?: Maybe<Scalars["Boolean"]>
     /** Workchain id of the account address (id field). */
-    workchain_id?: Maybe<Scalars['Int']>
+    workchain_id?: Maybe<Scalars["Int"]>
 }
 
 /**
@@ -507,8 +507,8 @@ export type BlockchainAccountPublic_CellsArgs = {
 }
 
 export type BlockchainAccountQuery = {
-    __typename?: 'BlockchainAccountQuery'
-    address: Scalars['String']
+    __typename?: "BlockchainAccountQuery"
+    address: Scalars["String"]
     /** Account information (e.g. boc). */
     info?: Maybe<BlockchainAccount>
     /**
@@ -525,24 +525,24 @@ export type BlockchainAccountQuery = {
 
 export type BlockchainAccountQueryMessagesArgs = {
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
-    counterparties?: Maybe<Array<Scalars['String']>>
+    counterparties?: Maybe<Array<Scalars["String"]>>
     msg_type?: Maybe<Array<BlockchainMessageTypeFilterEnum>>
-    min_value?: Maybe<Scalars['String']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    min_value?: Maybe<Scalars["String"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainAccountQueryTransactionsArgs = {
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
-    aborted?: Maybe<Scalars['Boolean']>
-    min_balance_delta?: Maybe<Scalars['String']>
-    max_balance_delta?: Maybe<Scalars['String']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    aborted?: Maybe<Scalars["Boolean"]>
+    min_balance_delta?: Maybe<Scalars["String"]>
+    max_balance_delta?: Maybe<Scalars["String"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 /**
@@ -550,63 +550,63 @@ export type BlockchainAccountQueryTransactionsArgs = {
  * Block
  */
 export type BlockchainBlock = Node & {
-    __typename?: 'BlockchainBlock'
-    _key: Scalars['String']
+    __typename?: "BlockchainBlock"
+    _key: Scalars["String"]
     account_blocks?: Maybe<Array<Maybe<BlockAccountBlocks>>>
-    after_merge?: Maybe<Scalars['Boolean']>
-    after_split?: Maybe<Scalars['Boolean']>
-    before_split?: Maybe<Scalars['Boolean']>
+    after_merge?: Maybe<Scalars["Boolean"]>
+    after_split?: Maybe<Scalars["Boolean"]>
+    before_split?: Maybe<Scalars["Boolean"]>
     /** Serialized bag of cells of this block encoded with base64 */
-    boc?: Maybe<Scalars['String']>
+    boc?: Maybe<Scalars["String"]>
     /** Collection-unique field for pagination and sorting. This field is designed to retain logical order. */
-    chain_order?: Maybe<Scalars['String']>
+    chain_order?: Maybe<Scalars["String"]>
     /** Public key of the collator who produced this block. */
-    created_by?: Maybe<Scalars['String']>
+    created_by?: Maybe<Scalars["String"]>
     /** Logical creation time automatically set by the block formation end. */
-    end_lt?: Maybe<Scalars['String']>
+    end_lt?: Maybe<Scalars["String"]>
     /** Block file hash */
-    file_hash?: Maybe<Scalars['String']>
-    flags?: Maybe<Scalars['Int']>
-    gen_catchain_seqno?: Maybe<Scalars['Float']>
-    gen_software_capabilities?: Maybe<Scalars['String']>
-    gen_software_version?: Maybe<Scalars['Float']>
+    file_hash?: Maybe<Scalars["String"]>
+    flags?: Maybe<Scalars["Int"]>
+    gen_catchain_seqno?: Maybe<Scalars["Float"]>
+    gen_software_capabilities?: Maybe<Scalars["String"]>
+    gen_software_version?: Maybe<Scalars["Float"]>
     /** uint 32 generation time stamp */
-    gen_utime?: Maybe<Scalars['Float']>
-    gen_utime_string?: Maybe<Scalars['String']>
-    gen_validator_list_hash_short?: Maybe<Scalars['Float']>
+    gen_utime?: Maybe<Scalars["Float"]>
+    gen_utime_string?: Maybe<Scalars["String"]>
+    gen_validator_list_hash_short?: Maybe<Scalars["Float"]>
     /** uint32 global block ID */
-    global_id?: Maybe<Scalars['Int']>
-    hash?: Maybe<Scalars['String']>
+    global_id?: Maybe<Scalars["Int"]>
+    hash?: Maybe<Scalars["String"]>
     /**
      * BlockchainBlock.id is "block/"-prefixed Block.id.
      * For id without prefix see "hash".
      */
-    id: Scalars['ID']
+    id: Scalars["ID"]
     in_msg_descr?: Maybe<Array<Maybe<InMsg>>>
     /** true if this block is a key block */
-    key_block?: Maybe<Scalars['Boolean']>
+    key_block?: Maybe<Scalars["Boolean"]>
     master?: Maybe<BlockMaster>
     master_ref?: Maybe<ExtBlkRef>
     /** Returns last known master block at the time of shard generation. */
-    min_ref_mc_seqno?: Maybe<Scalars['Float']>
+    min_ref_mc_seqno?: Maybe<Scalars["Float"]>
     out_msg_descr?: Maybe<Array<Maybe<OutMsg>>>
     /** External block reference for previous block in case of shard merge. */
     prev_alt_ref?: Maybe<ExtBlkRef>
     /** Returns a number of a previous key block. */
-    prev_key_block_seqno?: Maybe<Scalars['Float']>
+    prev_key_block_seqno?: Maybe<Scalars["Float"]>
     /** External block reference for previous block. */
     prev_ref?: Maybe<ExtBlkRef>
     prev_vert_alt_ref?: Maybe<ExtBlkRef>
     /** External block reference for previous block in case of vertical blocks. */
     prev_vert_ref?: Maybe<ExtBlkRef>
-    rand_seed?: Maybe<Scalars['String']>
-    seq_no?: Maybe<Scalars['Float']>
-    shard?: Maybe<Scalars['String']>
+    rand_seed?: Maybe<Scalars["String"]>
+    seq_no?: Maybe<Scalars["Float"]>
+    shard?: Maybe<Scalars["String"]>
     /**
      * Logical creation time automatically set by the block formation start.
      * Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
      */
-    start_lt?: Maybe<Scalars['String']>
+    start_lt?: Maybe<Scalars["String"]>
     state_update?: Maybe<BlockStateUpdate>
     /**
      * Returns block processing status
@@ -615,17 +615,17 @@ export type BlockchainBlock = Node & {
      * - 2 – finalized
      * - 3 – refused
      */
-    status?: Maybe<Scalars['Int']>
+    status?: Maybe<Scalars["Int"]>
     status_name?: Maybe<BlockProcessingStatusEnum>
-    tr_count?: Maybe<Scalars['Int']>
+    tr_count?: Maybe<Scalars["Int"]>
     value_flow?: Maybe<BlockValueFlow>
     /** uin32 block version identifier */
-    version?: Maybe<Scalars['Float']>
-    vert_seq_no?: Maybe<Scalars['Float']>
-    want_merge?: Maybe<Scalars['Boolean']>
-    want_split?: Maybe<Scalars['Boolean']>
+    version?: Maybe<Scalars["Float"]>
+    vert_seq_no?: Maybe<Scalars["Float"]>
+    want_merge?: Maybe<Scalars["Boolean"]>
+    want_split?: Maybe<Scalars["Boolean"]>
     /** uint32 workchain identifier */
-    workchain_id?: Maybe<Scalars['Int']>
+    workchain_id?: Maybe<Scalars["Int"]>
 }
 
 /**
@@ -654,33 +654,33 @@ export type BlockchainBlockStart_LtArgs = {
 
 /** This type is unstable */
 export type BlockchainBlocksConnection = {
-    __typename?: 'BlockchainBlocksConnection'
+    __typename?: "BlockchainBlocksConnection"
     edges: Array<BlockchainBlocksEdge>
     pageInfo: PageInfo
 }
 
 /** This type is unstable */
 export type BlockchainBlocksEdge = {
-    __typename?: 'BlockchainBlocksEdge'
+    __typename?: "BlockchainBlocksEdge"
     node: BlockchainBlock
-    cursor: Scalars['String']
+    cursor: Scalars["String"]
 }
 
 /** This type is unstable */
 export type BlockchainMasterSeqNoFilter = {
     /** Minimum inclusive seq_no of corresponding master blocks */
-    start?: Maybe<Scalars['Int']>
+    start?: Maybe<Scalars["Int"]>
     /** Maximum exclusive seq_no of corresponding master blocks */
-    end?: Maybe<Scalars['Int']>
+    end?: Maybe<Scalars["Int"]>
 }
 
 /** This type is unstable */
 export type BlockchainMasterSeqNoRange = {
-    __typename?: 'BlockchainMasterSeqNoRange'
+    __typename?: "BlockchainMasterSeqNoRange"
     /** Minimum inclusive seq_no of corresponding master blocks */
-    start?: Maybe<Scalars['Int']>
+    start?: Maybe<Scalars["Int"]>
     /** Maximum exclusive seq_no of corresponding master blocks */
-    end?: Maybe<Scalars['Int']>
+    end?: Maybe<Scalars["Int"]>
 }
 
 /**
@@ -692,78 +692,78 @@ export type BlockchainMasterSeqNoRange = {
  * destination smart contract. It can be queried with the following fields:
  */
 export type BlockchainMessage = Node & {
-    __typename?: 'BlockchainMessage'
-    _key: Scalars['String']
+    __typename?: "BlockchainMessage"
+    _key: Scalars["String"]
     /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
-    block_id?: Maybe<Scalars['String']>
+    block_id?: Maybe<Scalars["String"]>
     /** A bag of cells with the message structure encoded as base64. */
-    boc?: Maybe<Scalars['String']>
+    boc?: Maybe<Scalars["String"]>
     /** Bag of cells with the message body encoded as base64. */
-    body?: Maybe<Scalars['String']>
+    body?: Maybe<Scalars["String"]>
     /** `body` field root hash. */
-    body_hash?: Maybe<Scalars['String']>
+    body_hash?: Maybe<Scalars["String"]>
     /** Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender. */
-    bounce?: Maybe<Scalars['Boolean']>
+    bounce?: Maybe<Scalars["Boolean"]>
     /** Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender. */
-    bounced?: Maybe<Scalars['Boolean']>
+    bounced?: Maybe<Scalars["Boolean"]>
     /** Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message). */
-    chain_order?: Maybe<Scalars['String']>
+    chain_order?: Maybe<Scalars["String"]>
     /** Represents contract code in deploy messages. */
-    code?: Maybe<Scalars['String']>
+    code?: Maybe<Scalars["String"]>
     /** `code` field root hash. */
-    code_hash?: Maybe<Scalars['String']>
+    code_hash?: Maybe<Scalars["String"]>
     /** Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction. */
-    created_at?: Maybe<Scalars['Float']>
-    created_at_string?: Maybe<Scalars['String']>
+    created_at?: Maybe<Scalars["Float"]>
+    created_at_string?: Maybe<Scalars["String"]>
     /** Logical creation time automatically set by the generating transaction. */
-    created_lt?: Maybe<Scalars['String']>
+    created_lt?: Maybe<Scalars["String"]>
     /** Represents initial data for a contract in deploy messages */
-    data?: Maybe<Scalars['String']>
+    data?: Maybe<Scalars["String"]>
     /** `data` field root hash. */
-    data_hash?: Maybe<Scalars['String']>
+    data_hash?: Maybe<Scalars["String"]>
     /** Returns destination address string */
-    dst?: Maybe<Scalars['String']>
-    dst_chain_order?: Maybe<Scalars['String']>
+    dst?: Maybe<Scalars["String"]>
+    dst_chain_order?: Maybe<Scalars["String"]>
     /** The transaction in which this message is in_msg */
     dst_transaction?: Maybe<BlockchainTransaction>
     /** Workchain id of the destination address (dst field) */
-    dst_workchain_id?: Maybe<Scalars['Int']>
+    dst_workchain_id?: Maybe<Scalars["Int"]>
     /** Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated. */
-    fwd_fee?: Maybe<Scalars['String']>
-    hash?: Maybe<Scalars['String']>
+    fwd_fee?: Maybe<Scalars["String"]>
+    hash?: Maybe<Scalars["String"]>
     /**
      * BlockchainMessage.id is "message/"-prefixed Message.id.
      * For id without prefix see "hash".
      */
-    id: Scalars['ID']
+    id: Scalars["ID"]
     /** IHR is disabled for the message. */
-    ihr_disabled?: Maybe<Scalars['Boolean']>
+    ihr_disabled?: Maybe<Scalars["Boolean"]>
     /** This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism. */
-    ihr_fee?: Maybe<Scalars['String']>
-    import_fee?: Maybe<Scalars['String']>
+    ihr_fee?: Maybe<Scalars["String"]>
+    import_fee?: Maybe<Scalars["String"]>
     /** Represents contract library in deploy messages */
-    library?: Maybe<Scalars['String']>
+    library?: Maybe<Scalars["String"]>
     /** `library` field root hash. */
-    library_hash?: Maybe<Scalars['String']>
+    library_hash?: Maybe<Scalars["String"]>
     /**
      * Returns the type of message.
      * - 0 – internal
      * - 1 – extIn
      * - 2 – extOut
      */
-    msg_type?: Maybe<Scalars['Int']>
+    msg_type?: Maybe<Scalars["Int"]>
     msg_type_name?: Maybe<MessageTypeEnum>
     /** Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64. */
-    proof?: Maybe<Scalars['String']>
+    proof?: Maybe<Scalars["String"]>
     /** This is only used for special contracts in masterchain to deploy messages. */
-    split_depth?: Maybe<Scalars['Int']>
+    split_depth?: Maybe<Scalars["Int"]>
     /** Returns source address string */
-    src?: Maybe<Scalars['String']>
-    src_chain_order?: Maybe<Scalars['String']>
+    src?: Maybe<Scalars["String"]>
+    src_chain_order?: Maybe<Scalars["String"]>
     /** The transaction in which this message is included to out_msgs */
     src_transaction?: Maybe<BlockchainTransaction>
     /** Workchain id of the source address (src field) */
-    src_workchain_id?: Maybe<Scalars['Int']>
+    src_workchain_id?: Maybe<Scalars["Int"]>
     /**
      * Returns internal processing status according to the numbers shown.
      * - 0 – unknown
@@ -775,14 +775,14 @@ export type BlockchainMessage = Node & {
      * - 6 – refused
      * - 7 – transiting
      */
-    status?: Maybe<Scalars['Int']>
+    status?: Maybe<Scalars["Int"]>
     status_name?: Maybe<MessageProcessingStatusEnum>
     /** This is only used for special contracts in masterchain to deploy messages. */
-    tick?: Maybe<Scalars['Boolean']>
+    tick?: Maybe<Scalars["Boolean"]>
     /** This is only used for special contracts in masterchain to deploy messages */
-    tock?: Maybe<Scalars['Boolean']>
+    tock?: Maybe<Scalars["Boolean"]>
     /** May or may not be present */
-    value?: Maybe<Scalars['String']>
+    value?: Maybe<Scalars["String"]>
     /** May or may not be present. */
     value_other?: Maybe<Array<Maybe<OtherCurrency>>>
 }
@@ -849,31 +849,31 @@ export type BlockchainMessageValueArgs = {
 
 /** This type is unstable */
 export type BlockchainMessageEdge = {
-    __typename?: 'BlockchainMessageEdge'
+    __typename?: "BlockchainMessageEdge"
     node: BlockchainMessage
-    cursor: Scalars['String']
+    cursor: Scalars["String"]
 }
 
 export enum BlockchainMessageTypeFilterEnum {
     /** External inbound */
-    ExtIn = 'ExtIn',
+    ExtIn = "ExtIn",
     /** External outbound */
-    ExtOut = 'ExtOut',
+    ExtOut = "ExtOut",
     /** Internal inbound */
-    IntIn = 'IntIn',
+    IntIn = "IntIn",
     /** Internal outbound */
-    IntOut = 'IntOut',
+    IntOut = "IntOut",
 }
 
 /** This type is unstable */
 export type BlockchainMessagesConnection = {
-    __typename?: 'BlockchainMessagesConnection'
+    __typename?: "BlockchainMessagesConnection"
     edges: Array<BlockchainMessageEdge>
     pageInfo: PageInfo
 }
 
 export type BlockchainQuery = {
-    __typename?: 'BlockchainQuery'
+    __typename?: "BlockchainQuery"
     /**
      * **UNSTABLE**
      * Account-related information
@@ -925,96 +925,96 @@ export type BlockchainQuery = {
 }
 
 export type BlockchainQueryAccountArgs = {
-    address: Scalars['String']
+    address: Scalars["String"]
 }
 
 export type BlockchainQueryBlockArgs = {
-    hash: Scalars['String']
+    hash: Scalars["String"]
 }
 
 export type BlockchainQueryBlock_By_Seq_NoArgs = {
-    workchain: Scalars['Int']
-    thread: Scalars['String']
-    seq_no: Scalars['Float']
+    workchain: Scalars["Int"]
+    thread: Scalars["String"]
+    seq_no: Scalars["Float"]
 }
 
 export type BlockchainQueryTransactionArgs = {
-    hash: Scalars['String']
+    hash: Scalars["String"]
 }
 
 export type BlockchainQueryMessageArgs = {
-    hash: Scalars['String']
+    hash: Scalars["String"]
 }
 
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {
-    time_start?: Maybe<Scalars['Int']>
-    time_end?: Maybe<Scalars['Int']>
+    time_start?: Maybe<Scalars["Int"]>
+    time_end?: Maybe<Scalars["Int"]>
 }
 
 export type BlockchainQueryKey_BlocksArgs = {
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryBlocksArgs = {
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars['Int']>
-    thread?: Maybe<Scalars['String']>
-    min_tr_count?: Maybe<Scalars['Int']>
-    max_tr_count?: Maybe<Scalars['Int']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    workchain?: Maybe<Scalars["Int"]>
+    thread?: Maybe<Scalars["String"]>
+    min_tr_count?: Maybe<Scalars["Int"]>
+    max_tr_count?: Maybe<Scalars["Int"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryTransactionsArgs = {
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars['Int']>
-    min_balance_delta?: Maybe<Scalars['String']>
-    max_balance_delta?: Maybe<Scalars['String']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    workchain?: Maybe<Scalars["Int"]>
+    min_balance_delta?: Maybe<Scalars["String"]>
+    max_balance_delta?: Maybe<Scalars["String"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryWorkchain_BlocksArgs = {
     master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars['Int']>
-    thread?: Maybe<Scalars['String']>
-    min_tr_count?: Maybe<Scalars['Int']>
-    max_tr_count?: Maybe<Scalars['Int']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    workchain?: Maybe<Scalars["Int"]>
+    thread?: Maybe<Scalars["String"]>
+    min_tr_count?: Maybe<Scalars["Int"]>
+    max_tr_count?: Maybe<Scalars["Int"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryWorkchain_TransactionsArgs = {
     master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars['Int']>
-    min_balance_delta?: Maybe<Scalars['Int']>
-    max_balance_delta?: Maybe<Scalars['Int']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    workchain?: Maybe<Scalars["Int"]>
+    min_balance_delta?: Maybe<Scalars["Int"]>
+    max_balance_delta?: Maybe<Scalars["Int"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryAccount_TransactionsArgs = {
     master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    account_address: Scalars['String']
-    aborted?: Maybe<Scalars['Boolean']>
-    min_balance_delta?: Maybe<Scalars['Int']>
-    max_balance_delta?: Maybe<Scalars['Int']>
-    first?: Maybe<Scalars['Int']>
-    after?: Maybe<Scalars['String']>
-    last?: Maybe<Scalars['Int']>
-    before?: Maybe<Scalars['String']>
+    account_address: Scalars["String"]
+    aborted?: Maybe<Scalars["Boolean"]>
+    min_balance_delta?: Maybe<Scalars["Int"]>
+    max_balance_delta?: Maybe<Scalars["Int"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
 }
 
 /**
@@ -1022,25 +1022,25 @@ export type BlockchainQueryAccount_TransactionsArgs = {
  * Transaction
  */
 export type BlockchainTransaction = Node & {
-    __typename?: 'BlockchainTransaction'
-    _key: Scalars['String']
-    aborted?: Maybe<Scalars['Boolean']>
+    __typename?: "BlockchainTransaction"
+    _key: Scalars["String"]
+    aborted?: Maybe<Scalars["Boolean"]>
     account?: Maybe<BlockchainAccount>
-    account_addr?: Maybe<Scalars['String']>
+    account_addr?: Maybe<Scalars["String"]>
     action?: Maybe<TransactionAction>
     /** Account balance change after transaction */
-    balance_delta?: Maybe<Scalars['String']>
+    balance_delta?: Maybe<Scalars["String"]>
     /** Account balance change after transaction */
     balance_delta_other?: Maybe<Array<Maybe<OtherCurrency>>>
-    block_id?: Maybe<Scalars['String']>
-    boc?: Maybe<Scalars['String']>
+    block_id?: Maybe<Scalars["String"]>
+    boc?: Maybe<Scalars["String"]>
     bounce?: Maybe<TransactionBounce>
     /** Collection-unique field for pagination and sorting. This field is designed to retain logical order. */
-    chain_order?: Maybe<Scalars['String']>
+    chain_order?: Maybe<Scalars["String"]>
     compute?: Maybe<TransactionCompute>
     credit?: Maybe<TransactionCredit>
-    credit_first?: Maybe<Scalars['Boolean']>
-    destroyed?: Maybe<Scalars['Boolean']>
+    credit_first?: Maybe<Scalars["Boolean"]>
+    destroyed?: Maybe<Scalars["Boolean"]>
     /**
      * The end state of an account after a transaction, 1 is returned to indicate a finalized transaction at an active account
      * - 0 – uninit
@@ -1048,27 +1048,27 @@ export type BlockchainTransaction = Node & {
      * - 2 – frozen
      * - 3 – nonExist
      */
-    end_status?: Maybe<Scalars['Int']>
+    end_status?: Maybe<Scalars["Int"]>
     end_status_name?: Maybe<AccountStatusEnum>
     /** Fee for inbound external message import. */
-    ext_in_msg_fee?: Maybe<Scalars['String']>
-    hash?: Maybe<Scalars['String']>
+    ext_in_msg_fee?: Maybe<Scalars["String"]>
+    hash?: Maybe<Scalars["String"]>
     /**
      * BlockchainTransaction.id is "transaction/"-prefixed Transaction.id.
      * For id without prefix see "hash".
      */
-    id: Scalars['ID']
+    id: Scalars["ID"]
     in_message?: Maybe<BlockchainMessage>
-    in_msg?: Maybe<Scalars['String']>
-    installed?: Maybe<Scalars['Boolean']>
+    in_msg?: Maybe<Scalars["String"]>
+    installed?: Maybe<Scalars["Boolean"]>
     /** Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf). */
-    lt?: Maybe<Scalars['String']>
+    lt?: Maybe<Scalars["String"]>
     /** Merkle update field */
-    new_hash?: Maybe<Scalars['String']>
-    now?: Maybe<Scalars['Float']>
-    now_string?: Maybe<Scalars['String']>
+    new_hash?: Maybe<Scalars["String"]>
+    now?: Maybe<Scalars["Float"]>
+    now_string?: Maybe<Scalars["String"]>
     /** Merkle update field */
-    old_hash?: Maybe<Scalars['String']>
+    old_hash?: Maybe<Scalars["String"]>
     /**
      * The initial state of account. Note that in this case the query may return 0, if the account was not active before the transaction and 1 if it was already active
      * - 0 – uninit
@@ -1076,16 +1076,16 @@ export type BlockchainTransaction = Node & {
      * - 2 – frozen
      * - 3 – nonExist
      */
-    orig_status?: Maybe<Scalars['Int']>
+    orig_status?: Maybe<Scalars["Int"]>
     orig_status_name?: Maybe<AccountStatusEnum>
     out_messages?: Maybe<Array<Maybe<BlockchainMessage>>>
-    out_msgs?: Maybe<Array<Maybe<Scalars['String']>>>
+    out_msgs?: Maybe<Array<Maybe<Scalars["String"]>>>
     /** The number of generated outbound messages (one of the common transaction parameters defined by the specification) */
-    outmsg_cnt?: Maybe<Scalars['Int']>
-    prepare_transaction?: Maybe<Scalars['String']>
-    prev_trans_hash?: Maybe<Scalars['String']>
-    prev_trans_lt?: Maybe<Scalars['String']>
-    proof?: Maybe<Scalars['String']>
+    outmsg_cnt?: Maybe<Scalars["Int"]>
+    prepare_transaction?: Maybe<Scalars["String"]>
+    prev_trans_hash?: Maybe<Scalars["String"]>
+    prev_trans_lt?: Maybe<Scalars["String"]>
+    proof?: Maybe<Scalars["String"]>
     split_info?: Maybe<TransactionSplitInfo>
     /**
      * Transaction processing status
@@ -1095,7 +1095,7 @@ export type BlockchainTransaction = Node & {
      * - 3 – finalized
      * - 4 – refused
      */
-    status?: Maybe<Scalars['Int']>
+    status?: Maybe<Scalars["Int"]>
     status_name?: Maybe<TransactionProcessingStatusEnum>
     storage?: Maybe<TransactionStorage>
     /**
@@ -1105,7 +1105,7 @@ export type BlockchainTransaction = Node & {
      * The formula is:
      * total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
      */
-    total_fees?: Maybe<Scalars['String']>
+    total_fees?: Maybe<Scalars["String"]>
     /** Same as above, but reserved for non gram coins that may appear in the blockchain */
     total_fees_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /**
@@ -1119,11 +1119,11 @@ export type BlockchainTransaction = Node & {
      * - 6 – mergePrepare
      * - 7 – mergeInstall
      */
-    tr_type?: Maybe<Scalars['Int']>
+    tr_type?: Maybe<Scalars["Int"]>
     tr_type_name?: Maybe<TransactionTypeEnum>
-    tt?: Maybe<Scalars['String']>
+    tt?: Maybe<Scalars["String"]>
     /** Workchain id of the account address (account_addr field) */
-    workchain_id?: Maybe<Scalars['Int']>
+    workchain_id?: Maybe<Scalars["Int"]>
 }
 
 /**
@@ -1168,37 +1168,37 @@ export type BlockchainTransactionTotal_FeesArgs = {
 
 /** This type is unstable */
 export type BlockchainTransactionEdge = {
-    __typename?: 'BlockchainTransactionEdge'
+    __typename?: "BlockchainTransactionEdge"
     node: BlockchainTransaction
-    cursor: Scalars['String']
+    cursor: Scalars["String"]
 }
 
 /** This type is unstable */
 export type BlockchainTransactionsConnection = {
-    __typename?: 'BlockchainTransactionsConnection'
+    __typename?: "BlockchainTransactionsConnection"
     edges: Array<BlockchainTransactionEdge>
     pageInfo: PageInfo
 }
 
 export enum BounceTypeEnum {
-    NegFunds = 'NegFunds',
-    NoFunds = 'NoFunds',
-    Ok = 'Ok',
+    NegFunds = "NegFunds",
+    NoFunds = "NoFunds",
+    Ok = "Ok",
 }
 
 export enum ComputeTypeEnum {
-    Skipped = 'Skipped',
-    Vm = 'Vm',
+    Skipped = "Skipped",
+    Vm = "Vm",
 }
 
 export type Config = {
-    __typename?: 'Config'
+    __typename?: "Config"
     /** Address of config smart contract in the masterchain */
-    p0?: Maybe<Scalars['String']>
+    p0?: Maybe<Scalars["String"]>
     /** Address of elector smart contract in the masterchain */
-    p1?: Maybe<Scalars['String']>
+    p1?: Maybe<Scalars["String"]>
     /** Critical params */
-    p10?: Maybe<Array<Maybe<Scalars['Float']>>>
+    p10?: Maybe<Array<Maybe<Scalars["Float"]>>>
     /** Config voting setup */
     p11?: Maybe<ConfigP11>
     /** Array of all workchains descriptions */
@@ -1214,7 +1214,7 @@ export type Config = {
     /** Storage prices */
     p18?: Maybe<Array<Maybe<ConfigP18>>>
     /** Address of minter smart contract in the masterchain */
-    p2?: Maybe<Scalars['String']>
+    p2?: Maybe<Scalars["String"]>
     /** Gas limits and prices in the masterchain */
     p20?: Maybe<GasLimitsPrices>
     /** Gas limits and prices in workchains */
@@ -1232,9 +1232,9 @@ export type Config = {
     /** Consensus config */
     p29?: Maybe<ConfigP29>
     /** Address of fee collector smart contract in the masterchain */
-    p3?: Maybe<Scalars['String']>
+    p3?: Maybe<Scalars["String"]>
     /** Array of fundamental smart contracts addresses */
-    p31?: Maybe<Array<Maybe<Scalars['String']>>>
+    p31?: Maybe<Array<Maybe<Scalars["String"]>>>
     /** Previous validators set */
     p32?: Maybe<ValidatorSet>
     /** Previous temporary validators set */
@@ -1250,7 +1250,7 @@ export type Config = {
     /** Array of validator signed temporary keys */
     p39?: Maybe<Array<Maybe<ConfigP39>>>
     /** Address of TON DNS root smart contract in the masterchain */
-    p4?: Maybe<Scalars['String']>
+    p4?: Maybe<Scalars["String"]>
     /** Configuration parameter 6 */
     p6?: Maybe<ConfigP6>
     /** Configuration parameter 7 */
@@ -1258,43 +1258,43 @@ export type Config = {
     /** Global version */
     p8?: Maybe<ConfigP8>
     /** Mandatory params */
-    p9?: Maybe<Array<Maybe<Scalars['Float']>>>
+    p9?: Maybe<Array<Maybe<Scalars["Float"]>>>
 }
 
 /** Config voting setup */
 export type ConfigP11 = {
-    __typename?: 'ConfigP11'
+    __typename?: "ConfigP11"
     critical_params?: Maybe<ConfigProposalSetup>
     normal_params?: Maybe<ConfigProposalSetup>
 }
 
 export type ConfigP12 = {
-    __typename?: 'ConfigP12'
-    accept_msgs?: Maybe<Scalars['Boolean']>
-    active?: Maybe<Scalars['Boolean']>
-    actual_min_split?: Maybe<Scalars['Int']>
-    addr_len_step?: Maybe<Scalars['Int']>
-    basic?: Maybe<Scalars['Boolean']>
-    enabled_since?: Maybe<Scalars['Float']>
-    flags?: Maybe<Scalars['Int']>
-    max_addr_len?: Maybe<Scalars['Int']>
-    max_split?: Maybe<Scalars['Int']>
-    min_addr_len?: Maybe<Scalars['Int']>
-    min_split?: Maybe<Scalars['Int']>
-    version?: Maybe<Scalars['Float']>
-    vm_mode?: Maybe<Scalars['String']>
-    vm_version?: Maybe<Scalars['Int']>
-    workchain_id?: Maybe<Scalars['Int']>
-    workchain_type_id?: Maybe<Scalars['Float']>
-    zerostate_file_hash?: Maybe<Scalars['String']>
-    zerostate_root_hash?: Maybe<Scalars['String']>
+    __typename?: "ConfigP12"
+    accept_msgs?: Maybe<Scalars["Boolean"]>
+    active?: Maybe<Scalars["Boolean"]>
+    actual_min_split?: Maybe<Scalars["Int"]>
+    addr_len_step?: Maybe<Scalars["Int"]>
+    basic?: Maybe<Scalars["Boolean"]>
+    enabled_since?: Maybe<Scalars["Float"]>
+    flags?: Maybe<Scalars["Int"]>
+    max_addr_len?: Maybe<Scalars["Int"]>
+    max_split?: Maybe<Scalars["Int"]>
+    min_addr_len?: Maybe<Scalars["Int"]>
+    min_split?: Maybe<Scalars["Int"]>
+    version?: Maybe<Scalars["Float"]>
+    vm_mode?: Maybe<Scalars["String"]>
+    vm_version?: Maybe<Scalars["Int"]>
+    workchain_id?: Maybe<Scalars["Int"]>
+    workchain_type_id?: Maybe<Scalars["Float"]>
+    zerostate_file_hash?: Maybe<Scalars["String"]>
+    zerostate_root_hash?: Maybe<Scalars["String"]>
 }
 
 /** Block create fees */
 export type ConfigP14 = {
-    __typename?: 'ConfigP14'
-    basechain_block_fee?: Maybe<Scalars['String']>
-    masterchain_block_fee?: Maybe<Scalars['String']>
+    __typename?: "ConfigP14"
+    basechain_block_fee?: Maybe<Scalars["String"]>
+    masterchain_block_fee?: Maybe<Scalars["String"]>
 }
 
 /** Block create fees */
@@ -1309,28 +1309,28 @@ export type ConfigP14Masterchain_Block_FeeArgs = {
 
 /** Election parameters */
 export type ConfigP15 = {
-    __typename?: 'ConfigP15'
-    elections_end_before?: Maybe<Scalars['Float']>
-    elections_start_before?: Maybe<Scalars['Float']>
-    stake_held_for?: Maybe<Scalars['Float']>
-    validators_elected_for?: Maybe<Scalars['Float']>
+    __typename?: "ConfigP15"
+    elections_end_before?: Maybe<Scalars["Float"]>
+    elections_start_before?: Maybe<Scalars["Float"]>
+    stake_held_for?: Maybe<Scalars["Float"]>
+    validators_elected_for?: Maybe<Scalars["Float"]>
 }
 
 /** Validators count */
 export type ConfigP16 = {
-    __typename?: 'ConfigP16'
-    max_main_validators?: Maybe<Scalars['Int']>
-    max_validators?: Maybe<Scalars['Int']>
-    min_validators?: Maybe<Scalars['Int']>
+    __typename?: "ConfigP16"
+    max_main_validators?: Maybe<Scalars["Int"]>
+    max_validators?: Maybe<Scalars["Int"]>
+    min_validators?: Maybe<Scalars["Int"]>
 }
 
 /** Validator stake parameters */
 export type ConfigP17 = {
-    __typename?: 'ConfigP17'
-    max_stake?: Maybe<Scalars['String']>
-    max_stake_factor?: Maybe<Scalars['Float']>
-    min_stake?: Maybe<Scalars['String']>
-    min_total_stake?: Maybe<Scalars['String']>
+    __typename?: "ConfigP17"
+    max_stake?: Maybe<Scalars["String"]>
+    max_stake_factor?: Maybe<Scalars["Float"]>
+    min_stake?: Maybe<Scalars["String"]>
+    min_total_stake?: Maybe<Scalars["String"]>
 }
 
 /** Validator stake parameters */
@@ -1349,13 +1349,13 @@ export type ConfigP17Min_Total_StakeArgs = {
 }
 
 export type ConfigP18 = {
-    __typename?: 'ConfigP18'
-    bit_price_ps?: Maybe<Scalars['String']>
-    cell_price_ps?: Maybe<Scalars['String']>
-    mc_bit_price_ps?: Maybe<Scalars['String']>
-    mc_cell_price_ps?: Maybe<Scalars['String']>
-    utime_since?: Maybe<Scalars['Float']>
-    utime_since_string?: Maybe<Scalars['String']>
+    __typename?: "ConfigP18"
+    bit_price_ps?: Maybe<Scalars["String"]>
+    cell_price_ps?: Maybe<Scalars["String"]>
+    mc_bit_price_ps?: Maybe<Scalars["String"]>
+    mc_cell_price_ps?: Maybe<Scalars["String"]>
+    utime_since?: Maybe<Scalars["Float"]>
+    utime_since_string?: Maybe<Scalars["String"]>
 }
 
 export type ConfigP18Bit_Price_PsArgs = {
@@ -1376,56 +1376,56 @@ export type ConfigP18Mc_Cell_Price_PsArgs = {
 
 /** Catchain config */
 export type ConfigP28 = {
-    __typename?: 'ConfigP28'
-    mc_catchain_lifetime?: Maybe<Scalars['Float']>
-    shard_catchain_lifetime?: Maybe<Scalars['Float']>
-    shard_validators_lifetime?: Maybe<Scalars['Float']>
-    shard_validators_num?: Maybe<Scalars['Float']>
-    shuffle_mc_validators?: Maybe<Scalars['Boolean']>
+    __typename?: "ConfigP28"
+    mc_catchain_lifetime?: Maybe<Scalars["Float"]>
+    shard_catchain_lifetime?: Maybe<Scalars["Float"]>
+    shard_validators_lifetime?: Maybe<Scalars["Float"]>
+    shard_validators_num?: Maybe<Scalars["Float"]>
+    shuffle_mc_validators?: Maybe<Scalars["Boolean"]>
 }
 
 /** Consensus config */
 export type ConfigP29 = {
-    __typename?: 'ConfigP29'
-    attempt_duration?: Maybe<Scalars['Float']>
-    catchain_max_deps?: Maybe<Scalars['Float']>
-    consensus_timeout_ms?: Maybe<Scalars['Float']>
-    fast_attempts?: Maybe<Scalars['Float']>
-    max_block_bytes?: Maybe<Scalars['Float']>
-    max_collated_bytes?: Maybe<Scalars['Float']>
-    new_catchain_ids?: Maybe<Scalars['Boolean']>
-    next_candidate_delay_ms?: Maybe<Scalars['Float']>
-    round_candidates?: Maybe<Scalars['Float']>
+    __typename?: "ConfigP29"
+    attempt_duration?: Maybe<Scalars["Float"]>
+    catchain_max_deps?: Maybe<Scalars["Float"]>
+    consensus_timeout_ms?: Maybe<Scalars["Float"]>
+    fast_attempts?: Maybe<Scalars["Float"]>
+    max_block_bytes?: Maybe<Scalars["Float"]>
+    max_collated_bytes?: Maybe<Scalars["Float"]>
+    new_catchain_ids?: Maybe<Scalars["Boolean"]>
+    next_candidate_delay_ms?: Maybe<Scalars["Float"]>
+    round_candidates?: Maybe<Scalars["Float"]>
 }
 
 export type ConfigP39 = {
-    __typename?: 'ConfigP39'
-    adnl_addr?: Maybe<Scalars['String']>
-    seqno?: Maybe<Scalars['Float']>
-    signature_r?: Maybe<Scalars['String']>
-    signature_s?: Maybe<Scalars['String']>
-    temp_public_key?: Maybe<Scalars['String']>
-    valid_until?: Maybe<Scalars['Float']>
+    __typename?: "ConfigP39"
+    adnl_addr?: Maybe<Scalars["String"]>
+    seqno?: Maybe<Scalars["Float"]>
+    signature_r?: Maybe<Scalars["String"]>
+    signature_s?: Maybe<Scalars["String"]>
+    temp_public_key?: Maybe<Scalars["String"]>
+    valid_until?: Maybe<Scalars["Float"]>
 }
 
 /** Configuration parameter 6 */
 export type ConfigP6 = {
-    __typename?: 'ConfigP6'
-    mint_add_price?: Maybe<Scalars['String']>
-    mint_new_price?: Maybe<Scalars['String']>
+    __typename?: "ConfigP6"
+    mint_add_price?: Maybe<Scalars["String"]>
+    mint_new_price?: Maybe<Scalars["String"]>
 }
 
 export type ConfigP7 = {
-    __typename?: 'ConfigP7'
-    currency?: Maybe<Scalars['Float']>
-    value?: Maybe<Scalars['String']>
+    __typename?: "ConfigP7"
+    currency?: Maybe<Scalars["Float"]>
+    value?: Maybe<Scalars["String"]>
 }
 
 /** Global version */
 export type ConfigP8 = {
-    __typename?: 'ConfigP8'
-    capabilities?: Maybe<Scalars['String']>
-    version?: Maybe<Scalars['Float']>
+    __typename?: "ConfigP8"
+    capabilities?: Maybe<Scalars["String"]>
+    version?: Maybe<Scalars["Float"]>
 }
 
 /** Global version */
@@ -1434,23 +1434,23 @@ export type ConfigP8CapabilitiesArgs = {
 }
 
 export type ConfigProposalSetup = {
-    __typename?: 'ConfigProposalSetup'
-    bit_price?: Maybe<Scalars['Float']>
-    cell_price?: Maybe<Scalars['Float']>
-    max_losses?: Maybe<Scalars['Int']>
-    max_store_sec?: Maybe<Scalars['Float']>
-    max_tot_rounds?: Maybe<Scalars['Int']>
-    min_store_sec?: Maybe<Scalars['Float']>
-    min_tot_rounds?: Maybe<Scalars['Int']>
-    min_wins?: Maybe<Scalars['Int']>
+    __typename?: "ConfigProposalSetup"
+    bit_price?: Maybe<Scalars["Float"]>
+    cell_price?: Maybe<Scalars["Float"]>
+    max_losses?: Maybe<Scalars["Int"]>
+    max_store_sec?: Maybe<Scalars["Float"]>
+    max_tot_rounds?: Maybe<Scalars["Int"]>
+    min_store_sec?: Maybe<Scalars["Float"]>
+    min_tot_rounds?: Maybe<Scalars["Int"]>
+    min_wins?: Maybe<Scalars["Int"]>
 }
 
 export type ExtBlkRef = {
-    __typename?: 'ExtBlkRef'
-    end_lt?: Maybe<Scalars['String']>
-    file_hash?: Maybe<Scalars['String']>
-    root_hash?: Maybe<Scalars['String']>
-    seq_no?: Maybe<Scalars['Float']>
+    __typename?: "ExtBlkRef"
+    end_lt?: Maybe<Scalars["String"]>
+    file_hash?: Maybe<Scalars["String"]>
+    root_hash?: Maybe<Scalars["String"]>
+    seq_no?: Maybe<Scalars["Float"]>
 }
 
 export type ExtBlkRefEnd_LtArgs = {
@@ -1458,16 +1458,16 @@ export type ExtBlkRefEnd_LtArgs = {
 }
 
 export type GasLimitsPrices = {
-    __typename?: 'GasLimitsPrices'
-    block_gas_limit?: Maybe<Scalars['String']>
-    delete_due_limit?: Maybe<Scalars['String']>
-    flat_gas_limit?: Maybe<Scalars['String']>
-    flat_gas_price?: Maybe<Scalars['String']>
-    freeze_due_limit?: Maybe<Scalars['String']>
-    gas_credit?: Maybe<Scalars['String']>
-    gas_limit?: Maybe<Scalars['String']>
-    gas_price?: Maybe<Scalars['String']>
-    special_gas_limit?: Maybe<Scalars['String']>
+    __typename?: "GasLimitsPrices"
+    block_gas_limit?: Maybe<Scalars["String"]>
+    delete_due_limit?: Maybe<Scalars["String"]>
+    flat_gas_limit?: Maybe<Scalars["String"]>
+    flat_gas_price?: Maybe<Scalars["String"]>
+    freeze_due_limit?: Maybe<Scalars["String"]>
+    gas_credit?: Maybe<Scalars["String"]>
+    gas_limit?: Maybe<Scalars["String"]>
+    gas_price?: Maybe<Scalars["String"]>
+    special_gas_limit?: Maybe<Scalars["String"]>
 }
 
 export type GasLimitsPricesBlock_Gas_LimitArgs = {
@@ -1507,11 +1507,11 @@ export type GasLimitsPricesSpecial_Gas_LimitArgs = {
 }
 
 export type InMsg = {
-    __typename?: 'InMsg'
-    fwd_fee?: Maybe<Scalars['String']>
-    ihr_fee?: Maybe<Scalars['String']>
+    __typename?: "InMsg"
+    fwd_fee?: Maybe<Scalars["String"]>
+    ihr_fee?: Maybe<Scalars["String"]>
     in_msg?: Maybe<MsgEnvelope>
-    msg_id?: Maybe<Scalars['String']>
+    msg_id?: Maybe<Scalars["String"]>
     /**
      * - 0 – external
      * - 1 – ihr
@@ -1521,13 +1521,13 @@ export type InMsg = {
      * - 5 – discardedFinal
      * - 6 – discardedTransit
      */
-    msg_type?: Maybe<Scalars['Int']>
+    msg_type?: Maybe<Scalars["Int"]>
     msg_type_name?: Maybe<InMsgTypeEnum>
     out_msg?: Maybe<MsgEnvelope>
-    proof_created?: Maybe<Scalars['String']>
-    proof_delivered?: Maybe<Scalars['String']>
-    transaction_id?: Maybe<Scalars['String']>
-    transit_fee?: Maybe<Scalars['String']>
+    proof_created?: Maybe<Scalars["String"]>
+    proof_delivered?: Maybe<Scalars["String"]>
+    transaction_id?: Maybe<Scalars["String"]>
+    transit_fee?: Maybe<Scalars["String"]>
 }
 
 export type InMsgFwd_FeeArgs = {
@@ -1543,38 +1543,38 @@ export type InMsgTransit_FeeArgs = {
 }
 
 export enum InMsgTypeEnum {
-    External = 'External',
-    Ihr = 'Ihr',
-    Immediately = 'Immediately',
-    Final = 'Final',
-    Transit = 'Transit',
-    DiscardedFinal = 'DiscardedFinal',
-    DiscardedTransit = 'DiscardedTransit',
+    External = "External",
+    Ihr = "Ihr",
+    Immediately = "Immediately",
+    Final = "Final",
+    Transit = "Transit",
+    DiscardedFinal = "DiscardedFinal",
+    DiscardedTransit = "DiscardedTransit",
 }
 
 export enum MessageProcessingStatusEnum {
-    Unknown = 'Unknown',
-    Queued = 'Queued',
-    Processing = 'Processing',
-    Preliminary = 'Preliminary',
-    Proposed = 'Proposed',
-    Finalized = 'Finalized',
-    Refused = 'Refused',
-    Transiting = 'Transiting',
+    Unknown = "Unknown",
+    Queued = "Queued",
+    Processing = "Processing",
+    Preliminary = "Preliminary",
+    Proposed = "Proposed",
+    Finalized = "Finalized",
+    Refused = "Refused",
+    Transiting = "Transiting",
 }
 
 export enum MessageTypeEnum {
-    Internal = 'Internal',
-    ExtIn = 'ExtIn',
-    ExtOut = 'ExtOut',
+    Internal = "Internal",
+    ExtIn = "ExtIn",
+    ExtOut = "ExtOut",
 }
 
 export type MsgEnvelope = {
-    __typename?: 'MsgEnvelope'
-    cur_addr?: Maybe<Scalars['String']>
-    fwd_fee_remaining?: Maybe<Scalars['String']>
-    msg_id?: Maybe<Scalars['String']>
-    next_addr?: Maybe<Scalars['String']>
+    __typename?: "MsgEnvelope"
+    cur_addr?: Maybe<Scalars["String"]>
+    fwd_fee_remaining?: Maybe<Scalars["String"]>
+    msg_id?: Maybe<Scalars["String"]>
+    next_addr?: Maybe<Scalars["String"]>
 }
 
 export type MsgEnvelopeFwd_Fee_RemainingArgs = {
@@ -1582,13 +1582,13 @@ export type MsgEnvelopeFwd_Fee_RemainingArgs = {
 }
 
 export type MsgForwardPrices = {
-    __typename?: 'MsgForwardPrices'
-    bit_price?: Maybe<Scalars['String']>
-    cell_price?: Maybe<Scalars['String']>
-    first_frac?: Maybe<Scalars['Int']>
-    ihr_price_factor?: Maybe<Scalars['Float']>
-    lump_price?: Maybe<Scalars['String']>
-    next_frac?: Maybe<Scalars['Int']>
+    __typename?: "MsgForwardPrices"
+    bit_price?: Maybe<Scalars["String"]>
+    cell_price?: Maybe<Scalars["String"]>
+    first_frac?: Maybe<Scalars["Int"]>
+    ihr_price_factor?: Maybe<Scalars["Float"]>
+    lump_price?: Maybe<Scalars["String"]>
+    next_frac?: Maybe<Scalars["Int"]>
 }
 
 export type MsgForwardPricesBit_PriceArgs = {
@@ -1605,13 +1605,13 @@ export type MsgForwardPricesLump_PriceArgs = {
 
 /** This type is unstable */
 export type Node = {
-    id: Scalars['ID']
+    id: Scalars["ID"]
 }
 
 export type OtherCurrency = {
-    __typename?: 'OtherCurrency'
-    currency?: Maybe<Scalars['Float']>
-    value?: Maybe<Scalars['String']>
+    __typename?: "OtherCurrency"
+    currency?: Maybe<Scalars["Float"]>
+    value?: Maybe<Scalars["String"]>
 }
 
 export type OtherCurrencyValueArgs = {
@@ -1619,11 +1619,11 @@ export type OtherCurrencyValueArgs = {
 }
 
 export type OutMsg = {
-    __typename?: 'OutMsg'
-    import_block_lt?: Maybe<Scalars['String']>
+    __typename?: "OutMsg"
+    import_block_lt?: Maybe<Scalars["String"]>
     imported?: Maybe<InMsg>
-    msg_env_hash?: Maybe<Scalars['String']>
-    msg_id?: Maybe<Scalars['String']>
+    msg_env_hash?: Maybe<Scalars["String"]>
+    msg_id?: Maybe<Scalars["String"]>
     /**
      * - 0 – external
      * - 1 – immediately
@@ -1635,13 +1635,13 @@ export type OutMsg = {
      * - 7 – dequeueShort
      * - -1 – none
      */
-    msg_type?: Maybe<Scalars['Int']>
+    msg_type?: Maybe<Scalars["Int"]>
     msg_type_name?: Maybe<OutMsgTypeEnum>
-    next_addr_pfx?: Maybe<Scalars['String']>
-    next_workchain?: Maybe<Scalars['Int']>
+    next_addr_pfx?: Maybe<Scalars["String"]>
+    next_workchain?: Maybe<Scalars["Int"]>
     out_msg?: Maybe<MsgEnvelope>
     reimport?: Maybe<InMsg>
-    transaction_id?: Maybe<Scalars['String']>
+    transaction_id?: Maybe<Scalars["String"]>
 }
 
 export type OutMsgImport_Block_LtArgs = {
@@ -1653,28 +1653,28 @@ export type OutMsgNext_Addr_PfxArgs = {
 }
 
 export enum OutMsgTypeEnum {
-    External = 'External',
-    Immediately = 'Immediately',
-    OutMsgNew = 'OutMsgNew',
-    Transit = 'Transit',
-    DequeueImmediately = 'DequeueImmediately',
-    Dequeue = 'Dequeue',
-    TransitRequired = 'TransitRequired',
-    DequeueShort = 'DequeueShort',
-    None = 'None',
+    External = "External",
+    Immediately = "Immediately",
+    OutMsgNew = "OutMsgNew",
+    Transit = "Transit",
+    DequeueImmediately = "DequeueImmediately",
+    Dequeue = "Dequeue",
+    TransitRequired = "TransitRequired",
+    DequeueShort = "DequeueShort",
+    None = "None",
 }
 
 /** This type is unstable */
 export type PageInfo = {
-    __typename?: 'PageInfo'
-    startCursor: Scalars['String']
-    endCursor: Scalars['String']
-    hasNextPage: Scalars['Boolean']
-    hasPreviousPage: Scalars['Boolean']
+    __typename?: "PageInfo"
+    startCursor: Scalars["String"]
+    endCursor: Scalars["String"]
+    hasNextPage: Scalars["Boolean"]
+    hasPreviousPage: Scalars["Boolean"]
 }
 
 export type Query = {
-    __typename?: 'Query'
+    __typename?: "Query"
     /**
      * **UNSTABLE**
      * Blockchain-related information (blocks, transactions, etc.)
@@ -1683,41 +1683,41 @@ export type Query = {
 }
 
 export enum SkipReasonEnum {
-    NoState = 'NoState',
-    BadState = 'BadState',
-    NoGas = 'NoGas',
+    NoState = "NoState",
+    BadState = "BadState",
+    NoGas = "NoGas",
 }
 
 export enum SplitTypeEnum {
-    None = 'None',
-    Split = 'Split',
-    Merge = 'Merge',
+    None = "None",
+    Split = "Split",
+    Merge = "Merge",
 }
 
 export type TransactionAction = {
-    __typename?: 'TransactionAction'
-    action_list_hash?: Maybe<Scalars['String']>
-    msgs_created?: Maybe<Scalars['Int']>
+    __typename?: "TransactionAction"
+    action_list_hash?: Maybe<Scalars["String"]>
+    msgs_created?: Maybe<Scalars["Int"]>
     /** The flag indicates absence of funds required to create an outbound message */
-    no_funds?: Maybe<Scalars['Boolean']>
-    result_arg?: Maybe<Scalars['Int']>
-    result_code?: Maybe<Scalars['Int']>
-    skipped_actions?: Maybe<Scalars['Int']>
-    spec_actions?: Maybe<Scalars['Int']>
+    no_funds?: Maybe<Scalars["Boolean"]>
+    result_arg?: Maybe<Scalars["Int"]>
+    result_code?: Maybe<Scalars["Int"]>
+    skipped_actions?: Maybe<Scalars["Int"]>
+    spec_actions?: Maybe<Scalars["Int"]>
     /**
      * - 0 – unchanged
      * - 1 – frozen
      * - 2 – deleted
      */
-    status_change?: Maybe<Scalars['Int']>
+    status_change?: Maybe<Scalars["Int"]>
     status_change_name?: Maybe<AccountStatusChangeEnum>
-    success?: Maybe<Scalars['Boolean']>
-    tot_actions?: Maybe<Scalars['Int']>
-    total_action_fees?: Maybe<Scalars['String']>
-    total_fwd_fees?: Maybe<Scalars['String']>
-    total_msg_size_bits?: Maybe<Scalars['Float']>
-    total_msg_size_cells?: Maybe<Scalars['Float']>
-    valid?: Maybe<Scalars['Boolean']>
+    success?: Maybe<Scalars["Boolean"]>
+    tot_actions?: Maybe<Scalars["Int"]>
+    total_action_fees?: Maybe<Scalars["String"]>
+    total_fwd_fees?: Maybe<Scalars["String"]>
+    total_msg_size_bits?: Maybe<Scalars["Float"]>
+    total_msg_size_cells?: Maybe<Scalars["Float"]>
+    valid?: Maybe<Scalars["Boolean"]>
 }
 
 export type TransactionActionTotal_Action_FeesArgs = {
@@ -1729,19 +1729,19 @@ export type TransactionActionTotal_Fwd_FeesArgs = {
 }
 
 export type TransactionBounce = {
-    __typename?: 'TransactionBounce'
+    __typename?: "TransactionBounce"
     /**
      * - 0 – negFunds
      * - 1 – noFunds
      * - 2 – ok
      */
-    bounce_type?: Maybe<Scalars['Int']>
+    bounce_type?: Maybe<Scalars["Int"]>
     bounce_type_name?: Maybe<BounceTypeEnum>
-    fwd_fees?: Maybe<Scalars['String']>
-    msg_fees?: Maybe<Scalars['String']>
-    msg_size_bits?: Maybe<Scalars['Float']>
-    msg_size_cells?: Maybe<Scalars['Float']>
-    req_fwd_fees?: Maybe<Scalars['String']>
+    fwd_fees?: Maybe<Scalars["String"]>
+    msg_fees?: Maybe<Scalars["String"]>
+    msg_size_bits?: Maybe<Scalars["Float"]>
+    msg_size_cells?: Maybe<Scalars["Float"]>
+    req_fwd_fees?: Maybe<Scalars["String"]>
 }
 
 export type TransactionBounceFwd_FeesArgs = {
@@ -1757,44 +1757,44 @@ export type TransactionBounceReq_Fwd_FeesArgs = {
 }
 
 export type TransactionCompute = {
-    __typename?: 'TransactionCompute'
+    __typename?: "TransactionCompute"
     /** The flag reflects whether this has resulted in the activation of a previously frozen, uninitialized or non-existent account. */
-    account_activated?: Maybe<Scalars['Boolean']>
+    account_activated?: Maybe<Scalars["Boolean"]>
     /**
      * - 0 – skipped
      * - 1 – vm
      */
-    compute_type?: Maybe<Scalars['Int']>
+    compute_type?: Maybe<Scalars["Int"]>
     compute_type_name?: Maybe<ComputeTypeEnum>
-    exit_arg?: Maybe<Scalars['Int']>
+    exit_arg?: Maybe<Scalars["Int"]>
     /** These parameter represents the status values returned by TVM; for a successful transaction, exit_code has to be 0 or 1 */
-    exit_code?: Maybe<Scalars['Int']>
+    exit_code?: Maybe<Scalars["Int"]>
     /** This parameter may be non-zero only for external inbound messages. It is the lesser of either the amount of gas that can be paid from the account balance or the maximum gas credit */
-    gas_credit?: Maybe<Scalars['Int']>
+    gas_credit?: Maybe<Scalars["Int"]>
     /** This parameter reflects the total gas fees collected by the validators for executing this transaction. It must be equal to the product of gas_used and gas_price from the current block header. */
-    gas_fees?: Maybe<Scalars['String']>
+    gas_fees?: Maybe<Scalars["String"]>
     /** This parameter reflects the gas limit for this instance of TVM. It equals the lesser of either the Grams credited in the credit phase from the value of the inbound message divided by the current gas price, or the global per-transaction gas limit. */
-    gas_limit?: Maybe<Scalars['String']>
-    gas_used?: Maybe<Scalars['String']>
-    mode?: Maybe<Scalars['Int']>
+    gas_limit?: Maybe<Scalars["String"]>
+    gas_used?: Maybe<Scalars["String"]>
+    mode?: Maybe<Scalars["Int"]>
     /** This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below) */
-    msg_state_used?: Maybe<Scalars['Boolean']>
+    msg_state_used?: Maybe<Scalars["Boolean"]>
     /**
      * Reason for skipping the compute phase. According to the specification, the phase can be skipped due to the absence of funds to buy gas, absence of state of an account or a message, failure to provide a valid state in the message
      * - 0 – noState
      * - 1 – badState
      * - 2 – noGas
      */
-    skipped_reason?: Maybe<Scalars['Int']>
+    skipped_reason?: Maybe<Scalars["Int"]>
     skipped_reason_name?: Maybe<SkipReasonEnum>
     /** This flag is set if and only if exit_code is either 0 or 1. */
-    success?: Maybe<Scalars['Boolean']>
+    success?: Maybe<Scalars["Boolean"]>
     /** This parameter is the representation hashes of the resulting state of TVM. */
-    vm_final_state_hash?: Maybe<Scalars['String']>
+    vm_final_state_hash?: Maybe<Scalars["String"]>
     /** This parameter is the representation hashes of the original state of TVM. */
-    vm_init_state_hash?: Maybe<Scalars['String']>
+    vm_init_state_hash?: Maybe<Scalars["String"]>
     /** the total number of steps performed by TVM (usually equal to two plus the number of instructions executed, including implicit RETs) */
-    vm_steps?: Maybe<Scalars['Float']>
+    vm_steps?: Maybe<Scalars["Float"]>
 }
 
 export type TransactionComputeGas_FeesArgs = {
@@ -1810,11 +1810,11 @@ export type TransactionComputeGas_UsedArgs = {
 }
 
 export type TransactionCredit = {
-    __typename?: 'TransactionCredit'
-    credit?: Maybe<Scalars['String']>
+    __typename?: "TransactionCredit"
+    credit?: Maybe<Scalars["String"]>
     credit_other?: Maybe<Array<Maybe<OtherCurrency>>>
     /** The sum of due_fees_collected and credit must equal the value of the message received, plus its ihr_fee if the message has not been received via Instant Hypercube Routing, IHR (otherwise the ihr_fee is awarded to the validators). */
-    due_fees_collected?: Maybe<Scalars['String']>
+    due_fees_collected?: Maybe<Scalars["String"]>
 }
 
 export type TransactionCreditCreditArgs = {
@@ -1826,36 +1826,36 @@ export type TransactionCreditDue_Fees_CollectedArgs = {
 }
 
 export enum TransactionProcessingStatusEnum {
-    Unknown = 'Unknown',
-    Preliminary = 'Preliminary',
-    Proposed = 'Proposed',
-    Finalized = 'Finalized',
-    Refused = 'Refused',
+    Unknown = "Unknown",
+    Preliminary = "Preliminary",
+    Proposed = "Proposed",
+    Finalized = "Finalized",
+    Refused = "Refused",
 }
 
 export type TransactionSplitInfo = {
-    __typename?: 'TransactionSplitInfo'
-    acc_split_depth?: Maybe<Scalars['Int']>
+    __typename?: "TransactionSplitInfo"
+    acc_split_depth?: Maybe<Scalars["Int"]>
     /** length of the current shard prefix */
-    cur_shard_pfx_len?: Maybe<Scalars['Int']>
-    sibling_addr?: Maybe<Scalars['String']>
-    this_addr?: Maybe<Scalars['String']>
+    cur_shard_pfx_len?: Maybe<Scalars["Int"]>
+    sibling_addr?: Maybe<Scalars["String"]>
+    this_addr?: Maybe<Scalars["String"]>
 }
 
 export type TransactionStorage = {
-    __typename?: 'TransactionStorage'
+    __typename?: "TransactionStorage"
     /**
      * This field represents account status change after the transaction is completed.
      * - 0 – unchanged
      * - 1 – frozen
      * - 2 – deleted
      */
-    status_change?: Maybe<Scalars['Int']>
+    status_change?: Maybe<Scalars["Int"]>
     status_change_name?: Maybe<AccountStatusChangeEnum>
     /** This field defines the amount of storage fees collected in grams. */
-    storage_fees_collected?: Maybe<Scalars['String']>
+    storage_fees_collected?: Maybe<Scalars["String"]>
     /** This field represents the amount of due fees in grams, it might be empty. */
-    storage_fees_due?: Maybe<Scalars['String']>
+    storage_fees_due?: Maybe<Scalars["String"]>
 }
 
 export type TransactionStorageStorage_Fees_CollectedArgs = {
@@ -1867,26 +1867,26 @@ export type TransactionStorageStorage_Fees_DueArgs = {
 }
 
 export enum TransactionTypeEnum {
-    Ordinary = 'Ordinary',
-    Storage = 'Storage',
-    Tick = 'Tick',
-    Tock = 'Tock',
-    SplitPrepare = 'SplitPrepare',
-    SplitInstall = 'SplitInstall',
-    MergePrepare = 'MergePrepare',
-    MergeInstall = 'MergeInstall',
+    Ordinary = "Ordinary",
+    Storage = "Storage",
+    Tick = "Tick",
+    Tock = "Tock",
+    SplitPrepare = "SplitPrepare",
+    SplitInstall = "SplitInstall",
+    MergePrepare = "MergePrepare",
+    MergeInstall = "MergeInstall",
 }
 
 export type ValidatorSet = {
-    __typename?: 'ValidatorSet'
+    __typename?: "ValidatorSet"
     list?: Maybe<Array<Maybe<ValidatorSetList>>>
-    main?: Maybe<Scalars['Int']>
-    total?: Maybe<Scalars['Int']>
-    total_weight?: Maybe<Scalars['String']>
-    utime_since?: Maybe<Scalars['Float']>
-    utime_since_string?: Maybe<Scalars['String']>
-    utime_until?: Maybe<Scalars['Float']>
-    utime_until_string?: Maybe<Scalars['String']>
+    main?: Maybe<Scalars["Int"]>
+    total?: Maybe<Scalars["Int"]>
+    total_weight?: Maybe<Scalars["String"]>
+    utime_since?: Maybe<Scalars["Float"]>
+    utime_since_string?: Maybe<Scalars["String"]>
+    utime_until?: Maybe<Scalars["Float"]>
+    utime_until_string?: Maybe<Scalars["String"]>
 }
 
 export type ValidatorSetTotal_WeightArgs = {
@@ -1894,10 +1894,10 @@ export type ValidatorSetTotal_WeightArgs = {
 }
 
 export type ValidatorSetList = {
-    __typename?: 'ValidatorSetList'
-    adnl_addr?: Maybe<Scalars['String']>
-    public_key?: Maybe<Scalars['String']>
-    weight?: Maybe<Scalars['String']>
+    __typename?: "ValidatorSetList"
+    adnl_addr?: Maybe<Scalars["String"]>
+    public_key?: Maybe<Scalars["String"]>
+    weight?: Maybe<Scalars["String"]>
 }
 
 export type ValidatorSetListWeightArgs = {
@@ -2015,12 +2015,12 @@ export type ResolversTypes = {
     AccountStatusEnum: AccountStatusEnum
     BigIntFormat: BigIntFormat
     BlockAccountBlocks: ResolverTypeWrapper<BlockAccountBlocks>
-    String: ResolverTypeWrapper<Scalars['String']>
-    Int: ResolverTypeWrapper<Scalars['Int']>
+    String: ResolverTypeWrapper<Scalars["String"]>
+    Int: ResolverTypeWrapper<Scalars["Int"]>
     BlockAccountBlocksTransactions: ResolverTypeWrapper<BlockAccountBlocksTransactions>
     BlockLimits: ResolverTypeWrapper<BlockLimits>
     BlockLimitsBytes: ResolverTypeWrapper<BlockLimitsBytes>
-    Float: ResolverTypeWrapper<Scalars['Float']>
+    Float: ResolverTypeWrapper<Scalars["Float"]>
     BlockLimitsGas: ResolverTypeWrapper<BlockLimitsGas>
     BlockLimitsLtDelta: ResolverTypeWrapper<BlockLimitsLtDelta>
     BlockMaster: ResolverTypeWrapper<BlockMaster>
@@ -2028,12 +2028,12 @@ export type ResolversTypes = {
     BlockMasterShardFees: ResolverTypeWrapper<BlockMasterShardFees>
     BlockMasterShardHashes: ResolverTypeWrapper<BlockMasterShardHashes>
     BlockMasterShardHashesDescr: ResolverTypeWrapper<BlockMasterShardHashesDescr>
-    Boolean: ResolverTypeWrapper<Scalars['Boolean']>
+    Boolean: ResolverTypeWrapper<Scalars["Boolean"]>
     BlockProcessingStatusEnum: BlockProcessingStatusEnum
     BlockStateUpdate: ResolverTypeWrapper<BlockStateUpdate>
     BlockValueFlow: ResolverTypeWrapper<BlockValueFlow>
     BlockchainAccount: ResolverTypeWrapper<BlockchainAccount>
-    ID: ResolverTypeWrapper<Scalars['ID']>
+    ID: ResolverTypeWrapper<Scalars["ID"]>
     BlockchainAccountQuery: ResolverTypeWrapper<BlockchainAccountQuery>
     BlockchainBlock: ResolverTypeWrapper<BlockchainBlock>
     BlockchainBlocksConnection: ResolverTypeWrapper<BlockchainBlocksConnection>
@@ -2074,10 +2074,10 @@ export type ResolversTypes = {
     MsgEnvelope: ResolverTypeWrapper<MsgEnvelope>
     MsgForwardPrices: ResolverTypeWrapper<MsgForwardPrices>
     Node:
-        | ResolversTypes['BlockchainAccount']
-        | ResolversTypes['BlockchainBlock']
-        | ResolversTypes['BlockchainMessage']
-        | ResolversTypes['BlockchainTransaction']
+        | ResolversTypes["BlockchainAccount"]
+        | ResolversTypes["BlockchainBlock"]
+        | ResolversTypes["BlockchainMessage"]
+        | ResolversTypes["BlockchainTransaction"]
     OtherCurrency: ResolverTypeWrapper<OtherCurrency>
     OutMsg: ResolverTypeWrapper<OutMsg>
     OutMsgTypeEnum: OutMsgTypeEnum
@@ -2100,12 +2100,12 @@ export type ResolversTypes = {
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
     BlockAccountBlocks: BlockAccountBlocks
-    String: Scalars['String']
-    Int: Scalars['Int']
+    String: Scalars["String"]
+    Int: Scalars["Int"]
     BlockAccountBlocksTransactions: BlockAccountBlocksTransactions
     BlockLimits: BlockLimits
     BlockLimitsBytes: BlockLimitsBytes
-    Float: Scalars['Float']
+    Float: Scalars["Float"]
     BlockLimitsGas: BlockLimitsGas
     BlockLimitsLtDelta: BlockLimitsLtDelta
     BlockMaster: BlockMaster
@@ -2113,11 +2113,11 @@ export type ResolversParentTypes = {
     BlockMasterShardFees: BlockMasterShardFees
     BlockMasterShardHashes: BlockMasterShardHashes
     BlockMasterShardHashesDescr: BlockMasterShardHashesDescr
-    Boolean: Scalars['Boolean']
+    Boolean: Scalars["Boolean"]
     BlockStateUpdate: BlockStateUpdate
     BlockValueFlow: BlockValueFlow
     BlockchainAccount: BlockchainAccount
-    ID: Scalars['ID']
+    ID: Scalars["ID"]
     BlockchainAccountQuery: BlockchainAccountQuery
     BlockchainBlock: BlockchainBlock
     BlockchainBlocksConnection: BlockchainBlocksConnection
@@ -2152,10 +2152,10 @@ export type ResolversParentTypes = {
     MsgEnvelope: MsgEnvelope
     MsgForwardPrices: MsgForwardPrices
     Node:
-        | ResolversParentTypes['BlockchainAccount']
-        | ResolversParentTypes['BlockchainBlock']
-        | ResolversParentTypes['BlockchainMessage']
-        | ResolversParentTypes['BlockchainTransaction']
+        | ResolversParentTypes["BlockchainAccount"]
+        | ResolversParentTypes["BlockchainBlock"]
+        | ResolversParentTypes["BlockchainMessage"]
+        | ResolversParentTypes["BlockchainTransaction"]
     OtherCurrency: OtherCurrency
     OutMsg: OutMsg
     PageInfo: PageInfo
@@ -2172,26 +2172,26 @@ export type ResolversParentTypes = {
 
 export type BlockAccountBlocksResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockAccountBlocks'] = ResolversParentTypes['BlockAccountBlocks'],
+    ParentType extends ResolversParentTypes["BlockAccountBlocks"] = ResolversParentTypes["BlockAccountBlocks"],
 > = {
     account_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     new_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     old_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    tr_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    tr_count?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     transactions?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['BlockAccountBlocksTransactions']>>>,
+        Maybe<Array<Maybe<ResolversTypes["BlockAccountBlocksTransactions"]>>>,
         ParentType,
         ContextType
     >
@@ -2200,27 +2200,27 @@ export type BlockAccountBlocksResolvers<
 
 export type BlockAccountBlocksTransactionsResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockAccountBlocksTransactions'] = ResolversParentTypes['BlockAccountBlocksTransactions'],
+    ParentType extends ResolversParentTypes["BlockAccountBlocksTransactions"] = ResolversParentTypes["BlockAccountBlocksTransactions"],
 > = {
     lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockAccountBlocksTransactionsLtArgs, never>
     >
     total_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockAccountBlocksTransactionsTotal_FeesArgs, never>
     >
     total_fees_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     transaction_id?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -2229,20 +2229,20 @@ export type BlockAccountBlocksTransactionsResolvers<
 
 export type BlockLimitsResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockLimits'] = ResolversParentTypes['BlockLimits'],
+    ParentType extends ResolversParentTypes["BlockLimits"] = ResolversParentTypes["BlockLimits"],
 > = {
     bytes?: Resolver<
-        Maybe<ResolversTypes['BlockLimitsBytes']>,
+        Maybe<ResolversTypes["BlockLimitsBytes"]>,
         ParentType,
         ContextType
     >
     gas?: Resolver<
-        Maybe<ResolversTypes['BlockLimitsGas']>,
+        Maybe<ResolversTypes["BlockLimitsGas"]>,
         ParentType,
         ContextType
     >
     lt_delta?: Resolver<
-        Maybe<ResolversTypes['BlockLimitsLtDelta']>,
+        Maybe<ResolversTypes["BlockLimitsLtDelta"]>,
         ParentType,
         ContextType
     >
@@ -2251,20 +2251,20 @@ export type BlockLimitsResolvers<
 
 export type BlockLimitsBytesResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockLimitsBytes'] = ResolversParentTypes['BlockLimitsBytes'],
+    ParentType extends ResolversParentTypes["BlockLimitsBytes"] = ResolversParentTypes["BlockLimitsBytes"],
 > = {
     hard_limit?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     soft_limit?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     underload?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -2273,20 +2273,20 @@ export type BlockLimitsBytesResolvers<
 
 export type BlockLimitsGasResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockLimitsGas'] = ResolversParentTypes['BlockLimitsGas'],
+    ParentType extends ResolversParentTypes["BlockLimitsGas"] = ResolversParentTypes["BlockLimitsGas"],
 > = {
     hard_limit?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     soft_limit?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     underload?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -2295,20 +2295,20 @@ export type BlockLimitsGasResolvers<
 
 export type BlockLimitsLtDeltaResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockLimitsLtDelta'] = ResolversParentTypes['BlockLimitsLtDelta'],
+    ParentType extends ResolversParentTypes["BlockLimitsLtDelta"] = ResolversParentTypes["BlockLimitsLtDelta"],
 > = {
     hard_limit?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     soft_limit?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     underload?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -2317,51 +2317,51 @@ export type BlockLimitsLtDeltaResolvers<
 
 export type BlockMasterResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockMaster'] = ResolversParentTypes['BlockMaster'],
+    ParentType extends ResolversParentTypes["BlockMaster"] = ResolversParentTypes["BlockMaster"],
 > = {
-    config?: Resolver<Maybe<ResolversTypes['Config']>, ParentType, ContextType>
+    config?: Resolver<Maybe<ResolversTypes["Config"]>, ParentType, ContextType>
     config_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     max_shard_gen_utime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     max_shard_gen_utime_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     min_shard_gen_utime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     min_shard_gen_utime_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     prev_blk_signatures?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['BlockMasterPrevBlkSignatures']>>>,
+        Maybe<Array<Maybe<ResolversTypes["BlockMasterPrevBlkSignatures"]>>>,
         ParentType,
         ContextType
     >
     recover_create_msg?: Resolver<
-        Maybe<ResolversTypes['InMsg']>,
+        Maybe<ResolversTypes["InMsg"]>,
         ParentType,
         ContextType
     >
     shard_fees?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['BlockMasterShardFees']>>>,
+        Maybe<Array<Maybe<ResolversTypes["BlockMasterShardFees"]>>>,
         ParentType,
         ContextType
     >
     shard_hashes?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['BlockMasterShardHashes']>>>,
+        Maybe<Array<Maybe<ResolversTypes["BlockMasterShardHashes"]>>>,
         ParentType,
         ContextType
     >
@@ -2370,43 +2370,43 @@ export type BlockMasterResolvers<
 
 export type BlockMasterPrevBlkSignaturesResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockMasterPrevBlkSignatures'] = ResolversParentTypes['BlockMasterPrevBlkSignatures'],
+    ParentType extends ResolversParentTypes["BlockMasterPrevBlkSignatures"] = ResolversParentTypes["BlockMasterPrevBlkSignatures"],
 > = {
-    node_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    r?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    s?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    node_id?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    r?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    s?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockMasterShardFeesResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockMasterShardFees'] = ResolversParentTypes['BlockMasterShardFees'],
+    ParentType extends ResolversParentTypes["BlockMasterShardFees"] = ResolversParentTypes["BlockMasterShardFees"],
 > = {
     create?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockMasterShardFeesCreateArgs, never>
     >
     create_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockMasterShardFeesFeesArgs, never>
     >
     fees_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
-    shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    shard?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
@@ -2415,16 +2415,16 @@ export type BlockMasterShardFeesResolvers<
 
 export type BlockMasterShardHashesResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockMasterShardHashes'] = ResolversParentTypes['BlockMasterShardHashes'],
+    ParentType extends ResolversParentTypes["BlockMasterShardHashes"] = ResolversParentTypes["BlockMasterShardHashes"],
 > = {
     descr?: Resolver<
-        Maybe<ResolversTypes['BlockMasterShardHashesDescr']>,
+        Maybe<ResolversTypes["BlockMasterShardHashesDescr"]>,
         ParentType,
         ContextType
     >
-    shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    shard?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
@@ -2433,113 +2433,113 @@ export type BlockMasterShardHashesResolvers<
 
 export type BlockMasterShardHashesDescrResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockMasterShardHashesDescr'] = ResolversParentTypes['BlockMasterShardHashesDescr'],
+    ParentType extends ResolversParentTypes["BlockMasterShardHashesDescr"] = ResolversParentTypes["BlockMasterShardHashesDescr"],
 > = {
     before_merge?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     before_split?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     end_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockMasterShardHashesDescrEnd_LtArgs, never>
     >
     fees_collected?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockMasterShardHashesDescrFees_CollectedArgs, never>
     >
     fees_collected_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     file_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    flags?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    flags?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     funds_created?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockMasterShardHashesDescrFunds_CreatedArgs, never>
     >
     funds_created_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     gen_utime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     gen_utime_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     min_ref_mc_seqno?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     next_catchain_seqno?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     next_validator_shard?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     nx_cc_updated?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     reg_mc_seqno?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     root_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
-    split?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
-    split_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    seq_no?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
+    split?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
+    split_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     split_type_name?: Resolver<
-        Maybe<ResolversTypes['SplitTypeEnum']>,
+        Maybe<ResolversTypes["SplitTypeEnum"]>,
         ParentType,
         ContextType
     >
     start_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockMasterShardHashesDescrStart_LtArgs, never>
     >
     want_merge?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     want_split?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
@@ -2548,19 +2548,19 @@ export type BlockMasterShardHashesDescrResolvers<
 
 export type BlockStateUpdateResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockStateUpdate'] = ResolversParentTypes['BlockStateUpdate'],
+    ParentType extends ResolversParentTypes["BlockStateUpdate"] = ResolversParentTypes["BlockStateUpdate"],
 > = {
-    new?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    new_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    new?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    new_depth?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     new_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    old?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    old_depth?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    old?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    old_depth?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     old_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -2569,93 +2569,93 @@ export type BlockStateUpdateResolvers<
 
 export type BlockValueFlowResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockValueFlow'] = ResolversParentTypes['BlockValueFlow'],
+    ParentType extends ResolversParentTypes["BlockValueFlow"] = ResolversParentTypes["BlockValueFlow"],
 > = {
     created?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowCreatedArgs, never>
     >
     created_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     exported?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowExportedArgs, never>
     >
     exported_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     fees_collected?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowFees_CollectedArgs, never>
     >
     fees_collected_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     fees_imported?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowFees_ImportedArgs, never>
     >
     fees_imported_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     from_prev_blk?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowFrom_Prev_BlkArgs, never>
     >
     from_prev_blk_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     imported?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowImportedArgs, never>
     >
     imported_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     minted?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowMintedArgs, never>
     >
     minted_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     to_next_blk?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockValueFlowTo_Next_BlkArgs, never>
     >
     to_next_blk_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
@@ -2664,102 +2664,102 @@ export type BlockValueFlowResolvers<
 
 export type BlockchainAccountResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainAccount'] = ResolversParentTypes['BlockchainAccount'],
+    ParentType extends ResolversParentTypes["BlockchainAccount"] = ResolversParentTypes["BlockchainAccount"],
 > = {
-    _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>
-    acc_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    _key?: Resolver<ResolversTypes["String"], ParentType, ContextType>
+    acc_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     acc_type_name?: Resolver<
-        Maybe<ResolversTypes['AccountStatusEnum']>,
+        Maybe<ResolversTypes["AccountStatusEnum"]>,
         ParentType,
         ContextType
     >
-    address?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    address?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     balance?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountBalanceArgs, never>
     >
     balance_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     bits?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountBitsArgs, never>
     >
-    boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    boc?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     cells?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountCellsArgs, never>
     >
-    code?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    code?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     code_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    data?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     data_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     due_payment?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountDue_PaymentArgs, never>
     >
-    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>
+    id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>
     init_code_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     last_paid?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     last_trans_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountLast_Trans_LtArgs, never>
     >
-    library?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    library?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     library_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    proof?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    proof?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     public_cells?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountPublic_CellsArgs, never>
     >
     split_depth?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     state_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    tick?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
-    tock?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
+    tick?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
+    tock?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
     workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
@@ -2768,22 +2768,22 @@ export type BlockchainAccountResolvers<
 
 export type BlockchainAccountQueryResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainAccountQuery'] = ResolversParentTypes['BlockchainAccountQuery'],
+    ParentType extends ResolversParentTypes["BlockchainAccountQuery"] = ResolversParentTypes["BlockchainAccountQuery"],
 > = {
-    address?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    address?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     info?: Resolver<
-        Maybe<ResolversTypes['BlockchainAccount']>,
+        Maybe<ResolversTypes["BlockchainAccount"]>,
         ParentType,
         ContextType
     >
     messages?: Resolver<
-        Maybe<ResolversTypes['BlockchainMessagesConnection']>,
+        Maybe<ResolversTypes["BlockchainMessagesConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountQueryMessagesArgs, never>
     >
     transactions?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransactionsConnection']>,
+        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainAccountQueryTransactionsArgs, never>
@@ -2793,189 +2793,189 @@ export type BlockchainAccountQueryResolvers<
 
 export type BlockchainBlockResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainBlock'] = ResolversParentTypes['BlockchainBlock'],
+    ParentType extends ResolversParentTypes["BlockchainBlock"] = ResolversParentTypes["BlockchainBlock"],
 > = {
-    _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    _key?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     account_blocks?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['BlockAccountBlocks']>>>,
+        Maybe<Array<Maybe<ResolversTypes["BlockAccountBlocks"]>>>,
         ParentType,
         ContextType
     >
     after_merge?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     after_split?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     before_split?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
-    boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    boc?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     chain_order?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     created_by?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     end_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainBlockEnd_LtArgs, never>
     >
     file_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    flags?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    flags?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     gen_catchain_seqno?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     gen_software_capabilities?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainBlockGen_Software_CapabilitiesArgs, never>
     >
     gen_software_version?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     gen_utime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     gen_utime_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     gen_validator_list_hash_short?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
-    global_id?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
-    hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>
+    global_id?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    hash?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>
     in_msg_descr?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['InMsg']>>>,
+        Maybe<Array<Maybe<ResolversTypes["InMsg"]>>>,
         ParentType,
         ContextType
     >
     key_block?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     master?: Resolver<
-        Maybe<ResolversTypes['BlockMaster']>,
+        Maybe<ResolversTypes["BlockMaster"]>,
         ParentType,
         ContextType
     >
     master_ref?: Resolver<
-        Maybe<ResolversTypes['ExtBlkRef']>,
+        Maybe<ResolversTypes["ExtBlkRef"]>,
         ParentType,
         ContextType
     >
     min_ref_mc_seqno?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     out_msg_descr?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OutMsg']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OutMsg"]>>>,
         ParentType,
         ContextType
     >
     prev_alt_ref?: Resolver<
-        Maybe<ResolversTypes['ExtBlkRef']>,
+        Maybe<ResolversTypes["ExtBlkRef"]>,
         ParentType,
         ContextType
     >
     prev_key_block_seqno?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     prev_ref?: Resolver<
-        Maybe<ResolversTypes['ExtBlkRef']>,
+        Maybe<ResolversTypes["ExtBlkRef"]>,
         ParentType,
         ContextType
     >
     prev_vert_alt_ref?: Resolver<
-        Maybe<ResolversTypes['ExtBlkRef']>,
+        Maybe<ResolversTypes["ExtBlkRef"]>,
         ParentType,
         ContextType
     >
     prev_vert_ref?: Resolver<
-        Maybe<ResolversTypes['ExtBlkRef']>,
+        Maybe<ResolversTypes["ExtBlkRef"]>,
         ParentType,
         ContextType
     >
     rand_seed?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
-    shard?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    seq_no?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
+    shard?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     start_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainBlockStart_LtArgs, never>
     >
     state_update?: Resolver<
-        Maybe<ResolversTypes['BlockStateUpdate']>,
+        Maybe<ResolversTypes["BlockStateUpdate"]>,
         ParentType,
         ContextType
     >
-    status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    status?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     status_name?: Resolver<
-        Maybe<ResolversTypes['BlockProcessingStatusEnum']>,
+        Maybe<ResolversTypes["BlockProcessingStatusEnum"]>,
         ParentType,
         ContextType
     >
-    tr_count?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    tr_count?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     value_flow?: Resolver<
-        Maybe<ResolversTypes['BlockValueFlow']>,
+        Maybe<ResolversTypes["BlockValueFlow"]>,
         ParentType,
         ContextType
     >
-    version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    version?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     vert_seq_no?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     want_merge?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     want_split?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
@@ -2984,182 +2984,182 @@ export type BlockchainBlockResolvers<
 
 export type BlockchainBlocksConnectionResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainBlocksConnection'] = ResolversParentTypes['BlockchainBlocksConnection'],
+    ParentType extends ResolversParentTypes["BlockchainBlocksConnection"] = ResolversParentTypes["BlockchainBlocksConnection"],
 > = {
     edges?: Resolver<
-        Array<ResolversTypes['BlockchainBlocksEdge']>,
+        Array<ResolversTypes["BlockchainBlocksEdge"]>,
         ParentType,
         ContextType
     >
-    pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>
+    pageInfo?: Resolver<ResolversTypes["PageInfo"], ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockchainBlocksEdgeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainBlocksEdge'] = ResolversParentTypes['BlockchainBlocksEdge'],
+    ParentType extends ResolversParentTypes["BlockchainBlocksEdge"] = ResolversParentTypes["BlockchainBlocksEdge"],
 > = {
-    node?: Resolver<ResolversTypes['BlockchainBlock'], ParentType, ContextType>
-    cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    node?: Resolver<ResolversTypes["BlockchainBlock"], ParentType, ContextType>
+    cursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockchainMasterSeqNoRangeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainMasterSeqNoRange'] = ResolversParentTypes['BlockchainMasterSeqNoRange'],
+    ParentType extends ResolversParentTypes["BlockchainMasterSeqNoRange"] = ResolversParentTypes["BlockchainMasterSeqNoRange"],
 > = {
-    start?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
-    end?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    start?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    end?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockchainMessageResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainMessage'] = ResolversParentTypes['BlockchainMessage'],
+    ParentType extends ResolversParentTypes["BlockchainMessage"] = ResolversParentTypes["BlockchainMessage"],
 > = {
-    _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    _key?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     block_id?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    body?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    boc?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    body?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     body_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    bounce?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
+    bounce?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
     bounced?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     chain_order?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    code?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    code?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     code_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     created_at?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     created_at_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     created_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainMessageCreated_LtArgs, never>
     >
-    data?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    data?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     data_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    dst?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    dst?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     dst_chain_order?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     dst_transaction?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransaction']>,
+        Maybe<ResolversTypes["BlockchainTransaction"]>,
         ParentType,
         ContextType
     >
     dst_workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     fwd_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainMessageFwd_FeeArgs, never>
     >
-    hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>
+    hash?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>
     ihr_disabled?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     ihr_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainMessageIhr_FeeArgs, never>
     >
     import_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainMessageImport_FeeArgs, never>
     >
-    library?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    library?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     library_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    msg_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    msg_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     msg_type_name?: Resolver<
-        Maybe<ResolversTypes['MessageTypeEnum']>,
+        Maybe<ResolversTypes["MessageTypeEnum"]>,
         ParentType,
         ContextType
     >
-    proof?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    proof?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     split_depth?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
-    src?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    src?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     src_chain_order?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     src_transaction?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransaction']>,
+        Maybe<ResolversTypes["BlockchainTransaction"]>,
         ParentType,
         ContextType
     >
     src_workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
-    status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    status?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     status_name?: Resolver<
-        Maybe<ResolversTypes['MessageProcessingStatusEnum']>,
+        Maybe<ResolversTypes["MessageProcessingStatusEnum"]>,
         ParentType,
         ContextType
     >
-    tick?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
-    tock?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
+    tick?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
+    tock?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
     value?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainMessageValueArgs, never>
     >
     value_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
@@ -3168,110 +3168,110 @@ export type BlockchainMessageResolvers<
 
 export type BlockchainMessageEdgeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainMessageEdge'] = ResolversParentTypes['BlockchainMessageEdge'],
+    ParentType extends ResolversParentTypes["BlockchainMessageEdge"] = ResolversParentTypes["BlockchainMessageEdge"],
 > = {
     node?: Resolver<
-        ResolversTypes['BlockchainMessage'],
+        ResolversTypes["BlockchainMessage"],
         ParentType,
         ContextType
     >
-    cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    cursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockchainMessagesConnectionResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainMessagesConnection'] = ResolversParentTypes['BlockchainMessagesConnection'],
+    ParentType extends ResolversParentTypes["BlockchainMessagesConnection"] = ResolversParentTypes["BlockchainMessagesConnection"],
 > = {
     edges?: Resolver<
-        Array<ResolversTypes['BlockchainMessageEdge']>,
+        Array<ResolversTypes["BlockchainMessageEdge"]>,
         ParentType,
         ContextType
     >
-    pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>
+    pageInfo?: Resolver<ResolversTypes["PageInfo"], ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockchainQueryResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainQuery'] = ResolversParentTypes['BlockchainQuery'],
+    ParentType extends ResolversParentTypes["BlockchainQuery"] = ResolversParentTypes["BlockchainQuery"],
 > = {
     account?: Resolver<
-        Maybe<ResolversTypes['BlockchainAccountQuery']>,
+        Maybe<ResolversTypes["BlockchainAccountQuery"]>,
         ParentType,
         ContextType,
-        RequireFields<BlockchainQueryAccountArgs, 'address'>
+        RequireFields<BlockchainQueryAccountArgs, "address">
     >
     block?: Resolver<
-        Maybe<ResolversTypes['BlockchainBlock']>,
+        Maybe<ResolversTypes["BlockchainBlock"]>,
         ParentType,
         ContextType,
-        RequireFields<BlockchainQueryBlockArgs, 'hash'>
+        RequireFields<BlockchainQueryBlockArgs, "hash">
     >
     block_by_seq_no?: Resolver<
-        Maybe<ResolversTypes['BlockchainBlock']>,
+        Maybe<ResolversTypes["BlockchainBlock"]>,
         ParentType,
         ContextType,
         RequireFields<
             BlockchainQueryBlock_By_Seq_NoArgs,
-            'workchain' | 'thread' | 'seq_no'
+            "workchain" | "thread" | "seq_no"
         >
     >
     transaction?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransaction']>,
+        Maybe<ResolversTypes["BlockchainTransaction"]>,
         ParentType,
         ContextType,
-        RequireFields<BlockchainQueryTransactionArgs, 'hash'>
+        RequireFields<BlockchainQueryTransactionArgs, "hash">
     >
     message?: Resolver<
-        Maybe<ResolversTypes['BlockchainMessage']>,
+        Maybe<ResolversTypes["BlockchainMessage"]>,
         ParentType,
         ContextType,
-        RequireFields<BlockchainQueryMessageArgs, 'hash'>
+        RequireFields<BlockchainQueryMessageArgs, "hash">
     >
     master_seq_no_range?: Resolver<
-        Maybe<ResolversTypes['BlockchainMasterSeqNoRange']>,
+        Maybe<ResolversTypes["BlockchainMasterSeqNoRange"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryMaster_Seq_No_RangeArgs, never>
     >
     key_blocks?: Resolver<
-        Maybe<ResolversTypes['BlockchainBlocksConnection']>,
+        Maybe<ResolversTypes["BlockchainBlocksConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryKey_BlocksArgs, never>
     >
     blocks?: Resolver<
-        Maybe<ResolversTypes['BlockchainBlocksConnection']>,
+        Maybe<ResolversTypes["BlockchainBlocksConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryBlocksArgs, never>
     >
     transactions?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransactionsConnection']>,
+        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryTransactionsArgs, never>
     >
     workchain_blocks?: Resolver<
-        Maybe<ResolversTypes['BlockchainBlocksConnection']>,
+        Maybe<ResolversTypes["BlockchainBlocksConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryWorkchain_BlocksArgs, never>
     >
     workchain_transactions?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransactionsConnection']>,
+        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryWorkchain_TransactionsArgs, never>
     >
     account_transactions?: Resolver<
-        Maybe<ResolversTypes['BlockchainTransactionsConnection']>,
+        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
         ParentType,
         ContextType,
         RequireFields<
             BlockchainQueryAccount_TransactionsArgs,
-            'account_address'
+            "account_address"
         >
     >
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
@@ -3279,197 +3279,197 @@ export type BlockchainQueryResolvers<
 
 export type BlockchainTransactionResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainTransaction'] = ResolversParentTypes['BlockchainTransaction'],
+    ParentType extends ResolversParentTypes["BlockchainTransaction"] = ResolversParentTypes["BlockchainTransaction"],
 > = {
-    _key?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    _key?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     aborted?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     account?: Resolver<
-        Maybe<ResolversTypes['BlockchainAccount']>,
+        Maybe<ResolversTypes["BlockchainAccount"]>,
         ParentType,
         ContextType
     >
     account_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     action?: Resolver<
-        Maybe<ResolversTypes['TransactionAction']>,
+        Maybe<ResolversTypes["TransactionAction"]>,
         ParentType,
         ContextType
     >
     balance_delta?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainTransactionBalance_DeltaArgs, never>
     >
     balance_delta_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     block_id?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    boc?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    boc?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     bounce?: Resolver<
-        Maybe<ResolversTypes['TransactionBounce']>,
+        Maybe<ResolversTypes["TransactionBounce"]>,
         ParentType,
         ContextType
     >
     chain_order?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     compute?: Resolver<
-        Maybe<ResolversTypes['TransactionCompute']>,
+        Maybe<ResolversTypes["TransactionCompute"]>,
         ParentType,
         ContextType
     >
     credit?: Resolver<
-        Maybe<ResolversTypes['TransactionCredit']>,
+        Maybe<ResolversTypes["TransactionCredit"]>,
         ParentType,
         ContextType
     >
     credit_first?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     destroyed?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
-    end_status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    end_status?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     end_status_name?: Resolver<
-        Maybe<ResolversTypes['AccountStatusEnum']>,
+        Maybe<ResolversTypes["AccountStatusEnum"]>,
         ParentType,
         ContextType
     >
     ext_in_msg_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainTransactionExt_In_Msg_FeeArgs, never>
     >
-    hash?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>
+    hash?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>
     in_message?: Resolver<
-        Maybe<ResolversTypes['BlockchainMessage']>,
+        Maybe<ResolversTypes["BlockchainMessage"]>,
         ParentType,
         ContextType
     >
-    in_msg?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    in_msg?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     installed?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainTransactionLtArgs, never>
     >
     new_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    now?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    now?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     now_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     old_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     orig_status?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     orig_status_name?: Resolver<
-        Maybe<ResolversTypes['AccountStatusEnum']>,
+        Maybe<ResolversTypes["AccountStatusEnum"]>,
         ParentType,
         ContextType
     >
     out_messages?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['BlockchainMessage']>>>,
+        Maybe<Array<Maybe<ResolversTypes["BlockchainMessage"]>>>,
         ParentType,
         ContextType
     >
     out_msgs?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['String']>>>,
+        Maybe<Array<Maybe<ResolversTypes["String"]>>>,
         ParentType,
         ContextType
     >
-    outmsg_cnt?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    outmsg_cnt?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     prepare_transaction?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     prev_trans_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     prev_trans_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainTransactionPrev_Trans_LtArgs, never>
     >
-    proof?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    proof?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     split_info?: Resolver<
-        Maybe<ResolversTypes['TransactionSplitInfo']>,
+        Maybe<ResolversTypes["TransactionSplitInfo"]>,
         ParentType,
         ContextType
     >
-    status?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    status?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     status_name?: Resolver<
-        Maybe<ResolversTypes['TransactionProcessingStatusEnum']>,
+        Maybe<ResolversTypes["TransactionProcessingStatusEnum"]>,
         ParentType,
         ContextType
     >
     storage?: Resolver<
-        Maybe<ResolversTypes['TransactionStorage']>,
+        Maybe<ResolversTypes["TransactionStorage"]>,
         ParentType,
         ContextType
     >
     total_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<BlockchainTransactionTotal_FeesArgs, never>
     >
     total_fees_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
-    tr_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    tr_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     tr_type_name?: Resolver<
-        Maybe<ResolversTypes['TransactionTypeEnum']>,
+        Maybe<ResolversTypes["TransactionTypeEnum"]>,
         ParentType,
         ContextType
     >
-    tt?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    tt?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
@@ -3478,140 +3478,140 @@ export type BlockchainTransactionResolvers<
 
 export type BlockchainTransactionEdgeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainTransactionEdge'] = ResolversParentTypes['BlockchainTransactionEdge'],
+    ParentType extends ResolversParentTypes["BlockchainTransactionEdge"] = ResolversParentTypes["BlockchainTransactionEdge"],
 > = {
     node?: Resolver<
-        ResolversTypes['BlockchainTransaction'],
+        ResolversTypes["BlockchainTransaction"],
         ParentType,
         ContextType
     >
-    cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>
+    cursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type BlockchainTransactionsConnectionResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['BlockchainTransactionsConnection'] = ResolversParentTypes['BlockchainTransactionsConnection'],
+    ParentType extends ResolversParentTypes["BlockchainTransactionsConnection"] = ResolversParentTypes["BlockchainTransactionsConnection"],
 > = {
     edges?: Resolver<
-        Array<ResolversTypes['BlockchainTransactionEdge']>,
+        Array<ResolversTypes["BlockchainTransactionEdge"]>,
         ParentType,
         ContextType
     >
-    pageInfo?: Resolver<ResolversTypes['PageInfo'], ParentType, ContextType>
+    pageInfo?: Resolver<ResolversTypes["PageInfo"], ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type ConfigResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['Config'] = ResolversParentTypes['Config'],
+    ParentType extends ResolversParentTypes["Config"] = ResolversParentTypes["Config"],
 > = {
-    p0?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    p1?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    p0?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    p1?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     p10?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['Float']>>>,
+        Maybe<Array<Maybe<ResolversTypes["Float"]>>>,
         ParentType,
         ContextType
     >
-    p11?: Resolver<Maybe<ResolversTypes['ConfigP11']>, ParentType, ContextType>
+    p11?: Resolver<Maybe<ResolversTypes["ConfigP11"]>, ParentType, ContextType>
     p12?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['ConfigP12']>>>,
+        Maybe<Array<Maybe<ResolversTypes["ConfigP12"]>>>,
         ParentType,
         ContextType
     >
-    p14?: Resolver<Maybe<ResolversTypes['ConfigP14']>, ParentType, ContextType>
-    p15?: Resolver<Maybe<ResolversTypes['ConfigP15']>, ParentType, ContextType>
-    p16?: Resolver<Maybe<ResolversTypes['ConfigP16']>, ParentType, ContextType>
-    p17?: Resolver<Maybe<ResolversTypes['ConfigP17']>, ParentType, ContextType>
+    p14?: Resolver<Maybe<ResolversTypes["ConfigP14"]>, ParentType, ContextType>
+    p15?: Resolver<Maybe<ResolversTypes["ConfigP15"]>, ParentType, ContextType>
+    p16?: Resolver<Maybe<ResolversTypes["ConfigP16"]>, ParentType, ContextType>
+    p17?: Resolver<Maybe<ResolversTypes["ConfigP17"]>, ParentType, ContextType>
     p18?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['ConfigP18']>>>,
+        Maybe<Array<Maybe<ResolversTypes["ConfigP18"]>>>,
         ParentType,
         ContextType
     >
-    p2?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    p2?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     p20?: Resolver<
-        Maybe<ResolversTypes['GasLimitsPrices']>,
+        Maybe<ResolversTypes["GasLimitsPrices"]>,
         ParentType,
         ContextType
     >
     p21?: Resolver<
-        Maybe<ResolversTypes['GasLimitsPrices']>,
+        Maybe<ResolversTypes["GasLimitsPrices"]>,
         ParentType,
         ContextType
     >
     p22?: Resolver<
-        Maybe<ResolversTypes['BlockLimits']>,
+        Maybe<ResolversTypes["BlockLimits"]>,
         ParentType,
         ContextType
     >
     p23?: Resolver<
-        Maybe<ResolversTypes['BlockLimits']>,
+        Maybe<ResolversTypes["BlockLimits"]>,
         ParentType,
         ContextType
     >
     p24?: Resolver<
-        Maybe<ResolversTypes['MsgForwardPrices']>,
+        Maybe<ResolversTypes["MsgForwardPrices"]>,
         ParentType,
         ContextType
     >
     p25?: Resolver<
-        Maybe<ResolversTypes['MsgForwardPrices']>,
+        Maybe<ResolversTypes["MsgForwardPrices"]>,
         ParentType,
         ContextType
     >
-    p28?: Resolver<Maybe<ResolversTypes['ConfigP28']>, ParentType, ContextType>
-    p29?: Resolver<Maybe<ResolversTypes['ConfigP29']>, ParentType, ContextType>
-    p3?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    p28?: Resolver<Maybe<ResolversTypes["ConfigP28"]>, ParentType, ContextType>
+    p29?: Resolver<Maybe<ResolversTypes["ConfigP29"]>, ParentType, ContextType>
+    p3?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     p31?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['String']>>>,
+        Maybe<Array<Maybe<ResolversTypes["String"]>>>,
         ParentType,
         ContextType
     >
     p32?: Resolver<
-        Maybe<ResolversTypes['ValidatorSet']>,
+        Maybe<ResolversTypes["ValidatorSet"]>,
         ParentType,
         ContextType
     >
     p33?: Resolver<
-        Maybe<ResolversTypes['ValidatorSet']>,
+        Maybe<ResolversTypes["ValidatorSet"]>,
         ParentType,
         ContextType
     >
     p34?: Resolver<
-        Maybe<ResolversTypes['ValidatorSet']>,
+        Maybe<ResolversTypes["ValidatorSet"]>,
         ParentType,
         ContextType
     >
     p35?: Resolver<
-        Maybe<ResolversTypes['ValidatorSet']>,
+        Maybe<ResolversTypes["ValidatorSet"]>,
         ParentType,
         ContextType
     >
     p36?: Resolver<
-        Maybe<ResolversTypes['ValidatorSet']>,
+        Maybe<ResolversTypes["ValidatorSet"]>,
         ParentType,
         ContextType
     >
     p37?: Resolver<
-        Maybe<ResolversTypes['ValidatorSet']>,
+        Maybe<ResolversTypes["ValidatorSet"]>,
         ParentType,
         ContextType
     >
     p39?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['ConfigP39']>>>,
+        Maybe<Array<Maybe<ResolversTypes["ConfigP39"]>>>,
         ParentType,
         ContextType
     >
-    p4?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    p6?: Resolver<Maybe<ResolversTypes['ConfigP6']>, ParentType, ContextType>
+    p4?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    p6?: Resolver<Maybe<ResolversTypes["ConfigP6"]>, ParentType, ContextType>
     p7?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['ConfigP7']>>>,
+        Maybe<Array<Maybe<ResolversTypes["ConfigP7"]>>>,
         ParentType,
         ContextType
     >
-    p8?: Resolver<Maybe<ResolversTypes['ConfigP8']>, ParentType, ContextType>
+    p8?: Resolver<Maybe<ResolversTypes["ConfigP8"]>, ParentType, ContextType>
     p9?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['Float']>>>,
+        Maybe<Array<Maybe<ResolversTypes["Float"]>>>,
         ParentType,
         ContextType
     >
@@ -3620,15 +3620,15 @@ export type ConfigResolvers<
 
 export type ConfigP11Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP11'] = ResolversParentTypes['ConfigP11'],
+    ParentType extends ResolversParentTypes["ConfigP11"] = ResolversParentTypes["ConfigP11"],
 > = {
     critical_params?: Resolver<
-        Maybe<ResolversTypes['ConfigProposalSetup']>,
+        Maybe<ResolversTypes["ConfigProposalSetup"]>,
         ParentType,
         ContextType
     >
     normal_params?: Resolver<
-        Maybe<ResolversTypes['ConfigProposalSetup']>,
+        Maybe<ResolversTypes["ConfigProposalSetup"]>,
         ParentType,
         ContextType
     >
@@ -3637,63 +3637,63 @@ export type ConfigP11Resolvers<
 
 export type ConfigP12Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP12'] = ResolversParentTypes['ConfigP12'],
+    ParentType extends ResolversParentTypes["ConfigP12"] = ResolversParentTypes["ConfigP12"],
 > = {
     accept_msgs?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
-    active?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
+    active?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
     actual_min_split?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     addr_len_step?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
-    basic?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
+    basic?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
     enabled_since?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
-    flags?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    flags?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     max_addr_len?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
-    max_split?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    max_split?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     min_addr_len?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
-    min_split?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
-    version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
-    vm_mode?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    vm_version?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    min_split?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    version?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
+    vm_mode?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    vm_version?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     workchain_id?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     workchain_type_id?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     zerostate_file_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     zerostate_root_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -3702,16 +3702,16 @@ export type ConfigP12Resolvers<
 
 export type ConfigP14Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP14'] = ResolversParentTypes['ConfigP14'],
+    ParentType extends ResolversParentTypes["ConfigP14"] = ResolversParentTypes["ConfigP14"],
 > = {
     basechain_block_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP14Basechain_Block_FeeArgs, never>
     >
     masterchain_block_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP14Masterchain_Block_FeeArgs, never>
@@ -3721,25 +3721,25 @@ export type ConfigP14Resolvers<
 
 export type ConfigP15Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP15'] = ResolversParentTypes['ConfigP15'],
+    ParentType extends ResolversParentTypes["ConfigP15"] = ResolversParentTypes["ConfigP15"],
 > = {
     elections_end_before?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     elections_start_before?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     stake_held_for?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     validators_elected_for?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -3748,20 +3748,20 @@ export type ConfigP15Resolvers<
 
 export type ConfigP16Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP16'] = ResolversParentTypes['ConfigP16'],
+    ParentType extends ResolversParentTypes["ConfigP16"] = ResolversParentTypes["ConfigP16"],
 > = {
     max_main_validators?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     max_validators?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     min_validators?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
@@ -3770,27 +3770,27 @@ export type ConfigP16Resolvers<
 
 export type ConfigP17Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP17'] = ResolversParentTypes['ConfigP17'],
+    ParentType extends ResolversParentTypes["ConfigP17"] = ResolversParentTypes["ConfigP17"],
 > = {
     max_stake?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP17Max_StakeArgs, never>
     >
     max_stake_factor?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     min_stake?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP17Min_StakeArgs, never>
     >
     min_total_stake?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP17Min_Total_StakeArgs, never>
@@ -3800,39 +3800,39 @@ export type ConfigP17Resolvers<
 
 export type ConfigP18Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP18'] = ResolversParentTypes['ConfigP18'],
+    ParentType extends ResolversParentTypes["ConfigP18"] = ResolversParentTypes["ConfigP18"],
 > = {
     bit_price_ps?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP18Bit_Price_PsArgs, never>
     >
     cell_price_ps?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP18Cell_Price_PsArgs, never>
     >
     mc_bit_price_ps?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP18Mc_Bit_Price_PsArgs, never>
     >
     mc_cell_price_ps?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP18Mc_Cell_Price_PsArgs, never>
     >
     utime_since?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     utime_since_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -3841,30 +3841,30 @@ export type ConfigP18Resolvers<
 
 export type ConfigP28Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP28'] = ResolversParentTypes['ConfigP28'],
+    ParentType extends ResolversParentTypes["ConfigP28"] = ResolversParentTypes["ConfigP28"],
 > = {
     mc_catchain_lifetime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     shard_catchain_lifetime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     shard_validators_lifetime?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     shard_validators_num?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     shuffle_mc_validators?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
@@ -3873,50 +3873,50 @@ export type ConfigP28Resolvers<
 
 export type ConfigP29Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP29'] = ResolversParentTypes['ConfigP29'],
+    ParentType extends ResolversParentTypes["ConfigP29"] = ResolversParentTypes["ConfigP29"],
 > = {
     attempt_duration?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     catchain_max_deps?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     consensus_timeout_ms?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     fast_attempts?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     max_block_bytes?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     max_collated_bytes?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     new_catchain_ids?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     next_candidate_delay_ms?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     round_candidates?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -3925,31 +3925,31 @@ export type ConfigP29Resolvers<
 
 export type ConfigP39Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP39'] = ResolversParentTypes['ConfigP39'],
+    ParentType extends ResolversParentTypes["ConfigP39"] = ResolversParentTypes["ConfigP39"],
 > = {
     adnl_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    seqno?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    seqno?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     signature_r?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     signature_s?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     temp_public_key?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     valid_until?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -3958,15 +3958,15 @@ export type ConfigP39Resolvers<
 
 export type ConfigP6Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP6'] = ResolversParentTypes['ConfigP6'],
+    ParentType extends ResolversParentTypes["ConfigP6"] = ResolversParentTypes["ConfigP6"],
 > = {
     mint_add_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     mint_new_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -3975,144 +3975,144 @@ export type ConfigP6Resolvers<
 
 export type ConfigP7Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP7'] = ResolversParentTypes['ConfigP7'],
+    ParentType extends ResolversParentTypes["ConfigP7"] = ResolversParentTypes["ConfigP7"],
 > = {
-    currency?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
-    value?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    currency?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
+    value?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type ConfigP8Resolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigP8'] = ResolversParentTypes['ConfigP8'],
+    ParentType extends ResolversParentTypes["ConfigP8"] = ResolversParentTypes["ConfigP8"],
 > = {
     capabilities?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ConfigP8CapabilitiesArgs, never>
     >
-    version?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    version?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type ConfigProposalSetupResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ConfigProposalSetup'] = ResolversParentTypes['ConfigProposalSetup'],
+    ParentType extends ResolversParentTypes["ConfigProposalSetup"] = ResolversParentTypes["ConfigProposalSetup"],
 > = {
     bit_price?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     cell_price?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
-    max_losses?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    max_losses?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     max_store_sec?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     max_tot_rounds?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     min_store_sec?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     min_tot_rounds?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
-    min_wins?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    min_wins?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type ExtBlkRefResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ExtBlkRef'] = ResolversParentTypes['ExtBlkRef'],
+    ParentType extends ResolversParentTypes["ExtBlkRef"] = ResolversParentTypes["ExtBlkRef"],
 > = {
     end_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ExtBlkRefEnd_LtArgs, never>
     >
     file_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     root_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    seq_no?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    seq_no?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type GasLimitsPricesResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['GasLimitsPrices'] = ResolversParentTypes['GasLimitsPrices'],
+    ParentType extends ResolversParentTypes["GasLimitsPrices"] = ResolversParentTypes["GasLimitsPrices"],
 > = {
     block_gas_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesBlock_Gas_LimitArgs, never>
     >
     delete_due_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesDelete_Due_LimitArgs, never>
     >
     flat_gas_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesFlat_Gas_LimitArgs, never>
     >
     flat_gas_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesFlat_Gas_PriceArgs, never>
     >
     freeze_due_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesFreeze_Due_LimitArgs, never>
     >
     gas_credit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesGas_CreditArgs, never>
     >
     gas_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesGas_LimitArgs, never>
     >
     gas_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesGas_PriceArgs, never>
     >
     special_gas_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<GasLimitsPricesSpecial_Gas_LimitArgs, never>
@@ -4122,54 +4122,54 @@ export type GasLimitsPricesResolvers<
 
 export type InMsgResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['InMsg'] = ResolversParentTypes['InMsg'],
+    ParentType extends ResolversParentTypes["InMsg"] = ResolversParentTypes["InMsg"],
 > = {
     fwd_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<InMsgFwd_FeeArgs, never>
     >
     ihr_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<InMsgIhr_FeeArgs, never>
     >
     in_msg?: Resolver<
-        Maybe<ResolversTypes['MsgEnvelope']>,
+        Maybe<ResolversTypes["MsgEnvelope"]>,
         ParentType,
         ContextType
     >
-    msg_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    msg_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    msg_id?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    msg_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     msg_type_name?: Resolver<
-        Maybe<ResolversTypes['InMsgTypeEnum']>,
+        Maybe<ResolversTypes["InMsgTypeEnum"]>,
         ParentType,
         ContextType
     >
     out_msg?: Resolver<
-        Maybe<ResolversTypes['MsgEnvelope']>,
+        Maybe<ResolversTypes["MsgEnvelope"]>,
         ParentType,
         ContextType
     >
     proof_created?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     proof_delivered?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     transaction_id?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     transit_fee?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<InMsgTransit_FeeArgs, never>
@@ -4179,22 +4179,22 @@ export type InMsgResolvers<
 
 export type MsgEnvelopeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['MsgEnvelope'] = ResolversParentTypes['MsgEnvelope'],
+    ParentType extends ResolversParentTypes["MsgEnvelope"] = ResolversParentTypes["MsgEnvelope"],
 > = {
     cur_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     fwd_fee_remaining?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<MsgEnvelopeFwd_Fee_RemainingArgs, never>
     >
-    msg_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
+    msg_id?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     next_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -4203,58 +4203,58 @@ export type MsgEnvelopeResolvers<
 
 export type MsgForwardPricesResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['MsgForwardPrices'] = ResolversParentTypes['MsgForwardPrices'],
+    ParentType extends ResolversParentTypes["MsgForwardPrices"] = ResolversParentTypes["MsgForwardPrices"],
 > = {
     bit_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<MsgForwardPricesBit_PriceArgs, never>
     >
     cell_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<MsgForwardPricesCell_PriceArgs, never>
     >
-    first_frac?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    first_frac?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     ihr_price_factor?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     lump_price?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<MsgForwardPricesLump_PriceArgs, never>
     >
-    next_frac?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    next_frac?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type NodeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['Node'] = ResolversParentTypes['Node'],
+    ParentType extends ResolversParentTypes["Node"] = ResolversParentTypes["Node"],
 > = {
     __resolveType: TypeResolveFn<
-        | 'BlockchainAccount'
-        | 'BlockchainBlock'
-        | 'BlockchainMessage'
-        | 'BlockchainTransaction',
+        | "BlockchainAccount"
+        | "BlockchainBlock"
+        | "BlockchainMessage"
+        | "BlockchainTransaction",
         ParentType,
         ContextType
     >
-    id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>
+    id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>
 }
 
 export type OtherCurrencyResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['OtherCurrency'] = ResolversParentTypes['OtherCurrency'],
+    ParentType extends ResolversParentTypes["OtherCurrency"] = ResolversParentTypes["OtherCurrency"],
 > = {
-    currency?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    currency?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     value?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<OtherCurrencyValueArgs, never>
@@ -4264,46 +4264,46 @@ export type OtherCurrencyResolvers<
 
 export type OutMsgResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['OutMsg'] = ResolversParentTypes['OutMsg'],
+    ParentType extends ResolversParentTypes["OutMsg"] = ResolversParentTypes["OutMsg"],
 > = {
     import_block_lt?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<OutMsgImport_Block_LtArgs, never>
     >
-    imported?: Resolver<Maybe<ResolversTypes['InMsg']>, ParentType, ContextType>
+    imported?: Resolver<Maybe<ResolversTypes["InMsg"]>, ParentType, ContextType>
     msg_env_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    msg_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>
-    msg_type?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    msg_id?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    msg_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     msg_type_name?: Resolver<
-        Maybe<ResolversTypes['OutMsgTypeEnum']>,
+        Maybe<ResolversTypes["OutMsgTypeEnum"]>,
         ParentType,
         ContextType
     >
     next_addr_pfx?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<OutMsgNext_Addr_PfxArgs, never>
     >
     next_workchain?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     out_msg?: Resolver<
-        Maybe<ResolversTypes['MsgEnvelope']>,
+        Maybe<ResolversTypes["MsgEnvelope"]>,
         ParentType,
         ContextType
     >
-    reimport?: Resolver<Maybe<ResolversTypes['InMsg']>, ParentType, ContextType>
+    reimport?: Resolver<Maybe<ResolversTypes["InMsg"]>, ParentType, ContextType>
     transaction_id?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -4312,13 +4312,13 @@ export type OutMsgResolvers<
 
 export type PageInfoResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['PageInfo'] = ResolversParentTypes['PageInfo'],
+    ParentType extends ResolversParentTypes["PageInfo"] = ResolversParentTypes["PageInfo"],
 > = {
-    startCursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>
-    endCursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>
-    hasNextPage?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>
+    startCursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
+    endCursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
+    hasNextPage?: Resolver<ResolversTypes["Boolean"], ParentType, ContextType>
     hasPreviousPage?: Resolver<
-        ResolversTypes['Boolean'],
+        ResolversTypes["Boolean"],
         ParentType,
         ContextType
     >
@@ -4327,10 +4327,10 @@ export type PageInfoResolvers<
 
 export type QueryResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query'],
+    ParentType extends ResolversParentTypes["Query"] = ResolversParentTypes["Query"],
 > = {
     blockchain?: Resolver<
-        Maybe<ResolversTypes['BlockchainQuery']>,
+        Maybe<ResolversTypes["BlockchainQuery"]>,
         ParentType,
         ContextType
     >
@@ -4338,123 +4338,123 @@ export type QueryResolvers<
 
 export type TransactionActionResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['TransactionAction'] = ResolversParentTypes['TransactionAction'],
+    ParentType extends ResolversParentTypes["TransactionAction"] = ResolversParentTypes["TransactionAction"],
 > = {
     action_list_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     msgs_created?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     no_funds?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
-    result_arg?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    result_arg?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     result_code?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     skipped_actions?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     spec_actions?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     status_change?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     status_change_name?: Resolver<
-        Maybe<ResolversTypes['AccountStatusChangeEnum']>,
+        Maybe<ResolversTypes["AccountStatusChangeEnum"]>,
         ParentType,
         ContextType
     >
     success?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     tot_actions?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     total_action_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionActionTotal_Action_FeesArgs, never>
     >
     total_fwd_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionActionTotal_Fwd_FeesArgs, never>
     >
     total_msg_size_bits?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     total_msg_size_cells?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
-    valid?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>
+    valid?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type TransactionBounceResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['TransactionBounce'] = ResolversParentTypes['TransactionBounce'],
+    ParentType extends ResolversParentTypes["TransactionBounce"] = ResolversParentTypes["TransactionBounce"],
 > = {
     bounce_type?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     bounce_type_name?: Resolver<
-        Maybe<ResolversTypes['BounceTypeEnum']>,
+        Maybe<ResolversTypes["BounceTypeEnum"]>,
         ParentType,
         ContextType
     >
     fwd_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionBounceFwd_FeesArgs, never>
     >
     msg_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionBounceMsg_FeesArgs, never>
     >
     msg_size_bits?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     msg_size_cells?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     req_fwd_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionBounceReq_Fwd_FeesArgs, never>
@@ -4464,96 +4464,96 @@ export type TransactionBounceResolvers<
 
 export type TransactionComputeResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['TransactionCompute'] = ResolversParentTypes['TransactionCompute'],
+    ParentType extends ResolversParentTypes["TransactionCompute"] = ResolversParentTypes["TransactionCompute"],
 > = {
     account_activated?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     compute_type?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     compute_type_name?: Resolver<
-        Maybe<ResolversTypes['ComputeTypeEnum']>,
+        Maybe<ResolversTypes["ComputeTypeEnum"]>,
         ParentType,
         ContextType
     >
-    exit_arg?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
-    exit_code?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
-    gas_credit?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    exit_arg?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    exit_code?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    gas_credit?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     gas_fees?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionComputeGas_FeesArgs, never>
     >
     gas_limit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionComputeGas_LimitArgs, never>
     >
     gas_used?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionComputeGas_UsedArgs, never>
     >
-    mode?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    mode?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     msg_state_used?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     skipped_reason?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     skipped_reason_name?: Resolver<
-        Maybe<ResolversTypes['SkipReasonEnum']>,
+        Maybe<ResolversTypes["SkipReasonEnum"]>,
         ParentType,
         ContextType
     >
     success?: Resolver<
-        Maybe<ResolversTypes['Boolean']>,
+        Maybe<ResolversTypes["Boolean"]>,
         ParentType,
         ContextType
     >
     vm_final_state_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     vm_init_state_hash?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
-    vm_steps?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>
+    vm_steps?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
 export type TransactionCreditResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['TransactionCredit'] = ResolversParentTypes['TransactionCredit'],
+    ParentType extends ResolversParentTypes["TransactionCredit"] = ResolversParentTypes["TransactionCredit"],
 > = {
     credit?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionCreditCreditArgs, never>
     >
     credit_other?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['OtherCurrency']>>>,
+        Maybe<Array<Maybe<ResolversTypes["OtherCurrency"]>>>,
         ParentType,
         ContextType
     >
     due_fees_collected?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionCreditDue_Fees_CollectedArgs, never>
@@ -4563,25 +4563,25 @@ export type TransactionCreditResolvers<
 
 export type TransactionSplitInfoResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['TransactionSplitInfo'] = ResolversParentTypes['TransactionSplitInfo'],
+    ParentType extends ResolversParentTypes["TransactionSplitInfo"] = ResolversParentTypes["TransactionSplitInfo"],
 > = {
     acc_split_depth?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     cur_shard_pfx_len?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     sibling_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     this_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -4590,26 +4590,26 @@ export type TransactionSplitInfoResolvers<
 
 export type TransactionStorageResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['TransactionStorage'] = ResolversParentTypes['TransactionStorage'],
+    ParentType extends ResolversParentTypes["TransactionStorage"] = ResolversParentTypes["TransactionStorage"],
 > = {
     status_change?: Resolver<
-        Maybe<ResolversTypes['Int']>,
+        Maybe<ResolversTypes["Int"]>,
         ParentType,
         ContextType
     >
     status_change_name?: Resolver<
-        Maybe<ResolversTypes['AccountStatusChangeEnum']>,
+        Maybe<ResolversTypes["AccountStatusChangeEnum"]>,
         ParentType,
         ContextType
     >
     storage_fees_collected?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionStorageStorage_Fees_CollectedArgs, never>
     >
     storage_fees_due?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<TransactionStorageStorage_Fees_DueArgs, never>
@@ -4619,38 +4619,38 @@ export type TransactionStorageResolvers<
 
 export type ValidatorSetResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ValidatorSet'] = ResolversParentTypes['ValidatorSet'],
+    ParentType extends ResolversParentTypes["ValidatorSet"] = ResolversParentTypes["ValidatorSet"],
 > = {
     list?: Resolver<
-        Maybe<Array<Maybe<ResolversTypes['ValidatorSetList']>>>,
+        Maybe<Array<Maybe<ResolversTypes["ValidatorSetList"]>>>,
         ParentType,
         ContextType
     >
-    main?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
-    total?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>
+    main?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    total?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     total_weight?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ValidatorSetTotal_WeightArgs, never>
     >
     utime_since?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     utime_since_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     utime_until?: Resolver<
-        Maybe<ResolversTypes['Float']>,
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
     utime_until_string?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
@@ -4659,20 +4659,20 @@ export type ValidatorSetResolvers<
 
 export type ValidatorSetListResolvers<
     ContextType = any,
-    ParentType extends ResolversParentTypes['ValidatorSetList'] = ResolversParentTypes['ValidatorSetList'],
+    ParentType extends ResolversParentTypes["ValidatorSetList"] = ResolversParentTypes["ValidatorSetList"],
 > = {
     adnl_addr?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     public_key?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
     >
     weight?: Resolver<
-        Maybe<ResolversTypes['String']>,
+        Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType,
         RequireFields<ValidatorSetListWeightArgs, never>

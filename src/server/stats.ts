@@ -1,5 +1,5 @@
-import { STATS } from './config'
-import { StatsD, Callback as StatsCallback } from 'node-statsd'
+import { STATS } from "./config"
+import { StatsD, Callback as StatsCallback } from "node-statsd"
 
 export interface IStats {
     configuredTags: string[]
@@ -79,7 +79,7 @@ export class QStats implements IStats {
         configuredTags: string[],
         resetInterval: number,
     ) {
-        const hostPort = server.split(':')
+        const hostPort = server.split(":")
         this.host = hostPort[0]
         this.port = hostPort[1] !== undefined ? Number(hostPort[1]) : undefined
         this.configuredTags = configuredTags
@@ -95,7 +95,7 @@ export class QStats implements IStats {
             return impl
         }
         const newImpl = new StatsD(this.host, this.port, STATS.prefix)
-        newImpl.socket.on('error', (err: Error) => {
+        newImpl.socket.on("error", (err: Error) => {
             logStatsError(err)
             this.dropImpl()
         })
@@ -119,7 +119,7 @@ export class QStats implements IStats {
         return new Promise(resolve => {
             const timeoutTimer = setTimeout(() => {
                 // It was confirmed that StatsD lib sometimes hangs and we need this timeout
-                this.dropImpl({ name: '', message: 'timeouted' })
+                this.dropImpl({ name: "", message: "timeouted" })
                 resolve()
             }, 1000)
 

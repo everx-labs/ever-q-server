@@ -1,12 +1,12 @@
-import { Database } from 'arangojs'
-import program from 'commander'
-import fetch from 'node-fetch'
-import { URL } from 'url'
-import { INDEXES } from '../../server/data/blockchain'
-import { QIndexInfo } from '../../server/data/data-provider'
+import { Database } from "arangojs"
+import program from "commander"
+import fetch from "node-fetch"
+import { URL } from "url"
+import { INDEXES } from "../../server/data/blockchain"
+import { QIndexInfo } from "../../server/data/data-provider"
 
 function sameFields(a: string[], b: string[]): boolean {
-    return a.join(',').toLowerCase() === b.join(',').toLowerCase()
+    return a.join(",").toLowerCase() === b.join(",").toLowerCase()
 }
 
 async function detectRedirect(url: string) {
@@ -35,7 +35,7 @@ async function updateCollection(
             console.log(
                 `${name}: remove index [${
                     existing.id
-                }] on [${existing.fields.join(',')}]`,
+                }] on [${existing.fields.join(",")}]`,
             )
             await dbCollection.dropIndex(existing.id)
         }
@@ -43,7 +43,7 @@ async function updateCollection(
     for (const required of indexes) {
         if (!existingIndexes.find(x => sameFields(x.fields, required.fields))) {
             console.log(
-                `${name}: create index on [${required.fields.join(',')}]`,
+                `${name}: create index on [${required.fields.join(",")}]`,
             )
             let indexCreated = false
             while (!indexCreated) {
@@ -51,7 +51,7 @@ async function updateCollection(
                     await dbCollection.createPersistentIndex(required.fields)
                     indexCreated = true
                 } catch (error) {
-                    if (error.message.toLowerCase().indexOf('timeout') >= 0) {
+                    if (error.message.toLowerCase().indexOf("timeout") >= 0) {
                         console.log(
                             `Index creation failed: ${error.message}. Retrying...`,
                         )
@@ -73,7 +73,7 @@ async function updateDb(config: {
         url: await detectRedirect(config.server),
     })
     if (config.auth) {
-        const [user, password] = config.auth.split(':')
+        const [user, password] = config.auth.split(":")
         arango.useBasicAuth(user, password)
     }
     arango.useDatabase(config.name)
@@ -91,7 +91,7 @@ function update(servers: string[], options: { auth?: string }) {
             try {
                 await updateDb({
                     server,
-                    name: 'blockchain',
+                    name: "blockchain",
                     auth: options.auth,
                 })
             } catch (error) {
@@ -104,7 +104,7 @@ function update(servers: string[], options: { auth?: string }) {
 }
 
 program
-    .arguments('[servers...]')
-    .option('-a, --auth <user:password>', 'user:password', '')
+    .arguments("[servers...]")
+    .option("-a, --auth <user:password>", "user:password", "")
     .action(update)
     .parse(process.argv)

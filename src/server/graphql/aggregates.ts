@@ -1,4 +1,4 @@
-import QBlockchainData from '../data/blockchain'
+import QBlockchainData from "../data/blockchain"
 
 export function aggregatesResolvers(data: QBlockchainData) {
     return {

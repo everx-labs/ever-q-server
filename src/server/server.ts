@@ -14,60 +14,60 @@
  * limitations under the License.
  */
 
-import { TonClient } from '@tonclient/core'
-import { libNode } from '@tonclient/lib-node'
-import fs from 'fs'
-import express from 'express'
-import http from 'http'
-import path from 'path'
+import { TonClient } from "@tonclient/core"
+import { libNode } from "@tonclient/lib-node"
+import fs from "fs"
+import express from "express"
+import http from "http"
+import path from "path"
 
 import {
     ApolloServer,
     ApolloServerExpressConfig,
     IResolvers,
-} from 'apollo-server-express'
-import { ConnectionContext } from 'subscriptions-transport-ws'
-import { QShardDatabaseProvider } from './data/shard-database-provider'
-import QBlockchainData from './data/blockchain'
-import type { QBlockchainDataProvider, QDataProviders } from './data/data'
+} from "apollo-server-express"
+import { ConnectionContext } from "subscriptions-transport-ws"
+import { QShardDatabaseProvider } from "./data/shard-database-provider"
+import QBlockchainData from "./data/blockchain"
+import type { QBlockchainDataProvider, QDataProviders } from "./data/data"
 import {
     parseArangoConfig,
     QBlockchainDataConfig,
     QHotColdDataConfig,
     STATS,
-} from './config'
+} from "./config"
 import {
     QDatabasePool,
     QDataCombiner,
     QDataPrecachedCombiner,
     QDataProvider,
-} from './data/data-provider'
-import { MemjsDataCache } from './data/caching/memjs-datacache'
-import { aggregatesResolvers } from './graphql/aggregates'
-import { counterpartiesResolvers } from './graphql/counterparties'
-import { explainResolvers } from './graphql/explain'
-import { infoResolvers } from './graphql/info'
-import { postRequestsResolvers } from './graphql/post-requests'
-import { blockchainResolvers } from './graphql/blockchain'
+} from "./data/data-provider"
+import { MemjsDataCache } from "./data/caching/memjs-datacache"
+import { aggregatesResolvers } from "./graphql/aggregates"
+import { counterpartiesResolvers } from "./graphql/counterparties"
+import { explainResolvers } from "./graphql/explain"
+import { infoResolvers } from "./graphql/info"
+import { postRequestsResolvers } from "./graphql/post-requests"
+import { blockchainResolvers } from "./graphql/blockchain"
 
-import { createResolvers } from './graphql/resolvers-generated'
-import { accessResolvers } from './graphql/access'
-import { mam } from './graphql/mam'
+import { createResolvers } from "./graphql/resolvers-generated"
+import { accessResolvers } from "./graphql/access"
+import { mam } from "./graphql/mam"
 
-import type { QConfig } from './config'
-import { totalsResolvers } from './graphql/totals'
-import QLogs from './logs'
-import type { QLog } from './logs'
-import type { IStats } from './stats'
-import { QStats, StatsCounter } from './stats'
-import { QTracer } from './tracing'
-import { Tracer } from 'opentracing'
-import { Auth } from './auth'
-import { assignDeep, httpUrl, packageJson, QError } from './utils'
-import WebSocket from 'ws'
-import { MemStats } from './mem-stat'
-import { QRequestContext, QRequestServices, RequestEvent } from './request'
-import { overrideAccountBoc } from './graphql/account-boc'
+import type { QConfig } from "./config"
+import { totalsResolvers } from "./graphql/totals"
+import QLogs from "./logs"
+import type { QLog } from "./logs"
+import type { IStats } from "./stats"
+import { QStats, StatsCounter } from "./stats"
+import { QTracer } from "./tracing"
+import { Tracer } from "opentracing"
+import { Auth } from "./auth"
+import { assignDeep, httpUrl, packageJson, QError } from "./utils"
+import WebSocket from "ws"
+import { MemStats } from "./mem-stat"
+import { QRequestContext, QRequestServices, RequestEvent } from "./request"
+import { overrideAccountBoc } from "./graphql/account-boc"
 
 type QServerOptions = {
     config: QConfig
@@ -92,16 +92,16 @@ export class DataProviderFactory {
         return {
             blockchain: this.ensureBlockchain(
                 this.config.blockchain,
-                'blockchain',
+                "blockchain",
             ),
             counterparties: this.ensureDatabases(
                 this.config.counterparties,
-                'counterparties',
+                "counterparties",
                 false,
             ),
             chainRangesVerification: this.ensureDatabases(
                 this.config.chainRangesVerification,
-                'chainRangesVerification',
+                "chainRangesVerification",
                 false,
             ),
         }
@@ -139,8 +139,8 @@ export class DataProviderFactory {
         dataExpirationTimeout = 0,
         emptyDataExpirationTimeout = 0,
     ): QDataProvider | undefined {
-        const cacheConfig = (config ?? '').trim()
-        if (main === undefined || cacheConfig === '') {
+        const cacheConfig = (config ?? "").trim()
+        if (main === undefined || cacheConfig === "") {
             return main
         }
         return new QDataPrecachedCombiner(
@@ -181,7 +181,7 @@ export class DataProviderFactory {
                 }
                 return hot ?? cold
             },
-            'hot-cold',
+            "hot-cold",
         )
     }
 
@@ -198,7 +198,7 @@ export class DataProviderFactory {
                     sharded && config.length > 0 ? Math.log2(config.length) : 0
                 if (shardingDepth % 1 !== 0) {
                     throw new Error(
-                        'Invalid sharding configuration: the count of databases should be a power of 2',
+                        "Invalid sharding configuration: the count of databases should be a power of 2",
                     )
                 }
 
@@ -234,14 +234,14 @@ export class DataProviderFactory {
         return this.ensureProvider(
             config,
             () => {
-                if (config.trim() === '') {
+                if (config.trim() === "") {
                     return undefined
                 }
                 const databaseConfig = parseArangoConfig(config)
                 const shard =
                     shardingDepth > 0
                         ? databaseConfig.name.slice(-shardingDepth)
-                        : ''
+                        : ""
                 const qShard = this.databasePool.ensureShard(
                     databaseConfig,
                     shard,
@@ -305,7 +305,7 @@ export default class TONQServer {
         this.client = new TonClient()
         this.config = options.config
         this.logs = options.logs
-        this.log = this.logs.create('server')
+        this.log = this.logs.create("server")
         this.shared = new Map()
         this.tracer = QTracer.create(options.config)
         this.stats = QStats.create(
@@ -328,7 +328,7 @@ export default class TONQServer {
                 providers: providers.ensure(),
                 slowQueriesProviders: providers.ensureBlockchain(
                     this.config.slowQueriesBlockchain,
-                    'slow',
+                    "slow",
                 ),
                 isTests: false,
             })
@@ -350,9 +350,9 @@ export default class TONQServer {
             this.data,
         )
         this.addEndPoint({
-            path: '/graphql/mam',
+            path: "/graphql/mam",
             resolvers: mam,
-            typeDefFileNames: ['type-defs-mam.graphql'],
+            typeDefFileNames: ["type-defs-mam.graphql"],
             supportSubscriptions: false,
         })
         overrideAccountBoc()
@@ -368,19 +368,19 @@ export default class TONQServer {
             blockchainResolvers,
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({
-            path: '/graphql',
+            path: "/graphql",
             resolvers,
             typeDefFileNames: [
-                'type-defs-info.graphql',
-                'type-defs-blockchain/account.graphql',
-                'type-defs-blockchain/block.graphql',
-                'type-defs-blockchain/blockchain.graphql',
-                'type-defs-blockchain/common.graphql',
-                'type-defs-blockchain/message.graphql',
-                'type-defs-blockchain/transaction.graphql',
-                'type-defs-generated.graphql',
-                'type-defs-counterparties.graphql',
-                'type-defs-custom.graphql',
+                "type-defs-info.graphql",
+                "type-defs-blockchain/account.graphql",
+                "type-defs-blockchain/block.graphql",
+                "type-defs-blockchain/blockchain.graphql",
+                "type-defs-blockchain/common.graphql",
+                "type-defs-blockchain/message.graphql",
+                "type-defs-blockchain/transaction.graphql",
+                "type-defs-generated.graphql",
+                "type-defs-counterparties.graphql",
+                "type-defs-custom.graphql",
             ],
             supportSubscriptions: true,
         })
@@ -397,7 +397,7 @@ export default class TONQServer {
             () => {
                 this.endPoints.forEach((endPoint: EndPoint) => {
                     this.log.debug(
-                        'GRAPHQL',
+                        "GRAPHQL",
                         httpUrl(`${host}:${port}${endPoint.path}`),
                     )
                 })
@@ -424,8 +424,8 @@ export default class TONQServer {
 
     addEndPoint(endPoint: EndPoint) {
         const typeDefs = endPoint.typeDefFileNames
-            .map(x => fs.readFileSync(path.join('res', x), 'utf-8'))
-            .join('\n')
+            .map(x => fs.readFileSync(path.join("res", x), "utf-8"))
+            .join("\n")
         const config: ApolloServerExpressConfig = {
             debug: false,
             typeDefs,
@@ -484,23 +484,23 @@ export default class TONQServer {
                         return {
                             didResolveSource(ctx) {
                                 const context = ctx.context as QRequestContext
-                                context.log('Apollo_didResolveSource')
+                                context.log("Apollo_didResolveSource")
                             },
                             parsingDidStart(ctx) {
                                 const context = ctx.context as QRequestContext
-                                context.log('Apollo_parsingDidStart')
+                                context.log("Apollo_parsingDidStart")
                             },
                             validationDidStart(ctx) {
                                 const context = ctx.context as QRequestContext
-                                context.log('Apollo_validationDidStart')
+                                context.log("Apollo_validationDidStart")
                             },
                             executionDidStart(ctx) {
                                 const context = ctx.context as QRequestContext
-                                context.log('Apollo_executionDidStart')
+                                context.log("Apollo_executionDidStart")
                             },
                             willSendResponse(ctx) {
                                 const context = ctx.context as QRequestContext
-                                context.log('Apollo_willSendResponse')
+                                context.log("Apollo_willSendResponse")
                                 context.onRequestFinishing()
                                 if (
                                     context.multipleAccessKeysDetected ??
@@ -514,7 +514,7 @@ export default class TONQServer {
                 },
             ],
             formatError: err => {
-                if (err.extensions?.code === 'INTERNAL_SERVER_ERROR') {
+                if (err.extensions?.code === "INTERNAL_SERVER_ERROR") {
                     void this.internalErrorStats.increment()
                 }
                 return err

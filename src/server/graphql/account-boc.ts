@@ -1,5 +1,5 @@
-import { Account } from './resolvers-generated'
-import { SelectionNode } from 'graphql'
+import { Account } from "./resolvers-generated"
+import { SelectionNode } from "graphql"
 import {
     CollectionFilter,
     convertFilterValue,
@@ -11,12 +11,12 @@ import {
     StructFilter,
     testFields,
     undefinedToNull,
-} from '../filter/filters'
+} from "../filter/filters"
 
 export function overrideAccountBoc() {
     const fields = Account.fields
     if (fields) {
-        fields['boc'] = {
+        fields["boc"] = {
             filterCondition(params, path, filter) {
                 return filterConditionForFields(
                     path,
@@ -41,7 +41,7 @@ export function overrideAccountBoc() {
                 path: string,
                 def: SelectionNode,
             ): QReturnExpression[] {
-                if (def.kind !== 'Field') {
+                if (def.kind !== "Field") {
                     throw invalidSelection(def.kind)
                 }
                 const name = def.name.value

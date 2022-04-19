@@ -1,5 +1,5 @@
-import type { AccessKey } from '../auth'
-import { QRequestContext } from '../request'
+import type { AccessKey } from "../auth"
+import { QRequestContext } from "../request"
 
 type ManagementArgs = {
     account?: string
@@ -28,9 +28,9 @@ async function registerAccessKeys(
     context: QRequestContext,
 ): Promise<number> {
     return context.services.auth.registerAccessKeys(
-        args.account || '',
+        args.account || "",
         args.keys || [],
-        args.signedManagementAccessKey || '',
+        args.signedManagementAccessKey || "",
     )
 }
 
@@ -40,9 +40,9 @@ async function revokeAccessKeys(
     context: QRequestContext,
 ): Promise<number> {
     return context.services.auth.revokeAccessKeys(
-        args.account || '',
+        args.account || "",
         args.keys || [],
-        args.signedManagementAccessKey || '',
+        args.signedManagementAccessKey || "",
     )
 }
 

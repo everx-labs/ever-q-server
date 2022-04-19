@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { Counterparty } from '../graphql/counterparties'
-import type { QDataOptions } from './data'
-import QData from './data'
-import { QDataCollection } from './collection'
+import { Counterparty } from "../graphql/counterparties"
+import type { QDataOptions } from "./data"
+import QData from "./data"
+import { QDataCollection } from "./collection"
 import {
     Account,
     Block,
@@ -25,56 +25,56 @@ import {
     Message,
     Transaction,
     Zerostate,
-} from '../graphql/resolvers-generated'
-import { QDataProvider, QIndexInfo, sortedIndex } from './data-provider'
-import { QType } from '../filter/filters'
-import { required, toU64String } from '../utils'
-import { QRequestContext } from '../request'
-import { Database } from 'arangojs'
+} from "../graphql/resolvers-generated"
+import { QDataProvider, QIndexInfo, sortedIndex } from "./data-provider"
+import { QType } from "../filter/filters"
+import { required, toU64String } from "../utils"
+import { QRequestContext } from "../request"
+import { Database } from "arangojs"
 
 export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
     blocks: {
         indexes: [
-            sortedIndex(['seq_no', 'gen_utime']),
-            sortedIndex(['gen_utime']),
-            sortedIndex(['workchain_id', 'shard', 'seq_no']),
-            sortedIndex(['workchain_id', 'shard', 'gen_utime']),
-            sortedIndex(['workchain_id', 'seq_no']),
-            sortedIndex(['workchain_id', 'gen_utime']),
-            sortedIndex(['master.min_shard_gen_utime']),
-            sortedIndex(['prev_ref.root_hash', '_key']),
-            sortedIndex(['prev_alt_ref.root_hash', '_key']),
+            sortedIndex(["seq_no", "gen_utime"]),
+            sortedIndex(["gen_utime"]),
+            sortedIndex(["workchain_id", "shard", "seq_no"]),
+            sortedIndex(["workchain_id", "shard", "gen_utime"]),
+            sortedIndex(["workchain_id", "seq_no"]),
+            sortedIndex(["workchain_id", "gen_utime"]),
+            sortedIndex(["master.min_shard_gen_utime"]),
+            sortedIndex(["prev_ref.root_hash", "_key"]),
+            sortedIndex(["prev_alt_ref.root_hash", "_key"]),
         ],
     },
     accounts: {
-        indexes: [sortedIndex(['last_trans_lt']), sortedIndex(['balance'])],
+        indexes: [sortedIndex(["last_trans_lt"]), sortedIndex(["balance"])],
     },
     messages: {
         indexes: [
-            sortedIndex(['block_id']),
-            sortedIndex(['value', 'created_at']),
-            sortedIndex(['src', 'value', 'created_at']),
-            sortedIndex(['dst', 'value', 'created_at']),
-            sortedIndex(['src', 'created_at']),
-            sortedIndex(['dst', 'created_at']),
-            sortedIndex(['created_lt']),
-            sortedIndex(['created_at']),
+            sortedIndex(["block_id"]),
+            sortedIndex(["value", "created_at"]),
+            sortedIndex(["src", "value", "created_at"]),
+            sortedIndex(["dst", "value", "created_at"]),
+            sortedIndex(["src", "created_at"]),
+            sortedIndex(["dst", "created_at"]),
+            sortedIndex(["created_lt"]),
+            sortedIndex(["created_at"]),
         ],
     },
     transactions: {
         indexes: [
-            sortedIndex(['block_id']),
-            sortedIndex(['in_msg']),
-            sortedIndex(['out_msgs[*]']),
-            sortedIndex(['account_addr', 'now']),
-            sortedIndex(['now']),
-            sortedIndex(['lt']),
-            sortedIndex(['account_addr', 'orig_status', 'end_status']),
-            sortedIndex(['now', 'account_addr', 'lt']),
+            sortedIndex(["block_id"]),
+            sortedIndex(["in_msg"]),
+            sortedIndex(["out_msgs[*]"]),
+            sortedIndex(["account_addr", "now"]),
+            sortedIndex(["now"]),
+            sortedIndex(["lt"]),
+            sortedIndex(["account_addr", "orig_status", "end_status"]),
+            sortedIndex(["now", "account_addr", "lt"]),
         ],
     },
     blocks_signatures: {
-        indexes: [sortedIndex(['signatures[*].node_id', 'gen_utime'])],
+        indexes: [sortedIndex(["signatures[*].node_id", "gen_utime"])],
     },
     zerostates: {
         indexes: [],
@@ -85,7 +85,7 @@ export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
 }
 
 Object.values(INDEXES).forEach((collection: { indexes: QIndexInfo[] }) => {
-    collection.indexes = collection.indexes.concat({ fields: ['_key'] })
+    collection.indexes = collection.indexes.concat({ fields: ["_key"] })
 })
 
 export type CollectionLatency = {
@@ -147,34 +147,34 @@ export default class QBlockchainData extends QData {
                 INDEXES[name].indexes,
             )
         }
-        this.accounts = add('accounts', Account, fast?.accounts, slow?.accounts)
-        this.blocks = add('blocks', Block, fast?.blocks, slow?.blocks)
+        this.accounts = add("accounts", Account, fast?.accounts, slow?.accounts)
+        this.blocks = add("blocks", Block, fast?.blocks, slow?.blocks)
         this.blocks_signatures = add(
-            'blocks_signatures',
+            "blocks_signatures",
             BlockSignatures,
             fast?.blocks,
             slow?.blocks,
         )
         this.transactions = add(
-            'transactions',
+            "transactions",
             Transaction,
             fast?.transactions,
             slow?.transactions,
         )
         this.messages = add(
-            'messages',
+            "messages",
             Message,
             fast?.transactions,
             slow?.transactions,
         )
         this.zerostates = add(
-            'zerostates',
+            "zerostates",
             Zerostate,
             fast?.zerostate,
             slow?.zerostate,
         )
         this.counterparties = add(
-            'counterparties',
+            "counterparties",
             Counterparty,
             options.providers.counterparties,
         )
@@ -201,18 +201,18 @@ export default class QBlockchainData extends QData {
         }
         this.debugLatency = 0
 
-        this.blocks.docInsertOrUpdate.on('doc', async block => {
+        this.blocks.docInsertOrUpdate.on("doc", async block => {
             this.updateLatency(this.latency.blocks, block.gen_utime)
         })
-        this.transactions.docInsertOrUpdate.on('doc', async tr => {
+        this.transactions.docInsertOrUpdate.on("doc", async tr => {
             this.updateLatency(this.latency.transactions, tr.now)
         })
-        this.messages.docInsertOrUpdate.on('doc', async msg => {
+        this.messages.docInsertOrUpdate.on("doc", async msg => {
             this.updateLatency(this.latency.messages, msg.created_at)
         })
 
         this.reliableChainOrderUpperBoundary = {
-            boundary: '',
+            boundary: "",
             lastCheckTime: 0,
         }
     }
@@ -312,13 +312,13 @@ export default class QBlockchainData extends QData {
         }
 
         const fetchedTimes = await request.trace(
-            'fetchLatencyTimes',
+            "fetchLatencyTimes",
             async () => {
                 const fetchers = [...fetchersByDatabasePoolIndex.values()]
                 request.requestTags.arangoCalls += fetchers.length
                 return await Promise.all(
                     fetchers.map(async fetcher => {
-                        const query = `RETURN {${fetcher.returns.join(',\n')}}`
+                        const query = `RETURN {${fetcher.returns.join(",\n")}}`
                         return (
                             await (await fetcher.database.query(query)).all()
                         )[0] as Record<string, number | null>
@@ -359,17 +359,17 @@ export default class QBlockchainData extends QData {
                     {
                         latency: latency.blocks,
                         collection: this.blocks,
-                        field: 'gen_utime',
+                        field: "gen_utime",
                     },
                     {
                         latency: latency.messages,
                         collection: this.messages,
-                        field: 'created_at',
+                        field: "created_at",
                     },
                     {
                         latency: latency.transactions,
                         collection: this.transactions,
-                        field: 'now',
+                        field: "now",
                     },
                 ],
                 request,
@@ -402,9 +402,9 @@ export default class QBlockchainData extends QData {
             if (result.length > 0) {
                 const boundary = result.reduce<string>((prev, summary) => {
                     const curr =
-                        summary.reliable_chain_order_upper_boundary ?? ''
+                        summary.reliable_chain_order_upper_boundary ?? ""
                     return curr < prev ? curr : prev
-                }, 'z')
+                }, "z")
 
                 this.reliableChainOrderUpperBoundary = {
                     boundary,
@@ -445,7 +445,7 @@ export default class QBlockchainData extends QData {
                 }
             } else {
                 throw new Error(
-                    'There is something wrong with chain order boundary',
+                    "There is something wrong with chain order boundary",
                 )
             }
         }

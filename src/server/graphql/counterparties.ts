@@ -1,4 +1,4 @@
-import QBlockchainData from '../data/blockchain'
+import QBlockchainData from "../data/blockchain"
 import {
     bigUInt2,
     resolveBigUInt,
@@ -6,9 +6,9 @@ import {
     struct,
     scalar,
     BigIntArgs,
-} from '../filter/filters'
-import { QRequestContext } from '../request'
-import { required } from '../utils'
+} from "../filter/filters"
+import { QRequestContext } from "../request"
+import { required } from "../utils"
 
 //------------------------------------------------------------- Counterparties
 
@@ -46,25 +46,25 @@ async function counterparties(
     args: CounterpartiesArgs,
     context: QRequestContext,
 ): Promise<CounterpartiesResult[]> {
-    return context.trace('counterparties', async traceSpan => {
+    return context.trace("counterparties", async traceSpan => {
         await context.requireGrantedAccess(args)
-        let text = 'FOR doc IN counterparties FILTER doc.account == @account'
+        let text = "FOR doc IN counterparties FILTER doc.account == @account"
         const vars: Record<string, unknown> = {
             account: args.account,
             first: Math.min(50, args.first ?? 50),
         }
         if (args.after) {
-            const after = args.after.split('/')
+            const after = args.after.split("/")
             text +=
-                ' AND (' +
-                'doc.last_message_at < @after_0' +
-                ' OR doc.last_message_at == @after_0 AND doc.counterparty < @after_1' +
-                ')'
+                " AND (" +
+                "doc.last_message_at < @after_0" +
+                " OR doc.last_message_at == @after_0 AND doc.counterparty < @after_1" +
+                ")"
             vars.after_0 = Number.parseInt(after[0])
             vars.after_1 = after[1]
         }
         text +=
-            ' SORT doc.last_message_at DESC, doc.counterparty DESC LIMIT @first RETURN doc'
+            " SORT doc.last_message_at DESC, doc.counterparty DESC LIMIT @first RETURN doc"
 
         const result = (await context.services.data.query(
             required(context.services.data.counterparties.provider),
@@ -73,8 +73,8 @@ async function counterparties(
                 vars,
                 orderBy: [
                     {
-                        path: 'last_message_at,counterparty',
-                        direction: 'DESC',
+                        path: "last_message_at,counterparty",
+                        direction: "DESC",
                     },
                 ],
                 request: context,
