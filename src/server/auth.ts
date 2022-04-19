@@ -1,90 +1,94 @@
-import type { QConfig } from "./config";
-import fetch from "node-fetch";
-import { extractHeader, GraphQLConnection, QError, RequestWithHeaders } from "./utils";
+import type { QConfig } from "./config"
+import fetch from "node-fetch"
+import {
+    extractHeader,
+    GraphQLConnection,
+    QError,
+    RequestWithHeaders,
+} from "./utils"
 
 export type AccessKey = {
-    key: string,
-    restrictToAccounts?: string[],
-};
+    key: string
+    restrictToAccounts?: string[]
+}
 
 export type AccessRights = {
-    granted: boolean,
-    restrictToAccounts: string[],
-};
+    granted: boolean
+    restrictToAccounts: string[]
+}
 
 export const grantedAccess: AccessRights = Object.freeze({
     granted: true,
     restrictToAccounts: [],
-});
+})
 
 export const deniedAccess: AccessRights = Object.freeze({
     granted: false,
     restrictToAccounts: [],
-});
+})
 
 export type AccessArgs = {
     accessKey?: string | null | undefined
-};
+}
 
 export class Auth {
-    config: QConfig;
-    mamAccessKeys: Set<string>;
+    config: QConfig
+    mamAccessKeys: Set<string>
 
     constructor(config: QConfig) {
-        this.config = config;
-        this.mamAccessKeys = new Set<string>(config.mamAccessKeys);
+        this.config = config
+        this.mamAccessKeys = new Set<string>(config.mamAccessKeys)
     }
 
     static accessGranted: AccessRights = {
         granted: true,
         restrictToAccounts: [],
-    };
-
+    }
 
     static extractAccessKey(
         req: RequestWithHeaders | undefined,
         connection: GraphQLConnection | undefined,
     ): string {
-        return extractHeader(req, connection, "accessKey", "");
+        return extractHeader(req, connection, "accessKey", "")
     }
 
     static unauthorizedError(): Error {
-        return QError.unauthorized();
+        return QError.unauthorized()
     }
 
     authServiceRequired() {
         if (!this.config.authorization.endpoint) {
-            throw QError.authServiceUnavailable();
+            throw QError.authServiceUnavailable()
         }
     }
 
     async requireGrantedAccess(accessKey?: string): Promise<AccessRights> {
-        const access = await this.getAccessRights(accessKey);
+        const access = await this.getAccessRights(accessKey)
         if (!access.granted) {
-            throw Auth.unauthorizedError();
+            throw Auth.unauthorizedError()
         }
-        return access;
+        return access
     }
 
     async getAccessRights(accessKey?: string): Promise<AccessRights> {
         if (!this.config.authorization.endpoint) {
-            return grantedAccess;
+            return grantedAccess
         }
         if ((accessKey || "") === "") {
-            return deniedAccess;
+            return deniedAccess
         }
         const rights: AccessRights = await this.invokeAuth("getAccessRights", {
             accessKey,
-        });
+        })
         if (!rights.restrictToAccounts) {
-            rights.restrictToAccounts = [];
+            rights.restrictToAccounts = []
         }
-        return rights;
+        return rights
     }
 
     async getManagementAccessKey(): Promise<string> {
-        this.authServiceRequired();
-        return this.invokeAuth("getManagementAccessKey", {});
+        this.authServiceRequired()
+        return this.invokeAuth("getManagementAccessKey", {})
     }
 
     async registerAccessKeys(
@@ -92,12 +96,12 @@ export class Auth {
         keys: AccessKey[],
         signedManagementAccessKey: string,
     ): Promise<number> {
-        this.authServiceRequired();
+        this.authServiceRequired()
         return this.invokeAuth("registerAccessKeys", {
             account,
             keys,
             signedManagementAccessKey,
-        });
+        })
     }
 
     async revokeAccessKeys(
@@ -105,12 +109,12 @@ export class Auth {
         keys: string[],
         signedManagementAccessKey: string,
     ): Promise<number> {
-        this.authServiceRequired();
+        this.authServiceRequired()
         return this.invokeAuth("revokeAccessKeys", {
             account,
             keys,
             signedManagementAccessKey,
-        });
+        })
     }
 
     async invokeAuth<T>(method: string, params: unknown): Promise<T> {
@@ -125,18 +129,17 @@ export class Auth {
                 method,
                 params,
             }),
-        });
+        })
 
         if (res.status !== 200) {
-            throw new Error(`Auth service failed: ${await res.text()}`);
+            throw new Error(`Auth service failed: ${await res.text()}`)
         }
 
-        const response = await res.json();
+        const response = await res.json()
         if (response.error) {
-            throw QError.auth(response.error);
+            throw QError.auth(response.error)
         }
 
-        return response.result;
+        return response.result
     }
-
 }

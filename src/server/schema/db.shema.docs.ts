@@ -41,7 +41,8 @@ query{
                 `,
         bits: "Contains sum of all the bits used by the cells of the account. Used in storage fee calculation",
         cells: "Contains number of the cells of the account. Used in storage fee calculation",
-        public_cells: "Contains the number of public cells of the account. Used in storage fee calculation.",
+        public_cells:
+            "Contains the number of public cells of the account. Used in storage fee calculation.",
         due_payment: `
 If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 \`\`\`
@@ -64,7 +65,8 @@ If present, accumulates the storage payments that could not be exacted from the 
 \`\`\`
         `,
         balance_other: " ",
-        split_depth: "Is present and non-zero only in instances of large smart contracts.",
+        split_depth:
+            "Is present and non-zero only in instances of large smart contracts.",
         tick: "May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.",
         tock: `May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
 \`\`\`        
@@ -97,7 +99,8 @@ If present, accumulates the storage payments that could not be exacted from the 
         init_code_hash: "account 's initial code hash (when it was deployed)",
         proof: "Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64.",
         boc: "Bag of cells with the account struct encoded as base64.",
-        state_hash: "Contains the representation hash of an instance of `StateInit` when an account is frozen.",
+        state_hash:
+            "Contains the representation hash of an instance of `StateInit` when an account is frozen.",
     },
     message: {
         _doc: `# Message type
@@ -107,10 +110,12 @@ body or payload. The body is essentially arbitrary, to be interpreted by the
 destination smart contract. It can be queried with the following fields:`,
         msg_type: "Returns the type of message.",
         status: "Returns internal processing status according to the numbers shown.",
-        block_id: "Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64.",
+        block_id:
+            "Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64.",
         body: "Bag of cells with the message body encoded as base64.",
         body_hash: "`body` field root hash.",
-        split_depth: "This is only used for special contracts in masterchain to deploy messages.",
+        split_depth:
+            "This is only used for special contracts in masterchain to deploy messages.",
         tick: "This is only used for special contracts in masterchain to deploy messages.",
         tock: "This is only used for special contracts in masterchain to deploy messages",
         code: "Represents contract code in deploy messages.",
@@ -123,59 +128,75 @@ destination smart contract. It can be queried with the following fields:`,
         dst: "Returns destination address string",
         src_workchain_id: "Workchain id of the source address (src field)",
         dst_workchain_id: "Workchain id of the destination address (dst field)",
-        created_lt: "Logical creation time automatically set by the generating transaction.",
-        created_at: "Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction.",
+        created_lt:
+            "Logical creation time automatically set by the generating transaction.",
+        created_at:
+            "Creation unixtime automatically set by the generating transaction. The creation unixtime equals the creation unixtime of the block containing the generating transaction.",
         ihr_disabled: "IHR is disabled for the message.",
-        ihr_fee: "This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism.",
-        fwd_fee: "Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated.",
+        ihr_fee:
+            "This value is subtracted from the value attached to the message and awarded to the validators of the destination shardchain if they include the message by the IHR mechanism.",
+        fwd_fee:
+            "Original total forwarding fee paid for using the HR mechanism; it is automatically computed from some configuration parameters and the size of the message at the time the message is generated.",
         import_fee: "",
         bounce: "Bounce flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender.",
-        bounced: "Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender.",
+        bounced:
+            "Bounced flag. If the transaction has been aborted, and the inbound message has its bounce flag set, then it is “bounced” by automatically generating an outbound message (with the bounce flag clear) to its original sender.",
         value: "May or may not be present",
         value_other: "May or may not be present.",
         proof: "Merkle proof that message is a part of a block it cut from. It is a bag of cells with Merkle proof struct encoded as base64.",
         boc: "A bag of cells with the message structure encoded as base64.",
-        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message).",
+        chain_order:
+            "Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message).",
     },
-
 
     transaction: {
         _doc: "TON Transaction",
         _: { collection: "transactions" },
-        tr_type: "Transaction type according to the original blockchain specification, clause 4.2.4.",
+        tr_type:
+            "Transaction type according to the original blockchain specification, clause 4.2.4.",
         status: "Transaction processing status",
         block_id: "",
         account_addr: "",
-        workchain_id: "Workchain id of the account address (account_addr field)",
+        workchain_id:
+            "Workchain id of the account address (account_addr field)",
         lt: "Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf).",
         prev_trans_hash: "",
         prev_trans_lt: "",
         now: "",
-        outmsg_cnt: "The number of generated outbound messages (one of the common transaction parameters defined by the specification)",
-        orig_status: "The initial state of account. Note that in this case the query may return 0, if the account was not active before the transaction and 1 if it was already active",
-        end_status: "The end state of an account after a transaction, 1 is returned to indicate a finalized transaction at an active account",
+        outmsg_cnt:
+            "The number of generated outbound messages (one of the common transaction parameters defined by the specification)",
+        orig_status:
+            "The initial state of account. Note that in this case the query may return 0, if the account was not active before the transaction and 1 if it was already active",
+        end_status:
+            "The end state of an account after a transaction, 1 is returned to indicate a finalized transaction at an active account",
         in_msg: "",
         in_message: "",
-        out_msgs: "Dictionary of transaction outbound messages as specified in the specification",
+        out_msgs:
+            "Dictionary of transaction outbound messages as specified in the specification",
         out_messages: "",
         total_fees: `Total amount of fees collected by the validators. 
 Because fwd_fee is collected by the validators of the receiving shard, 
 total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 The formula is:
 total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
-        total_fees_other: "Same as above, but reserved for non gram coins that may appear in the blockchain",
+        total_fees_other:
+            "Same as above, but reserved for non gram coins that may appear in the blockchain",
         old_hash: "Merkle update field",
         new_hash: "Merkle update field",
         credit_first: "",
         storage: {
-            storage_fees_collected: "This field defines the amount of storage fees collected in grams.",
-            storage_fees_due: "This field represents the amount of due fees in grams, it might be empty.",
-            status_change: "This field represents account status change after the transaction is completed.",
+            storage_fees_collected:
+                "This field defines the amount of storage fees collected in grams.",
+            storage_fees_due:
+                "This field represents the amount of due fees in grams, it might be empty.",
+            status_change:
+                "This field represents account status change after the transaction is completed.",
         },
 
         credit: {
             _doc: "The account is credited with the value of the inbound message received. The credit phase can result in the collection of some due payments",
-            due_fees_collected: "The sum of due_fees_collected and credit must equal the value of the message received, plus its ihr_fee if the message has not been received via Instant Hypercube Routing, IHR (otherwise the ihr_fee is awarded to the validators).",
+            due_fees_collected:
+                "The sum of due_fees_collected and credit must equal the value of the message received, plus its ihr_fee if the message has not been received via Instant Hypercube Routing, IHR (otherwise the ihr_fee is awarded to the validators).",
             credit: "",
             credit_other: "",
         },
@@ -183,26 +204,38 @@ total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.f
             _doc: `The code of the smart contract is invoked inside an instance of TVM with adequate parameters, including a copy of the inbound message and of the persistent data, and terminates with an exit code, the new persistent data, and an action list (which includes, for instance, outbound messages to be sent). The processing phase may lead to the creation of a new account (uninitialized or active), or to the activation of a previously uninitialized or frozen account. The gas payment, equal to the product of the gas price and the gas consumed, is exacted from the account balance.
 If there is no reason to skip the computing phase, TVM is invoked and the results of the computation are logged. Possible parameters are covered below.`,
             compute_type: "",
-            skipped_reason: "Reason for skipping the compute phase. According to the specification, the phase can be skipped due to the absence of funds to buy gas, absence of state of an account or a message, failure to provide a valid state in the message",
-            success: "This flag is set if and only if exit_code is either 0 or 1.",
-            msg_state_used: "This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)",
-            account_activated: "The flag reflects whether this has resulted in the activation of a previously frozen, uninitialized or non-existent account.",
-            gas_fees: "This parameter reflects the total gas fees collected by the validators for executing this transaction. It must be equal to the product of gas_used and gas_price from the current block header.",
+            skipped_reason:
+                "Reason for skipping the compute phase. According to the specification, the phase can be skipped due to the absence of funds to buy gas, absence of state of an account or a message, failure to provide a valid state in the message",
+            success:
+                "This flag is set if and only if exit_code is either 0 or 1.",
+            msg_state_used:
+                "This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)This parameter reflects whether the state passed in the message has been used. If it is set, the account_activated flag is used (see below)",
+            account_activated:
+                "The flag reflects whether this has resulted in the activation of a previously frozen, uninitialized or non-existent account.",
+            gas_fees:
+                "This parameter reflects the total gas fees collected by the validators for executing this transaction. It must be equal to the product of gas_used and gas_price from the current block header.",
             gas_used: "",
-            gas_limit: "This parameter reflects the gas limit for this instance of TVM. It equals the lesser of either the Grams credited in the credit phase from the value of the inbound message divided by the current gas price, or the global per-transaction gas limit.",
-            gas_credit: "This parameter may be non-zero only for external inbound messages. It is the lesser of either the amount of gas that can be paid from the account balance or the maximum gas credit",
+            gas_limit:
+                "This parameter reflects the gas limit for this instance of TVM. It equals the lesser of either the Grams credited in the credit phase from the value of the inbound message divided by the current gas price, or the global per-transaction gas limit.",
+            gas_credit:
+                "This parameter may be non-zero only for external inbound messages. It is the lesser of either the amount of gas that can be paid from the account balance or the maximum gas credit",
             mode: "",
-            exit_code: "These parameter represents the status values returned by TVM; for a successful transaction, exit_code has to be 0 or 1",
+            exit_code:
+                "These parameter represents the status values returned by TVM; for a successful transaction, exit_code has to be 0 or 1",
             exit_arg: "",
-            vm_steps: "the total number of steps performed by TVM (usually equal to two plus the number of instructions executed, including implicit RETs)",
-            vm_init_state_hash: "This parameter is the representation hashes of the original state of TVM.",
-            vm_final_state_hash: "This parameter is the representation hashes of the resulting state of TVM.",
+            vm_steps:
+                "the total number of steps performed by TVM (usually equal to two plus the number of instructions executed, including implicit RETs)",
+            vm_init_state_hash:
+                "This parameter is the representation hashes of the original state of TVM.",
+            vm_final_state_hash:
+                "This parameter is the representation hashes of the resulting state of TVM.",
         },
         action: {
             _doc: "If the smart contract has terminated successfully (with exit code 0 or 1), the actions from the list are performed. If it is impossible to perform all of them—for example, because of insufficient funds to transfer with an outbound message—then the transaction is aborted and the account state is rolled back. The transaction is also aborted if the smart contract did not terminate successfully, or if it was not possible to invoke the smart contract at all because it is uninitialized or frozen.",
             success: "",
             valid: "",
-            no_funds: "The flag indicates absence of funds required to create an outbound message",
+            no_funds:
+                "The flag indicates absence of funds required to create an outbound message",
             status_change: "",
             total_fwd_fees: "",
             total_action_fees: "",
@@ -245,17 +278,20 @@ total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fw
 
 The formula is:
 balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
-        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
+        chain_order:
+            "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
         ext_in_msg_fee: "Fee for inbound external message import.",
     },
 
     shardDescr: {
         _doc: "ShardHashes is represented by a dictionary with 32-bit workchain_ids as keys, and “shard binary trees”, represented by TL-B type BinTree ShardDescr, as values. Each leaf of this shard binary tree contains a value of type ShardDescr, which describes a single shard by indicating the sequence number seq_no, the logical time lt, and the hash hash of the latest (signed) block of the corresponding shardchain.",
         seq_no: "uint32 sequence number",
-        reg_mc_seqno: "Returns last known master block at the time of shard generation.",
+        reg_mc_seqno:
+            "Returns last known master block at the time of shard generation.",
         start_lt: "Logical time of the shardchain start",
         end_lt: "Logical time of the shardchain end",
-        root_hash: "Returns last known master block at the time of shard generation. The shard block configuration is derived from that block.",
+        root_hash:
+            "Returns last known master block at the time of shard generation. The shard block configuration is derived from that block.",
         file_hash: "Shard block file hash.",
         before_split: `TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
@@ -272,9 +308,11 @@ The masterchain cannot be split or merged.`,
         split_type: "",
         split: "",
         fees_collected: "Amount of fees collected int his shard in grams.",
-        fees_collected_other: "Amount of fees collected int his shard in non gram currencies.",
+        fees_collected_other:
+            "Amount of fees collected int his shard in non gram currencies.",
         funds_created: "Amount of funds created in this shard in grams.",
-        funds_created_other: "Amount of funds created in this shard in non gram currencies.",
+        funds_created_other:
+            "Amount of funds created in this shard in non gram currencies.",
     },
 
     block: {
@@ -289,8 +327,10 @@ The masterchain cannot be split or merged.`,
         flags: "",
         master_ref: "",
         prev_ref: "External block reference for previous block.",
-        prev_alt_ref: "External block reference for previous block in case of shard merge.",
-        prev_vert_ref: "External block reference for previous block in case of vertical blocks.",
+        prev_alt_ref:
+            "External block reference for previous block in case of shard merge.",
+        prev_vert_ref:
+            "External block reference for previous block in case of vertical blocks.",
         prev_vert_alt_ref: "",
         version: "uin32 block version identifier",
         gen_validator_list_hash_short: "",
@@ -303,13 +343,15 @@ Logical time is a component of the TON Blockchain that also plays an important r
         end_lt: "Logical creation time automatically set by the block formation end.",
         workchain_id: "uint32 workchain identifier",
         shard: "",
-        min_ref_mc_seqno: "Returns last known master block at the time of shard generation.",
+        min_ref_mc_seqno:
+            "Returns last known master block at the time of shard generation.",
         prev_key_block_seqno: "Returns a number of a previous key block.",
         gen_software_version: "",
         gen_software_capabilities: "",
         value_flow: {
             to_next_blk: "Amount of grams amount to the next block.",
-            to_next_blk_other: "Amount of non gram cryptocurrencies to the next block.",
+            to_next_blk_other:
+                "Amount of non gram cryptocurrencies to the next block.",
             exported: "Amount of grams exported.",
             exported_other: "Amount of non gram cryptocurrencies exported.",
             fees_collected: "",
@@ -319,11 +361,13 @@ Logical time is a component of the TON Blockchain that also plays an important r
             imported: "Amount of grams imported.",
             imported_other: "Amount of non gram cryptocurrencies imported.",
             from_prev_blk: "Amount of grams transferred from previous block.",
-            from_prev_blk_other: "Amount of non gram cryptocurrencies transferred from previous block.",
+            from_prev_blk_other:
+                "Amount of non gram cryptocurrencies transferred from previous block.",
             minted: "Amount of grams minted in this block.",
             minted_other: "",
             fees_imported: "Amount of import fees in grams",
-            fees_imported_other: "Amount of import fees in non gram currencies.",
+            fees_imported_other:
+                "Amount of import fees in non gram currencies.",
         },
         in_msg_descr: "",
         rand_seed: "",
@@ -361,7 +405,8 @@ Logical time is a component of the TON Blockchain that also plays an important r
                 fees: "Amount of fees in grams",
                 fees_other: "Array of fees in non gram crypto currencies",
                 create: "Amount of fees created during shard",
-                create_other: "Amount of non gram fees created in non gram crypto currencies during the block.",
+                create_other:
+                    "Amount of non gram fees created in non gram crypto currencies during the block.",
             },
             recover_create_msg: "",
             prev_blk_signatures: {
@@ -498,7 +543,8 @@ Logical time is a component of the TON Blockchain that also plays an important r
         key_block: "true if this block is a key block",
         boc: "Serialized bag of cells of this block encoded with base64",
         balance_delta: "Account balance change after transaction",
-        chain_order: "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
+        chain_order:
+            "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
         file_hash: "Block file hash",
     },
 
@@ -526,10 +572,12 @@ Logical time is a component of the TON Blockchain that also plays an important r
         workchain_id: "Zerostate workchain_id",
         accounts: "Initial accounts state at the workchain start",
         total_balance: "Overall balance of all accounts of the workchain",
-        total_balance_other: "Overall balance of all accounts of the workchain in other currencies",
+        total_balance_other:
+            "Overall balance of all accounts of the workchain in other currencies",
         master: {
             global_balance: "Overall balance of all accounts",
-            global_balance_other: "Overall balance of all accounts in other currencies",
+            global_balance_other:
+                "Overall balance of all accounts in other currencies",
             validator_list_hash_short: "",
         },
         boc: "Serialized bag of cells of this zerostate encoded with base64",
@@ -542,5 +590,4 @@ Logical time is a component of the TON Blockchain that also plays an important r
         root_hash: "Zerostate root cell representation hash",
         file_hash: "Zerostate file hash",
     },
-
-};
+}

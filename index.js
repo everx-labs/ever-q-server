@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-const {main} = require('./dist/server');
-process.title = 'q-server';
-main();
+const { main } = require('./dist/server')
+process.title = 'q-server'
+main()

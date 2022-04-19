@@ -1,29 +1,31 @@
 module.exports = {
     root: true,
-    ignorePatterns: [
-        "src/server/graphql/blockchain/resolvers-types-generated.ts"
-    ],
     parser: "@typescript-eslint/parser",
     parserOptions: {
+        project: "./tsconfig.json",
         tsconfigRootDir: __dirname,
-        project: ['./tsconfig.json'],
     },
-    plugins: [
-        "@typescript-eslint",
-    ],
+    plugins: ["@typescript-eslint", "prettier", "jest"],
     extends: [
         "eslint:recommended",
         "plugin:@typescript-eslint/recommended",
+        // 'plugin:@typescript-eslint/recommended-requiring-type-checking',
         "prettier",
     ],
     rules: {
+        "prettier/prettier": 2,
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
-        "quotes": "off",
-        "@typescript-eslint/quotes": ["error", "double"],
-        "semi": "off",
-        "@typescript-eslint/semi": ["error"],
+        "no-implicit-coercion": ["warn", { allow: ["!!"] }],
         "eol-last": ["error", "always"],
         "@typescript-eslint/no-floating-promises": ["error"],
+        "no-implicit-coercion": ["warn", { allow: ["!!"] }],
+        curly: ["error", "all"],
     },
-};
+    env: {
+        node: true,
+        "jest/globals": true,
+    },
+}

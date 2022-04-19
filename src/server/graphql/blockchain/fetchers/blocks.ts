@@ -1,11 +1,11 @@
-import { GraphQLResolveInfo } from "graphql";
+import { GraphQLResolveInfo } from "graphql"
 
-import { QParams } from "../../../filter/filters";
-import { QRequestContext } from "../../../request";
-import { QTraceSpan } from "../../../tracing";
-import { QError, required } from "../../../utils";
+import { QParams } from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
+import { QTraceSpan } from "../../../tracing"
+import { QError, required } from "../../../utils"
 
-import { config } from "../config";
+import { config } from "../config"
 import {
     Direction,
     getNodeSelectionSetForConnection,
@@ -13,14 +13,14 @@ import {
     prepareChainOrderFilter,
     processPaginatedQueryResult,
     processPaginationArgs,
-} from "../helpers";
+} from "../helpers"
 import {
     BlockchainBlock,
     BlockchainBlocksConnection,
     BlockchainQueryBlocksArgs,
     BlockchainQueryBlock_By_Seq_NoArgs,
     BlockchainQueryKey_BlocksArgs,
-} from "../resolvers-types-generated";
+} from "../resolvers-types-generated"
 
 async function fetch_block(
     filterBuilder: (params: QParams) => String,
@@ -30,21 +30,21 @@ async function fetch_block(
     maxJoinDepth = 1,
     shards?: Set<string>,
 ) {
-    const selectionSet = info.fieldNodes[0].selectionSet;
+    const selectionSet = info.fieldNodes[0].selectionSet
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
         maxJoinDepth,
-        "doc"
-    );
+        "doc",
+    )
 
     // query
-    const params = new QParams();
+    const params = new QParams()
     const query =
         "FOR doc IN blocks " +
         `FILTER ${filterBuilder(params)} ` +
-        `RETURN ${returnExpression}`;
-    const queryResult = await context.services.data.query(
+        `RETURN ${returnExpression}`
+    const queryResult = (await context.services.data.query(
         required(context.services.data.blocks.provider),
         {
             text: query,
@@ -54,7 +54,7 @@ async function fetch_block(
             traceSpan,
             shards,
         },
-    ) as BlockchainBlock[];
+    )) as BlockchainBlock[]
 
     await config.blocks.fetchJoins(
         queryResult,
@@ -62,9 +62,9 @@ async function fetch_block(
         context,
         traceSpan,
         maxJoinDepth,
-    );
+    )
 
-    return queryResult[0];
+    return queryResult[0]
 }
 
 export async function resolve_block(
@@ -74,12 +74,12 @@ export async function resolve_block(
     traceSpan: QTraceSpan,
 ) {
     return fetch_block(
-        (params) => `doc._key == @${params.add(hash)}`,
+        params => `doc._key == @${params.add(hash)}`,
         context,
         info,
         traceSpan,
         // TODO: shard
-    );
+    )
 }
 
 export async function resolve_block_by_seq_no(
@@ -89,14 +89,14 @@ export async function resolve_block_by_seq_no(
     traceSpan: QTraceSpan,
 ) {
     return fetch_block(
-        (params) => 
+        params =>
             `doc.workchain_id == @${params.add(args.workchain)} AND ` +
             `doc.shard == @${params.add(args.thread)} AND ` +
             `doc.seq_no == @${params.add(args.seq_no)}`,
         context,
         info,
         traceSpan,
-    );
+    )
 }
 
 export async function resolve_key_blocks(
@@ -106,24 +106,21 @@ export async function resolve_key_blocks(
     traceSpan: QTraceSpan,
 ) {
     // filters
-    const filters: string[] = [];
-    const params = new QParams();
+    const filters: string[] = []
+    const params = new QParams()
 
-    await prepareChainOrderFilter(args, params, filters, context);
-    filters.push("doc.key_block == true");
+    await prepareChainOrderFilter(args, params, filters, context)
+    filters.push("doc.key_block == true")
 
-    const {
-        direction,
-        limit,
-    } = processPaginationArgs(args);
+    const { direction, limit } = processPaginationArgs(args)
 
-    const selectionSet = getNodeSelectionSetForConnection(info);
+    const selectionSet = getNodeSelectionSetForConnection(info)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
         0,
         "doc",
-    );
+    )
 
     // query
     const query = `
@@ -132,8 +129,8 @@ export async function resolve_key_blocks(
         SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
         RETURN ${returnExpression}
-    `;
-    const queryResult = await context.services.data.query(
+    `
+    const queryResult = (await context.services.data.query(
         required(context.services.data.blocks.provider),
         {
             text: query,
@@ -147,14 +144,14 @@ export async function resolve_key_blocks(
             request: context,
             traceSpan,
         },
-    ) as BlockchainBlock[];
+    )) as BlockchainBlock[]
 
-    return await processPaginatedQueryResult(
+    return (await processPaginatedQueryResult(
         queryResult,
         limit,
         direction,
         "chain_order",
-    ) as BlockchainBlocksConnection;
+    )) as BlockchainBlocksConnection
 }
 
 export async function resolve_blockchain_blocks(
@@ -165,39 +162,36 @@ export async function resolve_blockchain_blocks(
 ) {
     // validate args
     if (args.thread && !isDefined(args.workchain)) {
-        throw QError.invalidQuery("Workchain is required for the thread filter");
+        throw QError.invalidQuery("Workchain is required for the thread filter")
     }
 
     // filters
-    const filters: string[] = [];
-    const params = new QParams();
+    const filters: string[] = []
+    const params = new QParams()
 
-    await prepareChainOrderFilter(args, params, filters, context);
+    await prepareChainOrderFilter(args, params, filters, context)
     if (isDefined(args.workchain)) {
-        filters.push(`doc.workchain_id == @${params.add(args.workchain)}`);
+        filters.push(`doc.workchain_id == @${params.add(args.workchain)}`)
     }
     if (isDefined(args.thread)) {
-        filters.push(`doc.shard == @${params.add(args.thread)}`);
+        filters.push(`doc.shard == @${params.add(args.thread)}`)
     }
     if (isDefined(args.min_tr_count)) {
-        filters.push(`doc.tr_count >= @${params.add(args.min_tr_count)}`);
+        filters.push(`doc.tr_count >= @${params.add(args.min_tr_count)}`)
     }
     if (isDefined(args.max_tr_count)) {
-        filters.push(`doc.tr_count <= @${params.add(args.max_tr_count)}`);
+        filters.push(`doc.tr_count <= @${params.add(args.max_tr_count)}`)
     }
 
-    const {
-        direction,
-        limit,
-    } = processPaginationArgs(args);
+    const { direction, limit } = processPaginationArgs(args)
 
-    const selectionSet = getNodeSelectionSetForConnection(info);
+    const selectionSet = getNodeSelectionSetForConnection(info)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
         0,
         "doc",
-    );
+    )
 
     // query
     const query = `
@@ -206,8 +200,8 @@ export async function resolve_blockchain_blocks(
         SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
         RETURN ${returnExpression}
-    `;
-    const queryResult = await context.services.data.query(
+    `
+    const queryResult = (await context.services.data.query(
         required(context.services.data.blocks.provider),
         {
             text: query,
@@ -221,12 +215,12 @@ export async function resolve_blockchain_blocks(
             request: context,
             traceSpan,
         },
-    ) as BlockchainBlock[];
+    )) as BlockchainBlock[]
 
-    return await processPaginatedQueryResult(
+    return (await processPaginatedQueryResult(
         queryResult,
         limit,
         direction,
         "chain_order",
-    ) as BlockchainBlocksConnection;
+    )) as BlockchainBlocksConnection
 }

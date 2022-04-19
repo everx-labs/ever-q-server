@@ -1,2 +1,2 @@
-export *  from "./trace-span";
-export *  from "./tracer";
+export * from "./trace-span"
+export * from "./tracer"
