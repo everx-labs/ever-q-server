@@ -258,7 +258,7 @@ export class QDataCollection {
                                     for (const ws of request.connection.context
                                         .ws) {
                                         if (ws.readyState === WebSocket.OPEN) {
-                                            this.log.debug('CLOSING WS request') // TODO remove
+                                            this.log.debug('DEBUG: close ws') // TODO remove
                                             ws.close()
                                         }
                                     }
@@ -302,7 +302,6 @@ export class QDataCollection {
 
                     const savedReturn = asyncIterator.return.bind(asyncIterator)
                     asyncIterator.return = () => {
-                        console.log(' ASYNC_ITERATORN_RETURN WAS CALLED') // TODO remove
                         clearInterval(timerId)
                         return savedReturn()
                     }
@@ -371,25 +370,31 @@ export class QDataCollection {
                 }
                 return subscription
             },
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-            resolve: (payload: any, _: unknown, context: QRequestContext) => {
-                if (this.subscriptionsMode === 2) {
-                    this.log.debug('!!! GOT PAYLAD', payload) // TODO remove, Please, use this.log... for logging
-
-                    if (payload === 'STOP') {
-                        // Subscription was abruptly aborted by streams application
-                        if (context?.connection?.context?.subscrWS?.close) {
-                            context.connection.context.subscrWS.close()
-                            return
-                        }
-                    }
-                    // Add _key to mimic "old" behavior
-                    if (payload._key === undefined) {
-                        payload._key = payload.id
-                    }
-                }
-                return payload
-            },
+            ...(this.subscriptionsMode === 1
+                ? {}
+                : {
+                      resolve: (
+                          payload: any,
+                          _: unknown,
+                          context: QRequestContext,
+                      ) => {
+                          this.log.debug('DEBUG: got payload', payload) // TODO remove
+                          if (payload === 'STOP') {
+                              // Subscription was abruptly aborted by streams application
+                              if (
+                                  context?.connection?.context?.subscrWS?.close
+                              ) {
+                                  context.connection.context.subscrWS.close()
+                                  return
+                              }
+                          }
+                          // Add _key to mimic "old" behavior
+                          if (payload._key === undefined) {
+                              payload._key = payload.id
+                          }
+                          return payload
+                      },
+                  }),
         }
     }
 
