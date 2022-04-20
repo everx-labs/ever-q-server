@@ -1,4 +1,4 @@
-import { QDataCache } from '../data-provider'
+import { QDataCache } from "../data-provider"
 
 export class InMemoryDataCache implements QDataCache {
     data: Map<string, unknown>
@@ -10,7 +10,7 @@ export class InMemoryDataCache implements QDataCache {
         this.data = new Map()
         this.getCount = 0
         this.setCount = 0
-        this.lastKey = ''
+        this.lastKey = ""
     }
 
     async get(key: string): Promise<unknown | undefined> {

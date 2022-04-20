@@ -1,6 +1,6 @@
-import { AccessArgs } from '../auth'
-import { QRequestContext } from '../request'
-import { required } from '../utils'
+import { AccessArgs } from "../auth"
+import { QRequestContext } from "../request"
+import { required } from "../utils"
 
 //------------------------------------------------------------- Query
 
@@ -10,11 +10,11 @@ async function getAccountsCount(
     context: QRequestContext,
 ): Promise<number> {
     const { data } = context.services
-    return context.trace('getAccountsCount', async traceSpan => {
+    return context.trace("getAccountsCount", async traceSpan => {
         context.requestTags.hasTotals = true
         await context.requireGrantedAccess(args)
         const result = await data.query(required(data.accounts.provider), {
-            text: 'RETURN LENGTH(accounts)',
+            text: "RETURN LENGTH(accounts)",
             vars: {},
             orderBy: [],
             request: context,
@@ -32,11 +32,11 @@ async function getTransactionsCount(
     context: QRequestContext,
 ): Promise<number> {
     const { data } = context.services
-    return context.trace('getTransactionsCount', async traceSpan => {
+    return context.trace("getTransactionsCount", async traceSpan => {
         context.requestTags.hasTotals = true
         await context.requireGrantedAccess(args)
         const result = await data.query(required(data.transactions.provider), {
-            text: 'RETURN LENGTH(transactions)',
+            text: "RETURN LENGTH(transactions)",
             vars: {},
             orderBy: [],
             request: context,
@@ -54,7 +54,7 @@ async function getAccountsTotalBalance(
     context: QRequestContext,
 ): Promise<string> {
     const { data } = context.services
-    return context.trace('getAccountsTotalBalance', async traceSpan => {
+    return context.trace("getAccountsTotalBalance", async traceSpan => {
         context.requestTags.hasTotals = true
         await context.requireGrantedAccess(args)
         /*

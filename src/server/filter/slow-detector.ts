@@ -1,13 +1,13 @@
-import type { QIndexInfo } from '../data/data-provider'
+import type { QIndexInfo } from "../data/data-provider"
 import {
     CollectionFilter,
     indexToString,
     orderByToString,
     QParams,
     splitOr,
-} from './filters'
-import type { OrderBy, QFieldExplanation, QType } from './filters'
-import type { QLog } from '../logs'
+} from "./filters"
+import type { OrderBy, QFieldExplanation, QType } from "./filters"
+import type { QLog } from "../logs"
 
 function setIs1(s: Set<string>, a: string): boolean {
     return s.size === 1 && s.has(a)
@@ -19,16 +19,16 @@ function setIs2(s: Set<string>, a: string, b: string): boolean {
 
 function canUseIndexedRange(ops: Set<string>): boolean {
     return (
-        setIs1(ops, '==') ||
-        setIs1(ops, '!=') ||
-        setIs1(ops, '>') ||
-        setIs2(ops, '>', '<') ||
-        setIs2(ops, '>', '<=') ||
-        setIs1(ops, '>=') ||
-        setIs2(ops, '>=', '<') ||
-        setIs2(ops, '>=', '<=') ||
-        setIs1(ops, '<') ||
-        setIs1(ops, '<=')
+        setIs1(ops, "==") ||
+        setIs1(ops, "!=") ||
+        setIs1(ops, ">") ||
+        setIs2(ops, ">", "<") ||
+        setIs2(ops, ">", "<=") ||
+        setIs1(ops, ">=") ||
+        setIs2(ops, ">=", "<") ||
+        setIs2(ops, ">=", "<=") ||
+        setIs1(ops, "<") ||
+        setIs1(ops, "<=")
     )
 }
 
@@ -90,7 +90,7 @@ function orderByCanUseIndex(
             if (!field) {
                 return false
             }
-            if (!setIs1(field.operations, '==')) {
+            if (!setIs1(field.operations, "==")) {
                 return false
             }
         }
@@ -112,8 +112,8 @@ function orderByCanUseAnyIndex(
 }
 
 function hasKeyEq(fields: Map<string, QFieldExplanation>): boolean {
-    const key = fields.get('_key')
-    return !!(key && setIs1(key.operations, '=='))
+    const key = fields.get("_key")
+    return !!(key && setIs1(key.operations, "=="))
 }
 
 function getSlowReason(
@@ -125,7 +125,7 @@ function getSlowReason(
     const logFields: string[] = []
     for (const [name, explanation] of fields.entries()) {
         logFields.push(
-            `${name} ${Array.from(explanation.operations).join(' AND ')}`,
+            `${name} ${Array.from(explanation.operations).join(" AND ")}`,
         )
     }
     return {
@@ -145,13 +145,13 @@ function getSlowReasonForOrOperand(
     const params = new QParams({
         explain: true,
     })
-    type.filterCondition(params, '', filter)
+    type.filterCondition(params, "", filter)
     if (!params.explanation) {
-        return getSlowReason('No filter', new Map(), collectionIndexes, [])
+        return getSlowReason("No filter", new Map(), collectionIndexes, [])
     }
     const fields = new Map<string, QFieldExplanation>()
     for (const [field, explanation] of params.explanation.fields) {
-        if (field !== 'status') {
+        if (field !== "status") {
             fields.set(field, explanation)
         }
     }

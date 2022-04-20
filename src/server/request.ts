@@ -1,16 +1,16 @@
-import { QConfig } from './config'
-import { AccessArgs, AccessRights, Auth } from './auth'
-import { Span, SpanContext, Tracer } from 'opentracing'
-import { QTraceSpan, QTracer } from './tracing'
-import { TonClient } from '@tonclient/core'
-import QLogs from './logs'
-import QBlockchainData from './data/blockchain'
-import EventEmitter from 'events'
-import { extractHeader, QError, RequestWithHeaders } from './utils'
-import express from 'express'
-import { ExecutionParams } from 'subscriptions-transport-ws'
-import { IStats } from './stats'
-import { QRequestParams } from './filter/filters'
+import { QConfig } from "./config"
+import { AccessArgs, AccessRights, Auth } from "./auth"
+import { Span, SpanContext, Tracer } from "opentracing"
+import { QTraceSpan, QTracer } from "./tracing"
+import { TonClient } from "@tonclient/core"
+import QLogs from "./logs"
+import QBlockchainData from "./data/blockchain"
+import EventEmitter from "events"
+import { extractHeader, QError, RequestWithHeaders } from "./utils"
+import express from "express"
+import { ExecutionParams } from "subscriptions-transport-ws"
+import { IStats } from "./stats"
+import { QRequestParams } from "./filter/filters"
 
 export class QRequestServices {
     constructor(
@@ -26,8 +26,8 @@ export class QRequestServices {
 }
 
 export const RequestEvent = {
-    CLOSE: 'close',
-    FINISH: 'finish',
+    CLOSE: "close",
+    FINISH: "finish",
 }
 
 export class QRequestContext implements QRequestParams {
@@ -57,16 +57,16 @@ export class QRequestContext implements QRequestParams {
         this.start = Date.now()
         this.events = new EventEmitter()
         this.events.setMaxListeners(0)
-        req?.on?.('close', () => {
+        req?.on?.("close", () => {
             this.emitClose()
         })
-        this.remoteAddress = req?.socket?.remoteAddress ?? ''
+        this.remoteAddress = req?.socket?.remoteAddress ?? ""
         this.expectedAccountBocVersion = Number.parseInt(
             extractHeader(
                 req as RequestWithHeaders,
                 connection,
-                'X-Evernode-Expected-Account-Boc-Version',
-                '1',
+                "X-Evernode-Expected-Account-Boc-Version",
+                "1",
             ),
         )
         this.accessKey = Auth.extractAccessKey(
@@ -78,11 +78,11 @@ export class QRequestContext implements QRequestParams {
             undefined
         this.requestSpan = QTraceSpan.create(
             services.tracer,
-            'q-request',
+            "q-request",
             this.parentSpan,
         )
         this.requestSpan.log({
-            event: 'QRequestContext_created',
+            event: "QRequestContext_created",
             headers: req?.headers,
             request_body: req?.body,
         })

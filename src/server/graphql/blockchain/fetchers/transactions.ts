@@ -1,13 +1,13 @@
-import { GraphQLResolveInfo } from 'graphql'
+import { GraphQLResolveInfo } from "graphql"
 
-import { convertBigUInt } from '../../../filter/filters'
-import { QParams } from '../../../filter/filters'
-import { QRequestContext } from '../../../request'
-import { QTraceSpan } from '../../../tracing'
-import { required } from '../../../utils'
-import { QError } from '../../../utils'
+import { convertBigUInt } from "../../../filter/filters"
+import { QParams } from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
+import { QTraceSpan } from "../../../tracing"
+import { required } from "../../../utils"
+import { QError } from "../../../utils"
 
-import { config } from '../config'
+import { config } from "../config"
 import {
     Direction,
     getNodeSelectionSetForConnection,
@@ -15,7 +15,7 @@ import {
     prepareChainOrderFilter,
     processPaginatedQueryResult,
     processPaginationArgs,
-} from '../helpers'
+} from "../helpers"
 import {
     BlockchainAccountQueryTransactionsArgs,
     BlockchainQueryAccount_TransactionsArgs,
@@ -23,7 +23,7 @@ import {
     BlockchainQueryWorkchain_TransactionsArgs,
     BlockchainTransaction,
     BlockchainTransactionsConnection,
-} from '../resolvers-types-generated'
+} from "../resolvers-types-generated"
 
 export async function resolve_transaction(
     hash: String,
@@ -38,13 +38,13 @@ export async function resolve_transaction(
         selectionSet,
         context,
         maxJoinDepth,
-        'doc',
+        "doc",
     )
 
     // query
     const params = new QParams()
     const query =
-        'FOR doc IN transactions ' +
+        "FOR doc IN transactions " +
         `FILTER doc._key == @${params.add(hash)} ` +
         `RETURN ${returnExpression}`
     const queryResult = (await context.services.data.query(
@@ -96,14 +96,14 @@ export async function resolve_blockchain_transactions(
         selectionSet,
         context,
         maxJoinDepth,
-        'doc',
+        "doc",
     )
 
     // query
     const query = `
         FOR doc IN transactions
-        FILTER ${filters.join(' AND ')}
-        SORT doc.chain_order ${direction == Direction.Backward ? 'DESC' : 'ASC'}
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
@@ -114,8 +114,8 @@ export async function resolve_blockchain_transactions(
             vars: params.values,
             orderBy: [
                 {
-                    path: 'chain_order',
-                    direction: 'ASC',
+                    path: "chain_order",
+                    direction: "ASC",
                 },
             ],
             request: context,
@@ -127,7 +127,7 @@ export async function resolve_blockchain_transactions(
         queryResult,
         limit,
         direction,
-        'chain_order',
+        "chain_order",
         async r => {
             await config.transactions.fetchJoins(
                 r,
@@ -157,7 +157,7 @@ export async function resolve_account_transactions(
         restrictToAccounts.length != 0 &&
         !restrictToAccounts.includes(account_address)
     ) {
-        throw QError.invalidQuery('This account_addr is not allowed')
+        throw QError.invalidQuery("This account_addr is not allowed")
     }
 
     // filters
@@ -185,14 +185,14 @@ export async function resolve_account_transactions(
         selectionSet,
         context,
         maxJoinDepth,
-        'doc',
+        "doc",
     )
 
     // query
     const query = `
         FOR doc IN transactions
-        FILTER ${filters.join(' AND ')}
-        SORT doc.chain_order ${direction == Direction.Backward ? 'DESC' : 'ASC'}
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
@@ -203,8 +203,8 @@ export async function resolve_account_transactions(
             vars: params.values,
             orderBy: [
                 {
-                    path: 'chain_order',
-                    direction: 'ASC',
+                    path: "chain_order",
+                    direction: "ASC",
                 },
             ],
             request: context,
@@ -217,7 +217,7 @@ export async function resolve_account_transactions(
         queryResult,
         limit,
         direction,
-        'chain_order',
+        "chain_order",
         async r => {
             await config.transactions.fetchJoins(
                 r,

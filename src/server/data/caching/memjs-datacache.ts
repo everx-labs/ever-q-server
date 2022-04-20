@@ -1,7 +1,7 @@
-import { Client as MemcachedClient, ClientOptions } from 'memjs'
-import type { QMemCachedConfig } from '../../config'
-import type { QLog } from '../../logs'
-import type { QDataCache } from '../data-provider'
+import { Client as MemcachedClient, ClientOptions } from "memjs"
+import type { QMemCachedConfig } from "../../config"
+import type { QLog } from "../../logs"
+import type { QDataCache } from "../data-provider"
 
 export class MemjsDataCache implements QDataCache {
     memcached: MemcachedClient
@@ -31,13 +31,13 @@ export class MemjsDataCache implements QDataCache {
                 if (!err) {
                     try {
                         const value = data ? JSON.parse(data.toString()) : null
-                        this.log.debug('GET', hashedKey)
+                        this.log.debug("GET", hashedKey)
                         resolve(value)
                     } catch (e) {
                         this.log.error(
-                            'FAILED',
-                            'MEMCACHED',
-                            'GET',
+                            "FAILED",
+                            "MEMCACHED",
+                            "GET",
                             hashedKey,
                             e.message,
                             data?.toString(),
@@ -46,9 +46,9 @@ export class MemjsDataCache implements QDataCache {
                     }
                 } else {
                     this.log.error(
-                        'FAILED',
-                        'MEMCACHED',
-                        'GET',
+                        "FAILED",
+                        "MEMCACHED",
+                        "GET",
                         hashedKey,
                         err.message,
                     )
@@ -70,12 +70,12 @@ export class MemjsDataCache implements QDataCache {
                 expirationTimeout !== 0 ? { expires: expirationTimeout } : {},
                 err => {
                     if (!err) {
-                        this.log.debug('SET', hashedKey)
+                        this.log.debug("SET", hashedKey)
                     } else {
                         this.log.error(
-                            'FAILED',
-                            'MEMCACHED',
-                            'SET',
+                            "FAILED",
+                            "MEMCACHED",
+                            "SET",
                             hashedKey,
                             err.message,
                         )

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import schemaDef from '../../server/schema/db-schema'
-import gen from './ql-js-generator'
+import schemaDef from "../../server/schema/db-schema"
+import gen from "./ql-js-generator"
 
-import fs from 'fs'
+import fs from "fs"
 
 const { ql, js } = gen(schemaDef)
 
 // Please ensure that new files are added to package.json "pre-commit" command as well
-fs.writeFileSync('./res/type-defs-generated.graphql', ql)
-fs.writeFileSync('./src/server/graphql/resolvers-generated.ts', js)
+fs.writeFileSync("./res/type-defs-generated.graphql", ql)
+fs.writeFileSync("./src/server/graphql/resolvers-generated.ts", js)

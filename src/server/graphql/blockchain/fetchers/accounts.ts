@@ -1,12 +1,12 @@
-import { GraphQLResolveInfo } from 'graphql'
+import { GraphQLResolveInfo } from "graphql"
 
-import { QParams } from '../../../filter/filters'
-import { QRequestContext } from '../../../request'
-import { QTraceSpan } from '../../../tracing'
-import { required } from '../../../utils'
+import { QParams } from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
+import { QTraceSpan } from "../../../tracing"
+import { required } from "../../../utils"
 
-import { config } from '../config'
-import { BlockchainAccount } from '../resolvers-types-generated'
+import { config } from "../config"
+import { BlockchainAccount } from "../resolvers-types-generated"
 
 export async function resolve_account(
     address: String,
@@ -21,13 +21,13 @@ export async function resolve_account(
         selectionSet,
         context,
         maxJoinDepth,
-        'doc',
+        "doc",
     )
 
     // query
     const params = new QParams()
     const query =
-        'FOR doc IN accounts ' +
+        "FOR doc IN accounts " +
         `FILTER doc._key == @${params.add(address)} ` +
         `RETURN ${returnExpression}`
     const queryResult = (await context.services.data.query(

@@ -1,6 +1,6 @@
-import { BigIntArgs, resolveBigUInt } from '../../../filter/filters'
-import { QRequestContext } from '../../../request'
-import { AccountStatusEnum, Resolvers } from '../resolvers-types-generated'
+import { BigIntArgs, resolveBigUInt } from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
+import { AccountStatusEnum, Resolvers } from "../resolvers-types-generated"
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainAccount: {

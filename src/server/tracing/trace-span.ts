@@ -1,6 +1,6 @@
-import { Span, SpanContext, Tags, Tracer } from 'opentracing'
-import { QTracer } from './tracer'
-import { cleanError, toLog } from '../utils'
+import { Span, SpanContext, Tags, Tracer } from "opentracing"
+import { QTracer } from "./tracer"
+import { cleanError, toLog } from "../utils"
 
 const SPAN_CREATION_TAGS = {
     // according to some sources next tag should be attached on span creation
@@ -31,15 +31,15 @@ export class QTraceSpan {
         try {
             const result = await operation(span)
             if (result !== undefined) {
-                span.log({ event: 'completed', result: toLog(result) })
+                span.log({ event: "completed", result: toLog(result) })
             } else {
-                span.log({ event: 'completed' })
+                span.log({ event: "completed" })
             }
             span.finish()
             return result
         } catch (error) {
             const cleaned = cleanError(error)
-            span.log({ event: 'error', 'error.object': toLog(error) })
+            span.log({ event: "error", "error.object": toLog(error) })
             span.finish()
             throw cleaned
         }

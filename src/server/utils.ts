@@ -1,15 +1,15 @@
-import type { QLog } from './logs'
-import fs from 'fs'
-import path from 'path'
-import { createHash } from 'crypto'
+import type { QLog } from "./logs"
+import fs from "fs"
+import path from "path"
+import { createHash } from "crypto"
 
 export function packageJson(): Record<string, unknown> {
     let testPath = path.resolve(__dirname)
-    const packagePath = () => path.resolve(testPath, 'package.json')
-    while (testPath !== '' && !fs.existsSync(packagePath())) {
+    const packagePath = () => path.resolve(testPath, "package.json")
+    while (testPath !== "" && !fs.existsSync(packagePath())) {
         testPath = path.dirname(testPath)
     }
-    return JSON.parse(fs.readFileSync(packagePath(), 'utf8'))
+    return JSON.parse(fs.readFileSync(packagePath(), "utf8"))
 }
 
 export function cleanError(
@@ -45,7 +45,7 @@ export class QError extends Error {
 
     constructor(code: number, message: string, data?: Record<string, unknown>) {
         super(message)
-        this.source = 'graphql'
+        this.source = "graphql"
         this.code = code
         if (data !== undefined) {
             this.data = data
@@ -53,7 +53,7 @@ export class QError extends Error {
     }
 
     static messageExpired(id: string, expiredAt: number): Error {
-        return QError.create(QErrorCode.MESSAGE_EXPIRED, 'Message expired', {
+        return QError.create(QErrorCode.MESSAGE_EXPIRED, "Message expired", {
             id,
             expiredAt,
             now: Date.now(),
@@ -63,7 +63,7 @@ export class QError extends Error {
     static queryTerminatedOnTimeout(): Error {
         return QError.create(
             QErrorCode.QUERY_TERMINATED_ON_TIMEOUT,
-            'Query terminated on timeout',
+            "Query terminated on timeout",
             {
                 now: Date.now(),
             },
@@ -81,18 +81,18 @@ export class QError extends Error {
     static multipleAccessKeys() {
         return QError.create(
             QErrorCode.MULTIPLE_ACCESS_KEYS,
-            'Request must use the same access key for all queries and mutations',
+            "Request must use the same access key for all queries and mutations",
         )
     }
 
     static unauthorized() {
-        return QError.create(QErrorCode.UNAUTHORIZED, 'Unauthorized')
+        return QError.create(QErrorCode.UNAUTHORIZED, "Unauthorized")
     }
 
     static authServiceUnavailable() {
         return QError.create(
             QErrorCode.AUTH_SERVICE_UNAVAILABLE,
-            'Auth service unavailable',
+            "Auth service unavailable",
         )
     }
 
@@ -101,17 +101,17 @@ export class QError extends Error {
             QErrorCode.AUTH_FAILED,
             error.message ??
                 (error as { description?: string }).description ??
-                '',
+                "",
             { authErrorCode: error.code },
         )
     }
 
     static internalServerError() {
-        return QError.create(500, 'Internal Server Error')
+        return QError.create(500, "Internal Server Error")
     }
 
     static serviceUnavailable() {
-        return QError.create(503, 'Service Unavailable')
+        return QError.create(503, "Service Unavailable")
     }
 
     static invalidConfigValue(option: string, message: string) {
@@ -137,7 +137,7 @@ export function isSystemError(
         syscall?: unknown
     },
 ): boolean {
-    if (error.type === 'system') {
+    if (error.type === "system") {
         return true
     }
     return error.errno !== undefined && error.syscall !== undefined
@@ -171,18 +171,18 @@ export function toJSON(value: unknown): string {
 
 export function toLog(value: unknown, objs?: unknown[]): unknown {
     switch (typeof value) {
-        case 'undefined':
-        case 'boolean':
-        case 'number':
-        case 'bigint':
-        case 'symbol':
+        case "undefined":
+        case "boolean":
+        case "number":
+        case "bigint":
+        case "symbol":
             return value
-        case 'string':
+        case "string":
             if (value.length > 80) {
                 return `${value.substr(0, 50)}… [${value.length}]`
             }
             return value
-        case 'function':
+        case "function":
             return undefined
         default: {
             if (value === null) {
@@ -210,11 +210,11 @@ export function toLog(value: unknown, objs?: unknown[]): unknown {
 }
 
 export function hash(...keys: string[]): string {
-    return createHash('md5').update(keys.join('')).digest('hex')
+    return createHash("md5").update(keys.join("")).digest("hex")
 }
 
 export function httpUrl(address: string): string {
-    const http = 'http'
+    const http = "http"
     return `${http}://${address}`
 }
 
@@ -222,7 +222,7 @@ function isObject(test: unknown): boolean {
     return (
         test !== null &&
         test !== undefined &&
-        typeof test === 'object' &&
+        typeof test === "object" &&
         !Array.isArray(test)
     )
 }

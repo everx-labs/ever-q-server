@@ -1,26 +1,26 @@
-import gql from 'graphql-tag'
-import { AggregationFn } from '../server/data/aggregations'
-import type { AccessRights } from '../server/auth'
-import QLogs from '../server/logs'
-import TONQServer from '../server/server'
+import gql from "graphql-tag"
+import { AggregationFn } from "../server/data/aggregations"
+import type { AccessRights } from "../server/auth"
+import QLogs from "../server/logs"
+import TONQServer from "../server/server"
 import {
     aggregationQueryText,
     createLocalArangoTestData,
     createTestClient,
     normalized,
     testConfig,
-} from './init-tests'
-import { FieldAggregation } from '@tonclient/core'
-import { CollectionFilter } from '../server/filter/filters'
-import { required } from '../server/utils'
+} from "./init-tests"
+import { FieldAggregation } from "@tonclient/core"
+import { CollectionFilter } from "../server/filter/filters"
+import { required } from "../server/utils"
 
-test('Optimized MIN, MAX', () => {
+test("Optimized MIN, MAX", () => {
     const data = createLocalArangoTestData(new QLogs())
 
     expect(
         aggregationQueryText(required(data.blocks), [
             {
-                field: 'seq_no',
+                field: "seq_no",
                 fn: AggregationFn.MIN,
             },
         ]),
@@ -33,7 +33,7 @@ test('Optimized MIN, MAX', () => {
     )
 })
 
-test('Aggregations Fast Detector', async () => {
+test("Aggregations Fast Detector", async () => {
     const granted: AccessRights = {
         granted: true,
         restrictToAccounts: [],
@@ -62,7 +62,7 @@ test('Aggregations Fast Detector', async () => {
         await isFast({}, [
             {
                 fn: AggregationFn.MIN,
-                field: 'lt',
+                field: "lt",
             },
         ]),
     ).toBeTruthy()
@@ -70,7 +70,7 @@ test('Aggregations Fast Detector', async () => {
         await isFast({}, [
             {
                 fn: AggregationFn.MIN,
-                field: 'outmsg_cnt',
+                field: "outmsg_cnt",
             },
         ]),
     ).toBeFalsy()
@@ -78,7 +78,7 @@ test('Aggregations Fast Detector', async () => {
         await isFast({ outmsg_cnt: { eq: 1 } }, [
             {
                 fn: AggregationFn.SUM,
-                field: 'lt',
+                field: "lt",
             },
         ]),
     ).toBeTruthy()
@@ -86,7 +86,7 @@ test('Aggregations Fast Detector', async () => {
         await isFast({ outmsg_cnt: { eq: 1 } }, [
             {
                 fn: AggregationFn.COUNT,
-                field: '',
+                field: "",
             },
         ]),
     ).toBeFalsy()
@@ -94,7 +94,7 @@ test('Aggregations Fast Detector', async () => {
         await isFast({}, [
             {
                 fn: AggregationFn.COUNT,
-                field: '',
+                field: "",
             },
         ]),
     ).toBeTruthy()
@@ -141,7 +141,7 @@ function aggregateStrings<T>(items: T[], getValue: (item: T) => string) {
     }
 }
 
-test('Partitioned Data', async () => {
+test("Partitioned Data", async () => {
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
@@ -239,7 +239,7 @@ test('Partitioned Data', async () => {
     void server.stop()
 })
 
-test('Partitioned data with null', async () => {
+test("Partitioned data with null", async () => {
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
@@ -264,7 +264,7 @@ test('Partitioned data with null', async () => {
     void server.stop()
 })
 
-test('Balance delta sum', async () => {
+test("Balance delta sum", async () => {
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),

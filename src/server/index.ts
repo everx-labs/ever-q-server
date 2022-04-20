@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import program from 'commander'
-import type { QConfig } from './config'
-import { configParams, readConfigFile, resolveConfig } from './config'
-import type { QLog } from './logs'
-import QLogs from './logs'
-import TONQServer from './server'
-import { ConfigParam } from './config-param'
+import program from "commander"
+import type { QConfig } from "./config"
+import { configParams, readConfigFile, resolveConfig } from "./config"
+import type { QLog } from "./logs"
+import QLogs from "./logs"
+import TONQServer from "./server"
+import { ConfigParam } from "./config-param"
 
 ConfigParam.getAll(configParams).forEach(param => {
     program.option(`--${param.option} <value>`, param.descriptionWithDefaults())
@@ -48,7 +48,7 @@ const gs: GlobalState = {
     configPath: program.config || process.env.Q_CONFIG,
 }
 
-process.on('SIGHUP', () => {
+process.on("SIGHUP", () => {
     /**
      * WARNING: while multiple simultaneous SIGHUP calls
      * we ignore new SIGHUP signals until the last reload handler finished
@@ -57,9 +57,9 @@ process.on('SIGHUP', () => {
      */
     if (!gs.reloadLock) {
         gs.reloadLock = true
-        gs.configLog?.debug('RELOAD', 'CONFIG', gs.configPath)
+        gs.configLog?.debug("RELOAD", "CONFIG", gs.configPath)
         void (async () => {
-            gs.configLog?.debug('STOP', 'SERVER')
+            gs.configLog?.debug("STOP", "SERVER")
             await gs.server?.stop()
         })().then(() => {
             main()
@@ -79,8 +79,8 @@ function initGlobalState() {
 
     gs.logs = new QLogs()
     gs.logs.start()
-    gs.configLog = gs.logs.create('config')
-    gs.configLog.debug('USE', gs.config)
+    gs.configLog = gs.logs.create("config")
+    gs.configLog.debug("USE", gs.config)
 
     gs.server = new TONQServer({
         config: gs.config,
@@ -96,7 +96,7 @@ export function main() {
             try {
                 await gs.server.start()
             } catch (error) {
-                gs.server.log.error('FAILED', 'START', error)
+                gs.server.log.error("FAILED", "START", error)
                 process.exit(1)
             }
         }

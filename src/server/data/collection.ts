@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-import { Tracer } from 'opentracing'
+import { Tracer } from "opentracing"
 
-import WebSocket from 'ws'
-import md5 from 'md5'
-import { RedisPubSub } from 'graphql-redis-subscriptions'
-import postSubscription from '../graphql/post-subscription'
+import WebSocket from "ws"
+import md5 from "md5"
+import { RedisPubSub } from "graphql-redis-subscriptions"
+import postSubscription from "../graphql/post-subscription"
 
 import {
     AggregationFn,
     AggregationQuery,
     FieldAggregation,
-} from './aggregations'
+} from "./aggregations"
 import {
     QDataProvider,
     QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
     QResult,
-} from './data-provider'
-import { QDataListener, QDataSubscription } from './listener'
-import { AccessArgs, AccessRights, Auth, grantedAccess } from '../auth'
-import { QConfig, SlowQueriesMode, STATS } from '../config'
+} from "./data-provider"
+import { QDataListener, QDataSubscription } from "./listener"
+import { AccessArgs, AccessRights, Auth, grantedAccess } from "../auth"
+import { QConfig, SlowQueriesMode, STATS } from "../config"
 import {
     CollectionFilter,
     indexToString,
@@ -46,17 +46,17 @@ import {
     QueryStat,
     selectFields,
     selectionToString,
-} from '../filter/filters'
-import QLogs, { QLog } from '../logs'
-import { explainSlowReason, isFastQuery } from '../filter/slow-detector'
-import { IStats, StatsCounter, StatsGauge, StatsTiming } from '../stats'
-import { QTraceSpan, QTracer } from '../tracing'
-import { QError, required, wrap } from '../utils'
-import EventEmitter from 'events'
-import { FieldNode, SelectionSetNode } from 'graphql'
-import { QRequestContext, RequestEvent } from '../request'
-import { QCollectionQuery } from './collection-query'
-import { QJoinQuery } from './collection-joins'
+} from "../filter/filters"
+import QLogs, { QLog } from "../logs"
+import { explainSlowReason, isFastQuery } from "../filter/slow-detector"
+import { IStats, StatsCounter, StatsGauge, StatsTiming } from "../stats"
+import { QTraceSpan, QTracer } from "../tracing"
+import { QError, required, wrap } from "../utils"
+import EventEmitter from "events"
+import { FieldNode, SelectionSetNode } from "graphql"
+import { QRequestContext, RequestEvent } from "../request"
+import { QCollectionQuery } from "./collection-query"
+import { QJoinQuery } from "./collection-joins"
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000 // 60 minutes
 
@@ -208,21 +208,21 @@ export class QDataCollection {
     onDocumentInsertOrUpdate(doc: QDoc) {
         void this.statDoc.increment().then(() => {
             const isMessagePatch =
-                this.name === 'messages' &&
+                this.name === "messages" &&
                 doc.src === undefined &&
                 doc.dst === undefined
             if (isMessagePatch) {
                 return //skip
             }
 
-            this.docInsertOrUpdate.emit('doc', doc)
+            this.docInsertOrUpdate.emit("doc", doc)
             const isExternalInboundFinalizedMessage =
-                this.name === 'messages' &&
+                this.name === "messages" &&
                 doc._key &&
                 doc.msg_type === 1 &&
                 doc.status === 5
             if (isExternalInboundFinalizedMessage) {
-                const span = this.tracer.startSpan('messageDbNotification', {
+                const span = this.tracer.startSpan("messageDbNotification", {
                     childOf: QTracer.messageRootSpanContext(doc._key),
                 })
                 span.addTags({
@@ -245,7 +245,7 @@ export class QDataCollection {
                 },
             ) => {
                 if (this.subscriptionsMode === 0) {
-                    throw new Error('Disabled')
+                    throw new Error("Disabled")
                 }
                 const accessRights = await request.requireGrantedAccess(args)
                 await this.statSubscription.increment()
@@ -258,7 +258,7 @@ export class QDataCollection {
                                     for (const ws of request.connection.context
                                         .ws) {
                                         if (ws.readyState === WebSocket.OPEN) {
-                                            this.log.debug('DEBUG: close ws') // TODO remove
+                                            this.log.debug("DEBUG: close ws") // TODO remove
                                             ws.close()
                                         }
                                     }
@@ -283,10 +283,10 @@ export class QDataCollection {
                     await postSubscription(request, { key, value })
 
                     const timerId = setInterval(() => {
-                        postSubscription(request, { key, value: '' }).catch(
+                        postSubscription(request, { key, value: "" }).catch(
                             (err: any) => {
                                 // Can't help, can log an error only
-                                this.log.error('SUBSCRIPTIONS', err)
+                                this.log.error("SUBSCRIPTIONS", err)
                             },
                         )
                     }, request.services.config.subscriptions.kafkaOptions.keepAliveInterval)
@@ -317,11 +317,11 @@ export class QDataCollection {
                 )
                 const fieldSelection: FieldNode =
                     (info.operation.selectionSet.selections.find(
-                        x => x.kind === 'Field' && x.name.value === this.name,
+                        x => x.kind === "Field" && x.name.value === this.name,
                     ) ?? info.operation.selectionSet.selections[0]) as FieldNode
                 const parentSpan = QTraceSpan.create(
                     request.services.tracer,
-                    'subscription',
+                    "subscription",
                     request.parentSpan,
                 )
                 const eventListener = (doc: QDoc) => {
@@ -352,17 +352,17 @@ export class QDataCollection {
                             this.log.error(
                                 Date.now(),
                                 this.name,
-                                'SUBSCRIPTION\tFAILED',
+                                "SUBSCRIPTION\tFAILED",
                                 JSON.stringify(args.filter),
                                 error.toString(),
                             )
                         }
                     })()
                 }
-                this.docInsertOrUpdate.on('doc', eventListener)
+                this.docInsertOrUpdate.on("doc", eventListener)
                 this.subscriptionCount += 1
                 subscription.onClose = () => {
-                    this.docInsertOrUpdate.removeListener('doc', eventListener)
+                    this.docInsertOrUpdate.removeListener("doc", eventListener)
                     this.subscriptionCount = Math.max(
                         0,
                         this.subscriptionCount - 1,
@@ -378,8 +378,8 @@ export class QDataCollection {
                           _: unknown,
                           context: QRequestContext,
                       ) => {
-                          this.log.debug('DEBUG: got payload', payload) // TODO remove
-                          if (payload === 'STOP') {
+                          this.log.debug("DEBUG: got payload", payload) // TODO remove
+                          if (payload === "STOP") {
                               // Subscription was abruptly aborted by streams application
                               if (
                                   context?.connection?.context?.subscrWS?.close
@@ -410,7 +410,7 @@ export class QDataCollection {
         if (orderBy && orderBy.length > 0) {
             statKey = `${statKey}${orderBy
                 .map(x => `${x.path} ${x.direction}`)
-                .join(' ')}`
+                .join(" ")}`
         }
         let stat = this.queryStats.get(statKey)
         if (stat === undefined) {
@@ -487,13 +487,13 @@ export class QDataCollection {
             return true
         }
         const selection: SelectionSetNode = {
-            kind: 'SelectionSet',
+            kind: "SelectionSet",
             selections: [
                 {
-                    kind: 'Field',
+                    kind: "Field",
                     name: {
-                        kind: 'Name',
-                        value: 'id',
+                        kind: "Name",
+                        value: "id",
                     },
                 },
             ],
@@ -524,7 +524,7 @@ export class QDataCollection {
         if (records.length > 1) {
             return true
         }
-        const id = (records[0] as Record<string, unknown>)['_key'] as string
+        const id = (records[0] as Record<string, unknown>)["_key"] as string
         args.filter = { id: { eq: id } }
         args.orderBy = undefined
         return true
@@ -565,15 +565,15 @@ export class QDataCollection {
             traceParams.timeout = query.timeout
         }
         this.log.debug(
-            'BEFORE_QUERY',
+            "BEFORE_QUERY",
             {
                 ...args,
                 shards: query.shards,
             },
-            isFast ? 'FAST' : 'SLOW',
+            isFast ? "FAST" : "SLOW",
             request.remoteAddress,
         )
-        traceSpan.logEvent('ready_to_fetch')
+        traceSpan.logEvent("ready_to_fetch")
         const start = Date.now()
         const records =
             query.timeout > 0
@@ -597,7 +597,7 @@ export class QDataCollection {
         if (records.length > query.limit) {
             records.splice(query.limit)
         }
-        traceSpan.logEvent('ready_to_fetch_joins')
+        traceSpan.logEvent("ready_to_fetch_joins")
         await QJoinQuery.fetchJoinedRecords(
             this,
             records as Record<string, unknown>[],
@@ -607,12 +607,12 @@ export class QDataCollection {
             request,
             traceSpan,
         )
-        traceSpan.logEvent('joins_are_fetched')
+        traceSpan.logEvent("joins_are_fetched")
         this.log.debug(
-            'QUERY',
+            "QUERY",
             args,
             (Date.now() - start) / 1000,
-            isFast ? 'FAST' : 'SLOW',
+            isFast ? "FAST" : "SLOW",
             request.remoteAddress,
         )
         return records
@@ -634,7 +634,7 @@ export class QDataCollection {
                 fieldNodes: FieldNode[]
             },
         ) =>
-            wrap(this.log, 'QUERY', args, async () => {
+            wrap(this.log, "QUERY", args, async () => {
                 return await request.trace(
                     `${this.name}.queryResolver`,
                     async traceSpan => {
@@ -670,10 +670,10 @@ export class QDataCollection {
                                 : null
                             if (query === null) {
                                 this.log.debug(
-                                    'QUERY',
+                                    "QUERY",
                                     args,
                                     0,
-                                    'SKIPPED',
+                                    "SKIPPED",
                                     request.remoteAddress,
                                 )
                                 return []
@@ -743,12 +743,12 @@ export class QDataCollection {
         params: QDataProviderQueryParams & { isFast: boolean },
     ): Promise<QResult[]> {
         const traceSpan = params.traceSpan
-        traceSpan.logEvent('collection_queryProvider_start')
+        traceSpan.logEvent("collection_queryProvider_start")
         const provider = required(
             params.isFast ? this.provider : this.slowQueriesProvider,
         )
         const result = await provider.query(params)
-        traceSpan.logEvent('collection_queryProvider_end')
+        traceSpan.logEvent("collection_queryProvider_end")
         return result
     }
 
@@ -780,7 +780,7 @@ export class QDataCollection {
                 }
             }
             request.events.on(RequestEvent.CLOSE, () => {
-                resolveBy('close', resolveOnClose, [])
+                resolveBy("close", resolveOnClose, [])
             })
             try {
                 const queryTimeoutAt = Date.now() + q.timeout
@@ -809,7 +809,7 @@ export class QDataCollection {
                             if (!resolvedBy) {
                                 if (docs.length > 0) {
                                     forceTimerId = undefined
-                                    resolveBy('query', resolve, docs as QDoc[])
+                                    resolveBy("query", resolve, docs as QDoc[])
                                 } else {
                                     const now = Date.now()
                                     const checkDuration = now - checkStart
@@ -840,26 +840,26 @@ export class QDataCollection {
                         }
                         try {
                             if (this.docType.test(null, doc, q.filter)) {
-                                resolveBy('listener', resolve, [doc])
+                                resolveBy("listener", resolve, [doc])
                             }
                         } catch (error: any) {
                             this.log.error(
                                 Date.now(),
                                 this.name,
-                                'QUERY\tFAILED',
+                                "QUERY\tFAILED",
                                 JSON.stringify(q.filter),
                                 error.toString(),
                             )
                         }
                     }
                     this.waitForCount += 1
-                    this.docInsertOrUpdate.on('doc', waitFor)
+                    this.docInsertOrUpdate.on("doc", waitFor)
                     void this.statWaitForActive.increment().then(() => {})
                 })
                 const onTimeout = new Promise<QDoc[]>((resolve, reject) => {
                     setTimeout(() => {
                         if (hasDbResponse) {
-                            resolveBy('timeout', resolve, [])
+                            resolveBy("timeout", resolve, [])
                         } else {
                             reject(QError.queryTerminatedOnTimeout())
                         }
@@ -874,12 +874,12 @@ export class QDataCollection {
                     onTimeout,
                     onClose,
                 ])
-                span.setTag('resolved', resolvedBy)
+                span.setTag("resolved", resolvedBy)
                 return result
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
                     this.waitForCount = Math.max(0, this.waitForCount - 1)
-                    this.docInsertOrUpdate.removeListener('doc', waitFor)
+                    this.docInsertOrUpdate.removeListener("doc", waitFor)
                     waitFor = null
                     await this.statWaitForActive.decrement()
                 }
@@ -920,14 +920,14 @@ export class QDataCollection {
         // TODO: consider making query to two collections in one shard if (this.name === "messages" && shard.size === 1)
         const query = AggregationQuery.createForFields(
             this.name,
-            condition || '',
+            condition || "",
             fields,
         )
         return {
             text: query.text,
             params: params.values,
             queries: query.queries,
-            shards: this.name !== 'messages' ? shards : undefined,
+            shards: this.name !== "messages" ? shards : undefined,
         }
     }
 
@@ -946,14 +946,14 @@ export class QDataCollection {
                 q.fn === AggregationFn.MAX
             ) {
                 let path = q.path
-                if (path.startsWith('doc.')) {
-                    path = path.substr('doc.'.length)
+                if (path.startsWith("doc.")) {
+                    path = path.substr("doc.".length)
                 }
                 if (
                     !(await this.isFastQuery(text, filter, [
                         {
                             path,
-                            direction: 'ASC',
+                            direction: "ASC",
                         },
                     ]))
                 ) {
@@ -970,7 +970,7 @@ export class QDataCollection {
             args: AggregationArgs,
             request: QRequestContext,
         ) =>
-            wrap(this.log, 'AGGREGATE', args, async () => {
+            wrap(this.log, "AGGREGATE", args, async () => {
                 return await request.trace(
                     `${this.name}.aggregationResolver`,
                     async traceSpan => {
@@ -988,7 +988,7 @@ export class QDataCollection {
                                     ? args.fields
                                     : [
                                           {
-                                              field: '',
+                                              field: "",
                                               fn: AggregationFn.COUNT,
                                           },
                                       ]
@@ -1000,10 +1000,10 @@ export class QDataCollection {
                             )
                             if (!q) {
                                 this.log.debug(
-                                    'AGGREGATE',
+                                    "AGGREGATE",
                                     args,
                                     0,
-                                    'SKIPPED',
+                                    "SKIPPED",
                                     request.remoteAddress,
                                 )
                                 return []
@@ -1023,7 +1023,7 @@ export class QDataCollection {
                                 isFast,
                             })
                             const start = Date.now()
-                            traceSpan.logEvent('ready_to_fetch')
+                            traceSpan.logEvent("ready_to_fetch")
                             const result = await this.queryProvider({
                                 text: q.text,
                                 vars: q.params,
@@ -1033,12 +1033,12 @@ export class QDataCollection {
                                 traceSpan,
                                 shards: q.shards,
                             })
-                            traceSpan.logEvent('data_is_fetched')
+                            traceSpan.logEvent("data_is_fetched")
                             this.log.debug(
-                                'AGGREGATE',
+                                "AGGREGATE",
                                 args,
                                 (Date.now() - start) / 1000,
-                                isFast ? 'FAST' : 'SLOW',
+                                isFast ? "FAST" : "SLOW",
                                 request.remoteAddress,
                             )
                             return AggregationQuery.reduceResults(
@@ -1086,7 +1086,7 @@ export class QDataCollection {
             return aRest.size === 0
         }
         if (!sameIndexes(actualIndexes, this.indexes)) {
-            this.log.debug('RELOAD_INDEXES', actualIndexes)
+            this.log.debug("RELOAD_INDEXES", actualIndexes)
             this.indexes = actualIndexes.map(x => ({ fields: x.fields }))
             this.queryStats.clear()
         }
@@ -1115,7 +1115,7 @@ async function checkIsFast(
     }
     const isFast = await detector()
     if (!isFast && config.queries.slowQueries === SlowQueriesMode.DISABLE) {
-        throw new Error('Slow queries are disabled')
+        throw new Error("Slow queries are disabled")
     }
     return isFast
 }

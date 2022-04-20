@@ -1,4 +1,4 @@
-import { AccessRights } from '../auth'
+import { AccessRights } from "../auth"
 import {
     CollectionFilter,
     collectReturnExpressions,
@@ -13,9 +13,9 @@ import {
     ScalarFilter,
     splitOr,
     StructFilter,
-} from '../filter/filters'
-import { SelectionSetNode } from 'graphql'
-import { FilterConfig, FilterOrConversion, QConfig } from '../config'
+} from "../filter/filters"
+import { SelectionSetNode } from "graphql"
+import { FilterConfig, FilterOrConversion, QConfig } from "../config"
 
 export class QCollectionQuery {
     private constructor(
@@ -51,17 +51,17 @@ export class QCollectionQuery {
         const orderByText = orderBy
             .map(field => {
                 const direction =
-                    field.direction && field.direction.toLowerCase() === 'desc'
-                        ? ' DESC'
-                        : ''
+                    field.direction && field.direction.toLowerCase() === "desc"
+                        ? " DESC"
+                        : ""
                 return `doc.${field.path.replace(
                     /\bid\b/gi,
-                    '_key',
+                    "_key",
                 )}${direction}`
             })
-            .join(', ')
+            .join(", ")
 
-        const sortSection = orderByText !== '' ? `SORT ${orderByText}` : ''
+        const sortSection = orderByText !== "" ? `SORT ${orderByText}` : ""
         const limit: number = Math.min(args.limit || 50, 50)
         const limitSection = `LIMIT ${limit}`
 
@@ -82,7 +82,7 @@ export class QCollectionQuery {
                 params,
                 accessRights,
             )
-            const filterSection = condition ? `FILTER ${condition}` : ''
+            const filterSection = condition ? `FILTER ${condition}` : ""
             const returnExpression = QCollectionQuery.buildReturnExpression(
                 request,
                 collectionDocType,
@@ -96,7 +96,7 @@ export class QCollectionQuery {
                 ${limitSection}
                 RETURN ${returnExpression}
             `)
-            if (collectionName === 'messages' && shardingDegree > 0) {
+            if (collectionName === "messages" && shardingDegree > 0) {
                 texts.push(`
                     FOR doc IN messages_complement
                     ${filterSection}
@@ -115,7 +115,7 @@ export class QCollectionQuery {
             texts.length === 1
                 ? texts[0]
                 : `
-                FOR doc IN UNION_DISTINCT(${texts.map(x => `${x}`).join(', ')})
+                FOR doc IN UNION_DISTINCT(${texts.map(x => `${x}`).join(", ")})
                 ${sortSection}
                 ${limitSection}
                 RETURN doc`
@@ -178,18 +178,18 @@ export class QCollectionQuery {
             fieldSelection,
             [],
         )
-        let filterSection = ''
+        let filterSection = ""
         const params = new QParams()
         for (const onValue of onValues) {
-            if (filterSection === '') {
-                filterSection = 'FILTER '
+            if (filterSection === "") {
+                filterSection = "FILTER "
             } else {
-                filterSection += ' OR '
+                filterSection += " OR "
             }
             filterSection += `@${params.add(onValue)} IN doc.${refOn}`
         }
         const text =
-            refCollectionName === 'messages' && shardingDegree > 0
+            refCollectionName === "messages" && shardingDegree > 0
                 ? `
                 FOR doc IN UNION_DISTINCT(
                     FOR doc IN messages
@@ -235,13 +235,13 @@ export class QCollectionQuery {
         const condition =
             accounts.length === 1
                 ? `== @${params.add(accounts[0])}`
-                : `IN [${accounts.map(x => `@${params.add(x)}`).join(',')}]`
+                : `IN [${accounts.map(x => `@${params.add(x)}`).join(",")}]`
         switch (collectionName) {
-            case 'accounts':
+            case "accounts":
                 return `doc._key ${condition}`
-            case 'transactions':
+            case "transactions":
                 return `doc.account_addr ${condition}`
-            case 'messages':
+            case "messages":
                 return `(doc.src ${condition}) OR (doc.dst ${condition})`
             default:
                 return null
@@ -257,7 +257,7 @@ export class QCollectionQuery {
     ): string | null {
         const primaryCondition =
             filter !== null && Object.keys(filter).length > 0
-                ? collectionDocType.filterCondition(params, 'doc', filter)
+                ? collectionDocType.filterCondition(params, "doc", filter)
                 : null
         const additionalCondition = QCollectionQuery.getAdditionalCondition(
             collectionName,
@@ -274,11 +274,11 @@ export class QCollectionQuery {
         collectionDocType: QType,
         selectionSet: SelectionSetNode | undefined,
         orderBy: OrderBy[],
-        path = 'doc',
+        path = "doc",
         overrides: Map<string, string> | undefined = undefined,
     ): string {
         const expressions = new Map()
-        expressions.set('_key', `${path}._key`)
+        expressions.set("_key", `${path}._key`)
         const fields = collectionDocType.fields
         if (fields) {
             collectReturnExpressions(
@@ -306,7 +306,7 @@ export class QCollectionQuery {
                 )
             }
         }
-        expressions.delete('id')
+        expressions.delete("id")
         if (overrides) {
             overrides.forEach((value, key) => {
                 expressions.set(key, value)
@@ -346,7 +346,7 @@ function getAccountsShards(
 ): boolean {
     return getShardsForEqOrIn(
         filter,
-        'id',
+        "id",
         shards,
         shardingDegree,
         getAccountShard,
@@ -360,7 +360,7 @@ function getBlocksShards(
 ): boolean {
     return getShardsForEqOrIn(
         filter,
-        'id',
+        "id",
         shards,
         shardingDegree,
         getBlockShard,
@@ -374,14 +374,14 @@ function getMessagesShards(
 ) {
     const srcUsed = getShardsForEqOrIn(
         filter,
-        'src',
+        "src",
         shards,
         shardingDegree,
         getMessageAddressShard,
     )
     const dstUsed = getShardsForEqOrIn(
         filter,
-        'dst',
+        "dst",
         shards,
         shardingDegree,
         getMessageAddressShard,
@@ -396,7 +396,7 @@ function getTransactionsShards(
 ) {
     return getShardsForEqOrIn(
         filter,
-        'account_addr',
+        "account_addr",
         shards,
         shardingDegree,
         getAccountShard,
@@ -407,12 +407,12 @@ function getMessageAddressShard(
     address: string,
     shardingDegree: number,
 ): number | undefined {
-    const addressWithoutPrefix = address.split(':')[1]
+    const addressWithoutPrefix = address.split(":")[1]
     if (addressWithoutPrefix === undefined || addressWithoutPrefix.length < 1) {
         return undefined
     }
     return getShardFromHexString(
-        addressWithoutPrefix.replace('_', ''),
+        addressWithoutPrefix.replace("_", ""),
         shardingDegree,
     )
 }
@@ -421,7 +421,7 @@ function getAccountShard(
     address: string,
     shardingDegree: number,
 ): number | undefined {
-    const addressWithoutPrefix = address.split(':')[1]
+    const addressWithoutPrefix = address.split(":")[1]
     if (
         addressWithoutPrefix === undefined ||
         addressWithoutPrefix.length !== 64
@@ -445,7 +445,7 @@ function getShardFromHexString(
     const symbols = Math.ceil(shardingDegree / 4)
     const excessBits = symbols * 4 - shardingDegree
     return (
-        parseInt(hex.padEnd(symbols, '0').substr(0, symbols), 16) >> excessBits
+        parseInt(hex.padEnd(symbols, "0").substr(0, symbols), 16) >> excessBits
     )
 }
 
@@ -477,7 +477,7 @@ function getShardsForEqOrIn(
     for (const value of values) {
         const shard = shardFromValue(value, shardingDegree)
         if (shard !== undefined && shard >= 0 && shard <= 0xff) {
-            shards.add(shard.toString(2).padStart(shardingDegree, '0'))
+            shards.add(shard.toString(2).padStart(shardingDegree, "0"))
         } else {
             return false
         }

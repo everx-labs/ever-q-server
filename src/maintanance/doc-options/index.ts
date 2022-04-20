@@ -1,8 +1,8 @@
-import { configParams } from '../../server/config'
-import { ConfigParam } from '../../server/config-param'
+import { configParams } from "../../server/config"
+import { ConfigParam } from "../../server/config-param"
 
 function toString(value: unknown): string {
-    return value === null || value === undefined ? '' : `${value}`
+    return value === null || value === undefined ? "" : `${value}`
 }
 
 export function formatTable(
@@ -15,9 +15,9 @@ export function formatTable(
 ): string {
     const headerSeparator = options?.headerSeparator ?? false
     const multilineSeparator = options?.multilineSeparator ?? false
-    const multilineIndent = options?.multilineIndent ?? '  '
+    const multilineIndent = options?.multilineIndent ?? "  "
     const rows: string[][][] = table.map(row =>
-        row.map(cell => toString(cell).split('\n')),
+        row.map(cell => toString(cell).split("\n")),
     )
     const widths: number[] = []
     const isEmpty: boolean[] = []
@@ -43,13 +43,13 @@ export function formatTable(
         rowLine
             .map(formatValue)
             .filter((_, i) => !isEmpty[i])
-            .join('  ')
+            .join("  ")
             .trimEnd()
     const formatCellLine = (cell: string[], line: number) => {
         if (line >= cell.length) {
-            return ''
+            return ""
         }
-        return `${line > 0 ? multilineIndent : ''}${cell[line]}`
+        return `${line > 0 ? multilineIndent : ""}${cell[line]}`
     }
     const lines: string[] = []
     const hasMultilines =
@@ -64,22 +64,22 @@ export function formatTable(
                 rowIndex > firstDataRowIndex &&
                 line === 0
             ) {
-                lines.push('')
+                lines.push("")
             }
             lines.push(formatRowLine(row.map(x => formatCellLine(x, line))))
         }
     })
     if (headerSeparator) {
-        const separator = formatRowLine(widths.map(x => '-'.repeat(x)))
+        const separator = formatRowLine(widths.map(x => "-".repeat(x)))
         lines.splice(1, 0, separator)
     }
-    return lines.join('\n')
+    return lines.join("\n")
 }
 
-const rows = [['Option', 'ENV', 'Default', 'Description']]
+const rows = [["Option", "ENV", "Default", "Description"]]
 for (const param of ConfigParam.getAll(configParams)) {
     rows.push([
-        `--${param.option}${param.deprecated ? ' (DEPRECATED)' : ''}`,
+        `--${param.option}${param.deprecated ? " (DEPRECATED)" : ""}`,
         param.env,
         `${param.defaultValueAsString()}`,
         param.description,
@@ -89,6 +89,6 @@ for (const param of ConfigParam.getAll(configParams)) {
 console.log(
     formatTable(rows, {
         headerSeparator: true,
-        multilineIndent: '',
+        multilineIndent: "",
     }),
 )

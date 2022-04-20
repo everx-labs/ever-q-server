@@ -1,11 +1,11 @@
-import { GraphQLResolveInfo } from 'graphql'
+import { GraphQLResolveInfo } from "graphql"
 
-import { QParams } from '../../../filter/filters'
-import { QRequestContext } from '../../../request'
-import { QTraceSpan } from '../../../tracing'
-import { QError, required } from '../../../utils'
+import { QParams } from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
+import { QTraceSpan } from "../../../tracing"
+import { QError, required } from "../../../utils"
 
-import { config } from '../config'
+import { config } from "../config"
 import {
     Direction,
     getNodeSelectionSetForConnection,
@@ -13,14 +13,14 @@ import {
     prepareChainOrderFilter,
     processPaginatedQueryResult,
     processPaginationArgs,
-} from '../helpers'
+} from "../helpers"
 import {
     BlockchainBlock,
     BlockchainBlocksConnection,
     BlockchainQueryBlocksArgs,
     BlockchainQueryBlock_By_Seq_NoArgs,
     BlockchainQueryKey_BlocksArgs,
-} from '../resolvers-types-generated'
+} from "../resolvers-types-generated"
 
 async function fetch_block(
     filterBuilder: (params: QParams) => String,
@@ -35,13 +35,13 @@ async function fetch_block(
         selectionSet,
         context,
         maxJoinDepth,
-        'doc',
+        "doc",
     )
 
     // query
     const params = new QParams()
     const query =
-        'FOR doc IN blocks ' +
+        "FOR doc IN blocks " +
         `FILTER ${filterBuilder(params)} ` +
         `RETURN ${returnExpression}`
     const queryResult = (await context.services.data.query(
@@ -110,7 +110,7 @@ export async function resolve_key_blocks(
     const params = new QParams()
 
     await prepareChainOrderFilter(args, params, filters, context)
-    filters.push('doc.key_block == true')
+    filters.push("doc.key_block == true")
 
     const { direction, limit } = processPaginationArgs(args)
 
@@ -119,14 +119,14 @@ export async function resolve_key_blocks(
         selectionSet,
         context,
         0,
-        'doc',
+        "doc",
     )
 
     // query
     const query = `
         FOR doc IN blocks
-        FILTER ${filters.join(' AND ')}
-        SORT doc.chain_order ${direction == Direction.Backward ? 'DESC' : 'ASC'}
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
@@ -137,8 +137,8 @@ export async function resolve_key_blocks(
             vars: params.values,
             orderBy: [
                 {
-                    path: 'chain_order',
-                    direction: 'ASC',
+                    path: "chain_order",
+                    direction: "ASC",
                 },
             ],
             request: context,
@@ -150,7 +150,7 @@ export async function resolve_key_blocks(
         queryResult,
         limit,
         direction,
-        'chain_order',
+        "chain_order",
     )) as BlockchainBlocksConnection
 }
 
@@ -162,7 +162,7 @@ export async function resolve_blockchain_blocks(
 ) {
     // validate args
     if (args.thread && !isDefined(args.workchain)) {
-        throw QError.invalidQuery('Workchain is required for the thread filter')
+        throw QError.invalidQuery("Workchain is required for the thread filter")
     }
 
     // filters
@@ -190,14 +190,14 @@ export async function resolve_blockchain_blocks(
         selectionSet,
         context,
         0,
-        'doc',
+        "doc",
     )
 
     // query
     const query = `
         FOR doc IN blocks
-        FILTER ${filters.join(' AND ')}
-        SORT doc.chain_order ${direction == Direction.Backward ? 'DESC' : 'ASC'}
+        FILTER ${filters.join(" AND ")}
+        SORT doc.chain_order ${direction == Direction.Backward ? "DESC" : "ASC"}
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
@@ -208,8 +208,8 @@ export async function resolve_blockchain_blocks(
             vars: params.values,
             orderBy: [
                 {
-                    path: 'chain_order',
-                    direction: 'ASC',
+                    path: "chain_order",
+                    direction: "ASC",
                 },
             ],
             request: context,
@@ -221,6 +221,6 @@ export async function resolve_blockchain_blocks(
         queryResult,
         limit,
         direction,
-        'chain_order',
+        "chain_order",
     )) as BlockchainBlocksConnection
 }

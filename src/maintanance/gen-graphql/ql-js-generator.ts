@@ -1,5 +1,5 @@
-import { Writer } from './gen'
-import type { DbField, DbType } from '../../server/schema/db-schema-types'
+import { Writer } from "./gen"
+import type { DbField, DbType } from "../../server/schema/db-schema-types"
 import {
     DbTypeCategory,
     isBigInt,
@@ -7,21 +7,21 @@ import {
     scalarTypes,
     stringifyEnumValues,
     toEnumStyle,
-} from '../../server/schema/db-schema-types'
-import { TypeDef } from '../../server/schema/schema-def'
-import fs from 'fs'
-import path from 'path'
+} from "../../server/schema/db-schema-types"
+import { TypeDef } from "../../server/schema/schema-def"
+import fs from "fs"
+import path from "path"
 import {
     DbJoin,
     IntEnumDef,
     ToStringFormatter,
-} from '../../server/schema/schema'
+} from "../../server/schema/schema"
 
 function compareFields(a: DbField, b: DbField): number {
-    if (a.name === 'id') {
-        return b.name === 'id' ? 0 : -1
+    if (a.name === "id") {
+        return b.name === "id" ? 0 : -1
     }
-    if (b.name === 'id') {
+    if (b.name === "id") {
         return 1
     }
     return a.name === b.name ? 0 : a.name < b.name ? -1 : 1
@@ -31,35 +31,35 @@ function tsTypeDecl(field: DbField): string {
     let decl
     if (field.type.category == DbTypeCategory.scalar) {
         if (field.type === scalarTypes.boolean) {
-            decl = 'boolean'
+            decl = "boolean"
         } else if (field.type === scalarTypes.float) {
-            decl = 'number'
+            decl = "number"
         } else if (field.type === scalarTypes.int) {
-            decl = 'number'
+            decl = "number"
         } else if (field.type === scalarTypes.uint64) {
-            decl = 'string'
+            decl = "string"
         } else if (field.type === scalarTypes.uint1024) {
-            decl = 'string'
+            decl = "string"
         } else {
-            decl = 'string'
+            decl = "string"
         }
     } else {
         decl = field.type.name
     }
-    return decl + '[]'.repeat(field.arrayDepth)
+    return decl + "[]".repeat(field.arrayDepth)
 }
 
 function parentParam(...fields: DbField[]): string {
     return `parent: { ${fields
-        .map(x => `${x.name === 'id' ? '_key' : x.name}: ${tsTypeDecl(x)}`)
-        .join(', ')} }`
+        .map(x => `${x.name === "id" ? "_key" : x.name}: ${tsTypeDecl(x)}`)
+        .join(", ")} }`
 }
 
 const keyField: DbField = {
-    name: '_key',
+    name: "_key",
     type: scalarTypes.string,
     arrayDepth: 0,
-    doc: '',
+    doc: "",
 }
 
 function main(schemaDef: TypeDef): {
@@ -77,7 +77,7 @@ function main(schemaDef: TypeDef): {
     const js = new Writer()
 
     function genGDoc(prefix: string, doc: string) {
-        if (doc.trim() === '') {
+        if (doc.trim() === "") {
             return
         }
         const lines = doc.split(/\n\r?|\r\n?/)
@@ -113,7 +113,7 @@ function main(schemaDef: TypeDef): {
             Object.keys(enumDef.values).forEach(name => {
                 g.writeLn(`    ${toEnumStyle(name)}`)
             })
-            g.writeLn('}')
+            g.writeLn("}")
             g.writeLn()
         }
     }
@@ -127,17 +127,17 @@ function main(schemaDef: TypeDef): {
             })
             g.writeLn()
         } else {
-            genGDoc('', type.doc)
+            genGDoc("", type.doc)
             g.writeLn(`type ${type.name} {`)
             type.fields.forEach(field => {
-                genGDoc('\t', field.doc)
+                genGDoc("\t", field.doc)
                 const typeDeclaration =
-                    '['.repeat(field.arrayDepth) +
+                    "[".repeat(field.arrayDepth) +
                     field.type.name +
-                    ']'.repeat(field.arrayDepth)
-                let params = ''
+                    "]".repeat(field.arrayDepth)
+                let params = ""
                 if (isBigInt(field.type)) {
-                    params = '(format: BigIntFormat)'
+                    params = "(format: BigIntFormat)"
                 } else if (field.join !== undefined) {
                     params = `(timeout: Int, "**DEPRECATED**" when: ${type.name}Filter)`
                 }
@@ -151,7 +151,7 @@ function main(schemaDef: TypeDef): {
                     g.writeLn(`\t${field.name}_string: String`)
                 }
             })
-            g.writeLn('}')
+            g.writeLn("}")
         }
         g.writeLn()
     }
@@ -170,13 +170,13 @@ function main(schemaDef: TypeDef): {
                 const filterName = `${itemTypeName}ArrayFilter`
                 preventTwice(filterName, gNames, () => {
                     g.writeLn(`input ${filterName} {`)
-                    ;['any', 'all'].forEach(op => {
+                    ;["any", "all"].forEach(op => {
                         g.writeLn(`\t${op}: ${itemTypeName}Filter`)
                     })
-                    g.writeLn('}')
+                    g.writeLn("}")
                     g.writeLn()
                 })
-                itemTypeName += 'Array'
+                itemTypeName += "Array"
             }
         })
     }
@@ -198,12 +198,12 @@ function main(schemaDef: TypeDef): {
         }
         genGFiltersForArrayFields(type, gNames)
         genGFiltersForEnumNameFields(type, gNames)
-        genGDoc('', type.doc)
+        genGDoc("", type.doc)
         g.writeLn(`input ${type.name}Filter {`)
         type.fields.forEach(field => {
-            genGDoc('\t', field.doc)
+            genGDoc("\t", field.doc)
             const typeDeclaration =
-                field.type.name + 'Array'.repeat(field.arrayDepth)
+                field.type.name + "Array".repeat(field.arrayDepth)
             g.writeLn(`\t${field.name}: ${typeDeclaration}Filter`)
             const enumDef = field.enumDef
             if (enumDef !== undefined) {
@@ -211,19 +211,19 @@ function main(schemaDef: TypeDef): {
             }
         })
         g.writeLn(`    OR: ${type.name}Filter`)
-        g.writeLn('}')
+        g.writeLn("}")
         g.writeLn()
     }
 
     function genGScalarTypesFilter(name: string) {
         g.writeLn(`input ${name}Filter {`)
-        ;['eq', 'ne', 'gt', 'lt', 'ge', 'le'].forEach(op => {
+        ;["eq", "ne", "gt", "lt", "ge", "le"].forEach(op => {
             g.writeLn(`\t${op}: ${name}`)
         })
-        ;['in', 'notIn'].forEach(op => {
+        ;["in", "notIn"].forEach(op => {
             g.writeLn(`\t${op}: [${name}]`)
         })
-        g.writeLn('}')
+        g.writeLn("}")
         g.writeLn()
     }
 
@@ -257,7 +257,7 @@ function main(schemaDef: TypeDef): {
 
         types.forEach((type: DbType) => {
             g.writeLn(
-                `\t${type.collection ?? ''}(filter: ${
+                `\t${type.collection ?? ""}(filter: ${
                     type.name
                 }Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [${
                     type.name
@@ -272,28 +272,28 @@ function main(schemaDef: TypeDef): {
     }
 
     function genGSubscriptions(types: DbType[]) {
-        g.writeLn('type Subscription {')
+        g.writeLn("type Subscription {")
         types.forEach(type => {
             g.writeLn(
-                `\t${type.collection ?? ''}(filter: ${
+                `\t${type.collection ?? ""}(filter: ${
                     type.name
                 }Filter, accessKey: String): ${type.name}`,
             )
         })
-        g.writeLn('}')
+        g.writeLn("}")
     }
 
     function getScalarResolverName(field: DbField): string {
         if (field.type === scalarTypes.uint64) {
-            return 'bigUInt1'
+            return "bigUInt1"
         }
         if (field.type === scalarTypes.uint1024) {
-            return 'bigUInt2'
+            return "bigUInt2"
         }
         if (field.type === scalarTypes.string && (field.lowerFilter ?? false)) {
-            return 'stringLowerFilter'
+            return "stringLowerFilter"
         }
-        return 'scalar'
+        return "scalar"
     }
 
     function genJSFiltersForArrayFields(type: DbType, jsNames: Set<string>) {
@@ -312,7 +312,7 @@ function main(schemaDef: TypeDef): {
                 const ${filterName} = array(() => ${itemResolverName});
                 `)
                     })
-                    itemTypeName += 'Array'
+                    itemTypeName += "Array"
                 }
             }
         })
@@ -326,19 +326,19 @@ function main(schemaDef: TypeDef): {
             let typeDeclaration: string | null = null
             const join = field.join
             if (join !== undefined) {
-                const suffix = field.arrayDepth > 0 ? 'Array' : ''
+                const suffix = field.arrayDepth > 0 ? "Array" : ""
                 const params = [
                     `"${join.on}"`,
                     `"${join.refOn}"`,
-                    `"${field.type.collection ?? ''}"`,
+                    `"${field.type.collection ?? ""}"`,
                 ]
                 const extraFields: string[] = []
                 if (field.arrayDepth === 0) {
                     extraFields.push(
-                        ...(join.preCondition ?? '')
-                            .split(' ')
+                        ...(join.preCondition ?? "")
+                            .split(" ")
                             .map(x => x.trim())
-                            .filter(x => x.startsWith('parent.'))
+                            .filter(x => x.startsWith("parent."))
                             .map(x => x.substr(7)),
                     )
                 }
@@ -348,13 +348,13 @@ function main(schemaDef: TypeDef): {
                 params.push(
                     extraFields.length > 0
                         ? `["${extraFields.join('", "')}"]`
-                        : '[]',
+                        : "[]",
                 )
                 params.push(`() => ${field.type.name}`)
-                typeDeclaration = `join${suffix}(${params.join(', ')})`
+                typeDeclaration = `join${suffix}(${params.join(", ")})`
             } else if (field.arrayDepth > 0) {
                 typeDeclaration =
-                    field.type.name + 'Array'.repeat(field.arrayDepth)
+                    field.type.name + "Array".repeat(field.arrayDepth)
             } else if (field.type.category === DbTypeCategory.scalar) {
                 typeDeclaration = getScalarResolverName(field)
             } else if (field.type.fields.length > 0) {
@@ -378,7 +378,7 @@ function main(schemaDef: TypeDef): {
             }
         })
         js.writeBlockLn(`
-        }${type.collection !== undefined ? ', true' : ''});
+        }${type.collection !== undefined ? ", true" : ""});
 
     `)
     }
@@ -393,7 +393,7 @@ function main(schemaDef: TypeDef): {
             js.writeLn(
                 `            return "${unionVariantType(type, variant)}";`,
             )
-            js.writeLn('        }')
+            js.writeLn("        }")
         })
         js.writeBlockLn(`
                 return null;
@@ -444,8 +444,8 @@ function main(schemaDef: TypeDef): {
         js.writeLn(`        ${type.name}: {`)
         if (type.collection !== undefined) {
             js.writeLn(`            id(${parentParam(keyField)}) {`)
-            js.writeLn('                return parent._key;')
-            js.writeLn('            },')
+            js.writeLn("                return parent._key;")
+            js.writeLn("            },")
         }
         bigUIntFields.forEach(field => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2
@@ -457,18 +457,18 @@ function main(schemaDef: TypeDef): {
             js.writeLn(
                 `                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`,
             )
-            js.writeLn('            },')
+            js.writeLn("            },")
         })
         stringFormattedFields.forEach(field => {
             js.writeLn(
                 `            ${field.name}_string(${parentParam(field)}) {`,
             )
             js.writeLn(
-                `                return ${field.formatter ?? ''}(parent.${
+                `                return ${field.formatter ?? ""}(parent.${
                     field.name
                 });`,
             )
-            js.writeLn('            },')
+            js.writeLn("            },")
         })
         enumFields.forEach(field => {
             const enumDef = field.enumDef
@@ -480,7 +480,7 @@ function main(schemaDef: TypeDef): {
                 )
             }
         })
-        js.writeLn('        },')
+        js.writeLn("        },")
     }
 
     function genJSScalarFields(
@@ -493,46 +493,46 @@ function main(schemaDef: TypeDef): {
                 return
             }
             const docName =
-                type.collection !== undefined && field.name === 'id'
-                    ? '_key'
+                type.collection !== undefined && field.name === "id"
+                    ? "_key"
                     : field.name
             const path = `${parentPath}.${field.name}`
             let docPath = `${parentDocPath}.${docName}`
             if (field.arrayDepth > 0) {
-                let suffix = '[*]'
+                let suffix = "[*]"
                 for (let depth = 10; depth > 0; depth -= 1) {
-                    const s = `[${'*'.repeat(depth)}]`
+                    const s = `[${"*".repeat(depth)}]`
                     if (docPath.includes(s)) {
-                        suffix = `[${'*'.repeat(depth + 1)}]`
+                        suffix = `[${"*".repeat(depth + 1)}]`
                         break
                     }
                 }
                 docPath = `${docPath}${suffix}`
             }
             switch (field.type.category) {
-                case 'scalar':
+                case "scalar":
                     {
                         let typeName
                         if (field.type === scalarTypes.boolean) {
-                            typeName = 'boolean'
+                            typeName = "boolean"
                         } else if (field.type === scalarTypes.float) {
-                            typeName = 'number'
+                            typeName = "number"
                         } else if (field.type === scalarTypes.int) {
-                            typeName = 'number'
+                            typeName = "number"
                         } else if (field.type === scalarTypes.uint64) {
-                            typeName = 'uint64'
+                            typeName = "uint64"
                         } else if (field.type === scalarTypes.uint1024) {
-                            typeName = 'uint1024'
+                            typeName = "uint1024"
                         } else {
-                            typeName = 'string'
+                            typeName = "string"
                         }
                         js.writeLn(
                             `scalarFields.set("${path}", { type: "${typeName}", path: "${docPath}" });`,
                         )
                     }
                     break
-                case 'struct':
-                case 'union':
+                case "struct":
+                case "union":
                     genJSScalarFields(field.type, path, docPath)
                     break
             }
@@ -546,8 +546,8 @@ function main(schemaDef: TypeDef): {
     ) {
         type.fields.forEach((field: DbField) => {
             const docName =
-                type.collection !== undefined && field.name === 'id'
-                    ? '_key'
+                type.collection !== undefined && field.name === "id"
+                    ? "_key"
                     : field.name
             const path = `${parentPath}.${field.name}`
             const docPath = `${parentDocPath}.${docName}`
@@ -555,16 +555,16 @@ function main(schemaDef: TypeDef): {
             if (join !== undefined) {
                 const onField = type.fields.find(x => x.name === join.on)
                 if (onField === undefined) {
-                    throw 'Join on field does not exist.'
+                    throw "Join on field does not exist."
                 }
                 const collection = field.type.collection
                 if (collection === undefined) {
-                    throw 'Joined type is not a collection.'
+                    throw "Joined type is not a collection."
                 }
-                const extraFields = (join.preCondition ?? '')
-                    .split(' ')
+                const extraFields = (join.preCondition ?? "")
+                    .split(" ")
                     .map(x => x.trim())
-                    .filter(x => x.startsWith('parent.'))
+                    .filter(x => x.startsWith("parent."))
                     .map(x => x.substr(7))
                     .map(x => type.fields.find(y => y.name === x))
                     .filter(x => x !== undefined) as DbField[]
@@ -584,17 +584,17 @@ function main(schemaDef: TypeDef): {
                 )
                 if (join.preCondition !== undefined) {
                     js.writeLn(`        if (!(${join.preCondition})) {`)
-                    js.writeLn('            return false;')
-                    js.writeLn('        }')
+                    js.writeLn("            return false;")
+                    js.writeLn("        }")
                 }
                 js.writeLn(
                     `        return (args.when === undefined || ${type.name}.test(null, parent, args.when));`,
                 )
-                js.writeLn('    },')
-                js.writeLn('});')
+                js.writeLn("    },")
+                js.writeLn("});")
             } else if (
-                field.type.category === 'struct' ||
-                field.type.category === 'union'
+                field.type.category === "struct" ||
+                field.type.category === "union"
             ) {
                 genJSJoinFields(field.type, path, docPath)
             }
@@ -622,7 +622,7 @@ function main(schemaDef: TypeDef): {
             DEC
         }
         `)
-        ;['String', 'Boolean', 'Int', 'Float'].forEach(genGScalarTypesFilter)
+        ;["String", "Boolean", "Int", "Float"].forEach(genGScalarTypesFilter)
         genGEnumTypes()
         types.forEach(type => genGTypeDeclaration(type))
         const gArrayFilters = new Set<string>()
@@ -665,20 +665,20 @@ function main(schemaDef: TypeDef): {
             genJSCustomResolvers(type)
             genJSTypeResolversForUnion(type)
         })
-        js.writeLn('        Query: {')
+        js.writeLn("        Query: {")
         collections.forEach(type => {
             js.writeLn(
-                `            ${type.collection ?? ''}: data.${
-                    type.collection ?? ''
+                `            ${type.collection ?? ""}: data.${
+                    type.collection ?? ""
                 }.queryResolver(),`,
             )
         })
-        js.writeLn('        },')
-        js.writeLn('        Subscription: {')
+        js.writeLn("        },")
+        js.writeLn("        Subscription: {")
         collections.forEach(type => {
             js.writeLn(
-                `            ${type.collection ?? ''}: data.${
-                    type.collection ?? ''
+                `            ${type.collection ?? ""}: data.${
+                    type.collection ?? ""
                 }.subscriptionResolver(),`,
             )
         })
@@ -693,14 +693,14 @@ function main(schemaDef: TypeDef): {
         const scalarFields = new Map();
         `)
         collections.forEach(type => {
-            genJSScalarFields(type, type.collection ?? '', 'doc')
+            genJSScalarFields(type, type.collection ?? "", "doc")
         })
 
         js.writeBlockLn(`
         const joinFields = new Map();
         `)
         collections.forEach(type => {
-            genJSJoinFields(type, type.collection ?? '', 'doc')
+            genJSJoinFields(type, type.collection ?? "", "doc")
         })
 
         js.writeBlockLn(`
@@ -724,21 +724,21 @@ function main(schemaDef: TypeDef): {
                 .map(([name, value]) => {
                     return `    ${name}: ${value},`
                 })
-                .join('\n'),
+                .join("\n"),
         )
-        console.log('};\n')
+        console.log("};\n")
     }
 
     const dbTypesPath = path.resolve(
         __dirname,
-        '..',
-        '..',
-        '..',
-        'db-types.json',
+        "..",
+        "..",
+        "..",
+        "db-types.json",
     )
     fs.writeFileSync(
         dbTypesPath,
-        JSON.stringify(getDbSchemaInfo(dbTypes), undefined, '    '),
+        JSON.stringify(getDbSchemaInfo(dbTypes), undefined, "    "),
     )
     console.log(`Db Types written to: ${dbTypesPath}`)
     return {
@@ -775,17 +775,17 @@ function getDbFieldInfo(field: DbField): DbFieldInfo {
     let type: string
     if (field.type.category === DbTypeCategory.scalar) {
         if (field.type === scalarTypes.boolean) {
-            type = 'Boolean'
+            type = "Boolean"
         } else if (field.type === scalarTypes.float) {
-            type = 'Float'
+            type = "Float"
         } else if (field.type === scalarTypes.int) {
-            type = 'Int'
+            type = "Int"
         } else if (field.type === scalarTypes.uint64) {
-            type = 'UInt64'
+            type = "UInt64"
         } else if (field.type === scalarTypes.uint1024) {
-            type = 'UInt1024'
+            type = "UInt1024"
         } else {
-            type = 'String'
+            type = "String"
         }
     } else {
         type = field.type.name

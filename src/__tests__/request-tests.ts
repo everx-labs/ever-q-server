@@ -1,13 +1,13 @@
-import { ApolloClient } from 'apollo-client'
-import gql from 'graphql-tag'
+import { ApolloClient } from "apollo-client"
+import gql from "graphql-tag"
 import {
     createTestClient,
     testServerRequired,
     testServerStop,
-} from './init-tests'
+} from "./init-tests"
 
-import AbortController from 'node-abort-controller'
-import { required } from '../server/utils'
+import AbortController from "node-abort-controller"
+import { required } from "../server/utils"
 
 const sleep = async (ms: number) => new Promise(x => setTimeout(x, ms))
 
@@ -50,7 +50,7 @@ class TestQuery {
                 },
             })
             .catch(error => {
-                console.log('>>>', error)
+                console.log(">>>", error)
             })
     }
 
@@ -61,7 +61,7 @@ class TestQuery {
 }
 
 test.each([true, false])(
-    'Release Aborted Requests (webSockets: %s)',
+    "Release Aborted Requests (webSockets: %s)",
     async useWebSockets => {
         const server = await testServerRequired()
         const collection = required(server.data.transactions)
@@ -102,10 +102,10 @@ test.each([true, false])(
     },
 )
 
-test('Many concurrent requests over web socket', async () => {
+test("Many concurrent requests over web socket", async () => {
     await testServerRequired()
     const client = createTestClient({ useWebSockets: true })
-    let output = ''
+    let output = ""
 
     const originalStdoutWrite = process.stderr.write.bind(process.stderr)
 
@@ -147,14 +147,14 @@ test('Many concurrent requests over web socket', async () => {
         `,
     })
     ;(process.stderr as { write: unknown }).write = originalStdoutWrite
-    expect(output.includes('MaxListenersExceededWarning')).toBeFalsy()
+    expect(output.includes("MaxListenersExceededWarning")).toBeFalsy()
     ;(client as unknown as Closable).close()
 })
 
 function randomRequest(size: number): { id: string; body: string } {
     return {
-        id: Buffer.alloc(32, 1).toString('base64'),
-        body: Buffer.alloc(size, 0).toString('base64'),
+        id: Buffer.alloc(32, 1).toString("base64"),
+        body: Buffer.alloc(size, 0).toString("base64"),
     }
 }
 
@@ -184,17 +184,17 @@ async function postRequest(request: { id: string; body: string }) {
 //     });
 // });
 
-test('Post extra large request with default limit', async () => {
+test("Post extra large request with default limit", async () => {
     await testServerStop()
     await testServerRequired()
     try {
         await postRequest(randomRequest(65000))
     } catch (error) {
-        expect(error.message.includes('is too large')).toBeTruthy()
+        expect(error.message.includes("is too large")).toBeTruthy()
     }
 })
 
-test('Post extra large request with configured limit', async () => {
+test("Post extra large request with configured limit", async () => {
     await testServerStop()
     await testServerRequired({
         requests: {
@@ -204,6 +204,6 @@ test('Post extra large request with configured limit', async () => {
     try {
         await postRequest(randomRequest(10000))
     } catch (error) {
-        expect(error.message.includes('is too large')).toBeTruthy()
+        expect(error.message.includes("is too large")).toBeTruthy()
     }
 })

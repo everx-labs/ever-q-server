@@ -1,8 +1,8 @@
 export type SchemaDoc = string | { md: string } | { html: string }
 
 export enum ToStringFormatter {
-    unixMillisecondsToString = 'unixMillisecondsToString',
-    unixSecondsToString = 'unixSecondsToString',
+    unixMillisecondsToString = "unixMillisecondsToString",
+    unixSecondsToString = "unixSecondsToString",
 }
 
 export type DbJoin = {

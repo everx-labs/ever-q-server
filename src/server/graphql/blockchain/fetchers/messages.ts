@@ -1,11 +1,11 @@
-import { GraphQLResolveInfo } from 'graphql'
+import { GraphQLResolveInfo } from "graphql"
 
-import { convertBigUInt, QParams } from '../../../filter/filters'
-import { QRequestContext } from '../../../request'
-import { QTraceSpan } from '../../../tracing'
-import { QError, required } from '../../../utils'
+import { convertBigUInt, QParams } from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
+import { QTraceSpan } from "../../../tracing"
+import { QError, required } from "../../../utils"
 
-import { config } from '../config'
+import { config } from "../config"
 import {
     Direction,
     getNodeSelectionSetForConnection,
@@ -13,14 +13,14 @@ import {
     prepareChainOrderFilter,
     processPaginatedQueryResult,
     processPaginationArgs,
-} from '../helpers'
+} from "../helpers"
 import {
     BlockchainAccountQuery,
     BlockchainAccountQueryMessagesArgs,
     BlockchainMessage,
     BlockchainMessagesConnection,
     BlockchainMessageTypeFilterEnum,
-} from '../resolvers-types-generated'
+} from "../resolvers-types-generated"
 
 export async function resolve_message(
     hash: String,
@@ -35,13 +35,13 @@ export async function resolve_message(
         selectionSet,
         context,
         maxJoinDepth,
-        'doc',
+        "doc",
     )
 
     // query
     const params = new QParams()
     const query =
-        'FOR doc IN messages ' +
+        "FOR doc IN messages " +
         `FILTER doc._key == @${params.add(hash)} ` +
         `RETURN ${returnExpression}`
     const queryResult = (await context.services.data.query(
@@ -91,13 +91,13 @@ export async function resolve_account_messages(
     if (args.counterparties && args.counterparties.length > 0) {
         if (args.msg_type && (hasExtIn || hasExtOut)) {
             throw QError.invalidQuery(
-                'External messages do not have counterparties. ' +
+                "External messages do not have counterparties. " +
                     "Don't use counterparties filter together with extIn/ExtOut message types.",
             )
         }
         if (args.counterparties.length > 5) {
             throw QError.invalidQuery(
-                'Only up to 5 counterparties are allowed in account messages filter.',
+                "Only up to 5 counterparties are allowed in account messages filter.",
             )
         }
     }
@@ -125,9 +125,9 @@ export async function resolve_account_messages(
             selectionSet,
             context,
             maxJoinDepth,
-            'doc',
+            "doc",
             undefined,
-            [['account_chain_order', `doc.${sortField}`]],
+            [["account_chain_order", `doc.${sortField}`]],
         )
 
     if (hasInbound) {
@@ -141,10 +141,10 @@ export async function resolve_account_messages(
             params,
             inboundAndFilters,
             context,
-            'dst_chain_order',
+            "dst_chain_order",
         )
-        const returnExpression = returnExpressionBuilder('dst_chain_order')
-        const commonFilter = inboundAndFilters.join(' AND ')
+        const returnExpression = returnExpressionBuilder("dst_chain_order")
+        const commonFilter = inboundAndFilters.join(" AND ")
         const orFilters: string[] = []
         if (counterpartiesParamsMap) {
             for (const cpParam of counterpartiesParamsMap.values()) {
@@ -168,10 +168,10 @@ export async function resolve_account_messages(
         queries.push(
             ...orFilters.map(
                 filter =>
-                    'FOR doc IN messages ' +
+                    "FOR doc IN messages " +
                     `FILTER ${filter} ` +
                     `SORT doc.dst_chain_order ${
-                        direction == Direction.Backward ? 'DESC' : 'ASC'
+                        direction == Direction.Backward ? "DESC" : "ASC"
                     } ` +
                     `LIMIT ${limit} ` +
                     `RETURN ${returnExpression}`,
@@ -189,10 +189,10 @@ export async function resolve_account_messages(
             params,
             outboundAndFilters,
             context,
-            'src_chain_order',
+            "src_chain_order",
         )
-        const returnExpression = returnExpressionBuilder('src_chain_order')
-        const commonFilter = outboundAndFilters.join(' AND ')
+        const returnExpression = returnExpressionBuilder("src_chain_order")
+        const commonFilter = outboundAndFilters.join(" AND ")
         const orFilters: string[] = []
         if (counterpartiesParamsMap) {
             for (const cpParam of counterpartiesParamsMap.values()) {
@@ -216,10 +216,10 @@ export async function resolve_account_messages(
         queries.push(
             ...orFilters.map(
                 filter =>
-                    'FOR doc IN messages ' +
+                    "FOR doc IN messages " +
                     `FILTER ${filter} ` +
                     `SORT doc.src_chain_order ${
-                        direction == Direction.Backward ? 'DESC' : 'ASC'
+                        direction == Direction.Backward ? "DESC" : "ASC"
                     } ` +
                     `LIMIT ${limit} ` +
                     `RETURN ${returnExpression}`,
@@ -230,12 +230,12 @@ export async function resolve_account_messages(
     const query =
         queries.length === 1
             ? queries[0]
-            : `FOR d IN UNION((${queries.join('),(')})) ` +
+            : `FOR d IN UNION((${queries.join("),(")})) ` +
               `SORT d.account_chain_order ${
-                  direction == Direction.Backward ? 'DESC' : 'ASC'
+                  direction == Direction.Backward ? "DESC" : "ASC"
               } ` +
               `LIMIT ${limit} ` +
-              'RETURN d'
+              "RETURN d"
     const queryResult = (await context.services.data.query(
         required(context.services.data.transactions.provider),
         {
@@ -243,11 +243,11 @@ export async function resolve_account_messages(
             vars: params.values,
             orderBy: [
                 {
-                    path: 'account_chain_order',
-                    direction: 'ASC',
+                    path: "account_chain_order",
+                    direction: "ASC",
                 },
             ],
-            distinctBy: 'account_chain_order',
+            distinctBy: "account_chain_order",
             request: context,
             traceSpan,
             // TODO: shard and complement_messages usage
@@ -258,7 +258,7 @@ export async function resolve_account_messages(
         queryResult,
         limit,
         direction,
-        'account_chain_order',
+        "account_chain_order",
         async r => {
             await config.messages.fetchJoins(
                 r,

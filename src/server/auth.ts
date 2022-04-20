@@ -1,11 +1,11 @@
-import type { QConfig } from './config'
-import fetch from 'node-fetch'
+import type { QConfig } from "./config"
+import fetch from "node-fetch"
 import {
     extractHeader,
     GraphQLConnection,
     QError,
     RequestWithHeaders,
-} from './utils'
+} from "./utils"
 
 export type AccessKey = {
     key: string
@@ -49,7 +49,7 @@ export class Auth {
         req: RequestWithHeaders | undefined,
         connection: GraphQLConnection | undefined,
     ): string {
-        return extractHeader(req, connection, 'accessKey', '')
+        return extractHeader(req, connection, "accessKey", "")
     }
 
     static unauthorizedError(): Error {
@@ -74,10 +74,10 @@ export class Auth {
         if (!this.config.authorization.endpoint) {
             return grantedAccess
         }
-        if ((accessKey || '') === '') {
+        if ((accessKey || "") === "") {
             return deniedAccess
         }
-        const rights: AccessRights = await this.invokeAuth('getAccessRights', {
+        const rights: AccessRights = await this.invokeAuth("getAccessRights", {
             accessKey,
         })
         if (!rights.restrictToAccounts) {
@@ -88,7 +88,7 @@ export class Auth {
 
     async getManagementAccessKey(): Promise<string> {
         this.authServiceRequired()
-        return this.invokeAuth('getManagementAccessKey', {})
+        return this.invokeAuth("getManagementAccessKey", {})
     }
 
     async registerAccessKeys(
@@ -97,7 +97,7 @@ export class Auth {
         signedManagementAccessKey: string,
     ): Promise<number> {
         this.authServiceRequired()
-        return this.invokeAuth('registerAccessKeys', {
+        return this.invokeAuth("registerAccessKeys", {
             account,
             keys,
             signedManagementAccessKey,
@@ -110,7 +110,7 @@ export class Auth {
         signedManagementAccessKey: string,
     ): Promise<number> {
         this.authServiceRequired()
-        return this.invokeAuth('revokeAccessKeys', {
+        return this.invokeAuth("revokeAccessKeys", {
             account,
             keys,
             signedManagementAccessKey,
@@ -119,13 +119,13 @@ export class Auth {
 
     async invokeAuth<T>(method: string, params: unknown): Promise<T> {
         const res = await fetch(this.config.authorization.endpoint, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: '1',
+                jsonrpc: "2.0",
+                id: "1",
                 method,
                 params,
             }),

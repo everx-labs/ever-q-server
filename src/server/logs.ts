@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { toJSON } from './utils'
+import { toJSON } from "./utils"
 
 export interface QLog {
     error(...args: unknown[]): void
@@ -26,16 +26,16 @@ function str(arg: unknown): string {
     let s
     if (arg instanceof Error) {
         s = arg.message || arg.toString()
-    } else if (typeof arg === 'string') {
+    } else if (typeof arg === "string") {
         s = arg
     } else {
         s = toJSON(arg)
     }
-    return s.split('\n').join('\\n').split('\t').join('\\t')
+    return s.split("\n").join("\\n").split("\t").join("\\t")
 }
 
 function format(name: string, args: unknown[]) {
-    return `${Date.now()}\t${name}\t${args.map(str).join('\t')}`
+    return `${Date.now()}\t${name}\t${args.map(str).join("\t")}`
 }
 
 export default class QLogs {

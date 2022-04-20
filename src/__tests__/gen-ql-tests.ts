@@ -1,23 +1,23 @@
-import { QParams } from '../server/filter/filters'
+import { QParams } from "../server/filter/filters"
 import {
     Account,
     BlockSignatures,
     Message,
     Transaction,
-} from '../server/graphql/resolvers-generated'
-import QLogs from '../server/logs'
+} from "../server/graphql/resolvers-generated"
+import QLogs from "../server/logs"
 import {
     createLocalArangoTestData,
     normalized,
     queryText,
     selectionInfo,
     testServerQuery,
-} from './init-tests'
-import { FieldNode, SelectionNode } from 'graphql'
-import { grantedAccess } from '../server/auth'
-import { FilterOrConversion } from '../server/config'
-import { QCollectionQuery } from '../server/data/collection-query'
-import { overrideAccountBoc } from '../server/graphql/account-boc'
+} from "./init-tests"
+import { FieldNode, SelectionNode } from "graphql"
+import { grantedAccess } from "../server/auth"
+import { FilterOrConversion } from "../server/config"
+import { QCollectionQuery } from "../server/data/collection-query"
+import { overrideAccountBoc } from "../server/graphql/account-boc"
 
 type Blocks = {
     blocks: {
@@ -25,9 +25,9 @@ type Blocks = {
         master: unknown[] | null
     }[]
 }
-test('remove nulls', async () => {
+test("remove nulls", async () => {
     const data = await testServerQuery<Blocks>(
-        'query { blocks { id master { min_shard_gen_utime } } }',
+        "query { blocks { id master { min_shard_gen_utime } } }",
     )
     expect(data.blocks.length).toBeGreaterThan(0)
 
@@ -60,7 +60,7 @@ test('remove nulls', async () => {
     expect(block).toEqual({ master: null })
 })
 
-test('multi query', async () => {
+test("multi query", async () => {
     const data = await testServerQuery<Blocks>(`
     query { 
         info { time }
@@ -107,7 +107,7 @@ return doc
 
  */
 
-test('OR conversions', () => {
+test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs())
     const withOr = normalized(
         QCollectionQuery.create(
@@ -116,23 +116,23 @@ test('OR conversions', () => {
             data.messages.docType,
             {
                 filter: {
-                    src: { eq: '1' },
-                    OR: { dst: { eq: '1' } },
+                    src: { eq: "1" },
+                    OR: { dst: { eq: "1" } },
                 },
                 orderBy: [
                     {
-                        path: 'created_at',
-                        direction: 'ASC',
+                        path: "created_at",
+                        direction: "ASC",
                     },
                 ],
             },
-            selectionInfo('src dst'),
+            selectionInfo("src dst"),
             grantedAccess,
             0,
             {
                 orConversion: FilterOrConversion.OR_OPERATOR,
             },
-        )?.text ?? '',
+        )?.text ?? "",
     )
 
     expect(withOr).toEqual(
@@ -152,23 +152,23 @@ test('OR conversions', () => {
             data.messages.docType,
             {
                 filter: {
-                    src: { eq: '1' },
-                    OR: { dst: { eq: '1' } },
+                    src: { eq: "1" },
+                    OR: { dst: { eq: "1" } },
                 },
                 orderBy: [
                     {
-                        path: 'created_at',
-                        direction: 'ASC',
+                        path: "created_at",
+                        direction: "ASC",
                     },
                 ],
             },
-            selectionInfo('src dst'),
+            selectionInfo("src dst"),
             grantedAccess,
             0,
             {
                 orConversion: FilterOrConversion.SUB_QUERIES,
             },
-        )?.text ?? '',
+        )?.text ?? "",
     )
 
     expect(withSubQueries).toEqual(
@@ -193,7 +193,7 @@ test('OR conversions', () => {
     )
 })
 
-test('messages_complement are used for shardingDegree > 0', () => {
+test("messages_complement are used for shardingDegree > 0", () => {
     const data = createLocalArangoTestData(new QLogs())
     const withOr = normalized(
         QCollectionQuery.create(
@@ -203,28 +203,28 @@ test('messages_complement are used for shardingDegree > 0', () => {
             {
                 filter: {
                     src: {
-                        eq: '8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d',
+                        eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
                     },
                     OR: {
                         dst: {
-                            eq: '-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d',
+                            eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
                         },
                     },
                 },
                 orderBy: [
                     {
-                        path: 'created_at',
-                        direction: 'ASC',
+                        path: "created_at",
+                        direction: "ASC",
                     },
                 ],
             },
-            selectionInfo('src dst'),
+            selectionInfo("src dst"),
             grantedAccess,
             1,
             {
                 orConversion: FilterOrConversion.OR_OPERATOR,
             },
-        )?.text ?? '',
+        )?.text ?? "",
     )
 
     expect(withOr).toEqual(
@@ -255,28 +255,28 @@ test('messages_complement are used for shardingDegree > 0', () => {
             {
                 filter: {
                     src: {
-                        eq: '8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d',
+                        eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
                     },
                     OR: {
                         dst: {
-                            eq: '-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d',
+                            eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
                         },
                     },
                 },
                 orderBy: [
                     {
-                        path: 'created_at',
-                        direction: 'ASC',
+                        path: "created_at",
+                        direction: "ASC",
                     },
                 ],
             },
-            selectionInfo('src dst'),
+            selectionInfo("src dst"),
             grantedAccess,
             1,
             {
                 orConversion: FilterOrConversion.SUB_QUERIES,
             },
-        )?.text ?? '',
+        )?.text ?? "",
     )
 
     expect(withSubQueries).toEqual(
@@ -313,7 +313,7 @@ test('messages_complement are used for shardingDegree > 0', () => {
     )
 })
 
-test('reduced RETURN', () => {
+test("reduced RETURN", () => {
     const data = createLocalArangoTestData(new QLogs())
     const blocks = data.blocks
     const accounts = data.accounts
@@ -321,10 +321,10 @@ test('reduced RETURN', () => {
     const messages = data.messages
 
     expect(
-        queryText(blocks, 'seq_no', [
+        queryText(blocks, "seq_no", [
             {
-                path: 'gen_utime',
-                direction: 'ASC',
+                path: "gen_utime",
+                direction: "ASC",
             },
         ]),
     ).toEqual(
@@ -337,7 +337,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(accounts, 'id balance __typename')).toEqual(
+    expect(queryText(accounts, "id balance __typename")).toEqual(
         normalized(`
         FOR doc IN accounts LIMIT 50 RETURN {
             _key: doc._key,
@@ -346,7 +346,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(blocks, 'value_flow { imported }')).toEqual(
+    expect(queryText(blocks, "value_flow { imported }")).toEqual(
         normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
@@ -357,7 +357,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(blocks, 'in_msg_descr { msg_type }')).toEqual(
+    expect(queryText(blocks, "in_msg_descr { msg_type }")).toEqual(
         normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
@@ -368,7 +368,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(transactions, 'in_message { id }')).toEqual(
+    expect(queryText(transactions, "in_message { id }")).toEqual(
         normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
@@ -378,7 +378,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(transactions, 'out_messages { id }')).toEqual(
+    expect(queryText(transactions, "out_messages { id }")).toEqual(
         normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
@@ -388,7 +388,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(messages, 'msg_type_name msg_type')).toEqual(
+    expect(queryText(messages, "msg_type_name msg_type")).toEqual(
         normalized(`
         FOR doc IN messages LIMIT 50 RETURN {
             _key: doc._key,
@@ -397,7 +397,7 @@ test('reduced RETURN', () => {
     `),
     )
 
-    expect(queryText(blocks, 'gen_utime_string')).toEqual(
+    expect(queryText(blocks, "gen_utime_string")).toEqual(
         normalized(`
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
@@ -409,11 +409,11 @@ test('reduced RETURN', () => {
     expect(
         queryText(
             blocks,
-            'id',
+            "id",
             [
                 {
-                    path: 'seq_no',
-                    direction: 'DESC',
+                    path: "seq_no",
+                    direction: "DESC",
                 },
             ],
             undefined,
@@ -437,176 +437,176 @@ test('reduced RETURN', () => {
 
 function selection(name: string, selections: SelectionNode[]): FieldNode {
     return {
-        kind: 'Field',
+        kind: "Field",
         name: {
-            kind: 'Name',
+            kind: "Name",
             value: name,
         },
         arguments: [],
         directives: [],
         selectionSet: {
-            kind: 'SelectionSet',
+            kind: "SelectionSet",
             selections,
         },
     }
 }
 
-test('Include join precondition fields', () => {
+test("Include join precondition fields", () => {
     const e = Message.returnExpressions(
         {
             expectedAccountBocVersion: 1,
         },
-        'doc',
-        selection('message', [
-            selection('dst_transaction', [selection('id', [])]),
+        "doc",
+        selection("message", [
+            selection("dst_transaction", [selection("id", [])]),
         ]),
     )
     expect(e[0].expression).toEqual(
-        '( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )',
+        "( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )",
     )
 })
 
-test('Generate Array AQL', () => {
+test("Generate Array AQL", () => {
     const params = new QParams()
 
     params.clear()
-    let ql = BlockSignatures.filterCondition(params, 'doc', {
-        signatures: { any: { node_id: { eq: '1' } } },
+    let ql = BlockSignatures.filterCondition(params, "doc", {
+        signatures: { any: { node_id: { eq: "1" } } },
     })
-    expect(ql).toEqual('@v1 IN doc.signatures[*].node_id')
-    expect(params.values.v1).toEqual('1')
+    expect(ql).toEqual("@v1 IN doc.signatures[*].node_id")
+    expect(params.values.v1).toEqual("1")
 
     params.clear()
-    ql = BlockSignatures.filterCondition(params, 'doc', {
-        signatures: { any: { node_id: { ne: '1' } } },
+    ql = BlockSignatures.filterCondition(params, "doc", {
+        signatures: { any: { node_id: { ne: "1" } } },
     })
     expect(ql).toEqual(
-        'LENGTH(doc.signatures[* FILTER CURRENT.node_id != @v1]) > 0',
+        "LENGTH(doc.signatures[* FILTER CURRENT.node_id != @v1]) > 0",
     )
-    expect(params.values.v1).toEqual('1')
+    expect(params.values.v1).toEqual("1")
 })
 
-test('Generate AQL', () => {
+test("Generate AQL", () => {
     const params = new QParams()
     let ql
 
     params.clear()
-    ql = BlockSignatures.filterCondition(params, 'doc', {
+    ql = BlockSignatures.filterCondition(params, "doc", {
         gen_utime: {
             ge: 1,
             le: 2,
         },
         signatures: {
             any: {
-                node_id: { in: ['3', '4'] },
+                node_id: { in: ["3", "4"] },
             },
         },
     })
     expect(ql).toEqual(
-        '((doc.gen_utime >= @v1) AND (doc.gen_utime <= @v2)) AND ((@v3 IN doc.signatures[*].node_id) OR (@v4 IN doc.signatures[*].node_id))',
+        "((doc.gen_utime >= @v1) AND (doc.gen_utime <= @v2)) AND ((@v3 IN doc.signatures[*].node_id) OR (@v4 IN doc.signatures[*].node_id))",
     )
     expect(params.values.v1).toEqual(1)
     expect(params.values.v2).toEqual(2)
-    expect(params.values.v3).toEqual('3')
-    expect(params.values.v4).toEqual('4')
+    expect(params.values.v3).toEqual("3")
+    expect(params.values.v4).toEqual("4")
 
     params.clear()
-    ql = Transaction.filterCondition(params, 'doc', {
-        id: { notIn: ['1', '2'] },
+    ql = Transaction.filterCondition(params, "doc", {
+        id: { notIn: ["1", "2"] },
     })
-    expect(ql).toEqual('NOT ((doc._key == @v1) OR (doc._key == @v2))')
-    expect(params.values.v1).toEqual('1')
-    expect(params.values.v2).toEqual('2')
+    expect(ql).toEqual("NOT ((doc._key == @v1) OR (doc._key == @v2))")
+    expect(params.values.v1).toEqual("1")
+    expect(params.values.v2).toEqual("2")
 
     params.clear()
-    ql = Transaction.filterCondition(params, 'doc', { in_msg: { ne: '1' } })
-    expect(ql).toEqual('doc.in_msg != @v1')
-    expect(params.values.v1).toEqual('1')
+    ql = Transaction.filterCondition(params, "doc", { in_msg: { ne: "1" } })
+    expect(ql).toEqual("doc.in_msg != @v1")
+    expect(params.values.v1).toEqual("1")
 
     params.clear()
-    ql = Transaction.filterCondition(params, 'doc', {
-        out_msgs: { any: { ne: '1' } },
+    ql = Transaction.filterCondition(params, "doc", {
+        out_msgs: { any: { ne: "1" } },
     })
-    expect(ql).toEqual('LENGTH(doc.out_msgs[* FILTER CURRENT != @v1]) > 0')
-    expect(params.values.v1).toEqual('1')
+    expect(ql).toEqual("LENGTH(doc.out_msgs[* FILTER CURRENT != @v1]) > 0")
+    expect(params.values.v1).toEqual("1")
 
     params.clear()
-    ql = Transaction.filterCondition(params, 'doc', {
-        out_msgs: { any: { eq: '1' } },
+    ql = Transaction.filterCondition(params, "doc", {
+        out_msgs: { any: { eq: "1" } },
     })
-    expect(ql).toEqual('@v1 IN doc.out_msgs[*]')
-    expect(params.values.v1).toEqual('1')
+    expect(ql).toEqual("@v1 IN doc.out_msgs[*]")
+    expect(params.values.v1).toEqual("1")
 
     params.clear()
-    ql = Message.filterCondition(params, 'doc', { value: { ne: null } })
-    expect(ql).toEqual('doc.value != @v1')
+    ql = Message.filterCondition(params, "doc", { value: { ne: null } })
+    expect(ql).toEqual("doc.value != @v1")
     expect(params.values.v1).toBeNull()
 
     params.clear()
-    ql = Account.filterCondition(params, 'doc', { id: { gt: 'fff' } })
-    expect(ql).toEqual('TO_STRING(doc._key) > @v1')
-    expect(params.values.v1).toEqual('fff')
+    ql = Account.filterCondition(params, "doc", { id: { gt: "fff" } })
+    expect(ql).toEqual("TO_STRING(doc._key) > @v1")
+    expect(params.values.v1).toEqual("fff")
 
     params.clear()
-    ql = Account.filterCondition(params, 'doc', { id: { eq: 'fff' } })
-    expect(ql).toEqual('doc._key == @v1')
-    expect(params.values.v1).toEqual('fff')
+    ql = Account.filterCondition(params, "doc", { id: { eq: "fff" } })
+    expect(ql).toEqual("doc._key == @v1")
+    expect(params.values.v1).toEqual("fff")
 
     params.clear()
-    ql = Account.filterCondition(params, 'doc', {
-        id: { gt: 'fff' },
+    ql = Account.filterCondition(params, "doc", {
+        id: { gt: "fff" },
         last_paid: { ge: 20 },
     })
-    expect(ql).toEqual('(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)')
-    expect(params.values.v1).toEqual('fff')
+    expect(ql).toEqual("(TO_STRING(doc._key) > @v1) AND (doc.last_paid >= @v2)")
+    expect(params.values.v1).toEqual("fff")
     expect(params.values.v2).toEqual(20)
 
     params.clear()
-    ql = Message.filterCondition(params, 'doc', {
-        src: { eq: '1' },
-        dst: { eq: '2' },
+    ql = Message.filterCondition(params, "doc", {
+        src: { eq: "1" },
+        dst: { eq: "2" },
         OR: {
-            src: { eq: '2' },
-            dst: { eq: '1' },
+            src: { eq: "2" },
+            dst: { eq: "1" },
         },
     })
     expect(ql).toEqual(
-        '((doc.src == @v1) AND (doc.dst == @v2)) OR ((doc.src == @v3) AND (doc.dst == @v4))',
+        "((doc.src == @v1) AND (doc.dst == @v2)) OR ((doc.src == @v3) AND (doc.dst == @v4))",
     )
-    expect(params.values.v1).toEqual('1')
-    expect(params.values.v2).toEqual('2')
-    expect(params.values.v3).toEqual('2')
-    expect(params.values.v4).toEqual('1')
+    expect(params.values.v1).toEqual("1")
+    expect(params.values.v2).toEqual("2")
+    expect(params.values.v3).toEqual("2")
+    expect(params.values.v4).toEqual("1")
 })
 
-test('Account BOC versioning', () => {
+test("Account BOC versioning", () => {
     overrideAccountBoc()
     const e2 = Account.returnExpressions(
         {
             expectedAccountBocVersion: 2,
         },
-        'doc',
-        selection('account', [selection('boc', [])]),
+        "doc",
+        selection("account", [selection("boc", [])]),
     )
     expect(e2[0].expression).toEqual(
-        '( doc.account && { boc: doc.account.boc } )',
+        "( doc.account && { boc: doc.account.boc } )",
     )
     const e1 = Account.returnExpressions(
         {
             expectedAccountBocVersion: 1,
         },
-        'doc',
-        selection('account', [selection('boc', [])]),
+        "doc",
+        selection("account", [selection("boc", [])]),
     )
     expect(e1[0].expression).toEqual(
-        '( doc.account && { boc: doc.account.boc1 || doc.account.boc } )',
+        "( doc.account && { boc: doc.account.boc1 || doc.account.boc } )",
     )
 })
 
-test('Use null in queries', () => {
+test("Use null in queries", () => {
     const params = new QParams()
 
     params.clear()
-    const ql = Account.filterCondition(params, 'doc', { last_paid: null })
+    const ql = Account.filterCondition(params, "doc", { last_paid: null })
     expect(ql).toBeNull()
 })

@@ -2,13 +2,13 @@ import {
     BigIntArgs,
     resolveBigUInt,
     unixSecondsToString,
-} from '../../../filter/filters'
-import { QRequestContext } from '../../../request'
+} from "../../../filter/filters"
+import { QRequestContext } from "../../../request"
 import {
     MessageProcessingStatusEnum,
     MessageTypeEnum,
     Resolvers,
-} from '../resolvers-types-generated'
+} from "../resolvers-types-generated"
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainMessage: {

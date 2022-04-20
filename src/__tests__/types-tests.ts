@@ -1,6 +1,6 @@
-import { unixSecondsToString } from '../server/filter/filters'
-import { packageJson } from '../server/utils'
-import { testServerQuery } from './init-tests'
+import { unixSecondsToString } from "../server/filter/filters"
+import { packageJson } from "../server/utils"
+import { testServerQuery } from "./init-tests"
 
 const { version } = packageJson()
 
@@ -17,12 +17,12 @@ type Messages = {
     }[]
 }
 
-test('version', async () => {
-    const info = await testServerQuery('query{info{version}}')
+test("version", async () => {
+    const info = await testServerQuery("query{info{version}}")
     expect(info).toMatchObject({ info: { version } })
 })
 
-test('time companion fields', async () => {
+test("time companion fields", async () => {
     const minTime = 1000000000000 // 2001-09-09T01:46:40.000Z
     const maxTime = 10000000000000 // 2286-11-20T17:46:40.000Z
 
@@ -37,7 +37,7 @@ test('time companion fields', async () => {
         return unixSecondsToString(value) === string
     }
     const data = await testServerQuery<Messages>(
-        'query { messages { created_at created_at_string } }',
+        "query { messages { created_at created_at_string } }",
     )
     for (const message of data.messages) {
         expect(
@@ -46,7 +46,7 @@ test('time companion fields', async () => {
     }
 })
 
-test('when conditions for joins', async () => {
+test("when conditions for joins", async () => {
     const data = await testServerQuery<Messages>(`
     query { 
         messages { 
@@ -67,7 +67,7 @@ test('when conditions for joins', async () => {
     }
 })
 
-test('Case insensitive filters', async () => {
+test("Case insensitive filters", async () => {
     const query = async (collection: string, field: string, value: unknown) => {
         return (
             await testServerQuery<Record<string, Record<string, unknown>[]>>(
@@ -94,7 +94,7 @@ test('Case insensitive filters', async () => {
             expect(`${docsLower[i][field]}`.toLowerCase()).toEqual(valueLower)
         }
     }
-    await testField('messages', 'src')
-    await testField('messages', 'dst')
-    await testField('transactions', 'account_addr')
+    await testField("messages", "src")
+    await testField("messages", "dst")
+    await testField("transactions", "account_addr")
 })

@@ -1,5 +1,5 @@
-import type { QConfig } from '../config'
-import { tracer as noopTracer } from 'opentracing/lib/noop'
+import type { QConfig } from "../config"
+import { tracer as noopTracer } from "opentracing/lib/noop"
 import opentracing, {
     Tracer,
     Tags,
@@ -7,14 +7,14 @@ import opentracing, {
     FORMAT_BINARY,
     Span,
     SpanContext,
-} from 'opentracing'
+} from "opentracing"
 
-import jaegerclient from 'jaeger-client'
+import jaegerclient from "jaeger-client"
 
-import { cleanError, toLog } from '../utils'
-import express from 'express'
+import { cleanError, toLog } from "../utils"
+import express from "express"
 
-declare module 'jaeger-client' {
+declare module "jaeger-client" {
     class SpanContext {
         static fromString(s: string): opentracing.SpanContext
     }
@@ -27,12 +27,12 @@ function parseUrl(url: string): {
     path: string
     query: string
 } {
-    const protocolSeparatorPos = url.indexOf('://')
+    const protocolSeparatorPos = url.indexOf("://")
     const protocolEnd = protocolSeparatorPos >= 0 ? protocolSeparatorPos + 3 : 0
-    const questionPos = url.indexOf('?', protocolEnd)
+    const questionPos = url.indexOf("?", protocolEnd)
     const queryStart = questionPos >= 0 ? questionPos + 1 : url.length
     const pathEnd = questionPos >= 0 ? questionPos : url.length
-    const pathSeparatorPos = url.indexOf('/', protocolEnd)
+    const pathSeparatorPos = url.indexOf("/", protocolEnd)
     // eslint-disable-next-line no-nested-ternary
     const pathStart =
         pathSeparatorPos >= 0
@@ -42,11 +42,11 @@ function parseUrl(url: string): {
             : questionPos >= 0
             ? questionPos
             : url.length
-    const hostPort = url.substring(protocolEnd, pathStart).split(':')
+    const hostPort = url.substring(protocolEnd, pathStart).split(":")
     return {
         protocol: url.substring(0, protocolEnd),
         host: hostPort[0],
-        port: hostPort[1] ?? '',
+        port: hostPort[1] ?? "",
         path: url.substring(pathStart, pathEnd),
         query: url.substring(queryStart),
     }
@@ -70,16 +70,16 @@ export class QTracer {
     }): JaegerConfig | null {
         const endpoint = config.endpoint
 
-        if (endpoint === '') {
+        if (endpoint === "") {
             return null
         }
 
         const parts = parseUrl(endpoint)
-        return parts.protocol === ''
+        return parts.protocol === ""
             ? {
                   serviceName: config.service,
                   sampler: {
-                      type: 'const',
+                      type: "const",
                       param: 1,
                   },
                   reporter: {
@@ -91,7 +91,7 @@ export class QTracer {
             : {
                   serviceName: config.service,
                   sampler: {
-                      type: 'const',
+                      type: "const",
                       param: 1,
                   },
                   reporter: {
@@ -111,17 +111,17 @@ export class QTracer {
         return jaegerclient.initTracerFromEnv(jaegerConfig, {
             logger: {
                 info(msg: unknown) {
-                    console.log('INFO ', msg)
+                    console.log("INFO ", msg)
                 },
                 error(msg: unknown) {
-                    console.log('ERROR', msg)
+                    console.log("ERROR", msg)
                 },
             },
         })
     }
 
     static messageRootSpanContext(messageId: string): SpanContext | undefined {
-        if (messageId === '') {
+        if (messageId === "") {
             return undefined
         }
         const traceId = messageId.substr(0, 16)
@@ -138,7 +138,7 @@ export class QTracer {
         }
         let ctx_src: unknown
         let ctx_frm: string
-        if ('headers' in source) {
+        if ("headers" in source) {
             ctx_src = source.headers
             ctx_frm = FORMAT_TEXT_MAP
         } else {
@@ -156,7 +156,7 @@ export class QTracer {
     ): Promise<T> {
         const span = tracer.startSpan(name, { childOf: parentSpan })
         try {
-            span.setTag(Tags.SPAN_KIND, 'server')
+            span.setTag(Tags.SPAN_KIND, "server")
             QTracer.attachCommonTags(span)
             const result = await f(span)
             if (result !== undefined) {
@@ -166,7 +166,7 @@ export class QTracer {
             return result
         } catch (error) {
             const cleaned = cleanError(error)
-            span.log({ event: 'failed', payload: toLog(error) })
+            span.log({ event: "failed", payload: toLog(error) })
             span.finish()
             throw cleaned
         }
@@ -174,7 +174,7 @@ export class QTracer {
 
     static attachCommonTags(span: Span) {
         Object.entries(QTracer.config.jaeger.tags).forEach(([name, value]) => {
-            if (name !== '') {
+            if (name !== "") {
                 span.setTag(name, value)
             }
         })

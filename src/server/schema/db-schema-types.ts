@@ -1,5 +1,5 @@
-import { makeFieldTypeName } from '../../maintanance/gen-graphql/gen'
-import { Def, parseTypeDef, TypeDef } from './schema-def'
+import { makeFieldTypeName } from "../../maintanance/gen-graphql/gen"
+import { Def, parseTypeDef, TypeDef } from "./schema-def"
 import type {
     DbJoin,
     IntEnumDef,
@@ -7,8 +7,8 @@ import type {
     SchemaDoc,
     SchemaMember,
     SchemaType,
-} from './schema'
-import { ToStringFormatter } from './schema'
+} from "./schema"
+import { ToStringFormatter } from "./schema"
 
 const { ref, arrayOf } = Def
 
@@ -23,7 +23,7 @@ export const join = (
         ...ref(refDef),
         _: {
             join: {
-                collection: '',
+                collection: "",
                 on,
                 refOn,
                 preCondition,
@@ -111,8 +111,8 @@ export function u8enum(name: string, values: IntEnumValues) {
             .map(([name, value]) => {
                 return `- ${value} – ${name}`
             })
-            .join('\n')
-        const effectiveDoc = `${doc ? `${doc}\n` : ''}${valuesDoc}`
+            .join("\n")
+        const effectiveDoc = `${doc ? `${doc}\n` : ""}${valuesDoc}`
         return withDoc(
             {
                 _int: {
@@ -140,10 +140,10 @@ export const otherCurrencyCollection = (doc?: string): TypeDef =>
     arrayOf(ref({ OtherCurrency }), doc)
 
 export enum DbTypeCategory {
-    unresolved = 'unresolved',
-    scalar = 'scalar',
-    union = 'union',
-    struct = 'struct',
+    unresolved = "unresolved",
+    scalar = "scalar",
+    union = "union",
+    struct = "struct",
 }
 
 export type DbType = {
@@ -170,17 +170,17 @@ function scalarType(name: string): DbType {
         name,
         category: DbTypeCategory.scalar,
         fields: [],
-        doc: '',
+        doc: "",
     }
 }
 
 export const scalarTypes = {
-    int: scalarType('Int'),
-    uint64: scalarType('String'),
-    uint1024: scalarType('String'),
-    float: scalarType('Float'),
-    boolean: scalarType('Boolean'),
-    string: scalarType('String'),
+    int: scalarType("Int"),
+    uint64: scalarType("String"),
+    uint1024: scalarType("String"),
+    float: scalarType("Float"),
+    boolean: scalarType("Boolean"),
+    string: scalarType("String"),
 }
 
 export function isBigInt(type: DbType): boolean {
@@ -192,7 +192,7 @@ export function unresolvedType(name: string): DbType {
         name,
         category: DbTypeCategory.unresolved,
         fields: [],
-        doc: '',
+        doc: "",
     }
 }
 
@@ -206,20 +206,20 @@ export function stringifyEnumValues(values: {
     const fields = Object.entries(values).map(([name, value]) => {
         return `${toEnumStyle(name)}: ${value}`
     })
-    return `{ ${fields.join(', ')} }`
+    return `{ ${fields.join(", ")} }`
 }
 
 export function getDocMD(doc?: SchemaDoc): string {
     if (!doc) {
-        return ''
+        return ""
     }
-    if (typeof doc === 'string') {
+    if (typeof doc === "string") {
         return doc
     }
-    if ('md' in doc) {
+    if ("md" in doc) {
         return doc.md
     }
-    return ''
+    return ""
 }
 
 export type DbSchema = {
@@ -299,7 +299,7 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             }
         } else {
             field.type = scalarTypes.string
-            console.log('Invalid field type: ', JSON.stringify(schemaType))
+            console.log("Invalid field type: ", JSON.stringify(schemaType))
             process.exit(1)
         }
         return field
@@ -332,10 +332,10 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
 
         if (type.collection) {
             type.fields.push({
-                name: 'id',
+                name: "id",
                 arrayDepth: 0,
                 type: scalarTypes.string,
-                doc: '',
+                doc: "",
             })
         }
         struct.forEach(field => {

@@ -1,5 +1,5 @@
-import { Kafka, Producer } from 'kafkajs'
-import { QRequestContext } from '../request'
+import { Kafka, Producer } from "kafkajs"
+import { QRequestContext } from "../request"
 
 const postSubscription = async (
     context: QRequestContext,
@@ -26,13 +26,13 @@ const postSubscription = async (
     }
 
     const producer: Producer = await ensureShared(
-        'subscr-producer',
+        "subscr-producer",
         async () => {
             const kafka: Kafka = await ensureShared(
-                'subscr-kafka',
+                "subscr-kafka",
                 async () =>
                     new Kafka({
-                        clientId: 'subscr-q-server',
+                        clientId: "subscr-q-server",
                         brokers: [kafkaOptions.server],
                     }),
             )
