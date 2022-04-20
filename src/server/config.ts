@@ -235,9 +235,9 @@ export const configParams = {
 
     /* Depricated, use `subscriptionsMode = 0 | 1 | 2`
     useListeners: ConfigParam.boolean(
-        'use-listeners',
+        "use-listeners",
         true,
-        'Use database listeners for subscriptions',
+        "Use database listeners for subscriptions",
     ),
     */
     subscriptionsMode: ConfigParam.integer(
