@@ -172,34 +172,34 @@ export const configParams = {
             server: ConfigParam.string(
                 "subscriptions-kafka-server",
                 "kafka:9092",
-                "Subscriptions server url",
+                "Subscriptions server url (for 'external' subscriptions mode)",
             ),
             topic: ConfigParam.string(
                 "subscriptions-kafka-topic",
                 "subscriptions",
-                "Subscriptions topic name",
+                "Subscriptions topic name (for 'external' subscriptions mode)",
             ),
             maxSize: ConfigParam.integer(
                 "subscriptions-max-filter-size",
                 16383,
-                "maximum subscription's filter size in bytes",
+                "Maximum subscription's filter size in bytes (for 'external' subscriptions mode)",
             ),
             keepAliveInterval: ConfigParam.integer(
                 "subscriptions-filters-millis",
                 30000,
-                "Keep alive for filters in millisecons",
+                "Kafka keep alive period for filters in millisecons (for 'external' subscriptions mode)",
             ),
         },
         redisOptions: {
             port: ConfigParam.integer(
                 "subscriptions-redis-port",
                 6379,
-                "Redis port",
+                "Redis port (for 'external' subscriptions mode)",
             ),
             host: ConfigParam.string(
                 "subscriptions-redis-host",
                 "redis",
-                "Redis host",
+                "Redis host (for 'external' subscriptions mode)",
             ),
         },
     },
