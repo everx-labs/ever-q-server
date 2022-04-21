@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - prettify code
-- new `subscriptions-mode` config parameter with three options: `disable`, `arango` (default), `external`
+- new `subscriptions-mode` config parameter with three options: `disabled`, `arango` (default), `external`
 - new `external` subscriptions mode (publishes filters to Kafka and gets documents from Redis)
 
 ### Deprecated
