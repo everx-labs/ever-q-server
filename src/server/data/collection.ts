@@ -356,9 +356,7 @@ export class QDataCollection {
                     pubsub.asyncIterator([key]),
                     async next => {
                         if (next == "STOP") {
-                            await asyncIterator.throw(
-                                new Error("Subscription was terminated"),
-                            )
+                            await terminate()
                         }
                     },
                     () => {
@@ -367,14 +365,17 @@ export class QDataCollection {
                             0,
                             this.subscriptionCount - 1,
                         )
+                        pubsubEvents.off("connection-error", terminate)
                     },
                 )
-                pubsubEvents.on("connection-error", () => {
-                    void asyncIterator.throw(
+                pubsubEvents.on("connection-error", terminate)
+                return asyncIterator
+
+                function terminate() {
+                    return asyncIterator.throw(
                         new Error("Subscription was terminated"),
                     )
-                })
-                return asyncIterator
+                }
             },
             resolve: (
                 payload: any,
