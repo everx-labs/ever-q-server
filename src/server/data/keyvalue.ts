@@ -39,14 +39,18 @@ export const emptyKVProvider: KVProvider = {
 }
 
 export type ValuesWithDelays<T> = {
+    dataKey: string
+    changesKey: string
     values: T[]
-    lengths: {
+    changes: {
         delay: number
         length: number
     }[]
 }
 
 export function parseValuesWithDelays<T>(
+    dataKey: string,
+    changesKey: string,
     source: (T | number)[],
 ): ValuesWithDelays<T> {
     const values = []
@@ -72,43 +76,61 @@ export function parseValuesWithDelays<T>(
         length: values.length,
     })
     return {
+        dataKey,
+        changesKey,
         values,
-        lengths,
+        changes: lengths,
     }
 }
 
-// export function mockKVProvider<T>(source: {
-//     [key: string]: ValuesWithDelays
-// }): KVProvider {
-//     const overriddenValues = new Map<string, T[]>()
-//     return {
-//         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//         async get<T>(key: string): Promise<T[] | null | undefined> {
-//             const overridden = overriddenValues.get(key)
-//             if (overridden) {
-//                 return overridden
-//             }
-//             return source[key]?.values
-//         },
-//
-//         subscribe<T>(
-//             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//             _key: string,
-//             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//             _handler: (
-//                 data: T | undefined,
-//                 error: Error | undefined,
-//             ) => Promise<void>,
-//         ): Promise<string> {
-//             return Promise.resolve("")
-//         },
-//
-//         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-//         unsubscribe(_handle: string): Promise<void> {
-//             return Promise.resolve()
-//         },
-//     }
-// }
+export function mockKVProvider<T>(source: ValuesWithDelays<T>[]): KVProvider {
+    const values = new Map<string, ValuesWithDelays<T>>()
+    const changes = new Map<string, ValuesWithDelays<T>>()
+    const lengths = new Map<string, number>()
+    for (const s of source) {
+        values.set(s.dataKey, s)
+        changes.set(s.changesKey, s)
+    }
+    return {
+        async get<GT>(key: string): Promise<GT | null | undefined> {
+            const v = values.get(key)?.values
+            return v
+                ? (v.slice(0, lengths.get(key) ?? v.length) as unknown as GT)
+                : undefined
+        },
+
+        subscribe<CT>(
+            key: string,
+            _handler: (
+                data: CT | undefined,
+                error: Error | undefined,
+            ) => Promise<void>,
+        ): Promise<string> {
+            const play = changes.get(key)
+            if (play) {
+                let step = 0
+                const check = () => {
+                    if (step < play.changes.length) {
+                        setTimeout(() => {
+                            lengths.set(play.dataKey, play.changes[step].length)
+                            step += 1
+                            check()
+                        }, play.changes[step].delay)
+                    } else {
+                        lengths.delete(play.dataKey)
+                    }
+                }
+                check()
+            }
+            return Promise.resolve("")
+        },
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        unsubscribe(_handle: string): Promise<void> {
+            return Promise.resolve()
+        },
+    }
+}
 
 export class KVIterator<T> implements AsyncIterator<T> {
     pullQueue: ((result: IteratorResult<T>) => void)[]
