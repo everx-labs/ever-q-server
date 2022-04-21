@@ -333,6 +333,7 @@ export function extractHeader(
 
 export class QAsyncIterator<T> implements AsyncIterator<T> {
     private isClosed = false
+    private closedWith = new Deferred<IteratorResult<T>>()
     constructor(
         private upstream: AsyncIterator<T>,
         private onNext?: (next: T) => void | Promise<void>,
@@ -343,7 +344,10 @@ export class QAsyncIterator<T> implements AsyncIterator<T> {
         if (this.isClosed) {
             return { value: undefined, done: true as const }
         }
-        const next = await this.upstream.next()
+        const next = await Promise.race([
+            this.upstream.next(),
+            this.closedWith.promise,
+        ])
         if (!next.done && this.onNext) {
             await this.onNext(next.value)
         }
@@ -351,26 +355,59 @@ export class QAsyncIterator<T> implements AsyncIterator<T> {
     }
 
     public async return() {
-        this.onClose?.()
-        this.isClosed = true
-        if (this.upstream.return) {
-            return await this.upstream.return()
-        } else {
-            return { value: undefined, done: true as const }
-        }
+        return this.close(
+            () =>
+                this.upstream.return?.() ??
+                Promise.resolve({ value: undefined, done: true as const }),
+        )
     }
 
     public throw(error: any) {
+        return this.close(
+            () => this.upstream.throw?.() ?? Promise.reject(error),
+        )
+    }
+
+    private close(getResult: () => Promise<IteratorResult<T, any>>) {
         this.onClose?.()
         this.isClosed = true
-        if (this.upstream.throw) {
-            return this.upstream.throw(error)
-        } else {
-            return Promise.reject(error)
-        }
+        return getResult().then(
+            v => {
+                this.closedWith.resolve(v)
+                return v
+            },
+            r => {
+                this.closedWith.reject(r)
+                return Promise.reject(r)
+            },
+        )
     }
 
     public [$$asyncIterator]() {
         return this
+    }
+}
+
+export class Deferred<T> {
+    promise: Promise<T>
+    // Resolve and reject are reentrant:
+    // https://262.ecma-international.org/6.0/#sec-promise-resolve-functions
+    resolve: (value: T | PromiseLike<T>) => void
+    // https://262.ecma-international.org/6.0/#sec-promise-reject-functions
+    reject: (reason?: any) => void
+    constructor() {
+        let cResolve = undefined
+        let cReject = undefined
+        this.promise = new Promise((resolve, reject) => {
+            cResolve = resolve
+            cReject = reject
+        })
+        if (!cResolve || !cReject) {
+            // Expected to be impossible:
+            // https://262.ecma-international.org/6.0/#sec-promise-constructor
+            throw new Error("Invalid Promise constructor")
+        }
+        this.resolve = cResolve
+        this.reject = cReject
     }
 }
