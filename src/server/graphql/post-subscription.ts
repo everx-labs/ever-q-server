@@ -12,23 +12,11 @@ const postSubscription = async (
             `Message size ${size} is too large. Maximum size is ${kafkaOptions.maxSize} bytes.`,
         )
     }
-    const ensureShared = async <T>(
-        name: string,
-        createValue: () => Promise<T>,
-    ): Promise<T> => {
-        const shared = context.services.shared
-        if (shared.has(name)) {
-            return shared.get(name) as T
-        }
-        const value = await createValue()
-        shared.set(name, value)
-        return value
-    }
 
-    const producer: Producer = await ensureShared(
+    const producer: Producer = await context.ensureShared(
         "subscr-producer",
         async () => {
-            const kafka: Kafka = await ensureShared(
+            const kafka: Kafka = await context.ensureShared(
                 "subscr-kafka",
                 async () =>
                     new Kafka({

@@ -142,4 +142,17 @@ export class QRequestContext implements QRequestParams {
     ): Promise<T> {
         return this.requestSpan.traceChildOperation(operationName, operation)
     }
+
+    async ensureShared<T>(
+        name: string,
+        createValue: () => Promise<T>,
+    ): Promise<T> {
+        const shared = this.services.shared
+        if (shared.has(name)) {
+            return shared.get(name) as T
+        }
+        const value = await createValue()
+        shared.set(name, value)
+        return value
+    }
 }

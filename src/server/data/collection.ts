@@ -16,7 +16,6 @@
 
 import { Tracer } from "opentracing"
 
-import WebSocket from "ws"
 import md5 from "md5"
 import { RedisPubSub } from "graphql-redis-subscriptions"
 import postSubscription from "../graphql/post-subscription"
@@ -35,7 +34,7 @@ import {
 } from "./data-provider"
 import { QDataListener, QDataSubscription } from "./listener"
 import { AccessArgs, AccessRights, Auth, grantedAccess } from "../auth"
-import { QConfig, SlowQueriesMode, STATS } from "../config"
+import { QConfig, SlowQueriesMode, STATS, SubscriptionsMode } from "../config"
 import {
     CollectionFilter,
     indexToString,
@@ -51,16 +50,14 @@ import QLogs, { QLog } from "../logs"
 import { explainSlowReason, isFastQuery } from "../filter/slow-detector"
 import { IStats, StatsCounter, StatsGauge, StatsTiming } from "../stats"
 import { QTraceSpan, QTracer } from "../tracing"
-import { QError, required, wrap } from "../utils"
+import { QAsyncIterator, QError, required, wrap } from "../utils"
 import EventEmitter from "events"
-import { FieldNode, SelectionSetNode } from "graphql"
+import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql"
 import { QRequestContext, RequestEvent } from "../request"
 import { QCollectionQuery } from "./collection-query"
 import { QJoinQuery } from "./collection-joins"
 
 const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000 // 60 minutes
-
-let pubsub: RedisPubSub
 
 export type AggregationArgs = {
     filter?: CollectionFilter | null
@@ -79,7 +76,7 @@ export type QCollectionOptions = {
     auth: Auth
     tracer: Tracer
     stats: IStats
-    subscriptionsMode: number
+    subscriptionsMode: SubscriptionsMode
 
     isTests: boolean
 }
@@ -97,7 +94,7 @@ export class QDataCollection {
     auth: Auth
     tracer: Tracer
     isTests: boolean
-    subscriptionsMode: number
+    subscriptionsMode: SubscriptionsMode
 
     // Own
     statDoc: StatsCounter
@@ -132,10 +129,7 @@ export class QDataCollection {
         this.auth = options.auth
         this.tracer = options.tracer
         this.isTests = options.isTests
-        this.subscriptionsMode = // maybe it is not a proper place to validate arguments
-            options.subscriptionsMode >= 0 && options.subscriptionsMode <= 2
-                ? options.subscriptionsMode
-                : 0
+        this.subscriptionsMode = options.subscriptionsMode
         this.waitForCount = 0
         this.subscriptionCount = 0
 
@@ -178,7 +172,10 @@ export class QDataCollection {
         this.maxQueueSize = 0
 
         const provider = options.provider
-        if (this.subscriptionsMode === 1 && provider !== undefined) {
+        if (
+            this.subscriptionsMode === SubscriptionsMode.Arango &&
+            provider !== undefined
+        ) {
             void (async () => {
                 this.hotSubscription = await provider.subscribe(name, doc =>
                     this.onDocumentInsertOrUpdate(doc as QDoc),
@@ -188,11 +185,7 @@ export class QDataCollection {
     }
 
     close() {
-        if (
-            this.subscriptionsMode === 1 &&
-            this.provider !== undefined &&
-            this.hotSubscription
-        ) {
+        if (this.provider !== undefined && this.hotSubscription) {
             this.provider.unsubscribe(this.hotSubscription)
             this.hotSubscription = null
             this.provider = undefined
@@ -233,81 +226,16 @@ export class QDataCollection {
         })
     }
 
-    subscriptionResolver() {
+    arangoSubscriptionResolver() {
         return {
             subscribe: async (
                 _: unknown,
                 args: AccessArgs & { filter: CollectionFilter | null },
                 request: QRequestContext,
-                info: {
-                    operation: { selectionSet: SelectionSetNode }
-                    fieldName: string
-                },
+                info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
-                if (this.subscriptionsMode === 0) {
-                    throw new Error("Disabled")
-                }
                 const accessRights = await request.requireGrantedAccess(args)
                 await this.statSubscription.increment()
-
-                if (this.subscriptionsMode === 2) {
-                    if (!pubsub) {
-                        const retryStrategy = (times: number): number => {
-                            if (times > 10) {
-                                if (request?.connection?.context?.ws) {
-                                    for (const ws of request.connection.context
-                                        .ws) {
-                                        if (ws.readyState === WebSocket.OPEN) {
-                                            this.log.debug("DEBUG: close ws") // TODO remove
-                                            ws.close()
-                                        }
-                                    }
-                                }
-                            }
-                            return Math.min(times * 200, 2000)
-                        }
-
-                        pubsub = new RedisPubSub({
-                            connection: {
-                                ...request.services.config.subscriptions
-                                    .redisOptions,
-                                retryStrategy,
-                                maxRetriesPerRequest: null,
-                            },
-                        })
-                    }
-
-                    const value = JSON.stringify(args.filter || {})
-                    const key = info.fieldName + md5(value)
-
-                    await postSubscription(request, { key, value })
-
-                    const timerId = setInterval(() => {
-                        postSubscription(request, { key, value: "" }).catch(
-                            (err: any) => {
-                                // Can't help, can log an error only
-                                this.log.error("SUBSCRIPTIONS", err)
-                            },
-                        )
-                    }, request.services.config.subscriptions.kafkaOptions.keepAliveInterval)
-
-                    const asyncIterator = pubsub.asyncIterator([key])
-                    //
-                    // For explanations, see https://github.com/apollographql/graphql-subscriptions/issues/99
-                    //
-                    if (!asyncIterator.return) {
-                        asyncIterator.return = () =>
-                            Promise.resolve({ value: undefined, done: true })
-                    }
-
-                    const savedReturn = asyncIterator.return.bind(asyncIterator)
-                    asyncIterator.return = () => {
-                        clearInterval(timerId)
-                        return savedReturn()
-                    }
-                    return asyncIterator
-                }
-
                 const subscription = new QDataSubscription(
                     this.name,
                     this.docType,
@@ -370,31 +298,111 @@ export class QDataCollection {
                 }
                 return subscription
             },
-            ...(this.subscriptionsMode === 1
-                ? {}
-                : {
-                      resolve: (
-                          payload: any,
-                          _: unknown,
-                          context: QRequestContext,
-                      ) => {
-                          this.log.debug("DEBUG: got payload", payload) // TODO remove
-                          if (payload === "STOP") {
-                              // Subscription was abruptly aborted by streams application
-                              if (
-                                  context?.connection?.context?.subscrWS?.close
-                              ) {
-                                  context.connection.context.subscrWS.close()
-                                  return
-                              }
-                          }
-                          // Add _key to mimic "old" behavior
-                          if (payload._key === undefined) {
-                              payload._key = payload.id
-                          }
-                          return payload
-                      },
-                  }),
+        }
+    }
+
+    externalSubscriptionResolver() {
+        return {
+            subscribe: async (
+                _: unknown,
+                args: AccessArgs & { filter: CollectionFilter | null },
+                context: QRequestContext,
+                info: GraphQLResolveInfo,
+            ) => {
+                await context.requireGrantedAccess(args)
+                await this.statSubscription.increment()
+
+                const pubsubEvents = await context.ensureShared(
+                    "subscr-pubsub-events",
+                    async () => new EventEmitter(),
+                )
+                const pubsub = await context.ensureShared(
+                    "subscr-pubsub",
+                    async () => {
+                        const retryStrategy = (times: number): number => {
+                            // > 1800 ms of downtime (50+100+150+200+250+300+350+400)
+                            if (times > 8) {
+                                pubsubEvents.emit("connection-error")
+                            }
+                            return Math.min(times * 50, 2000)
+                        }
+                        return new RedisPubSub({
+                            connection: {
+                                ...context.services.config.subscriptions
+                                    .redisOptions,
+                                maxRetriesPerRequest: null,
+                                retryStrategy,
+                            },
+                        })
+                    },
+                )
+
+                const value = JSON.stringify(args.filter || {})
+                const key = info.fieldName + md5(value)
+
+                await postSubscription(context, { key, value })
+
+                const timerId = setInterval(() => {
+                    postSubscription(context, { key, value: "" }).catch(
+                        (err: any) => {
+                            // Can't help, can log an error only
+                            this.log.error("SUBSCRIPTIONS_ERROR", err)
+                        },
+                    )
+                }, context.services.config.subscriptions.kafkaOptions.keepAliveInterval)
+
+                this.subscriptionCount += 1
+                const asyncIterator = new QAsyncIterator(
+                    pubsub.asyncIterator([key]),
+                    async next => {
+                        if (next == "STOP") {
+                            await asyncIterator.throw(
+                                new Error("Subscription was terminated"),
+                            )
+                        }
+                    },
+                    () => {
+                        clearInterval(timerId)
+                        this.subscriptionCount = Math.max(
+                            0,
+                            this.subscriptionCount - 1,
+                        )
+                    },
+                )
+                pubsubEvents.on("connection-error", () => {
+                    void asyncIterator.throw(
+                        new Error("Subscription was terminated"),
+                    )
+                })
+                return asyncIterator
+            },
+            resolve: (
+                payload: any,
+                _args: unknown,
+                _context: QRequestContext,
+                _info: GraphQLResolveInfo,
+            ) => {
+                // Add _key to mimic "old" behavior
+                if (payload._key === undefined) {
+                    payload._key = payload.id
+                }
+                return payload
+            },
+        }
+    }
+
+    subscriptionResolver() {
+        switch (this.subscriptionsMode) {
+            case SubscriptionsMode.Disabled:
+                return {
+                    subscribe: () => {
+                        throw new Error("Disabled")
+                    },
+                }
+            case SubscriptionsMode.Arango:
+                return this.arangoSubscriptionResolver()
+            case SubscriptionsMode.External:
+                return this.externalSubscriptionResolver()
         }
     }
 

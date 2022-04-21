@@ -16,7 +16,7 @@
         "update indexes": "node dist/maintanance/arango-update/index.js",
         "npm install": "npm install",
         "eslint": "eslint . --ext .ts",
-        "eslint-fix": "eslint . --ext .ts"
+        "eslint-fix": "eslint . --ext .ts --fix"
     },
     "keywords": [],
     "author": "",

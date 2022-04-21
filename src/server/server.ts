@@ -35,6 +35,7 @@ import {
     QBlockchainDataConfig,
     QHotColdDataConfig,
     STATS,
+    SubscriptionsMode,
 } from "./config"
 import {
     QDatabasePool,
@@ -249,7 +250,7 @@ export class DataProviderFactory {
                 return new QShardDatabaseProvider(
                     this.logs.create(logKey),
                     qShard,
-                    this.config.subscriptionsMode === 1,
+                    this.config.subscriptionsMode === SubscriptionsMode.Arango,
                 )
             },
             shardingDepth.toString(),
@@ -427,7 +428,6 @@ export default class TONQServer {
         const typeDefs = endPoint.typeDefFileNames
             .map(x => fs.readFileSync(path.join("res", x), "utf-8"))
             .join("\n")
-        const subscrWSSet = new Set() // To collect links to websockets opened by subscribers
         const config: ApolloServerExpressConfig = {
             debug: false,
             typeDefs,
@@ -435,27 +435,23 @@ export default class TONQServer {
             subscriptions: {
                 keepAlive: this.config.server.keepAlive,
                 onDisconnect(
-                    webSocket: WebSocket,
+                    _webSocket: WebSocket,
                     context: QConnectionContext,
                 ) {
                     const activeRequests = context.activeRequests
                     if (activeRequests) {
                         activeRequests.forEach(x => x.emitClose())
                         context.activeRequests = []
-                        subscrWSSet.delete(webSocket)
                     }
                 },
                 onConnect(
                     connectionParams: QConnectionParams,
-                    webSocket: WebSocket,
+                    _webSocket: WebSocket,
                     context: QConnectionContext,
                 ): Record<string, unknown> {
                     const activeRequests: QRequestContext[] = []
                     context.activeRequests = activeRequests
-                    subscrWSSet.add(webSocket)
                     return {
-                        subscrWSSet,
-                        subscrWS: webSocket,
                         activeRequests,
                         accessKey:
                             connectionParams.accessKey ??

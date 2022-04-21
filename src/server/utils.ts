@@ -2,6 +2,7 @@ import type { QLog } from "./logs"
 import fs from "fs"
 import path from "path"
 import { createHash } from "crypto"
+import { $$asyncIterator } from "iterall"
 
 export function packageJson(): Record<string, unknown> {
     let testPath = path.resolve(__dirname)
@@ -328,4 +329,48 @@ export function extractHeader(
         tryExtractHeader(req, connection, name.toLowerCase()) ??
         def
     )
+}
+
+export class QAsyncIterator<T> implements AsyncIterator<T> {
+    private isClosed = false
+    constructor(
+        private upstream: AsyncIterator<T>,
+        private onNext?: (next: T) => void | Promise<void>,
+        private onClose?: () => void,
+    ) {}
+
+    public async next() {
+        if (this.isClosed) {
+            return { value: undefined, done: true as const }
+        }
+        const next = await this.upstream.next()
+        if (!next.done && this.onNext) {
+            await this.onNext(next.value)
+        }
+        return next
+    }
+
+    public async return() {
+        this.onClose?.()
+        this.isClosed = true
+        if (this.upstream.return) {
+            return await this.upstream.return()
+        } else {
+            return { value: undefined, done: true as const }
+        }
+    }
+
+    public throw(error: any) {
+        this.onClose?.()
+        this.isClosed = true
+        if (this.upstream.throw) {
+            return this.upstream.throw(error)
+        } else {
+            return Promise.reject(error)
+        }
+    }
+
+    public [$$asyncIterator]() {
+        return this
+    }
 }
