@@ -355,32 +355,20 @@ export class QAsyncIterator<T> implements AsyncIterator<T> {
     }
 
     public async return() {
-        return this.close(
-            () =>
-                this.upstream.return?.() ??
-                Promise.resolve({ value: undefined, done: true as const }),
+        this.closedWith.resolve({ value: undefined, done: true as const })
+        this.onClose?.()
+        this.isClosed = true
+        return (
+            this.upstream.return?.() ??
+            Promise.resolve({ value: undefined, done: true as const })
         )
     }
 
     public throw(error: any) {
-        return this.close(
-            () => this.upstream.throw?.() ?? Promise.reject(error),
-        )
-    }
-
-    private close(getResult: () => Promise<IteratorResult<T, any>>) {
+        this.closedWith.reject(error)
         this.onClose?.()
         this.isClosed = true
-        return getResult().then(
-            v => {
-                this.closedWith.resolve(v)
-                return v
-            },
-            r => {
-                this.closedWith.reject(r)
-                return Promise.reject(r)
-            },
-        )
+        return this.upstream.throw?.() ?? Promise.reject(error)
     }
 
     public [$$asyncIterator]() {
