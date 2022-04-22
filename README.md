@@ -23,7 +23,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
 
 ```text
 Option                                          ENV                                             Default           Description
-----------------------------------------------  ----------------------------------------------  ----------------  ----------------------------------------------------------------------
+----------------------------------------------  ----------------------------------------------  ----------------  --------------------------------------------------------------------------------------
 --config                                        Q_CONFIG                                                          Path to JSON configuration file
 --host                                          Q_HOST                                          {ip}              Listening address
 --port                                          Q_PORT                                          4000              Listening port
@@ -34,9 +34,16 @@ Option                                          ENV                             
 --requests-server                               Q_REQUESTS_SERVER                               kafka:9092        Requests server url
 --requests-topic                                Q_REQUESTS_TOPIC                                requests          Requests topic name
 --requests-max-size                             Q_REQUESTS_MAX_SIZE                             16383             Maximum request message size in bytes
+--subscriptions-kafka-server                    Q_SUBSCRIPTIONS_KAFKA_SERVER                    kafka:9092        Subscriptions server url (for 'external' subscriptions mode)
+--subscriptions-kafka-topic                     Q_SUBSCRIPTIONS_KAFKA_TOPIC                     subscriptions     Subscriptions topic name (for 'external' subscriptions mode)
+--subscriptions-max-filter-size                 Q_SUBSCRIPTIONS_MAX_FILTER_SIZE                 16383             Maximum subscription's filter size in bytes (for 'external' subscriptions mode)
+--subscriptions-filters-millis                  Q_SUBSCRIPTIONS_FILTERS_MILLIS                  30000             Kafka keep alive period for filters in millisecons (for 'external' subscriptions mode)
+--subscriptions-redis-port                      Q_SUBSCRIPTIONS_REDIS_PORT                      6379              Redis port (for 'external' subscriptions mode)
+--subscriptions-redis-host                      Q_SUBSCRIPTIONS_REDIS_HOST                      redis             Redis host (for 'external' subscriptions mode)
 --filter-or-conversion                          Q_FILTER_OR_CONVERSION                          sub-queries       Filter OR conversion:
                                                                                                                   `or-operator` – q-server uses AQL with OR
-                                                                                                                  `sub-queries` – q-server performs parallel queries for each OR operand                                                                                                                   and combines results (this option provides faster execution
+                                                                                                                  `sub-queries` – q-server performs parallel queries for each OR operand
+                                                                                                                   and combines results (this option provides faster execution
                                                                                                                    than OR operator in AQL)
 --query-max-runtime                             Q_QUERY_MAX_RUNTIME                             600               Max allowed execution time for ArangoDb queries in seconds
 --slow-queries                                  Q_SLOW_QUERIES                                  redirect          Slow queries handling:
@@ -45,7 +52,11 @@ Option                                          ENV                             
                                                                                                                   `disable` – fail on slow queries
 --query-wait-for-period                         Q_QUERY_WAIT_FOR_PERIOD                         1000              Collection polling period for wait-for queries
                                                                                                                   (collection queries with timeout) in ms
---use-listeners                                 Q_USE_LISTENERS                                 true              Use database listeners for subscriptions
+--use-listeners (DEPRECATED)                    Q_USE_LISTENERS                                 true              Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)
+--subscriptions-mode                            Q_SUBSCRIPTIONS_MODE                            arango            Subscriptions mode:
+                                                                                                                  `disabled` - disable subscriptions
+                                                                                                                  `arango` - subscribe to ArangoDB WAL for changes
+                                                                                                                  `external` - use external services to handle subscriptions
 --hot-cache                                     Q_HOT_CACHE                                                       hot cache server
 --hot-cache-expiration                          Q_HOT_CACHE_EXPIRATION                          10                hot cache expiration in seconds
 --hot-cache-empty-data-expiration               Q_HOT_CACHE_EMPTY_DATA_EXPIRATION               2                 hot cache empty entries expiration in seconds
@@ -251,10 +262,10 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
     qserver.query.slow           counter  collection=name  Incremented each time when q-server has encountered
                                                            slow query
 
-    qserver.query.time           timer    collection=name  Reported each time when q-server has finished 
+    qserver.query.time           timer    collection=name  Reported each time when q-server has finished
                                                            query handler from SDK client
-                                                       
-    qserver.query.active         gauge    collection=name  Updated each time when q-server has started and finished 
+
+    qserver.query.active         gauge    collection=name  Updated each time when q-server has started and finished
                                                            query handler from SDK client
 
     qserver.subscription.count   counter  collection=name  Incremented for each subscription start

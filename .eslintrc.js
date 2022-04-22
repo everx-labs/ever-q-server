@@ -23,6 +23,7 @@ module.exports = {
         "@typescript-eslint/no-floating-promises": ["error"],
         "no-implicit-coercion": ["warn", { allow: ["!!"] }],
         curly: ["error", "all"],
+        "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     },
     env: {
         node: true,

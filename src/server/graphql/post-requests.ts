@@ -60,34 +60,24 @@ async function postRequestsUsingKafka(
     context: QRequestContext,
     span: QTraceSpan,
 ): Promise<void> {
-    const ensureShared = async <T>(
-        name: string,
-        createValue: () => Promise<T>,
-    ): Promise<T> => {
-        const shared = context.services.shared
-        if (shared.has(name)) {
-            return shared.get(name) as T
-        }
-        const value = await createValue()
-        shared.set(name, value)
-        return value
-    }
-
     const config = context.services.config.requests
-    const producer: Producer = await ensureShared("producer", async () => {
-        const kafka: Kafka = await ensureShared(
-            "kafka",
-            async () =>
-                new Kafka({
-                    clientId: "q-server",
-                    brokers: [config.server],
-                }),
-        )
-        const newProducer = kafka.producer()
-        await newProducer.connect()
-        span.logEvent("kafka_producer_connected")
-        return newProducer
-    })
+    const producer: Producer = await context.ensureShared(
+        "producer",
+        async () => {
+            const kafka: Kafka = await context.ensureShared(
+                "kafka",
+                async () =>
+                    new Kafka({
+                        clientId: "q-server",
+                        brokers: [config.server],
+                    }),
+            )
+            const newProducer = kafka.producer()
+            await newProducer.connect()
+            span.logEvent("kafka_producer_connected")
+            return newProducer
+        },
+    )
 
     span.logEvent("kafka_message_preparation_start")
     const messages = requests.map(request => {

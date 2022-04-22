@@ -16,7 +16,7 @@
 
 import { QDataCollection } from "./collection"
 import { Auth } from "../auth"
-import { STATS } from "../config"
+import { STATS, SubscriptionsMode } from "../config"
 import type { QLog } from "../logs"
 import QLogs from "../logs"
 import type { QType } from "../filter/filters"
@@ -51,6 +51,7 @@ export type QDataOptions = {
     auth: Auth
     tracer: Tracer
     stats: IStats
+    subscriptionsMode: SubscriptionsMode
     isTests: boolean
 }
 
@@ -75,7 +76,7 @@ export default class QData {
     auth: Auth
     tracer: Tracer
     isTests: boolean
-
+    subscriptionsMode: SubscriptionsMode
     // Own
     log: QLog
     statPostCount: StatsCounter
@@ -95,6 +96,7 @@ export default class QData {
         this.auth = options.auth
         this.tracer = options.tracer
         this.isTests = options.isTests
+        this.subscriptionsMode = options.subscriptionsMode
 
         this.log = this.logs.create("data")
 
@@ -142,6 +144,7 @@ export default class QData {
             tracer: this.tracer,
             stats: this.stats,
             isTests: this.isTests,
+            subscriptionsMode: this.subscriptionsMode,
         })
         this.collections.push(collection)
         this.collectionsByName.set(name, collection)

@@ -35,6 +35,7 @@ import {
     QBlockchainDataConfig,
     QHotColdDataConfig,
     STATS,
+    SubscriptionsMode,
 } from "./config"
 import {
     QDatabasePool,
@@ -249,7 +250,7 @@ export class DataProviderFactory {
                 return new QShardDatabaseProvider(
                     this.logs.create(logKey),
                     qShard,
-                    this.config.useListeners,
+                    this.config.subscriptionsMode === SubscriptionsMode.Arango,
                 )
             },
             shardingDepth.toString(),
@@ -331,6 +332,7 @@ export default class TONQServer {
                     "slow",
                 ),
                 isTests: false,
+                subscriptionsMode: this.config.subscriptionsMode,
             })
         this.internalErrorStats = new StatsCounter(
             this.stats,

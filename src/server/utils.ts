@@ -2,6 +2,7 @@ import type { QLog } from "./logs"
 import fs from "fs"
 import path from "path"
 import { createHash } from "crypto"
+import { $$asyncIterator } from "iterall"
 
 export function packageJson(): Record<string, unknown> {
     let testPath = path.resolve(__dirname)
@@ -328,4 +329,73 @@ export function extractHeader(
         tryExtractHeader(req, connection, name.toLowerCase()) ??
         def
     )
+}
+
+export class QAsyncIterator<T> implements AsyncIterator<T> {
+    private isClosed = false
+    private closedWith = new Deferred<IteratorResult<T>>()
+    constructor(
+        private upstream: AsyncIterator<T>,
+        private onNext?: (next: T) => void | Promise<void>,
+        private onClose?: () => void,
+    ) {}
+
+    public async next() {
+        if (this.isClosed) {
+            return { value: undefined, done: true as const }
+        }
+        const next = await Promise.race([
+            this.upstream.next(),
+            this.closedWith.promise,
+        ])
+        if (!next.done && this.onNext) {
+            await this.onNext(next.value)
+        }
+        return next
+    }
+
+    public async return() {
+        this.closedWith.resolve({ value: undefined, done: true as const })
+        this.onClose?.()
+        this.isClosed = true
+        return (
+            this.upstream.return?.() ??
+            Promise.resolve({ value: undefined, done: true as const })
+        )
+    }
+
+    public throw(error: any) {
+        this.closedWith.reject(error)
+        this.onClose?.()
+        this.isClosed = true
+        return this.upstream.throw?.() ?? Promise.reject(error)
+    }
+
+    public [$$asyncIterator]() {
+        return this
+    }
+}
+
+export class Deferred<T> {
+    promise: Promise<T>
+    // Resolve and reject are reentrant:
+    // https://262.ecma-international.org/6.0/#sec-promise-resolve-functions
+    resolve: (value: T | PromiseLike<T>) => void
+    // https://262.ecma-international.org/6.0/#sec-promise-reject-functions
+    reject: (reason?: any) => void
+    constructor() {
+        let cResolve = undefined
+        let cReject = undefined
+        this.promise = new Promise((resolve, reject) => {
+            cResolve = resolve
+            cReject = reject
+        })
+        if (!cResolve || !cReject) {
+            // Expected to be impossible:
+            // https://262.ecma-international.org/6.0/#sec-promise-constructor
+            throw new Error("Invalid Promise constructor")
+        }
+        this.resolve = cResolve
+        this.reject = cReject
+    }
 }
