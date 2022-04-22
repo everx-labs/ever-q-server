@@ -9,6 +9,7 @@ import {
     KVMockEntry,
 } from "../data/keyvalue"
 import { createClient } from "@node-redis/client"
+import { ConfigParam } from "../config-param"
 
 export type RempConfig = {
     enabled: boolean
@@ -59,10 +60,6 @@ type RempReceiptsArgs = {
     messageId: string
 }
 
-export const DEFAULT_REMP_URL = "redis://localhost:6379"
-export const DEFAULT_REMP_MESSAGE_DATA_KEY = "remp-receipts:{messageId}"
-export const DEFAULT_REMP_MESSAGE_CHANGES_KEY = "keyspace@0:remp-receipts:{messageId}"
-
 const knownKinds = new Set<RempReceiptKind>([
     RempReceiptKind.RejectedByFullnode,
     RempReceiptKind.SentToValidators,
@@ -70,6 +67,31 @@ const knownKinds = new Set<RempReceiptKind>([
     RempReceiptKind.IncludedIntoAcceptedBlock,
     RempReceiptKind.Finalized,
 ])
+
+export const rempConfigParams = {
+    enabled: ConfigParam.boolean("remp-enabled", false, "REMP enabled"),
+    redis: {
+        url: ConfigParam.string(
+            "remp-redis-url",
+            "redis://localhost:6379",
+            "URL to REMP redis",
+        ),
+        messageDataKey: ConfigParam.string(
+            "remp-redis-message-data-key",
+            "remp-receipts:{messageId}",
+            "Redis key for message REMP notifications\n" +
+                "This parameter must contain substring `{messageId}`\n" +
+                "that will be replaced with actual message id",
+        ),
+        messageChangesKey: ConfigParam.string(
+            "remp-redis-message-changes-key",
+            "keyspace@0:remp-receipts:{messageId}",
+            "Redis key for message REMP changes channel\n" +
+                "This parameter must contain substring `{messageId}`\n" +
+                "that will be replaced with actual message id",
+        ),
+    },
+}
 
 export function rempResolvers(config: RempConfig, customProvider?: KVProvider) {
     return {
@@ -90,7 +112,7 @@ function rempReceiptsResolver(
             args: AccessArgs & RempReceiptsArgs,
             request: QRequestContext,
         ) => {
-            if (!request.services.config.useListeners) {
+            if (!config.enabled) {
                 throw new Error("Disabled")
             }
             await request.requireGrantedAccess(args)
@@ -138,17 +160,32 @@ function redisRempProvider(config: RempConfig): KVProvider {
     const client = createClient({
         url: config.redis.url,
     })
+    let connected = false
+    async function ensureConnected() {
+        if (!connected) {
+            await client.connect()
+            connected = true
+        }
+    }
     return {
         async get<T>(key: string): Promise<T | null | undefined> {
-            return (await client.get(key)) as unknown as T | undefined | null
+            await ensureConnected()
+            const value = await client.get(key)
+            if (value === null || value === undefined) {
+                return value
+            }
+            return JSON.parse(value) as unknown as T
         },
         async subscribe<T>(key: string): Promise<AsyncIterator<T>> {
+            await ensureConnected()
+            const subscriber = client.duplicate()
+            await subscriber.connect()
             const iterator = new KVIterator<T>()
-            await client.subscribe(key, message => {
+            await subscriber.subscribe(key, message => {
                 iterator.push(message as unknown as T)
             })
             iterator.onClose = async () => {
-                await client.unsubscribe(key)
+                await subscriber.unsubscribe(key)
             }
             return iterator
         },

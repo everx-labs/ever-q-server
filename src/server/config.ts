@@ -18,12 +18,7 @@ import { URL } from "url"
 import { readFileSync } from "fs"
 import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
 import { QError } from "./utils"
-import {
-    DEFAULT_REMP_MESSAGE_CHANGES_KEY,
-    DEFAULT_REMP_MESSAGE_DATA_KEY,
-    DEFAULT_REMP_URL,
-    RempConfig,
-} from "./graphql/remp"
+import { RempConfig, rempConfigParams } from "./graphql/remp"
 
 export type QConfig = {
     config: string
@@ -243,26 +238,7 @@ export const configParams = {
                 "(collection queries with timeout) in ms",
         ),
     },
-    remp: {
-        enabled: ConfigParam.boolean("remp-enabled", false, "REMP enabled"),
-        redis: {
-            url: ConfigParam.string(
-                "remp-redis-url",
-                DEFAULT_REMP_URL,
-                "URL to REMP redis",
-            ),
-            messageDataKey: ConfigParam.string(
-                "remp-redis-message-data-key",
-                DEFAULT_REMP_MESSAGE_DATA_KEY,
-                "Redis key for message REMP notifications",
-            ),
-            messageChangesKey: ConfigParam.string(
-                "remp-redis-message-changes-key",
-                DEFAULT_REMP_MESSAGE_CHANGES_KEY,
-                "Redis key for message REMP changes channel",
-            ),
-        },
-    },
+    remp: rempConfigParams,
     useListeners: ConfigParam.boolean(
         "use-listeners",
         true,
