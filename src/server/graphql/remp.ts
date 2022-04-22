@@ -32,11 +32,25 @@ enum RempReceiptKind {
     Other = "Other",
 }
 
+const knownKinds = new Set<RempReceiptKind>([
+    RempReceiptKind.RejectedByFullnode,
+    RempReceiptKind.SentToValidators,
+    RempReceiptKind.IncludedIntoBlock,
+    RempReceiptKind.IncludedIntoAcceptedBlock,
+    RempReceiptKind.Finalized,
+])
+
 type RempReceipt = {
     kind: RempReceiptKind
     messageId: string
     timestamp: number
     json: string
+}
+
+type RempReceiptJson = {
+    kind: RempReceiptKind
+    timestamp: number
+    message_id: string
 }
 
 type RempReceiptsArgs = {
@@ -69,6 +83,20 @@ function rempReceiptsResolver(
             return await KVIterator.startWithDataAndChangesKeys(
                 receiptProvider,
                 rempKeys(args.messageId),
+                data => {
+                    const json: RempReceiptJson = data as RempReceiptJson
+                    const receipt: RempReceipt = {
+                        kind: knownKinds.has(json.kind)
+                            ? json.kind
+                            : RempReceiptKind.Other,
+                        timestamp: json.timestamp,
+                        messageId: json.message_id,
+                        json: JSON.stringify(json),
+                    }
+                    return {
+                        rempReceipts: receipt,
+                    }
+                },
             )
         },
     }
@@ -77,7 +105,7 @@ function rempReceiptsResolver(
 function mockReceipts(
     messageId: string,
     flow: (RempReceiptKind | number)[],
-): KVMockEntry<RempReceipt> {
+): KVMockEntry<RempReceiptJson> {
     const entries = flow.map(kind => {
         if (typeof kind === "number") {
             return kind
@@ -86,12 +114,7 @@ function mockReceipts(
         return {
             kind,
             timestamp,
-            messageId,
-            json: JSON.stringify({
-                kind,
-                timestamp,
-                messageId,
-            }),
+            message_id: messageId,
         }
     })
     return kvMockEntry(rempKeys(messageId), entries)

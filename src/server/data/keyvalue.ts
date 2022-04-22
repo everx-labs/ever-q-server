@@ -234,6 +234,7 @@ export class KVIterator<T> implements AsyncIterator<T> {
     static async startWithDataAndChangesKeys<T>(
         provider: KVProvider,
         keys: KVDataWithChangesKeys,
+        mapData: (data: unknown) => T,
     ): Promise<KVIterator<T>> {
         const iterator = new KVIterator<T>()
         let pushedCount = 0
@@ -242,7 +243,7 @@ export class KVIterator<T> implements AsyncIterator<T> {
             const data = await provider.get<T[]>(keys.data)
             if (data !== null && data !== undefined) {
                 while (pushedCount < data.length) {
-                    iterator.push(data[pushedCount])
+                    iterator.push(mapData(data[pushedCount]))
                     pushedCount += 1
                 }
             }
