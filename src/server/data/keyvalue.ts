@@ -3,15 +3,7 @@ import { $$asyncIterator } from "iterall"
 export interface KVProvider {
     get<T>(key: string): Promise<T | null | undefined>
 
-    subscribe<T>(
-        key: string,
-        handler: (
-            data: T | undefined,
-            error: Error | undefined,
-        ) => Promise<void>,
-    ): Promise<string>
-
-    unsubscribe(handle: string): Promise<void>
+    subscribe<T>(key: string): Promise<AsyncIterator<T>>
 }
 
 export const emptyKVProvider: KVProvider = {
@@ -23,38 +15,34 @@ export const emptyKVProvider: KVProvider = {
     subscribe<T>(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _key: string,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _handler: (
-            data: T | undefined,
-            error: Error | undefined,
-        ) => Promise<void>,
-    ): Promise<string> {
-        return Promise.resolve("")
-    },
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    unsubscribe(_handle: string): Promise<void> {
-        return Promise.resolve()
+    ): Promise<AsyncIterator<T>> {
+        return Promise.resolve({
+            async next(): Promise<IteratorResult<T>> {
+                return {
+                    value: undefined,
+                    done: true,
+                }
+            },
+        })
     },
 }
 
-export type ValuesWithDelays<T> = {
-    dataKey: string
-    changesKey: string
+export type KVMockEntry<T> = {
+    keys: KVDataWithChangesKeys
     values: T[]
-    changes: {
+    ranges: {
         delay: number
-        length: number
+        start: number
+        end: number
     }[]
 }
 
-export function parseValuesWithDelays<T>(
-    dataKey: string,
-    changesKey: string,
+export function kvMockEntry<T>(
+    keys: KVDataWithChangesKeys,
     source: (T | number)[],
-): ValuesWithDelays<T> {
+): KVMockEntry<T> {
     const values = []
-    const lengths = []
+    const ranges = []
     let delay = 0
 
     for (const item of source) {
@@ -62,74 +50,83 @@ export function parseValuesWithDelays<T>(
             delay = item
         } else {
             if (delay > 0) {
-                lengths.push({
+                ranges.push({
                     delay,
-                    length: values.length,
+                    start: 0,
+                    end: values.length,
                 })
                 delay = 0
             }
             values.push(item)
         }
     }
-    lengths.push({
+    ranges.push({
         delay,
-        length: values.length,
+        start: 0,
+        end: values.length,
     })
     return {
-        dataKey,
-        changesKey,
+        keys,
         values,
-        changes: lengths,
+        ranges,
     }
 }
 
-export function mockKVProvider<T>(source: ValuesWithDelays<T>[]): KVProvider {
-    const values = new Map<string, ValuesWithDelays<T>>()
-    const changes = new Map<string, ValuesWithDelays<T>>()
-    const lengths = new Map<string, number>()
-    for (const s of source) {
-        values.set(s.dataKey, s)
-        changes.set(s.changesKey, s)
+export function kvMockProvider<T>(entries: KVMockEntry<T>[]): KVProvider {
+    const entriesByDataKey = new Map<string, KVMockEntry<T>>()
+    const entriesByChangesKey = new Map<string, KVMockEntry<T>>()
+    const rangesByDataKey = new Map<string, { start: number; end: number }>()
+    for (const entry of entries) {
+        entriesByDataKey.set(entry.keys.data, entry)
+        entriesByChangesKey.set(entry.keys.changes, entry)
     }
     return {
         async get<GT>(key: string): Promise<GT | null | undefined> {
-            const v = values.get(key)?.values
-            return v
-                ? (v.slice(0, lengths.get(key) ?? v.length) as unknown as GT)
-                : undefined
+            const range = rangesByDataKey.get(key)
+            if (!range) {
+                return undefined
+            }
+            const entry = entriesByDataKey.get(key)
+            if (!entry) {
+                return undefined
+            }
+            return entry.values.slice(range.start, range.end) as unknown as GT
         },
 
-        subscribe<CT>(
-            key: string,
-            _handler: (
-                data: CT | undefined,
-                error: Error | undefined,
-            ) => Promise<void>,
-        ): Promise<string> {
-            const play = changes.get(key)
-            if (play) {
+        async subscribe<CT>(key: string): Promise<AsyncIterator<CT>> {
+            const entry = entriesByChangesKey.get(key)
+            const iterator = new KVIterator<CT>()
+            if (entry) {
                 let step = 0
+                rangesByDataKey.set(entry.keys.data, { start: 0, end: 0 })
                 const check = () => {
-                    if (step < play.changes.length) {
+                    if (step < entry.ranges.length) {
+                        const range = entry.ranges[step]
                         setTimeout(() => {
-                            lengths.set(play.dataKey, play.changes[step].length)
+                            iterator.push({} as unknown as CT)
+                            rangesByDataKey.set(entry.keys.data, range)
                             step += 1
                             check()
-                        }, play.changes[step].delay)
+                        }, range.delay)
                     } else {
-                        lengths.delete(play.dataKey)
+                        setTimeout(
+                            () => rangesByDataKey.delete(entry.keys.data),
+                            100,
+                        )
                     }
                 }
                 check()
+            } else {
+                await iterator.return()
             }
-            return Promise.resolve("")
-        },
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        unsubscribe(_handle: string): Promise<void> {
-            return Promise.resolve()
+            return iterator
         },
     }
+}
+
+export type KVDataWithChangesKeys = {
+    data: string
+    changes: string
 }
 
 export class KVIterator<T> implements AsyncIterator<T> {
@@ -234,16 +231,15 @@ export class KVIterator<T> implements AsyncIterator<T> {
         }
     }
 
-    static async startOnProviderWithDataAndChangesKeys<T>(
+    static async startWithDataAndChangesKeys<T>(
         provider: KVProvider,
-        dataKey: string,
-        changesKey: string,
+        keys: KVDataWithChangesKeys,
     ): Promise<KVIterator<T>> {
         const iterator = new KVIterator<T>()
         let pushedCount = 0
 
         async function pushNext() {
-            const data = await provider.get<T[]>(dataKey)
+            const data = await provider.get<T[]>(keys.data)
             if (data !== null && data !== undefined) {
                 while (pushedCount < data.length) {
                     iterator.push(data[pushedCount])
@@ -253,12 +249,17 @@ export class KVIterator<T> implements AsyncIterator<T> {
         }
 
         await pushNext()
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        await provider.subscribe(changesKey, async (_data, error) => {
-            if (!error) {
-                await pushNext()
+        void (async () => {
+            const changesIterator = await provider.subscribe(keys.changes)
+            let done = false
+            while (!done) {
+                done = (await changesIterator.next()).done ?? false
+                if (!done) {
+                    await pushNext()
+                }
             }
-        })
+        })().then(() => {})
+
         return iterator
     }
 }
