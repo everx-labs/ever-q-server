@@ -15,6 +15,11 @@
  */
 
 import { Tracer } from "opentracing"
+
+import md5 from "md5"
+import { RedisPubSub } from "graphql-redis-subscriptions"
+import postSubscription from "../graphql/post-subscription"
+
 import {
     AggregationFn,
     AggregationQuery,
@@ -29,7 +34,7 @@ import {
 } from "./data-provider"
 import { QDataListener, QDataSubscription } from "./listener"
 import { AccessArgs, AccessRights, Auth, grantedAccess } from "../auth"
-import { QConfig, SlowQueriesMode, STATS } from "../config"
+import { QConfig, SlowQueriesMode, STATS, SubscriptionsMode } from "../config"
 import {
     CollectionFilter,
     indexToString,
@@ -45,9 +50,9 @@ import QLogs, { QLog } from "../logs"
 import { explainSlowReason, isFastQuery } from "../filter/slow-detector"
 import { IStats, StatsCounter, StatsGauge, StatsTiming } from "../stats"
 import { QTraceSpan, QTracer } from "../tracing"
-import { QError, required, wrap } from "../utils"
+import { QAsyncIterator, QError, required, wrap } from "../utils"
 import EventEmitter from "events"
-import { FieldNode, SelectionSetNode } from "graphql"
+import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql"
 import { QRequestContext, RequestEvent } from "../request"
 import { QCollectionQuery } from "./collection-query"
 import { QJoinQuery } from "./collection-joins"
@@ -71,6 +76,7 @@ export type QCollectionOptions = {
     auth: Auth
     tracer: Tracer
     stats: IStats
+    subscriptionsMode: SubscriptionsMode
 
     isTests: boolean
 }
@@ -88,6 +94,7 @@ export class QDataCollection {
     auth: Auth
     tracer: Tracer
     isTests: boolean
+    subscriptionsMode: SubscriptionsMode
 
     // Own
     statDoc: StatsCounter
@@ -122,7 +129,7 @@ export class QDataCollection {
         this.auth = options.auth
         this.tracer = options.tracer
         this.isTests = options.isTests
-
+        this.subscriptionsMode = options.subscriptionsMode
         this.waitForCount = 0
         this.subscriptionCount = 0
 
@@ -165,7 +172,10 @@ export class QDataCollection {
         this.maxQueueSize = 0
 
         const provider = options.provider
-        if (provider !== undefined) {
+        if (
+            this.subscriptionsMode === SubscriptionsMode.Arango &&
+            provider !== undefined
+        ) {
             void (async () => {
                 this.hotSubscription = await provider.subscribe(name, doc =>
                     this.onDocumentInsertOrUpdate(doc as QDoc),
@@ -216,7 +226,7 @@ export class QDataCollection {
         })
     }
 
-    subscriptionResolver() {
+    arangoSubscriptionResolver() {
         return {
             subscribe: async (
                 _: unknown,
@@ -224,9 +234,6 @@ export class QDataCollection {
                 request: QRequestContext,
                 info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
-                if (!request.services.config.useListeners) {
-                    throw new Error("Disabled")
-                }
                 const accessRights = await request.requireGrantedAccess(args)
                 await this.statSubscription.increment()
                 const subscription = new QDataSubscription(
@@ -269,7 +276,7 @@ export class QDataCollection {
                                     [this.name]: reduced as QDoc,
                                 })
                             }
-                        } catch (error) {
+                        } catch (error: any) {
                             this.log.error(
                                 Date.now(),
                                 this.name,
@@ -291,6 +298,112 @@ export class QDataCollection {
                 }
                 return subscription
             },
+        }
+    }
+
+    externalSubscriptionResolver() {
+        return {
+            subscribe: async (
+                _: unknown,
+                args: AccessArgs & { filter: CollectionFilter | null },
+                context: QRequestContext,
+                info: GraphQLResolveInfo,
+            ) => {
+                await context.requireGrantedAccess(args)
+                await this.statSubscription.increment()
+
+                const pubsubEvents = await context.ensureShared(
+                    "subscr-pubsub-events",
+                    async () => new EventEmitter(),
+                )
+                const pubsub = await context.ensureShared(
+                    "subscr-pubsub",
+                    async () => {
+                        const retryStrategy = (times: number): number => {
+                            // > 1800 ms of downtime (50+100+150+200+250+300+350+400)
+                            if (times > 8) {
+                                pubsubEvents.emit("connection-error")
+                            }
+                            return Math.min(times * 50, 2000)
+                        }
+                        return new RedisPubSub({
+                            connection: {
+                                ...context.services.config.subscriptions
+                                    .redisOptions,
+                                maxRetriesPerRequest: null,
+                                retryStrategy,
+                            },
+                        })
+                    },
+                )
+
+                const value = JSON.stringify(args.filter || {})
+                const key = info.fieldName + md5(value)
+
+                await postSubscription(context, { key, value })
+
+                const timerId = setInterval(() => {
+                    postSubscription(context, { key, value: "" }).catch(
+                        (err: any) => {
+                            // Can't help, can log an error only
+                            this.log.error("SUBSCRIPTIONS_ERROR", err)
+                        },
+                    )
+                }, context.services.config.subscriptions.kafkaOptions.keepAliveInterval)
+
+                this.subscriptionCount += 1
+                const asyncIterator = new QAsyncIterator(
+                    pubsub.asyncIterator([key]),
+                    async next => {
+                        if (next == "STOP") {
+                            await terminate()
+                        }
+                    },
+                    () => {
+                        clearInterval(timerId)
+                        this.subscriptionCount = Math.max(
+                            0,
+                            this.subscriptionCount - 1,
+                        )
+                        pubsubEvents.off("connection-error", terminate)
+                    },
+                )
+                pubsubEvents.on("connection-error", terminate)
+                return asyncIterator
+
+                function terminate() {
+                    return asyncIterator.throw(
+                        new Error("Subscription was terminated"),
+                    )
+                }
+            },
+            resolve: (
+                payload: any,
+                _args: unknown,
+                _context: QRequestContext,
+                _info: GraphQLResolveInfo,
+            ) => {
+                // Add _key to mimic "old" behavior
+                if (payload._key === undefined) {
+                    payload._key = payload.id
+                }
+                return payload
+            },
+        }
+    }
+
+    subscriptionResolver() {
+        switch (this.subscriptionsMode) {
+            case SubscriptionsMode.Disabled:
+                return {
+                    subscribe: () => {
+                        throw new Error("Disabled")
+                    },
+                }
+            case SubscriptionsMode.Arango:
+                return this.arangoSubscriptionResolver()
+            case SubscriptionsMode.External:
+                return this.externalSubscriptionResolver()
         }
     }
 
@@ -582,7 +695,7 @@ export class QDataCollection {
                                 request,
                                 traceSpan,
                             )
-                        } catch (error) {
+                        } catch (error: any) {
                             await this.statQueryFailed.increment()
                             if (queryProcessing.created) {
                                 const slowReason = explainSlowReason(
@@ -738,7 +851,7 @@ export class QDataCollection {
                             if (this.docType.test(null, doc, q.filter)) {
                                 resolveBy("listener", resolve, [doc])
                             }
-                        } catch (error) {
+                        } catch (error: any) {
                             this.log.error(
                                 Date.now(),
                                 this.name,

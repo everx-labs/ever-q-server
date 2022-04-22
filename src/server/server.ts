@@ -35,6 +35,7 @@ import {
     QBlockchainDataConfig,
     QHotColdDataConfig,
     STATS,
+    SubscriptionsMode,
 } from "./config"
 import {
     QDatabasePool,
@@ -68,7 +69,7 @@ import WebSocket from "ws"
 import { MemStats } from "./mem-stat"
 import { QRequestContext, QRequestServices, RequestEvent } from "./request"
 import { overrideAccountBoc } from "./graphql/account-boc"
-import { mockRempProvider, rempResolvers } from "./graphql/remp"
+import { rempResolvers } from "./graphql/remp"
 
 type QServerOptions = {
     config: QConfig
@@ -250,7 +251,7 @@ export class DataProviderFactory {
                 return new QShardDatabaseProvider(
                     this.logs.create(logKey),
                     qShard,
-                    this.config.useListeners,
+                    this.config.subscriptionsMode === SubscriptionsMode.Arango,
                 )
             },
             shardingDepth.toString(),
@@ -332,6 +333,7 @@ export default class TONQServer {
                     "slow",
                 ),
                 isTests: false,
+                subscriptionsMode: this.config.subscriptionsMode,
             })
         this.internalErrorStats = new StatsCounter(
             this.stats,
@@ -366,7 +368,7 @@ export default class TONQServer {
             postRequestsResolvers,
             accessResolvers,
             counterpartiesResolvers(this.data),
-            rempResolvers(this.data, mockRempProvider()),
+            rempResolvers(this.config.remp),
             blockchainResolvers,
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({

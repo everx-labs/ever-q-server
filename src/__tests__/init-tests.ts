@@ -9,7 +9,7 @@ import { ApolloClient } from "apollo-client"
 import nodeFetch, { RequestInit } from "node-fetch"
 import WebSocket from "ws"
 import QBlockchainData, { INDEXES } from "../server/data/blockchain"
-import { QConfig, resolveConfig } from "../server/config"
+import { QConfig, resolveConfig, SubscriptionsMode } from "../server/config"
 import type { QDataProviders } from "../server/data/data"
 import type {
     QDataCache,
@@ -210,7 +210,7 @@ export async function testServerQuery<T>(
                   }
         }
         return responseJson.data
-    } catch (error) {
+    } catch (error: any) {
         if (error.name === "AbortError") {
             console.log(">>>", "Request aborted.")
             return undefined as unknown as T
@@ -256,6 +256,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         isTests: true,
+        subscriptionsMode: SubscriptionsMode.Arango,
     })
 }
 
@@ -339,6 +340,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         isTests: true,
+        subscriptionsMode: SubscriptionsMode.Arango,
     })
 }
 

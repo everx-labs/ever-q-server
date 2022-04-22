@@ -3,7 +3,7 @@ import ApolloClient from "apollo-client"
 import gql from "graphql-tag"
 
 import { Auth } from "../server/auth"
-import { resolveConfig } from "../server/config"
+import { resolveConfig, SubscriptionsMode } from "../server/config"
 import QBlockchainData from "../server/data/blockchain"
 import QLogs from "../server/logs"
 import TONQServer, { DataProviderFactory } from "../server/server"
@@ -80,6 +80,7 @@ beforeAll(async () => {
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         isTests: true,
+        subscriptionsMode: SubscriptionsMode.Arango,
     })
 
     server = new TONQServer({

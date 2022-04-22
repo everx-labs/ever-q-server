@@ -18,6 +18,12 @@ import { URL } from "url"
 import { readFileSync } from "fs"
 import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
 import { QError } from "./utils"
+import {
+    DEFAULT_REMP_MESSAGE_CHANGES_KEY,
+    DEFAULT_REMP_MESSAGE_DATA_KEY,
+    DEFAULT_REMP_URL,
+    RempConfig,
+} from "./graphql/remp"
 
 export type QConfig = {
     config: string
@@ -32,13 +38,27 @@ export type QConfig = {
         topic: string
         maxSize: number
     }
+    subscriptions: {
+        kafkaOptions: {
+            server: string
+            topic: string
+            maxSize: number
+            keepAliveInterval: number
+        }
+        redisOptions: {
+            port: number
+            host: string
+        }
+    }
     queries: {
         filter: FilterConfig
         maxRuntimeInS: number
         slowQueries: SlowQueriesMode
         waitForPeriod: number
     }
-    useListeners: boolean
+    remp: RempConfig
+    useListeners?: boolean
+    subscriptionsMode: SubscriptionsMode
     blockchain: QBlockchainDataConfig
     counterparties: string[]
     chainRangesVerification: string[]
@@ -112,6 +132,12 @@ export enum FilterOrConversion {
     SUB_QUERIES = "sub-queries",
 }
 
+export enum SubscriptionsMode {
+    Disabled = "disabled",
+    Arango = "arango",
+    External = "external",
+}
+
 export const configParams = {
     config: ConfigParam.string("config", "", "Path to JSON configuration file"),
     server: {
@@ -147,6 +173,44 @@ export const configParams = {
             "Maximum request message size in bytes",
         ),
     },
+
+    subscriptions: {
+        kafkaOptions: {
+            server: ConfigParam.string(
+                "subscriptions-kafka-server",
+                "kafka:9092",
+                "Subscriptions server url (for 'external' subscriptions mode)",
+            ),
+            topic: ConfigParam.string(
+                "subscriptions-kafka-topic",
+                "subscriptions",
+                "Subscriptions topic name (for 'external' subscriptions mode)",
+            ),
+            maxSize: ConfigParam.integer(
+                "subscriptions-max-filter-size",
+                16383,
+                "Maximum subscription's filter size in bytes (for 'external' subscriptions mode)",
+            ),
+            keepAliveInterval: ConfigParam.integer(
+                "subscriptions-filters-millis",
+                30000,
+                "Kafka keep alive period for filters in millisecons (for 'external' subscriptions mode)",
+            ),
+        },
+        redisOptions: {
+            port: ConfigParam.integer(
+                "subscriptions-redis-port",
+                6379,
+                "Redis port (for 'external' subscriptions mode)",
+            ),
+            host: ConfigParam.string(
+                "subscriptions-redis-host",
+                "redis",
+                "Redis host (for 'external' subscriptions mode)",
+            ),
+        },
+    },
+
     queries: {
         filter: {
             orConversion: ConfigParam.string(
@@ -179,10 +243,39 @@ export const configParams = {
                 "(collection queries with timeout) in ms",
         ),
     },
+    remp: {
+        enabled: ConfigParam.boolean("remp-enabled", false, "REMP enabled"),
+        redis: {
+            url: ConfigParam.string(
+                "remp-redis-url",
+                DEFAULT_REMP_URL,
+                "URL to REMP redis",
+            ),
+            messageDataKey: ConfigParam.string(
+                "remp-redis-message-data-key",
+                DEFAULT_REMP_MESSAGE_DATA_KEY,
+                "Redis key for message REMP notifications",
+            ),
+            messageChangesKey: ConfigParam.string(
+                "remp-redis-message-changes-key",
+                DEFAULT_REMP_MESSAGE_CHANGES_KEY,
+                "Redis key for message REMP changes channel",
+            ),
+        },
+    },
     useListeners: ConfigParam.boolean(
         "use-listeners",
         true,
-        "Use database listeners for subscriptions",
+        "Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)",
+        true,
+    ),
+    subscriptionsMode: ConfigParam.string(
+        "subscriptions-mode",
+        "arango",
+        "Subscriptions mode:\n" +
+            "`disabled` - disable subscriptions\n" +
+            "`arango` - subscribe to ArangoDB WAL for changes\n" +
+            "`external` - use external services to handle subscriptions",
     ),
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
@@ -439,6 +532,37 @@ function checkDataUpgradeRequired(
     return isDeprecatedSpecified
 }
 
+function checkSubscriptionsConfig(
+    config: QConfig,
+    specified: ConfigParam<ConfigValue>[],
+): void {
+    const isUseListenersSpecified = specified.includes(
+        configParams.useListeners,
+    )
+    const isSubscriptionsModeSpecified = specified.includes(
+        configParams.subscriptionsMode,
+    )
+    if (isUseListenersSpecified && isSubscriptionsModeSpecified) {
+        throw QError.invalidConfig(
+            "Invalid data config: use-listeners mustn't be mixed with subscriptions-mode. Please choose one.",
+        )
+    }
+    if (isUseListenersSpecified) {
+        config.subscriptionsMode = config.useListeners
+            ? SubscriptionsMode.Arango
+            : SubscriptionsMode.Disabled
+    }
+    if (!Object.values(SubscriptionsMode).includes(config.subscriptionsMode)) {
+        throw QError.invalidConfig(
+            `Unknown subscriptions-mode: got ${
+                config.subscriptionsMode
+            }, but expected one of [${Object.values(SubscriptionsMode).join(
+                ", ",
+            )}]`,
+        )
+    }
+}
+
 export function resolveConfig(
     options: Record<string, ConfigValue>,
     json: DeepPartial<QConfig>,
@@ -450,6 +574,8 @@ export function resolveConfig(
         env,
         configParams,
     )
+
+    checkSubscriptionsConfig(config, specified)
 
     const isDataUpgradeRequired = checkDataUpgradeRequired(
         specified,
