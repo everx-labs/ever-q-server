@@ -6,13 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- prettify code
-- new `subscriptions-mode` config parameter with three options: `disabled`, `arango` (default), `external`
+- new `subscriptions-mode` config parameter with three options: `disabled`, `arango` (default), `external` - describes which backend should be used for subscriptions
 - new `external` subscriptions mode (publishes filters to Kafka and gets documents from Redis)
 
 ### Deprecated
 
 - `use-listeners` config parameter (use `subscriptions-mode` instead)
+
+### Improved
+
+- prettify code:)
 
 ## [0.49.1] - 2022-04-07
 
