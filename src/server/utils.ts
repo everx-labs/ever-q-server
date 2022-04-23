@@ -1,28 +1,31 @@
-import type { QLog } from "./logs";
-import fs from "fs";
-import path from "path";
-import { createHash } from "crypto";
+import type { QLog } from "./logs"
+import fs from "fs"
+import path from "path"
+import { createHash } from "crypto"
+import { $$asyncIterator } from "iterall"
 
 export function packageJson(): Record<string, unknown> {
-    let testPath = path.resolve(__dirname);
-    const packagePath = () => path.resolve(testPath, "package.json");
+    let testPath = path.resolve(__dirname)
+    const packagePath = () => path.resolve(testPath, "package.json")
     while (testPath !== "" && !fs.existsSync(packagePath())) {
-        testPath = path.dirname(testPath);
+        testPath = path.dirname(testPath)
     }
-    return JSON.parse(fs.readFileSync(packagePath(), "utf8"));
+    return JSON.parse(fs.readFileSync(packagePath(), "utf8"))
 }
 
-export function cleanError(error: Error & {
-    ArangoError?: Error,
-    request?: unknown,
-    response?: unknown,
-}): Error {
+export function cleanError(
+    error: Error & {
+        ArangoError?: Error
+        request?: unknown
+        response?: unknown
+    },
+): Error {
     if (error.ArangoError !== undefined) {
-        return error.ArangoError;
+        return error.ArangoError
     }
-    delete error.request;
-    delete error.response;
-    return error;
+    delete error.request
+    delete error.response
+    return error
 }
 
 enum QErrorCode {
@@ -37,16 +40,16 @@ enum QErrorCode {
 }
 
 export class QError extends Error {
-    source: string;
-    code: number;
-    data?: Record<string, unknown>;
+    source: string
+    code: number
+    data?: Record<string, unknown>
 
     constructor(code: number, message: string, data?: Record<string, unknown>) {
-        super(message);
-        this.source = "graphql";
-        this.code = code;
+        super(message)
+        this.source = "graphql"
+        this.code = code
         if (data !== undefined) {
-            this.data = data;
+            this.data = data
         }
     }
 
@@ -55,7 +58,7 @@ export class QError extends Error {
             id,
             expiredAt,
             now: Date.now(),
-        });
+        })
     }
 
     static queryTerminatedOnTimeout(): Error {
@@ -65,138 +68,164 @@ export class QError extends Error {
             {
                 now: Date.now(),
             },
-        );
+        )
     }
 
-    static create(code: number, message: string, data?: Record<string, unknown>): Error {
-        return new QError(code, message, data);
+    static create(
+        code: number,
+        message: string,
+        data?: Record<string, unknown>,
+    ): Error {
+        return new QError(code, message, data)
     }
 
     static multipleAccessKeys() {
         return QError.create(
             QErrorCode.MULTIPLE_ACCESS_KEYS,
             "Request must use the same access key for all queries and mutations",
-        );
+        )
     }
 
     static unauthorized() {
-        return QError.create(QErrorCode.UNAUTHORIZED, "Unauthorized");
+        return QError.create(QErrorCode.UNAUTHORIZED, "Unauthorized")
     }
 
     static authServiceUnavailable() {
-        return QError.create(QErrorCode.AUTH_SERVICE_UNAVAILABLE, "Auth service unavailable");
+        return QError.create(
+            QErrorCode.AUTH_SERVICE_UNAVAILABLE,
+            "Auth service unavailable",
+        )
     }
 
     static auth(error: QError) {
         return QError.create(
             QErrorCode.AUTH_FAILED,
-            error.message ?? (error as { description?: string }).description ?? "",
+            error.message ??
+                (error as { description?: string }).description ??
+                "",
             { authErrorCode: error.code },
-        );
+        )
     }
 
     static internalServerError() {
-        return QError.create(500, "Internal Server Error");
+        return QError.create(500, "Internal Server Error")
     }
 
     static serviceUnavailable() {
-        return QError.create(503, "Service Unavailable");
+        return QError.create(503, "Service Unavailable")
     }
 
     static invalidConfigValue(option: string, message: string) {
-        return QError.create(QErrorCode.INVALID_CONFIG, `Invalid ${option}: ${message}`);
+        return QError.create(
+            QErrorCode.INVALID_CONFIG,
+            `Invalid ${option}: ${message}`,
+        )
     }
 
     static invalidConfig(message: string) {
-        return QError.create(QErrorCode.INVALID_CONFIG, message);
+        return QError.create(QErrorCode.INVALID_CONFIG, message)
     }
 
     static invalidQuery(message: string) {
-        return QError.create(QErrorCode.INVALID_QUERY, message);
+        return QError.create(QErrorCode.INVALID_QUERY, message)
     }
 }
 
-export function isSystemError(error: Error & {
-    type?: string,
-    errno?: unknown,
-    syscall?: unknown,
-}): boolean {
+export function isSystemError(
+    error: Error & {
+        type?: string
+        errno?: unknown
+        syscall?: unknown
+    },
+): boolean {
     if (error.type === "system") {
-        return true;
+        return true
     }
-    return error.errno !== undefined && error.syscall !== undefined;
+    return error.errno !== undefined && error.syscall !== undefined
 }
 
-export async function wrap<R>(log: QLog, op: string, args: unknown, fetch: () => Promise<R>) {
+export async function wrap<R>(
+    log: QLog,
+    op: string,
+    args: unknown,
+    fetch: () => Promise<R>,
+) {
     try {
-        return await fetch();
+        return await fetch()
     } catch (err) {
-        let cleaned = cleanError(err);
-        log.error(`${op}_FAILED`, args, err);
+        let cleaned = cleanError(err)
+        log.error(`${op}_FAILED`, args, err)
         if (isSystemError(err)) {
-            cleaned = QError.internalServerError();
+            cleaned = QError.internalServerError()
         }
-        throw cleaned;
+        throw cleaned
     }
 }
 
 export function toJSON(value: unknown): string {
     try {
-        return JSON.stringify(toLog(value));
+        return JSON.stringify(toLog(value))
     } catch (error) {
-        return JSON.stringify(`${value}`);
+        return JSON.stringify(`${value}`)
     }
 }
 
 export function toLog(value: unknown, objs?: unknown[]): unknown {
     switch (typeof value) {
-    case "undefined":
-    case "boolean":
-    case "number":
-    case "bigint":
-    case "symbol":
-        return value;
-    case "string":
-        if (value.length > 80) {
-            return `${value.substr(0, 50)}… [${value.length}]`;
-        }
-        return value;
-    case "function":
-        return undefined;
-    default: {
-        if (value === null) {
-            return value;
-        }
-        if (objs !== undefined && objs.includes(value)) {
-            return undefined;
-        }
-        const newObjs = objs !== undefined ? [...objs, value] : [value];
-        if (Array.isArray(value)) {
-            return value.map(x => toLog(x, newObjs));
-        }
-        const valueToLog: Record<string, unknown> = {};
-        Object.entries(value as Record<string, unknown>).forEach(([n, v]) => {
-            const propertyValueToLog = toLog(v, newObjs);
-            if (propertyValueToLog !== undefined) {
-                valueToLog[n] = propertyValueToLog;
+        case "undefined":
+        case "boolean":
+        case "number":
+        case "bigint":
+        case "symbol":
+            return value
+        case "string":
+            if (value.length > 80) {
+                return `${value.substr(0, 50)}… [${value.length}]`
             }
-        });
-        return valueToLog;
-    }
+            return value
+        case "function":
+            return undefined
+        default: {
+            if (value === null) {
+                return value
+            }
+            if (objs !== undefined && objs.includes(value)) {
+                return undefined
+            }
+            const newObjs = objs !== undefined ? [...objs, value] : [value]
+            if (Array.isArray(value)) {
+                return value.map(x => toLog(x, newObjs))
+            }
+            const valueToLog: Record<string, unknown> = {}
+            Object.entries(value as Record<string, unknown>).forEach(
+                ([n, v]) => {
+                    const propertyValueToLog = toLog(v, newObjs)
+                    if (propertyValueToLog !== undefined) {
+                        valueToLog[n] = propertyValueToLog
+                    }
+                },
+            )
+            return valueToLog
+        }
     }
 }
 
 export function hash(...keys: string[]): string {
-    return createHash("md5").update(keys.join("")).digest("hex");
+    return createHash("md5").update(keys.join("")).digest("hex")
 }
 
 export function httpUrl(address: string): string {
-    const http = "http";
-    return `${http}://${address}`;
+    const http = "http"
+    return `${http}://${address}`
 }
 
 function isObject(test: unknown): boolean {
-    return (test !== null && test !== undefined && typeof test === "object" && !Array.isArray(test));
+    return (
+        test !== null &&
+        test !== undefined &&
+        typeof test === "object" &&
+        !Array.isArray(test)
+    )
 }
 
 export function assignDeep(
@@ -204,86 +233,89 @@ export function assignDeep(
     source: Record<string, unknown> | undefined,
 ) {
     if (!source) {
-        return;
+        return
     }
     for (const [name, value] of Object.entries(source)) {
         if (isObject(value) && isObject(target[name])) {
-            assignDeep(target[name] as Record<string, unknown>, value as Record<string, unknown>);
+            assignDeep(
+                target[name] as Record<string, unknown>,
+                value as Record<string, unknown>,
+            )
         } else {
-            target[name] = value;
+            target[name] = value
         }
     }
 }
 
-export function cloneDeep(source: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+export function cloneDeep(
+    source: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
     if (source === undefined) {
-        return undefined;
+        return undefined
     }
-    const clone: Record<string, unknown> = {};
+    const clone: Record<string, unknown> = {}
     for (const [name, value] of Object.entries(source)) {
         if (isObject(value)) {
-            clone[name] = cloneDeep(value as Record<string, unknown>);
+            clone[name] = cloneDeep(value as Record<string, unknown>)
         } else {
-            clone[name] = value;
+            clone[name] = value
         }
     }
-    return clone;
-
+    return clone
 }
 
 export function required<T>(value: T | undefined): T {
     if (value !== undefined) {
-        return value;
+        return value
     }
-    throw QError.serviceUnavailable();
+    throw QError.serviceUnavailable()
 }
 
 export function setHasIntersections<T>(a: Set<T>, b: Set<T>): boolean {
-    const [c, d] = a.size < b.size ? [a, b] : [b, a];
+    const [c, d] = a.size < b.size ? [a, b] : [b, a]
     for (const x of c) {
         if (d.has(x)) {
-            return true;
+            return true
         }
     }
-    return false;
+    return false
 }
 
 export function arraysAreEqual<T>(a: Array<T>, b: Array<T>): boolean {
     if (a.length != b.length) {
-        return false;
+        return false
     }
     for (let i = 0; i < a.length; i++) {
         if (a[i] != b[i]) {
-            return false;
+            return false
         }
     }
-    return true;
+    return true
 }
 
 export function toU64String(value: number): string {
-    const hex = value.toString(16);
-    return `${(hex.length - 1).toString(16)}${hex}`;
+    const hex = value.toString(16)
+    return `${(hex.length - 1).toString(16)}${hex}`
 }
 
 export type RequestWithHeaders = {
     headers?: {
         [name: string]: string
     }
-};
+}
 
 export type GraphQLConnection = {
     context?: {
         [name: string]: string
     }
-};
-
+}
 
 function tryExtractHeader(
     req: RequestWithHeaders | undefined,
     connection: GraphQLConnection | undefined,
     name: string,
 ): string | undefined {
-    return req?.headers?.[name] ?? connection?.context?.[name];
+    return req?.headers?.[name] ?? connection?.context?.[name]
 }
 
 export function extractHeader(
@@ -292,9 +324,78 @@ export function extractHeader(
     name: string,
     def: string,
 ): string {
-    return tryExtractHeader(req, connection, name) ?? tryExtractHeader(
-        req,
-        connection,
-        name.toLowerCase(),
-    ) ?? def;
+    return (
+        tryExtractHeader(req, connection, name) ??
+        tryExtractHeader(req, connection, name.toLowerCase()) ??
+        def
+    )
+}
+
+export class QAsyncIterator<T> implements AsyncIterator<T> {
+    private isClosed = false
+    private closedWith = new Deferred<IteratorResult<T>>()
+    constructor(
+        private upstream: AsyncIterator<T>,
+        private onNext?: (next: T) => void | Promise<void>,
+        private onClose?: () => void,
+    ) {}
+
+    public async next() {
+        if (this.isClosed) {
+            return { value: undefined, done: true as const }
+        }
+        const next = await Promise.race([
+            this.upstream.next(),
+            this.closedWith.promise,
+        ])
+        if (!next.done && this.onNext) {
+            await this.onNext(next.value)
+        }
+        return next
+    }
+
+    public async return() {
+        this.closedWith.resolve({ value: undefined, done: true as const })
+        this.onClose?.()
+        this.isClosed = true
+        return (
+            this.upstream.return?.() ??
+            Promise.resolve({ value: undefined, done: true as const })
+        )
+    }
+
+    public throw(error: any) {
+        this.closedWith.reject(error)
+        this.onClose?.()
+        this.isClosed = true
+        return this.upstream.throw?.() ?? Promise.reject(error)
+    }
+
+    public [$$asyncIterator]() {
+        return this
+    }
+}
+
+export class Deferred<T> {
+    promise: Promise<T>
+    // Resolve and reject are reentrant:
+    // https://262.ecma-international.org/6.0/#sec-promise-resolve-functions
+    resolve: (value: T | PromiseLike<T>) => void
+    // https://262.ecma-international.org/6.0/#sec-promise-reject-functions
+    reject: (reason?: any) => void
+    constructor() {
+        let cResolve = undefined
+        let cReject = undefined
+        this.promise = new Promise((resolve, reject) => {
+            cResolve = resolve
+            cReject = reject
+        })
+        if (!cResolve || !cReject) {
+            // Expected to be impossible:
+            // https://262.ecma-international.org/6.0/#sec-promise-constructor
+            throw new Error("Invalid Promise constructor")
+        }
+        this.resolve = cResolve
+        this.reject = cReject
+    }
 }

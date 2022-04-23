@@ -1,118 +1,144 @@
-import gql from "graphql-tag";
-import { AggregationFn } from "../server/data/aggregations";
-import type { AccessRights } from "../server/auth";
-import QLogs from "../server/logs";
-import TONQServer from "../server/server";
+import gql from "graphql-tag"
+import { AggregationFn } from "../server/data/aggregations"
+import type { AccessRights } from "../server/auth"
+import QLogs from "../server/logs"
+import TONQServer from "../server/server"
 import {
     aggregationQueryText,
     createLocalArangoTestData,
     createTestClient,
     normalized,
     testConfig,
-} from "./init-tests";
-import { FieldAggregation } from "@tonclient/core";
-import {
-    CollectionFilter,
-} from "../server/filter/filters";
-import { required } from "../server/utils";
+} from "./init-tests"
+import { FieldAggregation } from "@tonclient/core"
+import { CollectionFilter } from "../server/filter/filters"
+import { required } from "../server/utils"
 
 test("Optimized MIN, MAX", () => {
-    const data = createLocalArangoTestData(new QLogs());
+    const data = createLocalArangoTestData(new QLogs())
 
-    expect(aggregationQueryText(required(data.blocks), [{
-        field: "seq_no",
-        fn: AggregationFn.MIN,
-    }])).toEqual(
+    expect(
+        aggregationQueryText(required(data.blocks), [
+            {
+                field: "seq_no",
+                fn: AggregationFn.MIN,
+            },
+        ]),
+    ).toEqual(
         normalized(`
         RETURN [ 
             (FOR doc IN blocks LET a = doc.seq_no SORT a ASC LIMIT 1 RETURN a)[0]
         ]
-    `));
-
-});
+    `),
+    )
+})
 
 test("Aggregations Fast Detector", async () => {
     const granted: AccessRights = {
         granted: true,
         restrictToAccounts: [],
-    };
-    const data = createLocalArangoTestData(new QLogs());
+    }
+    const data = createLocalArangoTestData(new QLogs())
 
-    const isFast = async (filter: CollectionFilter, fields: FieldAggregation[]) => {
-        const q = required(data.transactions).createAggregationQuery(filter, fields, granted);
-        return q !== null && required(data.transactions).isFastAggregationQuery(q.text, filter, q.queries);
-    };
-    expect(await isFast({}, [
-        {
-            fn: AggregationFn.MIN,
-            field: "lt",
-        },
-    ])).toBeTruthy();
-    expect(await isFast({}, [
-        {
-            fn: AggregationFn.MIN,
-            field: "outmsg_cnt",
-        },
-    ])).toBeFalsy();
-    expect(await isFast({ outmsg_cnt: { eq: 1 } }, [
-        {
-            fn: AggregationFn.SUM,
-            field: "lt",
-        },
-    ])).toBeTruthy();
-    expect(await isFast({ outmsg_cnt: { eq: 1 } }, [
-        {
-            fn: AggregationFn.COUNT,
-            field: "",
-        },
-    ])).toBeFalsy();
-    expect(await isFast({}, [
-        {
-            fn: AggregationFn.COUNT,
-            field: "",
-        },
-    ])).toBeTruthy();
-});
+    const isFast = async (
+        filter: CollectionFilter,
+        fields: FieldAggregation[],
+    ) => {
+        const q = required(data.transactions).createAggregationQuery(
+            filter,
+            fields,
+            granted,
+        )
+        return (
+            q !== null &&
+            required(data.transactions).isFastAggregationQuery(
+                q.text,
+                filter,
+                q.queries,
+            )
+        )
+    }
+    expect(
+        await isFast({}, [
+            {
+                fn: AggregationFn.MIN,
+                field: "lt",
+            },
+        ]),
+    ).toBeTruthy()
+    expect(
+        await isFast({}, [
+            {
+                fn: AggregationFn.MIN,
+                field: "outmsg_cnt",
+            },
+        ]),
+    ).toBeFalsy()
+    expect(
+        await isFast({ outmsg_cnt: { eq: 1 } }, [
+            {
+                fn: AggregationFn.SUM,
+                field: "lt",
+            },
+        ]),
+    ).toBeTruthy()
+    expect(
+        await isFast({ outmsg_cnt: { eq: 1 } }, [
+            {
+                fn: AggregationFn.COUNT,
+                field: "",
+            },
+        ]),
+    ).toBeFalsy()
+    expect(
+        await isFast({}, [
+            {
+                fn: AggregationFn.COUNT,
+                field: "",
+            },
+        ]),
+    ).toBeTruthy()
+})
 
 function aggregateNumbers<T>(items: T[], getValue: (item: T) => bigint) {
-    let sum = getValue(items[0]);
-    let min = sum;
-    let max = sum;
+    let sum = getValue(items[0])
+    let min = sum
+    let max = sum
     for (let i = 1; i < items.length; i += 1) {
-        const value = getValue(items[i]);
+        const value = getValue(items[i])
         if (value < min) {
-            min = value;
+            min = value
         }
         if (value > max) {
-            max = value;
+            max = value
         }
-        sum += value;
+        sum += value
     }
-    const avg = sum / BigInt(items.length);
+    const avg = sum / BigInt(items.length)
     return {
         sum,
         min,
         max,
         avg,
-    };
+    }
 }
 
 function aggregateStrings<T>(items: T[], getValue: (item: T) => string) {
-    let min = getValue(items[0]);
-    let max = min;
+    let min = getValue(items[0])
+    let max = min
     for (let i = 1; i < items.length; i += 1) {
-        const value = getValue(items[i]);
+        const value = getValue(items[i])
         if (value < min) {
-            min = value;
+            min = value
         }
         if (value > max) {
-            max = value;
+            max = value
         }
     }
     return {
         min,
         max,
-    };
+    }
 }
 
 test("Partitioned Data", async () => {
@@ -120,15 +146,35 @@ test("Partitioned Data", async () => {
         config: testConfig,
         logs: new QLogs(),
         data: createLocalArangoTestData(new QLogs()),
-    });
-    await server.start();
-    const client = createTestClient({ useWebSockets: true });
-    let messages = (await client.query({
-        query: gql`query { messages(filter: { value: {ne: null, lt: "1000000000000000000"}} limit: 10){id value created_at created_lt} }`,
-    })).data.messages;
-    const aggregated: (string | number)[] = (await client.query({
-        query: gql`${`query { aggregateMessages(
-            filter: {id: {in: ["${messages.map((x: {id: string}) => x.id).join("\",\"")}"]}}
+    })
+    await server.start()
+    const client = createTestClient({ useWebSockets: true })
+    let messages = (
+        await client.query({
+            query: gql`
+                query {
+                    messages(
+                        filter: {
+                            value: { ne: null, lt: "1000000000000000000" }
+                        }
+                        limit: 10
+                    ) {
+                        id
+                        value
+                        created_at
+                        created_lt
+                    }
+                }
+            `,
+        })
+    ).data.messages
+    const aggregated: (string | number)[] = (
+        await client.query({
+            query: gql`
+                ${`query { aggregateMessages(
+            filter: {id: {in: ["${messages
+                .map((x: { id: string }) => x.id)
+                .join('","')}"]}}
             fields: [
                 {field: "value", fn: COUNT}
                 {field: "value", fn: MIN}
@@ -146,90 +192,117 @@ test("Partitioned Data", async () => {
                 {field: "id", fn: MIN}
                 {field: "id", fn: MAX}
             ]) 
-        }`}`,
-    })).data.aggregateMessages;
+        }`}
+            `,
+        })
+    ).data.aggregateMessages
     // If we run on test evn where hot and cold are point to the same arango.
     // we must take in account that aggregation works on two similar set of data.
     if (Number(aggregated[0]) > messages.length) {
-        messages = messages.concat(messages);
+        messages = messages.concat(messages)
     }
-    expect(aggregated.length).toEqual(15);
-    expect(Number(aggregated[0])).toEqual(messages.length);
+    expect(aggregated.length).toEqual(15)
+    expect(Number(aggregated[0])).toEqual(messages.length)
 
     // BigInt(2)
-    const values = aggregateNumbers<{ value: string }>(messages, m => BigInt(m.value));
-    expect(BigInt(aggregated[1])).toEqual(values.min);
-    expect(BigInt(aggregated[2])).toEqual(values.max);
-    expect(BigInt(aggregated[3])).toEqual(values.sum);
-    expect(BigInt(aggregated[4])).toEqual(values.avg);
+    const values = aggregateNumbers<{ value: string }>(messages, m =>
+        BigInt(m.value),
+    )
+    expect(BigInt(aggregated[1])).toEqual(values.min)
+    expect(BigInt(aggregated[2])).toEqual(values.max)
+    expect(BigInt(aggregated[3])).toEqual(values.sum)
+    expect(BigInt(aggregated[4])).toEqual(values.avg)
 
     // BigInt(1)
-    const lts = aggregateNumbers<{ created_lt: string }>(messages, m => BigInt(m.created_lt));
-    expect(BigInt(aggregated[5])).toEqual(lts.min);
-    expect(BigInt(aggregated[6])).toEqual(lts.max);
-    expect(BigInt(aggregated[7])).toEqual(lts.sum);
-    expect(BigInt(aggregated[8])).toEqual(lts.avg);
+    const lts = aggregateNumbers<{ created_lt: string }>(messages, m =>
+        BigInt(m.created_lt),
+    )
+    expect(BigInt(aggregated[5])).toEqual(lts.min)
+    expect(BigInt(aggregated[6])).toEqual(lts.max)
+    expect(BigInt(aggregated[7])).toEqual(lts.sum)
+    expect(BigInt(aggregated[8])).toEqual(lts.avg)
 
     // Number
-    const ats = aggregateNumbers<{ created_at: number }>(messages, m => BigInt(m.created_at));
-    expect(BigInt(aggregated[9])).toEqual(ats.min);
-    expect(BigInt(aggregated[10])).toEqual(ats.max);
-    expect(BigInt(aggregated[11])).toEqual(ats.sum);
-    expect(BigInt(aggregated[12])).toEqual(ats.avg);
+    const ats = aggregateNumbers<{ created_at: number }>(messages, m =>
+        BigInt(m.created_at),
+    )
+    expect(BigInt(aggregated[9])).toEqual(ats.min)
+    expect(BigInt(aggregated[10])).toEqual(ats.max)
+    expect(BigInt(aggregated[11])).toEqual(ats.sum)
+    expect(BigInt(aggregated[12])).toEqual(ats.avg)
 
     // String
-    const ids = aggregateStrings<{ id: string }>(messages, m => m.id);
-    expect(aggregated[13]).toEqual(ids.min);
-    expect(aggregated[14]).toEqual(ids.max);
+    const ids = aggregateStrings<{ id: string }>(messages, m => m.id)
+    expect(aggregated[13]).toEqual(ids.min)
+    expect(aggregated[14]).toEqual(ids.max)
 
-    void server.stop();
-});
+    void server.stop()
+})
 
 test("Partitioned data with null", async () => {
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
         data: createLocalArangoTestData(new QLogs()),
-    });
-    await server.start();
-    const client = createTestClient({ useWebSockets: true });
-    const aggregated: (string | number)[] = (await client.query({
-        query: gql`${`query { aggregateMessages(
+    })
+    await server.start()
+    const client = createTestClient({ useWebSockets: true })
+    const aggregated: (string | number)[] = (
+        await client.query({
+            query: gql`
+                ${`query { aggregateMessages(
             filter: {id: {in: ["1"]}}
             fields: [
                 {field: "value", fn: COUNT}
                 {field: "value", fn: MIN}
             ]) 
-        }`}`,
-    })).data.aggregateMessages;
-    expect(aggregated[1]).toBeNull();
-    void server.stop();
-});
+        }`}
+            `,
+        })
+    ).data.aggregateMessages
+    expect(aggregated[1]).toBeNull()
+    void server.stop()
+})
 
 test("Balance delta sum", async () => {
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
         data: createLocalArangoTestData(new QLogs()),
-    });
-    await server.start();
-    const client = createTestClient({ useWebSockets: true });
-    const account = (await client.query({
-        query: gql`query { accounts(filter: { workchain_id: { eq: 0 }} limit: 1){id balance} }`,
-    })).data.accounts[0];
+    })
+    await server.start()
+    const client = createTestClient({ useWebSockets: true })
+    const account = (
+        await client.query({
+            query: gql`
+                query {
+                    accounts(filter: { workchain_id: { eq: 0 } }, limit: 1) {
+                        id
+                        balance
+                    }
+                }
+            `,
+        })
+    ).data.accounts[0]
 
-    console.log(account.id);
+    console.log(account.id)
 
-    const aggregated: (string | number)[] = (await client.query({
-        query: gql`${`query { aggregateTransactions(
+    const aggregated: (string | number)[] = (
+        await client.query({
+            query: gql`
+                ${`query { aggregateTransactions(
             filter: {account_addr: {eq: "${account.id}"}}
             fields: [
                 {field: "balance_delta", fn: SUM}
             ]) 
-        }`}`,
-    })).data.aggregateTransactions;
+        }`}
+            `,
+        })
+    ).data.aggregateTransactions
 
-    expect(BigInt(aggregated[0]).toString()).toEqual(BigInt(account.balance).toString());
+    expect(BigInt(aggregated[0]).toString()).toEqual(
+        BigInt(account.balance).toString(),
+    )
 
-    void server.stop();
-});
+    void server.stop()
+})

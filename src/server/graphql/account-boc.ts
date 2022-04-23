@@ -1,14 +1,20 @@
-import { Account } from "./resolvers-generated";
-import { SelectionNode } from "graphql";
+import { Account } from "./resolvers-generated"
+import { SelectionNode } from "graphql"
 import {
-    CollectionFilter, convertFilterValue,
-    filterConditionForFields, invalidSelection,
-    QRequestParams, QReturnExpression, scalarOps,
-    StructFilter, testFields, undefinedToNull,
-} from "../filter/filters";
+    CollectionFilter,
+    convertFilterValue,
+    filterConditionForFields,
+    invalidSelection,
+    QRequestParams,
+    QReturnExpression,
+    scalarOps,
+    StructFilter,
+    testFields,
+    undefinedToNull,
+} from "../filter/filters"
 
 export function overrideAccountBoc() {
-    const fields = Account.fields;
+    const fields = Account.fields
     if (fields) {
         fields["boc"] = {
             filterCondition(params, path, filter) {
@@ -17,10 +23,18 @@ export function overrideAccountBoc() {
                     filter as StructFilter,
                     scalarOps,
                     (op, path, _filterKey, filterValue) => {
-                        const converted = convertFilterValue(filterValue, op, undefined);
-                        return op.filterCondition(params, path, converted as CollectionFilter);
+                        const converted = convertFilterValue(
+                            filterValue,
+                            op,
+                            undefined,
+                        )
+                        return op.filterCondition(
+                            params,
+                            path,
+                            converted as CollectionFilter,
+                        )
                     },
-                );
+                )
             },
             returnExpressions(
                 request: QRequestParams,
@@ -28,18 +42,19 @@ export function overrideAccountBoc() {
                 def: SelectionNode,
             ): QReturnExpression[] {
                 if (def.kind !== "Field") {
-                    throw invalidSelection(def.kind);
+                    throw invalidSelection(def.kind)
                 }
-                const name = def.name.value;
-                const field = `${path}.${name}`;
+                const name = def.name.value
+                const field = `${path}.${name}`
                 return [
                     {
                         name,
-                        expression: (request.expectedAccountBocVersion === 1)
-                            ? `${field}1 || ${field}`
-                            : field,
+                        expression:
+                            request.expectedAccountBocVersion === 1
+                                ? `${field}1 || ${field}`
+                                : field,
                     },
-                ];
+                ]
             },
             test(parent, value, filter) {
                 return testFields(
@@ -47,15 +62,19 @@ export function overrideAccountBoc() {
                     filter,
                     scalarOps,
                     (op, value, _filterKey, filterValue) => {
-                        const converted = convertFilterValue(filterValue, op, undefined);
+                        const converted = convertFilterValue(
+                            filterValue,
+                            op,
+                            undefined,
+                        )
                         return op.test(
                             parent,
                             undefinedToNull(value),
                             converted as CollectionFilter,
-                        );
+                        )
                     },
-                );
+                )
             },
-        };
+        }
     }
 }

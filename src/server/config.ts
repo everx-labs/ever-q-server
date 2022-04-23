@@ -14,98 +14,105 @@
  * limitations under the License.
  */
 
-
-
-import { URL } from "url";
-import { readFileSync } from "fs";
-import {
-    ConfigParam,
-    ConfigValue,
-    DeepPartial,
-} from "./config-param";
-import { QError } from "./utils";
+import { URL } from "url"
+import { readFileSync } from "fs"
+import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
+import { QError } from "./utils"
 
 export type QConfig = {
-    config: string,
+    config: string
     server: {
-        host: string,
-        port: number,
-        keepAlive: number,
-    },
+        host: string
+        port: number
+        keepAlive: number
+    }
     requests: {
-        mode: RequestsMode,
-        server: string,
-        topic: string,
-        maxSize: number,
-    },
+        mode: RequestsMode
+        server: string
+        topic: string
+        maxSize: number
+    }
+    subscriptions: {
+        kafkaOptions: {
+            server: string
+            topic: string
+            maxSize: number
+            keepAliveInterval: number
+        }
+        redisOptions: {
+            port: number
+            host: string
+        }
+    }
     queries: {
-        filter: FilterConfig,
-        maxRuntimeInS: number,
-        slowQueries: SlowQueriesMode,
-        waitForPeriod: number,
-    },
-    useListeners: boolean,
-    blockchain: QBlockchainDataConfig,
-    counterparties: string[],
-    chainRangesVerification: string[],
+        filter: FilterConfig
+        maxRuntimeInS: number
+        slowQueries: SlowQueriesMode
+        waitForPeriod: number
+    }
+    useListeners?: boolean
+    subscriptionsMode: SubscriptionsMode
+    blockchain: QBlockchainDataConfig
+    counterparties: string[]
+    chainRangesVerification: string[]
 
-    slowQueriesBlockchain?: QBlockchainDataConfig,
+    slowQueriesBlockchain?: QBlockchainDataConfig
 
-    data?: QDeprecatedDataConfig,
-    slowQueriesData?: QDeprecatedDataConfig,
+    data?: QDeprecatedDataConfig
+    slowQueriesData?: QDeprecatedDataConfig
 
     authorization: {
-        endpoint: string,
-    },
+        endpoint: string
+    }
     jaeger: {
-        endpoint: string,
-        service: string,
-        tags: Record<string, string>,
-    },
+        endpoint: string
+        service: string
+        tags: Record<string, string>
+    }
     statsd: {
-        server: string,
-        tags: string[],
-        resetInterval: number,
-    },
-    mamAccessKeys: string[],
-    isTests: boolean,
-    networkName: string,
-    cacheKeyPrefix: string,
-    endpoints: string[],
-};
+        server: string
+        tags: string[]
+        resetInterval: number
+    }
+    mamAccessKeys: string[]
+    isTests: boolean
+    networkName: string
+    cacheKeyPrefix: string
+    endpoints: string[]
+}
 
 export type FilterConfig = {
-    orConversion: FilterOrConversion,
-};
+    orConversion: FilterOrConversion
+}
 
 export type QBlockchainDataConfig = {
-    hotCache?: string,
-    hotCacheExpiration: number,
-    hotCacheEmptyDataExpiration: number,
-    accounts: string[],
-    blocks: QHotColdDataConfig,
-    transactions: QHotColdDataConfig,
-    zerostate: string,
-};
+    hotCache?: string
+    hotCacheExpiration: number
+    hotCacheEmptyDataExpiration: number
+    accounts: string[]
+    blocks: QHotColdDataConfig
+    transactions: QHotColdDataConfig
+    zerostate: string
+}
 
 export type QHotColdDataConfig = {
-    hot: string[],
-    cache?: string,
-    cold: string[],
-};
+    hot: string[]
+    cache?: string
+    cold: string[]
+}
 
 export type QDeprecatedDataConfig = {
-    mut?: string;
-    hot?: string;
-    cold?: string[];
-    cache?: string;
-    counterparties?: string;
-};
+    mut?: string
+    hot?: string
+    cold?: string[]
+    cache?: string
+    counterparties?: string
+}
 
 export enum SlowQueriesMode {
     ENABLE = "enable",
     REDIRECT = "redirect",
-    DISABLE = "disable"
+    DISABLE = "disable",
 }
 
 export enum RequestsMode {
@@ -118,34 +125,95 @@ export enum FilterOrConversion {
     SUB_QUERIES = "sub-queries",
 }
 
+export enum SubscriptionsMode {
+    Disabled = "disabled",
+    Arango = "arango",
+    External = "external",
+}
+
 export const configParams = {
     config: ConfigParam.string("config", "", "Path to JSON configuration file"),
     server: {
         host: ConfigParam.string("host", "{ip}", "Listening address"),
         port: ConfigParam.integer("port", 4000, "Listening port"),
-        keepAlive: ConfigParam.integer("keep-alive", 60000, "GraphQL keep alive ms"),
+        keepAlive: ConfigParam.integer(
+            "keep-alive",
+            60000,
+            "GraphQL keep alive ms",
+        ),
     },
     requests: {
         mode: ConfigParam.string(
             "requests-mode",
             "kafka",
             "Requests mode:\n" +
-            "`kafka` – writes external messages to kafka topic\n" +
-            "`rest` – posts external messages to REST endpoint"),
-        server: ConfigParam.string("requests-server", "kafka:9092", "Requests server url"),
-        topic: ConfigParam.string("requests-topic", "requests", "Requests topic name"),
-        maxSize: ConfigParam.integer("requests-max-size", 16383, "Maximum request message size in bytes"),
+                "`kafka` – writes external messages to kafka topic\n" +
+                "`rest` – posts external messages to REST endpoint",
+        ),
+        server: ConfigParam.string(
+            "requests-server",
+            "kafka:9092",
+            "Requests server url",
+        ),
+        topic: ConfigParam.string(
+            "requests-topic",
+            "requests",
+            "Requests topic name",
+        ),
+        maxSize: ConfigParam.integer(
+            "requests-max-size",
+            16383,
+            "Maximum request message size in bytes",
+        ),
     },
+
+    subscriptions: {
+        kafkaOptions: {
+            server: ConfigParam.string(
+                "subscriptions-kafka-server",
+                "kafka:9092",
+                "Subscriptions server url (for 'external' subscriptions mode)",
+            ),
+            topic: ConfigParam.string(
+                "subscriptions-kafka-topic",
+                "subscriptions",
+                "Subscriptions topic name (for 'external' subscriptions mode)",
+            ),
+            maxSize: ConfigParam.integer(
+                "subscriptions-max-filter-size",
+                16383,
+                "Maximum subscription's filter size in bytes (for 'external' subscriptions mode)",
+            ),
+            keepAliveInterval: ConfigParam.integer(
+                "subscriptions-filters-millis",
+                30000,
+                "Kafka keep alive period for filters in millisecons (for 'external' subscriptions mode)",
+            ),
+        },
+        redisOptions: {
+            port: ConfigParam.integer(
+                "subscriptions-redis-port",
+                6379,
+                "Redis port (for 'external' subscriptions mode)",
+            ),
+            host: ConfigParam.string(
+                "subscriptions-redis-host",
+                "redis",
+                "Redis host (for 'external' subscriptions mode)",
+            ),
+        },
+    },
+
     queries: {
         filter: {
             orConversion: ConfigParam.string(
                 "filter-or-conversion",
                 "sub-queries",
                 "Filter OR conversion:\n" +
-                "`or-operator` – q-server uses AQL with OR\n" +
-                "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
-                " and combines results (this option provides faster execution\n" +
-                " than OR operator in AQL)",
+                    "`or-operator` – q-server uses AQL with OR\n" +
+                    "`sub-queries` – q-server performs parallel queries for each OR operand\n" +
+                    " and combines results (this option provides faster execution\n" +
+                    " than OR operator in AQL)",
             ),
         },
         maxRuntimeInS: ConfigParam.integer(
@@ -157,18 +225,31 @@ export const configParams = {
             "slow-queries",
             "redirect",
             "Slow queries handling:\n" +
-            "`enable` – process slow queries on the main database\n" +
-            "`redirect` – redirect slow queries to slow-queries database\n" +
-            "`disable` – fail on slow queries",
+                "`enable` – process slow queries on the main database\n" +
+                "`redirect` – redirect slow queries to slow-queries database\n" +
+                "`disable` – fail on slow queries",
         ),
         waitForPeriod: ConfigParam.integer(
             "query-wait-for-period",
             1000,
             "Collection polling period for wait-for queries\n" +
-            "(collection queries with timeout) in ms",
+                "(collection queries with timeout) in ms",
         ),
     },
-    useListeners: ConfigParam.boolean("use-listeners", true, "Use database listeners for subscriptions"),
+    useListeners: ConfigParam.boolean(
+        "use-listeners",
+        true,
+        "Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)",
+        true,
+    ),
+    subscriptionsMode: ConfigParam.string(
+        "subscriptions-mode",
+        "arango",
+        "Subscriptions mode:\n" +
+            "`disabled` - disable subscriptions\n" +
+            "`arango` - subscribe to ArangoDB WAL for changes\n" +
+            "`external` - use external services to handle subscriptions",
+    ),
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
@@ -182,7 +263,11 @@ export const configParams = {
     },
     jaeger: {
         endpoint: ConfigParam.string("jaeger-endpoint", "", "Jaeger endpoint"),
-        service: ConfigParam.string("trace-service", "Q Server", "Trace service name"),
+        service: ConfigParam.string(
+            "trace-service",
+            "Q Server",
+            "Trace service name",
+        ),
         tags: ConfigParam.map(
             "trace-tags",
             {},
@@ -190,7 +275,11 @@ export const configParams = {
         ),
     },
     statsd: {
-        server: ConfigParam.string("statsd-server", "", "StatsD server (host:port)"),
+        server: ConfigParam.string(
+            "statsd-server",
+            "",
+            "StatsD server (host:port)",
+        ),
         tags: ConfigParam.map(
             "statsd-tags",
             {},
@@ -207,7 +296,11 @@ export const configParams = {
         [],
         "Access keys used to authorize mam endpoint access",
     ),
-    isTests: ConfigParam.boolean("is-tests", false, "Determines that q-server runs in unit tests mode."),
+    isTests: ConfigParam.boolean(
+        "is-tests",
+        false,
+        "Determines that q-server runs in unit tests mode.",
+    ),
     networkName: ConfigParam.string(
         "network-name",
         "cinet.tonlabs.io",
@@ -223,24 +316,23 @@ export const configParams = {
         [],
         "Alternative endpoints of q-server (comma separated addresses)",
     ),
-};
-
+}
 
 export type QArangoConfig = {
-    server: string,
-    name: string,
-    auth: string,
-    maxSockets: number,
-    listenerRestartTimeout: number;
-};
+    server: string
+    name: string
+    auth: string
+    maxSockets: number
+    listenerRestartTimeout: number
+}
 
 export type QMemCachedConfig = {
-    server: string,
-};
+    server: string
+}
 
-const DEFAULT_LISTENER_RESTART_TIMEOUT = 1000;
-const DEFAULT_ARANGO_MAX_SOCKETS = 100;
-const DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS = 3;
+const DEFAULT_LISTENER_RESTART_TIMEOUT = 1000
+const DEFAULT_ARANGO_MAX_SOCKETS = 100
+const DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS = 3
 
 // Stats Schema
 
@@ -271,54 +363,73 @@ export const STATS = {
     errors: {
         internal: "errors.internal",
     },
-};
+}
 
-
-export function ensureProtocol(address: string, defaultProtocol: string): string {
-    return /^\w+:\/\//gi.test(address) ? address : `${defaultProtocol}://${address}`;
+export function ensureProtocol(
+    address: string,
+    defaultProtocol: string,
+): string {
+    return /^\w+:\/\//gi.test(address)
+        ? address
+        : `${defaultProtocol}://${address}`
 }
 
 export function readConfigFile(configFile: string): DeepPartial<QConfig> {
     try {
-        return JSON.parse(readFileSync(configFile).toString()) as DeepPartial<QConfig>;
+        return JSON.parse(
+            readFileSync(configFile).toString(),
+        ) as DeepPartial<QConfig>
     } catch (error) {
-        console.error("Error while reading config file:", error);
-        return {};
+        console.error("Error while reading config file:", error)
+        return {}
     }
 }
 
 export function parseArangoConfig(config: string): QArangoConfig {
-    const lowerCased = config.toLowerCase().trim();
-    const hasProtocol = lowerCased.startsWith("http:") || lowerCased.startsWith("https:");
-    const url = new URL(hasProtocol ? config : `https://${config}`);
-    const protocol = url.protocol || "https:";
-    const host = (url.port || protocol.toLowerCase() === "https:") ? url.host : `${url.host}:8529`;
-    const path = url.pathname !== "/" ? url.pathname : "";
-    const param = (name: string) => url.searchParams.get(name) || "";
+    const lowerCased = config.toLowerCase().trim()
+    const hasProtocol =
+        lowerCased.startsWith("http:") || lowerCased.startsWith("https:")
+    const url = new URL(hasProtocol ? config : `https://${config}`)
+    const protocol = url.protocol || "https:"
+    const host =
+        url.port || protocol.toLowerCase() === "https:"
+            ? url.host
+            : `${url.host}:8529`
+    const path = url.pathname !== "/" ? url.pathname : ""
+    const param = (name: string) => url.searchParams.get(name) || ""
     return {
         server: `${protocol}//${host}${path}`,
         auth: url.username && `${url.username}:${url.password}`,
         name: param("name") || "blockchain",
-        maxSockets: Number.parseInt(param("maxSockets")) || DEFAULT_ARANGO_MAX_SOCKETS,
-        listenerRestartTimeout: Number.parseInt(param("listenerRestartTimeout")) || DEFAULT_LISTENER_RESTART_TIMEOUT,
-    };
+        maxSockets:
+            Number.parseInt(param("maxSockets")) || DEFAULT_ARANGO_MAX_SOCKETS,
+        listenerRestartTimeout:
+            Number.parseInt(param("listenerRestartTimeout")) ||
+            DEFAULT_LISTENER_RESTART_TIMEOUT,
+    }
 }
 
 function resolveMaxSockets(config: string, defMaxSockets: number): string {
-    const lowerCased = config.toLowerCase().trim();
-    const hasProtocol = lowerCased.startsWith("http:") || lowerCased.startsWith("https:");
-    const url = new URL(hasProtocol ? config : `https://${config}`);
+    const lowerCased = config.toLowerCase().trim()
+    const hasProtocol =
+        lowerCased.startsWith("http:") || lowerCased.startsWith("https:")
+    const url = new URL(hasProtocol ? config : `https://${config}`)
     if ((url.searchParams.get("maxSockets") || "") === "") {
-        url.search = `${url.search !== "" ? `${url.search}&` : ""}maxSockets=${defMaxSockets}`;
+        url.search = `${
+            url.search !== "" ? `${url.search}&` : ""
+        }maxSockets=${defMaxSockets}`
     }
-    return url.toString();
+    return url.toString()
 }
 
-function resolveMaxSocketsFor(configs: (string[] | undefined)[], defMaxSockets: number) {
+function resolveMaxSocketsFor(
+    configs: (string[] | undefined)[],
+    defMaxSockets: number,
+) {
     for (const config of configs) {
         if (config !== undefined) {
             for (let j = 0; j < config.length; j += 1) {
-                config[j] = resolveMaxSockets(config[j], defMaxSockets);
+                config[j] = resolveMaxSockets(config[j], defMaxSockets)
             }
         }
     }
@@ -328,41 +439,55 @@ function upgradeDatabases(deprecated: string | undefined): string[] {
     return (deprecated ?? "")
         .split(",")
         .map(x => x.trim())
-        .filter(x => x !== "");
+        .filter(x => x !== "")
 }
 
-function upgradeHotCold(deprecated: QDeprecatedDataConfig, def: string | undefined): QHotColdDataConfig {
+function upgradeHotCold(
+    deprecated: QDeprecatedDataConfig,
+    def: string | undefined,
+): QHotColdDataConfig {
     return {
         hot: upgradeDatabases(deprecated.hot || def),
         cache: deprecated.cache,
         cold: deprecated.cold ?? [],
-    };
+    }
 }
 
-function upgradeBlockchain(deprecated: QDeprecatedDataConfig): QBlockchainDataConfig {
-    const blocks = upgradeHotCold(deprecated, deprecated.mut);
+function upgradeBlockchain(
+    deprecated: QDeprecatedDataConfig,
+): QBlockchainDataConfig {
+    const blocks = upgradeHotCold(deprecated, deprecated.mut)
     return {
         accounts: upgradeDatabases(deprecated.mut),
         blocks,
         transactions: upgradeHotCold(deprecated, deprecated.mut),
         zerostate: blocks.hot[0] ?? "",
-        hotCacheExpiration: configParams.blockchain.hotCacheExpiration.defaultValue,
-        hotCacheEmptyDataExpiration: configParams.blockchain.hotCacheEmptyDataExpiration.defaultValue,
-    };
+        hotCacheExpiration:
+            configParams.blockchain.hotCacheExpiration.defaultValue,
+        hotCacheEmptyDataExpiration:
+            configParams.blockchain.hotCacheEmptyDataExpiration.defaultValue,
+    }
 }
 
-type ConfigParamSource = ConfigParam<ConfigValue> | Record<string, unknown>;
+type ConfigParamSource = ConfigParam<ConfigValue> | Record<string, unknown>
 
-function isSpecifiedAny(specified: ConfigParam<ConfigValue>[], ...params: ConfigParamSource[]): boolean {
+function isSpecifiedAny(
+    specified: ConfigParam<ConfigValue>[],
+    ...params: ConfigParamSource[]
+): boolean {
     for (const param of params) {
-        const isSpecified = param instanceof ConfigParam
-            ? specified.includes(param)
-            : isSpecifiedAny(specified, ...Object.values(param) as ConfigParamSource[]);
+        const isSpecified =
+            param instanceof ConfigParam
+                ? specified.includes(param)
+                : isSpecifiedAny(
+                      specified,
+                      ...(Object.values(param) as ConfigParamSource[]),
+                  )
         if (isSpecified) {
-            return true;
+            return true
         }
     }
-    return false;
+    return false
 }
 
 function checkDataUpgradeRequired(
@@ -370,12 +495,45 @@ function checkDataUpgradeRequired(
     deprecated: ConfigParamSource,
     ...data: ConfigParamSource[]
 ): boolean {
-    const isDeprecatedSpecified = isSpecifiedAny(specified, deprecated);
-    const isSpecified = isSpecifiedAny(specified, ...data);
+    const isDeprecatedSpecified = isSpecifiedAny(specified, deprecated)
+    const isSpecified = isSpecifiedAny(specified, ...data)
     if (isSpecified && isDeprecatedSpecified) {
-        throw QError.invalidConfig("Invalid data config: data configuration mustn't be mixed with deprecated data configuration. Please choose one.");
+        throw QError.invalidConfig(
+            "Invalid data config: data configuration mustn't be mixed with deprecated data configuration. Please choose one.",
+        )
     }
-    return isDeprecatedSpecified;
+    return isDeprecatedSpecified
+}
+
+function checkSubscriptionsConfig(
+    config: QConfig,
+    specified: ConfigParam<ConfigValue>[],
+): void {
+    const isUseListenersSpecified = specified.includes(
+        configParams.useListeners,
+    )
+    const isSubscriptionsModeSpecified = specified.includes(
+        configParams.subscriptionsMode,
+    )
+    if (isUseListenersSpecified && isSubscriptionsModeSpecified) {
+        throw QError.invalidConfig(
+            "Invalid data config: use-listeners mustn't be mixed with subscriptions-mode. Please choose one.",
+        )
+    }
+    if (isUseListenersSpecified) {
+        config.subscriptionsMode = config.useListeners
+            ? SubscriptionsMode.Arango
+            : SubscriptionsMode.Disabled
+    }
+    if (!Object.values(SubscriptionsMode).includes(config.subscriptionsMode)) {
+        throw QError.invalidConfig(
+            `Unknown subscriptions-mode: got ${
+                config.subscriptionsMode
+            }, but expected one of [${Object.values(SubscriptionsMode).join(
+                ", ",
+            )}]`,
+        )
+    }
 }
 
 export function resolveConfig(
@@ -383,42 +541,54 @@ export function resolveConfig(
     json: DeepPartial<QConfig>,
     env: Record<string, string>,
 ): QConfig {
-    const {
-        config,
-        specified,
-    } = ConfigParam.resolveConfig(options, json, env, configParams);
+    const { config, specified } = ConfigParam.resolveConfig(
+        options,
+        json,
+        env,
+        configParams,
+    )
 
+    checkSubscriptionsConfig(config, specified)
 
     const isDataUpgradeRequired = checkDataUpgradeRequired(
         specified,
         configParams.data,
         configParams.blockchain,
         configParams.counterparties,
-    );
+    )
     if (config.data !== undefined && isDataUpgradeRequired) {
-        config.blockchain = upgradeBlockchain(config.data);
-        config.counterparties = upgradeDatabases(config.data.counterparties);
+        config.blockchain = upgradeBlockchain(config.data)
+        config.counterparties = upgradeDatabases(config.data.counterparties)
     }
     const isSlowQueriesDataUpgradeRequired = checkDataUpgradeRequired(
         specified,
         configParams.slowQueriesData,
         configParams.slowQueriesBlockchain,
-    );
+    )
     if (config.slowQueriesData && isSlowQueriesDataUpgradeRequired) {
-        config.slowQueriesBlockchain = upgradeBlockchain(config.slowQueriesData);
+        config.slowQueriesBlockchain = upgradeBlockchain(config.slowQueriesData)
     }
-    const slow = config.slowQueriesBlockchain;
+    const slow = config.slowQueriesBlockchain
     if (slow !== undefined) {
-        resolveMaxSocketsFor([
-            slow.accounts,
-            slow.blocks.hot,
-            slow.blocks.cold,
-            slow.transactions.hot,
-            slow.transactions.cold,
-        ], DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS);
+        resolveMaxSocketsFor(
+            [
+                slow.accounts,
+                slow.blocks.hot,
+                slow.blocks.cold,
+                slow.transactions.hot,
+                slow.transactions.cold,
+            ],
+            DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS,
+        )
     }
-    if (config.blockchain.zerostate === "" && !specified.includes(configParams.blockchain.zerostate)) {
-        config.blockchain.zerostate = config.blockchain.blocks.hot[0] ?? config.blockchain.blocks.cold[0] ?? "";
+    if (
+        config.blockchain.zerostate === "" &&
+        !specified.includes(configParams.blockchain.zerostate)
+    ) {
+        config.blockchain.zerostate =
+            config.blockchain.blocks.hot[0] ??
+            config.blockchain.blocks.cold[0] ??
+            ""
     }
-    return config;
+    return config
 }

@@ -14,65 +14,65 @@
  * limitations under the License.
  */
 
-import { toJSON } from "./utils";
+import { toJSON } from "./utils"
 
 export interface QLog {
-    error(...args: unknown[]): void,
+    error(...args: unknown[]): void
 
-    debug(...args: unknown[]): void,
+    debug(...args: unknown[]): void
 }
 
 function str(arg: unknown): string {
-    let s;
+    let s
     if (arg instanceof Error) {
-        s = arg.message || arg.toString();
+        s = arg.message || arg.toString()
     } else if (typeof arg === "string") {
-        s = arg;
+        s = arg
     } else {
-        s = toJSON(arg);
+        s = toJSON(arg)
     }
-    return s.split("\n").join("\\n").split("\t").join("\\t");
+    return s.split("\n").join("\\n").split("\t").join("\\t")
 }
 
 function format(name: string, args: unknown[]) {
-    return `${Date.now()}\t${name}\t${args.map(str).join("\t")}`;
+    return `${Date.now()}\t${name}\t${args.map(str).join("\t")}`
 }
 
 export default class QLogs {
-    static stopped: boolean;
+    static stopped: boolean
 
     static error(...args: unknown[]) {
         if (QLogs.stopped) {
-            return;
+            return
         }
-        console.error(...args);
+        console.error(...args)
     }
 
     static debug(...args: unknown[]) {
         if (QLogs.stopped) {
-            return;
+            return
         }
-        console.debug(...args);
+        console.debug(...args)
     }
 
     create(name: string): QLog {
         return {
             error(...args) {
-                QLogs.error(format(name, args));
+                QLogs.error(format(name, args))
             },
             debug(...args) {
-                QLogs.debug(format(name, args));
+                QLogs.debug(format(name, args))
             },
-        };
+        }
     }
 
     start() {
-        QLogs.stopped = false;
+        QLogs.stopped = false
     }
 
     stop() {
-        QLogs.stopped = true;
+        QLogs.stopped = true
     }
 }
 
-QLogs.stopped = false;
+QLogs.stopped = false

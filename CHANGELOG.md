@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.50.0] - 2022-04-22
+
+### New
+
+- new `subscriptions-mode` config parameter with three options: `disabled`, `arango` (default), `external` - describes which backend should be used for subscriptions
+- new `external` subscriptions mode (publishes filters to Kafka and gets documents from Redis)
+
+### Deprecated
+
+- `use-listeners` config parameter (use `subscriptions-mode` instead)
+
+### Improved
+
+- prettify code:)
+
 ## [0.49.1] - 2022-04-07
 
 ### Fixed
@@ -36,19 +51,19 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- Support for `null` in scalar filter. e.g. `filter: { last_paid: null }`. Means missing filter.  
+- Support for `null` in scalar filter. e.g. `filter: { last_paid: null }`. Means missing filter.
 - Add new functions to `blockchain` root api:
     - `account`, allows:
         - to fetch account info (e.g. boc) via `info` field
         - to fetch transaction info via `transactions` (similar to now deprecated `blockchain.account_transactions`)
     - `blocks` (is similar to now deprecated `workchain_blocks`)
     - `transactions` (is similar to now deprecated `workchain_transactions`)
-  
+
 ### Deprecation
 
-- `blockchain.workchain_blocks`. Use `blockchain{ blocks }` instead. 
-- `blockchain.workchain_transactions`. Use `blockchain{ transactions } ` instead. 
-- `blockchain.account_transactions`. Use `blockchain{ account{ transactions } }` instead. 
+- `blockchain.workchain_blocks`. Use `blockchain{ blocks }` instead.
+- `blockchain.workchain_transactions`. Use `blockchain{ transactions } ` instead.
+- `blockchain.account_transactions`. Use `blockchain{ account{ transactions } }` instead.
 
 ### Breaking
 
@@ -63,16 +78,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `X-Evernode-Expected-Account-Boc-Version` header handler did not handle lowercase version of the header. 
+- `X-Evernode-Expected-Account-Boc-Version` header handler did not handle lowercase version of the header.
 
 ## [0.47.0] - 2022-02-28
 
 ### New
 
-- Support `X-Evernode-Expected-Account-Boc-Version` header. 
+- Support `X-Evernode-Expected-Account-Boc-Version` header.
   `1` (default) means old version, `2` – new (with `init_code_hash` field).
 
-- Support `boc1` field in accounts collection. `boc` field contains new `2` version, 
+- Support `boc1` field in accounts collection. `boc` field contains new `2` version,
   `boc1` contains downgraded to `1` version.
 
 - `account.init_code_hash` – account 's initial code hash (when it was deployed).
@@ -118,9 +133,9 @@ https://tonlabs.gitbook.io/evernode-platform/reference/breaking-changes/deprecat
     - `key_blocks` - paginate through key blocks
     - `workchain_blocks` with optional filter by thread (former 'shard')
     - `workchain_transactions`
-    - `account_transactions` 
+    - `account_transactions`
 
-Later, it will be expanded with messages pagination. 
+Later, it will be expanded with messages pagination.
 
 ### Optimized
 - Without chain ranges verification database the verified boundary now 10 seconds ago instead of 120.
@@ -139,7 +154,7 @@ Later, it will be expanded with messages pagination.
 ### Fixed
 
 - diagnostic timeout added to statsD reporting
-- "Cannot read property 'length' of null" error 
+- "Cannot read property 'length' of null" error
 
 ## [0.44.3] - 2021-10-25
 
@@ -527,11 +542,11 @@ Later, it will be expanded with messages pagination.
   In following example we return `dst_transaction` only for messages with `value` greater than zero:
 
   ```graphql
-  query { 
-      messages { 
+  query {
+      messages {
           dst_transaction(timeout: 0, when: { value: { gt: "0" } }) {
-              id 
-          } 
+              id
+          }
           value
           dst
       }
