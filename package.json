@@ -5,25 +5,28 @@
     "main": "index.js",
     "repository": "git@github.com:tonlabs/ton-q-server.git",
     "scripts": {
-        "format": "prettier --write 'src/**/*.ts' 'types/**/*.ts'",
-        "gen": "npm run gen-schema && npm run gen-blockchain",
-        "gen-schema": "node dist/maintanance/gen-graphql/db-schema-generator.js",
-        "gen-blockchain": "graphql-codegen --config src/maintanance/blockchain-codegen.yml",
+        "format": "npm run pretier && npm run eslint-fix",
+        "gen": "npm run gen-schema-no-format && npm run gen-blockchain-no-format && npm run format",
+        "gen-schema": "npm run gen-schema-no-format && npm run format",
+        "gen-blockchain": "npm run gen-blockchain-no-format && npm run format",
         "options-docs": "node dist/maintanance/doc-options/index.js",
         "tsc": "tsc --build --force",
         "test": "jest -i --forceExit",
         "start": "node dist/server/index.js",
         "update indexes": "node dist/maintanance/arango-update/index.js",
         "npm install": "npm install",
+        "pretier": "prettier --write 'src/**/*.ts' 'types/**/*.ts'",
         "eslint": "eslint . --ext .ts",
-        "eslint-fix": "eslint . --ext .ts --fix"
+        "eslint-fix": "eslint . --ext .ts --fix",
+        "gen-schema-no-format": "node dist/maintanance/gen-graphql/db-schema-generator.js",
+        "gen-blockchain-no-format": "graphql-codegen --config src/maintanance/blockchain-codegen.yml"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "husky": {
         "hooks": {
-            "pre-commit": " npm run format && npm run eslint && npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.ts res/type-defs-generated.graphql && npm run format"
+            "pre-commit": "npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.ts res/type-defs-generated.graphql"
         }
     },
     "dependencies": {
