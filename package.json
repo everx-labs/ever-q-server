@@ -1,6 +1,6 @@
 {
     "name": "ton-q-server",
-    "version": "0.50.0",
+    "version": "0.51.0",
     "description": "TON Q Server – realtime queries over TON blockchain.",
     "main": "index.js",
     "repository": "git@github.com:tonlabs/ton-q-server.git",
@@ -23,7 +23,7 @@
     "license": "ISC",
     "husky": {
         "hooks": {
-            "pre-commit": "npm run eslint && npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.ts res/type-defs-generated.graphql && npm run format"
+            "pre-commit": "npm run tsc && npm run gen && npm run tsc && git add src/server/graphql/resolvers-generated.ts res/type-defs-generated.graphql"
         }
     },
     "dependencies": {
