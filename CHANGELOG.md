@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.0] - 2022-04-30
+
+### New
+
 ## [0.50.0] - 2022-04-22
 
 ### New
