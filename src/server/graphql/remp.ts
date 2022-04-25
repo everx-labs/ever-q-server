@@ -1,23 +1,23 @@
 import { AccessArgs } from "../auth"
 import { QRequestContext } from "../request"
-import {
-    KVIterator,
-    KVProvider,
-    kvMockProvider,
-    KVDataWithChangesKeys,
-    kvMockEntry,
-    KVMockEntry,
-} from "../data/keyvalue"
-import { createClient } from "@node-redis/client"
 import { ConfigParam } from "../config-param"
+import {
+    RedisClientConfig,
+    redisClientConfigParams,
+    redisProvider,
+} from "../data/kv-redis"
+import {
+    dataChangesConfigParams,
+    DataChangesKeys,
+    startDataChangesIterator,
+} from "../data/kv-data-changes"
+import { KVProvider } from "../data/kv-provider"
+import { kvMockEntry, KVMockEntry, kvMockProvider } from "../data/kv-mock"
 
 export type RempConfig = {
     enabled: boolean
-    redis: {
-        url: string
-        messageDataKey: string
-        messageChangesKey: string
-    }
+    redis: RedisClientConfig
+    message: DataChangesKeys
 }
 
 enum RempReceiptKind {
@@ -70,27 +70,8 @@ const knownKinds = new Set<RempReceiptKind>([
 
 export const rempConfigParams = {
     enabled: ConfigParam.boolean("remp-enabled", false, "REMP enabled"),
-    redis: {
-        url: ConfigParam.string(
-            "remp-redis-url",
-            "redis://localhost:6379",
-            "URL to REMP redis",
-        ),
-        messageDataKey: ConfigParam.string(
-            "remp-redis-message-data-key",
-            "remp-receipts:{messageId}",
-            "Redis key for message REMP notifications\n" +
-                "This parameter must contain substring `{messageId}`\n" +
-                "that will be replaced with actual message id",
-        ),
-        messageChangesKey: ConfigParam.string(
-            "remp-redis-message-changes-key",
-            "keyspace@0:remp-receipts:{messageId}",
-            "Redis key for message REMP changes channel\n" +
-                "This parameter must contain substring `{messageId}`\n" +
-                "that will be replaced with actual message id",
-        ),
-    },
+    redis: redisClientConfigParams("remp"),
+    message: dataChangesConfigParams("remp", "message"),
 }
 
 export function rempResolvers(config: RempConfig, customProvider?: KVProvider) {
@@ -119,9 +100,9 @@ function rempReceiptsResolver(
             const provider =
                 customProvider ??
                 (await request.ensureShared("remp-redis-provider", async () => {
-                    return redisRempProvider(config)
+                    return redisProvider(config.redis)
                 }))
-            return await KVIterator.startWithDataAndChangesKeys(
+            return await startDataChangesIterator(
                 provider,
                 messageKeys(config, args.messageId),
                 rempJsonToReceipt,
@@ -130,16 +111,10 @@ function rempReceiptsResolver(
     }
 }
 
-function messageKeys(
-    config: RempConfig,
-    messageId: string,
-): KVDataWithChangesKeys {
+function messageKeys(config: RempConfig, messageId: string): DataChangesKeys {
     return {
-        data: config.redis.messageDataKey.replace("{messageId}", messageId),
-        changes: config.redis.messageChangesKey.replace(
-            "{messageId}",
-            messageId,
-        ),
+        dataKey: config.message.dataKey.replace("{messageId}", messageId),
+        changesKey: config.message.changesKey.replace("{messageId}", messageId),
     }
 }
 
@@ -153,41 +128,6 @@ function rempJsonToReceipt(data: unknown): {
             timestamp: json.timestamp,
             messageId: json.message_id,
             json: JSON.stringify(json),
-        },
-    }
-}
-function redisRempProvider(config: RempConfig): KVProvider {
-    const client = createClient({
-        url: config.redis.url,
-    })
-    let connected = false
-    async function ensureConnected() {
-        if (!connected) {
-            await client.connect()
-            connected = true
-        }
-    }
-    return {
-        async get<T>(key: string): Promise<T | null | undefined> {
-            await ensureConnected()
-            const value = await client.get(key)
-            if (value === null || value === undefined) {
-                return value
-            }
-            return JSON.parse(value) as unknown as T
-        },
-        async subscribe<T>(key: string): Promise<AsyncIterator<T>> {
-            await ensureConnected()
-            const subscriber = client.duplicate()
-            await subscriber.connect()
-            const iterator = new KVIterator<T>()
-            await subscriber.subscribe(key, message => {
-                iterator.push(message as unknown as T)
-            })
-            iterator.onClose = async () => {
-                await subscriber.unsubscribe(key)
-            }
-            return iterator
         },
     }
 }
