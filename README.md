@@ -53,11 +53,11 @@ Option                                          ENV                             
 --query-wait-for-period                         Q_QUERY_WAIT_FOR_PERIOD                         1000                                  Collection polling period for wait-for queries
                                                                                                                                       (collection queries with timeout) in ms
 --remp-enabled                                  Q_REMP_ENABLED                                  false                                 REMP enabled
---remp-redis-url                                Q_REMP_REDIS_URL                                redis://localhost:6379                URL to REMP redis
---remp-redis-message-data-key                   Q_REMP_REDIS_MESSAGE_DATA_KEY                   remp-receipts:{messageId}             Redis key for message REMP notifications
+--remp-redis-client-url                         Q_REMP_REDIS_CLIENT_URL                         redis://localhost:6379                URL to remp redis
+--remp-message-data-key                         Q_REMP_MESSAGE_DATA_KEY                         remp-receipts:{messageId}             Key for message data
                                                                                                                                       This parameter must contain substring `{messageId}`
                                                                                                                                       that will be replaced with actual message id
---remp-redis-message-changes-key                Q_REMP_REDIS_MESSAGE_CHANGES_KEY                keyspace@0:remp-receipts:{messageId}  Redis key for message REMP changes channel
+--remp-message-changes-key                      Q_REMP_MESSAGE_CHANGES_KEY                      keyspace@0:remp-receipts:{messageId}  Key for message changes channel
                                                                                                                                       This parameter must contain substring `{messageId}`
                                                                                                                                       that will be replaced with actual message id
 --use-listeners (DEPRECATED)                    Q_USE_LISTENERS                                 true                                  Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)
