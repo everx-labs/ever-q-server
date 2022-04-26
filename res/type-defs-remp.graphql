@@ -7,32 +7,15 @@ enum RempReceiptKind {
     Other
 }
 
+scalar RempReceiptJson
+
 type RempReceipt {
     kind: RempReceiptKind!
     messageId: String!
     timestamp: Float!
-    json: String!
+    json: RempReceiptJson!
 }
 
 extend type Subscription  {
     rempReceipts(messageId: String!): RempReceipt
 }
-
-
-enum RempReceiptKindOther {
-    AcceptedByFullnode
-    AcceptedByQueue
-    Duplicate
-    IgnoredByCollator
-    IgnoredByFullNode
-    IgnoredByQueue
-    IgnoredByShardchain
-    PutIntoQueue
-    RejectedByCollator
-    RejectedByMasterchain
-    RejectedByQueue
-    RejectedByShardchain
-    Timeout
-    Other
-}
-

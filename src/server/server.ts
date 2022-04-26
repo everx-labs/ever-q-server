@@ -368,7 +368,7 @@ export default class TONQServer {
             postRequestsResolvers,
             accessResolvers,
             counterpartiesResolvers(this.data),
-            rempResolvers(this.config.remp),
+            rempResolvers(this.config.remp, this.logs),
             blockchainResolvers,
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({

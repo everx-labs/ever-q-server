@@ -7,25 +7,29 @@ import {
     redisProvider,
 } from "../data/kv-redis"
 import {
-    dataChangesConfigParams,
-    DataChangesKeys,
-    startDataChangesIterator,
-} from "../data/kv-data-changes"
+    listChangesConfigParams,
+    ListKeys,
+    startListChangesIterator,
+} from "../data/kv-list-changes"
 import { KVProvider } from "../data/kv-provider"
-import { kvMockEntry, KVMockEntry, kvMockProvider } from "../data/kv-mock"
+import QLogs from "../logs"
 
 export type RempConfig = {
     enabled: boolean
     redis: RedisClientConfig
-    message: DataChangesKeys
+    message: ListKeys
 }
 
-enum RempReceiptKind {
+export enum RempReceiptKind {
+    RejectedByFullnode = "RejectedByFullnode",
+    SentToValidators = "SentToValidators",
     IncludedIntoBlock = "IncludedIntoBlock",
-    AcceptedByFullnode = "AcceptedByFullnode",
-    Finalized = "Finalized",
-    AcceptedByQueue = "AcceptedByQueue",
     IncludedIntoAcceptedBlock = "IncludedIntoAcceptedBlock",
+    Finalized = "Finalized",
+    Other = "Other",
+
+    AcceptedByFullnode = "AcceptedByFullnode",
+    AcceptedByQueue = "AcceptedByQueue",
     Duplicate = "Duplicate",
     IgnoredByCollator = "IgnoredByCollator",
     IgnoredByFullNode = "IgnoredByFullNode",
@@ -33,23 +37,20 @@ enum RempReceiptKind {
     IgnoredByShardchain = "IgnoredByShardchain",
     PutIntoQueue = "PutIntoQueue",
     RejectedByCollator = "RejectedByCollator",
-    RejectedByFullnode = "RejectedByFullnode",
     RejectedByMasterchain = "RejectedByMasterchain",
     RejectedByQueue = "RejectedByQueue",
     RejectedByShardchain = "RejectedByShardchain",
-    SentToValidators = "SentToValidators",
     Timeout = "Timeout",
-    Other = "Other",
 }
 
-type RempReceipt = {
+export type RempReceipt = {
     kind: RempReceiptKind
     messageId: string
     timestamp: number
     json: string
 }
 
-type RempReceiptJson = {
+export type RempReceiptJson = {
     kind: RempReceiptKind
     timestamp: number
     message_id: string
@@ -71,13 +72,22 @@ const knownKinds = new Set<RempReceiptKind>([
 export const rempConfigParams = {
     enabled: ConfigParam.boolean("remp-enabled", false, "REMP enabled"),
     redis: redisClientConfigParams("remp"),
-    message: dataChangesConfigParams("remp", "message"),
+    message: listChangesConfigParams(
+        "message",
+        "remp",
+        "remp-receipts:{message}",
+        "__keyspace@0__:remp-receipts:{message}",
+    ),
 }
 
-export function rempResolvers(config: RempConfig, customProvider?: KVProvider) {
+export function rempResolvers(
+    config: RempConfig,
+    logs: QLogs,
+    customProvider?: KVProvider,
+) {
     return {
         Subscription: {
-            rempReceipts: rempReceiptsResolver(config, customProvider),
+            rempReceipts: rempReceiptsResolver(config, logs, customProvider),
         },
     }
 }
@@ -85,6 +95,7 @@ export function rempResolvers(config: RempConfig, customProvider?: KVProvider) {
 function rempReceiptsResolver(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     config: RempConfig,
+    logs: QLogs,
     customProvider?: KVProvider,
 ) {
     return {
@@ -100,21 +111,27 @@ function rempReceiptsResolver(
             const provider =
                 customProvider ??
                 (await request.ensureShared("remp-redis-provider", async () => {
-                    return redisProvider(config.redis)
+                    return redisProvider(
+                        config.redis,
+                        logs.create("remp-redis"),
+                    )
                 }))
-            return await startDataChangesIterator(
+            return await startListChangesIterator(
                 provider,
-                messageKeys(config, args.messageId),
+                rempMessageKeys(config, args.messageId),
                 rempJsonToReceipt,
             )
         },
     }
 }
 
-function messageKeys(config: RempConfig, messageId: string): DataChangesKeys {
+export function rempMessageKeys(
+    config: RempConfig,
+    messageId: string,
+): ListKeys {
     return {
-        dataKey: config.message.dataKey.replace("{messageId}", messageId),
-        changesKey: config.message.changesKey.replace("{messageId}", messageId),
+        listKey: config.message.listKey.replace("{message}", messageId),
+        changesKey: config.message.changesKey.replace("{message}", messageId),
     }
 }
 
@@ -130,39 +147,4 @@ function rempJsonToReceipt(data: unknown): {
             json: JSON.stringify(json),
         },
     }
-}
-
-function mockReceipts(
-    config: RempConfig,
-    messageId: string,
-    flow: (RempReceiptKind | number)[],
-): KVMockEntry<RempReceiptJson> {
-    const entries = flow.map(kind => {
-        if (typeof kind === "number") {
-            return kind
-        }
-        const timestamp = Date.now()
-        return {
-            kind,
-            timestamp,
-            message_id: messageId,
-        }
-    })
-    return kvMockEntry(messageKeys(config, messageId), entries)
-}
-
-export function mockRempProvider(config: RempConfig): KVProvider {
-    return kvMockProvider([
-        mockReceipts(config, "1", [
-            RempReceiptKind.AcceptedByFullnode,
-            500,
-            RempReceiptKind.SentToValidators,
-            1000,
-            RempReceiptKind.AcceptedByQueue,
-            1500,
-            RempReceiptKind.IncludedIntoAcceptedBlock,
-            2000,
-            RempReceiptKind.Finalized,
-        ]),
-    ])
 }

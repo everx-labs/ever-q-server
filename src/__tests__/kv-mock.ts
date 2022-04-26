@@ -1,7 +1,7 @@
-import { KVIterator, KVProvider } from "./kv-provider"
-import { DataChangesKeys } from "./kv-data-changes"
+import { ListKeys } from "../server/data/kv-list-changes"
+import { KVIterator, KVProvider } from "../server/data/kv-provider"
 
-export type KVMockEntry<T> = DataChangesKeys & {
+export type KVMockEntry<T> = ListKeys & {
     values: T[]
     ranges: {
         delay: number
@@ -11,7 +11,7 @@ export type KVMockEntry<T> = DataChangesKeys & {
 }
 
 export function kvMockEntry<T>(
-    keys: DataChangesKeys,
+    keys: ListKeys,
     source: (T | number)[],
 ): KVMockEntry<T> {
     const values = []
@@ -46,24 +46,44 @@ export function kvMockEntry<T>(
 }
 
 export function kvMockProvider<T>(entries: KVMockEntry<T>[]): KVProvider {
-    const entriesByDataKey = new Map<string, KVMockEntry<T>>()
+    const entriesByListKey = new Map<string, KVMockEntry<T>>()
     const entriesByChangesKey = new Map<string, KVMockEntry<T>>()
-    const rangesByDataKey = new Map<string, { start: number; end: number }>()
+    const rangesByListKey = new Map<string, { start: number; end: number }>()
     for (const entry of entries) {
-        entriesByDataKey.set(entry.dataKey, entry)
+        entriesByListKey.set(entry.listKey, entry)
         entriesByChangesKey.set(entry.changesKey, entry)
     }
     return {
         async get<GT>(key: string): Promise<GT | null | undefined> {
-            const range = rangesByDataKey.get(key)
+            const range = rangesByListKey.get(key)
             if (!range) {
                 return undefined
             }
-            const entry = entriesByDataKey.get(key)
+            const entry = entriesByListKey.get(key)
             if (!entry) {
                 return undefined
             }
             return entry.values.slice(range.start, range.end) as unknown as GT
+        },
+
+        async list<LT>(
+            key: string,
+            first: number,
+            last: number,
+        ): Promise<LT[] | null | undefined> {
+            const range = rangesByListKey.get(key)
+            if (!range) {
+                return undefined
+            }
+            const entry = entriesByListKey.get(key)
+            if (!entry) {
+                return undefined
+            }
+            const list = entry.values.slice(
+                range.start,
+                range.end,
+            ) as unknown as LT[]
+            return list.slice(first, last === -1 ? undefined : last - 1)
         },
 
         async subscribe<CT>(key: string): Promise<AsyncIterator<CT>> {
@@ -71,19 +91,19 @@ export function kvMockProvider<T>(entries: KVMockEntry<T>[]): KVProvider {
             const iterator = new KVIterator<CT>()
             if (entry) {
                 let step = 0
-                rangesByDataKey.set(entry.dataKey, { start: 0, end: 0 })
+                rangesByListKey.set(entry.listKey, { start: 0, end: 0 })
                 const check = () => {
                     if (step < entry.ranges.length) {
                         const range = entry.ranges[step]
                         setTimeout(() => {
                             iterator.push({} as unknown as CT)
-                            rangesByDataKey.set(entry.dataKey, range)
+                            rangesByListKey.set(entry.listKey, range)
                             step += 1
                             check()
                         }, range.delay)
                     } else {
                         setTimeout(
-                            () => rangesByDataKey.delete(entry.dataKey),
+                            () => rangesByListKey.delete(entry.listKey),
                             100,
                         )
                     }

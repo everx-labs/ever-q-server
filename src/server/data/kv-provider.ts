@@ -1,77 +1,86 @@
 import { $$asyncIterator } from "iterall"
+import { Deferred } from "../utils"
 
 export interface KVProvider {
     get<T>(key: string): Promise<T | null | undefined>
+
+    list<T>(
+        key: string,
+        first: number,
+        last: number,
+    ): Promise<T[] | null | undefined>
 
     subscribe<T>(key: string): Promise<AsyncIterator<T>>
 }
 
 export class KVIterator<T> implements AsyncIterator<T> {
-    pullQueue: ((result: IteratorResult<T>) => void)[]
-    pushQueue: T[]
-    running: boolean
-    onClose: (() => void) | null
-
-    constructor() {
-        this.pullQueue = []
-        this.pushQueue = []
-        this.running = true
-        this.onClose = null
-    }
+    private pullQueue: ((result: IteratorResult<T>) => void)[] = []
+    private pushQueue: T[] = []
+    private running = true
+    private closedWith = new Deferred<IteratorResult<T>>()
+    onClose: (() => void) | null = null
 
     push(value: T) {
-        if (!this.isQueueOverflow()) {
-            this.internalPush(value)
+        if (!this.running) {
+            return
         }
-    }
-
-    isQueueOverflow(): boolean {
-        return this.getQueueSize() >= 10
-    }
-
-    getQueueSize(): number {
-        return this.pushQueue.length + this.pullQueue.length
-    }
-
-    internalPush(item: T) {
         if (this.pullQueue.length !== 0) {
-            this.pullQueue.shift()?.(
-                !this.running
-                    ? {
-                          value: item,
-                          done: true,
-                      }
-                    : {
-                          value: item,
-                          done: false,
-                      },
-            )
+            this.pullQueue.shift()?.({
+                value,
+                done: false,
+            })
         } else {
-            this.pushQueue.push(item)
+            this.pushQueue.push(value)
         }
     }
 
-    async next(): Promise<IteratorResult<T>> {
-        return new Promise(resolve => {
+    next(): Promise<IteratorResult<T>> {
+        if (!this.running) {
+            return this.closedWith.promise
+        }
+        const nextValue = new Promise<IteratorResult<T>>((resolve, reject) => {
             const dequeued = this.pushQueue.shift()
             if (dequeued !== undefined) {
-                const item: IteratorResult<T> = this.running
-                    ? {
-                          value: dequeued,
-                          done: false,
-                      }
-                    : {
-                          value: undefined,
-                          done: true,
-                      }
-                resolve(item)
+                if (this.running) {
+                    resolve({
+                        value: dequeued,
+                        done: false,
+                    })
+                } else {
+                    this.closedWith.promise.then(resolve, reject)
+                }
             } else {
                 this.pullQueue.push(resolve)
             }
         })
+        return Promise.race([this.closedWith.promise, nextValue])
+    }
+
+    close(resolved: boolean, error?: Error) {
+        if (this.running) {
+            this.running = false
+            if (resolved) {
+                this.closedWith.resolve({ done: true, value: undefined })
+            } else {
+                this.closedWith.reject(error)
+            }
+            if (this.onClose) {
+                this.onClose()
+            }
+        }
     }
 
     async return(): Promise<IteratorResult<T>> {
+        this.close(true)
+        await this.emptyQueue()
+        return {
+            value: undefined,
+            done: true,
+        }
+    }
+
+    async throw(error?: Error): Promise<IteratorResult<T>> {
+        this.close(false, error)
         if (this.onClose) {
             this.onClose()
         }
@@ -82,21 +91,13 @@ export class KVIterator<T> implements AsyncIterator<T> {
         }
     }
 
-    async throw(error?: Error): Promise<IteratorResult<T>> {
-        if (this.onClose) {
-            this.onClose()
-        }
-        await this.emptyQueue()
-        return Promise.reject(error)
-    }
-
     [$$asyncIterator]() {
         return this
     }
 
     async emptyQueue() {
         if (this.running) {
-            this.running = false
+            this.close(true)
             this.pullQueue.forEach(resolve =>
                 resolve({
                     value: undefined,
@@ -112,6 +113,15 @@ export class KVIterator<T> implements AsyncIterator<T> {
 export const emptyKVProvider: KVProvider = {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async get<T>(_key: string): Promise<T | null | undefined> {
+        return undefined
+    },
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async list<T>(
+        _key: string,
+        _first: number,
+        _last: number,
+    ): Promise<T[] | null | undefined> {
         return undefined
     },
 
