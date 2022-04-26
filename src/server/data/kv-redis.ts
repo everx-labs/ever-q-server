@@ -74,7 +74,6 @@ export function redisProvider(
             await subscriber.connect()
             const iterator = new KVIterator<T>()
             const onError = () => {
-                subscriber.off("error", onError)
                 void iterator.throw(
                     new Error(
                         "Subscription was terminated due to internal server error",
@@ -86,6 +85,7 @@ export function redisProvider(
             })
             subscriber.on("error", onError)
             iterator.onClose = async () => {
+                subscriber.off("error", onError)
                 await subscriber.unsubscribe(key)
             }
             return iterator

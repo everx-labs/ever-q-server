@@ -38,17 +38,12 @@ export class KVIterator<T> implements AsyncIterator<T> {
         if (!this.running) {
             return this.closedWith.promise
         }
-        const nextValue = new Promise<IteratorResult<T>>((resolve, reject) => {
-            const dequeued = this.pushQueue.shift()
-            if (dequeued !== undefined) {
-                if (this.running) {
-                    resolve({
-                        value: dequeued,
-                        done: false,
-                    })
-                } else {
-                    this.closedWith.promise.then(resolve, reject)
-                }
+        const nextValue = new Promise<IteratorResult<T>>(resolve => {
+            if (this.pushQueue.length > 0) {
+                resolve({
+                    value: this.pushQueue.shift() as T,
+                    done: false,
+                })
             } else {
                 this.pullQueue.push(resolve)
             }
@@ -81,9 +76,6 @@ export class KVIterator<T> implements AsyncIterator<T> {
 
     async throw(error?: Error): Promise<IteratorResult<T>> {
         this.close(false, error)
-        if (this.onClose) {
-            this.onClose()
-        }
         await this.emptyQueue()
         return {
             value: undefined,
