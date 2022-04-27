@@ -69,6 +69,7 @@ import WebSocket from "ws"
 import { MemStats } from "./mem-stat"
 import { QRequestContext, QRequestServices, RequestEvent } from "./request"
 import { overrideAccountBoc } from "./graphql/account-boc"
+import { rempResolvers } from "./graphql/remp"
 
 type QServerOptions = {
     config: QConfig
@@ -367,6 +368,7 @@ export default class TONQServer {
             postRequestsResolvers,
             accessResolvers,
             counterpartiesResolvers(this.data),
+            rempResolvers(this.config.remp, this.logs),
             blockchainResolvers,
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({
@@ -382,6 +384,7 @@ export default class TONQServer {
                 "type-defs-blockchain/transaction.graphql",
                 "type-defs-generated.graphql",
                 "type-defs-counterparties.graphql",
+                "type-defs-remp.graphql",
                 "type-defs-custom.graphql",
             ],
             supportSubscriptions: true,

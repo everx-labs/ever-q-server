@@ -14,6 +14,7 @@ type Info = {
     latency?: number
     endpoints?: string[]
     chainOrderBoundary?: string
+    rempEnabled?: boolean
 }
 
 async function info(
@@ -60,6 +61,7 @@ async function info(
         result.latency =
             data.debugLatency === 0 ? latency.latency : data.debugLatency
     }
+    result.rempEnabled = context.services.config.remp.enabled
     return result
 }
 

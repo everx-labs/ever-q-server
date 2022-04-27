@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- `Subscription.remReceipts` subscription.
+- `Query.info.rempEnabled` field.
+- `remp` config section.
+
 ## [0.50.0] - 2022-04-22
 
 ### New

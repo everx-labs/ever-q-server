@@ -5,18 +5,21 @@
     "main": "index.js",
     "repository": "git@github.com:tonlabs/ton-q-server.git",
     "scripts": {
-        "format": "prettier --write 'src/**/*.ts' 'types/**/*.ts'",
-        "gen": "npm run gen-schema && npm run gen-blockchain",
-        "gen-schema": "node dist/maintanance/gen-graphql/db-schema-generator.js",
-        "gen-blockchain": "graphql-codegen --config src/maintanance/blockchain-codegen.yml",
+        "format": "npm run pretier && npm run eslint-fix",
+        "gen": "npm run gen-schema-no-format && npm run gen-blockchain-no-format && npm run format",
+        "gen-schema": "npm run gen-schema-no-format && npm run format",
+        "gen-blockchain": "npm run gen-blockchain-no-format && npm run format",
         "options-docs": "node dist/maintanance/doc-options/index.js",
         "tsc": "tsc --build --force",
         "test": "jest -i --forceExit",
         "start": "node dist/server/index.js",
         "update indexes": "node dist/maintanance/arango-update/index.js",
         "npm install": "npm install",
+        "pretier": "prettier --write 'src/**/*.ts' 'types/**/*.ts'",
         "eslint": "eslint . --ext .ts",
-        "eslint-fix": "eslint . --ext .ts --fix"
+        "eslint-fix": "eslint . --ext .ts --fix",
+        "gen-schema-no-format": "node dist/maintanance/gen-graphql/db-schema-generator.js",
+        "gen-blockchain-no-format": "graphql-codegen --config src/maintanance/blockchain-codegen.yml"
     },
     "keywords": [],
     "author": "",
@@ -56,7 +59,8 @@
         "node-statsd": "0.1.1",
         "opentracing": "0.14.4",
         "subscriptions-transport-ws": "0.9.17",
-        "ws": "7.4.6"
+        "ws": "7.4.6",
+        "@node-redis/client": "^1.0.6"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.19.0",

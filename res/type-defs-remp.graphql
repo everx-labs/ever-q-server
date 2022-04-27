@@ -1,0 +1,21 @@
+enum RempReceiptKind {
+    RejectedByFullnode
+    SentToValidators
+    IncludedIntoBlock
+    IncludedIntoAcceptedBlock
+    Finalized
+    Other
+}
+
+scalar RempReceiptJson
+
+type RempReceipt {
+    kind: RempReceiptKind!
+    messageId: String!
+    timestamp: Float!
+    json: RempReceiptJson!
+}
+
+extend type Subscription  {
+    rempReceipts(messageId: String!): RempReceipt
+}
