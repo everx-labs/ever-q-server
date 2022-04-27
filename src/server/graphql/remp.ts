@@ -75,8 +75,8 @@ export const rempConfigParams = {
     message: listChangesConfigParams(
         "message",
         "remp",
-        "remp-receipts:{messageId}",
-        "__keyspace@0__:remp-receipts:{messageId}",
+        "remp-receipts:{message}",
+        "__keyspace@0__:remp-receipts:{message}",
     ),
 }
 
@@ -134,8 +134,8 @@ export function rempMessageKeys(
     messageId: string,
 ): ListKeys {
     return {
-        listKey: config.message.listKey.replace("{messageId}", messageId),
-        changesKey: config.message.changesKey.replace("{messageId}", messageId),
+        listKey: config.message.listKey.replace("{message}", messageId),
+        changesKey: config.message.changesKey.replace("{message}", messageId),
     }
 }
 
