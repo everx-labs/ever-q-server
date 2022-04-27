@@ -120,6 +120,10 @@ function rempReceiptsResolver(
                 provider,
                 rempMessageKeys(config, args.messageId),
                 rempJsonToReceipt,
+                {
+                    beforeFirst: 5_000,
+                    afterFirst: 600_000,
+                },
             )
         },
     }

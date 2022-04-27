@@ -35,9 +35,17 @@ export async function startListChangesIterator<T>(
     provider: KVProvider,
     keys: ListKeys,
     mapItem: (item: unknown) => T,
+    timeout: {
+        beforeFirst: number
+        afterFirst: number
+    },
 ): Promise<KVIterator<T>> {
     const iterator = new KVIterator<T>()
     let processed = 0
+    let timeoutHandle = setTimeout(
+        () => iterator.throw(new Error("Timeout")),
+        timeout.beforeFirst,
+    )
 
     async function pushNext() {
         const items = await provider.list<T[]>(
@@ -46,10 +54,15 @@ export async function startListChangesIterator<T>(
             -(processed + 1),
         )
         if (items !== null && items !== undefined && items.length > 0) {
+            clearTimeout(timeoutHandle)
             processed += items.length
             for (let i = items.length - 1; i >= 0; i -= 1) {
                 iterator.push(mapItem(items[i]))
             }
+            timeoutHandle = setTimeout(
+                () => iterator.throw(new Error("Timeout")),
+                timeout.afterFirst,
+            )
         }
     }
 
@@ -61,6 +74,7 @@ export async function startListChangesIterator<T>(
                 if (changesIterator.return) {
                     await changesIterator.return()
                 }
+                clearTimeout(timeoutHandle)
             }
             let done = false
             while (!done) {
