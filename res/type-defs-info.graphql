@@ -22,6 +22,8 @@ type Info {
     (work in progress to make them fully impossible when the feature goes into production).
     """
     chainOrderBoundary: String
+    "Shows whether rempReceipts subscription is enabled"
+    rempEnabled: Boolean
 }
 
 type Query {
