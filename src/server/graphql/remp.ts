@@ -98,6 +98,7 @@ function rempReceiptsResolver(
     logs: QLogs,
     customProvider?: KVProvider,
 ) {
+    const log = logs.create("remp-redis")
     return {
         subscribe: async (
             _: unknown,
@@ -111,10 +112,7 @@ function rempReceiptsResolver(
             const provider =
                 customProvider ??
                 (await request.ensureShared("remp-redis-provider", async () => {
-                    return redisProvider(
-                        config.redis,
-                        logs.create("remp-redis"),
-                    )
+                    return redisProvider(config.redis, log)
                 }))
             return await startListChangesIterator(
                 provider,

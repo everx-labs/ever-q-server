@@ -66,9 +66,9 @@ export async function startListChangesIterator<T>(
         }
     }
 
-    await pushNext()
     void (async () => {
         try {
+            await pushNext()
             const changesIterator = await provider.subscribe(keys.changesKey)
             iterator.onClose = async () => {
                 if (changesIterator.return) {
@@ -84,7 +84,9 @@ export async function startListChangesIterator<T>(
                 }
             }
         } catch (error) {
-            void iterator.throw(error).then(() => {})
+            void iterator
+                .throw(new Error("Internal server error"))
+                .then(() => {})
         }
     })().then(() => {})
 

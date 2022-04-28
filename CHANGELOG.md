@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.1] - 2022-04-30
+
+### Fixed
+
+- `rempReceipts` returns internal server error when redis is inaccessible
+- `rempReceipts` subscription terminated q-server if redis disconnected unexpectedly
+
 ## [0.51.0] - 2022-04-30
 
 ### New

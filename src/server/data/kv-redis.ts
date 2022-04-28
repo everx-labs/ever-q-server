@@ -36,14 +36,13 @@ export function redisProvider(
         const client = createClient({
             url: config.url,
         })
-        client.on("error", async error => {
+        await client.connect()
+        client.on("error", error => {
             if (sharedClient !== null) {
                 log.error(error)
                 sharedClient = null
-                await client.disconnect()
             }
         })
-        await client.connect()
         sharedClient = client
         return client
     }
@@ -62,33 +61,49 @@ export function redisProvider(
             first: number,
             last: number,
         ): Promise<T[] | null | undefined> {
-            const values = await (await ensureClient()).lRange(key, first, last)
-            if (values === null || values === undefined) {
-                return values
+            try {
+                const values = await (
+                    await ensureClient()
+                ).lRange(key, first, last)
+                if (values === null || values === undefined) {
+                    return values
+                }
+                return values.map(x => JSON.parse(x) as unknown as T)
+            } catch (error) {
+                log.error("FAILED", `Failed to fetch list "${key}"`, error)
+                throw error
             }
-            return values.map(x => JSON.parse(x) as unknown as T)
         },
 
         async subscribe<T>(key: string): Promise<AsyncIterator<T>> {
-            const subscriber = (await ensureClient()).duplicate()
-            await subscriber.connect()
-            const iterator = new KVIterator<T>()
-            const onError = () => {
-                void iterator.throw(
-                    new Error(
-                        "Subscription was terminated due to internal server error",
-                    ),
-                )
+            try {
+                const subscriber = (await ensureClient()).duplicate()
+                await subscriber.connect()
+                const iterator = new KVIterator<T>()
+                let iteratorThrown = false
+                const onError = () => {
+                    if (iteratorThrown) {
+                        return
+                    }
+                    iteratorThrown = true
+                    void iterator.throw(
+                        new Error(
+                            "Subscription was terminated due to internal server error",
+                        ),
+                    )
+                }
+                await subscriber.subscribe(key, (message: unknown) => {
+                    iterator.push(message as T)
+                })
+                subscriber.on("error", onError)
+                iterator.onClose = async () => {
+                    await subscriber.unsubscribe(key)
+                }
+                return iterator
+            } catch (error) {
+                log.error("FAILED", `Failed to subscribe "${key}"`, error)
+                throw error
             }
-            await subscriber.subscribe(key, (message: unknown) => {
-                iterator.push(message as T)
-            })
-            subscriber.on("error", onError)
-            iterator.onClose = async () => {
-                subscriber.off("error", onError)
-                await subscriber.unsubscribe(key)
-            }
-            return iterator
         },
     }
 }
