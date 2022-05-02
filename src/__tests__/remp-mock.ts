@@ -41,3 +41,5 @@ export function mockRempProvider(config: RempConfig): KVProvider {
         ]),
     ])
 }
+
+test("There is no tests in this file", () => {})

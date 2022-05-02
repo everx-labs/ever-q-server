@@ -116,3 +116,5 @@ export function kvMockProvider<T>(entries: KVMockEntry<T>[]): KVProvider {
         },
     }
 }
+
+test("There is no tests in this file", () => {})
