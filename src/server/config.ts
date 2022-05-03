@@ -18,6 +18,7 @@ import { URL } from "url"
 import { readFileSync } from "fs"
 import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
 import { QError } from "./utils"
+import { RempConfig, rempConfigParams } from "./graphql/remp"
 
 export type QConfig = {
     config: string
@@ -50,6 +51,7 @@ export type QConfig = {
         slowQueries: SlowQueriesMode
         waitForPeriod: number
     }
+    remp: RempConfig
     useListeners?: boolean
     subscriptionsMode: SubscriptionsMode
     blockchain: QBlockchainDataConfig
@@ -236,6 +238,7 @@ export const configParams = {
                 "(collection queries with timeout) in ms",
         ),
     },
+    remp: rempConfigParams,
     useListeners: ConfigParam.boolean(
         "use-listeners",
         true,
