@@ -363,13 +363,23 @@ export class QDataCollection {
                 )
                 const asyncIterator = new QAsyncIterator(
                     pubsub.asyncIterator([key]),
-                    async next => {
-                        if (next == "STOP") {
+                    async (next: any) => {
+                        if (
+                            next == "STOP" ||
+                            typeof next !== "object" ||
+                            Array.isArray(next) ||
+                            next === null
+                        ) {
+                            this.log.error(
+                                "SUBSCRIPTIONS_ERROR_NEXT",
+                                JSON.stringify(next),
+                            )
                             await terminate()
                         }
+                        next._key = next.id
                         await QJoinQuery.fetchJoinedRecords(
                             this,
-                            [next as Record<string, unknown>],
+                            [next],
                             fieldSelection.selectionSet,
                             accessRights,
                             40000,
