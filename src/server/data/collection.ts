@@ -309,7 +309,7 @@ export class QDataCollection {
                 context: QRequestContext,
                 info: GraphQLResolveInfo,
             ) => {
-                await context.requireGrantedAccess(args)
+                const accessRights = await context.requireGrantedAccess(args)
                 await this.statSubscription.increment()
 
                 const pubsubEvents = await context.ensureShared(
@@ -352,12 +352,30 @@ export class QDataCollection {
                 }, context.services.config.subscriptions.kafkaOptions.keepAliveInterval)
 
                 this.subscriptionCount += 1
+                const fieldSelection: FieldNode =
+                    (info.operation.selectionSet.selections.find(
+                        x => x.kind === "Field" && x.name.value === this.name,
+                    ) ?? info.operation.selectionSet.selections[0]) as FieldNode
+                const parentSpan = QTraceSpan.create(
+                    context.services.tracer,
+                    "subscription",
+                    context.parentSpan,
+                )
                 const asyncIterator = new QAsyncIterator(
                     pubsub.asyncIterator([key]),
                     async next => {
                         if (next == "STOP") {
                             await terminate()
                         }
+                        await QJoinQuery.fetchJoinedRecords(
+                            this,
+                            [next as Record<string, unknown>],
+                            fieldSelection.selectionSet,
+                            accessRights,
+                            40000,
+                            context,
+                            parentSpan,
+                        )
                     },
                     () => {
                         clearInterval(timerId)
