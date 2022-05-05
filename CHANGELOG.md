@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.1] - 2022-05-05
+
+### Fixed
+
+- joins in subscriptions (e.g. `in_message` and `out_messages` for transactions) for external subscriptions mode
+
 ## [0.51.0] - 2022-05-03
 
 ### New
