@@ -53,6 +53,7 @@ export type QDataOptions = {
     stats: IStats
     subscriptionsMode: SubscriptionsMode
     isTests: boolean
+    ignoreMessagesForLatency: boolean
 }
 
 function collectProviders(

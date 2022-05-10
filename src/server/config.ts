@@ -57,6 +57,7 @@ export type QConfig = {
     blockchain: QBlockchainDataConfig
     counterparties: string[]
     chainRangesVerification: string[]
+    ignoreMessagesForLatency: boolean
 
     slowQueriesBlockchain?: QBlockchainDataConfig
 
@@ -244,6 +245,11 @@ export const configParams = {
         true,
         "Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)",
         true,
+    ),
+    ignoreMessagesForLatency: ConfigParam.boolean(
+        "ignore-messages-for-latency",
+        false,
+        "Exclude messages from total latency (for networks without service messages)",
     ),
     subscriptionsMode: ConfigParam.string(
         "subscriptions-mode",
