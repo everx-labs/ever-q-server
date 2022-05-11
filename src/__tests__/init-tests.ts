@@ -257,6 +257,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         stats: QStats.create("", [], 0),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
+        ignoreMessagesForLatency: false,
     })
 }
 
@@ -341,6 +342,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         stats: QStats.create("", [], 0),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
+        ignoreMessagesForLatency: false,
     })
 }
 

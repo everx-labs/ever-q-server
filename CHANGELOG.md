@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.2] - 2022-05-10
+
+### New
+
+- configuration option `ignore-messages-for-latency` to exclude messages latency from total latency for networks without service messages
+
 ## [0.51.1] - 2022-05-05
 
 ### Fixed
