@@ -81,6 +81,7 @@ beforeAll(async () => {
         stats: QStats.create("", [], 0),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
+        ignoreMessagesForLatency: false,
     })
 
     server = new TONQServer({

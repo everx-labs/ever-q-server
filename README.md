@@ -61,6 +61,7 @@ Option                                          ENV                             
                                                                                                                                         This parameter must contain substring `{message}`
                                                                                                                                         that will be replaced with actual message id
 --use-listeners (DEPRECATED)                    Q_USE_LISTENERS                                 true                                    Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)
+--ignore-messages-for-latency                   Q_IGNORE_MESSAGES_FOR_LATENCY                   false                                   Exclude messages from total latency (for networks without service messages)
 --subscriptions-mode                            Q_SUBSCRIPTIONS_MODE                            arango                                  Subscriptions mode:
                                                                                                                                         `disabled` - disable subscriptions
                                                                                                                                         `arango` - subscribe to ArangoDB WAL for changes

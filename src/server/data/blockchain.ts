@@ -124,6 +124,7 @@ export default class QBlockchainData extends QData {
     zerostates: QDataCollection
     counterparties: QDataCollection
 
+    ignoreMessagesForLatency: boolean
     latency: Latency
     debugLatency: number
 
@@ -131,6 +132,7 @@ export default class QBlockchainData extends QData {
 
     constructor(options: QDataOptions) {
         super(options)
+        this.ignoreMessagesForLatency = options.ignoreMessagesForLatency
         const fast = options.providers.blockchain
         const slow = options.slowQueriesProviders
         const add = (
@@ -256,7 +258,7 @@ export default class QBlockchainData extends QData {
         )
         this.latency.latency = Math.max(
             blocks.latency,
-            messages.latency,
+            this.ignoreMessagesForLatency ? 0 : messages.latency,
             transactions.latency,
         )
         this.latency.lastBlockTime = blocks.maxTime
