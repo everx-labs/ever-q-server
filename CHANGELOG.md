@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.52.0] - 2022-06-03
+
+### New
+
+- `allow_latest_inconsistent_data` option in paginated `blockchain` queries:
+  > By default there a delay of realtime data to ensure impossibility of data inserts before latest accessible cursor. It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+
+### Fixed
+
+- `blockchain.master_seq_no_range` behavior for edge cases (when boundaries are close to first and/or latests blocks)
+
+### Improved
+
+- more performant query for `blockchain.master_seq_no_range.end`
+
 ## [0.51.2] - 2022-05-10
 
 ### New
