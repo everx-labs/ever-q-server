@@ -1197,6 +1197,18 @@ function createResolvers(data: QBlockchainData) {
                 return resolveBigUInt(2, parent.fees, args)
             },
         },
+        BlockMaster: {
+            max_shard_gen_utime_string(parent: {
+                max_shard_gen_utime: number
+            }) {
+                return unixSecondsToString(parent.max_shard_gen_utime)
+            },
+            min_shard_gen_utime_string(parent: {
+                min_shard_gen_utime: number
+            }) {
+                return unixSecondsToString(parent.min_shard_gen_utime)
+            },
+        },
         ZerostateMaster: {
             global_balance(
                 parent: { global_balance: string },

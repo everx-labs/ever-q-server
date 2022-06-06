@@ -237,7 +237,7 @@ function main(schemaDef: TypeDef): {
             DESC
         }
 
-        
+
         """
         Specify how to sort results.
         You can sort documents in result set using more than one field.
@@ -437,7 +437,8 @@ function main(schemaDef: TypeDef): {
             type.collection !== undefined ||
             joinFields.length > 0 ||
             bigUIntFields.length > 0 ||
-            enumFields.length > 0
+            enumFields.length > 0 ||
+            stringFormattedFields.length > 0
         if (!customResolverRequired) {
             return
         }
