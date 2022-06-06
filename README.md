@@ -34,21 +34,23 @@ Option                                          ENV                             
 --requests-server                               Q_REQUESTS_SERVER                               kafka:9092                              Requests server url
 --requests-topic                                Q_REQUESTS_TOPIC                                requests                                Requests topic name
 --requests-max-size                             Q_REQUESTS_MAX_SIZE                             16383                                   Maximum request message size in bytes
---subscriptions-kafka-server                    Q_SUBSCRIPTIONS_KAFKA_SERVER                    kafka:9092                              Subscriptions server url (for 'external' subscriptions mode)
---subscriptions-kafka-topic                     Q_SUBSCRIPTIONS_KAFKA_TOPIC                     subscriptions                           Subscriptions topic name (for 'external' subscriptions mode)
+--subscriptions-kafka-server                    Q_SUBSCRIPTIONS_KAFKA_SERVER                    kafka:9092                              Subscriptions server url (for 'external' subscriptions mode)     
+--subscriptions-kafka-topic                     Q_SUBSCRIPTIONS_KAFKA_TOPIC                     subscriptions                           Subscriptions topic name (for 'external' subscriptions mode)     
 --subscriptions-max-filter-size                 Q_SUBSCRIPTIONS_MAX_FILTER_SIZE                 16383                                   Maximum subscription's filter size in bytes (for 'external' subscriptions mode)
 --subscriptions-filters-millis                  Q_SUBSCRIPTIONS_FILTERS_MILLIS                  30000                                   Kafka keep alive period for filters in millisecons (for 'external' subscriptions mode)
 --subscriptions-redis-port                      Q_SUBSCRIPTIONS_REDIS_PORT                      6379                                    Redis port (for 'external' subscriptions mode)
 --subscriptions-redis-host                      Q_SUBSCRIPTIONS_REDIS_HOST                      redis                                   Redis host (for 'external' subscriptions mode)
+--subscriptions-health-redis-channel            Q_SUBSCRIPTIONS_HEALTH_REDIS_CHANNEL                                                    Redis channel with 'subscriptions are alive' messages
+--subscriptions-health-timeout                  Q_SUBSCRIPTIONS_HEALTH_TIMEOUT                  60000                                   Timeout for 'subscriptions are alive' messages
 --filter-or-conversion                          Q_FILTER_OR_CONVERSION                          sub-queries                             Filter OR conversion:
                                                                                                                                         `or-operator` – q-server uses AQL with OR
                                                                                                                                         `sub-queries` – q-server performs parallel queries for each OR operand
-                                                                                                                                         and combines results (this option provides faster execution
+                                                                                                                                         and combines results (this option provides faster execution     
                                                                                                                                          than OR operator in AQL)
---query-max-runtime                             Q_QUERY_MAX_RUNTIME                             600                                     Max allowed execution time for ArangoDb queries in seconds
+--query-max-runtime                             Q_QUERY_MAX_RUNTIME                             600                                     Max allowed execution time for ArangoDb queries in seconds       
 --slow-queries                                  Q_SLOW_QUERIES                                  redirect                                Slow queries handling:
                                                                                                                                         `enable` – process slow queries on the main database
-                                                                                                                                        `redirect` – redirect slow queries to slow-queries database
+                                                                                                                                        `redirect` – redirect slow queries to slow-queries database      
                                                                                                                                         `disable` – fail on slow queries
 --query-wait-for-period                         Q_QUERY_WAIT_FOR_PERIOD                         1000                                    Collection polling period for wait-for queries
                                                                                                                                         (collection queries with timeout) in ms
@@ -60,7 +62,8 @@ Option                                          ENV                             
 --remp-message-changes-key                      Q_REMP_MESSAGE_CHANGES_KEY                      __keyspace@0__:remp-receipts:{message}  Key for message changes channel
                                                                                                                                         This parameter must contain substring `{message}`
                                                                                                                                         that will be replaced with actual message id
---use-listeners (DEPRECATED)                    Q_USE_LISTENERS                                 true                                    Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)
+--use-listeners (DEPRECATED)                    Q_USE_LISTENERS                                 true                                    Use database listeners for subscriptions (deprecated in favor of 
+subscriptions-mode)
 --ignore-messages-for-latency                   Q_IGNORE_MESSAGES_FOR_LATENCY                   false                                   Exclude messages from total latency (for networks without service messages)
 --subscriptions-mode                            Q_SUBSCRIPTIONS_MODE                            arango                                  Subscriptions mode:
                                                                                                                                         `disabled` - disable subscriptions
@@ -81,7 +84,7 @@ Option                                          ENV                             
 --chain-ranges-verification                     Q_CHAIN_RANGES_VERIFICATION                                                             Chain ranges verification databases
 --slow-queries-hot-cache                        Q_SLOW_QUERIES_HOT_CACHE                                                                Slow queries hot cache server
 --slow-queries-hot-cache-expiration             Q_SLOW_QUERIES_HOT_CACHE_EXPIRATION             10                                      Slow queries hot cache expiration in seconds
---slow-queries-hot-cache-empty-data-expiration  Q_SLOW_QUERIES_HOT_CACHE_EMPTY_DATA_EXPIRATION  2                                       Slow queries hot cache empty entries expiration in seconds
+--slow-queries-hot-cache-empty-data-expiration  Q_SLOW_QUERIES_HOT_CACHE_EMPTY_DATA_EXPIRATION  2                                       Slow queries hot cache empty entries expiration in seconds       
 --slow-queries-accounts                         Q_SLOW_QUERIES_ACCOUNTS                                                                 Slow queries accounts databases
 --slow-queries-blocks-hot                       Q_SLOW_QUERIES_BLOCKS_HOT                                                               Slow queries blocks hot databases
 --slow-queries-blocks-cache                     Q_SLOW_QUERIES_BLOCKS_CACHE                                                             Slow queries blocks cache server
@@ -105,7 +108,7 @@ Option                                          ENV                             
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)
 --statsd-server                                 Q_STATSD_SERVER                                                                         StatsD server (host:port)
---statsd-tags                                   Q_STATSD_TAGS                                                                           Additional StatsD tags (comma separated name=value pairs)
+--statsd-tags                                   Q_STATSD_TAGS                                                                           Additional StatsD tags (comma separated name=value pairs)        
 --statsd-reset-interval                         Q_STATSD_RESET_INTERVAL                         0                                       Interval between statsd reconnects.
                                                                                                                                         If it is zero – no reconnects.
 --mam-access-keys                               Q_MAM_ACCESS_KEYS                                                                       Access keys used to authorize mam endpoint access

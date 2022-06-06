@@ -44,6 +44,8 @@ export type QConfig = {
             port: number
             host: string
         }
+        healthRedisChannel: string
+        healthTimeout: number
     }
     queries: {
         filter: FilterConfig
@@ -205,6 +207,16 @@ export const configParams = {
                 "Redis host (for 'external' subscriptions mode)",
             ),
         },
+        healthRedisChannel: ConfigParam.string(
+            "subscriptions-health-redis-channel",
+            "",
+            "Redis channel with 'subscriptions are alive' messages",
+        ),
+        healthTimeout: ConfigParam.integer(
+            "subscriptions-health-timeout",
+            60000,
+            "Timeout for 'subscriptions are alive' messages",
+        ),
     },
 
     queries: {
