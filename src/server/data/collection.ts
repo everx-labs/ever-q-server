@@ -17,7 +17,7 @@
 import { Tracer } from "opentracing"
 
 import md5 from "md5"
-import { RedisPubSub } from "graphql-redis-subscriptions"
+import { SubscriptionsRedis } from "./subcriptions-redis"
 import postSubscription from "../graphql/post-subscription"
 
 import {
@@ -312,30 +312,17 @@ export class QDataCollection {
                 const accessRights = await context.requireGrantedAccess(args)
                 await this.statSubscription.increment()
 
-                const pubsubEvents = await context.ensureShared(
-                    "subscr-pubsub-events",
-                    async () => new EventEmitter(),
+                const redis = await context.ensureShared(
+                    "subscr-redis",
+                    async () =>
+                        new SubscriptionsRedis(
+                            context.services.config.subscriptions,
+                            context.services.logs,
+                        ),
                 )
-                const pubsub = await context.ensureShared(
-                    "subscr-pubsub",
-                    async () => {
-                        const retryStrategy = (times: number): number => {
-                            // > 1800 ms of downtime (50+100+150+200+250+300+350+400)
-                            if (times > 8) {
-                                pubsubEvents.emit("connection-error")
-                            }
-                            return Math.min(times * 50, 2000)
-                        }
-                        return new RedisPubSub({
-                            connection: {
-                                ...context.services.config.subscriptions
-                                    .redisOptions,
-                                maxRetriesPerRequest: null,
-                                retryStrategy,
-                            },
-                        })
-                    },
-                )
+                if (!redis.healthy) {
+                    throw new Error("Subscription internal error")
+                }
 
                 const value = JSON.stringify(args.filter || {})
                 const key = info.fieldName + md5(value)
@@ -362,7 +349,7 @@ export class QDataCollection {
                     context.parentSpan,
                 )
                 const asyncIterator = new QAsyncIterator(
-                    pubsub.asyncIterator([key]),
+                    redis.pubsub.asyncIterator([key]),
                     async (next: any) => {
                         if (
                             next == "STOP" ||
@@ -393,15 +380,18 @@ export class QDataCollection {
                             0,
                             this.subscriptionCount - 1,
                         )
-                        pubsubEvents.off("connection-error", terminate)
+                        redis.events.off("error", terminate)
                     },
                 )
-                pubsubEvents.on("connection-error", terminate)
+                redis.events.on("error", terminate)
+                if (!redis.healthy) {
+                    await terminate()
+                }
                 return asyncIterator
 
                 function terminate() {
                     return asyncIterator.throw(
-                        new Error("Subscription was terminated"),
+                        new Error("Subscription internal error"),
                     )
                 }
             },

@@ -6,10 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- `allow_latest_inconsistent_data` option in paginated `blockchain` queries:
-  > By default there a delay of realtime data to ensure impossibility of data inserts before latest accessible cursor. It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
 - master config `p30`, `p40`, `p42` fields types
 - `prev_code_hash` account field
+- `allow_latest_inconsistent_data` option in paginated `blockchain` queries:
+  > By default there a delay of realtime data to ensure impossibility of data inserts before latest accessible cursor. It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+- two config options for reading external subscriptions health messages from Redis channel
+    - `subscriptions-health-redis-channel`
+    - `subscriptions-health-timeout`
 
 ### Fixed
 
