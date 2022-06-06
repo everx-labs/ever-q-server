@@ -18,11 +18,34 @@ import {
     resolve_message,
     resolve_block_by_seq_no,
 } from "./fetchers"
+import { isDefined } from "./helpers"
 
-function parseMasterSeqNo(chain_order: string) {
-    const length = parseInt(chain_order[0], 16) + 1
-    return parseInt(chain_order.slice(1, length + 1), 16)
-}
+// UUID is a hack to bypass QDataCombiner deduplication
+const MASTER_SEQ_NO_RANGE_QUERY = `
+    RETURN {
+        _key: UUID(),
+        first: @time_start ? (
+            FOR b IN blocks
+            FILTER b.workchain_id == -1
+            SORT b.gen_utime ASC
+            LIMIT 1
+            RETURN b.seq_no
+        )[0] : null,
+        start: @time_start ? (
+            FOR b IN blocks
+            FILTER b.workchain_id == -1 && b.gen_utime >= @time_start
+            SORT b.gen_utime ASC
+            LIMIT 1
+            RETURN b.seq_no
+        )[0] : null,
+        end: @time_end ? (
+            FOR b IN blocks
+            FILTER b.master.min_shard_gen_utime != null && b.master.min_shard_gen_utime >= @time_end
+            SORT b.master.min_shard_gen_utime ASC
+            LIMIT 1
+            RETURN b.seq_no
+        )[0] : null
+    }`.replace(/\s+/g, " ")
 
 async function resolve_maser_seq_no_range(
     args: BlockchainQueryMaster_Seq_No_RangeArgs,
@@ -35,97 +58,100 @@ async function resolve_maser_seq_no_range(
         )
     }
 
-    // For the start we are:
-    // - searching the closest master block at or before time_start - all later blocks will have bigger chain_order
-    // - searching the minimum chain_order as a backup plan
-    // For the end we are:
-    // - trying to reduce amount of blocks to process via end_query_limiter
-    // - getting the max chain_order for a blocks at or before time_end
-    const text = `
-        // ArangoDB most likely will execute all of the queries, but we will give it a chance to optimize
-        LET end_query_limiter = @time_end
-            ? /* min_gen_utime_for_range_ending_after_time_end */ (
-                FOR b IN blocks
-                FILTER b.workchain_id == -1 && b.gen_utime > @time_end
-                SORT b.gen_utime ASC
-                LIMIT 1
-                RETURN MIN(b.master.shard_hashes[*].descr.gen_utime)
-            )[0]
-            : null
-
-        LET end_query_limiter2 = @time_end && (end_query_limiter > @time_end || end_query_limiter == null)
-            ? /* min_gen_utime_for_range_ending_right_before_time_end */ (
-                FOR b IN blocks
-                FILTER b.workchain_id == -1 && b.gen_utime <= @time_end
-                SORT b.gen_utime DESC
-                LIMIT 1
-                RETURN MIN(b.master.shard_hashes[*].descr.gen_utime)
-            )[0]
-            : end_query_limiter
-
-        LET end_query_limiter3 = end_query_limiter2 || 1
-
-        RETURN {
-            _key: UUID(),
-            first: @time_start ? (FOR b IN blocks SORT b.chain_order ASC LIMIT 1 RETURN b.chain_order)[0] : null,
-            start: @time_start ? (FOR b IN blocks FILTER b.workchain_id == -1 && b.gen_utime <= @time_start SORT b.gen_utime DESC LIMIT 1 RETURN b.chain_order)[0] : null,
-            end: @time_end ? MAX(FOR b IN blocks FILTER b.gen_utime >= end_query_limiter3 && b.gen_utime <= @time_end SORT b.gen_utime DESC RETURN b.chain_order) : null
-        }
-    ` // UUID is a hack to bypass QDataCombiner deduplication
-    const vars: Record<string, unknown> = {
-        time_start: args.time_start ?? null,
-        time_end: args.time_end ?? null,
-    }
     const result = (await context.services.data.query(
         required(context.services.data.blocks.provider),
         {
-            text,
-            vars,
+            text: MASTER_SEQ_NO_RANGE_QUERY,
+            vars: {
+                time_start: args.time_start ?? null,
+                time_end: args.time_end ?? null,
+            },
             orderBy: [],
             request: context,
             traceSpan,
         },
-    )) as { first: string | null; start: string | null; end: string | null }[]
+    )) as {
+        first: number | null
+        start: number | null
+        end: number | null
+    }[]
 
-    let first: string | null = null
-    let start: string | null = null
-    let end: string | null = null
+    // Aggregate data from multiple DB
+    // min first, min start, min end
+    let first: number | null = null
+    let start: number | null = null
+    let end: number | null = null
     for (const r of result) {
         if (r.first && (!first || r.first < first)) {
             first = r.first
         }
-        if (r.start && (!start || r.start > start)) {
+        if (r.start && (!start || r.start < start)) {
             start = r.start
         }
-        if (r.end && (!end || r.end > end)) {
+        if (r.end && (!end || r.end < end)) {
             end = r.end
         }
-    }
-    if (!start && first) {
-        start = first
-    }
-    if (args.time_end && !end) {
-        start = null
-    }
-    if (args.time_start && !start) {
-        end = null
     }
 
     // reliable boundary
     const reliable =
         await context.services.data.getReliableChainOrderUpperBoundary(context)
-    if (reliable.boundary == "") {
-        throw QError.create(500, "Could not determine reliable upper boundary")
+    const max_end = parseMasterSeqNo(reliable.boundary)
+
+    // Edge cases:
+    // 1. time_start is ...
+    // 1.1. ...after reliable boundary
+    //      it is ok to return start >= max_end
+    //      (queries just will give empty results for a while)
+    // 1.2  ...greater than the last masterblock gen_utime
+    //      start == null and we need to coerce
+    // 1.3. time_start is less than the first masterblock gen_utime
+    //      start == first and if database hasn't all blocks,
+    //      we can't properly determine start seq_no
+    // 2. time_end ...
+    // 2.1. ...is less than the first available block gen_utime
+    //      end is defined and doesn't violate definition
+    // 2.2. ...is greater than min_shard_gen_utime of the last masterblock
+    //      end is automatically null as expected
+    // 2.3. ...results to end greater than reliable boundary
+    //      it is better to null end to highlight that some data is not accessible yet
+    // 3. start is greater than end
+    //    it is expected to be impossible
+
+    if (isDefined(args.time_start)) {
+        if (start == null) {
+            // 1.2
+            // the difference between max_end and last is expected to be insignificant
+            start = max_end
+        } else if (start == first && first > 1) {
+            // 1.3
+            start = null
+        }
+    }
+
+    if (end && end > max_end) {
+        // 2.3
+        end = null
+    }
+
+    if (start && end && start > end) {
+        // 3
+        throw QError.create(
+            500,
+            "Start is greater than end: " +
+                `[${args.time_start},${args.time_end}) -> [${start},${end}) ` +
+                `with first = ${first} and max_end = ${max_end}`,
+        )
     }
 
     return {
-        start: start ? parseMasterSeqNo(start) : null,
-        end: end
-            ? Math.min(
-                  parseMasterSeqNo(end) + 1,
-                  parseMasterSeqNo(reliable.boundary),
-              )
-            : null,
+        start,
+        end,
+    }
+
+    function parseMasterSeqNo(chain_order: string) {
+        const length = parseInt(chain_order[0], 16) + 1
+        return parseInt(chain_order.slice(1, length + 1), 16)
     }
 }
 
