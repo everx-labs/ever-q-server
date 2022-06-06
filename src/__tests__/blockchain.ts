@@ -135,7 +135,7 @@ test("master_seq_no_range", async () => {
         `,
     })
     expect(queryResult2.data.blockchain.master_seq_no_range).toMatchObject({
-        start: 8898619,
+        start: 8898620,
         end: 8898622,
     })
 
@@ -154,7 +154,7 @@ test("master_seq_no_range", async () => {
     })
     expect(queryResult3.data.blockchain.master_seq_no_range).toMatchObject({
         start: null,
-        end: 8898623,
+        end: null,
     })
 })
 
