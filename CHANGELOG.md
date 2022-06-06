@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+### New
+
+- two config options for reading external subscriptions health messages from Redis channel
+    - `subscriptions-health-redis-channel`
+    - `subscriptions-health-timeout`
+
 ## [0.51.2] - 2022-05-10
 
 ### New

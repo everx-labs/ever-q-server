@@ -17,6 +17,7 @@ export class SubscriptionsRedis {
             // > 1800 ms of downtime (50+100+150+200+250+300+350+400)
             if (times > 8) {
                 this.log.error("ConnectionError")
+                this.healthy = false
                 this.events.emit("error")
                 this.events.emit("connection-error")
             }

@@ -321,7 +321,7 @@ export class QDataCollection {
                         ),
                 )
                 if (!redis.healthy) {
-                    throw new Error("Subscription was terminated")
+                    throw new Error("Subscription internal error")
                 }
 
                 const value = JSON.stringify(args.filter || {})
@@ -391,7 +391,7 @@ export class QDataCollection {
 
                 function terminate() {
                     return asyncIterator.throw(
-                        new Error("Subscription was terminated"),
+                        new Error("Subscription internal error"),
                     )
                 }
             },
