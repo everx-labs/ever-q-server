@@ -383,6 +383,7 @@ export default class QBlockchainData extends QData {
         return latency
     }
 
+    // Spec: reliable_chain_order_upper_boundary = U64String(last_reliable_mc_seq_no + 1)
     async getReliableChainOrderUpperBoundary(
         context: QRequestContext,
     ): Promise<ReliableChainOrderUpperBoundary> {

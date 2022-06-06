@@ -97,7 +97,8 @@ type BlockchainQuery {
     Returns seq_no range such that:
     1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
     2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-    If time_start is null, then start is null. If time_end is null, then end is null.
+    start is null if time_start is null or if DB doesn't have enough blocks history to determine start.
+    end is null if time_end is null or new data could be added before time_end.
     **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
     """
     master_seq_no_range(
@@ -110,6 +111,12 @@ type BlockchainQuery {
     This node could be used for a cursor-based pagination of key blocks.
     """
     key_blocks(
+        """
+        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
+        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
         """
         Filter by master blocks seq_no.
         """
@@ -129,6 +136,12 @@ type BlockchainQuery {
     This node could be used for a cursor-based pagination of blocks.
     """
     blocks(
+        """
+        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
+        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
         """
         The blocks could be filtered by seq_no of corresponding masterchain blocks.
         See also: blockсhain { master_seq_no_range }
@@ -159,6 +172,12 @@ type BlockchainQuery {
     This node could be used for a cursor-based pagination of transactions.
     """
     transactions(
+        """
+        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
+        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: blockchain { master_seq_no_range }
@@ -284,6 +303,12 @@ type BlockchainAccountQuery {
     """
     transactions(
         """
+        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
+        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
+        """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
         """
@@ -310,7 +335,13 @@ type BlockchainAccountQuery {
     **UNSTABLE**
     This node could be used for a cursor-based pagination of account messages.
     """
-    messages(        
+    messages(
+        """
+        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
+        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+     
         """
         The messages could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
