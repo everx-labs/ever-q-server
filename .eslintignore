@@ -8,6 +8,3 @@ coverage/*
 /src/public/
 # custom definition files
 /src/types/
-# generated files
-/src/server/graphql/resolvers-generated.ts
-/src/server/graphql/blockchain/resolvers-types-generated.ts

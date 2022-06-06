@@ -1,11 +1,11 @@
 {
     "name": "ton-q-server",
-    "version": "0.51.2",
+    "version": "0.52.0",
     "description": "TON Q Server – realtime queries over TON blockchain.",
     "main": "index.js",
     "repository": "git@github.com:tonlabs/ton-q-server.git",
     "scripts": {
-        "format": "npm run pretier && npm run eslint-fix",
+        "format": "npm run eslint-fix",
         "gen": "npm run gen-schema-no-format && npm run gen-blockchain-no-format && npm run format",
         "gen-schema": "npm run gen-schema-no-format && npm run format",
         "gen-blockchain": "npm run gen-blockchain-no-format && npm run format",
@@ -15,7 +15,6 @@
         "start": "node dist/server/index.js",
         "update indexes": "node dist/maintanance/arango-update/index.js",
         "npm install": "npm install",
-        "pretier": "prettier --write 'src/**/*.ts' 'types/**/*.ts'",
         "eslint": "eslint . --ext .ts",
         "eslint-fix": "eslint . --ext .ts --fix",
         "gen-schema-no-format": "node dist/maintanance/gen-graphql/db-schema-generator.js",

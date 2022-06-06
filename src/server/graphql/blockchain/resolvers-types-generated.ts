@@ -525,6 +525,7 @@ export type BlockchainAccountQuery = {
 }
 
 export type BlockchainAccountQueryMessagesArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     counterparties?: Maybe<Array<Scalars["String"]>>
     msg_type?: Maybe<Array<BlockchainMessageTypeFilterEnum>>
@@ -536,6 +537,7 @@ export type BlockchainAccountQueryMessagesArgs = {
 }
 
 export type BlockchainAccountQueryTransactionsArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     aborted?: Maybe<Scalars["Boolean"]>
     min_balance_delta?: Maybe<Scalars["String"]>
@@ -889,7 +891,8 @@ export type BlockchainQuery = {
      * Returns seq_no range such that:
      * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
      * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-     * If time_start is null, then start is null. If time_end is null, then end is null.
+     * start is null if time_start is null or if DB doesn't have enough blocks history to determine start.
+     * end is null if time_end is null or new data could be added before time_end.
      * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
      */
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>
@@ -953,6 +956,7 @@ export type BlockchainQueryMaster_Seq_No_RangeArgs = {
 }
 
 export type BlockchainQueryKey_BlocksArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
@@ -961,6 +965,7 @@ export type BlockchainQueryKey_BlocksArgs = {
 }
 
 export type BlockchainQueryBlocksArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     workchain?: Maybe<Scalars["Int"]>
     thread?: Maybe<Scalars["String"]>
@@ -973,6 +978,7 @@ export type BlockchainQueryBlocksArgs = {
 }
 
 export type BlockchainQueryTransactionsArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     workchain?: Maybe<Scalars["Int"]>
     min_balance_delta?: Maybe<Scalars["String"]>
