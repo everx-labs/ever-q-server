@@ -33,7 +33,7 @@ import {
     QResult,
 } from "./data-provider"
 import { QDataListener, QDataSubscription } from "./listener"
-import { AccessArgs, AccessRights, Auth, grantedAccess } from "../auth"
+import { AccessArgs, AccessRights, Auth } from "../auth"
 import { QConfig, SlowQueriesMode, STATS, SubscriptionsMode } from "../config"
 import {
     CollectionFilter,
@@ -454,41 +454,6 @@ export class QDataCollection {
             this.queryStats.set(statKey, stat)
         }
         return stat.isFast
-    }
-
-    explainQueryResolver() {
-        return async (
-            _parent: unknown,
-            args: {
-                filter?: CollectionFilter | null
-                orderBy?: OrderBy[] | null
-            },
-        ) => {
-            await this.checkRefreshInfo()
-            const q = QCollectionQuery.create(
-                { expectedAccountBocVersion: 1 },
-                this.name,
-                this.docType,
-                args,
-                undefined,
-                grantedAccess,
-                0,
-            )
-            if (!q) {
-                return { isFast: true }
-            }
-            const slowReason = await explainSlowReason(
-                this.name,
-                this.indexes,
-                this.docType,
-                q.filter,
-                q.orderBy,
-            )
-            return {
-                isFast: slowReason === null,
-                ...(slowReason ? { slowReason } : {}),
-            }
-        }
     }
 
     async optimizeSortedQueryWithSingleResult(
