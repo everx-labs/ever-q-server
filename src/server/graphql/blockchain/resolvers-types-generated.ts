@@ -911,21 +911,6 @@ export type BlockchainQuery = {
      * This node could be used for a cursor-based pagination of transactions.
      */
     transactions?: Maybe<BlockchainTransactionsConnection>
-    /**
-     * **DEPRECATED**: will be removed soon after May 1
-     * This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
-     */
-    workchain_blocks?: Maybe<BlockchainBlocksConnection>
-    /**
-     * **DEPRECATED**: will be removed soon after May 1
-     * This node could be used for a cursor-based pagination of transactions filtered by workchains.
-     */
-    workchain_transactions?: Maybe<BlockchainTransactionsConnection>
-    /**
-     * **DEPRECATED**: will be removed soon after May 1
-     * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
-     */
-    account_transactions?: Maybe<BlockchainTransactionsConnection>
 }
 
 export type BlockchainQueryAccountArgs = {
@@ -983,41 +968,6 @@ export type BlockchainQueryTransactionsArgs = {
     workchain?: Maybe<Scalars["Int"]>
     min_balance_delta?: Maybe<Scalars["String"]>
     max_balance_delta?: Maybe<Scalars["String"]>
-    first?: Maybe<Scalars["Int"]>
-    after?: Maybe<Scalars["String"]>
-    last?: Maybe<Scalars["Int"]>
-    before?: Maybe<Scalars["String"]>
-}
-
-export type BlockchainQueryWorkchain_BlocksArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars["Int"]>
-    thread?: Maybe<Scalars["String"]>
-    min_tr_count?: Maybe<Scalars["Int"]>
-    max_tr_count?: Maybe<Scalars["Int"]>
-    first?: Maybe<Scalars["Int"]>
-    after?: Maybe<Scalars["String"]>
-    last?: Maybe<Scalars["Int"]>
-    before?: Maybe<Scalars["String"]>
-}
-
-export type BlockchainQueryWorkchain_TransactionsArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars["Int"]>
-    min_balance_delta?: Maybe<Scalars["Int"]>
-    max_balance_delta?: Maybe<Scalars["Int"]>
-    first?: Maybe<Scalars["Int"]>
-    after?: Maybe<Scalars["String"]>
-    last?: Maybe<Scalars["Int"]>
-    before?: Maybe<Scalars["String"]>
-}
-
-export type BlockchainQueryAccount_TransactionsArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    account_address: Scalars["String"]
-    aborted?: Maybe<Scalars["Boolean"]>
-    min_balance_delta?: Maybe<Scalars["Int"]>
-    max_balance_delta?: Maybe<Scalars["Int"]>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
@@ -3264,27 +3214,6 @@ export type BlockchainQueryResolvers<
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryTransactionsArgs, never>
-    >
-    workchain_blocks?: Resolver<
-        Maybe<ResolversTypes["BlockchainBlocksConnection"]>,
-        ParentType,
-        ContextType,
-        RequireFields<BlockchainQueryWorkchain_BlocksArgs, never>
-    >
-    workchain_transactions?: Resolver<
-        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
-        ParentType,
-        ContextType,
-        RequireFields<BlockchainQueryWorkchain_TransactionsArgs, never>
-    >
-    account_transactions?: Resolver<
-        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
-        ParentType,
-        ContextType,
-        RequireFields<
-            BlockchainQueryAccount_TransactionsArgs,
-            "account_address"
-        >
     >
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }

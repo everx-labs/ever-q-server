@@ -233,58 +233,6 @@ export const resolvers: Resolvers<QRequestContext> = {
                 },
             )
         },
-        workchain_blocks: async (_parent, args, context, info) => {
-            return context.trace(
-                "blockchain-resolve_workchain_blocks",
-                async traceSpan => {
-                    const repaired_args = {
-                        master_seq_no_range: args.master_seq_no,
-                        ...args,
-                    }
-                    return await resolve_blockchain_blocks(
-                        repaired_args,
-                        context,
-                        info,
-                        traceSpan,
-                    )
-                },
-            )
-        },
-        workchain_transactions: async (_parent, args, context, info) => {
-            return context.trace(
-                "blockchain-workchain_transactions",
-                async traceSpan => {
-                    const repaired_args = {
-                        master_seq_no_range: args.master_seq_no,
-                        ...args,
-                    }
-                    return await resolve_blockchain_transactions(
-                        repaired_args,
-                        context,
-                        info,
-                        traceSpan,
-                    )
-                },
-            )
-        },
-        account_transactions: async (_parent, args, context, info) => {
-            return context.trace(
-                "blockchain-account_transactions",
-                async traceSpan => {
-                    const repaired_args = {
-                        master_seq_no_range: args.master_seq_no,
-                        ...args,
-                    }
-                    return await resolve_account_transactions(
-                        args.account_address,
-                        repaired_args,
-                        context,
-                        info,
-                        traceSpan,
-                    )
-                },
-            )
-        },
         blocks: async (_parent, args, context, info) => {
             return context.trace(
                 "blockchain-resolve_workchain_blocks",
