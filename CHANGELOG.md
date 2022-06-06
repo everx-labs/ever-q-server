@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - `blockchain.master_seq_no_range` behavior for edge cases (when boundaries are close to first and/or latests blocks)
+- `max_shard_gen_utime_string` and `min_shard_gen_utime_string` in `BlockMaster`
 
 ### Improved
 
