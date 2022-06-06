@@ -156,6 +156,7 @@ const AccountBase: TypeDef = {
     tock: bool(docs.account.tock),
     code: string(docs.account.code),
     code_hash: stringWithLowerFilter(docs.account.code_hash),
+    prev_code_hash: string(),
     data: string(docs.account.data),
     data_hash: stringWithLowerFilter(docs.account.data_hash),
     library: string(docs.account.library),
@@ -648,6 +649,11 @@ const Config: TypeDef = {
         max_block_bytes: u32(),
         max_collated_bytes: u32(),
     },
+    p30: {
+        delections_step: u32(),
+        staker_init_code_hash: string(),
+        validator_init_code_hash: string(),
+    },
     p31: arrayOf(string(), docs.block.master.config.p31),
     p32: validatorSet(docs.block.master.config.p32),
     p33: validatorSet(docs.block.master.config.p33),
@@ -657,6 +663,7 @@ const Config: TypeDef = {
     p37: validatorSet(docs.block.master.config.p37),
     p39: arrayOf(
         {
+            map_key: string(),
             adnl_addr: string(),
             temp_public_key: string(),
             seqno: u32(),
@@ -666,6 +673,23 @@ const Config: TypeDef = {
         },
         docs.block.master.config.p39._doc,
     ),
+    p40: {
+        slashing_period_mc_blocks_count: u32(),
+        resend_mc_blocks_count: u32(),
+        min_samples_count: u32(),
+        collations_score_weight: u32(),
+        signing_score_weight: u32(),
+        min_slashing_protection_score: u32(),
+        z_param_numerator: u32(),
+        z_param_denominator: u32(),
+    },
+    p42: {
+        threshold: grams(),
+        payouts: arrayOf({
+            license_type: u8(),
+            payout_percent: u8(),
+        }),
+    },
 }
 
 const config = (doc?: string) => ref({ Config }, doc)

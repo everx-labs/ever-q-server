@@ -376,6 +376,7 @@ export type BlockchainAccount = Node & {
     library?: Maybe<Scalars["String"]>
     /** `library` field root hash. */
     library_hash?: Maybe<Scalars["String"]>
+    prev_code_hash?: Maybe<Scalars["String"]>
     /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
     proof?: Maybe<Scalars["String"]>
     /** Contains the number of public cells of the account. Used in storage fee calculation. */
@@ -2741,6 +2742,11 @@ export type BlockchainAccountResolvers<
     >
     library?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     library_hash?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    prev_code_hash?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
