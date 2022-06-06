@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+### Removed
+Queries:
+- `blockchain.workchain_blocks`. Use `blockchain{ blocks }` instead.
+- `blockchain.workchain_transactions`. Use `blockchain{ transactions } ` instead.
+- `blockchain.account_transactions`. Use `blockchain{ account{ transactions } }` instead.
+- `explainQueryAccounts`
+- `explainQueryTransactions`
+- `explainQueryMessages`
+- `explainQueryBlocks`
+- `explainQueryBlockSignatures`
+- `explainQueryZerostates`
+- `getAccountsCount`
+- `getTransactionsCount`
+- `getAccountsTotalBalance`
+- `QueryExplanation` and `SlowReason` types
+
 ## [0.51.2] - 2022-05-10
 
 ### New

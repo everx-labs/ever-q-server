@@ -45,26 +45,26 @@ async function resolve_maser_seq_no_range(
         // ArangoDB most likely will execute all of the queries, but we will give it a chance to optimize
         LET end_query_limiter = @time_end
             ? /* min_gen_utime_for_range_ending_after_time_end */ (
-                FOR b IN blocks 
-                FILTER b.workchain_id == -1 && b.gen_utime > @time_end 
-                SORT b.gen_utime ASC 
-                LIMIT 1 
+                FOR b IN blocks
+                FILTER b.workchain_id == -1 && b.gen_utime > @time_end
+                SORT b.gen_utime ASC
+                LIMIT 1
                 RETURN MIN(b.master.shard_hashes[*].descr.gen_utime)
             )[0]
             : null
-            
+
         LET end_query_limiter2 = @time_end && (end_query_limiter > @time_end || end_query_limiter == null)
             ? /* min_gen_utime_for_range_ending_right_before_time_end */ (
-                FOR b IN blocks 
-                FILTER b.workchain_id == -1 && b.gen_utime <= @time_end 
-                SORT b.gen_utime DESC 
-                LIMIT 1 
+                FOR b IN blocks
+                FILTER b.workchain_id == -1 && b.gen_utime <= @time_end
+                SORT b.gen_utime DESC
+                LIMIT 1
                 RETURN MIN(b.master.shard_hashes[*].descr.gen_utime)
             )[0]
             : end_query_limiter
-            
+
         LET end_query_limiter3 = end_query_limiter2 || 1
-            
+
         RETURN {
             _key: UUID(),
             first: @time_start ? (FOR b IN blocks SORT b.chain_order ASC LIMIT 1 RETURN b.chain_order)[0] : null,
@@ -200,58 +200,6 @@ export const resolvers: Resolvers<QRequestContext> = {
                 async traceSpan => {
                     return await resolve_key_blocks(
                         args,
-                        context,
-                        info,
-                        traceSpan,
-                    )
-                },
-            )
-        },
-        workchain_blocks: async (_parent, args, context, info) => {
-            return context.trace(
-                "blockchain-resolve_workchain_blocks",
-                async traceSpan => {
-                    const repaired_args = {
-                        master_seq_no_range: args.master_seq_no,
-                        ...args,
-                    }
-                    return await resolve_blockchain_blocks(
-                        repaired_args,
-                        context,
-                        info,
-                        traceSpan,
-                    )
-                },
-            )
-        },
-        workchain_transactions: async (_parent, args, context, info) => {
-            return context.trace(
-                "blockchain-workchain_transactions",
-                async traceSpan => {
-                    const repaired_args = {
-                        master_seq_no_range: args.master_seq_no,
-                        ...args,
-                    }
-                    return await resolve_blockchain_transactions(
-                        repaired_args,
-                        context,
-                        info,
-                        traceSpan,
-                    )
-                },
-            )
-        },
-        account_transactions: async (_parent, args, context, info) => {
-            return context.trace(
-                "blockchain-account_transactions",
-                async traceSpan => {
-                    const repaired_args = {
-                        master_seq_no_range: args.master_seq_no,
-                        ...args,
-                    }
-                    return await resolve_account_transactions(
-                        args.account_address,
-                        repaired_args,
                         context,
                         info,
                         traceSpan,

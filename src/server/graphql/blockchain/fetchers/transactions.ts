@@ -18,9 +18,7 @@ import {
 } from "../helpers"
 import {
     BlockchainAccountQueryTransactionsArgs,
-    BlockchainQueryAccount_TransactionsArgs,
     BlockchainQueryTransactionsArgs,
-    BlockchainQueryWorkchain_TransactionsArgs,
     BlockchainTransaction,
     BlockchainTransactionsConnection,
 } from "../resolvers-types-generated"
@@ -62,9 +60,7 @@ export async function resolve_transaction(
 }
 
 export async function resolve_blockchain_transactions(
-    args:
-        | BlockchainQueryTransactionsArgs
-        | BlockchainQueryWorkchain_TransactionsArgs,
+    args: BlockchainQueryTransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
@@ -142,9 +138,7 @@ export async function resolve_blockchain_transactions(
 
 export async function resolve_account_transactions(
     account_address: string,
-    args:
-        | BlockchainAccountQueryTransactionsArgs
-        | BlockchainQueryAccount_TransactionsArgs,
+    args: BlockchainAccountQueryTransactionsArgs,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
