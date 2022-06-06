@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+### New
+
+- master config `p30`, `p40`, `p42` fields types
+- `prev_code_hash` account field
+
 ## [0.51.2] - 2022-05-10
 
 ### New
