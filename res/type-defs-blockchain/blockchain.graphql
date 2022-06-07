@@ -2,9 +2,27 @@
 This type is unstable
 """
 type BlockchainMasterSeqNoRange {
-    "Minimum inclusive seq_no of corresponding master blocks"
+    """
+    INCLUSIVE seq_no range border. 
+    Masterchain block seq_no that corresponds to the specified time_start left border of
+    time interval.
+    Can be used to define pagination range in functions, providing cursor-based pagination.
+
+    If no corresponding masterchain block was found, null is returned. It may happen when the
+    time_start timestamp refers to the historic data which is not available.
+    """
     start: Int
-    "Maximum exclusive seq_no of corresponding master blocks"
+    """
+    EXCLUSIVE seq_no range border. 
+    Masterchain block seq_no that corresponds to the specified time_end right border of
+    time interval.
+    Can be used to define pagination range in functions, providing cursor-based pagination.
+
+    If no seq_no was found, returns `null`. 
+    This may happen if there is no corresponding masterchain block yet for 
+    the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
+    ommiting the right border seq_no for recent data pagination.
+    """  
     end: Int
 }
 
@@ -94,15 +112,15 @@ type BlockchainQuery {
 
     """
     **UNSTABLE**
-    Returns seq_no range such that:
-    1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-    2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-    start is null if time_start is null or if DB doesn't have enough blocks history to determine start.
-    end is null if time_end is null or new data could be added before time_end.
-    **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
-    """
+    Returns masterchain seq_no range for the specified time range
+    to be used further in pagination functions.
+    If `time_start` and/or `time_end` is null, then the corresponding seq_no range border 
+    is also null. 
+    """  
     master_seq_no_range(
+        "Start of the time range, inclusive"
          time_start: Int,
+        "End of the time range, exclusive"
          time_end: Int,
     ): BlockchainMasterSeqNoRange
 
@@ -112,8 +130,9 @@ type BlockchainQuery {
     """
     key_blocks(
         """
-        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
-        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
         """
         allow_latest_inconsistent_data: Boolean
 
@@ -137,8 +156,9 @@ type BlockchainQuery {
     """
     blocks(
         """
-        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
-        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
         """
         allow_latest_inconsistent_data: Boolean
 
@@ -173,8 +193,9 @@ type BlockchainQuery {
     """
     transactions(
         """
-        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
-        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
         """
         allow_latest_inconsistent_data: Boolean
 
@@ -214,8 +235,9 @@ type BlockchainAccountQuery {
     """
     transactions(
         """
-        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
-        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
         """
         allow_latest_inconsistent_data: Boolean
 
@@ -248,8 +270,9 @@ type BlockchainAccountQuery {
     """
     messages(
         """
-        By default there a delay of realtime data to ensure impossibility of inserts before latest accessible cursor.
-        It is possible to disable this guarantee and to reduce delay of realtime data by setting this flag to true.
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
         """
         allow_latest_inconsistent_data: Boolean
      
