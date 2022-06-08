@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+See the [migration guide](https://docs.everos.dev/evernode-platform/reference/breaking-changes/migration-guides#migrate_stats-1)
+
 Queries:
 - `blockchain.workchain_blocks`. Use `blockchain{ blocks }` instead.
 - `blockchain.workchain_transactions`. Use `blockchain{ transactions } ` instead.
