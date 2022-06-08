@@ -680,9 +680,27 @@ export type BlockchainMasterSeqNoFilter = {
 /** This type is unstable */
 export type BlockchainMasterSeqNoRange = {
     __typename?: "BlockchainMasterSeqNoRange"
-    /** Minimum inclusive seq_no of corresponding master blocks */
+    /**
+     * INCLUSIVE seq_no range border.
+     * Masterchain block seq_no that corresponds to the specified time_start left border of
+     * time interval.
+     * Can be used to define pagination range in functions, providing cursor-based pagination.
+     *
+     * If no corresponding masterchain block was found, null is returned. It may happen when the
+     * time_start timestamp refers to the historic data which is not available.
+     */
     start?: Maybe<Scalars["Int"]>
-    /** Maximum exclusive seq_no of corresponding master blocks */
+    /**
+     * EXCLUSIVE seq_no range border.
+     * Masterchain block seq_no that corresponds to the specified time_end right border of
+     * time interval.
+     * Can be used to define pagination range in functions, providing cursor-based pagination.
+     *
+     * If no seq_no was found, returns `null`.
+     * This may happen if there is no corresponding masterchain block yet for
+     * the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
+     * ommiting the right border seq_no for recent data pagination.
+     */
     end?: Maybe<Scalars["Int"]>
 }
 
@@ -888,12 +906,10 @@ export type BlockchainQuery = {
     message?: Maybe<BlockchainMessage>
     /**
      * **UNSTABLE**
-     * Returns seq_no range such that:
-     * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-     * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-     * start is null if time_start is null or if DB doesn't have enough blocks history to determine start.
-     * end is null if time_end is null or new data could be added before time_end.
-     * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
+     * Returns masterchain seq_no range for the specified time range
+     * to be used further in pagination functions.
+     * If `time_start` and/or `time_end` is null, then the corresponding seq_no range border
+     * is also null.
      */
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>
     /**
