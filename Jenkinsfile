@@ -175,7 +175,6 @@ pipeline {
 													ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
 													cd /home/node
 													npm --versions
-                                                    npm cache clean -f
 													npm ci
 													npm run tsc
 													npm test -- --bail --runInBand
