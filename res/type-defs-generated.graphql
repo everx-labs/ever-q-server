@@ -397,13 +397,41 @@ type ConfigP29 {
 	round_candidates: Float
 }
 
+type ConfigP30 {
+	delections_step: Float
+	staker_init_code_hash: String
+	validator_init_code_hash: String
+}
+
 type ConfigP39 {
 	adnl_addr: String
+	map_key: String
 	seqno: Float
 	signature_r: String
 	signature_s: String
 	temp_public_key: String
 	valid_until: Float
+}
+
+type ConfigP40 {
+	collations_score_weight: Float
+	min_samples_count: Float
+	min_slashing_protection_score: Float
+	resend_mc_blocks_count: Float
+	signing_score_weight: Float
+	slashing_period_mc_blocks_count: Float
+	z_param_denominator: Float
+	z_param_numerator: Float
+}
+
+type ConfigP42Payouts {
+	license_type: Int
+	payout_percent: Int
+}
+
+type ConfigP42 {
+	payouts: [ConfigP42Payouts]
+	threshold(format: BigIntFormat): String
 }
 
 type Config {
@@ -447,6 +475,7 @@ type Config {
 	p29: ConfigP29
 	"Address of fee collector smart contract in the masterchain"
 	p3: String
+	p30: ConfigP30
 	"Array of fundamental smart contracts addresses"
 	p31: [String]
 	"Previous validators set"
@@ -465,6 +494,8 @@ type Config {
 	p39: [ConfigP39]
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: String
+	p40: ConfigP40
+	p42: ConfigP42
 	"Configuration parameter 6"
 	p6: ConfigP6
 	"Configuration parameter 7"
@@ -849,6 +880,7 @@ type ZerostateAccounts {
 	library: String
 	"`library` field root hash."
 	library_hash: String
+	prev_code_hash: String
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: String
 	"Contains the number of public cells of the account. Used in storage fee calculation."
@@ -999,6 +1031,7 @@ type Account {
 	library: String
 	"`library` field root hash."
 	library_hash: String
+	prev_code_hash: String
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: String
 	"Contains the number of public cells of the account. Used in storage fee calculation."
@@ -1650,14 +1683,51 @@ input ConfigP29Filter {
     OR: ConfigP29Filter
 }
 
+input ConfigP30Filter {
+	delections_step: FloatFilter
+	staker_init_code_hash: StringFilter
+	validator_init_code_hash: StringFilter
+    OR: ConfigP30Filter
+}
+
 input ConfigP39Filter {
 	adnl_addr: StringFilter
+	map_key: StringFilter
 	seqno: FloatFilter
 	signature_r: StringFilter
 	signature_s: StringFilter
 	temp_public_key: StringFilter
 	valid_until: FloatFilter
     OR: ConfigP39Filter
+}
+
+input ConfigP40Filter {
+	collations_score_weight: FloatFilter
+	min_samples_count: FloatFilter
+	min_slashing_protection_score: FloatFilter
+	resend_mc_blocks_count: FloatFilter
+	signing_score_weight: FloatFilter
+	slashing_period_mc_blocks_count: FloatFilter
+	z_param_denominator: FloatFilter
+	z_param_numerator: FloatFilter
+    OR: ConfigP40Filter
+}
+
+input ConfigP42PayoutsFilter {
+	license_type: IntFilter
+	payout_percent: IntFilter
+    OR: ConfigP42PayoutsFilter
+}
+
+input ConfigP42PayoutsArrayFilter {
+	any: ConfigP42PayoutsFilter
+	all: ConfigP42PayoutsFilter
+}
+
+input ConfigP42Filter {
+	payouts: ConfigP42PayoutsArrayFilter
+	threshold: StringFilter
+    OR: ConfigP42Filter
 }
 
 input FloatArrayFilter {
@@ -1731,6 +1801,7 @@ input ConfigFilter {
 	p29: ConfigP29Filter
 	"Address of fee collector smart contract in the masterchain"
 	p3: StringFilter
+	p30: ConfigP30Filter
 	"Array of fundamental smart contracts addresses"
 	p31: StringArrayFilter
 	"Previous validators set"
@@ -1749,6 +1820,8 @@ input ConfigFilter {
 	p39: ConfigP39ArrayFilter
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: StringFilter
+	p40: ConfigP40Filter
+	p42: ConfigP42Filter
 	"Configuration parameter 6"
 	p6: ConfigP6Filter
 	"Configuration parameter 7"
@@ -2239,6 +2312,7 @@ input ZerostateAccountsFilter {
 	library: StringFilter
 	"`library` field root hash."
 	library_hash: StringFilter
+	prev_code_hash: StringFilter
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: StringFilter
 	"Contains the number of public cells of the account. Used in storage fee calculation."
@@ -2391,6 +2465,7 @@ input AccountFilter {
 	library: StringFilter
 	"`library` field root hash."
 	library_hash: StringFilter
+	prev_code_hash: StringFilter
 	"Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
 	proof: StringFilter
 	"Contains the number of public cells of the account. Used in storage fee calculation."

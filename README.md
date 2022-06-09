@@ -40,6 +40,8 @@ Option                                          ENV                             
 --subscriptions-filters-millis                  Q_SUBSCRIPTIONS_FILTERS_MILLIS                  30000                                   Kafka keep alive period for filters in millisecons (for 'external' subscriptions mode)
 --subscriptions-redis-port                      Q_SUBSCRIPTIONS_REDIS_PORT                      6379                                    Redis port (for 'external' subscriptions mode)
 --subscriptions-redis-host                      Q_SUBSCRIPTIONS_REDIS_HOST                      redis                                   Redis host (for 'external' subscriptions mode)
+--subscriptions-health-redis-channel            Q_SUBSCRIPTIONS_HEALTH_REDIS_CHANNEL                                                    Redis channel with 'subscriptions are alive' messages
+--subscriptions-health-timeout                  Q_SUBSCRIPTIONS_HEALTH_TIMEOUT                  60000                                   Timeout for 'subscriptions are alive' messages
 --filter-or-conversion                          Q_FILTER_OR_CONVERSION                          sub-queries                             Filter OR conversion:
                                                                                                                                         `or-operator` – q-server uses AQL with OR
                                                                                                                                         `sub-queries` – q-server performs parallel queries for each OR operand

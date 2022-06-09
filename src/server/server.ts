@@ -46,7 +46,6 @@ import {
 import { MemjsDataCache } from "./data/caching/memjs-datacache"
 import { aggregatesResolvers } from "./graphql/aggregates"
 import { counterpartiesResolvers } from "./graphql/counterparties"
-import { explainResolvers } from "./graphql/explain"
 import { infoResolvers } from "./graphql/info"
 import { postRequestsResolvers } from "./graphql/post-requests"
 import { blockchainResolvers } from "./graphql/blockchain"
@@ -56,7 +55,6 @@ import { accessResolvers } from "./graphql/access"
 import { mam } from "./graphql/mam"
 
 import type { QConfig } from "./config"
-import { totalsResolvers } from "./graphql/totals"
 import QLogs from "./logs"
 import type { QLog } from "./logs"
 import type { IStats } from "./stats"
@@ -363,9 +361,7 @@ export default class TONQServer {
         const resolvers = createResolvers(this.data) as IResolvers
         ;[
             infoResolvers,
-            totalsResolvers,
             aggregatesResolvers(this.data),
-            explainResolvers(this.data),
             postRequestsResolvers,
             accessResolvers,
             counterpartiesResolvers(this.data),

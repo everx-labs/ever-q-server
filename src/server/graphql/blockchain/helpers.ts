@@ -48,6 +48,7 @@ export function processPaginationArgs(args: PaginationArgs) {
 }
 
 export type ChainOrderFilterArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     after?: Maybe<Scalars["String"]>
     before?: Maybe<Scalars["String"]>
@@ -78,17 +79,18 @@ export async function prepareChainOrderFilter(
             ? args.before
             : end_chain_order
 
-    // reliable boundary
-    const reliable =
-        await context.services.data.getReliableChainOrderUpperBoundary(context)
-    if (reliable.boundary == "") {
-        throw QError.internalServerError()
-    }
+    if (!args.allow_latest_inconsistent_data) {
+        // reliable boundary
+        const reliable =
+            await context.services.data.getReliableChainOrderUpperBoundary(
+                context,
+            )
 
-    end_chain_order =
-        end_chain_order && end_chain_order < reliable.boundary
-            ? end_chain_order
-            : reliable.boundary
+        end_chain_order =
+            end_chain_order && end_chain_order < reliable.boundary
+                ? end_chain_order
+                : reliable.boundary
+    }
 
     // apply
     if (start_chain_order) {
@@ -97,12 +99,13 @@ export async function prepareChainOrderFilter(
     } else {
         // Next line is equivalent to "chain_order != null", but the ">=" is better:
         // we doesn't have to rely on arangodb to convert "!= null" to index scan boundary
-        /* eslint-disable no-useless-escape */
-        filters.push(`doc.${chainOrderFieldName} >= \"\"`)
+        filters.push(`doc.${chainOrderFieldName} >= ""`)
     }
 
-    const paramName = params.add(end_chain_order)
-    filters.push(`doc.${chainOrderFieldName} < @${paramName}`)
+    if (end_chain_order) {
+        const paramName = params.add(end_chain_order)
+        filters.push(`doc.${chainOrderFieldName} < @${paramName}`)
+    }
 }
 
 export function getNodeSelectionSetForConnection(info: GraphQLResolveInfo) {
@@ -184,7 +187,7 @@ export async function processPaginatedQueryResult<T>(
     }
 }
 
-export function isDefined<T>(value: T | null | undefined): boolean {
+export function isDefined<T>(value: T | null | undefined): value is T {
     return value !== undefined && value !== null
 }
 

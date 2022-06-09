@@ -376,6 +376,7 @@ export type BlockchainAccount = Node & {
     library?: Maybe<Scalars["String"]>
     /** `library` field root hash. */
     library_hash?: Maybe<Scalars["String"]>
+    prev_code_hash?: Maybe<Scalars["String"]>
     /** Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64. */
     proof?: Maybe<Scalars["String"]>
     /** Contains the number of public cells of the account. Used in storage fee calculation. */
@@ -524,6 +525,7 @@ export type BlockchainAccountQuery = {
 }
 
 export type BlockchainAccountQueryMessagesArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     counterparties?: Maybe<Array<Scalars["String"]>>
     msg_type?: Maybe<Array<BlockchainMessageTypeFilterEnum>>
@@ -535,6 +537,7 @@ export type BlockchainAccountQueryMessagesArgs = {
 }
 
 export type BlockchainAccountQueryTransactionsArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     aborted?: Maybe<Scalars["Boolean"]>
     min_balance_delta?: Maybe<Scalars["String"]>
@@ -677,9 +680,27 @@ export type BlockchainMasterSeqNoFilter = {
 /** This type is unstable */
 export type BlockchainMasterSeqNoRange = {
     __typename?: "BlockchainMasterSeqNoRange"
-    /** Minimum inclusive seq_no of corresponding master blocks */
+    /**
+     * INCLUSIVE seq_no range border.
+     * Masterchain block seq_no that corresponds to the specified time_start left border of
+     * time interval.
+     * Can be used to define pagination range in functions, providing cursor-based pagination.
+     *
+     * If no corresponding masterchain block was found, null is returned. It may happen when the
+     * time_start timestamp refers to the historic data which is not available.
+     */
     start?: Maybe<Scalars["Int"]>
-    /** Maximum exclusive seq_no of corresponding master blocks */
+    /**
+     * EXCLUSIVE seq_no range border.
+     * Masterchain block seq_no that corresponds to the specified time_end right border of
+     * time interval.
+     * Can be used to define pagination range in functions, providing cursor-based pagination.
+     *
+     * If no seq_no was found, returns `null`.
+     * This may happen if there is no corresponding masterchain block yet for
+     * the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
+     * ommiting the right border seq_no for recent data pagination.
+     */
     end?: Maybe<Scalars["Int"]>
 }
 
@@ -885,11 +906,10 @@ export type BlockchainQuery = {
     message?: Maybe<BlockchainMessage>
     /**
      * **UNSTABLE**
-     * Returns seq_no range such that:
-     * 1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-     * 2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-     * If time_start is null, then start is null. If time_end is null, then end is null.
-     * **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
+     * Returns masterchain seq_no range for the specified time range
+     * to be used further in pagination functions.
+     * If `time_start` and/or `time_end` is null, then the corresponding seq_no range border
+     * is also null.
      */
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>
     /**
@@ -907,21 +927,6 @@ export type BlockchainQuery = {
      * This node could be used for a cursor-based pagination of transactions.
      */
     transactions?: Maybe<BlockchainTransactionsConnection>
-    /**
-     * **DEPRECATED**: will be removed soon after May 1
-     * This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
-     */
-    workchain_blocks?: Maybe<BlockchainBlocksConnection>
-    /**
-     * **DEPRECATED**: will be removed soon after May 1
-     * This node could be used for a cursor-based pagination of transactions filtered by workchains.
-     */
-    workchain_transactions?: Maybe<BlockchainTransactionsConnection>
-    /**
-     * **DEPRECATED**: will be removed soon after May 1
-     * This node could be used for a cursor-based pagination of transactions filtered by account addresses.
-     */
-    account_transactions?: Maybe<BlockchainTransactionsConnection>
 }
 
 export type BlockchainQueryAccountArgs = {
@@ -952,6 +957,7 @@ export type BlockchainQueryMaster_Seq_No_RangeArgs = {
 }
 
 export type BlockchainQueryKey_BlocksArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
@@ -960,6 +966,7 @@ export type BlockchainQueryKey_BlocksArgs = {
 }
 
 export type BlockchainQueryBlocksArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     workchain?: Maybe<Scalars["Int"]>
     thread?: Maybe<Scalars["String"]>
@@ -972,45 +979,11 @@ export type BlockchainQueryBlocksArgs = {
 }
 
 export type BlockchainQueryTransactionsArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     workchain?: Maybe<Scalars["Int"]>
     min_balance_delta?: Maybe<Scalars["String"]>
     max_balance_delta?: Maybe<Scalars["String"]>
-    first?: Maybe<Scalars["Int"]>
-    after?: Maybe<Scalars["String"]>
-    last?: Maybe<Scalars["Int"]>
-    before?: Maybe<Scalars["String"]>
-}
-
-export type BlockchainQueryWorkchain_BlocksArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars["Int"]>
-    thread?: Maybe<Scalars["String"]>
-    min_tr_count?: Maybe<Scalars["Int"]>
-    max_tr_count?: Maybe<Scalars["Int"]>
-    first?: Maybe<Scalars["Int"]>
-    after?: Maybe<Scalars["String"]>
-    last?: Maybe<Scalars["Int"]>
-    before?: Maybe<Scalars["String"]>
-}
-
-export type BlockchainQueryWorkchain_TransactionsArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    workchain?: Maybe<Scalars["Int"]>
-    min_balance_delta?: Maybe<Scalars["Int"]>
-    max_balance_delta?: Maybe<Scalars["Int"]>
-    first?: Maybe<Scalars["Int"]>
-    after?: Maybe<Scalars["String"]>
-    last?: Maybe<Scalars["Int"]>
-    before?: Maybe<Scalars["String"]>
-}
-
-export type BlockchainQueryAccount_TransactionsArgs = {
-    master_seq_no?: Maybe<BlockchainMasterSeqNoFilter>
-    account_address: Scalars["String"]
-    aborted?: Maybe<Scalars["Boolean"]>
-    min_balance_delta?: Maybe<Scalars["Int"]>
-    max_balance_delta?: Maybe<Scalars["Int"]>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
@@ -2739,6 +2712,11 @@ export type BlockchainAccountResolvers<
         ParentType,
         ContextType
     >
+    prev_code_hash?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
     proof?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     public_cells?: Resolver<
         Maybe<ResolversTypes["String"]>,
@@ -3252,27 +3230,6 @@ export type BlockchainQueryResolvers<
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryTransactionsArgs, never>
-    >
-    workchain_blocks?: Resolver<
-        Maybe<ResolversTypes["BlockchainBlocksConnection"]>,
-        ParentType,
-        ContextType,
-        RequireFields<BlockchainQueryWorkchain_BlocksArgs, never>
-    >
-    workchain_transactions?: Resolver<
-        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
-        ParentType,
-        ContextType,
-        RequireFields<BlockchainQueryWorkchain_TransactionsArgs, never>
-    >
-    account_transactions?: Resolver<
-        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
-        ParentType,
-        ContextType,
-        RequireFields<
-            BlockchainQueryAccount_TransactionsArgs,
-            "account_address"
-        >
     >
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }

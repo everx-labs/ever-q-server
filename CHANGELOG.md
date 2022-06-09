@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.52.0] - 2022-06-03
+
+### New
+
+- master config `p30`, `p40`, `p42` fields types
+- `prev_code_hash` account field
+- `allow_latest_inconsistent_data` option in paginated `blockchain` queries:
+  > By default there is a delay of realtime data (several seconds) to ensure impossibility of data inserts before the latest accessible cursor.
+  > Now it became possible to disable this guarantee and thus - to reduce delay of realtime data by setting this flag to true.
+- two config options for reading external subscriptions health messages from Redis channel
+    - `subscriptions-health-redis-channel`
+    - `subscriptions-health-timeout`
+
+### Fixed
+
+- `blockchain.master_seq_no_range` behavior for edge cases (when boundaries are close to first and/or latests blocks)
+  E.g. for `time_start=time_end=now` this function used to return `end<start` but now it returns `end=null`, because a masterblock for end doesn't exist yet.
+- `max_shard_gen_utime_string` and `min_shard_gen_utime_string` in `BlockMaster`
+
+### Improved
+
+- faster and more reliable ArangoDB query for `blockchain.master_seq_no_range.end`
+
+### Removed
+
+See the [migration guide](https://docs.everos.dev/evernode-platform/reference/breaking-changes/migration-guides#migrate_stats-1)
+
+Queries:
+- `blockchain.workchain_blocks`. Use `blockchain{ blocks }` instead.
+- `blockchain.workchain_transactions`. Use `blockchain{ transactions } ` instead.
+- `blockchain.account_transactions`. Use `blockchain{ account{ transactions } }` instead.
+- `explainQueryAccounts`
+- `explainQueryTransactions`
+- `explainQueryMessages`
+- `explainQueryBlocks`
+- `explainQueryBlockSignatures`
+- `explainQueryZerostates`
+- `getAccountsCount`
+- `getTransactionsCount`
+- `getAccountsTotalBalance`
+- `QueryExplanation` and `SlowReason` types
+
 ## [0.51.2] - 2022-05-10
 
 ### New

@@ -21,7 +21,7 @@ type BlockchainAccount implements Node {
     address: String
     """
     Returns the current status of the account.
-    
+
     - 0 – uninit
     - 1 – active
     - 2 – frozen
@@ -68,6 +68,7 @@ type BlockchainAccount implements Node {
     library: String
     "`library` field root hash."
     library_hash: String
+    prev_code_hash: String
     "Merkle proof that account is a part of shard state it cut from as a bag of cells with Merkle proof struct encoded as base64."
     proof: String
     "Contains the number of public cells of the account. Used in storage fee calculation."

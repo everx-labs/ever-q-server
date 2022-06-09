@@ -2,9 +2,27 @@
 This type is unstable
 """
 type BlockchainMasterSeqNoRange {
-    "Minimum inclusive seq_no of corresponding master blocks"
+    """
+    INCLUSIVE seq_no range border. 
+    Masterchain block seq_no that corresponds to the specified time_start left border of
+    time interval.
+    Can be used to define pagination range in functions, providing cursor-based pagination.
+
+    If no corresponding masterchain block was found, null is returned. It may happen when the
+    time_start timestamp refers to the historic data which is not available.
+    """
     start: Int
-    "Maximum exclusive seq_no of corresponding master blocks"
+    """
+    EXCLUSIVE seq_no range border. 
+    Masterchain block seq_no that corresponds to the specified time_end right border of
+    time interval.
+    Can be used to define pagination range in functions, providing cursor-based pagination.
+
+    If no seq_no was found, returns `null`. 
+    This may happen if there is no corresponding masterchain block yet for 
+    the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
+    ommiting the right border seq_no for recent data pagination.
+    """  
     end: Int
 }
 
@@ -94,14 +112,15 @@ type BlockchainQuery {
 
     """
     **UNSTABLE**
-    Returns seq_no range such that:
-    1. masterblock(start).chain_order is less or equal to chain_order values of all transactions and blocks with time >= time_start
-    2. masterblock(end).chain_order is greater than chain_order values of all transactions and blocks with time <= time_end
-    If time_start is null, then start is null. If time_end is null, then end is null.
-    **CAUTION:** resulting seq_no ranges for adjacent time ranges could overlap.
-    """
+    Returns masterchain seq_no range for the specified time range
+    to be used further in pagination functions.
+    If `time_start` and/or `time_end` is null, then the corresponding seq_no range border 
+    is also null. 
+    """  
     master_seq_no_range(
+        "Start of the time range, inclusive"
          time_start: Int,
+        "End of the time range, exclusive"
          time_end: Int,
     ): BlockchainMasterSeqNoRange
 
@@ -111,14 +130,21 @@ type BlockchainQuery {
     """
     key_blocks(
         """
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
+        """
         Filter by master blocks seq_no.
         """
         master_seq_no_range: BlockchainMasterSeqNoFilter
 
         "This field is mutually exclusive with 'last'"
-        first: Int 
+        first: Int
         after: String
-        
+
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
@@ -130,6 +156,13 @@ type BlockchainQuery {
     """
     blocks(
         """
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
+        """
         The blocks could be filtered by seq_no of corresponding masterchain blocks.
         See also: blockсhain { master_seq_no_range }
         """
@@ -146,9 +179,9 @@ type BlockchainQuery {
         max_tr_count: Int,
 
         "This field is mutually exclusive with 'last'"
-        first: Int 
+        first: Int
         after: String
-        
+
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
@@ -160,6 +193,13 @@ type BlockchainQuery {
     """
     transactions(
         """
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
+        """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: blockchain { master_seq_no_range }
         """
@@ -174,98 +214,9 @@ type BlockchainQuery {
         max_balance_delta: String,
 
         "This field is mutually exclusive with 'last'"
-        first: Int 
+        first: Int
         after: String
-        
-        "This field is mutually exclusive with 'first'"
-        last: Int
-        before: String
-    ): BlockchainTransactionsConnection
 
-    """
-    **DEPRECATED**: will be removed soon after May 1
-    This node could be used for a cursor-based pagination of blocks (with optional workchain and thread filters).
-    """
-    workchain_blocks(
-        """
-        The blocks could be filtered by seq_no of corresponding masterchain blocks.
-        See also: blockсhain { master_seq_no_range }
-        """
-        master_seq_no: BlockchainMasterSeqNoFilter
-
-        "Optional filter by workchain"
-        workchain: Int
-        "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
-        thread: String,
-
-        "Optional filter by minimum transactions in a block (unoptimized, query could be dropped by timeout)"
-        min_tr_count: Int,
-        "Optional filter by maximum transactions in a block (unoptimized, query could be dropped by timeout)"
-        max_tr_count: Int,
-
-        "This field is mutually exclusive with 'last'"
-        first: Int 
-        after: String
-        
-        "This field is mutually exclusive with 'first'"
-        last: Int
-        before: String
-    ): BlockchainBlocksConnection
-
-    """
-    **DEPRECATED**: will be removed soon after May 1
-    This node could be used for a cursor-based pagination of transactions filtered by workchains.
-    """
-    workchain_transactions(
-        """
-        The transactions could be filtered by seq_no of corresponding masterchain blocks.
-        See also: blockchain { master_seq_no_range }
-        """
-        master_seq_no: BlockchainMasterSeqNoFilter
-
-        "Optional filter by workchain"
-        workchain: Int
-
-        "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: Int,
-        "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: Int,
-
-        "This field is mutually exclusive with 'last'"
-        first: Int 
-        after: String
-        
-        "This field is mutually exclusive with 'first'"
-        last: Int
-        before: String
-    ): BlockchainTransactionsConnection
-
-    """
-    **DEPRECATED**: will be removed soon after May 1
-    This node could be used for a cursor-based pagination of transactions filtered by account addresses.
-    """
-    account_transactions(
-        """
-        The transactions could be filtered by seq_no of corresponding masterchain blocks.
-        See also: blockchain { master_seq_no_range }
-        """
-        master_seq_no: BlockchainMasterSeqNoFilter
-
-        "Account address is required (64 hex symbols)"
-        account_address: String!
-
-        aborted: Boolean
-
-        "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: Int,
-        "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: Int,
-
-
-        "This field is mutually exclusive with 'last'"
-        first: Int 
-        after: String
-        
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
@@ -277,12 +228,19 @@ type BlockchainAccountQuery {
     Account information (e.g. boc).
     """
     info: BlockchainAccount
-    
+
     """
     **UNSTABLE**
     This node could be used for a cursor-based pagination of account transactions.
     """
     transactions(
+        """
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+
         """
         The transactions could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
@@ -298,9 +256,9 @@ type BlockchainAccountQuery {
 
 
         "This field is mutually exclusive with 'last'"
-        first: Int 
+        first: Int
         after: String
-        
+
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
@@ -310,16 +268,23 @@ type BlockchainAccountQuery {
     **UNSTABLE**
     This node could be used for a cursor-based pagination of account messages.
     """
-    messages(        
+    messages(
+        """
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
+     
         """
         The messages could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
-        """			
+        """
         master_seq_no_range: BlockchainMasterSeqNoFilter
 
         "Filter messages by counterparties (max - 5 counterparties)."
         counterparties: [String!]
-        
+
         "Filter messages by type (multiple are allowed, all messages if not specified)."
         msg_type: [BlockchainMessageTypeFilterEnum!]
 

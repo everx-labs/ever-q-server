@@ -250,13 +250,42 @@ const ConfigP29 = struct({
     round_candidates: scalar,
 })
 
+const ConfigP30 = struct({
+    delections_step: scalar,
+    staker_init_code_hash: scalar,
+    validator_init_code_hash: scalar,
+})
+
 const ConfigP39 = struct({
     adnl_addr: scalar,
+    map_key: scalar,
     seqno: scalar,
     signature_r: scalar,
     signature_s: scalar,
     temp_public_key: scalar,
     valid_until: scalar,
+})
+
+const ConfigP40 = struct({
+    collations_score_weight: scalar,
+    min_samples_count: scalar,
+    min_slashing_protection_score: scalar,
+    resend_mc_blocks_count: scalar,
+    signing_score_weight: scalar,
+    slashing_period_mc_blocks_count: scalar,
+    z_param_denominator: scalar,
+    z_param_numerator: scalar,
+})
+
+const ConfigP42Payouts = struct({
+    license_type: scalar,
+    payout_percent: scalar,
+})
+
+const ConfigP42PayoutsArray = array(() => ConfigP42Payouts)
+const ConfigP42 = struct({
+    payouts: ConfigP42PayoutsArray,
+    threshold: bigUInt2,
 })
 
 const FloatArray = array(() => scalar)
@@ -286,6 +315,7 @@ const Config = struct({
     p28: ConfigP28,
     p29: ConfigP29,
     p3: scalar,
+    p30: ConfigP30,
     p31: StringArray,
     p32: ValidatorSet,
     p33: ValidatorSet,
@@ -295,6 +325,8 @@ const Config = struct({
     p37: ValidatorSet,
     p39: ConfigP39Array,
     p4: scalar,
+    p40: ConfigP40,
+    p42: ConfigP42,
     p6: ConfigP6,
     p7: ConfigP7Array,
     p8: ConfigP8,
@@ -537,6 +569,7 @@ const ZerostateAccounts = struct({
     last_trans_lt: bigUInt1,
     library: scalar,
     library_hash: stringLowerFilter,
+    prev_code_hash: scalar,
     proof: scalar,
     public_cells: bigUInt1,
     split_depth: scalar,
@@ -577,6 +610,7 @@ const Account = struct(
         last_trans_lt: bigUInt1,
         library: scalar,
         library_hash: stringLowerFilter,
+        prev_code_hash: scalar,
         proof: scalar,
         public_cells: bigUInt1,
         split_depth: scalar,
@@ -1042,6 +1076,11 @@ function createResolvers(data: QBlockchainData) {
                 return unixSecondsToString(parent.utime_since)
             },
         },
+        ConfigP42: {
+            threshold(parent: { threshold: string }, args: BigIntArgs) {
+                return resolveBigUInt(2, parent.threshold, args)
+            },
+        },
         TransactionStorage: {
             storage_fees_collected(
                 parent: { storage_fees_collected: string },
@@ -1195,6 +1234,18 @@ function createResolvers(data: QBlockchainData) {
             },
             fees(parent: { fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.fees, args)
+            },
+        },
+        BlockMaster: {
+            max_shard_gen_utime_string(parent: {
+                max_shard_gen_utime: number
+            }) {
+                return unixSecondsToString(parent.max_shard_gen_utime)
+            },
+            min_shard_gen_utime_string(parent: {
+                min_shard_gen_utime: number
+            }) {
+                return unixSecondsToString(parent.min_shard_gen_utime)
             },
         },
         ZerostateMaster: {
@@ -1461,6 +1512,10 @@ scalarFields.set("accounts.library", { type: "string", path: "doc.library" })
 scalarFields.set("accounts.library_hash", {
     type: "string",
     path: "doc.library_hash",
+})
+scalarFields.set("accounts.prev_code_hash", {
+    type: "string",
+    path: "doc.prev_code_hash",
 })
 scalarFields.set("accounts.proof", { type: "string", path: "doc.proof" })
 scalarFields.set("accounts.public_cells", {
@@ -2436,6 +2491,18 @@ scalarFields.set("blocks.master.config.p3", {
     type: "string",
     path: "doc.master.config.p3",
 })
+scalarFields.set("blocks.master.config.p30.delections_step", {
+    type: "number",
+    path: "doc.master.config.p30.delections_step",
+})
+scalarFields.set("blocks.master.config.p30.staker_init_code_hash", {
+    type: "string",
+    path: "doc.master.config.p30.staker_init_code_hash",
+})
+scalarFields.set("blocks.master.config.p30.validator_init_code_hash", {
+    type: "string",
+    path: "doc.master.config.p30.validator_init_code_hash",
+})
 scalarFields.set("blocks.master.config.p31", {
     type: "string",
     path: "doc.master.config.p31[*]",
@@ -2636,6 +2703,10 @@ scalarFields.set("blocks.master.config.p39.adnl_addr", {
     type: "string",
     path: "doc.master.config.p39[*].adnl_addr",
 })
+scalarFields.set("blocks.master.config.p39.map_key", {
+    type: "string",
+    path: "doc.master.config.p39[*].map_key",
+})
 scalarFields.set("blocks.master.config.p39.seqno", {
     type: "number",
     path: "doc.master.config.p39[*].seqno",
@@ -2659,6 +2730,50 @@ scalarFields.set("blocks.master.config.p39.valid_until", {
 scalarFields.set("blocks.master.config.p4", {
     type: "string",
     path: "doc.master.config.p4",
+})
+scalarFields.set("blocks.master.config.p40.collations_score_weight", {
+    type: "number",
+    path: "doc.master.config.p40.collations_score_weight",
+})
+scalarFields.set("blocks.master.config.p40.min_samples_count", {
+    type: "number",
+    path: "doc.master.config.p40.min_samples_count",
+})
+scalarFields.set("blocks.master.config.p40.min_slashing_protection_score", {
+    type: "number",
+    path: "doc.master.config.p40.min_slashing_protection_score",
+})
+scalarFields.set("blocks.master.config.p40.resend_mc_blocks_count", {
+    type: "number",
+    path: "doc.master.config.p40.resend_mc_blocks_count",
+})
+scalarFields.set("blocks.master.config.p40.signing_score_weight", {
+    type: "number",
+    path: "doc.master.config.p40.signing_score_weight",
+})
+scalarFields.set("blocks.master.config.p40.slashing_period_mc_blocks_count", {
+    type: "number",
+    path: "doc.master.config.p40.slashing_period_mc_blocks_count",
+})
+scalarFields.set("blocks.master.config.p40.z_param_denominator", {
+    type: "number",
+    path: "doc.master.config.p40.z_param_denominator",
+})
+scalarFields.set("blocks.master.config.p40.z_param_numerator", {
+    type: "number",
+    path: "doc.master.config.p40.z_param_numerator",
+})
+scalarFields.set("blocks.master.config.p42.payouts.license_type", {
+    type: "number",
+    path: "doc.master.config.p42.payouts[*].license_type",
+})
+scalarFields.set("blocks.master.config.p42.payouts.payout_percent", {
+    type: "number",
+    path: "doc.master.config.p42.payouts[*].payout_percent",
+})
+scalarFields.set("blocks.master.config.p42.threshold", {
+    type: "uint1024",
+    path: "doc.master.config.p42.threshold",
 })
 scalarFields.set("blocks.master.config.p6.mint_add_price", {
     type: "string",
@@ -3417,6 +3532,10 @@ scalarFields.set("zerostates.accounts.library_hash", {
     type: "string",
     path: "doc.accounts[*].library_hash",
 })
+scalarFields.set("zerostates.accounts.prev_code_hash", {
+    type: "string",
+    path: "doc.accounts[*].prev_code_hash",
+})
 scalarFields.set("zerostates.accounts.proof", {
     type: "string",
     path: "doc.accounts[*].proof",
@@ -3948,6 +4067,18 @@ scalarFields.set("zerostates.master.config.p3", {
     type: "string",
     path: "doc.master.config.p3",
 })
+scalarFields.set("zerostates.master.config.p30.delections_step", {
+    type: "number",
+    path: "doc.master.config.p30.delections_step",
+})
+scalarFields.set("zerostates.master.config.p30.staker_init_code_hash", {
+    type: "string",
+    path: "doc.master.config.p30.staker_init_code_hash",
+})
+scalarFields.set("zerostates.master.config.p30.validator_init_code_hash", {
+    type: "string",
+    path: "doc.master.config.p30.validator_init_code_hash",
+})
 scalarFields.set("zerostates.master.config.p31", {
     type: "string",
     path: "doc.master.config.p31[*]",
@@ -4148,6 +4279,10 @@ scalarFields.set("zerostates.master.config.p39.adnl_addr", {
     type: "string",
     path: "doc.master.config.p39[*].adnl_addr",
 })
+scalarFields.set("zerostates.master.config.p39.map_key", {
+    type: "string",
+    path: "doc.master.config.p39[*].map_key",
+})
 scalarFields.set("zerostates.master.config.p39.seqno", {
     type: "number",
     path: "doc.master.config.p39[*].seqno",
@@ -4171,6 +4306,53 @@ scalarFields.set("zerostates.master.config.p39.valid_until", {
 scalarFields.set("zerostates.master.config.p4", {
     type: "string",
     path: "doc.master.config.p4",
+})
+scalarFields.set("zerostates.master.config.p40.collations_score_weight", {
+    type: "number",
+    path: "doc.master.config.p40.collations_score_weight",
+})
+scalarFields.set("zerostates.master.config.p40.min_samples_count", {
+    type: "number",
+    path: "doc.master.config.p40.min_samples_count",
+})
+scalarFields.set("zerostates.master.config.p40.min_slashing_protection_score", {
+    type: "number",
+    path: "doc.master.config.p40.min_slashing_protection_score",
+})
+scalarFields.set("zerostates.master.config.p40.resend_mc_blocks_count", {
+    type: "number",
+    path: "doc.master.config.p40.resend_mc_blocks_count",
+})
+scalarFields.set("zerostates.master.config.p40.signing_score_weight", {
+    type: "number",
+    path: "doc.master.config.p40.signing_score_weight",
+})
+scalarFields.set(
+    "zerostates.master.config.p40.slashing_period_mc_blocks_count",
+    {
+        type: "number",
+        path: "doc.master.config.p40.slashing_period_mc_blocks_count",
+    },
+)
+scalarFields.set("zerostates.master.config.p40.z_param_denominator", {
+    type: "number",
+    path: "doc.master.config.p40.z_param_denominator",
+})
+scalarFields.set("zerostates.master.config.p40.z_param_numerator", {
+    type: "number",
+    path: "doc.master.config.p40.z_param_numerator",
+})
+scalarFields.set("zerostates.master.config.p42.payouts.license_type", {
+    type: "number",
+    path: "doc.master.config.p42.payouts[*].license_type",
+})
+scalarFields.set("zerostates.master.config.p42.payouts.payout_percent", {
+    type: "number",
+    path: "doc.master.config.p42.payouts[*].payout_percent",
+})
+scalarFields.set("zerostates.master.config.p42.threshold", {
+    type: "uint1024",
+    path: "doc.master.config.p42.threshold",
 })
 scalarFields.set("zerostates.master.config.p6.mint_add_price", {
     type: "string",
@@ -4389,7 +4571,11 @@ export {
     ConfigP18,
     ConfigP28,
     ConfigP29,
+    ConfigP30,
     ConfigP39,
+    ConfigP40,
+    ConfigP42Payouts,
+    ConfigP42,
     Config,
     TransactionStorage,
     TransactionCredit,

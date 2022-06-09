@@ -1,5 +1,4 @@
 import { Database } from "arangojs"
-import ApolloClient from "apollo-client"
 import gql from "graphql-tag"
 
 import { Auth } from "../server/auth"
@@ -135,7 +134,7 @@ test("master_seq_no_range", async () => {
         `,
     })
     expect(queryResult2.data.blockchain.master_seq_no_range).toMatchObject({
-        start: 8898619,
+        start: 8898620,
         end: 8898622,
     })
 
@@ -154,11 +153,11 @@ test("master_seq_no_range", async () => {
     })
     expect(queryResult3.data.blockchain.master_seq_no_range).toMatchObject({
         start: null,
-        end: 8898623,
+        end: null,
     })
 })
 
-test("workchain_blocks", async () => {
+test("blocks", async () => {
     if (!server) {
         throw new Error("server is null")
     }
@@ -168,7 +167,7 @@ test("workchain_blocks", async () => {
         query: gql`
             {
                 blockchain {
-                    workchain_blocks(workchain: -1, first: 2) {
+                    blocks(workchain: -1, first: 2) {
                         edges {
                             node {
                                 id
@@ -190,7 +189,7 @@ test("workchain_blocks", async () => {
     })
     expect(queryResult1.data).toMatchObject({
         blockchain: {
-            workchain_blocks: {
+            blocks: {
                 edges: [
                     {
                         node: {
@@ -231,11 +230,7 @@ test("workchain_blocks", async () => {
         query: gql`
             {
                 blockchain {
-                    workchain_blocks(
-                        workchain: 0
-                        thread: "5800000000000000"
-                        last: 2
-                    ) {
+                    blocks(workchain: 0, thread: "5800000000000000", last: 2) {
                         edges {
                             node {
                                 id
@@ -257,7 +252,7 @@ test("workchain_blocks", async () => {
     })
     expect(queryResult2.data).toMatchObject({
         blockchain: {
-            workchain_blocks: {
+            blocks: {
                 edges: [
                     {
                         node: {
@@ -298,7 +293,7 @@ test("workchain_blocks", async () => {
         query: gql`
             {
                 blockchain {
-                    workchain_blocks(
+                    blocks(
                         workchain: 0
                         thread: "5800000000000000"
                         first: 2
@@ -326,7 +321,7 @@ test("workchain_blocks", async () => {
 
     expect(queryResult3.data).toMatchObject({
         blockchain: {
-            workchain_blocks: {
+            blocks: {
                 edges: [
                     {
                         node: {
@@ -364,7 +359,7 @@ test("workchain_blocks", async () => {
     })
 })
 
-test("account_transactions", async () => {
+test("blockchain.account.transactions", async () => {
     if (!server) {
         throw new Error("server is null")
     }
@@ -375,14 +370,141 @@ test("account_transactions", async () => {
         query: gql`
             {
                 blockchain {
-                    account_transactions(
-                        master_seq_no: { start: 8898621, end: 8898625 }
-                        account_address: "0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206"
-                        first: 50
+                    account(
+                        address: "0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206"
+                    ) {
+                        transactions(
+                            master_seq_no_range: {
+                                start: 8898621
+                                end: 8898625
+                            }
+                            first: 50
+                        ) {
+                            edges {
+                                node {
+                                    hash
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                startCursor
+                                endCursor
+                                hasNextPage
+                            }
+                        }
+                    }
+                }
+            }
+        `,
+    })
+
+    expect(queryResult.data).toMatchObject({
+        blockchain: {
+            account: {
+                transactions: {
+                    edges: [
+                        {
+                            node: {
+                                hash: "a1725e48f08eb5b4e07eaaa1979204b02385f351a4485d192f2ef6775ec7b2ca",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11800",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "34c0895d65e005129d0ef1f87783bd4ea48a5be79306a15dea85a44efc0c2e13",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11801",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "3cf3672f5288eec840ea535ad38d790e1c94a582619a903191f6881e43c50bab",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11802",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "bf2b8eac7e0e64948fef2300c4ee865c232b42b4986b6e41419f51759d5d42c7",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11803",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "c9f365fd3bfa8a6260b5154a22973ae5cd525fbe9dbd3ee632a9f52588295e14",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11804",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "7c4f031ac7db3763884eb16d51e6ade302c12fef14708c9b2afce653b07c4361",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11805",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "ddf949b10a09878a34d57b64551d32c30cd4ee56e37992fe985537bd6be29308",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11806",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "b2df4a58f3af4b7d50f14bf6c235539fdae4c843f38ba98e5251020bc127212f",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "587c83d005c622df11807",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                    ],
+                    pageInfo: {
+                        startCursor: "587c83d005c622df11800",
+                        endCursor: "587c83d005c622df11807",
+                        hasNextPage: false,
+                        __typename: "PageInfo",
+                    },
+                    __typename: "BlockchainTransactionsConnection",
+                },
+                __typename: "BlockchainAccountQuery",
+            },
+            __typename: "BlockchainQuery",
+        },
+    })
+})
+
+test("blockchain.transactions", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+
+    // simple forward
+    const queryResult1 = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    transactions(
+                        master_seq_no_range: { start: 8898621, end: 8898625 }
+                        first: 5
+                        after: "587c83d005c622df11803"
                     ) {
                         edges {
                             node {
+                                id
                                 hash
+                                chain_order
+                                balance_delta(format: HEX)
                             }
                             cursor
                         }
@@ -396,121 +518,7 @@ test("account_transactions", async () => {
             }
         `,
     })
-
-    expect(queryResult.data).toMatchObject({
-        blockchain: {
-            account_transactions: {
-                edges: [
-                    {
-                        node: {
-                            hash: "a1725e48f08eb5b4e07eaaa1979204b02385f351a4485d192f2ef6775ec7b2ca",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11800",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "34c0895d65e005129d0ef1f87783bd4ea48a5be79306a15dea85a44efc0c2e13",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11801",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "3cf3672f5288eec840ea535ad38d790e1c94a582619a903191f6881e43c50bab",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11802",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "bf2b8eac7e0e64948fef2300c4ee865c232b42b4986b6e41419f51759d5d42c7",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11803",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "c9f365fd3bfa8a6260b5154a22973ae5cd525fbe9dbd3ee632a9f52588295e14",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11804",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "7c4f031ac7db3763884eb16d51e6ade302c12fef14708c9b2afce653b07c4361",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11805",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "ddf949b10a09878a34d57b64551d32c30cd4ee56e37992fe985537bd6be29308",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11806",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                    {
-                        node: {
-                            hash: "b2df4a58f3af4b7d50f14bf6c235539fdae4c843f38ba98e5251020bc127212f",
-                            __typename: "BlockchainTransaction",
-                        },
-                        cursor: "587c83d005c622df11807",
-                        __typename: "BlockchainTransactionEdge",
-                    },
-                ],
-                pageInfo: {
-                    startCursor: "587c83d005c622df11800",
-                    endCursor: "587c83d005c622df11807",
-                    hasNextPage: false,
-                    __typename: "PageInfo",
-                },
-                __typename: "BlockchainTransactionsConnection",
-            },
-            __typename: "BlockchainQuery",
-        },
-    })
-})
-
-async function testTransactionsPagination(
-    client: ApolloClient<unknown>,
-    queryName: string,
-) {
-    // simple forward
-    const queryResult1 = await client.query({
-        query: gql`{
-            blockchain {
-                ${queryName}(
-                    master_seq_no: { start: 8898621, end: 8898625 }
-                    first: 5
-                    after: "587c83d005c622df11803"
-                ) {
-                    edges {
-                        node {
-                            id
-                            hash
-                            chain_order
-                            balance_delta(format: HEX)
-                        }
-                        cursor
-                    }
-                    pageInfo {
-                        startCursor
-                        endCursor
-                        hasNextPage
-                    }
-                }
-            }
-        }`,
-    })
-    expect(queryResult1.data.blockchain[queryName]).toMatchObject({
+    expect(queryResult1.data.blockchain.transactions).toMatchObject({
         edges: [
             {
                 node: {
@@ -567,29 +575,31 @@ async function testTransactionsPagination(
 
     // forward limited by realiable_chain_order_boundary (587c83f)
     const queryResult2 = await client.query({
-        query: gql`{
-            blockchain {
-                ${queryName}(
-                    master_seq_no: { start: 8898621, end: 8898625 }
-                    first: 5
-                    after: "587c83em05"
-                ) {
-                    edges {
-                        node {
-                            chain_order
+        query: gql`
+            {
+                blockchain {
+                    transactions(
+                        master_seq_no_range: { start: 8898621, end: 8898625 }
+                        first: 5
+                        after: "587c83em05"
+                    ) {
+                        edges {
+                            node {
+                                chain_order
+                            }
+                            cursor
                         }
-                        cursor
-                    }
-                    pageInfo {
-                        startCursor
-                        endCursor
-                        hasNextPage
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasNextPage
+                        }
                     }
                 }
             }
-        }`,
+        `,
     })
-    expect(queryResult2.data.blockchain[queryName]).toMatchObject({
+    expect(queryResult2.data.blockchain.transactions).toMatchObject({
         edges: [
             {
                 node: {
@@ -613,28 +623,30 @@ async function testTransactionsPagination(
 
     // backward
     const queryResult3 = await client.query({
-        query: gql`{
-            blockchain {
-                ${queryName}(
-                    master_seq_no: { start: 8898621, end: 8898625 }
-                    last: 5
-                ) {
-                    edges {
-                        node {
-                            chain_order
+        query: gql`
+            {
+                blockchain {
+                    transactions(
+                        master_seq_no_range: { start: 8898621, end: 8898625 }
+                        last: 5
+                    ) {
+                        edges {
+                            node {
+                                chain_order
+                            }
+                            cursor
                         }
-                        cursor
-                    }
-                    pageInfo {
-                        startCursor
-                        endCursor
-                        hasPreviousPage
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasPreviousPage
+                        }
                     }
                 }
             }
-        }`,
+        `,
     })
-    expect(queryResult3.data.blockchain[queryName]).toMatchObject({
+    expect(queryResult3.data.blockchain.transactions).toMatchObject({
         edges: [
             {
                 node: {
@@ -676,29 +688,31 @@ async function testTransactionsPagination(
 
     // backward with before
     const queryResult4 = await client.query({
-        query: gql`{
-            blockchain {
-                ${queryName}(
-                    master_seq_no: { start: 8898621, end: 8898625 }
-                    last: 5
-                    before: "587c83em05"
-                ) {
-                    edges {
-                        node {
-                            chain_order
+        query: gql`
+            {
+                blockchain {
+                    transactions(
+                        master_seq_no_range: { start: 8898621, end: 8898625 }
+                        last: 5
+                        before: "587c83em05"
+                    ) {
+                        edges {
+                            node {
+                                chain_order
+                            }
+                            cursor
                         }
-                        cursor
-                    }
-                    pageInfo {
-                        startCursor
-                        endCursor
-                        hasPreviousPage
+                        pageInfo {
+                            startCursor
+                            endCursor
+                            hasPreviousPage
+                        }
                     }
                 }
             }
-        }`,
+        `,
     })
-    expect(queryResult4.data.blockchain[queryName]).toMatchObject({
+    expect(queryResult4.data.blockchain.transactions).toMatchObject({
         edges: [
             {
                 node: {
@@ -737,23 +751,14 @@ async function testTransactionsPagination(
             hasPreviousPage: true,
         },
     })
-}
-
-test("workchain_transactions", async () => {
-    if (!server) {
-        throw new Error("server is null")
-    }
-    const client = createTestClient({ useWebSockets: true })
-
-    await testTransactionsPagination(client, "workchain_transactions")
 
     // filter by account_addresses
     const queryResult5 = await client.query({
         query: gql`
             {
                 blockchain {
-                    workchain_transactions(
-                        master_seq_no: { start: 8898621, end: 8898622 }
+                    transactions(
+                        master_seq_no_range: { start: 8898621, end: 8898622 }
                         workchain: 0
                         first: 10
                     ) {
@@ -775,7 +780,7 @@ test("workchain_transactions", async () => {
     })
     expect(queryResult5.data).toMatchObject({
         blockchain: {
-            workchain_transactions: {
+            transactions: {
                 edges: [
                     {
                         node: {
