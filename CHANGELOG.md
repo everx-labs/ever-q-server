@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.52.1] - xxxx-xx-xx
+
+### Fixed
+
+- `BlockchainTransaction` fields: orig_status_name, status_name, tr_type_name
+
 ## [0.52.0] - 2022-06-03
 
 ### New
