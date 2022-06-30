@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - `BlockchainTransaction` fields: orig_status_name, status_name, tr_type_name
 
+### Improved
+
+- Fix rare race condition in waitFor
+
 ## [0.52.0] - 2022-06-03
 
 ### New

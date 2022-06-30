@@ -50,7 +50,7 @@ import QLogs, { QLog } from "../logs"
 import { explainSlowReason, isFastQuery } from "../filter/slow-detector"
 import { IStats, StatsCounter, StatsGauge, StatsTiming } from "../stats"
 import { QTraceSpan, QTracer } from "../tracing"
-import { QAsyncIterator, QError, required, wrap } from "../utils"
+import { Deferred, QAsyncIterator, QError, required, wrap } from "../utils"
 import EventEmitter from "events"
 import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql"
 import { QRequestContext, RequestEvent } from "../request"
@@ -756,32 +756,39 @@ export class QDataCollection {
             if (traceParams) {
                 span.log({ params: traceParams })
             }
-            let waitFor: ((doc: QDoc) => void) | null = null
-            let forceTimerId: unknown | undefined = undefined
-            let resolvedBy: string | null = null
-            let hasDbResponse = false
-            let resolveOnClose: (doc: QDoc[]) => void = () => {}
-            const resolveBy = (
-                reason: string,
-                resolve: (result: QDoc[]) => void,
-                result: QDoc[],
-            ) => {
-                if (!resolvedBy) {
-                    resolvedBy = reason
-                    resolve(result)
+
+            let finishedBy: string | null = null
+            const defferedResult = new Deferred<QDoc[]>()
+            const resolveBy = (reason: string, result: QDoc[]) => {
+                if (!finishedBy) {
+                    finishedBy = reason
+                    defferedResult.resolve(result)
                 }
             }
+            const failBy = (reason: string, error: any) => {
+                if (!finishedBy) {
+                    finishedBy = reason
+                    defferedResult.reject(error)
+                }
+            }
+
             request.events.on(RequestEvent.CLOSE, () => {
-                resolveBy("close", resolveOnClose, [])
+                resolveBy("close", [])
             })
+
+            let waitFor: ((doc: QDoc) => void) | null = null
+            let queryTimer: NodeJS.Timeout | undefined = undefined
+            let firstQueryCompleted = false
             try {
                 const queryTimeoutAt = Date.now() + q.timeout
-                const onQuery = new Promise<QDoc[]>((resolve, reject) => {
-                    let queryCount = 0
-                    let period = request.services.config.queries.waitForPeriod
-                    const check = () => {
-                        const checkStart = Date.now()
-                        this.queryProvider({
+
+                // -------- Poll DB --------
+                let queryCount = 0
+                let period = request.services.config.queries.waitForPeriod
+                const queryOnce = async () => {
+                    try {
+                        const queryStart = Date.now()
+                        const docs = await this.queryProvider({
                             text: q.text,
                             vars: q.params,
                             orderBy: q.orderBy,
@@ -790,83 +797,86 @@ export class QDataCollection {
                             traceSpan: span,
                             isFast,
                             maxRuntimeInS: Math.ceil(
-                                (queryTimeoutAt - checkStart) / 1000,
+                                (queryTimeoutAt - queryStart) / 1000,
                             ),
-                        }).then(docs => {
-                            queryCount += 1
-                            if (queryCount >= 7) {
-                                period = period * 1.5
-                            }
-                            hasDbResponse = true
-                            if (!resolvedBy) {
-                                if (docs.length > 0) {
-                                    forceTimerId = undefined
-                                    resolveBy("query", resolve, docs as QDoc[])
-                                } else {
-                                    const now = Date.now()
-                                    const checkDuration = now - checkStart
-                                    const timeLeft = queryTimeoutAt - now
-                                    const toWait = Math.min(
-                                        period,
-                                        timeLeft - 2 * checkDuration,
-                                        timeLeft - 200,
-                                    )
-                                    forceTimerId = setTimeout(
-                                        check,
-                                        Math.max(toWait, 100),
-                                    )
-                                }
-                            }
-                        }, reject)
-                    }
-                    check()
-                })
-                const onChangesFeed = new Promise<QDoc[]>(resolve => {
-                    const authFilter = QDataListener.getAuthFilter(
-                        this.name,
-                        q.accessRights,
-                    )
-                    waitFor = doc => {
-                        if (authFilter && !authFilter(doc)) {
+                        })
+                        queryCount += 1
+                        if (queryCount >= 7) {
+                            period = period * 1.5
+                        }
+                        firstQueryCompleted = true
+                        if (finishedBy) {
                             return
                         }
-                        try {
-                            if (this.docType.test(null, doc, q.filter)) {
-                                resolveBy("listener", resolve, [doc])
-                            }
-                        } catch (error: any) {
-                            this.log.error(
-                                Date.now(),
-                                this.name,
-                                "QUERY\tFAILED",
-                                JSON.stringify(q.filter),
-                                error.toString(),
+                        if (docs.length > 0) {
+                            resolveBy("query", docs as QDoc[])
+                        } else {
+                            // next iteration
+                            const now = Date.now()
+                            const queryDuration = now - queryStart
+                            const timeLeft = queryTimeoutAt - now
+                            const toWait = Math.min(
+                                period,
+                                timeLeft - 2 * queryDuration,
+                                timeLeft - 200,
+                            )
+                            queryTimer = setTimeout(
+                                queryOnce,
+                                Math.max(toWait, 100),
                             )
                         }
+                    } catch (error: any) {
+                        this.log.error(
+                            Date.now(),
+                            this.name,
+                            "QUERY\tFAILED",
+                            JSON.stringify(q.filter),
+                            error.toString(),
+                        )
+                        failBy("query-error", error)
                     }
-                    this.waitForCount += 1
-                    this.docInsertOrUpdate.on("doc", waitFor)
-                    void this.statWaitForActive.increment().then(() => {})
-                })
-                const onTimeout = new Promise<QDoc[]>((resolve, reject) => {
-                    setTimeout(() => {
-                        if (hasDbResponse) {
-                            resolveBy("timeout", resolve, [])
-                        } else {
-                            reject(QError.queryTerminatedOnTimeout())
+                }
+                void queryOnce().then(() => {})
+
+                // -------- Subscribe changes feed --------
+                const authFilter = QDataListener.getAuthFilter(
+                    this.name,
+                    q.accessRights,
+                )
+                waitFor = doc => {
+                    if (authFilter && !authFilter(doc)) {
+                        return
+                    }
+                    try {
+                        if (this.docType.test(null, doc, q.filter)) {
+                            resolveBy("listener", [doc])
                         }
-                    }, q.timeout)
-                })
-                const onClose = new Promise<QDoc[]>(resolve => {
-                    resolveOnClose = resolve
-                })
-                const result = await Promise.race<Promise<QDoc[]>>([
-                    onQuery,
-                    onChangesFeed,
-                    onTimeout,
-                    onClose,
-                ])
-                span.setTag("resolved", resolvedBy)
+                    } catch (error: any) {
+                        this.log.error(
+                            Date.now(),
+                            this.name,
+                            "QUERY\tFAILED",
+                            JSON.stringify(q.filter),
+                            error.toString(),
+                        )
+                    }
+                }
+                this.waitForCount += 1
+                this.docInsertOrUpdate.on("doc", waitFor)
+                void this.statWaitForActive.increment().then(() => {})
+
+                // -------- Setup timeout --------
+                setTimeout(() => {
+                    if (firstQueryCompleted) {
+                        resolveBy("timeout", [])
+                    } else {
+                        failBy("timeout", QError.queryTerminatedOnTimeout())
+                    }
+                }, q.timeout)
+
+                // -------- Wait for result --------
+                const result = await defferedResult.promise
+                span.setTag("resolved", finishedBy)
                 return result
             } finally {
                 if (waitFor !== null && waitFor !== undefined) {
@@ -875,10 +885,7 @@ export class QDataCollection {
                     waitFor = null
                     await this.statWaitForActive.decrement()
                 }
-                if (forceTimerId !== undefined) {
-                    clearTimeout(forceTimerId as number)
-                    forceTimerId = null
-                }
+                clearTimeout(queryTimer)
             }
         }
         return traceSpan.traceChildOperation(`${this.name}.waitFor`, impl)
