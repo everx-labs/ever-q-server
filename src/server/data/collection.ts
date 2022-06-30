@@ -759,19 +759,13 @@ export class QDataCollection {
 
             let finishedBy: string | null = null
             const defferedResult = new Deferred<QDoc[]>()
-            const resolveBy = (
-                reason: string,
-                result: QDoc[],
-            ) => {
+            const resolveBy = (reason: string, result: QDoc[]) => {
                 if (!finishedBy) {
                     finishedBy = reason
                     defferedResult.resolve(result)
                 }
             }
-            const failBy = (
-                reason: string,
-                error: any,
-            ) => {
+            const failBy = (reason: string, error: any) => {
                 if (!finishedBy) {
                     finishedBy = reason
                     defferedResult.reject(error)
@@ -831,8 +825,7 @@ export class QDataCollection {
                                 Math.max(toWait, 100),
                             )
                         }
-                    }
-                    catch (error: any) {
+                    } catch (error: any) {
                         this.log.error(
                             Date.now(),
                             this.name,
