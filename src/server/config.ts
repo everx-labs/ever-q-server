@@ -234,7 +234,7 @@ export const configParams = {
             disableKeyComparison: ConfigParam.boolean(
                 "disable-key-comparison",
                 false,
-                "If `true` then AQL will use `TO_STRING(doc._key)` conversion " +
+                "**UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion " +
                     'if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).',
                 false,
             ),
