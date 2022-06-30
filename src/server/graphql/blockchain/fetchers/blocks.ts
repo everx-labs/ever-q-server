@@ -39,7 +39,10 @@ async function fetch_block(
     )
 
     // query
-    const params = new QParams()
+    const params = new QParams({
+        disableKeyComparison:
+            context.services.config.queries.filter.disableKeyComparison,
+    })
     const query =
         "FOR doc IN blocks " +
         `FILTER ${filterBuilder(params)} ` +
@@ -107,7 +110,10 @@ export async function resolve_key_blocks(
 ) {
     // filters
     const filters: string[] = []
-    const params = new QParams()
+    const params = new QParams({
+        disableKeyComparison:
+            context.services.config.queries.filter.disableKeyComparison,
+    })
 
     await prepareChainOrderFilter(args, params, filters, context)
     filters.push("doc.key_block == true")
@@ -167,7 +173,10 @@ export async function resolve_blockchain_blocks(
 
     // filters
     const filters: string[] = []
-    const params = new QParams()
+    const params = new QParams({
+        disableKeyComparison:
+            context.services.config.queries.filter.disableKeyComparison,
+    })
 
     await prepareChainOrderFilter(args, params, filters, context)
     if (isDefined(args.workchain)) {

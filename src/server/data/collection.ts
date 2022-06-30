@@ -34,7 +34,13 @@ import {
 } from "./data-provider"
 import { QDataListener, QDataSubscription } from "./listener"
 import { AccessArgs, AccessRights, Auth } from "../auth"
-import { QConfig, SlowQueriesMode, STATS, SubscriptionsMode } from "../config"
+import {
+    FilterConfig,
+    QConfig,
+    SlowQueriesMode,
+    STATS,
+    SubscriptionsMode,
+} from "../config"
 import {
     CollectionFilter,
     indexToString,
@@ -78,6 +84,7 @@ export type QCollectionOptions = {
     stats: IStats
     subscriptionsMode: SubscriptionsMode
 
+    filterConfig: FilterConfig
     isTests: boolean
 }
 
@@ -95,6 +102,7 @@ export class QDataCollection {
     tracer: Tracer
     isTests: boolean
     subscriptionsMode: SubscriptionsMode
+    filterConfig: FilterConfig
 
     // Own
     statDoc: StatsCounter
@@ -130,6 +138,7 @@ export class QDataCollection {
         this.tracer = options.tracer
         this.isTests = options.isTests
         this.subscriptionsMode = options.subscriptionsMode
+        this.filterConfig = options.filterConfig
         this.waitForCount = 0
         this.subscriptionCount = 0
 
@@ -443,6 +452,7 @@ export class QDataCollection {
         if (stat === undefined) {
             stat = {
                 isFast: isFastQuery(
+                    this.filterConfig,
                     this.name,
                     this.indexes,
                     this.docType,
@@ -491,6 +501,7 @@ export class QDataCollection {
             ],
         }
         const query = QCollectionQuery.create(
+            this.filterConfig,
             request,
             this.name,
             this.docType,
@@ -498,7 +509,6 @@ export class QDataCollection {
             selection,
             accessRights,
             required(this.provider).shardingDegree,
-            request.services.config.queries.filter,
         )
         if (query === null) {
             return false
@@ -650,6 +660,7 @@ export class QDataCollection {
                                 )
                             const query = optimizationPassed
                                 ? QCollectionQuery.create(
+                                      this.filterConfig,
                                       request,
                                       this.name,
                                       this.docType,
@@ -657,7 +668,6 @@ export class QDataCollection {
                                       selectionSet,
                                       accessRights,
                                       required(this.provider).shardingDegree,
-                                      request.services.config.queries.filter,
                                   )
                                 : null
                             if (query === null) {
@@ -682,6 +692,7 @@ export class QDataCollection {
                             await this.statQueryFailed.increment()
                             if (queryProcessing.created) {
                                 const slowReason = explainSlowReason(
+                                    this.filterConfig,
                                     this.name,
                                     this.indexes,
                                     this.docType,
@@ -903,7 +914,9 @@ export class QDataCollection {
         queries: AggregationQuery[]
         shards?: Set<string>
     } | null {
-        const params = new QParams()
+        const params = new QParams({
+            disableKeyComparison: this.filterConfig.disableKeyComparison,
+        })
         const condition = QCollectionQuery.buildFilterCondition(
             this.name,
             this.docType,

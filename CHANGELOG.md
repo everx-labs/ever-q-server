@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [0.52.1] - xxxx-xx-xx
 
+### New
+
+- `disable-key-comparison` parameter – if `true` then AQL will use `TO_STRING(doc._key)`
+  conversion if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).
+
 ### Fixed
 
 - `BlockchainTransaction` fields: orig_status_name, status_name, tr_type_name

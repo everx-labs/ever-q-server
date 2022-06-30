@@ -32,6 +32,7 @@ export class QCollectionQuery {
     ) {}
 
     static create(
+        config: FilterConfig,
         request: QRequestParams,
         collectionName: string,
         collectionDocType: QType,
@@ -45,7 +46,6 @@ export class QCollectionQuery {
         selectionSet: SelectionSetNode | undefined,
         accessRights: AccessRights,
         shardingDegree: number,
-        config?: FilterConfig,
     ): QCollectionQuery | null {
         const orderBy: OrderBy[] = args.orderBy || []
         const orderByText = orderBy
@@ -65,7 +65,9 @@ export class QCollectionQuery {
         const limit: number = Math.min(args.limit || 50, 50)
         const limitSection = `LIMIT ${limit}`
 
-        const params = new QParams()
+        const params = new QParams({
+            disableKeyComparison: config.disableKeyComparison,
+        })
         const orConversion =
             config?.orConversion ?? FilterOrConversion.SUB_QUERIES
         const useSubQueries = orConversion === FilterOrConversion.SUB_QUERIES
@@ -158,6 +160,7 @@ export class QCollectionQuery {
     ): QCollectionQuery | null {
         if (!refOnIsArray) {
             return QCollectionQuery.create(
+                config.queries.filter,
                 request,
                 refCollectionName,
                 refCollectionDocType,
@@ -169,7 +172,6 @@ export class QCollectionQuery {
                 fieldSelection,
                 accessRights,
                 shardingDegree,
-                config.queries.filter,
             )
         }
         const returnExpression = QCollectionQuery.buildReturnExpression(
@@ -179,7 +181,9 @@ export class QCollectionQuery {
             [],
         )
         let filterSection = ""
-        const params = new QParams()
+        const params = new QParams({
+            disableKeyComparison: config.queries.filter.disableKeyComparison,
+        })
         for (const onValue of onValues) {
             if (filterSection === "") {
                 filterSection = "FILTER "
@@ -195,7 +199,7 @@ export class QCollectionQuery {
                     FOR doc IN messages
                     ${filterSection}
                     RETURN ${returnExpression},
-                    
+
                     FOR doc IN messages_complement
                     ${filterSection}
                     RETURN ${returnExpression}

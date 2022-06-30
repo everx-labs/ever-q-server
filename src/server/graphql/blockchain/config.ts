@@ -370,7 +370,10 @@ export function compileCollectionConfig<TItem>(
 
             // maxJoinDepth is because in nested joins all paths should be different
             const pathForQuery = `${join.pathForQuery}${maxJoinDepth - 1}`
-            const params = new QParams()
+            const params = new QParams({
+                disableKeyComparison:
+                    context.services.config.queries.filter.disableKeyComparison,
+            })
             const returnExpression = config[
                 join.joinedCollection
             ].buildReturnExpression(

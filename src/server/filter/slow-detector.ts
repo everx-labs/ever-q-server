@@ -8,6 +8,7 @@ import {
 } from "./filters"
 import type { OrderBy, QFieldExplanation, QType } from "./filters"
 import type { QLog } from "../logs"
+import { FilterConfig } from "../config"
 
 function setIs1(s: Set<string>, a: string): boolean {
     return s.size === 1 && s.has(a)
@@ -137,12 +138,14 @@ function getSlowReason(
 }
 
 function getSlowReasonForOrOperand(
+    config: FilterConfig,
     collectionIndexes: QIndexInfo[],
     type: QType,
     filter: CollectionFilter,
     orderBy: OrderBy[],
 ): SlowReason | null {
     const params = new QParams({
+        disableKeyComparison: config.disableKeyComparison,
         explain: true,
     })
     type.filterCondition(params, "", filter)
@@ -199,6 +202,7 @@ export type SlowReason = {
 }
 
 export function explainSlowReason(
+    config: FilterConfig,
     _collectionName: string,
     collectionIndexes: QIndexInfo[],
     type: QType,
@@ -208,6 +212,7 @@ export function explainSlowReason(
     const orOperands = splitOr(filter)
     for (let i = 0; i < orOperands.length; i += 1) {
         const slowReason = getSlowReasonForOrOperand(
+            config,
             collectionIndexes,
             type,
             orOperands[i],
@@ -221,6 +226,7 @@ export function explainSlowReason(
 }
 
 export function isFastQuery(
+    config: FilterConfig,
     collectionName: string,
     collectionIndexes: QIndexInfo[],
     type: QType,
@@ -229,6 +235,7 @@ export function isFastQuery(
     log: QLog | null,
 ): boolean {
     const slowReason = explainSlowReason(
+        config,
         collectionName,
         collectionIndexes,
         type,

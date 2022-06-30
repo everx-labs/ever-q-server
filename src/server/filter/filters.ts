@@ -89,6 +89,7 @@ export class QExplanation {
 
 export type QParamsOptions = {
     explain?: boolean
+    disableKeyComparison?: boolean
 }
 
 /**
@@ -98,12 +99,14 @@ export class QParams {
     values: Record<string, unknown>
     count: number
     explanation: QExplanation | null
+    disableKeyComparison: boolean
 
     constructor(options?: QParamsOptions) {
         this.count = 0
         this.values = {}
         this.explanation =
             options && options.explain ? new QExplanation() : null
+        this.disableKeyComparison = options?.disableKeyComparison ?? false
     }
 
     clear() {
@@ -314,6 +317,7 @@ function filterConditionOp(
      */
 
     const isKeyOrderedComparison =
+        params.disableKeyComparison &&
         (path === "_key" || path.endsWith("._key")) &&
         op !== "==" &&
         op !== "!="
