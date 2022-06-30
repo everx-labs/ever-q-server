@@ -23,7 +23,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
 
 ```text
 Option                                          ENV                                             Default                                 Description
-----------------------------------------------  ----------------------------------------------  --------------------------------------  ----------------------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------  ----------------------------------------------  --------------------------------------  --------------------------------------------------------------------------------------
 --config                                        Q_CONFIG                                                                                Path to JSON configuration file
 --host                                          Q_HOST                                          {ip}                                    Listening address
 --port                                          Q_PORT                                          4000                                    Listening port
@@ -47,7 +47,7 @@ Option                                          ENV                             
                                                                                                                                         `sub-queries` – q-server performs parallel queries for each OR operand
                                                                                                                                          and combines results (this option provides faster execution
                                                                                                                                          than OR operator in AQL)
---disable-key-comparison                        Q_DISABLE_KEY_COMPARISON                        false                                   **UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion
+--stringify-key-in-aql-comparison               Q_STRINGIFY_KEY_IN_AQL_COMPARISON               false                                   **UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion
                                                                                                                                         if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).
 --query-max-runtime                             Q_QUERY_MAX_RUNTIME                             600                                     Max allowed execution time for ArangoDb queries in seconds
 --slow-queries                                  Q_SLOW_QUERIES                                  redirect                                Slow queries handling:

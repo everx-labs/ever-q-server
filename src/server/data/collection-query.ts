@@ -66,7 +66,7 @@ export class QCollectionQuery {
         const limitSection = `LIMIT ${limit}`
 
         const params = new QParams({
-            disableKeyComparison: config.disableKeyComparison,
+            stringifyKeyInAqlComparison: config.stringifyKeyInAqlComparison,
         })
         const orConversion =
             config?.orConversion ?? FilterOrConversion.SUB_QUERIES
@@ -182,7 +182,8 @@ export class QCollectionQuery {
         )
         let filterSection = ""
         const params = new QParams({
-            disableKeyComparison: config.queries.filter.disableKeyComparison,
+            stringifyKeyInAqlComparison:
+                config.queries.filter.stringifyKeyInAqlComparison,
         })
         for (const onValue of onValues) {
             if (filterSection === "") {

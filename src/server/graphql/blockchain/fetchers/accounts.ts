@@ -26,8 +26,8 @@ export async function resolve_account(
 
     // query
     const params = new QParams({
-        disableKeyComparison:
-            context.services.config.queries.filter.disableKeyComparison,
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
     const query =
         "FOR doc IN accounts " +

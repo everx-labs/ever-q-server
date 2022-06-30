@@ -40,8 +40,8 @@ export async function resolve_message(
 
     // query
     const params = new QParams({
-        disableKeyComparison:
-            context.services.config.queries.filter.disableKeyComparison,
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
     const query =
         "FOR doc IN messages " +
@@ -107,8 +107,8 @@ export async function resolve_account_messages(
 
     const { direction, limit } = processPaginationArgs(args)
     const params = new QParams({
-        disableKeyComparison:
-            context.services.config.queries.filter.disableKeyComparison,
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
     const queries: string[] = []
     const accountParam = params.add(parent.address)

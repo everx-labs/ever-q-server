@@ -16,7 +16,7 @@ test("Slow Detector", () => {
     let collectionType: QType
     const config: FilterConfig = {
         orConversion: FilterOrConversion.OR_OPERATOR,
-        disableKeyComparison: false,
+        stringifyKeyInAqlComparison: false,
     }
     function setCollection(name: string, type: QType) {
         collectionName = name

@@ -41,8 +41,8 @@ export async function resolve_transaction(
 
     // query
     const params = new QParams({
-        disableKeyComparison:
-            context.services.config.queries.filter.disableKeyComparison,
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
     const query =
         "FOR doc IN transactions " +
@@ -73,8 +73,8 @@ export async function resolve_blockchain_transactions(
     // filters
     const filters: string[] = []
     const params = new QParams({
-        disableKeyComparison:
-            context.services.config.queries.filter.disableKeyComparison,
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
 
     await prepareChainOrderFilter(args, params, filters, context)
@@ -163,8 +163,8 @@ export async function resolve_account_transactions(
     // filters
     const filters: string[] = []
     const params = new QParams({
-        disableKeyComparison:
-            context.services.config.queries.filter.disableKeyComparison,
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
 
     await prepareChainOrderFilter(args, params, filters, context)

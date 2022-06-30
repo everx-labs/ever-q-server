@@ -915,7 +915,8 @@ export class QDataCollection {
         shards?: Set<string>
     } | null {
         const params = new QParams({
-            disableKeyComparison: this.filterConfig.disableKeyComparison,
+            stringifyKeyInAqlComparison:
+                this.filterConfig.stringifyKeyInAqlComparison,
         })
         const condition = QCollectionQuery.buildFilterCondition(
             this.name,

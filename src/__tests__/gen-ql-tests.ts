@@ -547,13 +547,13 @@ test("Generate AQL", () => {
     expect(params.values.v1).toBeNull()
 
     params.clear()
-    params.disableKeyComparison = true
+    params.stringifyKeyInAqlComparison = true
     ql = Account.filterCondition(params, "doc", { id: { gt: "fff" } })
     expect(ql).toEqual("TO_STRING(doc._key) > @v1")
     expect(params.values.v1).toEqual("fff")
 
     params.clear()
-    params.disableKeyComparison = false
+    params.stringifyKeyInAqlComparison = false
     ql = Account.filterCondition(params, "doc", { id: { gt: "fff" } })
     expect(ql).toEqual("doc._key > @v1")
     expect(params.values.v1).toEqual("fff")
@@ -564,7 +564,7 @@ test("Generate AQL", () => {
     expect(params.values.v1).toEqual("fff")
 
     params.clear()
-    params.disableKeyComparison = true
+    params.stringifyKeyInAqlComparison = true
     ql = Account.filterCondition(params, "doc", {
         id: { gt: "fff" },
         last_paid: { ge: 20 },
@@ -574,7 +574,7 @@ test("Generate AQL", () => {
     expect(params.values.v2).toEqual(20)
 
     params.clear()
-    params.disableKeyComparison = false
+    params.stringifyKeyInAqlComparison = false
     ql = Message.filterCondition(params, "doc", {
         src: { eq: "1" },
         dst: { eq: "2" },

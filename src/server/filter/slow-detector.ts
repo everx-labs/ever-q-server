@@ -145,7 +145,7 @@ function getSlowReasonForOrOperand(
     orderBy: OrderBy[],
 ): SlowReason | null {
     const params = new QParams({
-        disableKeyComparison: config.disableKeyComparison,
+        stringifyKeyInAqlComparison: config.stringifyKeyInAqlComparison,
         explain: true,
     })
     type.filterCondition(params, "", filter)

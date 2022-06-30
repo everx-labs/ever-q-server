@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- **UNSTABLE!** `disable-key-comparison` parameter – if `true` then AQL will use `TO_STRING(doc._key)`
+- **UNSTABLE!** `stringify-key-in-aql-comparison` parameter – if `true` then AQL will use `TO_STRING(doc._key)`
   conversion if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).
 
 ### Fixed

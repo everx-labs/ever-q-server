@@ -88,7 +88,7 @@ export type QConfig = {
 
 export type FilterConfig = {
     orConversion: FilterOrConversion
-    disableKeyComparison: boolean
+    stringifyKeyInAqlComparison: boolean
 }
 
 export type QBlockchainDataConfig = {
@@ -231,10 +231,10 @@ export const configParams = {
                     " and combines results (this option provides faster execution\n" +
                     " than OR operator in AQL)",
             ),
-            disableKeyComparison: ConfigParam.boolean(
-                "disable-key-comparison",
+            stringifyKeyInAqlComparison: ConfigParam.boolean(
+                "stringify-key-in-aql-comparison",
                 false,
-                "**UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion " +
+                "**UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion\n" +
                     'if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).',
                 false,
             ),
