@@ -25,7 +25,10 @@ export async function resolve_account(
     )
 
     // query
-    const params = new QParams()
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
     const query =
         "FOR doc IN accounts " +
         `FILTER doc._key == @${params.add(address)} ` +

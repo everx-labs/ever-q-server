@@ -34,9 +34,9 @@ test("remove nulls", async () => {
     let block = (
         await testServerQuery<Blocks>(`
         query {
-            blocks(filter: { workchain_id: { eq: 0 } }) { 
-                master { min_shard_gen_utime } 
-            } 
+            blocks(filter: { workchain_id: { eq: 0 } }) {
+                master { min_shard_gen_utime }
+            }
         }
     `)
     ).blocks[0]
@@ -45,15 +45,15 @@ test("remove nulls", async () => {
     block = (
         await testServerQuery<Blocks>(`
         query {
-            blocks(filter: { workchain_id: { eq: 0 } }) { 
+            blocks(filter: { workchain_id: { eq: 0 } }) {
                 master {
                     shard_hashes {
                       workchain_id
                       shard
                       descr {seq_no}
                     }
-                } 
-            } 
+                }
+            }
         }
     `)
     ).blocks[0]
@@ -62,7 +62,7 @@ test("remove nulls", async () => {
 
 test("multi query", async () => {
     const data = await testServerQuery<Blocks>(`
-    query { 
+    query {
         info { time }
         blocks { id }
         b:blocks { id }
@@ -111,6 +111,10 @@ test("OR conversions", () => {
     const data = createLocalArangoTestData(new QLogs())
     const withOr = normalized(
         QCollectionQuery.create(
+            {
+                ...data.filterConfig,
+                orConversion: FilterOrConversion.OR_OPERATOR,
+            },
             { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
@@ -129,16 +133,13 @@ test("OR conversions", () => {
             selectionInfo("src dst"),
             grantedAccess,
             0,
-            {
-                orConversion: FilterOrConversion.OR_OPERATOR,
-            },
         )?.text ?? "",
     )
 
     expect(withOr).toEqual(
         normalized(`
         FOR doc IN messages
-        FILTER (doc.src == @v1) OR (doc.dst == @v2) 
+        FILTER (doc.src == @v1) OR (doc.dst == @v2)
         SORT doc.created_at
         LIMIT 50
         RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
@@ -147,6 +148,10 @@ test("OR conversions", () => {
 
     const withSubQueries = normalized(
         QCollectionQuery.create(
+            {
+                ...data.filterConfig,
+                orConversion: FilterOrConversion.SUB_QUERIES,
+            },
             { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
@@ -165,9 +170,6 @@ test("OR conversions", () => {
             selectionInfo("src dst"),
             grantedAccess,
             0,
-            {
-                orConversion: FilterOrConversion.SUB_QUERIES,
-            },
         )?.text ?? "",
     )
 
@@ -175,13 +177,13 @@ test("OR conversions", () => {
         normalized(`
         FOR doc IN UNION_DISTINCT(
             FOR doc IN messages
-            FILTER doc.src == @v1 
+            FILTER doc.src == @v1
             SORT doc.created_at
             LIMIT 50
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
             ,
             FOR doc IN messages
-            FILTER doc.dst == @v2 
+            FILTER doc.dst == @v2
             SORT doc.created_at
             LIMIT 50
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
@@ -197,6 +199,10 @@ test("messages_complement are used for shardingDegree > 0", () => {
     const data = createLocalArangoTestData(new QLogs())
     const withOr = normalized(
         QCollectionQuery.create(
+            {
+                ...data.filterConfig,
+                orConversion: FilterOrConversion.OR_OPERATOR,
+            },
             { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
@@ -221,9 +227,6 @@ test("messages_complement are used for shardingDegree > 0", () => {
             selectionInfo("src dst"),
             grantedAccess,
             1,
-            {
-                orConversion: FilterOrConversion.OR_OPERATOR,
-            },
         )?.text ?? "",
     )
 
@@ -235,7 +238,7 @@ test("messages_complement are used for shardingDegree > 0", () => {
             SORT doc.created_at
             LIMIT 50
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at } ,
-            
+
             FOR doc IN messages_complement
             FILTER (doc.src == @v1) OR (doc.dst == @v2)
             SORT doc.created_at
@@ -249,6 +252,10 @@ test("messages_complement are used for shardingDegree > 0", () => {
 
     const withSubQueries = normalized(
         QCollectionQuery.create(
+            {
+                ...data.filterConfig,
+                orConversion: FilterOrConversion.SUB_QUERIES,
+            },
             { expectedAccountBocVersion: 1 },
             data.messages.name,
             data.messages.docType,
@@ -273,9 +280,6 @@ test("messages_complement are used for shardingDegree > 0", () => {
             selectionInfo("src dst"),
             grantedAccess,
             1,
-            {
-                orConversion: FilterOrConversion.SUB_QUERIES,
-            },
         )?.text ?? "",
     )
 
@@ -283,19 +287,19 @@ test("messages_complement are used for shardingDegree > 0", () => {
         normalized(`
         FOR doc IN UNION_DISTINCT(
             FOR doc IN messages
-            FILTER doc.src == @v1 
+            FILTER doc.src == @v1
             SORT doc.created_at
             LIMIT 50
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
             ,
             FOR doc IN messages_complement
-            FILTER doc.src == @v1 
+            FILTER doc.src == @v1
             SORT doc.created_at
             LIMIT 50
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
             ,
             FOR doc IN messages
-            FILTER doc.dst == @v2 
+            FILTER doc.dst == @v2
             SORT doc.created_at
             LIMIT 50
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
@@ -351,7 +355,7 @@ test("reduced RETURN", () => {
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             value_flow: ( doc.value_flow && {
-                imported: doc.value_flow.imported 
+                imported: doc.value_flow.imported
             } )
         }
     `),
@@ -362,7 +366,7 @@ test("reduced RETURN", () => {
         FOR doc IN blocks LIMIT 50 RETURN {
             _key: doc._key,
             in_msg_descr: ( doc.in_msg_descr && (
-                FOR doc__in_msg_descr IN doc.in_msg_descr || [] RETURN { msg_type: doc__in_msg_descr.msg_type } 
+                FOR doc__in_msg_descr IN doc.in_msg_descr || [] RETURN { msg_type: doc__in_msg_descr.msg_type }
             ) )
         }
     `),
@@ -424,9 +428,9 @@ test("reduced RETURN", () => {
         ),
     ).toEqual(
         normalized(`
-        FOR doc IN blocks 
+        FOR doc IN blocks
         FILTER doc.workchain_id == @v1 SORT doc.seq_no DESC
-        LIMIT 1 
+        LIMIT 1
         RETURN {
             _key: doc._key,
             seq_no: doc.seq_no
@@ -543,8 +547,15 @@ test("Generate AQL", () => {
     expect(params.values.v1).toBeNull()
 
     params.clear()
+    params.stringifyKeyInAqlComparison = true
     ql = Account.filterCondition(params, "doc", { id: { gt: "fff" } })
     expect(ql).toEqual("TO_STRING(doc._key) > @v1")
+    expect(params.values.v1).toEqual("fff")
+
+    params.clear()
+    params.stringifyKeyInAqlComparison = false
+    ql = Account.filterCondition(params, "doc", { id: { gt: "fff" } })
+    expect(ql).toEqual("doc._key > @v1")
     expect(params.values.v1).toEqual("fff")
 
     params.clear()
@@ -553,6 +564,7 @@ test("Generate AQL", () => {
     expect(params.values.v1).toEqual("fff")
 
     params.clear()
+    params.stringifyKeyInAqlComparison = true
     ql = Account.filterCondition(params, "doc", {
         id: { gt: "fff" },
         last_paid: { ge: 20 },
@@ -562,6 +574,7 @@ test("Generate AQL", () => {
     expect(params.values.v2).toEqual(20)
 
     params.clear()
+    params.stringifyKeyInAqlComparison = false
     ql = Message.filterCondition(params, "doc", {
         src: { eq: "1" },
         dst: { eq: "2" },

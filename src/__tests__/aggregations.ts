@@ -26,7 +26,7 @@ test("Optimized MIN, MAX", () => {
         ]),
     ).toEqual(
         normalized(`
-        RETURN [ 
+        RETURN [
             (FOR doc IN blocks LET a = doc.seq_no SORT a ASC LIMIT 1 RETURN a)[0]
         ]
     `),
@@ -142,10 +142,11 @@ function aggregateStrings<T>(items: T[], getValue: (item: T) => string) {
 }
 
 test("Partitioned Data", async () => {
+    const data = createLocalArangoTestData(new QLogs())
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
-        data: createLocalArangoTestData(new QLogs()),
+        data,
     })
     await server.start()
     const client = createTestClient({ useWebSockets: true })
@@ -191,7 +192,7 @@ test("Partitioned Data", async () => {
                 {field: "created_at", fn: AVERAGE}
                 {field: "id", fn: MIN}
                 {field: "id", fn: MAX}
-            ]) 
+            ])
         }`}
             `,
         })
@@ -240,10 +241,11 @@ test("Partitioned Data", async () => {
 })
 
 test("Partitioned data with null", async () => {
+    const data = createLocalArangoTestData(new QLogs())
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
-        data: createLocalArangoTestData(new QLogs()),
+        data,
     })
     await server.start()
     const client = createTestClient({ useWebSockets: true })
@@ -255,7 +257,7 @@ test("Partitioned data with null", async () => {
             fields: [
                 {field: "value", fn: COUNT}
                 {field: "value", fn: MIN}
-            ]) 
+            ])
         }`}
             `,
         })
@@ -264,11 +266,12 @@ test("Partitioned data with null", async () => {
     void server.stop()
 })
 
-test("Balance delta sum", async () => {
+test.skip("Balance delta sum", async () => {
+    const data = createLocalArangoTestData(new QLogs())
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
-        data: createLocalArangoTestData(new QLogs()),
+        data,
     })
     await server.start()
     const client = createTestClient({ useWebSockets: true })
@@ -294,7 +297,7 @@ test("Balance delta sum", async () => {
             filter: {account_addr: {eq: "${account.id}"}}
             fields: [
                 {field: "balance_delta", fn: SUM}
-            ]) 
+            ])
         }`}
             `,
         })
