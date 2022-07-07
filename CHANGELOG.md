@@ -2,12 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.52.1] - xxxx-xx-xx
+## [0.52.1] - 2022-07-07
 
 ### New
 
 - **UNSTABLE!** `stringify-key-in-aql-comparison` parameter – if `true` then AQL will use `TO_STRING(doc._key)`
   conversion if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).
+
+- New paramter `--walking-use-cache` or `Q_WALKING_USE_CACHE`.\
+  Set this parameter to true to serve the block walking algorithm from the Redis cache
 
 ### Fixed
 

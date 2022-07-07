@@ -15,11 +15,10 @@
  */
 
 import { Tracer } from "opentracing"
-
 import md5 from "md5"
 import { SubscriptionsRedis } from "./subcriptions-redis"
 import postSubscription from "../graphql/post-subscription"
-
+import { canUseCache, resolveUsingCache } from "./resolveUsingCache"
 import {
     AggregationFn,
     AggregationQuery,
@@ -320,7 +319,6 @@ export class QDataCollection {
             ) => {
                 const accessRights = await context.requireGrantedAccess(args)
                 await this.statSubscription.increment()
-
                 const redis = await context.ensureShared(
                     "subscr-redis",
                     async () =>
@@ -790,6 +788,10 @@ export class QDataCollection {
             let waitFor: ((doc: QDoc) => void) | null = null
             let queryTimer: NodeJS.Timeout | undefined = undefined
             let firstQueryCompleted = false
+
+            if (request.services.config.walkingUseCache && canUseCache(q)) {
+                return resolveUsingCache(q, request, isFast, this, span)
+            }
             try {
                 const queryTimeoutAt = Date.now() + q.timeout
 
