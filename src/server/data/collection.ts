@@ -18,7 +18,7 @@ import { Tracer } from "opentracing"
 import md5 from "md5"
 import { SubscriptionsRedis } from "./subcriptions-redis"
 import postSubscription from "../graphql/post-subscription"
-import { canUseCache, resolveUsingCache } from "./resolveUsingCache"
+import { canUseWalkingCache, resolveUsingCache } from "./resolveUsingCache"
 import {
     AggregationFn,
     AggregationQuery,
@@ -789,7 +789,7 @@ export class QDataCollection {
             let queryTimer: NodeJS.Timeout | undefined = undefined
             let firstQueryCompleted = false
 
-            if (request.services.config.walkingUseCache && canUseCache(q)) {
+            if (request.services.config.walkingUseCache && canUseWalkingCache(q)) {
                 return resolveUsingCache(q, request, isFast, this, span)
             }
             try {

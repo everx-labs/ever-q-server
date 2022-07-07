@@ -30,7 +30,7 @@ export function extract2Hashes(queryFilter: CollectionFilter): string[] | null {
     )
 }
 
-export function canUseCache(query: QCollectionQuery): boolean {
+export function canUseWalkingCache(query: QCollectionQuery): boolean {
     return (
         extract2Hashes(query.filter)?.length === 3 &&
         query.limit === 1 &&
@@ -103,8 +103,7 @@ export async function resolveUsingCache(
                     break
                 }
             } else {
-                // Simple but probably sufficient delay policy
-                await sleep(timeLeft > query.timeout / 2 ? 500 : 1500)
+                await sleep(100)
             }
         }
     } catch (err: any) {

@@ -1,4 +1,4 @@
-import { extract2Hashes, canUseCache } from "../server/data/resolveUsingCache"
+import { extract2Hashes, canUseWalkingCache } from "../server/data/resolveUsingCache"
 import { QCollectionQuery } from "../server/data/collection-query"
 
 const filter1 = {
@@ -123,11 +123,11 @@ test("Unsuitable filter", () => {
 })
 
 test("This query can be resolved from cache", () => {
-    const result = canUseCache(query1 as unknown as QCollectionQuery)
+    const result = canUseWalkingCache(query1 as unknown as QCollectionQuery)
     expect(result).toBeTruthy()
 })
 
 test("This query CAN'T be resolved from cache", () => {
-    const result = canUseCache(query2 as unknown as QCollectionQuery)
+    const result = canUseWalkingCache(query2 as unknown as QCollectionQuery)
     expect(result).toBeFalsy()
 })
