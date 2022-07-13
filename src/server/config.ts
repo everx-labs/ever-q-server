@@ -55,6 +55,7 @@ export type QConfig = {
     }
     remp: RempConfig
     useListeners?: boolean
+    walkingUseCache: boolean
     subscriptionsMode: SubscriptionsMode
     blockchain: QBlockchainDataConfig
     counterparties: string[]
@@ -265,6 +266,11 @@ export const configParams = {
         true,
         "Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)",
         true,
+    ),
+    walkingUseCache: ConfigParam.boolean(
+        "walking-use-cache",
+        false,
+        "Use cache to serve block walking algorithm",
     ),
     ignoreMessagesForLatency: ConfigParam.boolean(
         "ignore-messages-for-latency",
