@@ -16,10 +16,11 @@ import {
 } from "./init-tests"
 
 test("Query without id should be filtered by limit", async () => {
+    const data = createLocalArangoTestData(new QLogs())
     const server = new TONQServer({
         config: testConfig,
         logs: new QLogs(),
-        data: createLocalArangoTestData(new QLogs()),
+        data,
     })
     await server.start()
     const client = createTestClient({ useWebSockets: true })

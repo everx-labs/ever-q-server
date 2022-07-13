@@ -40,7 +40,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             }
         },
         orig_status_name: parent => {
-            switch (parent.end_status) {
+            switch (parent.orig_status) {
                 case 0:
                     return AccountStatusEnum.Uninit
                 case 1:
@@ -54,7 +54,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             }
         },
         status_name: parent => {
-            switch (parent.end_status) {
+            switch (parent.status) {
                 case 0:
                     return TransactionProcessingStatusEnum.Unknown
                 case 1:
@@ -70,7 +70,7 @@ export const resolvers: Resolvers<QRequestContext> = {
             }
         },
         tr_type_name: parent => {
-            switch (parent.end_status) {
+            switch (parent.tr_type) {
                 case 0:
                     return TransactionTypeEnum.Ordinary
                 case 1:

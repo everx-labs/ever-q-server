@@ -22,7 +22,10 @@ const TEST_DB_NAME = "Q-server_test_db"
 let server: TONQServer | null = null
 
 beforeAll(async () => {
-    let serverAddress = process.env.Q_DATA_MUT ?? "http://localhost:8901"
+    let serverAddress =
+        process.env.Q_DATA_MUT ??
+        process.env.Q_ACCOUNTS ??
+        "http://localhost:8901"
 
     // prepare db
     const db = new Database(serverAddress)
@@ -80,6 +83,7 @@ beforeAll(async () => {
         stats: QStats.create("", [], 0),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
+        filterConfig: config.queries.filter,
         ignoreMessagesForLatency: false,
     })
 

@@ -39,7 +39,10 @@ export async function resolve_message(
     )
 
     // query
-    const params = new QParams()
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
     const query =
         "FOR doc IN messages " +
         `FILTER doc._key == @${params.add(hash)} ` +
@@ -103,7 +106,10 @@ export async function resolve_account_messages(
     }
 
     const { direction, limit } = processPaginationArgs(args)
-    const params = new QParams()
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
     const queries: string[] = []
     const accountParam = params.add(parent.address)
     const minValueFilter = isDefined(args.min_value)

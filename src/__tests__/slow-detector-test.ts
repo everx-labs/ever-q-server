@@ -2,18 +2,22 @@ import { INDEXES } from "../server/data/blockchain"
 import { isFastQuery } from "../server/filter/slow-detector"
 import { CollectionFilter, parseOrderBy, QType } from "../server/filter/filters"
 import {
-    Transaction,
     Account,
-    Message,
     Block,
     BlockSignatures,
+    Message,
+    Transaction,
 } from "../server/graphql/resolvers-generated"
+import { FilterConfig, FilterOrConversion } from "../server/config"
 
 test("Slow Detector", () => {
     const log = console
     let collectionName: string
     let collectionType: QType
-
+    const config: FilterConfig = {
+        orConversion: FilterOrConversion.OR_OPERATOR,
+        stringifyKeyInAqlComparison: false,
+    }
     function setCollection(name: string, type: QType) {
         collectionName = name
         collectionType = type
@@ -21,6 +25,7 @@ test("Slow Detector", () => {
 
     function isFast(filter: CollectionFilter, orderBy?: string) {
         return isFastQuery(
+            config,
             collectionName,
             INDEXES[collectionName].indexes,
             collectionType,

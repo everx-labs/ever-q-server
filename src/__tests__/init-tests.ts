@@ -73,6 +73,7 @@ export function queryText(
 ): string {
     return normalized(
         QCollectionQuery.create(
+            collection.filterConfig,
             request ?? { expectedAccountBocVersion: 1 },
             collection.name,
             collection.docType,
@@ -228,7 +229,10 @@ export async function testServerStop() {
 }
 
 export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
-    const dataMut = process.env.Q_DATA_MUT ?? "http://localhost:8901"
+    const dataMut =
+        process.env.Q_DATA_MUT ??
+        process.env.Q_ACCOUNTS ??
+        "http://localhost:8901"
     const slowQueriesMut = process.env.Q_SLOW_QUERIES_MUT ?? dataMut
 
     const config = resolveConfig(
@@ -257,6 +261,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         stats: QStats.create("", [], 0),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
+        filterConfig: config.queries.filter,
         ignoreMessagesForLatency: false,
     })
 }
@@ -342,6 +347,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         stats: QStats.create("", [], 0),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
+        filterConfig: testConfig.queries.filter,
         ignoreMessagesForLatency: false,
     })
 }

@@ -332,6 +332,7 @@ export default class TONQServer {
                 ),
                 isTests: false,
                 subscriptionsMode: this.config.subscriptionsMode,
+                filterConfig: this.config.queries.filter,
                 ignoreMessagesForLatency: this.config.ignoreMessagesForLatency,
             })
         this.internalErrorStats = new StatsCounter(

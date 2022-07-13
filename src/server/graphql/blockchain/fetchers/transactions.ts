@@ -40,7 +40,10 @@ export async function resolve_transaction(
     )
 
     // query
-    const params = new QParams()
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
     const query =
         "FOR doc IN transactions " +
         `FILTER doc._key == @${params.add(hash)} ` +
@@ -69,7 +72,10 @@ export async function resolve_blockchain_transactions(
 
     // filters
     const filters: string[] = []
-    const params = new QParams()
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
 
     await prepareChainOrderFilter(args, params, filters, context)
 
@@ -156,7 +162,10 @@ export async function resolve_account_transactions(
 
     // filters
     const filters: string[] = []
-    const params = new QParams()
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
 
     await prepareChainOrderFilter(args, params, filters, context)
     filters.push(`doc.account_addr == @${params.add(account_address)}`)

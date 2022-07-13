@@ -47,6 +47,8 @@ Option                                          ENV                             
                                                                                                                                         `sub-queries` – q-server performs parallel queries for each OR operand
                                                                                                                                          and combines results (this option provides faster execution
                                                                                                                                          than OR operator in AQL)
+--stringify-key-in-aql-comparison               Q_STRINGIFY_KEY_IN_AQL_COMPARISON               false                                   **UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion
+                                                                                                                                        if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).
 --query-max-runtime                             Q_QUERY_MAX_RUNTIME                             600                                     Max allowed execution time for ArangoDb queries in seconds
 --slow-queries                                  Q_SLOW_QUERIES                                  redirect                                Slow queries handling:
                                                                                                                                         `enable` – process slow queries on the main database
@@ -63,6 +65,7 @@ Option                                          ENV                             
                                                                                                                                         This parameter must contain substring `{message}`
                                                                                                                                         that will be replaced with actual message id
 --use-listeners (DEPRECATED)                    Q_USE_LISTENERS                                 true                                    Use database listeners for subscriptions (deprecated in favor of subscriptions-mode)
+--walking-use-cache                             Q_WALKING_USE_CACHE                             false                                   Use cache to serve block walking algorithm
 --ignore-messages-for-latency                   Q_IGNORE_MESSAGES_FOR_LATENCY                   false                                   Exclude messages from total latency (for networks without service messages)
 --subscriptions-mode                            Q_SUBSCRIPTIONS_MODE                            arango                                  Subscriptions mode:
                                                                                                                                         `disabled` - disable subscriptions
