@@ -1,4 +1,7 @@
-import { extract2Hashes, canUseWalkingCache } from "../server/data/resolveUsingCache"
+import {
+    extract2Hashes,
+    canUseWalkingCache,
+} from "../server/data/resolveUsingCache"
 import { QCollectionQuery } from "../server/data/collection-query"
 
 const filter1 = {

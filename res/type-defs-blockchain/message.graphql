@@ -42,6 +42,8 @@ type BlockchainMessage implements Node {
 	data_hash: String
 	"Returns destination address string"
 	dst: String
+    "The destination account"
+	dst_account: BlockchainAccount
 	"The transaction in which this message is in_msg"
 	dst_transaction: BlockchainTransaction
 	"Workchain id of the destination address (dst field)"
@@ -71,6 +73,8 @@ type BlockchainMessage implements Node {
 	split_depth: Int
 	"Returns source address string"
 	src: String
+    "The source account"
+	src_account: BlockchainAccount
 	"The transaction in which this message is included to out_msgs"
 	src_transaction: BlockchainTransaction
 	"Workchain id of the source address (src field)"

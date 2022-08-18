@@ -29,7 +29,7 @@ export async function resolve_transaction(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
-    const maxJoinDepth = 1
+    const maxJoinDepth = 2
 
     const selectionSet = info.fieldNodes[0].selectionSet
     const returnExpression = config.transactions.buildReturnExpression(
@@ -68,7 +68,7 @@ export async function resolve_blockchain_transactions(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
-    const maxJoinDepth = 1
+    const maxJoinDepth = 2
 
     // filters
     const filters: string[] = []
@@ -149,7 +149,7 @@ export async function resolve_account_transactions(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
-    const maxJoinDepth = 1
+    const maxJoinDepth = 2
     // validate args
     const restrictToAccounts = (await context.requireGrantedAccess({}))
         .restrictToAccounts

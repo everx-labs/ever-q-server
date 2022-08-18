@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.0] - 2022-08-18
+
+### New
+
+- Add `src_account` and `dst_account` joins to `BlockchainMessage` type (used in `blockchain` queries)
+
+- Increase max allowed joins depth for `blockchain { transaction }`, `blockchain { transactions }` and `blockchain { account { transactions } }` queries from 1 to 2 to allow `in_message { src_account }` and `out_messages { dst_account }` joins.
+
 ## [0.52.1] - 2022-07-07
 
 ### New
