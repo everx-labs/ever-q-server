@@ -744,6 +744,8 @@ export type BlockchainMessage = Node & {
     data_hash?: Maybe<Scalars["String"]>
     /** Returns destination address string */
     dst?: Maybe<Scalars["String"]>
+    /** The destination account */
+    dst_account?: Maybe<BlockchainAccount>
     dst_chain_order?: Maybe<Scalars["String"]>
     /** The transaction in which this message is in_msg */
     dst_transaction?: Maybe<BlockchainTransaction>
@@ -780,6 +782,8 @@ export type BlockchainMessage = Node & {
     split_depth?: Maybe<Scalars["Int"]>
     /** Returns source address string */
     src?: Maybe<Scalars["String"]>
+    /** The source account */
+    src_account?: Maybe<BlockchainAccount>
     src_chain_order?: Maybe<Scalars["String"]>
     /** The transaction in which this message is included to out_msgs */
     src_transaction?: Maybe<BlockchainTransaction>
@@ -3048,6 +3052,11 @@ export type BlockchainMessageResolvers<
         ContextType
     >
     dst?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    dst_account?: Resolver<
+        Maybe<ResolversTypes["BlockchainAccount"]>,
+        ParentType,
+        ContextType
+    >
     dst_chain_order?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
@@ -3107,6 +3116,11 @@ export type BlockchainMessageResolvers<
         ContextType
     >
     src?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    src_account?: Resolver<
+        Maybe<ResolversTypes["BlockchainAccount"]>,
+        ParentType,
+        ContextType
+    >
     src_chain_order?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,

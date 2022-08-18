@@ -789,7 +789,10 @@ export class QDataCollection {
             let queryTimer: NodeJS.Timeout | undefined = undefined
             let firstQueryCompleted = false
 
-            if (request.services.config.walkingUseCache && canUseWalkingCache(q)) {
+            if (
+                request.services.config.walkingUseCache &&
+                canUseWalkingCache(q)
+            ) {
                 return resolveUsingCache(q, request, isFast, this, span)
             }
             try {
