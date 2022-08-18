@@ -454,7 +454,7 @@ or/and via arg `--config <path to config>`
             "cache": "",
             "cold": []
         },
-        "zerostate": "",
+        "zerostate": ""
     },
     "slowQueriesBlockchain": {
         "hotCache": "",
@@ -471,7 +471,7 @@ or/and via arg `--config <path to config>`
             "cache": "",
             "cold": []
         },
-        "zerostate": "",
+        "zerostate": ""
     },
 	"authEndpoint": "",
 	"mamAccessKeys": "",
