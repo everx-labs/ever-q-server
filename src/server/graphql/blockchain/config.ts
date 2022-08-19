@@ -110,7 +110,7 @@ export const config: Config = {
                 refOnField: "_key",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR ${path} in accounts ` +
-                    `FILTER ${path}._key IN ${onFieldParam} ` +
+                    `FILTER ${path}._key IN @${onFieldParam} ` +
                     `RETURN ${returnExpression}`,
             },
             {
@@ -133,7 +133,7 @@ export const config: Config = {
                 refOnField: "_key",
                 queryBuilder: (path, onFieldParam, returnExpression) =>
                     `FOR ${path} in accounts ` +
-                    `FILTER ${path}._key IN ${onFieldParam} ` +
+                    `FILTER ${path}._key IN @${onFieldParam} ` +
                     `RETURN ${returnExpression}`,
             },
         ],
@@ -363,54 +363,15 @@ export function compileCollectionConfig<TItem>(
                 selectionSet,
                 join.targetField,
             )
-            if (
-                !joinSelectionSet ||
-                data.every(item => !join.needFetch(item))
-            ) {
+            if (!joinSelectionSet) {
                 continue
             }
-            const map = new Map<string, TItem[]>()
-            let onFieldIsArray = false
-            data.forEach(item => {
-                if (!join.needFetch(item)) {
-                    return
-                }
 
-                // cast in next line is because type inferring is not ideal
-                const onFieldValue = item[
-                    join.onField
-                ] as unknown as AllowedJoinOnTypes
-                if (!onFieldValue) {
-                    // TODO: Consider metric for unexpected errors
-                    throw QError.create(
-                        500,
-                        "error during join fetching (no join field)",
-                    )
-                }
+            const { itemsToUpdateByJoinedKey, onFieldIsArray } =
+                getItemsToFetch<TItem>(data, join)
 
-                function addToMap(fieldValue: string) {
-                    const record = map.get(fieldValue)
-                    if (record) {
-                        record.push(item)
-                    } else {
-                        map.set(fieldValue, [item])
-                    }
-                }
-
-                if (typeof onFieldValue === "string") {
-                    addToMap(onFieldValue)
-                    onFieldIsArray = false
-                } else {
-                    for (const fv of onFieldValue) {
-                        if (fv) {
-                            addToMap(fv)
-                        } // TODO: Else metric?
-                    }
-                    onFieldIsArray = true
-                }
-            })
-
-            if (map.size === 0) {
+            if (itemsToUpdateByJoinedKey.size === 0) {
+                await fetchSubjoins()
                 continue
             }
 
@@ -431,7 +392,9 @@ export function compileCollectionConfig<TItem>(
                 pathForQuery,
                 [join.refOnField as any],
             )
-            const onFieldsParamName = params.add([...map.keys()])
+            const onFieldsParamName = params.add([
+                ...itemsToUpdateByJoinedKey.keys(),
+            ])
             const query = `${join.queryBuilder(
                 pathForQuery,
                 onFieldsParamName,
@@ -464,7 +427,7 @@ export function compileCollectionConfig<TItem>(
                 }
                 /* eslint-disable no-inner-declarations */
                 function addToParent(refOn: string) {
-                    const parents = map.get(refOn)
+                    const parents = itemsToUpdateByJoinedKey.get(refOn)
                     if (!parents) {
                         return
                     }
@@ -484,18 +447,22 @@ export function compileCollectionConfig<TItem>(
                 }
             }
 
-            // in next line flat is for array-like fields (e.g. out_messages)
-            const joined = data
-                .map(d => d[join.targetField])
-                .filter(d => !!d)
-                .flat() as any
-            await config[join.joinedCollection].fetchJoins(
-                joined,
-                joinSelectionSet,
-                context,
-                traceSpan,
-                maxJoinDepth - 1,
-            )
+            await fetchSubjoins()
+
+            async function fetchSubjoins() {
+                // in next line flat is for array-like fields (e.g. out_messages)
+                const joined = data
+                    .map(d => d[join.targetField])
+                    .filter(d => !!d)
+                    .flat() as any
+                await config[join.joinedCollection].fetchJoins(
+                    joined,
+                    joinSelectionSet,
+                    context,
+                    traceSpan,
+                    maxJoinDepth - 1,
+                )
+            }
         }
     }
 
@@ -504,4 +471,49 @@ export function compileCollectionConfig<TItem>(
         fetchJoins: joinsFetcher,
         qDataCollectionSelector: collection.qDataCollectionSelector,
     }
+}
+
+function getItemsToFetch<TItem>(
+    data: TItem[],
+    join: JoinConfig<TItem, keyof Config>,
+) {
+    const itemsToUpdateByJoinedKey = new Map<string, TItem[]>()
+    let onFieldIsArray = false
+    data.forEach(item => {
+        if (!join.needFetch(item)) {
+            return
+        }
+
+        // cast in next line is because type inferring is not ideal
+        const onFieldValue = item[join.onField] as unknown as AllowedJoinOnTypes
+        if (!onFieldValue) {
+            // TODO: Consider metric for unexpected errors
+            throw QError.create(
+                500,
+                "error during join fetching (no join field)",
+            )
+        }
+
+        function addToMap(fieldValue: string) {
+            const record = itemsToUpdateByJoinedKey.get(fieldValue)
+            if (record) {
+                record.push(item)
+            } else {
+                itemsToUpdateByJoinedKey.set(fieldValue, [item])
+            }
+        }
+
+        if (typeof onFieldValue === "string") {
+            addToMap(onFieldValue)
+            onFieldIsArray = false
+        } else {
+            for (const fv of onFieldValue) {
+                if (fv) {
+                    addToMap(fv)
+                } // TODO: Else metric?
+            }
+            onFieldIsArray = true
+        }
+    })
+    return { itemsToUpdateByJoinedKey, onFieldIsArray }
 }
