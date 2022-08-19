@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.1] - 2022-08-19
+
+### Fix
+
+- Fix `src_account` and `dst_account` joins for multiple databases (hot, cold) case.
+
 ## [0.53.0] - 2022-08-18
 
 ### New
