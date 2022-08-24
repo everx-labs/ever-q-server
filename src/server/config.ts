@@ -50,6 +50,7 @@ export type QConfig = {
     queries: {
         filter: FilterConfig
         maxRuntimeInS: number
+        maxTimeout: number
         slowQueries: SlowQueriesMode
         waitForPeriod: number
     }
@@ -245,6 +246,12 @@ export const configParams = {
             600,
             "Max allowed execution time for ArangoDb queries in seconds",
         ),
+        maxTimeout: ConfigParam.integer(
+            "query-max-timeout-arg",
+            24 * 3600 * 1000,
+            "Max allowed `timeout` argument value for collections queries\n" +
+                "(timeout will be coerced down to this value)",
+        ),
         slowQueries: ConfigParam.string(
             "slow-queries",
             "redirect",
@@ -256,7 +263,7 @@ export const configParams = {
         waitForPeriod: ConfigParam.integer(
             "query-wait-for-period",
             1000,
-            "Collection polling period for wait-for queries\n" +
+            "Initial collection polling period for wait-for queries\n" +
                 "(collection queries with timeout) in ms",
         ),
     },
