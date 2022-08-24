@@ -638,6 +638,12 @@ export class QDataCollection {
                 return await request.trace(
                     `${this.name}.queryResolver`,
                     async traceSpan => {
+                        if (args.timeout && args.timeout > 0) {
+                            args.timeout = Math.min(
+                                args.timeout,
+                                request.services.config.queries.maxTimeout,
+                            )
+                        }
                         await this.statQuery.increment()
                         await this.statQueryActive.increment()
                         const start = Date.now()
@@ -801,6 +807,8 @@ export class QDataCollection {
                 // -------- Poll DB --------
                 let queryCount = 0
                 let period = request.services.config.queries.waitForPeriod
+                let lastQuery = false
+                let avgQueryDuration = 0
                 const queryOnce = async () => {
                     try {
                         const queryStart = Date.now()
@@ -826,20 +834,27 @@ export class QDataCollection {
                         }
                         if (docs.length > 0) {
                             resolveBy("query", docs as QDoc[])
+                        } else if (lastQuery) {
+                            return
                         } else {
                             // next iteration
                             const now = Date.now()
-                            const queryDuration = now - queryStart
                             const timeLeft = queryTimeoutAt - now
-                            const toWait = Math.min(
-                                period,
-                                timeLeft - 2 * queryDuration,
-                                timeLeft - 200,
-                            )
-                            queryTimer = setTimeout(
-                                queryOnce,
-                                Math.max(toWait, 100),
-                            )
+                            const queryDuration = now - queryStart
+                            avgQueryDuration =
+                                (avgQueryDuration * (queryCount - 1)) /
+                                    queryCount +
+                                queryDuration / queryCount
+                            const pessimisticQueryDuration =
+                                2 * avgQueryDuration
+                            const toWaitBeforeLastQuery =
+                                timeLeft - pessimisticQueryDuration
+                            let toWait = period - queryDuration
+                            if (toWait > toWaitBeforeLastQuery) {
+                                toWait = toWaitBeforeLastQuery
+                                lastQuery = true
+                            }
+                            queryTimer = setTimeout(queryOnce, toWait)
                         }
                     } catch (error: any) {
                         this.log.error(
