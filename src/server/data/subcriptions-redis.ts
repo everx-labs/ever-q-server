@@ -5,7 +5,7 @@ import { QConfig } from "../config"
 import QLogs, { QLog } from "../logs"
 
 export class SubscriptionsRedis {
-    public readonly events = new EventEmitter()
+    public readonly events = new EventEmitter().setMaxListeners(0)
     public readonly pubsub: RedisPubSub
     public healthy = true
 

@@ -34,7 +34,7 @@ export class KVIterator<T> implements AsyncIterator<T> {
         }
     }
 
-    next(): Promise<IteratorResult<T>> {
+    async next(): Promise<IteratorResult<T>> {
         if (!this.running) {
             return this.closedWith.promise
         }
@@ -48,7 +48,10 @@ export class KVIterator<T> implements AsyncIterator<T> {
                 this.pullQueue.push(resolve)
             }
         })
-        return Promise.race([this.closedWith.promise, nextValue])
+        const result = await Promise.race([this.closedWith.promise, nextValue])
+        // recreate instance of Deferred to prevent memory leak
+        this.closedWith = new Deferred<IteratorResult<T>>()
+        return result
     }
 
     close(resolved: boolean, error?: Error) {

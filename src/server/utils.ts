@@ -348,6 +348,9 @@ export class QAsyncIterator<T> implements AsyncIterator<T> {
             this.upstream.next(),
             this.closedWith.promise,
         ])
+        // recreate instance of Deferred to prevent memory leak
+        this.closedWith = new Deferred<IteratorResult<T>>()
+
         if (!next.done && this.onNext) {
             await this.onNext(next.value)
         }
