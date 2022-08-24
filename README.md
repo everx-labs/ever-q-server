@@ -50,7 +50,7 @@ Option                                          ENV                             
 --stringify-key-in-aql-comparison               Q_STRINGIFY_KEY_IN_AQL_COMPARISON               false                                   **UNSTABLE!** If `true` then AQL will use `TO_STRING(doc._key)` conversion
                                                                                                                                         if _key comparison operator is used in filter (e.g. `{ id: { lt: "123" }`).
 --query-max-runtime                             Q_QUERY_MAX_RUNTIME                             600                                     Max allowed execution time for ArangoDb queries in seconds
---query-max-timeout-arg                         Q_QUERY_MAX_TIMEOUT_ARG                         86400000                                Max allowed `timeout` argument value for collections queries
+--query-max-timeout-arg                         Q_QUERY_MAX_TIMEOUT_ARG                         86400000                                Max allowed `timeout` argument value (is ms) for collections queries
                                                                                                                                         (timeout will be coerced down to this value)
 --slow-queries                                  Q_SLOW_QUERIES                                  redirect                                Slow queries handling:
                                                                                                                                         `enable` – process slow queries on the main database

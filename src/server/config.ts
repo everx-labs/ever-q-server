@@ -249,7 +249,7 @@ export const configParams = {
         maxTimeout: ConfigParam.integer(
             "query-max-timeout-arg",
             24 * 3600 * 1000,
-            "Max allowed `timeout` argument value for collections queries\n" +
+            "Max allowed `timeout` argument value (is ms) for collections queries\n" +
                 "(timeout will be coerced down to this value)",
         ),
         slowQueries: ConfigParam.string(
