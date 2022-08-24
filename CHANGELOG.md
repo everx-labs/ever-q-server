@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.2] - 2022-08-24
+
+### New
+
+- Add new option `--query-max-timeout-arg` or `Q_QUERY_MAX_TIMEOUT_ARG`. \
+  This adds upper boundary for `timeout` pameter in collection API queries. \
+  Default is 24 hours.
+
+### Improved
+
+- Support `timeout` argument values >= 2^31 (by coercing them down using `--query-max-timeout-arg`). \
+  It is needed for ever-sdk + evernode-se with time shifts > 24 days.
+- Tweak waitFor logic to properly support `--query-wait-for-period` values less than 100 ms
+
 ## [0.53.1] - 2022-08-19
 
 ### Fix
