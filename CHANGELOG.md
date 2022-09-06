@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.3] - 2022-09-06
+
+### Fix
+
+- Fix memory leak in Promise.race()
+
 ## [0.53.2] - 2022-08-24
 
 ### New
