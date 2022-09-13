@@ -1,5 +1,5 @@
 import { $$asyncIterator } from "iterall"
-import { Deferred } from "../utils"
+import { Deferred, safeRace } from "../utils"
 
 export interface KVProvider {
     get<T>(key: string): Promise<T | null | undefined>
@@ -48,7 +48,9 @@ export class KVIterator<T> implements AsyncIterator<T> {
                 this.pullQueue.push(resolve)
             }
         })
-        return Promise.race([this.closedWith.promise, nextValue])
+        return safeRace([this.closedWith.promise, nextValue]) as Promise<
+            IteratorResult<T, any>
+        >
     }
 
     close(resolved: boolean, error?: Error) {
