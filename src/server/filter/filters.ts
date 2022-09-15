@@ -616,6 +616,25 @@ function invertedHex(hex: string): string {
 export type BigIntArgs = { format?: "HEX" | "DEC" }
 export type JoinArgs = { when?: CollectionFilter; timeout?: number }
 
+export function parseBigUInt(
+    prefixLength: number,
+    value: NumericScalar,
+): number | null | undefined {
+    if (value === null || value === undefined) {
+        return value
+    }
+    if (typeof value === "number") {
+        return value
+    }
+    const s = value.toString().trim()
+    const neg = s.startsWith("-")
+    const hex = `0x${
+        neg ? invertedHex(s.substr(prefixLength + 1)) : s.substr(prefixLength)
+    }`
+    const num = Number(hex)
+    return neg ? -num : num
+}
+
 export function resolveBigUInt(
     prefixLength: number,
     value: NumericScalar,
@@ -1119,6 +1138,50 @@ export function createEnumNameResolver(
     }
 }
 
+export function intFlags(onField: string): QType {
+    return {
+        filterCondition(_params, _path, _filter) {
+            return "false"
+        },
+        returnExpressions(
+            _request: QRequestParams,
+            path: string,
+        ): QReturnExpression[] {
+            return [
+                {
+                    name: onField,
+                    expression: `${path}.${onField}`,
+                },
+            ]
+        },
+        test(_parent, _value, _filter) {
+            return false
+        },
+    }
+}
+
+export function createFlagsResolver(
+    onField: string,
+    values: { [name: string]: number },
+): (parent: { [name: string]: unknown }) => string[] | null {
+    return parent => {
+        const flags = parseBigUInt(1, parent[onField] as NumericScalar)
+        if (flags === undefined || flags === null) {
+            return null
+        }
+        if (flags === 0) {
+            return []
+        }
+        const names = []
+        for (const [name, flag] of Object.entries(values)) {
+            if ((flag & flags) !== 0) {
+                names.push(name)
+            }
+        }
+        return names
+    }
+}
+
 //------------------------------------------------------------- String Companions
 
 export function stringCompanion(onField: string): QType {
@@ -1375,6 +1438,8 @@ export function selectFields(
                 companionFields = [item.name.slice(0, -5)]
             } else if (item.name.endsWith("_string")) {
                 companionFields = [item.name.slice(0, -7)]
+            } else if (item.name.endsWith("_flags")) {
+                companionFields = [item.name.slice(0, -6)]
             }
         }
         if (companionFields !== undefined) {

@@ -221,6 +221,16 @@ test("Enum Names", () => {
     ).toBeTruthy()
 })
 
+test("Flags", () => {
+    const data = createLocalArangoTestData(new QLogs())
+    const resolvers = createResolvers(data)
+    expect(
+        resolvers.ConfigP8.capabilities_flags({
+            capabilities: 0x1 | 0x000008 | 0x000400 | 0x100000,
+        }),
+    ).toEqual(["CapIhrEnabled", "CapReportVersion", "CapMyCode", "CapDiff"])
+})
+
 test("Select Fields", () => {
     const selected = selectFields(
         {

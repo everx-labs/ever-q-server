@@ -33,11 +33,36 @@ import {
     unixSeconds,
     withDoc,
     stringWithLowerFilter,
+    u64flags,
 } from "./db-schema-types"
 
 import { docs } from "./db.shema.docs"
 
 const { string, bool, ref, arrayOf } = Def
+
+const capabilities = u64flags("Capabilities", {
+    CapNone: 0,
+    CapIhrEnabled: 0x000001,
+    CapCreateStatsEnabled: 0x000002,
+    CapBounceMsgBody: 0x000004,
+    CapReportVersion: 0x000008,
+    CapSplitMergeTransactions: 0x000010,
+    CapShortDequeue: 0x000020,
+    CapMbppEnabled: 0x000040,
+    CapFastStorageStat: 0x000080,
+    CapInitCodeHash: 0x000100,
+    CapOffHypercube: 0x000200,
+    CapMyCode: 0x000400,
+    CapSetLibCode: 0x000800,
+    CapFixTupleIndexBug: 0x001000,
+    CapRemp: 0x002000,
+    CapDElections: 0x004000,
+    CapFullBodyInBounced: 0x010000,
+    CapStorageFeeToTvm: 0x020000,
+    CapCopyleft: 0x040000,
+    CapIndexAccounts: 0x080000,
+    CapDiff: 0x100000,
+})
 
 const accountStatus = u8enum("AccountStatus", {
     uninit: 0,
@@ -552,7 +577,7 @@ const Config: TypeDef = {
     p8: {
         _doc: docs.block.master.config.p8._doc,
         version: u32(),
-        capabilities: u64(),
+        capabilities: capabilities(),
     },
     p9: arrayOf(u32(), docs.block.master.config.p9),
     p10: arrayOf(u32(), docs.block.master.config.p10),

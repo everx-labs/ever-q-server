@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.4] - 2022-09-15
+
+### New
+
+- `capabilities_flags` companion field to p8 config parameter `capabilities`
+
 ## [0.53.3] - 2022-09-06
 
 ### Fix

@@ -11,8 +11,10 @@ import {
     BigIntArgs,
     JoinArgs,
     enumName,
+    intFlags,
     stringCompanion,
     createEnumNameResolver,
+    createFlagsResolver,
     unixSecondsToString,
 } from "../filter/filters"
 import QBlockchainData from "../data/blockchain"
@@ -167,6 +169,7 @@ const ConfigP7 = struct({
 
 const ConfigP8 = struct({
     capabilities: bigUInt1,
+    capabilities_flags: intFlags("capabilities"),
     version: scalar,
 })
 
@@ -1024,6 +1027,29 @@ function createResolvers(data: QBlockchainData) {
             capabilities(parent: { capabilities: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.capabilities, args)
             },
+            capabilities_flags: createFlagsResolver("capabilities", {
+                CapNone: 0,
+                CapIhrEnabled: 1,
+                CapCreateStatsEnabled: 2,
+                CapBounceMsgBody: 4,
+                CapReportVersion: 8,
+                CapSplitMergeTransactions: 16,
+                CapShortDequeue: 32,
+                CapMbppEnabled: 64,
+                CapFastStorageStat: 128,
+                CapInitCodeHash: 256,
+                CapOffHypercube: 512,
+                CapMyCode: 1024,
+                CapSetLibCode: 2048,
+                CapFixTupleIndexBug: 4096,
+                CapRemp: 8192,
+                CapDElections: 16384,
+                CapFullBodyInBounced: 65536,
+                CapStorageFeeToTvm: 131072,
+                CapCopyleft: 262144,
+                CapIndexAccounts: 524288,
+                CapDiff: 1048576,
+            }),
         },
         ConfigP14: {
             basechain_block_fee(
@@ -2791,10 +2817,6 @@ scalarFields.set("blocks.master.config.p7.value", {
     type: "string",
     path: "doc.master.config.p7[*].value",
 })
-scalarFields.set("blocks.master.config.p8.capabilities", {
-    type: "uint64",
-    path: "doc.master.config.p8.capabilities",
-})
 scalarFields.set("blocks.master.config.p8.version", {
     type: "number",
     path: "doc.master.config.p8.version",
@@ -4369,10 +4391,6 @@ scalarFields.set("zerostates.master.config.p7.currency", {
 scalarFields.set("zerostates.master.config.p7.value", {
     type: "string",
     path: "doc.master.config.p7[*].value",
-})
-scalarFields.set("zerostates.master.config.p8.capabilities", {
-    type: "uint64",
-    path: "doc.master.config.p8.capabilities",
 })
 scalarFields.set("zerostates.master.config.p8.version", {
     type: "number",
