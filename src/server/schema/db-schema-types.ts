@@ -3,6 +3,9 @@ import { Def, parseTypeDef, TypeDef } from "./schema-def"
 import type {
     DbJoin,
     IntEnumDef,
+    IntEnumValues,
+    IntFlags,
+    IntFlagsDef,
     IntSizeType,
     SchemaDoc,
     SchemaMember,
@@ -101,10 +104,6 @@ export const unixSeconds = (doc?: string) =>
 
 export const grams = u128
 
-type IntEnumValues = {
-    [name: string]: number
-}
-
 export function u8enum(name: string, values: IntEnumValues) {
     return (doc?: string): TypeDef => {
         const valuesDoc = Object.entries(values)
@@ -121,6 +120,32 @@ export function u8enum(name: string, values: IntEnumValues) {
                 },
                 _: {
                     enum: {
+                        name,
+                        values,
+                    },
+                },
+            },
+            effectiveDoc,
+        )
+    }
+}
+
+export function u64flags(name: string, values: IntFlags) {
+    return (doc?: string): TypeDef => {
+        const valuesDoc = Object.entries(values)
+            .map(([name, value]) => {
+                return `- 0x${value.toString(16)} – ${name}`
+            })
+            .join("\n")
+        const effectiveDoc = `${doc ? `${doc}\n` : ""}${valuesDoc}`
+        return withDoc(
+            {
+                _int: {
+                    unsigned: true,
+                    size: 64,
+                },
+                _: {
+                    flags: {
                         name,
                         values,
                     },
@@ -160,6 +185,7 @@ export type DbField = {
     arrayDepth: number
     join?: DbJoin
     enumDef?: IntEnumDef
+    flagsDef?: IntFlagsDef
     formatter?: ToStringFormatter
     lowerFilter?: boolean
     doc: string
@@ -209,6 +235,15 @@ export function stringifyEnumValues(values: {
     return `{ ${fields.join(", ")} }`
 }
 
+export function stringifyFlagsValues(values: {
+    [name: string]: number
+}): string {
+    const fields = Object.entries(values).map(([name, value]) => {
+        return `${name}: ${value}`
+    })
+    return `{ ${fields.join(", ")} }`
+}
+
 export function getDocMD(doc?: SchemaDoc): string {
     if (!doc) {
         return ""
@@ -225,11 +260,13 @@ export function getDocMD(doc?: SchemaDoc): string {
 export type DbSchema = {
     types: DbType[]
     enumTypes: Map<string, IntEnumDef>
+    flagsTypes: Map<string, IntFlagsDef>
 }
 
 export function parseDbSchema(schemaDef: TypeDef): DbSchema {
     const dbTypes: DbType[] = []
     const enumTypes: Map<string, IntEnumDef> = new Map()
+    const flagsTypes: Map<string, IntFlagsDef> = new Map()
 
     function parseDbField(
         typeName: string,
@@ -251,6 +288,11 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
         if (enumDef) {
             field.enumDef = enumDef
             enumTypes.set(enumDef.name, enumDef)
+        }
+        const flagsDef: IntFlagsDef | null = (ex && ex.flags) || null
+        if (flagsDef) {
+            field.flagsDef = flagsDef
+            flagsTypes.set(flagsDef.name, flagsDef)
         }
         const join = ex && ex.join
         if (join) {
@@ -419,5 +461,6 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
     return {
         types: orderedResolved,
         enumTypes,
+        flagsTypes,
     }
 }

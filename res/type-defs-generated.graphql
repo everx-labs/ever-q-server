@@ -153,6 +153,30 @@ enum SplitTypeEnum {
     Merge
 }
 
+enum CapabilitiesFlag {
+    CapNone
+    CapIhrEnabled
+    CapCreateStatsEnabled
+    CapBounceMsgBody
+    CapReportVersion
+    CapSplitMergeTransactions
+    CapShortDequeue
+    CapMbppEnabled
+    CapFastStorageStat
+    CapInitCodeHash
+    CapOffHypercube
+    CapMyCode
+    CapSetLibCode
+    CapFixTupleIndexBug
+    CapRemp
+    CapDElections
+    CapFullBodyInBounced
+    CapStorageFeeToTvm
+    CapCopyleft
+    CapIndexAccounts
+    CapDiff
+}
+
 type OtherCurrency {
 	currency: Float
 	value(format: BigIntFormat): String
@@ -306,7 +330,31 @@ type ConfigP7 {
 
 "Global version"
 type ConfigP8 {
+	"""
+	- 0x0 – CapNone
+	- 0x1 – CapIhrEnabled
+	- 0x2 – CapCreateStatsEnabled
+	- 0x4 – CapBounceMsgBody
+	- 0x8 – CapReportVersion
+	- 0x10 – CapSplitMergeTransactions
+	- 0x20 – CapShortDequeue
+	- 0x40 – CapMbppEnabled
+	- 0x80 – CapFastStorageStat
+	- 0x100 – CapInitCodeHash
+	- 0x200 – CapOffHypercube
+	- 0x400 – CapMyCode
+	- 0x800 – CapSetLibCode
+	- 0x1000 – CapFixTupleIndexBug
+	- 0x2000 – CapRemp
+	- 0x4000 – CapDElections
+	- 0x10000 – CapFullBodyInBounced
+	- 0x20000 – CapStorageFeeToTvm
+	- 0x40000 – CapCopyleft
+	- 0x80000 – CapIndexAccounts
+	- 0x100000 – CapDiff
+	"""
 	capabilities(format: BigIntFormat): String
+	capabilities_flags: [CapabilitiesFlag]
 	version: Float
 }
 
@@ -1583,6 +1631,29 @@ input ConfigP7Filter {
 
 "Global version"
 input ConfigP8Filter {
+	"""
+	- 0x0 – CapNone
+	- 0x1 – CapIhrEnabled
+	- 0x2 – CapCreateStatsEnabled
+	- 0x4 – CapBounceMsgBody
+	- 0x8 – CapReportVersion
+	- 0x10 – CapSplitMergeTransactions
+	- 0x20 – CapShortDequeue
+	- 0x40 – CapMbppEnabled
+	- 0x80 – CapFastStorageStat
+	- 0x100 – CapInitCodeHash
+	- 0x200 – CapOffHypercube
+	- 0x400 – CapMyCode
+	- 0x800 – CapSetLibCode
+	- 0x1000 – CapFixTupleIndexBug
+	- 0x2000 – CapRemp
+	- 0x4000 – CapDElections
+	- 0x10000 – CapFullBodyInBounced
+	- 0x20000 – CapStorageFeeToTvm
+	- 0x40000 – CapCopyleft
+	- 0x80000 – CapIndexAccounts
+	- 0x100000 – CapDiff
+	"""
 	capabilities: StringFilter
 	version: FloatFilter
     OR: ConfigP8Filter

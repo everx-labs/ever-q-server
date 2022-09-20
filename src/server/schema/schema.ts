@@ -22,9 +22,19 @@ export type IntEnumDef = {
     values: IntEnumValues
 }
 
+export type IntFlags = {
+    [name: string]: number
+}
+
+export type IntFlagsDef = {
+    name: string
+    values: IntFlags
+}
+
 export type SchemaEx = {
     collection?: string
     enum?: IntEnumDef
+    flags?: IntFlagsDef
     join?: DbJoin
     formatter?: ToStringFormatter
     lowerFilter?: boolean

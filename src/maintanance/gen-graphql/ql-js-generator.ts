@@ -6,6 +6,7 @@ import {
     parseDbSchema,
     scalarTypes,
     stringifyEnumValues,
+    stringifyFlagsValues,
     toEnumStyle,
 } from "../../server/schema/db-schema-types"
 import { TypeDef } from "../../server/schema/schema-def"
@@ -14,6 +15,7 @@ import path from "path"
 import {
     DbJoin,
     IntEnumDef,
+    IntFlagsDef,
     ToStringFormatter,
 } from "../../server/schema/schema"
 
@@ -66,7 +68,7 @@ function main(schemaDef: TypeDef): {
     ql: string
     js: string
 } {
-    const { types: dbTypes, enumTypes } = parseDbSchema(schemaDef)
+    const { types: dbTypes, enumTypes, flagsTypes } = parseDbSchema(schemaDef)
     dbTypes.forEach((dbType: DbType) => {
         dbType.fields.sort(compareFields)
     })
@@ -118,6 +120,17 @@ function main(schemaDef: TypeDef): {
         }
     }
 
+    function genGFlagsTypes() {
+        for (const flagsDef of flagsTypes.values()) {
+            g.writeLn(`enum ${flagsDef.name}Flag {`)
+            Object.keys(flagsDef.values).forEach(name => {
+                g.writeLn(`    ${name}`)
+            })
+            g.writeLn("}")
+            g.writeLn()
+        }
+    }
+
     function genGTypeDeclaration(type: DbType) {
         if (type.category === DbTypeCategory.union) {
             genGTypeDeclarationsForUnionVariants(type)
@@ -146,6 +159,10 @@ function main(schemaDef: TypeDef): {
                 const enumDef = field.enumDef
                 if (enumDef !== undefined) {
                     g.writeLn(`\t${field.name}_name: ${enumDef.name}Enum`)
+                }
+                const flagsDef = field.flagsDef
+                if (flagsDef !== undefined) {
+                    g.writeLn(`\t${field.name}_flags: [${flagsDef.name}Flag]`)
                 }
                 if (field.formatter !== undefined) {
                     g.writeLn(`\t${field.name}_string: String`)
@@ -370,6 +387,12 @@ function main(schemaDef: TypeDef): {
                         }", ${stringifyEnumValues(enumDef.values)}),`,
                     )
                 }
+                const flagsDef = field.flagsDef
+                if (flagsDef !== undefined) {
+                    js.writeLn(
+                        `    ${field.name}_flags: intFlags("${field.name}"),`,
+                    )
+                }
                 if (field.formatter !== undefined) {
                     js.writeLn(
                         `    ${field.name}_string: stringCompanion("${field.name}"),`,
@@ -433,11 +456,13 @@ function main(schemaDef: TypeDef): {
             (x: DbField) => x.formatter,
         )
         const enumFields = type.fields.filter(x => x.enumDef)
+        const flagsFields = type.fields.filter(x => x.flagsDef)
         const customResolverRequired =
             type.collection !== undefined ||
             joinFields.length > 0 ||
             bigUIntFields.length > 0 ||
             enumFields.length > 0 ||
+            flagsFields.length > 0 ||
             stringFormattedFields.length > 0
         if (!customResolverRequired) {
             return
@@ -481,6 +506,16 @@ function main(schemaDef: TypeDef): {
                 )
             }
         })
+        flagsFields.forEach(field => {
+            const flagsDef = field.flagsDef
+            if (flagsDef !== undefined) {
+                js.writeLn(
+                    `            ${field.name}_flags: createFlagsResolver("${
+                        field.name
+                    }", ${stringifyFlagsValues(flagsDef.values)}),`,
+                )
+            }
+        })
         js.writeLn("        },")
     }
 
@@ -490,7 +525,11 @@ function main(schemaDef: TypeDef): {
         parentDocPath: string,
     ) {
         type.fields.forEach((field: DbField) => {
-            if (field.join !== undefined || field.enumDef !== undefined) {
+            if (
+                field.join !== undefined ||
+                field.enumDef !== undefined ||
+                field.flagsDef !== undefined
+            ) {
                 return
             }
             const docName =
@@ -625,6 +664,7 @@ function main(schemaDef: TypeDef): {
         `)
         ;["String", "Boolean", "Int", "Float"].forEach(genGScalarTypesFilter)
         genGEnumTypes()
+        genGFlagsTypes()
         types.forEach(type => genGTypeDeclaration(type))
         const gArrayFilters = new Set<string>()
         types.forEach(type => genGFilter(type, gArrayFilters))
@@ -649,8 +689,10 @@ function main(schemaDef: TypeDef): {
             BigIntArgs,
             JoinArgs,
             enumName,
+            intFlags,
             stringCompanion,
             createEnumNameResolver,
+            createFlagsResolver,
             unixSecondsToString,
         } from "../filter/filters";
         import QBlockchainData from "../data/blockchain";
@@ -760,6 +802,7 @@ type DbFieldInfo = {
     arrayDepth: number
     join?: DbJoin
     enumDef?: IntEnumDef
+    flagsDef?: IntFlagsDef
     formatter?: ToStringFormatter
     lowerFilter?: boolean
 }
@@ -796,6 +839,7 @@ function getDbFieldInfo(field: DbField): DbFieldInfo {
         type,
         arrayDepth: field.arrayDepth,
         enumDef: field.enumDef,
+        flagsDef: field.flagsDef,
         join: field.join,
         formatter: field.formatter,
         lowerFilter: field.lowerFilter,
