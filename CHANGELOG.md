@@ -10,8 +10,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `in` operator with empty list parameter returned `null` (must return `false`)
-- `notIn` operator with empty list parameter returned `null` (must return `true`)
+- `in: []` (empty list) filters now lead to empty query results as expected
+- `notIn: []` (empty list) filters now are ignored as expected
 
 ## [0.53.3] - 2022-09-06
 
