@@ -346,6 +346,9 @@ function filterConditionForIn(
     filter: unknown[],
     explainOp?: string,
 ): string | null {
+    if (filter.length === 0) {
+        return "FALSE"
+    }
     const conditions = filter.map(value =>
         filterConditionOp(
             params,
@@ -454,12 +457,13 @@ const scalarIn: QType = {
 
 const scalarNotIn: QType = {
     filterCondition(params, path, filter) {
-        return `NOT (${filterConditionForIn(
+        const inCondition = filterConditionForIn(
             params,
             path,
             filter as unknown as unknown[],
             "!=",
-        )})`
+        )
+        return inCondition === "FALSE" ? "TRUE" : `NOT (${inCondition})`
     },
     returnExpressions(): QReturnExpression[] {
         throw NOT_IMPLEMENTED

@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 - `capabilities_flags` companion field to p8 config parameter `capabilities`
 
+### Fixed
+
+- `in: []` (empty list) filters now lead to empty query results as expected
+- `notIn: []` (empty list) filters now are ignored as expected
+
 ## [0.53.3] - 2022-09-06
 
 ### Fix
@@ -19,7 +24,7 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - Add new option `--query-max-timeout-arg` or `Q_QUERY_MAX_TIMEOUT_ARG`. \
-  This adds upper boundary for `timeout` pameter in collection API queries. \
+  This adds upper boundary for `timeout` parameter in collection API queries. \
   Default is 24 hours.
 
 ### Improved

@@ -523,6 +523,20 @@ test("Generate AQL", () => {
     expect(params.values.v2).toEqual("2")
 
     params.clear()
+    ql = Transaction.filterCondition(params, "doc", {
+        id: { in: [] },
+    })
+    expect(ql).toEqual("FALSE")
+    expect(params.values).toEqual({})
+
+    params.clear()
+    ql = Transaction.filterCondition(params, "doc", {
+        id: { notIn: [] },
+    })
+    expect(ql).toEqual("TRUE")
+    expect(params.values).toEqual({})
+
+    params.clear()
     ql = Transaction.filterCondition(params, "doc", { in_msg: { ne: "1" } })
     expect(ql).toEqual("doc.in_msg != @v1")
     expect(params.values.v1).toEqual("1")
