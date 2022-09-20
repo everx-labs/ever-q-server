@@ -10,8 +10,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- `in: []` (empty list) filters now lead to empty query results as expected
-- `notIn: []` (empty list) filters now are ignored as expected
+- `in: []` (empty list) filter now leads to an empty query result as expected
+- `notIn: []` (empty list) filter now is ignored as expected
 
 ## [0.53.3] - 2022-09-06
 
