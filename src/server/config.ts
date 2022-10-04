@@ -189,7 +189,7 @@ export const configParams = {
             ),
             maxSize: ConfigParam.integer(
                 "subscriptions-max-filter-size",
-                16383,
+                65535,
                 "Maximum subscription's filter size in bytes (for 'external' subscriptions mode)",
             ),
             keepAliveInterval: ConfigParam.integer(
