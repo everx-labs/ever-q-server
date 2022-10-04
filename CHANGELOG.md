@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.53.5] - 2022-10-04
+
+### New
+
+- increase `Q_REQUESTS_MAX_SIZE` default to 64kb
+
 ## [0.53.4] - 2022-09-15
 
 ### New
