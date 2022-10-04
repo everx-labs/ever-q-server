@@ -5,7 +5,6 @@ import { QParams } from "../../../filter/filters"
 import { QRequestContext } from "../../../request"
 import { QTraceSpan } from "../../../tracing"
 import { required } from "../../../utils"
-import { QError } from "../../../utils"
 
 import { config } from "../config"
 import {
@@ -150,16 +149,6 @@ export async function resolve_account_transactions(
     traceSpan: QTraceSpan,
 ) {
     const maxJoinDepth = 2
-    // validate args
-    const restrictToAccounts = (await context.requireGrantedAccess({}))
-        .restrictToAccounts
-    if (
-        restrictToAccounts.length != 0 &&
-        !restrictToAccounts.includes(account_address)
-    ) {
-        throw QError.invalidQuery("This account_addr is not allowed")
-    }
-
     // filters
     const filters: string[] = []
     const params = new QParams({

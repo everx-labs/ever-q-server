@@ -21,7 +21,6 @@ import QLogs from "../server/logs"
 import TONQServer, { DataProviderFactory } from "../server/server"
 import { QStats } from "../server/stats"
 import { QTracer } from "../server/tracing"
-import { Auth, grantedAccess } from "../server/auth"
 import { QDataCollection } from "../server/data/collection"
 import {
     CollectionFilter,
@@ -83,7 +82,6 @@ export function queryText(
                 orderBy,
             },
             selectionInfo(result),
-            grantedAccess,
             0,
         )?.text ?? "",
     )
@@ -93,10 +91,7 @@ export function aggregationQueryText(
     collection: QDataCollection,
     fields: FieldAggregation[],
 ): string {
-    return normalized(
-        collection.createAggregationQuery({}, fields, grantedAccess)?.text ??
-            "",
-    )
+    return normalized(collection.createAggregationQuery({}, fields)?.text ?? "")
 }
 
 interface SubscriptionClientPrivate {
@@ -256,7 +251,6 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
             "slow",
         ),
         logs: new QLogs(),
-        auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         isTests: true,
@@ -342,7 +336,6 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         providers,
         slowQueriesProviders: providers.blockchain,
         logs: new QLogs(),
-        auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         isTests: true,

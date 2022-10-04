@@ -1,7 +1,6 @@
 import { JoinArgs, mergeFieldWithSelectionSet } from "../filter/filters"
 import { FieldNode, SelectionSetNode, ValueNode } from "graphql"
 import { QRequestContext } from "../request"
-import { AccessRights } from "../auth"
 import { QCollectionQuery } from "./collection-query"
 import { QDataCollection } from "./collection"
 import { joinFields } from "../graphql/resolvers-generated"
@@ -195,7 +194,6 @@ export class QJoinQuery {
     async join(
         mainCollection: QDataCollection,
         mainRecords: Record<string, unknown>[],
-        accessRights: AccessRights,
         defaultTimeout: number | undefined,
         request: QRequestContext,
         traceSpan: QTraceSpan,
@@ -228,7 +226,6 @@ export class QJoinQuery {
                     this.refOn,
                     this.refOnIsArray,
                     this.fieldSelection,
-                    accessRights,
                     required(this.refCollection.provider).shardingDegree,
                     request.services.config,
                 )
@@ -270,7 +267,6 @@ export class QJoinQuery {
             this.refCollection,
             joinedRecords,
             this.fieldSelection,
-            accessRights,
             defaultTimeout,
             request,
             traceSpan,
@@ -281,7 +277,6 @@ export class QJoinQuery {
         mainCollection: QDataCollection,
         mainRecords: Record<string, unknown>[],
         mainSelection: SelectionSetNode | undefined,
-        accessRights: AccessRights,
         defaultTimeout: number | undefined,
         request: QRequestContext,
         traceSpan: QTraceSpan,
@@ -295,7 +290,6 @@ export class QJoinQuery {
             await join.join(
                 mainCollection,
                 mainRecords,
-                accessRights,
                 defaultTimeout,
                 request,
                 traceSpan,
