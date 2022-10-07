@@ -14,7 +14,6 @@ import {
     testServerQuery,
 } from "./init-tests"
 import { FieldNode, SelectionNode } from "graphql"
-import { grantedAccess } from "../server/auth"
 import { FilterOrConversion } from "../server/config"
 import { QCollectionQuery } from "../server/data/collection-query"
 import { overrideAccountBoc } from "../server/graphql/account-boc"
@@ -131,7 +130,6 @@ test("OR conversions", () => {
                 ],
             },
             selectionInfo("src dst"),
-            grantedAccess,
             0,
         )?.text ?? "",
     )
@@ -168,7 +166,6 @@ test("OR conversions", () => {
                 ],
             },
             selectionInfo("src dst"),
-            grantedAccess,
             0,
         )?.text ?? "",
     )
@@ -225,7 +222,6 @@ test("messages_complement are used for shardingDegree > 0", () => {
                 ],
             },
             selectionInfo("src dst"),
-            grantedAccess,
             1,
         )?.text ?? "",
     )
@@ -278,7 +274,6 @@ test("messages_complement are used for shardingDegree > 0", () => {
                 ],
             },
             selectionInfo("src dst"),
-            grantedAccess,
             1,
         )?.text ?? "",
     )

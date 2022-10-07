@@ -28,12 +28,10 @@ extend type Query {
         "Portion size"
         first: Int,
         "Starting cursor"
-        after: String,
-        "Specify access key if required"
-        accessKey: String
+        after: String
     ): [Counterparty]
 }
 
 extend type Subscription  {
-    counterparties(filter: CounterpartyFilter, accessKey: String): Counterparty
+    counterparties(filter: CounterpartyFilter): Counterparty
 }

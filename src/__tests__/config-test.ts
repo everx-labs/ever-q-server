@@ -37,8 +37,6 @@ test("Config File", () => {
             cold: [],
             cache: "",
         },
-        authEndpoint: "",
-        mamAccessKeys: "",
         jaegerEndpoint: "",
         trace: {
             service: "",

@@ -160,21 +160,13 @@ export const resolvers: Resolvers<QRequestContext> = {
         blockchain: () => ({}),
     },
     BlockchainQuery: {
-        account: async (_parent, args, context) => {
+        account: async (_parent, args, _context) => {
             const addressWithoutPrefix = args.address.split(":")[1]
             if (
                 addressWithoutPrefix === undefined ||
                 addressWithoutPrefix.length !== 64
             ) {
                 throw QError.invalidQuery("Invalid account address")
-            }
-            const restrictToAccounts = (await context.requireGrantedAccess({}))
-                .restrictToAccounts
-            if (
-                restrictToAccounts.length != 0 &&
-                !restrictToAccounts.includes(args.address)
-            ) {
-                throw QError.invalidQuery("This account address is not allowed")
             }
             return {
                 address: args.address,

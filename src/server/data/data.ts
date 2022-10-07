@@ -15,7 +15,6 @@
  */
 
 import { QDataCollection } from "./collection"
-import { Auth } from "../auth"
 import { FilterConfig, STATS, SubscriptionsMode } from "../config"
 import type { QLog } from "../logs"
 import QLogs from "../logs"
@@ -48,7 +47,6 @@ export type QDataOptions = {
     slowQueriesProviders?: QBlockchainDataProvider
 
     logs: QLogs
-    auth: Auth
     tracer: Tracer
     stats: IStats
     subscriptionsMode: SubscriptionsMode
@@ -75,7 +73,6 @@ export default class QData {
     slowQueriesProviders?: QBlockchainDataProvider
     logs: QLogs
     stats: IStats
-    auth: Auth
     tracer: Tracer
     isTests: boolean
     filterConfig: FilterConfig
@@ -97,7 +94,6 @@ export default class QData {
         this.slowQueriesProviders = options.slowQueriesProviders
         this.logs = options.logs
         this.stats = options.stats
-        this.auth = options.auth
         this.tracer = options.tracer
         this.isTests = options.isTests
         this.subscriptionsMode = options.subscriptionsMode
@@ -145,7 +141,6 @@ export default class QData {
             provider,
             slowQueriesProvider,
             logs: this.logs,
-            auth: this.auth,
             tracer: this.tracer,
             stats: this.stats,
             isTests: this.isTests,
@@ -201,13 +196,5 @@ export default class QData {
                 return provider.query(queryParams)
             },
         )
-    }
-
-    async finishOperations(operationIds: Set<string>): Promise<number> {
-        let count = 0
-        this.collections.forEach(
-            x => (count += x.finishOperations(operationIds)),
-        )
-        return count
     }
 }

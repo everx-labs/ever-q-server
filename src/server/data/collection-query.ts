@@ -1,4 +1,3 @@
-import { AccessRights } from "../auth"
 import {
     CollectionFilter,
     collectReturnExpressions,
@@ -24,10 +23,8 @@ export class QCollectionQuery {
         public orderBy: OrderBy[],
         public limit: number,
         public timeout: number,
-        public operationId: string | null,
         public text: string,
         public params: { [name: string]: unknown },
-        public accessRights: AccessRights,
         public shards: Set<string> | undefined,
     ) {}
 
@@ -41,10 +38,8 @@ export class QCollectionQuery {
             orderBy?: OrderBy[] | null
             limit?: number | null
             timeout?: number | null
-            operationId?: string | null
         },
         selectionSet: SelectionSetNode | undefined,
-        accessRights: AccessRights,
         shardingDegree: number,
     ): QCollectionQuery | null {
         const orderBy: OrderBy[] = args.orderBy || []
@@ -78,11 +73,9 @@ export class QCollectionQuery {
 
         for (const subFilter of subFilters) {
             const condition = QCollectionQuery.buildFilterCondition(
-                collectionName,
                 collectionDocType,
                 subFilter,
                 params,
-                accessRights,
             )
             const filterSection = condition ? `FILTER ${condition}` : ""
             const returnExpression = QCollectionQuery.buildReturnExpression(
@@ -138,10 +131,8 @@ export class QCollectionQuery {
             orderBy,
             limit,
             timeout,
-            args.operationId || null,
             text,
             params.values,
-            accessRights,
             shards,
         )
     }
@@ -154,7 +145,6 @@ export class QCollectionQuery {
         refOn: string,
         refOnIsArray: boolean,
         fieldSelection: SelectionSetNode | undefined,
-        accessRights: AccessRights,
         shardingDegree: number,
         config: QConfig,
     ): QCollectionQuery | null {
@@ -170,7 +160,6 @@ export class QCollectionQuery {
                     },
                 },
                 fieldSelection,
-                accessRights,
                 shardingDegree,
             )
         }
@@ -220,58 +209,20 @@ export class QCollectionQuery {
             [],
             1000,
             0,
-            null,
             text,
             params.values,
-            accessRights,
             undefined,
         )
     }
 
-    static getAdditionalCondition(
-        collectionName: string,
-        accessRights: AccessRights,
-        params: QParams,
-    ): string | null {
-        const accounts = accessRights.restrictToAccounts
-        if (accounts.length === 0) {
-            return null
-        }
-        const condition =
-            accounts.length === 1
-                ? `== @${params.add(accounts[0])}`
-                : `IN [${accounts.map(x => `@${params.add(x)}`).join(",")}]`
-        switch (collectionName) {
-            case "accounts":
-                return `doc._key ${condition}`
-            case "transactions":
-                return `doc.account_addr ${condition}`
-            case "messages":
-                return `(doc.src ${condition}) OR (doc.dst ${condition})`
-            default:
-                return null
-        }
-    }
-
     static buildFilterCondition(
-        collectionName: string,
         collectionDocType: QType,
         filter: { [name: string]: unknown } | null,
         params: QParams,
-        accessRights: AccessRights,
     ): string | null {
-        const primaryCondition =
-            filter !== null && Object.keys(filter).length > 0
-                ? collectionDocType.filterCondition(params, "doc", filter)
-                : null
-        const additionalCondition = QCollectionQuery.getAdditionalCondition(
-            collectionName,
-            accessRights,
-            params,
-        )
-        return primaryCondition && additionalCondition
-            ? `(${primaryCondition}) AND (${additionalCondition})`
-            : primaryCondition || additionalCondition
+        return filter !== null && Object.keys(filter).length > 0
+            ? collectionDocType.filterCondition(params, "doc", filter)
+            : null
     }
 
     static buildReturnExpression(

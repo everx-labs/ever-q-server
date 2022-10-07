@@ -66,14 +66,13 @@ const query1 = {
     orderBy: [],
     limit: 1,
     timeout: 74154,
-    operationId: null,
     text: "\n                FOR doc IN UNION_DISTINCT(\n                FOR doc IN blocks\n                FILTER doc.prev_ref.root_hash == @v1\n                \n                LIMIT 1\n                RETURN { _key: doc._key, gen_utime: doc.gen_utime, after_split: doc.after_split, workchain_id: doc.workchain_id, shard: doc.shard, in_msg_descr: ( doc.in_msg_descr && ( FOR doc__in_msg_descr IN doc.in_msg_descr || [] RETURN { msg_id: doc__in_msg_descr.msg_id, transaction_id: doc__in_msg_descr.transaction_id } ) ) }\n            , \n                FOR doc IN blocks\n                FILTER doc.prev_alt_ref.root_hash == @v2\n                \n                LIMIT 1\n                RETURN { _key: doc._key, gen_utime: doc.gen_utime, after_split: doc.after_split, workchain_id: doc.workchain_id, shard: doc.shard, in_msg_descr: ( doc.in_msg_descr && ( FOR doc__in_msg_descr IN doc.in_msg_descr || [] RETURN { msg_id: doc__in_msg_descr.msg_id, transaction_id: doc__in_msg_descr.transaction_id } ) ) }\n            )\n                \n                LIMIT 1\n                RETURN doc",
     params: {
         v1: "34eb90cad79914ed255519cd81fe8b4d3082ede6a5907432871eddaff8f12585",
         v2: "34eb90cad79914ed255519cd81fe8b4d3082ede6a5907432871eddaff8f12585",
     },
-    accessRights: { granted: true, restrictToAccounts: [] },
 }
+
 const query2 = {
     filter: {
         prev_ref: {

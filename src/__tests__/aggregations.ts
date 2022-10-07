@@ -1,6 +1,5 @@
 import gql from "graphql-tag"
 import { AggregationFn } from "../server/data/aggregations"
-import type { AccessRights } from "../server/auth"
 import QLogs from "../server/logs"
 import TONQServer from "../server/server"
 import {
@@ -34,10 +33,6 @@ test("Optimized MIN, MAX", () => {
 })
 
 test("Aggregations Fast Detector", async () => {
-    const granted: AccessRights = {
-        granted: true,
-        restrictToAccounts: [],
-    }
     const data = createLocalArangoTestData(new QLogs())
 
     const isFast = async (
@@ -47,7 +42,6 @@ test("Aggregations Fast Detector", async () => {
         const q = required(data.transactions).createAggregationQuery(
             filter,
             fields,
-            granted,
         )
         return (
             q !== null &&

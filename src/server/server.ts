@@ -51,8 +51,6 @@ import { postRequestsResolvers } from "./graphql/post-requests"
 import { blockchainResolvers } from "./graphql/blockchain"
 
 import { createResolvers } from "./graphql/resolvers-generated"
-import { accessResolvers } from "./graphql/access"
-import { mam } from "./graphql/mam"
 
 import type { QConfig } from "./config"
 import QLogs from "./logs"
@@ -61,8 +59,7 @@ import type { IStats } from "./stats"
 import { QStats, StatsCounter } from "./stats"
 import { QTracer } from "./tracing"
 import { Tracer } from "opentracing"
-import { Auth } from "./auth"
-import { assignDeep, httpUrl, packageJson, QError } from "./utils"
+import { assignDeep, httpUrl, packageJson } from "./utils"
 import WebSocket from "ws"
 import { MemStats } from "./mem-stat"
 import { QRequestContext, QRequestServices, RequestEvent } from "./request"
@@ -278,11 +275,6 @@ type QConnectionContext = ConnectionContext & {
     activeRequests?: QRequestContext[]
 }
 
-type QConnectionParams = {
-    accessKey?: string | null
-    accesskey?: string | null
-}
-
 export default class TONQServer {
     config: QConfig
     logs: QLogs
@@ -294,7 +286,6 @@ export default class TONQServer {
     tracer: Tracer
     stats: IStats
     client: TonClient
-    auth: Auth
     memStats: MemStats
     internalErrorStats: StatsCounter
     shared: Map<string, unknown>
@@ -313,7 +304,6 @@ export default class TONQServer {
             options.config.statsd.tags,
             options.config.statsd.resetInterval,
         )
-        this.auth = new Auth(options.config)
         this.endPoints = []
         this.app = express()
         this.server = http.createServer(this.app)
@@ -322,7 +312,6 @@ export default class TONQServer {
             options.data ||
             new QBlockchainData({
                 logs: this.logs,
-                auth: this.auth,
                 tracer: this.tracer,
                 stats: this.stats,
                 providers: providers.ensure(),
@@ -344,7 +333,6 @@ export default class TONQServer {
         this.memStats.start()
         this.requestServices = new QRequestServices(
             this.config,
-            this.auth,
             this.tracer,
             this.stats,
             this.client,
@@ -352,19 +340,12 @@ export default class TONQServer {
             this.logs,
             this.data,
         )
-        this.addEndPoint({
-            path: "/graphql/mam",
-            resolvers: mam,
-            typeDefFileNames: ["type-defs-mam.graphql"],
-            supportSubscriptions: false,
-        })
         overrideAccountBoc()
         const resolvers = createResolvers(this.data) as IResolvers
         ;[
             infoResolvers,
             aggregatesResolvers(this.data),
             postRequestsResolvers,
-            accessResolvers,
             counterpartiesResolvers(this.data),
             rempResolvers(this.config.remp, this.logs),
             blockchainResolvers,
@@ -446,7 +427,7 @@ export default class TONQServer {
                     }
                 },
                 onConnect(
-                    connectionParams: QConnectionParams,
+                    _connectionParams: unknown,
                     _webSocket: WebSocket,
                     context: QConnectionContext,
                 ): Record<string, unknown> {
@@ -454,9 +435,6 @@ export default class TONQServer {
                     context.activeRequests = activeRequests
                     return {
                         activeRequests,
-                        accessKey:
-                            connectionParams.accessKey ??
-                            connectionParams.accesskey,
                     }
                 },
             },
@@ -505,12 +483,6 @@ export default class TONQServer {
                                 const context = ctx.context as QRequestContext
                                 context.log("Apollo_willSendResponse")
                                 context.onRequestFinishing()
-                                if (
-                                    context.multipleAccessKeysDetected ??
-                                    false
-                                ) {
-                                    throw QError.multipleAccessKeys()
-                                }
                             },
                         }
                     },

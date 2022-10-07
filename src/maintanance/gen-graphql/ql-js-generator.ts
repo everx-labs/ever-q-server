@@ -276,7 +276,7 @@ function main(schemaDef: TypeDef): {
             g.writeLn(
                 `\t${type.collection ?? ""}(filter: ${
                     type.name
-                }Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [${
+                }Filter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [${
                     type.name
                 }]`,
             )
@@ -292,9 +292,9 @@ function main(schemaDef: TypeDef): {
         g.writeLn("type Subscription {")
         types.forEach(type => {
             g.writeLn(
-                `\t${type.collection ?? ""}(filter: ${
+                `\t${type.collection ?? ""}(filter: ${type.name}Filter): ${
                     type.name
-                }Filter, accessKey: String): ${type.name}`,
+                }`,
             )
         })
         g.writeLn("}")

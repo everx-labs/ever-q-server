@@ -31,8 +31,7 @@ import {
     QIndexInfo,
     QResult,
 } from "./data-provider"
-import { QDataListener, QDataSubscription } from "./listener"
-import { AccessArgs, AccessRights, Auth } from "../auth"
+import { QDataSubscription } from "./listener"
 import {
     FilterConfig,
     QConfig,
@@ -67,7 +66,6 @@ const INDEXES_REFRESH_INTERVAL = 60 * 60 * 1000 // 60 minutes
 export type AggregationArgs = {
     filter?: CollectionFilter | null
     fields?: FieldAggregation[] | null
-    accessKey?: string | null
 }
 
 export type QCollectionOptions = {
@@ -78,7 +76,6 @@ export type QCollectionOptions = {
     provider: QDataProvider | undefined
     slowQueriesProvider: QDataProvider | undefined
     logs: QLogs
-    auth: Auth
     tracer: Tracer
     stats: IStats
     subscriptionsMode: SubscriptionsMode
@@ -97,7 +94,6 @@ export class QDataCollection {
     provider: QDataProvider | undefined
     slowQueriesProvider: QDataProvider | undefined
     log: QLog
-    auth: Auth
     tracer: Tracer
     isTests: boolean
     subscriptionsMode: SubscriptionsMode
@@ -133,7 +129,6 @@ export class QDataCollection {
 
         this.slowQueriesProvider = options.slowQueriesProvider
         this.log = options.logs.create(name)
-        this.auth = options.auth
         this.tracer = options.tracer
         this.isTests = options.isTests
         this.subscriptionsMode = options.subscriptionsMode
@@ -238,16 +233,14 @@ export class QDataCollection {
         return {
             subscribe: async (
                 _: unknown,
-                args: AccessArgs & { filter: CollectionFilter | null },
+                args: { filter: CollectionFilter | null },
                 request: QRequestContext,
                 info: { operation: { selectionSet: SelectionSetNode } },
             ) => {
-                const accessRights = await request.requireGrantedAccess(args)
                 await this.statSubscription.increment()
                 const subscription = new QDataSubscription(
                     this.name,
                     this.docType,
-                    accessRights,
                     args.filter ?? {},
                     parseSelectionSet(info.operation.selectionSet, this.name),
                 )
@@ -275,7 +268,6 @@ export class QDataCollection {
                                     this,
                                     [reduced],
                                     fieldSelection.selectionSet,
-                                    accessRights,
                                     40000,
                                     request,
                                     parentSpan,
@@ -313,11 +305,10 @@ export class QDataCollection {
         return {
             subscribe: async (
                 _: unknown,
-                args: AccessArgs & { filter: CollectionFilter | null },
+                args: { filter: CollectionFilter | null },
                 context: QRequestContext,
                 info: GraphQLResolveInfo,
             ) => {
-                const accessRights = await context.requireGrantedAccess(args)
                 await this.statSubscription.increment()
                 const redis = await context.ensureShared(
                     "subscr-redis",
@@ -375,7 +366,6 @@ export class QDataCollection {
                             this,
                             [next],
                             fieldSelection.selectionSet,
-                            accessRights,
                             40000,
                             context,
                             parentSpan,
@@ -466,14 +456,11 @@ export class QDataCollection {
 
     async optimizeSortedQueryWithSingleResult(
         args: {
-            accessKey?: string | null
             filter?: CollectionFilter | null
             orderBy?: OrderBy[] | null
             limit?: number | null
             timeout?: number | null
-            operationId?: string | null
         },
-        accessRights: AccessRights,
         request: QRequestContext,
         traceSpan: QTraceSpan,
     ): Promise<boolean> {
@@ -505,7 +492,6 @@ export class QDataCollection {
             this.docType,
             args,
             selection,
-            accessRights,
             required(this.provider).shardingDegree,
         )
         if (query === null) {
@@ -533,12 +519,10 @@ export class QDataCollection {
     async fetchRecords(
         query: QCollectionQuery,
         args: {
-            accessKey?: string | null
             filter?: CollectionFilter | null
             orderBy?: OrderBy[] | null
             limit?: number | null
             timeout?: number | null
-            operationId?: string | null
         },
         selection: SelectionSetNode | undefined,
         request: QRequestContext,
@@ -602,7 +586,6 @@ export class QDataCollection {
             this,
             records as Record<string, unknown>[],
             selection,
-            query.accessRights,
             query.timeout || 40000,
             request,
             traceSpan,
@@ -622,12 +605,10 @@ export class QDataCollection {
         return async (
             _parent: unknown,
             args: {
-                accessKey?: string | null
                 filter?: CollectionFilter | null
                 orderBy?: OrderBy[] | null
                 limit?: number | null
                 timeout?: number | null
-                operationId?: string | null
             },
             request: QRequestContext,
             selection: {
@@ -651,14 +632,11 @@ export class QDataCollection {
                             created: false,
                         }
                         try {
-                            const accessRights =
-                                await request.requireGrantedAccess(args)
                             const selectionSet =
                                 selection.fieldNodes[0].selectionSet
                             const optimizationPassed =
                                 await this.optimizeSortedQueryWithSingleResult(
                                     args,
-                                    accessRights,
                                     request,
                                     traceSpan,
                                 )
@@ -670,7 +648,6 @@ export class QDataCollection {
                                       this.docType,
                                       args,
                                       selectionSet,
-                                      accessRights,
                                       required(this.provider).shardingDegree,
                                   )
                                 : null
@@ -870,14 +847,7 @@ export class QDataCollection {
                 void queryOnce().then(() => {})
 
                 // -------- Subscribe changes feed --------
-                const authFilter = QDataListener.getAuthFilter(
-                    this.name,
-                    q.accessRights,
-                )
                 waitFor = doc => {
-                    if (authFilter && !authFilter(doc)) {
-                        return
-                    }
                     try {
                         if (this.docType.test(null, doc, q.filter)) {
                             resolveBy("listener", [doc])
@@ -927,7 +897,6 @@ export class QDataCollection {
     createAggregationQuery(
         filter: CollectionFilter,
         fields: FieldAggregation[],
-        accessRights: AccessRights,
     ): {
         text: string
         params: Record<string, unknown>
@@ -939,11 +908,9 @@ export class QDataCollection {
                 this.filterConfig.stringifyKeyInAqlComparison,
         })
         const condition = QCollectionQuery.buildFilterCondition(
-            this.name,
             this.docType,
             filter,
             params,
-            accessRights,
         )
         const shards = QCollectionQuery.getShards(
             this.name,
@@ -1012,8 +979,6 @@ export class QDataCollection {
                         await this.statQueryActive.increment()
                         const start = Date.now()
                         try {
-                            const accessRights =
-                                await request.requireGrantedAccess(args)
                             const filter = args.filter || {}
                             const fields =
                                 Array.isArray(args.fields) &&
@@ -1029,7 +994,6 @@ export class QDataCollection {
                             const q = this.createAggregationQuery(
                                 filter,
                                 fields,
-                                accessRights,
                             )
                             if (!q) {
                                 this.log.debug(
@@ -1123,19 +1087,6 @@ export class QDataCollection {
             this.indexes = actualIndexes.map(x => ({ fields: x.fields }))
             this.queryStats.clear()
         }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    finishOperations(_operationIds: Set<string>): number {
-        const toClose = []
-        // TODO: Implement listener cancellation based on operationId
-        // for (const listener of this.listeners.items.values()) {
-        //     if (listener.operationId && operationIds.has(listener.operationId)) {
-        //         toClose.push(listener);
-        //     }
-        // }
-        // toClose.forEach(x => x.close());
-        return toClose.length
     }
 }
 

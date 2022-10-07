@@ -1,12 +1,11 @@
 import { QConfig } from "./config"
-import { AccessArgs, AccessRights, Auth } from "./auth"
 import { Span, SpanContext, Tracer } from "opentracing"
 import { QTraceSpan, QTracer } from "./tracing"
 import { TonClient } from "@tonclient/core"
 import QLogs from "./logs"
 import QBlockchainData from "./data/blockchain"
 import EventEmitter from "events"
-import { extractHeader, QError, RequestWithHeaders } from "./utils"
+import { extractHeader, RequestWithHeaders } from "./utils"
 import express from "express"
 import { ExecutionParams } from "subscriptions-transport-ws"
 import { IStats } from "./stats"
@@ -15,7 +14,6 @@ import { QRequestParams } from "./filter/filters"
 export class QRequestServices {
     constructor(
         public config: QConfig,
-        public auth: Auth,
         public tracer: Tracer,
         public stats: IStats,
         public client: TonClient,
@@ -34,11 +32,7 @@ export class QRequestContext implements QRequestParams {
     start: number
     events: EventEmitter
     remoteAddress: string
-    accessKey: string
     expectedAccountBocVersion: number
-    usedAccessKey?: string = undefined
-    usedMamAccessKey?: string = undefined
-    multipleAccessKeysDetected = false
     parentSpan: Span | SpanContext | undefined
     requestSpan: QTraceSpan
     requestTags = {
@@ -69,10 +63,6 @@ export class QRequestContext implements QRequestParams {
                 "1",
             ),
         )
-        this.accessKey = Auth.extractAccessKey(
-            req as RequestWithHeaders,
-            connection,
-        )
         this.parentSpan =
             QTracer.extractParentSpan(services.tracer, connection ?? req) ??
             undefined
@@ -86,31 +76,6 @@ export class QRequestContext implements QRequestParams {
             headers: req?.headers,
             request_body: req?.body,
         })
-    }
-
-    async requireGrantedAccess(args: AccessArgs): Promise<AccessRights> {
-        const accessKey = this.accessKey ?? args.accessKey ?? undefined
-        this.usedAccessKey = this.checkUsedAccessKey(accessKey)
-        return await this.services.auth.requireGrantedAccess(accessKey)
-    }
-
-    checkUsedAccessKey(accessKey?: string): string | undefined {
-        if (!accessKey) {
-            return this.usedAccessKey
-        }
-        if (this.usedAccessKey && accessKey !== this.usedAccessKey) {
-            this.multipleAccessKeysDetected = true
-            throw QError.multipleAccessKeys()
-        }
-        return accessKey
-    }
-
-    mamAccessRequired(args: AccessArgs) {
-        const accessKey = args.accessKey ?? undefined
-        this.usedMamAccessKey = this.checkUsedAccessKey(accessKey)
-        if (!accessKey || !this.services.auth.mamAccessKeys.has(accessKey)) {
-            throw Auth.unauthorizedError()
-        }
     }
 
     emitClose() {
