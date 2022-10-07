@@ -6,14 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- removed auth mutations and all other auth related logic.
-- removed obsolete `finishOperation` mutation.
-
-## [0.53.5] - 2022-10-04
-
-### New
-
 - increase `Q_REQUESTS_MAX_SIZE` default to 64kb
+
+### Improvement
+
+- removed obsolete auth mutations (`revokeAccessKeys`, `registerAccessKeys`) and all other auth related logic.
+- removed obsolete `finishOperation` mutation.
 
 ## [0.53.4] - 2022-09-15
 
