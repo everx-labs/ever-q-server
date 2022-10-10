@@ -13,7 +13,6 @@ import { required } from "../utils"
 //------------------------------------------------------------- Counterparties
 
 type CounterpartiesArgs = {
-    accessKey?: string | null
     first?: number | null
     after?: string | null
     account: string
@@ -47,7 +46,6 @@ async function counterparties(
     context: QRequestContext,
 ): Promise<CounterpartiesResult[]> {
     return context.trace("counterparties", async traceSpan => {
-        await context.requireGrantedAccess(args)
         let text = "FOR doc IN counterparties FILTER doc.account == @account"
         const vars: Record<string, unknown> = {
             account: args.account,

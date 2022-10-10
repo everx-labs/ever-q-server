@@ -1,66 +1,18 @@
 import { $$asyncIterator } from "iterall"
-import type { AccessRights } from "../auth"
 import { CollectionFilter, selectFields } from "../filter/filters"
 import type { FieldSelection, QType } from "../filter/filters"
 import { QDoc } from "./data-provider"
 
-type QDocTransaction = {
-    account_addr: string
-}
-
-type QDocMessage = {
-    src: string
-    dst: string
-}
-
 export class QDataListener {
     docType: QType
     filter: CollectionFilter
-    authFilter: ((doc: QDoc) => boolean) | null
 
-    constructor(
-        collectionName: string,
-        docType: QType,
-        accessRights: AccessRights,
-        filter: CollectionFilter,
-    ) {
+    constructor(docType: QType, filter: CollectionFilter) {
         this.docType = docType
-        this.authFilter = QDataListener.getAuthFilter(
-            collectionName,
-            accessRights,
-        )
         this.filter = filter
     }
 
-    static getAuthFilter(
-        collectionName: string,
-        accessRights: AccessRights,
-    ): ((doc: QDoc) => boolean) | null {
-        if (accessRights.restrictToAccounts.length === 0) {
-            return null
-        }
-        const accounts = new Set(accessRights.restrictToAccounts)
-        switch (collectionName) {
-            case "accounts":
-                return doc => accounts.has(doc._key)
-            case "transactions":
-                return doc =>
-                    accounts.has(
-                        (doc as unknown as QDocTransaction).account_addr,
-                    )
-            case "messages":
-                return doc =>
-                    accounts.has((doc as unknown as QDocMessage).src) ||
-                    accounts.has((doc as unknown as QDocMessage).dst)
-            default:
-                return () => false
-        }
-    }
-
     isFiltered(doc: QDoc): boolean {
-        if (this.authFilter && !this.authFilter(doc)) {
-            return false
-        }
         return this.docType.test(null, doc, this.filter)
     }
 }
@@ -83,11 +35,10 @@ export class QDataSubscription
     constructor(
         collectionName: string,
         docType: QType,
-        accessRights: AccessRights,
         filter: CollectionFilter,
         selection: FieldSelection[],
     ) {
-        super(collectionName, docType, accessRights, filter)
+        super(docType, filter)
         this.collectionName = collectionName
         this.selection = selection
         this.pullQueue = []

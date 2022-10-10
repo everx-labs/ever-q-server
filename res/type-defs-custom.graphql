@@ -37,9 +37,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: AccountFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation],
-        "Specify access key if required"
-        accessKey: String
+        fields: [FieldAggregation]
     ): [String]
 
     "Compute aggregated values for specified fields"
@@ -47,9 +45,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: TransactionFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation],
-        "Specify access key if required"
-        accessKey: String
+        fields: [FieldAggregation]
     ): [String]
 
     "Compute aggregated values for specified fields"
@@ -57,9 +53,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: MessageFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation],
-        "Specify access key if required"
-        accessKey: String
+        fields: [FieldAggregation]
     ): [String]
 
     "Compute aggregated values for specified fields"
@@ -67,9 +61,7 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: BlockFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation],
-        "Specify access key if required"
-        accessKey: String
+        fields: [FieldAggregation]
     ): [String]
 
     "Compute aggregated values for specified fields"
@@ -77,58 +69,14 @@ extend type Query {
         "Specify filter for records to aggregate"
         filter: BlockSignaturesFilter,
         "Specify list of fields to collect aggregated values"
-        fields: [FieldAggregation],
-        "Specify access key if required"
-        accessKey: String
+        fields: [FieldAggregation]
     ): [String]
-
-    "Returns one time access key for management functions"
-    getManagementAccessKey: String
-}
-
-input AccessKey {
-    "User defined access key"
-    key: String
-    """
-    Additional restrictions to specified accounts.
-    User will see only subset of a blockchain related to specified accounts.
-    If omitted or is an empty array then user has no restrictions.
-    """
-    restrictToAccounts: [String]
 }
 
 type Mutation {
     "Post external inbound message to blockchain node."
     postRequests(
         "List of message requests"
-        requests: [Request],
-        "Access key if required"
-        accessKey: String
+        requests: [Request]
     ): [String]
-
-    "Register GraphQL services access keys. Returns number of actually registered keys"
-    registerAccessKeys(
-        "Account contract address"
-        account: String,
-        "Access keys associated with account"
-        keys: [AccessKey],
-        "Management access key obtained with getManagementAccessKey and signed using key pair of account contract"
-        signedManagementAccessKey: String,
-    ): Int
-
-    "Revoke GraphQL services access keys. Returns number of actually revoked keys"
-    revokeAccessKeys(
-        "Account contract address"
-        account: String,
-        "Access keys associated with account"
-        keys: [String],
-        "Management access key obtained with getManagementAccessKey and signed using key pair of account contract"
-        signedManagementAccessKey: String,
-    ): Int
-
-    "Stop listeners for specified operations"
-    finishOperations(
-        "Operation identifiers"
-        operationIds: [String],
-    ): Int
 }

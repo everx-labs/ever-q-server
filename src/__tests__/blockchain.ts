@@ -1,7 +1,6 @@
 import { Database } from "arangojs"
 import gql from "graphql-tag"
 
-import { Auth } from "../server/auth"
 import { resolveConfig, SubscriptionsMode } from "../server/config"
 import QBlockchainData from "../server/data/blockchain"
 import QLogs from "../server/logs"
@@ -78,7 +77,6 @@ beforeAll(async () => {
     const blockchainData = new QBlockchainData({
         providers: providers.ensure(),
         logs: new QLogs(),
-        auth: new Auth(testConfig),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         isTests: true,

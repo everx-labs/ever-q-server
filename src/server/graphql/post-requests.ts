@@ -1,10 +1,7 @@
-import { TonClient } from "@tonclient/core"
 import { Kafka, Producer } from "kafkajs"
 import { FORMAT_TEXT_MAP } from "opentracing"
 import type { QConfig } from "../config"
 import { ensureProtocol, RequestsMode } from "../config"
-import type { AccessArgs, AccessRights } from "../auth"
-import { Auth } from "../auth"
 import fetch, { RequestInit } from "node-fetch"
 import { QTraceSpan, QTracer } from "../tracing"
 import { QError } from "../utils"
@@ -108,12 +105,7 @@ async function postRequestsUsingKafka(
     await send
 }
 
-async function checkPostRestrictions(
-    config: QConfig,
-    client: TonClient,
-    requests: Request[],
-    accessRights: AccessRights,
-) {
+async function checkPostRestrictions(config: QConfig, requests: Request[]) {
     requests.forEach(request => {
         const size = Math.ceil((request.body.length * 3) / 4)
         if (size > config.requests.maxSize) {
@@ -122,26 +114,11 @@ async function checkPostRestrictions(
             )
         }
     })
-
-    if (accessRights.restrictToAccounts.length === 0) {
-        return
-    }
-    const accounts = new Set(accessRights.restrictToAccounts)
-    for (const request of requests) {
-        const message = (
-            await client.boc.parse_message({
-                boc: request.body,
-            })
-        ).parsed
-        if (!accounts.has(message.dst)) {
-            throw Auth.unauthorizedError()
-        }
-    }
 }
 
 async function postRequests(
     _parent: Record<string, unknown>,
-    args: AccessArgs & { requests: Request[] },
+    args: { requests: Request[] },
     context: QRequestContext,
 ): Promise<string[]> {
     const requests: Request[] | null = args.requests
@@ -149,11 +126,10 @@ async function postRequests(
         return []
     }
 
-    const { tracer, client, data, config } = context.services
+    const { tracer, data, config } = context.services
     return context.trace("postRequests", async (span: QTraceSpan) => {
         span.logEvent("start", { requests })
-        const accessRights = await context.requireGrantedAccess(args)
-        await checkPostRestrictions(config, client, requests, accessRights)
+        await checkPostRestrictions(config, requests)
 
         const expired: Request | undefined = requests.find(
             x => x.expireAt && Date.now() > x.expireAt,

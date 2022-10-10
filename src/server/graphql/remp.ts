@@ -1,4 +1,3 @@
-import { AccessArgs } from "../auth"
 import { QRequestContext } from "../request"
 import { ConfigParam } from "../config-param"
 import {
@@ -57,7 +56,6 @@ export type RempReceiptJson = {
 }
 
 type RempReceiptsArgs = {
-    accessKey?: string | null
     messageId: string
 }
 
@@ -102,13 +100,12 @@ function rempReceiptsResolver(
     return {
         subscribe: async (
             _: unknown,
-            args: AccessArgs & RempReceiptsArgs,
+            args: RempReceiptsArgs,
             request: QRequestContext,
         ) => {
             if (!config.enabled) {
                 throw new Error("Disabled")
             }
-            await request.requireGrantedAccess(args)
             const provider =
                 customProvider ??
                 (await request.ensureShared("remp-redis-provider", async () => {

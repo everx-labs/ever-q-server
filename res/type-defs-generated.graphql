@@ -3010,19 +3010,19 @@ input QueryOrderBy {
 }
 
 extend type Query {
-	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Account]
-	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Transaction]
-	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Message]
-	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Block]
-	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [BlockSignatures]
-	zerostates(filter: ZerostateFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float, accessKey: String, operationId: String): [Zerostate]
+	accounts(filter: AccountFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Account]
+	transactions(filter: TransactionFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Transaction]
+	messages(filter: MessageFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Message]
+	blocks(filter: BlockFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Block]
+	blocks_signatures(filter: BlockSignaturesFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [BlockSignatures]
+	zerostates(filter: ZerostateFilter, orderBy: [QueryOrderBy], limit: Int, timeout: Float): [Zerostate]
 }
 
 type Subscription {
-	accounts(filter: AccountFilter, accessKey: String): Account
-	transactions(filter: TransactionFilter, accessKey: String): Transaction
-	messages(filter: MessageFilter, accessKey: String): Message
-	blocks(filter: BlockFilter, accessKey: String): Block
-	blocks_signatures(filter: BlockSignaturesFilter, accessKey: String): BlockSignatures
-	zerostates(filter: ZerostateFilter, accessKey: String): Zerostate
+	accounts(filter: AccountFilter): Account
+	transactions(filter: TransactionFilter): Transaction
+	messages(filter: MessageFilter): Message
+	blocks(filter: BlockFilter): Block
+	blocks_signatures(filter: BlockSignaturesFilter): BlockSignatures
+	zerostates(filter: ZerostateFilter): Zerostate
 }

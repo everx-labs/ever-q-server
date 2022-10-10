@@ -30,10 +30,6 @@ export function cleanError(
 
 enum QErrorCode {
     MESSAGE_EXPIRED = 10001,
-    MULTIPLE_ACCESS_KEYS = 10002,
-    UNAUTHORIZED = 10003,
-    AUTH_SERVICE_UNAVAILABLE = 10004,
-    AUTH_FAILED = 10005,
     QUERY_TERMINATED_ON_TIMEOUT = 10006,
     INVALID_CONFIG = 10007,
     INVALID_QUERY = 10008,
@@ -77,34 +73,6 @@ export class QError extends Error {
         data?: Record<string, unknown>,
     ): Error {
         return new QError(code, message, data)
-    }
-
-    static multipleAccessKeys() {
-        return QError.create(
-            QErrorCode.MULTIPLE_ACCESS_KEYS,
-            "Request must use the same access key for all queries and mutations",
-        )
-    }
-
-    static unauthorized() {
-        return QError.create(QErrorCode.UNAUTHORIZED, "Unauthorized")
-    }
-
-    static authServiceUnavailable() {
-        return QError.create(
-            QErrorCode.AUTH_SERVICE_UNAVAILABLE,
-            "Auth service unavailable",
-        )
-    }
-
-    static auth(error: QError) {
-        return QError.create(
-            QErrorCode.AUTH_FAILED,
-            error.message ??
-                (error as { description?: string }).description ??
-                "",
-            { authErrorCode: error.code },
-        )
     }
 
     static internalServerError() {

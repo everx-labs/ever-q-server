@@ -68,9 +68,6 @@ export type QConfig = {
     data?: QDeprecatedDataConfig
     slowQueriesData?: QDeprecatedDataConfig
 
-    authorization: {
-        endpoint: string
-    }
     jaeger: {
         endpoint: string
         service: string
@@ -81,7 +78,6 @@ export type QConfig = {
         tags: string[]
         resetInterval: number
     }
-    mamAccessKeys: string[]
     isTests: boolean
     networkName: string
     cacheKeyPrefix: string
@@ -300,9 +296,6 @@ export const configParams = {
     data: ConfigParam.dataDeprecated("data"),
     slowQueriesData: ConfigParam.dataDeprecated("slow-queries"),
 
-    authorization: {
-        endpoint: ConfigParam.string("auth-endpoint", "", "Auth endpoint"),
-    },
     jaeger: {
         endpoint: ConfigParam.string("jaeger-endpoint", "", "Jaeger endpoint"),
         service: ConfigParam.string(
@@ -333,11 +326,6 @@ export const configParams = {
             "Interval between statsd reconnects.\nIf it is zero – no reconnects.",
         ),
     },
-    mamAccessKeys: ConfigParam.array(
-        "mam-access-keys",
-        [],
-        "Access keys used to authorize mam endpoint access",
-    ),
     isTests: ConfigParam.boolean(
         "is-tests",
         false,
