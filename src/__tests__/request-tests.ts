@@ -188,7 +188,7 @@ test("Post extra large request with default limit", async () => {
     await testServerStop()
     await testServerRequired()
     try {
-        await postRequest(randomRequest(65000))
+        await postRequest(randomRequest(66000))
     } catch (error) {
         expect(error.message.includes("is too large")).toBeTruthy()
     }
