@@ -166,7 +166,7 @@ export const configParams = {
         ),
         maxSize: ConfigParam.integer(
             "requests-max-size",
-            16383,
+            65535,
             "Maximum request message size in bytes",
         ),
     },
