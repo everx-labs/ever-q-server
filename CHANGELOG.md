@@ -2,11 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.54.0] - 2022-10-05
+## [0.54.1] - 2022-10-26
 
 ### New
 
 - increase `Q_REQUESTS_MAX_SIZE` default to 64kb
+
+## [0.54.0] - 2022-10-05
+
+### New
+
+- increase `Q_SUBSCRIPTIONS_MAX_FILTER_SIZE` default to 64kb
 
 ### Improvement
 
