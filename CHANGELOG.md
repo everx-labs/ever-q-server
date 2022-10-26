@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
-- increase `Q_REQUESTS_MAX_SIZE` default to 64kb
+- increase `Q_SUBSCRIPTIONS_MAX_FILTER_SIZE` default to 64kb
 
 ### Improvement
 
