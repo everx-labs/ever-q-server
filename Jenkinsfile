@@ -193,6 +193,7 @@ pipeline {
 					}
 				}
 
+                /* Temporary disable Integration tests
 				stage ('Integration Tests') {
 					steps {
 						script {
@@ -216,7 +217,7 @@ pipeline {
 						success {script{G_IntegTestImage = "success"}}
 						failure {script{G_IntegTestImage = "failure"}}
 					}
-				}
+				}*/
 
 				stage ('Tag as latest') {
 					when {
