@@ -52,14 +52,12 @@ async function info(
         fields.has("messagesLatency") ||
         fields.has("lastBlockTime")
     if (latencyFieldsSelected) {
-        const data = context.services.data
-        const latency = await data.getLatency(context)
+        const latency = await context.services.data.getLatency(context)
         result.lastBlockTime = latency.lastBlockTime
         result.blocksLatency = latency.blocks.latency
         result.transactionsLatency = latency.transactions.latency
         result.messagesLatency = latency.messages.latency
-        result.latency =
-            data.debugLatency === 0 ? latency.latency : data.debugLatency
+        result.latency = latency.latency
     }
     result.rempEnabled = context.services.config.remp.enabled
     return result
