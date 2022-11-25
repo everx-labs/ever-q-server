@@ -30,6 +30,10 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
         super({
             ttlMs: LATENCY_UPDATE_FREQUENCY,
         })
+        this.update({
+            maxTime: 0,
+            latency: Date.now(),
+        })
         collection.docInsertOrUpdate.on("doc", async doc => {
             this.updateLatency(doc[this.field])
         })
