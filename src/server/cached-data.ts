@@ -1,3 +1,5 @@
+import Timeout = NodeJS.Timeout
+
 const DEFAULT_TTL_MS = 30000
 
 export type CachedDataOptions = {
@@ -9,9 +11,9 @@ type Resolver = { resolve: () => void; reject: (error: Error) => void }
 export abstract class CachedData<T> {
     private readonly ttlMs: number
     protected data: T | undefined = undefined
-    private nextRefreshTime = 0
     private refreshing = false
     private refreshResolvers: Resolver[] | undefined = undefined
+    private refreshTimer: Timeout | undefined = undefined
 
     protected constructor(options?: CachedDataOptions) {
         this.ttlMs = options?.ttlMs ?? DEFAULT_TTL_MS
@@ -22,8 +24,6 @@ export abstract class CachedData<T> {
     async get(): Promise<T> {
         if (this.data === undefined) {
             await this.initialRefreshData()
-        } else if (Date.now() > this.nextRefreshTime) {
-            this.startRefreshData()
         }
         if (!this.data) {
             throw Error("Invalid cached data state: data is undefined")
@@ -33,7 +33,6 @@ export abstract class CachedData<T> {
 
     update(data: T) {
         this.data = data
-        this.nextRefreshTime = Date.now() + this.ttlMs
         this.completeRefresh(x => x.resolve())
     }
 
@@ -68,6 +67,13 @@ export abstract class CachedData<T> {
         const resolvers = this.refreshResolvers
         this.refreshResolvers = undefined
         this.refreshing = false
+        if (this.refreshTimer) {
+            clearTimeout(this.refreshTimer)
+        }
+        this.refreshTimer = setTimeout(
+            () => this.startRefreshData(),
+            this.ttlMs,
+        )
         if (resolvers) {
             resolvers.forEach(resolve)
         }
