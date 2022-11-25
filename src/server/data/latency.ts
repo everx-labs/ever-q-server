@@ -34,6 +34,7 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
             maxTime: 0,
             latency: Date.now(),
         })
+        void this.get()
         collection.docInsertOrUpdate.on("doc", async doc => {
             this.updateLatency(doc[this.field])
         })
