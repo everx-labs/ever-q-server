@@ -70,10 +70,10 @@ export abstract class CachedData<T> {
         if (this.refreshTimer) {
             clearTimeout(this.refreshTimer)
         }
-        this.refreshTimer = setTimeout(
-            () => this.startRefreshData(),
-            this.ttlMs,
-        )
+        this.refreshTimer = setTimeout(() => {
+            this.refreshTimer = undefined
+            this.startRefreshData()
+        }, this.ttlMs)
         if (resolvers) {
             resolvers.forEach(resolve)
         }
