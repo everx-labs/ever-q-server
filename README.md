@@ -383,14 +383,14 @@ Yes, you need too run tsc twice :(.
 By default tests connect to Arango on [http://localhost:8901]
 
 ```bash
-$ tondev se start
+$ npx everdev se start
 Starting tonlabs-tonos-se-user... ✓
-$ tondev se set --db-port 8901
+$ npx everdev se set --db-port 8901
 Stopping [tonlabs-tonos-se-user]... ✓
 Removing [tonlabs-tonos-se-user]... ✓
 Creating tonlabs-tonos-se-user... ✓
 Starting tonlabs-tonos-se-user... ✓
-$ tondev se info
+$ npx everdev se info
 Instance  State    Version  GraphQL Port  ArangoDB Port  Docker Container       Docker Image
 --------  -------  -------  ------------  -------------  ---------------------  --------------------------
 default   running  0.28.11  80            8901           tonlabs-tonos-se-user  tonlabs/local-node:0.28.11
@@ -399,7 +399,7 @@ $ npm run test
 
 Optionally you can change Arango address for the tests
 ```
-$ tondev se info
+$ npx everdev se info
 Instance  State    Version  GraphQL Port  ArangoDB Port  Docker Container       Docker Image
 --------  -------  -------  ------------  -------------  ---------------------  --------------------------
 default   running  0.28.11  80            2021           tonlabs-tonos-se-user  tonlabs/local-node:0.28.11
