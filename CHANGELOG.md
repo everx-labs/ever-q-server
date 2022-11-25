@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.54.2] - 2022-10-26
+
+### Fixed
+
+- From now `Info.latency` always returns last known cached latency.
+  Every 30 seconds (latency cache TLL) it start background refreshing.
+
 ## [0.54.1] - 2022-10-26
 
 ### New
