@@ -25,18 +25,18 @@ test("Cached data", async () => {
         "A",
     ])
     await sleep(100)
-    expect(await data.get()).toBe("A")
+    expect(await data.get()).toBe("B")
     await sleep(10)
     expect(await data.get()).toBe("B")
     await sleep(100)
     expect(await Promise.all([data.get(), data.get()])).toStrictEqual([
-        "B",
-        "B",
+        "D",
+        "D",
     ])
     await sleep(10)
     expect(await Promise.all([data.get(), data.get()])).toStrictEqual([
-        "C",
-        "C",
+        "D",
+        "D",
     ])
-    expect(data.refreshCount).toBe(3)
+    expect(data.refreshCount).toBe(4)
 })
