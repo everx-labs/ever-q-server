@@ -65,14 +65,10 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
             }),
         )
 
-        let maxTime: number | null = null
+        let maxTime = 0
         for (const fetchedTime of fetchedTimes) {
             const time = fetchedTime[collection]
-            if (
-                time !== undefined &&
-                time !== null &&
-                (maxTime === null || time > maxTime)
-            ) {
+            if (time !== undefined && time !== null && time > maxTime) {
                 maxTime = time
             }
         }
@@ -86,11 +82,7 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
     private getUpdatedLatency(
         timeInSeconds: number | undefined | null,
     ): CollectionLatency | undefined {
-        if (
-            timeInSeconds === undefined ||
-            timeInSeconds === null ||
-            timeInSeconds === 0
-        ) {
+        if (timeInSeconds === undefined || timeInSeconds === null) {
             return this.data
         }
         const time = timeInSeconds * 1000

@@ -1,6 +1,6 @@
 {
 	"name": "ton-q-server",
-	"version": "0.53.2",
+	"version": "0.54.2",
 	"lockfileVersion": 1,
 	"requires": true,
 	"dependencies": {
