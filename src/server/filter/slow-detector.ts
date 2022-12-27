@@ -67,6 +67,10 @@ function getUsedIndexes(
     return indexes.length > 0 ? indexes : null
 }
 
+function resolveOrderByPath(path: string): string {
+    return path === "id" ? "_key" : path
+}
+
 function orderByCanUseIndex(
     orderBy: OrderBy[],
     fields: Map<string, QFieldExplanation>,
@@ -78,7 +82,7 @@ function orderByCanUseIndex(
     let iOrderBy = 0
     for (let iIndex = 0; iIndex < index.fields.length; iIndex += 1) {
         const indexField = index.fields[iIndex]
-        if (indexField === orderBy[iOrderBy].path) {
+        if (indexField === resolveOrderByPath(orderBy[iOrderBy].path)) {
             iOrderBy += 1
             if (iOrderBy >= orderBy.length) {
                 return true
