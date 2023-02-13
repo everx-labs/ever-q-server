@@ -305,7 +305,6 @@ export type BlockValueFlowTo_Next_BlkArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -400,7 +399,6 @@ export type BlockchainAccount = Node & {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -418,7 +416,6 @@ export type BlockchainAccountBalanceArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -436,7 +433,6 @@ export type BlockchainAccountBitsArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -454,7 +450,6 @@ export type BlockchainAccountCellsArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -472,7 +467,6 @@ export type BlockchainAccountDue_PaymentArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -490,7 +484,6 @@ export type BlockchainAccountLast_Trans_LtArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Account type
  *
  * Recall that a smart contract and an account are the same thing in the context
@@ -513,12 +506,10 @@ export type BlockchainAccountQuery = {
     /** Account information (e.g. boc). */
     info?: Maybe<BlockchainAccount>
     /**
-     * **UNSTABLE**
      * This node could be used for a cursor-based pagination of account messages.
      */
     messages?: Maybe<BlockchainMessagesConnection>
     /**
-     * **UNSTABLE**
      * This node could be used for a cursor-based pagination of account transactions.
      */
     transactions?: Maybe<BlockchainTransactionsConnection>
@@ -549,7 +540,6 @@ export type BlockchainAccountQueryTransactionsArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Block
  */
 export type BlockchainBlock = Node & {
@@ -632,7 +622,6 @@ export type BlockchainBlock = Node & {
 }
 
 /**
- * **UNSTABLE**
  * Block
  */
 export type BlockchainBlockEnd_LtArgs = {
@@ -640,7 +629,6 @@ export type BlockchainBlockEnd_LtArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Block
  */
 export type BlockchainBlockGen_Software_CapabilitiesArgs = {
@@ -648,28 +636,24 @@ export type BlockchainBlockGen_Software_CapabilitiesArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Block
  */
 export type BlockchainBlockStart_LtArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/** This type is unstable */
 export type BlockchainBlocksConnection = {
     __typename?: "BlockchainBlocksConnection"
     edges: Array<BlockchainBlocksEdge>
     pageInfo: PageInfo
 }
 
-/** This type is unstable */
 export type BlockchainBlocksEdge = {
     __typename?: "BlockchainBlocksEdge"
     node: BlockchainBlock
     cursor: Scalars["String"]
 }
 
-/** This type is unstable */
 export type BlockchainMasterSeqNoFilter = {
     /** Minimum inclusive seq_no of corresponding master blocks */
     start?: Maybe<Scalars["Int"]>
@@ -677,7 +661,6 @@ export type BlockchainMasterSeqNoFilter = {
     end?: Maybe<Scalars["Int"]>
 }
 
-/** This type is unstable */
 export type BlockchainMasterSeqNoRange = {
     __typename?: "BlockchainMasterSeqNoRange"
     /**
@@ -705,7 +688,6 @@ export type BlockchainMasterSeqNoRange = {
 }
 
 /**
- * **UNSTABLE**
  * # Message type
  *
  * Message layout queries.  A message consists of its header followed by its
@@ -813,7 +795,6 @@ export type BlockchainMessage = Node & {
 }
 
 /**
- * **UNSTABLE**
  * # Message type
  *
  * Message layout queries.  A message consists of its header followed by its
@@ -825,7 +806,6 @@ export type BlockchainMessageCreated_LtArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Message type
  *
  * Message layout queries.  A message consists of its header followed by its
@@ -837,7 +817,6 @@ export type BlockchainMessageFwd_FeeArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Message type
  *
  * Message layout queries.  A message consists of its header followed by its
@@ -849,7 +828,6 @@ export type BlockchainMessageIhr_FeeArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Message type
  *
  * Message layout queries.  A message consists of its header followed by its
@@ -861,7 +839,6 @@ export type BlockchainMessageImport_FeeArgs = {
 }
 
 /**
- * **UNSTABLE**
  * # Message type
  *
  * Message layout queries.  A message consists of its header followed by its
@@ -872,7 +849,6 @@ export type BlockchainMessageValueArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/** This type is unstable */
 export type BlockchainMessageEdge = {
     __typename?: "BlockchainMessageEdge"
     node: BlockchainMessage
@@ -890,7 +866,6 @@ export enum BlockchainMessageTypeFilterEnum {
     IntOut = "IntOut",
 }
 
-/** This type is unstable */
 export type BlockchainMessagesConnection = {
     __typename?: "BlockchainMessagesConnection"
     edges: Array<BlockchainMessageEdge>
@@ -900,7 +875,6 @@ export type BlockchainMessagesConnection = {
 export type BlockchainQuery = {
     __typename?: "BlockchainQuery"
     /**
-     * **UNSTABLE**
      * Account-related information
      */
     account?: Maybe<BlockchainAccountQuery>
@@ -909,7 +883,6 @@ export type BlockchainQuery = {
     transaction?: Maybe<BlockchainTransaction>
     message?: Maybe<BlockchainMessage>
     /**
-     * **UNSTABLE**
      * Returns masterchain seq_no range for the specified time range
      * to be used further in pagination functions.
      * If `time_start` and/or `time_end` is null, then the corresponding seq_no range border
@@ -917,17 +890,14 @@ export type BlockchainQuery = {
      */
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>
     /**
-     * **UNSTABLE**
      * This node could be used for a cursor-based pagination of key blocks.
      */
     key_blocks?: Maybe<BlockchainBlocksConnection>
     /**
-     * **UNSTABLE**
      * This node could be used for a cursor-based pagination of blocks.
      */
     blocks?: Maybe<BlockchainBlocksConnection>
     /**
-     * **UNSTABLE**
      * This node could be used for a cursor-based pagination of transactions.
      */
     transactions?: Maybe<BlockchainTransactionsConnection>
@@ -995,7 +965,6 @@ export type BlockchainQueryTransactionsArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Transaction
  */
 export type BlockchainTransaction = Node & {
@@ -1104,7 +1073,6 @@ export type BlockchainTransaction = Node & {
 }
 
 /**
- * **UNSTABLE**
  * Transaction
  */
 export type BlockchainTransactionBalance_DeltaArgs = {
@@ -1112,7 +1080,6 @@ export type BlockchainTransactionBalance_DeltaArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Transaction
  */
 export type BlockchainTransactionExt_In_Msg_FeeArgs = {
@@ -1120,7 +1087,6 @@ export type BlockchainTransactionExt_In_Msg_FeeArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Transaction
  */
 export type BlockchainTransactionLtArgs = {
@@ -1128,7 +1094,6 @@ export type BlockchainTransactionLtArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Transaction
  */
 export type BlockchainTransactionPrev_Trans_LtArgs = {
@@ -1136,21 +1101,18 @@ export type BlockchainTransactionPrev_Trans_LtArgs = {
 }
 
 /**
- * **UNSTABLE**
  * Transaction
  */
 export type BlockchainTransactionTotal_FeesArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/** This type is unstable */
 export type BlockchainTransactionEdge = {
     __typename?: "BlockchainTransactionEdge"
     node: BlockchainTransaction
     cursor: Scalars["String"]
 }
 
-/** This type is unstable */
 export type BlockchainTransactionsConnection = {
     __typename?: "BlockchainTransactionsConnection"
     edges: Array<BlockchainTransactionEdge>
@@ -1580,7 +1542,6 @@ export type MsgForwardPricesLump_PriceArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/** This type is unstable */
 export type Node = {
     id: Scalars["ID"]
 }
@@ -1641,7 +1602,6 @@ export enum OutMsgTypeEnum {
     None = "None",
 }
 
-/** This type is unstable */
 export type PageInfo = {
     __typename?: "PageInfo"
     startCursor: Scalars["String"]
@@ -1653,7 +1613,6 @@ export type PageInfo = {
 export type Query = {
     __typename?: "Query"
     /**
-     * **UNSTABLE**
      * Blockchain-related information (blocks, transactions, etc.)
      */
     blockchain?: Maybe<BlockchainQuery>
