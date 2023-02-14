@@ -1,5 +1,4 @@
 """
-**UNSTABLE**
 Block
 """
 type BlockchainBlock implements Node {

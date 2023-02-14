@@ -505,13 +505,9 @@ export type BlockchainAccountQuery = {
     address: Scalars["String"]
     /** Account information (e.g. boc). */
     info?: Maybe<BlockchainAccount>
-    /**
-     * This node could be used for a cursor-based pagination of account messages.
-     */
+    /** This node could be used for a cursor-based pagination of account messages. */
     messages?: Maybe<BlockchainMessagesConnection>
-    /**
-     * This node could be used for a cursor-based pagination of account transactions.
-     */
+    /** This node could be used for a cursor-based pagination of account transactions. */
     transactions?: Maybe<BlockchainTransactionsConnection>
 }
 
@@ -539,9 +535,7 @@ export type BlockchainAccountQueryTransactionsArgs = {
     before?: Maybe<Scalars["String"]>
 }
 
-/**
- * Block
- */
+/** Block */
 export type BlockchainBlock = Node & {
     __typename?: "BlockchainBlock"
     _key: Scalars["String"]
@@ -621,23 +615,17 @@ export type BlockchainBlock = Node & {
     workchain_id?: Maybe<Scalars["Int"]>
 }
 
-/**
- * Block
- */
+/** Block */
 export type BlockchainBlockEnd_LtArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/**
- * Block
- */
+/** Block */
 export type BlockchainBlockGen_Software_CapabilitiesArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/**
- * Block
- */
+/** Block */
 export type BlockchainBlockStart_LtArgs = {
     format?: Maybe<BigIntFormat>
 }
@@ -874,9 +862,7 @@ export type BlockchainMessagesConnection = {
 
 export type BlockchainQuery = {
     __typename?: "BlockchainQuery"
-    /**
-     * Account-related information
-     */
+    /** Account-related information */
     account?: Maybe<BlockchainAccountQuery>
     block?: Maybe<BlockchainBlock>
     block_by_seq_no?: Maybe<BlockchainBlock>
@@ -889,17 +875,11 @@ export type BlockchainQuery = {
      * is also null.
      */
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoRange>
-    /**
-     * This node could be used for a cursor-based pagination of key blocks.
-     */
+    /** This node could be used for a cursor-based pagination of key blocks. */
     key_blocks?: Maybe<BlockchainBlocksConnection>
-    /**
-     * This node could be used for a cursor-based pagination of blocks.
-     */
+    /** This node could be used for a cursor-based pagination of blocks. */
     blocks?: Maybe<BlockchainBlocksConnection>
-    /**
-     * This node could be used for a cursor-based pagination of transactions.
-     */
+    /** This node could be used for a cursor-based pagination of transactions. */
     transactions?: Maybe<BlockchainTransactionsConnection>
 }
 
@@ -964,9 +944,7 @@ export type BlockchainQueryTransactionsArgs = {
     before?: Maybe<Scalars["String"]>
 }
 
-/**
- * Transaction
- */
+/** Transaction */
 export type BlockchainTransaction = Node & {
     __typename?: "BlockchainTransaction"
     _key: Scalars["String"]
@@ -1072,37 +1050,27 @@ export type BlockchainTransaction = Node & {
     workchain_id?: Maybe<Scalars["Int"]>
 }
 
-/**
- * Transaction
- */
+/** Transaction */
 export type BlockchainTransactionBalance_DeltaArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/**
- * Transaction
- */
+/** Transaction */
 export type BlockchainTransactionExt_In_Msg_FeeArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/**
- * Transaction
- */
+/** Transaction */
 export type BlockchainTransactionLtArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/**
- * Transaction
- */
+/** Transaction */
 export type BlockchainTransactionPrev_Trans_LtArgs = {
     format?: Maybe<BigIntFormat>
 }
 
-/**
- * Transaction
- */
+/** Transaction */
 export type BlockchainTransactionTotal_FeesArgs = {
     format?: Maybe<BigIntFormat>
 }
@@ -1612,9 +1580,7 @@ export type PageInfo = {
 
 export type Query = {
     __typename?: "Query"
-    /**
-     * Blockchain-related information (blocks, transactions, etc.)
-     */
+    /** Blockchain-related information (blocks, transactions, etc.) */
     blockchain?: Maybe<BlockchainQuery>
 }
 
