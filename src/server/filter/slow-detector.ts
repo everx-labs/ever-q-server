@@ -256,3 +256,80 @@ export function isFastQuery(
     }
     return slowReason === null
 }
+
+export function getFastIndexHint(
+    collection: string,
+    filter: Record<string, unknown> | null | undefined,
+    orderBy: OrderBy[] | null | undefined,
+): string | null {
+    if (!filter) {
+        return null
+    }
+    const patterns = fastIndexHints[collection]
+    if (patterns === undefined) {
+        return null
+    }
+    for (const pattern of patterns) {
+        if (!filterMatch(filter, pattern.filter)) {
+            continue
+        }
+        let orderByMatch = true
+        for (const orderByPath of pattern.orderBy) {
+            if (
+                orderBy === null ||
+                orderBy === undefined ||
+                !orderBy.find(x => x.path === orderByPath)
+            ) {
+                orderByMatch = false
+                break
+            }
+        }
+        if (orderByMatch) {
+            return pattern.indexHint
+        }
+    }
+    return null
+}
+
+type QueryIndexHint = {
+    filter: Record<string, unknown>
+    orderBy: string[]
+    indexHint: string
+}
+
+function filterMatch(
+    filter: Record<string, unknown>,
+    pattern: Record<string, unknown>,
+): boolean {
+    for (const [name, nestedPattern] of Object.entries(pattern)) {
+        const nestedFilter = filter[name]
+        if (nestedFilter === undefined) {
+            return false
+        }
+        if (nestedPattern !== null) {
+            if (
+                !filterMatch(
+                    nestedFilter as Record<string, unknown>,
+                    nestedPattern as Record<string, unknown>,
+                )
+            ) {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+const fastIndexHints: { [collection: string]: QueryIndexHint[] } = {
+    messages: [
+        {
+            filter: {
+                created_at: null,
+                dst: null,
+                src: null,
+            },
+            orderBy: ["created_at"],
+            indexHint: "idx_src_dst_created_at",
+        },
+    ],
+}

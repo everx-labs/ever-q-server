@@ -1,5 +1,4 @@
 """
-**UNSTABLE**
 # Message type
 
 Message layout queries.  A message consists of its header followed by its
