@@ -38,7 +38,10 @@ export abstract class CachedData<T> {
 
     private initialRefreshData(): Promise<void> {
         const promise = new Promise<void>((resolve, reject) => {
-            const resolver = { resolve, reject }
+            const resolver = {
+                resolve,
+                reject,
+            }
             if (this.refreshResolvers !== undefined) {
                 this.refreshResolvers.push(resolver)
             } else {
