@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.54.4] - 2022-12-27
+
+### New
+
+- Remove "UNSTABLE" marks from `blockchain` API
+- Add indexHint to `messages(filter: {src: *, dst: *, created_at: *, * } orderBy: {path: "created_at"})` queries
+
 ## [0.54.3] - 2022-12-27
 
 ### Fixed
