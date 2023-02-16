@@ -1,9 +1,6 @@
-"""
-This type is unstable
-"""
 type BlockchainMasterSeqNoRange {
     """
-    INCLUSIVE seq_no range border. 
+    INCLUSIVE seq_no range border.
     Masterchain block seq_no that corresponds to the specified time_start left border of
     time interval.
     Can be used to define pagination range in functions, providing cursor-based pagination.
@@ -13,22 +10,19 @@ type BlockchainMasterSeqNoRange {
     """
     start: Int
     """
-    EXCLUSIVE seq_no range border. 
+    EXCLUSIVE seq_no range border.
     Masterchain block seq_no that corresponds to the specified time_end right border of
     time interval.
     Can be used to define pagination range in functions, providing cursor-based pagination.
 
-    If no seq_no was found, returns `null`. 
-    This may happen if there is no corresponding masterchain block yet for 
+    If no seq_no was found, returns `null`.
+    This may happen if there is no corresponding masterchain block yet for
     the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
     ommiting the right border seq_no for recent data pagination.
-    """  
+    """
     end: Int
 }
 
-"""
-This type is unstable
-"""
 input BlockchainMasterSeqNoFilter {
     "Minimum inclusive seq_no of corresponding master blocks"
     start: Int
@@ -36,33 +30,21 @@ input BlockchainMasterSeqNoFilter {
     end: Int
 }
 
-"""
-This type is unstable
-"""
 type BlockchainBlocksConnection {
     edges: [BlockchainBlocksEdge!]!
     pageInfo: PageInfo!
 }
 
-"""
-This type is unstable
-"""
 type BlockchainBlocksEdge {
     node: BlockchainBlock!
     cursor: String!
 }
 
-"""
-This type is unstable
-"""
 type BlockchainTransactionsConnection {
     edges: [BlockchainTransactionEdge!]!
     pageInfo: PageInfo!
 }
 
-"""
-This type is unstable
-"""
 type BlockchainTransactionEdge {
     node: BlockchainTransaction!
     cursor: String!
@@ -79,17 +61,11 @@ enum BlockchainMessageTypeFilterEnum {
     IntOut
 }
 
-"""
-This type is unstable
-"""
 type BlockchainMessagesConnection {
     edges: [BlockchainMessageEdge!]!
     pageInfo: PageInfo!
 }
 
-"""
-This type is unstable
-"""
 type BlockchainMessageEdge {
     node: BlockchainMessage!
     cursor: String!
@@ -97,7 +73,6 @@ type BlockchainMessageEdge {
 
 type BlockchainQuery {
     """
-    **UNSTABLE**
     Account-related information
     """
     account(
@@ -111,12 +86,11 @@ type BlockchainQuery {
     message(hash: String!): BlockchainMessage
 
     """
-    **UNSTABLE**
     Returns masterchain seq_no range for the specified time range
     to be used further in pagination functions.
-    If `time_start` and/or `time_end` is null, then the corresponding seq_no range border 
-    is also null. 
-    """  
+    If `time_start` and/or `time_end` is null, then the corresponding seq_no range border
+    is also null.
+    """
     master_seq_no_range(
         "Start of the time range, inclusive"
          time_start: Int,
@@ -125,7 +99,6 @@ type BlockchainQuery {
     ): BlockchainMasterSeqNoRange
 
     """
-    **UNSTABLE**
     This node could be used for a cursor-based pagination of key blocks.
     """
     key_blocks(
@@ -151,7 +124,6 @@ type BlockchainQuery {
     ): BlockchainBlocksConnection
 
     """
-    **UNSTABLE**
     This node could be used for a cursor-based pagination of blocks.
     """
     blocks(
@@ -188,7 +160,6 @@ type BlockchainQuery {
     ): BlockchainBlocksConnection
 
     """
-    **UNSTABLE**
     This node could be used for a cursor-based pagination of transactions.
     """
     transactions(
@@ -230,7 +201,6 @@ type BlockchainAccountQuery {
     info: BlockchainAccount
 
     """
-    **UNSTABLE**
     This node could be used for a cursor-based pagination of account transactions.
     """
     transactions(
@@ -265,7 +235,6 @@ type BlockchainAccountQuery {
     ): BlockchainTransactionsConnection
 
     """
-    **UNSTABLE**
     This node could be used for a cursor-based pagination of account messages.
     """
     messages(
@@ -275,7 +244,7 @@ type BlockchainAccountQuery {
         It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
         """
         allow_latest_inconsistent_data: Boolean
-     
+
         """
         The messages could be filtered by seq_no of corresponding masterchain blocks.
         See also: "master_seq_no_range"
@@ -303,7 +272,6 @@ type BlockchainAccountQuery {
 
 extend type Query {
     """
-    **UNSTABLE**
     Blockchain-related information (blocks, transactions, etc.)
     """
     blockchain: BlockchainQuery

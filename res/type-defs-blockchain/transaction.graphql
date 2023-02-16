@@ -1,5 +1,4 @@
 """
-**UNSTABLE**
 Transaction
 """
 type BlockchainTransaction implements Node {
@@ -78,8 +77,8 @@ type BlockchainTransaction implements Node {
 	status_name: TransactionProcessingStatusEnum
 	storage: TransactionStorage
 	"""
-	Total amount of fees collected by the validators. 
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Total amount of fees collected by the validators.
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	The formula is:
 	total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])

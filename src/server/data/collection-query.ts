@@ -15,6 +15,7 @@ import {
 } from "../filter/filters"
 import { SelectionSetNode } from "graphql"
 import { FilterConfig, FilterOrConversion, QConfig } from "../config"
+import { getFastIndexHint } from "../filter/slow-detector"
 
 export class QCollectionQuery {
     private constructor(
@@ -72,6 +73,16 @@ export class QCollectionQuery {
         const texts: string[] = []
 
         for (const subFilter of subFilters) {
+            const indexHint = getFastIndexHint(
+                collectionName,
+                subFilter,
+                orderBy,
+            )
+            const forOptions =
+                indexHint !== null
+                    ? `OPTIONS { indexHint: "${indexHint}" }`
+                    : ""
+
             const condition = QCollectionQuery.buildFilterCondition(
                 collectionDocType,
                 subFilter,
@@ -86,6 +97,7 @@ export class QCollectionQuery {
             )
             texts.push(`
                 FOR doc IN ${collectionName}
+                ${forOptions}
                 ${filterSection}
                 ${sortSection}
                 ${limitSection}
@@ -94,6 +106,7 @@ export class QCollectionQuery {
             if (collectionName === "messages" && shardingDegree > 0) {
                 texts.push(`
                     FOR doc IN messages_complement
+                    ${forOptions}
                     ${filterSection}
                     ${sortSection}
                     ${limitSection}
