@@ -29,8 +29,9 @@
         }
     },
     "dependencies": {
-        "@tonclient/core": "^1",
-        "@tonclient/lib-node": "^1",
+        "@eversdk/core": "^1",
+        "@eversdk/lib-node": "^1",
+        "@node-redis/client": "^1.0.6",
         "apollo-cache-inmemory": "1.6.6",
         "apollo-client": "2.6.10",
         "apollo-link": "1.2.14",
@@ -58,16 +59,10 @@
         "node-statsd": "0.1.1",
         "opentracing": "0.14.4",
         "subscriptions-transport-ws": "0.9.17",
-        "ws": "7.4.6",
-        "@node-redis/client": "^1.0.6"
+        "ton-lite-client": "^2.0.1",
+        "ws": "7.4.6"
     },
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^5.19.0",
-        "@typescript-eslint/parser": "^5.19.0",
-        "eslint": "^7.30.0",
-        "eslint-config-prettier": "^8.5.0",
-        "eslint-plugin-jest": "^26.1.4",
-        "eslint-plugin-prettier": "^4.0.0",
         "@babel/preset-env": "^7.14.7",
         "@babel/preset-typescript": "^7.14.5",
         "@graphql-codegen/cli": "^2.0.1",
@@ -81,6 +76,12 @@
         "@types/node": "^14",
         "@types/node-fetch": "^2.5.10",
         "@types/node-statsd": "^0.1.2",
+        "@typescript-eslint/eslint-plugin": "^5.19.0",
+        "@typescript-eslint/parser": "^5.19.0",
+        "eslint": "^7.30.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-jest": "^26.1.4",
+        "eslint-plugin-prettier": "^4.0.0",
         "flow": "0.2.3",
         "flow-bin": "0.131.0",
         "husky": "4.2.5",

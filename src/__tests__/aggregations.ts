@@ -9,7 +9,7 @@ import {
     normalized,
     testConfig,
 } from "./init-tests"
-import { FieldAggregation } from "@tonclient/core"
+import { FieldAggregation } from "@eversdk/core"
 import { CollectionFilter } from "../server/filter/filters"
 import { required } from "../server/utils"
 
