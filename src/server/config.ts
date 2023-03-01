@@ -162,7 +162,11 @@ export const configParams = {
             "kafka:9092",
             "Requests server url",
         ),
-        pubkey: ConfigParam.string("pubkey", "", "Liteserver base64 pubkey"),
+        pubkey: ConfigParam.string(
+            "requests-pubkey",
+            "",
+            "Liteserver base64 pubkey",
+        ),
         topic: ConfigParam.string(
             "requests-topic",
             "requests",
