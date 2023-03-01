@@ -59,6 +59,7 @@
         "node-statsd": "0.1.1",
         "opentracing": "0.14.4",
         "subscriptions-transport-ws": "0.9.17",
+        "ton-core": "^0.48.0",
         "ton-lite-client": "^2.0.1",
         "ws": "7.4.6"
     },

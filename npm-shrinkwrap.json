@@ -39,6 +39,7 @@
                 "node-statsd": "0.1.1",
                 "opentracing": "0.14.4",
                 "subscriptions-transport-ws": "0.9.17",
+                "ton-core": "^0.48.0",
                 "ton-lite-client": "^2.0.1",
                 "ws": "7.4.6"
             },
@@ -16634,8 +16635,7 @@
         "node_modules/symbol.inspect": {
             "version": "1.0.1",
             "resolved": "https://registry.npmjs.org/symbol.inspect/-/symbol.inspect-1.0.1.tgz",
-            "integrity": "sha512-YQSL4duoHmLhsTD1Pw8RW6TZ5MaTX5rXJnqacJottr2P2LZBF/Yvrc3ku4NUpMOm8aM0KOCqM+UAkMA5HWQCzQ==",
-            "peer": true
+            "integrity": "sha512-YQSL4duoHmLhsTD1Pw8RW6TZ5MaTX5rXJnqacJottr2P2LZBF/Yvrc3ku4NUpMOm8aM0KOCqM+UAkMA5HWQCzQ=="
         },
         "node_modules/sync-fetch": {
             "version": "0.3.0",
@@ -16850,7 +16850,6 @@
             "version": "0.48.0",
             "resolved": "https://registry.npmjs.org/ton-core/-/ton-core-0.48.0.tgz",
             "integrity": "sha512-v3QL0CC8iQQ0cjUN0lI9hK7wEpLW2Wnm+N5Ukm+NSbtQ0vq36LGQR/BRywoOQZJm59XzmW4ATbtCWeas9ePrRA==",
-            "peer": true,
             "dependencies": {
                 "symbol.inspect": "1.0.1"
             },
@@ -30524,8 +30523,7 @@
         "symbol.inspect": {
             "version": "1.0.1",
             "resolved": "https://registry.npmjs.org/symbol.inspect/-/symbol.inspect-1.0.1.tgz",
-            "integrity": "sha512-YQSL4duoHmLhsTD1Pw8RW6TZ5MaTX5rXJnqacJottr2P2LZBF/Yvrc3ku4NUpMOm8aM0KOCqM+UAkMA5HWQCzQ==",
-            "peer": true
+            "integrity": "sha512-YQSL4duoHmLhsTD1Pw8RW6TZ5MaTX5rXJnqacJottr2P2LZBF/Yvrc3ku4NUpMOm8aM0KOCqM+UAkMA5HWQCzQ=="
         },
         "sync-fetch": {
             "version": "0.3.0",
@@ -30703,7 +30701,6 @@
             "version": "0.48.0",
             "resolved": "https://registry.npmjs.org/ton-core/-/ton-core-0.48.0.tgz",
             "integrity": "sha512-v3QL0CC8iQQ0cjUN0lI9hK7wEpLW2Wnm+N5Ukm+NSbtQ0vq36LGQR/BRywoOQZJm59XzmW4ATbtCWeas9ePrRA==",
-            "peer": true,
             "requires": {
                 "symbol.inspect": "1.0.1"
             }
