@@ -39,7 +39,7 @@ pipeline {
 		stage('build container up') {
 			agent {
 				docker {
-					image 'node:16-buster'
+					image 'node:18-buster'
 					reuseNode true
 				}
 			}
