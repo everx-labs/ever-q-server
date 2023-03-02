@@ -25,8 +25,8 @@ class TestQuery {
     }
 
     sendQuery() {
-        // Wait for non existing transaction.
-        // We are using here Date.now as a nonexisting transaction id
+        // Wait for nonexistent transaction.
+        // We are using here Date.now as a nonexistent transaction id
         // to prevent apollo optimization on joining same requests.
         //
         this.client

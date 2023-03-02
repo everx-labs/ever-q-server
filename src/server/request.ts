@@ -51,7 +51,7 @@ export class QRequestContext implements QRequestParams {
         this.start = Date.now()
         this.events = new EventEmitter()
         this.events.setMaxListeners(0)
-        req?.on?.("close", () => {
+        req?.socket.on("close", () => {
             this.emitClose()
         })
         this.remoteAddress = req?.socket?.remoteAddress ?? ""
