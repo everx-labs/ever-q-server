@@ -175,6 +175,12 @@ enum CapabilitiesFlag {
     CapCopyleft
     CapIndexAccounts
     CapDiff
+    CapsTvmBugfixes2022
+    CapWorkchains
+    CapStcontNewFormat
+    CapFastStorageStatBugfix
+    CapResolveMerkleCell
+    CapSignatureWithId
 }
 
 type OtherCurrency {
@@ -352,6 +358,12 @@ type ConfigP8 {
 	- 0x40000 – CapCopyleft
 	- 0x80000 – CapIndexAccounts
 	- 0x100000 – CapDiff
+	- 0x200000 – CapsTvmBugfixes2022
+	- 0x400000 – CapWorkchains
+	- 0x800000 – CapStcontNewFormat
+	- 0x1000000 – CapFastStorageStatBugfix
+	- 0x2000000 – CapResolveMerkleCell
+	- 0x4000000 – CapSignatureWithId
 	"""
 	capabilities(format: BigIntFormat): String
 	capabilities_flags: [CapabilitiesFlag]
@@ -1653,6 +1665,12 @@ input ConfigP8Filter {
 	- 0x40000 – CapCopyleft
 	- 0x80000 – CapIndexAccounts
 	- 0x100000 – CapDiff
+	- 0x200000 – CapsTvmBugfixes2022
+	- 0x400000 – CapWorkchains
+	- 0x800000 – CapStcontNewFormat
+	- 0x1000000 – CapFastStorageStatBugfix
+	- 0x2000000 – CapResolveMerkleCell
+	- 0x4000000 – CapSignatureWithId
 	"""
 	capabilities: StringFilter
 	version: FloatFilter

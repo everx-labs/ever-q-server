@@ -1572,8 +1572,8 @@ export enum OutMsgTypeEnum {
 
 export type PageInfo = {
     __typename?: "PageInfo"
-    startCursor: Scalars["String"]
-    endCursor: Scalars["String"]
+    startCursor?: Maybe<Scalars["String"]>
+    endCursor?: Maybe<Scalars["String"]>
     hasNextPage: Scalars["Boolean"]
     hasPreviousPage: Scalars["Boolean"]
 }
@@ -4210,8 +4210,16 @@ export type PageInfoResolvers<
     ContextType = any,
     ParentType extends ResolversParentTypes["PageInfo"] = ResolversParentTypes["PageInfo"],
 > = {
-    startCursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
-    endCursor?: Resolver<ResolversTypes["String"], ParentType, ContextType>
+    startCursor?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    endCursor?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
     hasNextPage?: Resolver<ResolversTypes["Boolean"], ParentType, ContextType>
     hasPreviousPage?: Resolver<
         ResolversTypes["Boolean"],
