@@ -5,3 +5,5 @@ package-lock.json
 /dist/
 /tsconfig.tsbuildinfo
 /db-types.json
+/dump.rdb
+/.secret/
