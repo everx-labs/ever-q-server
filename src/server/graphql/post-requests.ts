@@ -6,6 +6,7 @@ import fetch, { RequestInit } from "node-fetch"
 import { QTraceSpan, QTracer } from "../tracing"
 import { QError } from "../utils"
 import { QRequestContext } from "../request"
+import { LiteClient } from "ton-lite-client"
 
 type Request = {
     id: string
@@ -105,6 +106,22 @@ async function postRequestsUsingKafka(
     await send
 }
 
+async function postRequestsUsingAdnl(
+    requests: Request[],
+    client: LiteClient,
+): Promise<void> {
+    try {
+        const res = requests.map(r => {
+            const body = Buffer.from(r.body, "base64")
+            return client.sendMessage(body)
+        })
+
+        await Promise.all(res)
+    } catch (_) {
+        // do nothing ...
+    }
+}
+
 async function checkPostRestrictions(config: QConfig, requests: Request[]) {
     requests.forEach(request => {
         const size = Math.ceil((request.body.length * 3) / 4)
@@ -127,6 +144,7 @@ async function postRequests(
     }
 
     const { tracer, data, config } = context.services
+
     return context.trace("postRequests", async (span: QTraceSpan) => {
         span.logEvent("start", { requests })
         await checkPostRestrictions(config, requests)
@@ -160,18 +178,33 @@ async function postRequests(
         })
         try {
             span.logEvent("ready_to_send")
+
             if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context)
-            } else {
+            } else if (config.requests.mode === RequestsMode.KAFKA) {
                 await postRequestsUsingKafka(requests, context, span)
+            } else if (config.requests.mode === RequestsMode.TCP_ADNL) {
+                const client = context.services.liteclient
+                if (!client) {
+                    throw new Error("context.services.liteclient is not inited")
+                }
+
+                await postRequestsUsingAdnl(requests, client)
+            } else {
+                throw new Error(
+                    `unexpected config.requests.mode: "${config.requests.mode}"`,
+                )
             }
+
             await data.statPostCount.increment()
+
             data.log.debug(
                 "postRequests",
                 "POSTED",
                 args,
                 context.remoteAddress,
             )
+
             span.logEvent("sent", { remoteAddress: context.remoteAddress })
         } catch (error) {
             await data.statPostFailed.increment()

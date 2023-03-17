@@ -15,12 +15,13 @@
  */
 
 import program from "commander"
-import type { QConfig } from "./config"
+import { QConfig, RequestsMode } from "./config"
 import { configParams, readConfigFile, resolveConfig } from "./config"
 import type { QLog } from "./logs"
 import QLogs from "./logs"
 import TONQServer from "./server"
 import { ConfigParam } from "./config-param"
+import { LiteClient, LiteSingleEngine } from "ton-lite-client"
 
 ConfigParam.getAll(configParams).forEach(param => {
     program.option(`--${param.option} <value>`, param.descriptionWithDefaults())
@@ -68,6 +69,17 @@ process.on("SIGHUP", () => {
     }
 })
 
+function initLiteServer(config: QConfig): LiteClient {
+    const engine = new LiteSingleEngine({
+        host: `tcp://${config.requests.server}`,
+        publicKey: Buffer.from(config.requests.pubkey, "base64"),
+    })
+
+    const client = new LiteClient({ engine })
+
+    return client
+}
+
 function initGlobalState() {
     const configData = gs.configPath ? readConfigFile(gs.configPath) : {}
 
@@ -82,9 +94,15 @@ function initGlobalState() {
     gs.configLog = gs.logs.create("config")
     gs.configLog.debug("USE", gs.config)
 
+    let liteclient: LiteClient | undefined
+    if (gs.config.requests.mode === RequestsMode.TCP_ADNL) {
+        liteclient = initLiteServer(gs.config)
+    }
+
     gs.server = new TONQServer({
         config: gs.config,
         logs: gs.logs,
+        liteclient,
     })
 }
 

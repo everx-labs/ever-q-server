@@ -1,7 +1,7 @@
 import { QConfig } from "./config"
 import { Span, SpanContext, Tracer } from "opentracing"
 import { QTraceSpan, QTracer } from "./tracing"
-import { TonClient } from "@tonclient/core"
+import { TonClient } from "@eversdk/core"
 import QLogs from "./logs"
 import QBlockchainData from "./data/blockchain"
 import EventEmitter from "events"
@@ -10,6 +10,7 @@ import express from "express"
 import { ExecutionParams } from "subscriptions-transport-ws"
 import { IStats } from "./stats"
 import { QRequestParams } from "./filter/filters"
+import { LiteClient } from "ton-lite-client"
 
 export class QRequestServices {
     constructor(
@@ -20,6 +21,7 @@ export class QRequestServices {
         public shared: Map<string, unknown>,
         public logs: QLogs,
         public data: QBlockchainData,
+        public liteclient?: LiteClient,
     ) {}
 }
 
