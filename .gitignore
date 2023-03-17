@@ -7,3 +7,5 @@ package-lock.json
 /db-types.json
 /dump.rdb
 /.secret/
+/dump.rdb
+/.secret/
