@@ -62,6 +62,12 @@ const capabilities = u64flags("Capabilities", {
     CapCopyleft: 0x040000,
     CapIndexAccounts: 0x080000,
     CapDiff: 0x100000,
+    CapsTvmBugfixes2022: 0x0200000, // popsave, exception handler, loops
+    CapWorkchains: 0x0400000,
+    CapStcontNewFormat: 0x0800000, // support old format continuation serialization
+    CapFastStorageStatBugfix: 0x1000000, // calc cell data size using fast storage stat
+    CapResolveMerkleCell: 0x2000000,
+    CapSignatureWithId: 0x4000000, // use some predefined id during signature check})
 })
 
 const accountStatus = u8enum("AccountStatus", {

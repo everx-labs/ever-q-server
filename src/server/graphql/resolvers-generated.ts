@@ -1049,6 +1049,12 @@ function createResolvers(data: QBlockchainData) {
                 CapCopyleft: 262144,
                 CapIndexAccounts: 524288,
                 CapDiff: 1048576,
+                CapsTvmBugfixes2022: 2097152,
+                CapWorkchains: 4194304,
+                CapStcontNewFormat: 8388608,
+                CapFastStorageStatBugfix: 16777216,
+                CapResolveMerkleCell: 33554432,
+                CapSignatureWithId: 67108864,
             }),
         },
         ConfigP14: {

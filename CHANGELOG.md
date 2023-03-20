@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.55.0] - 2023-02-16
+
+### New
+
+- Support new caps in capabilities_flags.
+
+### Fixed
+
+- `PageInfo.startCursor` and `PageInfo.endCursor` were required.
+
 ## [0.54.4] - 2023-02-16
 
 ### New

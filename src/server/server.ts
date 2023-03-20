@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { TonClient } from "@tonclient/core"
-import { libNode } from "@tonclient/lib-node"
+import { TonClient } from "@eversdk/core"
+import { libNode } from "@eversdk/lib-node"
 import fs from "fs"
 import express from "express"
 import http from "http"
@@ -65,11 +65,13 @@ import { MemStats } from "./mem-stat"
 import { QRequestContext, QRequestServices, RequestEvent } from "./request"
 import { overrideAccountBoc } from "./graphql/account-boc"
 import { rempResolvers } from "./graphql/remp"
+import { LiteClient } from "ton-lite-client"
 
 type QServerOptions = {
     config: QConfig
     logs: QLogs
     data?: QBlockchainData
+    liteclient?: LiteClient
 }
 
 type EndPoint = {
@@ -286,6 +288,7 @@ export default class TONQServer {
     tracer: Tracer
     stats: IStats
     client: TonClient
+    liteclient?: LiteClient
     memStats: MemStats
     internalErrorStats: StatsCounter
     shared: Map<string, unknown>
@@ -294,6 +297,7 @@ export default class TONQServer {
     constructor(options: QServerOptions) {
         TonClient.useBinaryLibrary(libNode)
         this.client = new TonClient()
+        this.liteclient = options.liteclient
         this.config = options.config
         this.logs = options.logs
         this.log = this.logs.create("server")
@@ -339,6 +343,7 @@ export default class TONQServer {
             this.shared,
             this.logs,
             this.data,
+            this.liteclient,
         )
         overrideAccountBoc()
         const resolvers = createResolvers(this.data) as IResolvers
