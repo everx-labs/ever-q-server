@@ -14,7 +14,6 @@ const fastIndexHints: QueryPatternsByCollection<QueryIndexHint> = {
     messages: [
         {
             filter: {
-                created_at: null,
                 dst: null,
                 src: null,
             },
