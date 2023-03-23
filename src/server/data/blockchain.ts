@@ -60,6 +60,13 @@ export const INDEXES: { [name: string]: { indexes: QIndexInfo[] } } = {
             indexInfo("code_hash, _key"),
             indexInfo("code_hash, balance"),
             indexInfo("last_paid"),
+            indexInfo("acc_type"),
+            indexInfo("init_code_hash, _key", {
+                name: "idx_init_code_hash_key",
+            }),
+            indexInfo("prev_code_hash, _key", {
+                name: "idx_prev_code_hash_key",
+            }),
         ],
     },
     messages: {
