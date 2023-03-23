@@ -30,6 +30,7 @@ export type QConfig = {
     requests: {
         mode: RequestsMode
         server: string
+        pubkey: string
         topic: string
         maxSize: number
     }
@@ -120,6 +121,7 @@ export enum SlowQueriesMode {
 }
 
 export enum RequestsMode {
+    TCP_ADNL = "tcpadnl", // via c++ lite-server tcp adnl
     KAFKA = "kafka",
     REST = "rest",
 }
@@ -151,6 +153,7 @@ export const configParams = {
             "requests-mode",
             "kafka",
             "Requests mode:\n" +
+                "`tcpadnl` – posts external messages to c++ liteserver\n" +
                 "`kafka` – writes external messages to kafka topic\n" +
                 "`rest` – posts external messages to REST endpoint",
         ),
@@ -158,6 +161,11 @@ export const configParams = {
             "requests-server",
             "kafka:9092",
             "Requests server url",
+        ),
+        pubkey: ConfigParam.string(
+            "requests-pubkey",
+            "",
+            "Liteserver base64 pubkey",
         ),
         topic: ConfigParam.string(
             "requests-topic",

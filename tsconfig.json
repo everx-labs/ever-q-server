@@ -28,6 +28,7 @@
     "include": ["src/**/*"],
     "exclude": [
         //      "**/__tests__",
-        "**/__mocks__"
+        "**/__mocks__",
+        "node_modules"
     ]
 }

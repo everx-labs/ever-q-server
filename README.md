@@ -136,6 +136,7 @@ type QConfig = {
     requests: {
         mode: RequestsMode,
         server: string,
+        pubkey: string,
         topic: string,
         maxSize: number,
     },
@@ -209,7 +210,8 @@ enum SlowQueriesMode {
     DISABLE = "disable"
 }
 
-enum RequestsMode {
+export enum RequestsMode {
+    TCP_ADNL = "tcpadnl", // via c++ lite-server tcp adnl
     KAFKA = "kafka",
     REST = "rest",
 }
@@ -438,6 +440,7 @@ or/and via arg `--config <path to config>`
 	"requests": {
 		"mode": "rest",
 		"server": "kafka:9092",
+        "pubkey": "",
 		"topic": "requests",
 		"maxSize": "16383"
 	},
