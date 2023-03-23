@@ -9,6 +9,7 @@ import {
 import type { OrderBy, QFieldExplanation, QType } from "./filters"
 import type { QLog } from "../logs"
 import { FilterConfig } from "../config"
+import { isSlowQueryException } from "./slow-query-exceptions"
 
 function setIs1(s: Set<string>, a: string): boolean {
     return s.size === 1 && s.has(a)
@@ -118,7 +119,7 @@ function orderByCanUseAnyIndex(
 
 function hasKeyEq(fields: Map<string, QFieldExplanation>): boolean {
     const key = fields.get("_key")
-    return !!(key && setIs1(key.operations, "=="))
+    return !!key && setIs1(key.operations, "==")
 }
 
 function getSlowReason(
@@ -147,10 +148,12 @@ function getSlowReasonForOrOperand(
     type: QType,
     filter: CollectionFilter,
     orderBy: OrderBy[],
+    skipValueConversion: boolean,
 ): SlowReason | null {
     const params = new QParams({
         stringifyKeyInAqlComparison: config.stringifyKeyInAqlComparison,
         explain: true,
+        skipValueConversion,
     })
     type.filterCondition(params, "", filter)
     if (!params.explanation) {
@@ -205,14 +208,27 @@ export type SlowReason = {
     availableIndexes: string[]
 }
 
+export type ExplainSlowReasonOptions = {
+    skipValueConversion?: boolean
+    disableExceptions?: boolean
+}
+
 export function explainSlowReason(
     config: FilterConfig,
-    _collectionName: string,
+    collectionName: string,
     collectionIndexes: QIndexInfo[],
     type: QType,
     filter: CollectionFilter,
     orderBy: OrderBy[],
+    options?: ExplainSlowReasonOptions,
 ): SlowReason | null {
+    const disableExceptions = options?.disableExceptions ?? false
+    const skipValueConversion = options?.skipValueConversion ?? false
+    if (!disableExceptions) {
+        if (isSlowQueryException(collectionName, filter, orderBy)) {
+            return null
+        }
+    }
     const orOperands = splitOr(filter)
     for (let i = 0; i < orOperands.length; i += 1) {
         const slowReason = getSlowReasonForOrOperand(
@@ -221,6 +237,7 @@ export function explainSlowReason(
             type,
             orOperands[i],
             orderBy,
+            skipValueConversion,
         )
         if (slowReason) {
             return slowReason
@@ -255,81 +272,4 @@ export function isFastQuery(
         })
     }
     return slowReason === null
-}
-
-export function getFastIndexHint(
-    collection: string,
-    filter: Record<string, unknown> | null | undefined,
-    orderBy: OrderBy[] | null | undefined,
-): string | null {
-    if (!filter) {
-        return null
-    }
-    const patterns = fastIndexHints[collection]
-    if (patterns === undefined) {
-        return null
-    }
-    for (const pattern of patterns) {
-        if (!filterMatch(filter, pattern.filter)) {
-            continue
-        }
-        let orderByMatch = true
-        for (const orderByPath of pattern.orderBy) {
-            if (
-                orderBy === null ||
-                orderBy === undefined ||
-                !orderBy.find(x => x.path === orderByPath)
-            ) {
-                orderByMatch = false
-                break
-            }
-        }
-        if (orderByMatch) {
-            return pattern.indexHint
-        }
-    }
-    return null
-}
-
-type QueryIndexHint = {
-    filter: Record<string, unknown>
-    orderBy: string[]
-    indexHint: string
-}
-
-function filterMatch(
-    filter: Record<string, unknown>,
-    pattern: Record<string, unknown>,
-): boolean {
-    for (const [name, nestedPattern] of Object.entries(pattern)) {
-        const nestedFilter = filter[name]
-        if (nestedFilter === undefined) {
-            return false
-        }
-        if (nestedPattern !== null) {
-            if (
-                !filterMatch(
-                    nestedFilter as Record<string, unknown>,
-                    nestedPattern as Record<string, unknown>,
-                )
-            ) {
-                return false
-            }
-        }
-    }
-    return true
-}
-
-const fastIndexHints: { [collection: string]: QueryIndexHint[] } = {
-    messages: [
-        {
-            filter: {
-                created_at: null,
-                dst: null,
-                src: null,
-            },
-            orderBy: ["created_at"],
-            indexHint: "idx_src_dst_created_at",
-        },
-    ],
 }

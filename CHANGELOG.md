@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### New
 
 - Support new caps in capabilities_flags.
+- Fast queries exceptions in slow detector.
 
 ### Fixed
 

@@ -121,6 +121,9 @@ export class QDatabasePool {
 export type QIndexInfo = {
     fields: string[]
     type?: string
+    name?: string
+    storedValues?: string[]
+    sparse?: boolean
 }
 
 export type QDoc = {
@@ -505,9 +508,26 @@ function isNullOrUndefined(v: unknown): boolean {
     return v === null || typeof v === "undefined"
 }
 
-export function sortedIndex(fields: string[]): QIndexInfo {
+export type QIndexOptions = {
+    name?: string
+    storedValues?: string
+    sparse?: boolean
+}
+
+export function indexInfo(fields: string, options?: QIndexOptions): QIndexInfo {
     return {
         type: "persistent",
-        fields,
+        fields: parseList(fields) ?? [],
+        name: options?.name,
+        storedValues: parseList(options?.storedValues),
+        sparse: options?.sparse,
     }
+}
+
+function parseList(s: string | undefined): string[] | undefined {
+    const items = (s ?? "")
+        .split(",")
+        .map(x => x.trim())
+        .filter(x => x !== "")
+    return items.length > 0 ? items : undefined
 }

@@ -90,6 +90,7 @@ export class QExplanation {
 export type QParamsOptions = {
     explain?: boolean
     stringifyKeyInAqlComparison?: boolean
+    skipValueConversion?: boolean
 }
 
 /**
@@ -100,6 +101,7 @@ export class QParams {
     count: number
     explanation: QExplanation | null
     stringifyKeyInAqlComparison: boolean
+    skipValueConversion: boolean
 
     constructor(options?: QParamsOptions) {
         this.count = 0
@@ -108,6 +110,7 @@ export class QParams {
             options && options.explain ? new QExplanation() : null
         this.stringifyKeyInAqlComparison =
             options?.stringifyKeyInAqlComparison ?? false
+        this.skipValueConversion = options?.skipValueConversion ?? false
     }
 
     clear() {
@@ -346,6 +349,9 @@ function filterConditionForIn(
     filter: unknown[],
     explainOp?: string,
 ): string | null {
+    if (params.skipValueConversion && !Array.isArray(filter)) {
+        return filterConditionOp(params, path, "==", null, explainOp)
+    }
     if (filter.length === 0) {
         return "FALSE"
     }
@@ -508,11 +514,13 @@ function createScalar(
                 filter as StructFilter,
                 scalarOps,
                 (op, path, _filterKey, filterValue) => {
-                    const converted = convertFilterValue(
-                        filterValue,
-                        op,
-                        filterValueConverter,
-                    )
+                    const converted = params.skipValueConversion
+                        ? filterValue
+                        : convertFilterValue(
+                              filterValue,
+                              op,
+                              filterValueConverter,
+                          )
                     return op.filterCondition(
                         params,
                         path,
