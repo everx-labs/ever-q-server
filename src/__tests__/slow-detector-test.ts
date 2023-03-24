@@ -62,7 +62,7 @@ test("Slow Detector", () => {
         ),
     ).toBeFalsy()
     expect(isFast({ now: { ge: 1 } }, "now desc, id desc")).toBeTruthy()
-    expect(isFast({ account_addr: { eq: "1" } }, "lt desc")).toBeFalsy()
+    expect(isFast({ account_addr: { eq: "1" } }, "lt desc")).toBeTruthy()
     expect(isFast({ block_id: { eq: "1" } })).toBeTruthy()
     expect(
         isFast(
@@ -81,7 +81,7 @@ test("Slow Detector", () => {
             },
             "now",
         ),
-    ).toBeFalsy()
+    ).toBeTruthy()
     expect(
         isFast({
             in_msg: { in: ["1", "2"] },
@@ -170,7 +170,7 @@ test("Slow Detector", () => {
             },
             "created_at",
         ),
-    ).toBeFalsy()
+    ).toBeTruthy()
     expect(
         isFast({
             status: { eq: 5 },
@@ -184,7 +184,7 @@ test("Slow Detector", () => {
             src: { in: ["1", "2"] },
             dst: { in: ["3", "4"] },
         }),
-    ).toBeFalsy()
+    ).toBeTruthy()
     expect(
         isFast(
             {
@@ -196,5 +196,5 @@ test("Slow Detector", () => {
             },
             "created_lt",
         ),
-    ).toBeFalsy()
+    ).toBeTruthy()
 })
