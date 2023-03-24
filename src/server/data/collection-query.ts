@@ -79,7 +79,7 @@ export class QCollectionQuery {
                 orderBy,
             )
             const forOptions =
-                indexHint !== null
+                indexHint !== undefined
                     ? `OPTIONS { indexHint: "${indexHint}" }`
                     : ""
 
