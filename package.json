@@ -1,6 +1,6 @@
 {
     "name": "ton-q-server",
-    "version": "0.55.0",
+    "version": "0.55.1",
     "description": "TON Q Server – realtime queries over TON blockchain.",
     "main": "index.js",
     "repository": "git@github.com:tonlabs/ton-q-server.git",
@@ -90,6 +90,7 @@
         "node-abort-controller": "^2.0.0",
         "prettier": "2.3.2",
         "ts-jest": "^27.0.3",
-        "typescript": "^4.3.5"
+        "typescript": "^4.3.5",
+        "csv": "^6.2.8"
     }
 }

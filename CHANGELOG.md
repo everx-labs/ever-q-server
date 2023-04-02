@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.55.1] - 2023-04-03
+
+### New
+
+- Fast queries exceptions in slow detector.
+
 ## [0.55.0] - 2023-03-20
 
 ### New

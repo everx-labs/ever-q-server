@@ -15,7 +15,7 @@ import {
 } from "../filter/filters"
 import { SelectionSetNode } from "graphql"
 import { FilterConfig, FilterOrConversion, QConfig } from "../config"
-import { getFastIndexHint } from "../filter/slow-detector"
+import { getFastIndexHint } from "../filter/fast-index-hints"
 
 export class QCollectionQuery {
     private constructor(
@@ -79,7 +79,7 @@ export class QCollectionQuery {
                 orderBy,
             )
             const forOptions =
-                indexHint !== null
+                indexHint !== undefined
                     ? `OPTIONS { indexHint: "${indexHint}" }`
                     : ""
 
