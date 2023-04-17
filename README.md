@@ -543,3 +543,35 @@ export Q_TRACE_TAGS=network=rustnet
 
 export Q_STATSD_SERVER="statsd.example.com:9125"
 ```
+
+### Run q-server in docker for development
+If you want to run q-server in docker do the following:
+1. Compile source files
+```
+npm install
+npm run tsc
+```
+2. Build docker image
+```
+docker build . -t qserver
+```
+3. q-server needs other available resources (like ArangoDB and node). The easiest way to provide them is to run Evernode SE as a docker image:
+```
+$ everdev se start
+$ everdev se set --db-port 8901
+```
+Wait a bit (sometimes it takes up to 2 minutes) and check if the ArangoDB web interface is available at http://localhost:8901.
+
+4. Create and run a new container (change 192.168.122.1 to your IP address)
+```
+docker run --rm -d \
+    -p 4000:4000 \
+    -e Q_REQUESTS_MODE=rest \
+    -e Q_REQUESTS_SERVER=192.168.122.1 \
+    -e Q_DATA_MUT=http://192.168.122.1:8901 \
+    -e Q_DATA_HOT=http://192.168.122.1:8901 \
+  qserver
+```
+GraphQL playground must be available on http://localhost:4000/graphql
+
+
