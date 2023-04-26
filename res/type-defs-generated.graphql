@@ -714,7 +714,7 @@ type BlockAccountBlocksTransactions {
 }
 
 type BlockAccountBlocks {
-	account_addr: String
+	account_addr(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
 	"new version of block hashes"
 	new_hash: String
 	"old version of block hashes"
@@ -1125,7 +1125,7 @@ type Transaction {
 	id: String
 	aborted: Boolean
 	account(timeout: Int, "**DEPRECATED**" when: TransactionFilter): Account
-	account_addr: String
+	account_addr(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
 	action: TransactionAction
 	"""
 	Account balance change after the transaction.
@@ -1272,7 +1272,7 @@ type Message {
 	"`data` field root hash."
 	data_hash: String
 	"Returns destination address string"
-	dst: String
+	dst(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
 	dst_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
 	dst_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the destination address (dst field)"
@@ -1301,7 +1301,7 @@ type Message {
 	"This is only used for special contracts in masterchain to deploy messages."
 	split_depth: Int
 	"Returns source address string"
-	src: String
+	src(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
 	src_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
 	src_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the source address (src field)"

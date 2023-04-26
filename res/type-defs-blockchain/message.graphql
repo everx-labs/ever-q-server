@@ -40,7 +40,7 @@ type BlockchainMessage implements Node {
 	"`data` field root hash."
 	data_hash: String
 	"Returns destination address string"
-	dst: String
+	dst(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
     "The destination account"
 	dst_account: BlockchainAccount
 	"The transaction in which this message is in_msg"
@@ -71,7 +71,7 @@ type BlockchainMessage implements Node {
 	"This is only used for special contracts in masterchain to deploy messages."
 	split_depth: Int
 	"Returns source address string"
-	src: String
+	src(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
     "The source account"
 	src_account: BlockchainAccount
 	"The transaction in which this message is included to out_msgs"

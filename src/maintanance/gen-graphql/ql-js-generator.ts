@@ -2,6 +2,7 @@ import { Writer } from "./gen"
 import type { DbField, DbType } from "../../server/schema/db-schema-types"
 import {
     DbTypeCategory,
+    isAddress,
     isBigInt,
     parseDbSchema,
     scalarTypes,
@@ -148,11 +149,16 @@ function main(schemaDef: TypeDef): {
                     "[".repeat(field.arrayDepth) +
                     field.type.name +
                     "]".repeat(field.arrayDepth)
-                let params = ""
-                if (isBigInt(field.type)) {
+                let params
+                if (isAddress(field)) {
+                    params =
+                        "(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean)"
+                } else if (isBigInt(field)) {
                     params = "(format: BigIntFormat)"
                 } else if (field.join !== undefined) {
                     params = `(timeout: Int, "**DEPRECATED**" when: ${type.name}Filter)`
+                } else {
+                    params = ""
                 }
 
                 g.writeLn(`\t${field.name}${params}: ${typeDeclaration}`)
@@ -307,6 +313,9 @@ function main(schemaDef: TypeDef): {
         if (field.type === scalarTypes.uint1024) {
             return "bigUInt2"
         }
+        if (isAddress(field)) {
+            return "addressFilter"
+        }
         if (field.type === scalarTypes.string && (field.lowerFilter ?? false)) {
             return "stringLowerFilter"
         }
@@ -449,9 +458,8 @@ function main(schemaDef: TypeDef): {
      */
     function genJSCustomResolvers(type: DbType) {
         const joinFields = type.fields.filter(x => x.join !== undefined)
-        const bigUIntFields = type.fields.filter((x: DbField) =>
-            isBigInt(x.type),
-        )
+        const bigUIntFields = type.fields.filter(isBigInt)
+        const addressFields = type.fields.filter(isAddress)
         const stringFormattedFields = type.fields.filter(
             (x: DbField) => x.formatter,
         )
@@ -461,6 +469,7 @@ function main(schemaDef: TypeDef): {
             type.collection !== undefined ||
             joinFields.length > 0 ||
             bigUIntFields.length > 0 ||
+            addressFields.length > 0 ||
             enumFields.length > 0 ||
             flagsFields.length > 0 ||
             stringFormattedFields.length > 0
@@ -482,6 +491,17 @@ function main(schemaDef: TypeDef): {
             )
             js.writeLn(
                 `                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`,
+            )
+            js.writeLn("            },")
+        })
+        addressFields.forEach(field => {
+            js.writeLn(
+                `            ${field.name}(${parentParam(
+                    field,
+                )}, args: AddressArgs) {`,
+            )
+            js.writeLn(
+                `                return resolveAddressField(parent.${field.name}, args);`,
             )
             js.writeLn("            },")
         })
@@ -681,12 +701,15 @@ function main(schemaDef: TypeDef): {
             bigUInt1,
             bigUInt2,
             stringLowerFilter,
+            addressFilter,
             resolveBigUInt,
+            resolveAddressField,
             struct,
             array,
             join,
             joinArray,
             BigIntArgs,
+            AddressArgs,
             JoinArgs,
             enumName,
             intFlags,

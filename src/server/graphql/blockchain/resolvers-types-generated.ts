@@ -33,6 +33,12 @@ export enum AccountStatusEnum {
     NonExist = "NonExist",
 }
 
+export enum AddressFormat {
+    Hex = "HEX",
+    Base64 = "BASE64",
+    AccountId = "ACCOUNT_ID",
+}
+
 /**
  * Due to GraphQL limitations big numbers are returned as a string.
  * You can specify format used to string representation for big integers.
@@ -396,6 +402,26 @@ export type BlockchainAccount = Node & {
     tock?: Maybe<Scalars["Boolean"]>
     /** Workchain id of the account address (id field). */
     workchain_id?: Maybe<Scalars["Int"]>
+}
+
+/**
+ * # Account type
+ *
+ * Recall that a smart contract and an account are the same thing in the context
+ * of the TON Blockchain, and that these terms can be used interchangeably, at
+ * least as long as only small (or “usual”) smart contracts are considered. A large
+ * smart-contract may employ several accounts lying in different shardchains of
+ * the same workchain for load balancing purposes.
+ *
+ * An account is identified by its full address and is completely described by
+ * its state. In other words, there is nothing else in an account apart from its
+ * address and state.
+ */
+export type BlockchainAccountAddressArgs = {
+    format?: Maybe<AddressFormat>
+    bounceable?: Maybe<Scalars["Boolean"]>
+    testOnly?: Maybe<Scalars["Boolean"]>
+    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /**
@@ -800,6 +826,20 @@ export type BlockchainMessageCreated_LtArgs = {
  * body or payload. The body is essentially arbitrary, to be interpreted by the
  * destination smart contract. It can be queried with the following fields:
  */
+export type BlockchainMessageDstArgs = {
+    format?: Maybe<AddressFormat>
+    bounceable?: Maybe<Scalars["Boolean"]>
+    testOnly?: Maybe<Scalars["Boolean"]>
+    urlSafe?: Maybe<Scalars["Boolean"]>
+}
+
+/**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
 export type BlockchainMessageFwd_FeeArgs = {
     format?: Maybe<BigIntFormat>
 }
@@ -824,6 +864,20 @@ export type BlockchainMessageIhr_FeeArgs = {
  */
 export type BlockchainMessageImport_FeeArgs = {
     format?: Maybe<BigIntFormat>
+}
+
+/**
+ * # Message type
+ *
+ * Message layout queries.  A message consists of its header followed by its
+ * body or payload. The body is essentially arbitrary, to be interpreted by the
+ * destination smart contract. It can be queried with the following fields:
+ */
+export type BlockchainMessageSrcArgs = {
+    format?: Maybe<AddressFormat>
+    bounceable?: Maybe<Scalars["Boolean"]>
+    testOnly?: Maybe<Scalars["Boolean"]>
+    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /**
@@ -1048,6 +1102,14 @@ export type BlockchainTransaction = Node & {
     tt?: Maybe<Scalars["String"]>
     /** Workchain id of the account address (account_addr field) */
     workchain_id?: Maybe<Scalars["Int"]>
+}
+
+/** Transaction */
+export type BlockchainTransactionAccount_AddrArgs = {
+    format?: Maybe<AddressFormat>
+    bounceable?: Maybe<Scalars["Boolean"]>
+    testOnly?: Maybe<Scalars["Boolean"]>
+    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /** Transaction */
@@ -1915,6 +1977,7 @@ export type DirectiveResolverFn<
 export type ResolversTypes = {
     AccountStatusChangeEnum: AccountStatusChangeEnum
     AccountStatusEnum: AccountStatusEnum
+    AddressFormat: AddressFormat
     BigIntFormat: BigIntFormat
     BlockAccountBlocks: ResolverTypeWrapper<BlockAccountBlocks>
     String: ResolverTypeWrapper<Scalars["String"]>
@@ -2575,7 +2638,12 @@ export type BlockchainAccountResolvers<
         ParentType,
         ContextType
     >
-    address?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    address?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainAccountAddressArgs, never>
+    >
     balance?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
@@ -2976,7 +3044,12 @@ export type BlockchainMessageResolvers<
         ParentType,
         ContextType
     >
-    dst?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    dst?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainMessageDstArgs, never>
+    >
     dst_account?: Resolver<
         Maybe<ResolversTypes["BlockchainAccount"]>,
         ParentType,
@@ -3040,7 +3113,12 @@ export type BlockchainMessageResolvers<
         ParentType,
         ContextType
     >
-    src?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    src?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainMessageSrcArgs, never>
+    >
     src_account?: Resolver<
         Maybe<ResolversTypes["BlockchainAccount"]>,
         ParentType,
@@ -3191,7 +3269,8 @@ export type BlockchainTransactionResolvers<
     account_addr?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
-        ContextType
+        ContextType,
+        RequireFields<BlockchainTransactionAccount_AddrArgs, never>
     >
     action?: Resolver<
         Maybe<ResolversTypes["TransactionAction"]>,

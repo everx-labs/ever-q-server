@@ -6,6 +6,7 @@ import {
     SchemaDoc,
     SchemaEx,
     SchemaMember,
+    SchemaSubType,
     SchemaType,
 } from "./schema"
 
@@ -23,7 +24,7 @@ export type ExplicitDef = {
     _ref?: string
     _bool?: EmptyRecord
     _time?: EmptyRecord
-    _string?: EmptyRecord
+    _string?: { subType?: SchemaSubType }
     _float?: { size?: 32 | 64 }
     _int?: { unsigned?: boolean; size?: IntSizeType }
     _array?: TypeDef

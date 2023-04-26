@@ -17,6 +17,12 @@
 import type { QDoc, QIndexInfo, Scalar } from "../data/data-provider"
 
 import { FieldNode, SelectionNode, SelectionSetNode } from "graphql"
+import { resolveAddress } from "../address"
+import {
+    addressStringFormatAccountId,
+    addressStringFormatBase64,
+    addressStringFormatHex,
+} from "@eversdk/core"
 
 const NOT_IMPLEMENTED = new Error("Not Implemented")
 
@@ -626,6 +632,12 @@ function invertedHex(hex: string): string {
 }
 
 export type BigIntArgs = { format?: "HEX" | "DEC" }
+export type AddressArgs = {
+    format?: "HEX" | "ACCOUNT_ID" | "BASE64"
+    bounceable?: boolean
+    testOnly?: boolean
+    urlSafe?: boolean
+}
 export type JoinArgs = { when?: CollectionFilter; timeout?: number }
 
 export function parseBigUInt(
@@ -675,6 +687,31 @@ export function resolveBigUInt(
     }`
 }
 
+export function resolveAddressField(
+    value: string | null | undefined,
+    args?: AddressArgs,
+): string | null | undefined {
+    if (value === null || value === undefined || value === "") {
+        return value
+    }
+    let format
+    switch (args?.format ?? "HEX") {
+        case "ACCOUNT_ID":
+            format = addressStringFormatAccountId()
+            break
+        case "BASE64":
+            format = addressStringFormatBase64(
+                args?.urlSafe ?? false,
+                args?.testOnly ?? false,
+                args?.bounceable ?? false,
+            )
+            break
+        default:
+            format = addressStringFormatHex()
+    }
+    return resolveAddress(value, format)
+}
+
 export function convertBigUInt(
     prefixLength: number,
     value: NumericScalar,
@@ -701,6 +738,9 @@ export function convertBigUInt(
 export const scalar: QType = createScalar()
 export const stringLowerFilter: QType = createScalar(x =>
     x ? `${x}`.toLowerCase() : x,
+)
+export const addressFilter: QType = createScalar(x =>
+    x ? resolveAddress(`${x}`) : x,
 )
 export const bigUInt1: QType = createScalar(x =>
     convertBigUInt(1, x as NumericScalar),

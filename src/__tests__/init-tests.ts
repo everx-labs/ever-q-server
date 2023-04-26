@@ -201,7 +201,7 @@ export async function testServerQuery<T>(
             throw errors.length === 1
                 ? errors[0]
                 : {
-                      message: "Multiple errors",
+                      message: `Multiple errors: ${JSON.stringify(errors)}`,
                       errors,
                   }
         }

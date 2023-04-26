@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- Case-insensitive filtering in args:
+  `blockchain.block(hash)`, `blockchain.transaction(hash)`, `blockchain.message(hash)`
+
+- Address filtering in args (accepts address in any format):
+  `blockchain.account(address)`, `blockchain.transaction(hash)`, `blockchain.message(hash)`,
+  `messages.src`, `messages.dst`, `transactions.account_addr`
+
+- Address formatting args (format, urlSafe, testOnly, bouncing) in fields:
+  `blockchain.account.info.address`, `blockchain.transaction.account_addr`,
+  `blockchain.message.src`, `blockchain.message.dst`,
+  `messages.src`, `messages.dst`, `transactions.account_addr`
 
 ## [0.55.1] - 2023-04-03
 

@@ -1,5 +1,6 @@
 import {
-    BigIntArgs,
+    AddressArgs,
+    BigIntArgs, resolveAddressField,
     resolveBigUInt,
     unixSecondsToString,
 } from "../../../filter/filters"
@@ -59,5 +60,9 @@ export const resolvers: Resolvers<QRequestContext> = {
                     return null
             }
         },
+        src: (parent, args) =>
+            resolveAddressField(parent.src, args as AddressArgs),
+        dst: (parent, args) =>
+            resolveAddressField(parent.dst, args as AddressArgs),
     },
 }

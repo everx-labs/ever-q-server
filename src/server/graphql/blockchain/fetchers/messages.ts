@@ -21,6 +21,7 @@ import {
     BlockchainMessagesConnection,
     BlockchainMessageTypeFilterEnum,
 } from "../resolvers-types-generated"
+import { resolveAddress } from "../../../address"
 
 export async function resolve_message(
     hash: String,
@@ -111,19 +112,23 @@ export async function resolve_account_messages(
             context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
     const queries: string[] = []
-    const accountParam = params.add(parent.address)
+    const accountParam = params.add(resolveAddress(parent.address))
     const minValueFilter = isDefined(args.min_value)
         ? `doc.value >= @${params.add(convertBigUInt(2, args.min_value))}`
         : undefined
-    const counterpartiesParamsMap =
-        args.counterparties && args.counterparties.length > 0
-            ? args.counterparties.reduce((map, value) => {
-                  if (!map.has(value)) {
-                      map.set(value, params.add(value))
-                  }
-                  return map
-              }, new Map<string, string>())
-            : undefined
+    let counterpartiesParamsMap = undefined
+    if (args.counterparties && args.counterparties.length > 0) {
+        counterpartiesParamsMap = new Map<string, string>()
+        for (const address of args.counterparties) {
+            const resolvedAddress = resolveAddress(address)
+            if (!counterpartiesParamsMap.has(resolvedAddress)) {
+                counterpartiesParamsMap.set(
+                    resolvedAddress,
+                    params.add(resolvedAddress),
+                )
+            }
+        }
+    }
 
     const selectionSet = getNodeSelectionSetForConnection(info)
     const returnExpressionBuilder = (sortField: string) =>

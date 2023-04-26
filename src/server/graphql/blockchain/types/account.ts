@@ -1,11 +1,17 @@
-import { BigIntArgs, resolveBigUInt } from "../../../filter/filters"
+import {
+    AddressArgs,
+    BigIntArgs,
+    resolveAddressField,
+    resolveBigUInt,
+} from "../../../filter/filters"
 import { QRequestContext } from "../../../request"
 import { AccountStatusEnum, Resolvers } from "../resolvers-types-generated"
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainAccount: {
         id: parent => `account/${parent._key}`,
-        address: parent => parent._key,
+        address: async (parent, args) =>
+            resolveAddressField(parent._key, args as AddressArgs),
         balance: (parent, args) =>
             resolveBigUInt(2, parent.balance, args as BigIntArgs),
         bits: (parent, args) =>

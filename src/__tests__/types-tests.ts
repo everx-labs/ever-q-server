@@ -1,6 +1,8 @@
 import { unixSecondsToString } from "../server/filter/filters"
 import { packageJson } from "../server/utils"
 import { testServerQuery } from "./init-tests"
+import { resolveAddress } from "../server/address"
+import { addressStringFormatBase64 } from "@eversdk/core"
 
 const { version } = packageJson()
 
@@ -48,11 +50,11 @@ test("time companion fields", async () => {
 
 test("when conditions for joins", async () => {
     const data = await testServerQuery<Messages>(`
-    query { 
-        messages { 
+    query {
+        messages {
             dst_transaction(timeout: 0, when: { value: { gt: "0" } }) {
-                id 
-            } 
+                id
+            }
             value
             dst
         }
@@ -92,6 +94,43 @@ test("Case insensitive filters", async () => {
         for (let i = 0; i < docsLower.length; i += 1) {
             expect(`${docsUpper[i][field]}`.toLowerCase()).toEqual(valueLower)
             expect(`${docsLower[i][field]}`.toLowerCase()).toEqual(valueLower)
+        }
+    }
+    await testField("messages", "src")
+    await testField("messages", "dst")
+    await testField("transactions", "account_addr")
+})
+
+test("Address filters", async () => {
+    const query = async (
+        collection: string,
+        field: string,
+        value: unknown,
+        format: string,
+    ) => {
+        return (
+            await testServerQuery<Record<string, Record<string, unknown>[]>>(
+                `query { ${collection}(filter:{${field}:{eq:"${value}"}}) { ${field}(format: ${format}) } }`,
+            )
+        )[collection]
+    }
+    const testField = async (collection: string, field: string) => {
+        const docs = (
+            await testServerQuery<Record<string, Record<string, unknown>[]>>(
+                `query { ${collection} { ${field} } }`,
+            )
+        )[collection]
+        const addrHex = `${docs[0][field]}`
+        const addrBase64 = resolveAddress(
+            addrHex,
+            addressStringFormatBase64(false, false, false),
+        )
+        const docsBase64 = await query(collection, field, addrBase64, "BASE64")
+        const docsHex = await query(collection, field, addrHex, "HEX")
+        expect(docsHex.length).toEqual(docsBase64.length)
+        for (let i = 0; i < docsHex.length; i += 1) {
+            expect(`${docsBase64[i][field]}`).toEqual(addrBase64)
+            expect(`${docsHex[i][field]}`).toEqual(addrHex)
         }
     }
     await testField("messages", "src")

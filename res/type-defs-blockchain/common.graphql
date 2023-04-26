@@ -8,3 +8,9 @@ type PageInfo {
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
 }
+
+enum AddressFormat {
+    HEX
+    BASE64
+    ACCOUNT_ID
+}
