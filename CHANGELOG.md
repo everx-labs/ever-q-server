@@ -18,6 +18,9 @@ All notable changes to this project will be documented in this file.
   `blockchain.message.src`, `blockchain.message.dst`,
   `messages.src`, `messages.dst`, `transactions.account_addr`
 
+- `accounts(filter:{id:{eq:""}})`, `accounts(filter:{id:{in:[""]}})`, `blockchain.account(address:"")`
+  returns account of type `NonExist` if an account is missing in current shard state.
+
 ## [0.55.1] - 2023-04-03
 
 ### New

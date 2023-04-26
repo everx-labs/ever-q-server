@@ -84,6 +84,20 @@ export type QCollectionOptions = {
     isTests: boolean
 }
 
+function addMissingAccountRecords(records: QResult[], idFilter: string[]) {
+    for (const id of idFilter) {
+        if (!records.find(x => ((x ?? {}) as any)["_key"] === id)) {
+            records.push({
+                _key: id,
+                acc_type: 3,
+                acc_type_name: "NonExist",
+                balance: "000",
+                workchain_id: parseInt(id.split(":")[0]) || 0,
+            })
+        }
+    }
+}
+
 export class QDataCollection {
     name: string
     docType: QType
@@ -559,6 +573,7 @@ export class QDataCollection {
         )
         traceSpan.logEvent("ready_to_fetch")
         const start = Date.now()
+        const idFilter = this.name === "accounts" ? query.extractIdFilter() : []
         const records =
             query.timeout > 0
                 ? await this.queryWaitFor(
@@ -578,6 +593,11 @@ export class QDataCollection {
                       isFast,
                       traceParams,
                   })
+
+        if (idFilter.length > 0 && records.length < idFilter.length) {
+            addMissingAccountRecords(records, idFilter)
+        }
+
         if (records.length > query.limit) {
             records.splice(query.limit)
         }
