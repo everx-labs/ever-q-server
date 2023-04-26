@@ -1,6 +1,7 @@
 import {
     AddressArgs,
-    BigIntArgs, resolveAddressField,
+    BigIntArgs,
+    resolveAddressField,
     resolveBigUInt,
     unixSecondsToString,
 } from "../../../filter/filters"
