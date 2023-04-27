@@ -31,7 +31,11 @@ export class QCollectionQuery {
 
     extractIdFilter(): string[] {
         const singleProp = (value: any): [string, any] | undefined => {
-            if (typeof value !== "object" || value === null) {
+            if (
+                typeof value !== "object" ||
+                value === null ||
+                Array.isArray(value)
+            ) {
                 return undefined
             }
             const entries = Object.entries(value)
