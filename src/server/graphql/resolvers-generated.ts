@@ -330,6 +330,7 @@ const Config = struct({
     p4: scalar,
     p40: ConfigP40,
     p42: ConfigP42,
+    p44: StringArray,
     p6: ConfigP6,
     p7: ConfigP7Array,
     p8: ConfigP8,
@@ -2807,6 +2808,10 @@ scalarFields.set("blocks.master.config.p42.threshold", {
     type: "uint1024",
     path: "doc.master.config.p42.threshold",
 })
+scalarFields.set("blocks.master.config.p44", {
+    type: "string",
+    path: "doc.master.config.p44[*]",
+})
 scalarFields.set("blocks.master.config.p6.mint_add_price", {
     type: "string",
     path: "doc.master.config.p6.mint_add_price",
@@ -4381,6 +4386,10 @@ scalarFields.set("zerostates.master.config.p42.payouts.payout_percent", {
 scalarFields.set("zerostates.master.config.p42.threshold", {
     type: "uint1024",
     path: "doc.master.config.p42.threshold",
+})
+scalarFields.set("zerostates.master.config.p44", {
+    type: "string",
+    path: "doc.master.config.p44[*]",
 })
 scalarFields.set("zerostates.master.config.p6.mint_add_price", {
     type: "string",

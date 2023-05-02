@@ -721,6 +721,7 @@ const Config: TypeDef = {
             payout_percent: u8(),
         }),
     },
+    p44: arrayOf(string(), docs.block.master.config.p44),
 }
 
 const config = (doc?: string) => ref({ Config }, doc)
