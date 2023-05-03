@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- Support new config parameter 44
 
 ## [0.55.1] - 2023-04-03
 
