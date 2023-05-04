@@ -18,6 +18,7 @@ import {
     BlockchainBlock,
     BlockchainMessage,
     BlockchainTransaction,
+    BlockchainBlockSignatures,
     Maybe,
 } from "./resolvers-types-generated"
 
@@ -26,6 +27,7 @@ export type Config = {
     blocks: CompiledCollectionConfig<BlockchainBlock>
     messages: CompiledCollectionConfig<BlockchainMessage>
     transactions: CompiledCollectionConfig<BlockchainTransaction>
+    blocks_signatures: CompiledCollectionConfig<BlockchainBlockSignatures>
 }
 
 export const config: Config = {
@@ -33,10 +35,36 @@ export const config: Config = {
         alwaysFetchFields: ["chain_order"],
         excludeFields: ["hash"],
         qDataCollectionSelector: ctx => ctx.services.data.blocks,
+        joins: [
+            {
+                targetField: "signatures",
+                additionalFields: ["workchain_id"],
+                pathForQuery: "sgn",
+                joinedCollection: "blocks_signatures",
+                prefetchQueryBuilder: (
+                    parentPath,
+                    joinPath,
+                    returnExpression,
+                ) =>
+                    `(FOR ${joinPath} IN blocks_signatures ` +
+                    `FILTER ${parentPath}._key == ${joinPath}._key ` +
+                    `RETURN ${returnExpression})[0]`,
+                needFetch: m => !m.signatures && m.workchain_id == -1,
+                onField: "_key",
+                refOnField: "_key",
+                queryBuilder: (path, onFieldParam, returnExpression) =>
+                    `FOR ${path} in blocks_signatures ` +
+                    `FILTER ${path}._key IN @${onFieldParam} ` +
+                    `RETURN ${returnExpression}`,
+            },
+        ],
     }),
     accounts: compileCollectionConfig({
         excludeFields: ["address"],
         qDataCollectionSelector: ctx => ctx.services.data.accounts,
+    }),
+    blocks_signatures: compileCollectionConfig({
+        qDataCollectionSelector: ctx => ctx.services.data.blocks_signatures,
     }),
     messages: compileCollectionConfig({
         alwaysFetchFields: [

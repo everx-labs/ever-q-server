@@ -722,3 +722,21 @@ enum MessageProcessingStatusEnum {
     Refused
     Transiting
 }
+
+type BlockSignature {
+	node_id: String,
+	r: String,
+	s: String,
+}
+
+type BlockchainBlockSignatures {
+    gen_utime: Float,
+    seq_no: Float,
+    shard: String,
+    workchain_id: Int,
+    proof: String,
+    validator_list_hash_short: Int,
+    catchain_seqno: Int,
+    sig_weight(format: BigIntFormat): String,
+    signatures: [BlockSignature],
+}
