@@ -994,7 +994,7 @@ address and state.
            
 """
 type Account {
-	id: String
+	id(format: AddressFormat): String
 	"""
 	Returns the current status of the account.
 	```

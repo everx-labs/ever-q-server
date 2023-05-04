@@ -52,10 +52,16 @@ function tsTypeDecl(field: DbField): string {
     return decl + "[]".repeat(field.arrayDepth)
 }
 
-function parentParam(...fields: DbField[]): string {
+function parentParam(type: DbType, ...fields: DbField[]): string {
     return `parent: { ${fields
-        .map(x => `${x.name === "id" ? "_key" : x.name}: ${tsTypeDecl(x)}`)
+        .map(x => `${dbField(type, x)}: ${tsTypeDecl(x)}`)
         .join(", ")} }`
+}
+
+function dbField(type: DbType, field: DbField): string {
+    return type.collection !== undefined && field.name === "id"
+        ? "_key"
+        : field.name
 }
 
 const keyField: DbField = {
@@ -477,41 +483,56 @@ function main(schemaDef: TypeDef): {
         }
         js.writeLn(`        ${type.name}: {`)
         if (type.collection !== undefined) {
-            js.writeLn(`            id(${parentParam(keyField)}) {`)
-            js.writeLn("                return parent._key;")
-            js.writeLn("            },")
+            if (!addressFields.find(x => x.name === "id")) {
+                js.writeLn(`            id(${parentParam(type, keyField)}) {`)
+                js.writeLn(
+                    `                return parent.${dbField(type, keyField)};`,
+                )
+                js.writeLn("            },")
+            }
         }
         bigUIntFields.forEach(field => {
             const prefixLength = field.type === scalarTypes.uint64 ? 1 : 2
             js.writeLn(
                 `            ${field.name}(${parentParam(
+                    type,
                     field,
                 )}, args: BigIntArgs) {`,
             )
             js.writeLn(
-                `                return resolveBigUInt(${prefixLength}, parent.${field.name}, args);`,
+                `                return resolveBigUInt(${prefixLength}, parent.${dbField(
+                    type,
+                    field,
+                )}, args);`,
             )
             js.writeLn("            },")
         })
         addressFields.forEach(field => {
             js.writeLn(
                 `            ${field.name}(${parentParam(
+                    type,
                     field,
                 )}, args: AddressArgs) {`,
             )
             js.writeLn(
-                `                return resolveAddressField(parent.${field.name}, args);`,
+                `                return resolveAddressField(parent.${dbField(
+                    type,
+                    field,
+                )}, args);`,
             )
             js.writeLn("            },")
         })
         stringFormattedFields.forEach(field => {
             js.writeLn(
-                `            ${field.name}_string(${parentParam(field)}) {`,
+                `            ${field.name}_string(${parentParam(
+                    type,
+                    field,
+                )}) {`,
             )
             js.writeLn(
-                `                return ${field.formatter ?? ""}(parent.${
-                    field.name
-                });`,
+                `                return ${
+                    field.formatter ?? ""
+                }(parent.${dbField(type, field)});`,
             )
             js.writeLn("            },")
         })
@@ -519,9 +540,12 @@ function main(schemaDef: TypeDef): {
             const enumDef = field.enumDef
             if (enumDef !== undefined) {
                 js.writeLn(
-                    `            ${field.name}_name: createEnumNameResolver("${
+                    `            ${
                         field.name
-                    }", ${stringifyEnumValues(enumDef.values)}),`,
+                    }_name: createEnumNameResolver("${dbField(
+                        type,
+                        field,
+                    )}", ${stringifyEnumValues(enumDef.values)}),`,
                 )
             }
         })
@@ -529,9 +553,12 @@ function main(schemaDef: TypeDef): {
             const flagsDef = field.flagsDef
             if (flagsDef !== undefined) {
                 js.writeLn(
-                    `            ${field.name}_flags: createFlagsResolver("${
+                    `            ${
                         field.name
-                    }", ${stringifyFlagsValues(flagsDef.values)}),`,
+                    }_flags: createFlagsResolver("${dbField(
+                        type,
+                        field,
+                    )}", ${stringifyFlagsValues(flagsDef.values)}),`,
                 )
             }
         })
@@ -551,10 +578,7 @@ function main(schemaDef: TypeDef): {
             ) {
                 return
             }
-            const docName =
-                type.collection !== undefined && field.name === "id"
-                    ? "_key"
-                    : field.name
+            const docName = dbField(type, field)
             const path = `${parentPath}.${field.name}`
             let docPath = `${parentDocPath}.${docName}`
             if (field.arrayDepth > 0) {
@@ -604,10 +628,7 @@ function main(schemaDef: TypeDef): {
         parentDocPath: string,
     ) {
         type.fields.forEach((field: DbField) => {
-            const docName =
-                type.collection !== undefined && field.name === "id"
-                    ? "_key"
-                    : field.name
+            const docName = dbField(type, field)
             const path = `${parentPath}.${field.name}`
             const docPath = `${parentDocPath}.${docName}`
             const join = field.join
@@ -638,6 +659,7 @@ function main(schemaDef: TypeDef): {
                 }
                 js.writeLn(
                     `    canJoin(${parentParam(
+                        type,
                         ...parentFields,
                     )}, args: JoinArgs) {`,
                 )

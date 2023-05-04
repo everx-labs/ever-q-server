@@ -593,7 +593,7 @@ const ZerostateLibraries = struct({
 
 const Account = struct(
     {
-        id: stringLowerFilter,
+        id: addressFilter,
         acc_type: scalar,
         acc_type_name: enumName("acc_type", {
             Uninit: 0,
@@ -1323,9 +1323,6 @@ function createResolvers(data: QBlockchainData) {
             }),
         },
         Account: {
-            id(parent: { _key: string }) {
-                return parent._key
-            },
             balance(parent: { balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance, args)
             },
@@ -1343,6 +1340,9 @@ function createResolvers(data: QBlockchainData) {
             },
             public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args)
+            },
+            id(parent: { _key: string }, args: AddressArgs) {
+                return resolveAddressField(parent._key, args)
             },
             acc_type_name: createEnumNameResolver("acc_type", {
                 Uninit: 0,

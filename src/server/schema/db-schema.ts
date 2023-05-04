@@ -209,6 +209,7 @@ const AccountBase: TypeDef = {
 
 const Account: TypeDef = {
     ...AccountBase,
+    id: address(),
     _doc: docs.account._doc,
     _: { collection: "accounts" },
 }
