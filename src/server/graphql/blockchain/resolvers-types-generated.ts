@@ -35,8 +35,15 @@ export enum AccountStatusEnum {
 
 export enum AddressFormat {
     Hex = "HEX",
-    Base64 = "BASE64",
     AccountId = "ACCOUNT_ID",
+    Base64UrlTestBounce = "BASE64_URL_TEST_BOUNCE",
+    Base64NourlTestBounce = "BASE64_NOURL_TEST_BOUNCE",
+    Base64UrlTestNobounce = "BASE64_URL_TEST_NOBOUNCE",
+    Base64UrlNotestBounce = "BASE64_URL_NOTEST_BOUNCE",
+    Base64NourlTestNobounce = "BASE64_NOURL_TEST_NOBOUNCE",
+    Base64UrlNotestNobounce = "BASE64_URL_NOTEST_NOBOUNCE",
+    Base64NourlNotestBounce = "BASE64_NOURL_NOTEST_BOUNCE",
+    Base64NourlNotestNobounce = "BASE64_NOURL_NOTEST_NOBOUNCE",
 }
 
 /**
@@ -419,9 +426,6 @@ export type BlockchainAccount = Node & {
  */
 export type BlockchainAccountAddressArgs = {
     format?: Maybe<AddressFormat>
-    bounceable?: Maybe<Scalars["Boolean"]>
-    testOnly?: Maybe<Scalars["Boolean"]>
-    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /**
@@ -828,9 +832,6 @@ export type BlockchainMessageCreated_LtArgs = {
  */
 export type BlockchainMessageDstArgs = {
     format?: Maybe<AddressFormat>
-    bounceable?: Maybe<Scalars["Boolean"]>
-    testOnly?: Maybe<Scalars["Boolean"]>
-    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /**
@@ -875,9 +876,6 @@ export type BlockchainMessageImport_FeeArgs = {
  */
 export type BlockchainMessageSrcArgs = {
     format?: Maybe<AddressFormat>
-    bounceable?: Maybe<Scalars["Boolean"]>
-    testOnly?: Maybe<Scalars["Boolean"]>
-    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /**
@@ -1107,9 +1105,6 @@ export type BlockchainTransaction = Node & {
 /** Transaction */
 export type BlockchainTransactionAccount_AddrArgs = {
     format?: Maybe<AddressFormat>
-    bounceable?: Maybe<Scalars["Boolean"]>
-    testOnly?: Maybe<Scalars["Boolean"]>
-    urlSafe?: Maybe<Scalars["Boolean"]>
 }
 
 /** Transaction */

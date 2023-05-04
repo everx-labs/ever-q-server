@@ -10,7 +10,7 @@ type BlockchainTransaction implements Node {
 	hash: String
 	aborted: Boolean
 	account: BlockchainAccount
-	account_addr(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean): String
+	account_addr(format: AddressFormat): String
 	action: TransactionAction
 	"Account balance change after transaction"
 	balance_delta(format: BigIntFormat): String

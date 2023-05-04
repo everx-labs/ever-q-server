@@ -151,8 +151,7 @@ function main(schemaDef: TypeDef): {
                     "]".repeat(field.arrayDepth)
                 let params
                 if (isAddress(field)) {
-                    params =
-                        "(format: AddressFormat, bounceable: Boolean, testOnly: Boolean, urlSafe: Boolean)"
+                    params = "(format: AddressFormat)"
                 } else if (isBigInt(field)) {
                     params = "(format: BigIntFormat)"
                 } else if (field.join !== undefined) {
