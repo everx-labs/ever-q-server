@@ -21,6 +21,8 @@ All notable changes to this project will be documented in this file.
 - `accounts(filter:{id:{eq:""}})`, `accounts(filter:{id:{in:[""]}})`, `blockchain.account(address:"")`
   returns account of type `NonExist` if an account is missing in current shard state.
 
+- Support new config parameter 44
+
 ## [0.55.1] - 2023-04-03
 
 ### New

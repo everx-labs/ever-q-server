@@ -556,6 +556,8 @@ type Config {
 	p4: String
 	p40: ConfigP40
 	p42: ConfigP42
+	"Array of suspended smart contracts addresses"
+	p44: [String]
 	"Configuration parameter 6"
 	p6: ConfigP6
 	"Configuration parameter 7"
@@ -1911,6 +1913,8 @@ input ConfigFilter {
 	p4: StringFilter
 	p40: ConfigP40Filter
 	p42: ConfigP42Filter
+	"Array of suspended smart contracts addresses"
+	p44: StringArrayFilter
 	"Configuration parameter 6"
 	p6: ConfigP6Filter
 	"Configuration parameter 7"
