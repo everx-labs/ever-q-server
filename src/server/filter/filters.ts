@@ -17,6 +17,12 @@
 import type { QDoc, QIndexInfo, Scalar } from "../data/data-provider"
 
 import { FieldNode, SelectionNode, SelectionSetNode } from "graphql"
+import { resolveAddress } from "../address"
+import {
+    addressStringFormatAccountId,
+    addressStringFormatBase64,
+    addressStringFormatHex,
+} from "@eversdk/core"
 
 const NOT_IMPLEMENTED = new Error("Not Implemented")
 
@@ -626,6 +632,19 @@ function invertedHex(hex: string): string {
 }
 
 export type BigIntArgs = { format?: "HEX" | "DEC" }
+export type AddressArgs = {
+    format?:
+        | "HEX"
+        | "ACCOUNT_ID"
+        | "BASE64_URL_TEST_BOUNCE"
+        | "BASE64_NOURL_TEST_BOUNCE"
+        | "BASE64_URL_TEST_NOBOUNCE"
+        | "BASE64_URL_NOTEST_BOUNCE"
+        | "BASE64_NOURL_TEST_NOBOUNCE"
+        | "BASE64_URL_NOTEST_NOBOUNCE"
+        | "BASE64_NOURL_NOTEST_BOUNCE"
+        | "BASE64_NOURL_NOTEST_NOBOUNCE"
+}
 export type JoinArgs = { when?: CollectionFilter; timeout?: number }
 
 export function parseBigUInt(
@@ -675,6 +694,48 @@ export function resolveBigUInt(
     }`
 }
 
+export function resolveAddressField(
+    value: string | null | undefined,
+    args?: AddressArgs,
+): string | null | undefined {
+    if (value === null || value === undefined || value === "") {
+        return value
+    }
+    let format
+    switch (args?.format ?? "HEX") {
+        case "ACCOUNT_ID":
+            format = addressStringFormatAccountId()
+            break
+        case "BASE64_URL_TEST_BOUNCE":
+            format = addressStringFormatBase64(true, true, true)
+            break
+        case "BASE64_NOURL_TEST_BOUNCE":
+            format = addressStringFormatBase64(false, true, true)
+            break
+        case "BASE64_URL_NOTEST_BOUNCE":
+            format = addressStringFormatBase64(true, false, true)
+            break
+        case "BASE64_URL_TEST_NOBOUNCE":
+            format = addressStringFormatBase64(true, true, false)
+            break
+        case "BASE64_NOURL_NOTEST_BOUNCE":
+            format = addressStringFormatBase64(false, false, true)
+            break
+        case "BASE64_NOURL_TEST_NOBOUNCE":
+            format = addressStringFormatBase64(false, true, false)
+            break
+        case "BASE64_URL_NOTEST_NOBOUNCE":
+            format = addressStringFormatBase64(true, false, false)
+            break
+        case "BASE64_NOURL_NOTEST_NOBOUNCE":
+            format = addressStringFormatBase64(false, false, false)
+            break
+        default:
+            format = addressStringFormatHex()
+    }
+    return resolveAddress(value, format)
+}
+
 export function convertBigUInt(
     prefixLength: number,
     value: NumericScalar,
@@ -701,6 +762,9 @@ export function convertBigUInt(
 export const scalar: QType = createScalar()
 export const stringLowerFilter: QType = createScalar(x =>
     x ? `${x}`.toLowerCase() : x,
+)
+export const addressFilter: QType = createScalar(x =>
+    x ? resolveAddress(`${x}`) : x,
 )
 export const bigUInt1: QType = createScalar(x =>
     convertBigUInt(1, x as NumericScalar),

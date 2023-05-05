@@ -50,6 +50,11 @@ export type SchemaClass = {
 
 export type EmptyRecord = Record<string, never>
 
+export enum SchemaSubType {
+    NONE,
+    ADDRESS,
+}
+
 export type SchemaType = {
     doc?: SchemaDoc
     _?: SchemaEx
@@ -57,7 +62,7 @@ export type SchemaType = {
     any?: EmptyRecord
     int?: { unsigned?: boolean; size?: IntSizeType }
     float?: { size?: 32 | 64 }
-    string?: EmptyRecord
+    string?: { subType?: SchemaSubType }
     bool?: EmptyRecord
     time?: EmptyRecord
     array?: SchemaType

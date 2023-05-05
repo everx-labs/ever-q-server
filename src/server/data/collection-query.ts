@@ -29,6 +29,31 @@ export class QCollectionQuery {
         public shards: Set<string> | undefined,
     ) {}
 
+    extractIdFilter(): string[] {
+        const singleProp = (value: any): [string, any] | undefined => {
+            if (
+                typeof value !== "object" ||
+                value === null ||
+                Array.isArray(value)
+            ) {
+                return undefined
+            }
+            const entries = Object.entries(value)
+            return entries.length === 1 ? entries[0] : undefined
+        }
+        const idProp = singleProp(this.filter)
+        if (idProp?.[0] === "id") {
+            const opProp = singleProp(idProp[1])
+            if (opProp?.[0] === "eq") {
+                return [`${opProp[1]}`]
+            }
+            if (opProp?.[0] === "in") {
+                return (opProp[1] as any[]).map((x: any) => `${x}`)
+            }
+        }
+        return []
+    }
+
     static create(
         config: FilterConfig,
         request: QRequestParams,
