@@ -13,10 +13,10 @@ All notable changes to this project will be documented in this file.
   `blockchain.account(address)`, `blockchain.transaction(hash)`, `blockchain.message(hash)`,
   `messages.src`, `messages.dst`, `transactions.account_addr`
 
-- Address formatting args (format, urlSafe, testOnly, bouncing) in fields:
+- Address formatting args in fields:
   `blockchain.account.info.address`, `blockchain.transaction.account_addr`,
   `blockchain.message.src`, `blockchain.message.dst`,
-  `messages.src`, `messages.dst`, `transactions.account_addr`
+  `messages.src`, `messages.dst`, `transactions.account_addr`, `accounts.id`
 
 - `accounts(filter:{id:{eq:""}})`, `accounts(filter:{id:{in:[""]}})`, `blockchain.account(address:"")`
   returns account of type `NonExist` if an account is missing in current shard state.

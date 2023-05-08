@@ -10,8 +10,7 @@ type PageInfo {
 }
 
 enum AddressFormat {
-    HEX
-    ACCOUNT_ID
+    RAW
     BASE64_URL_TEST_BOUNCE
     BASE64_NOURL_TEST_BOUNCE
     BASE64_URL_TEST_NOBOUNCE

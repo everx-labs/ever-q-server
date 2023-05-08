@@ -19,7 +19,6 @@ import type { QDoc, QIndexInfo, Scalar } from "../data/data-provider"
 import { FieldNode, SelectionNode, SelectionSetNode } from "graphql"
 import { resolveAddress } from "../address"
 import {
-    addressStringFormatAccountId,
     addressStringFormatBase64,
     addressStringFormatHex,
 } from "@eversdk/core"
@@ -634,8 +633,7 @@ function invertedHex(hex: string): string {
 export type BigIntArgs = { format?: "HEX" | "DEC" }
 export type AddressArgs = {
     format?:
-        | "HEX"
-        | "ACCOUNT_ID"
+        | "RAW"
         | "BASE64_URL_TEST_BOUNCE"
         | "BASE64_NOURL_TEST_BOUNCE"
         | "BASE64_URL_TEST_NOBOUNCE"
@@ -702,10 +700,7 @@ export function resolveAddressField(
         return value
     }
     let format
-    switch (args?.format ?? "HEX") {
-        case "ACCOUNT_ID":
-            format = addressStringFormatAccountId()
-            break
+    switch (args?.format ?? "RAW") {
         case "BASE64_URL_TEST_BOUNCE":
             format = addressStringFormatBase64(true, true, true)
             break

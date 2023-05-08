@@ -34,8 +34,7 @@ export enum AccountStatusEnum {
 }
 
 export enum AddressFormat {
-    Hex = "HEX",
-    AccountId = "ACCOUNT_ID",
+    Raw = "RAW",
     Base64UrlTestBounce = "BASE64_URL_TEST_BOUNCE",
     Base64NourlTestBounce = "BASE64_NOURL_TEST_BOUNCE",
     Base64UrlTestNobounce = "BASE64_URL_TEST_NOBOUNCE",
