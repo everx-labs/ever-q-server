@@ -71,12 +71,18 @@ async function postRequestsUsingJrpc(
                 jsonrpc: "2.0",
                 method: "sendMessage",
                 params: { message: request.body },
-                id: request.id,
+                id: Math.ceil(Math.random() * 10000000), // Jrpc request requires parameter `id: number`
             }),
         })
-        if (response.status !== 200) {
-            const message = `Post requests failed: ${await response.text()}`
-            throw new Error(message)
+        if (response.status === 200) {
+            const answer = await response.json()
+            // JRPC responds with http code = 200 even if an error occurs
+            if (answer.error) {
+                throw new Error(`Post requests failed: ${answer.error.message}`)
+            }
+        } else {
+            // network errors go here
+            throw new Error(`Post requests failed: ${await response.text()}`)
         }
     }
 }
