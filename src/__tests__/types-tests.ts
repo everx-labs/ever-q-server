@@ -131,7 +131,7 @@ test("Address filters", async () => {
             addrBase64,
             "BASE64_NOURL_NOTEST_NOBOUNCE",
         )
-        const docsHex = await query(collection, field, addrHex, "HEX")
+        const docsHex = await query(collection, field, addrHex, "RAW")
         expect(docsHex.length).toEqual(docsBase64.length)
         for (let i = 0; i < docsHex.length; i += 1) {
             expect(`${docsBase64[i][field]}`).toEqual(addrBase64)
