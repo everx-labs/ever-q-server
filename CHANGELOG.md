@@ -23,6 +23,8 @@ All notable changes to this project will be documented in this file.
 
 - Support new config parameter 44
 
+- Post external messages to JRPC endpoint
+
 ## [0.55.1] - 2023-04-03
 
 ### New

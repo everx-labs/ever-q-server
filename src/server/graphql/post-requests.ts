@@ -53,6 +53,33 @@ async function postRequestsUsingRest(
     }
 }
 
+async function postRequestsUsingJrpc(
+    requests: Request[],
+    context: QRequestContext,
+): Promise<void> {
+    const config = context.services.config.requests
+    const url = ensureProtocol(config.server, "https")
+
+    // No throttling (no pauses between requests).
+    // If requests fail with a "too many requests" error, it's the user's fault,
+    // let him reduce the number of messages in the request
+    for (const request of requests) {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: "sendMessage",
+                params: { message: request.body },
+                id: request.id,
+            }),
+        })
+        if (response.status !== 200) {
+            const message = `Post requests failed: ${await response.text()}`
+            throw new Error(message)
+        }
+    }
+}
 async function postRequestsUsingKafka(
     requests: Request[],
     context: QRequestContext,
@@ -181,6 +208,8 @@ async function postRequests(
 
             if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context)
+            } else if (config.requests.mode === RequestsMode.JRPC) {
+                await postRequestsUsingJrpc(requests, context)
             } else if (config.requests.mode === RequestsMode.KAFKA) {
                 await postRequestsUsingKafka(requests, context, span)
             } else if (config.requests.mode === RequestsMode.TCP_ADNL) {
