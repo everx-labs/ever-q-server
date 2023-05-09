@@ -31,6 +31,8 @@ Option                                          ENV                             
 --requests-mode                                 Q_REQUESTS_MODE                                 kafka                                   Requests mode:
                                                                                                                                         `kafka` – writes external messages to kafka topic
                                                                                                                                         `rest` – posts external messages to REST endpoint
+                                                                                                                                        `tcpadnl` – posts external messages to lite-server
+                                                                                                                                        `jrpc` – posts external messages to jrpc endpoint
 --requests-server                               Q_REQUESTS_SERVER                               kafka:9092                              Requests server url
 --requests-topic                                Q_REQUESTS_TOPIC                                requests                                Requests topic name
 --requests-max-size                             Q_REQUESTS_MAX_SIZE                             65535                                   Maximum request message size in bytes
@@ -214,6 +216,7 @@ export enum RequestsMode {
     TCP_ADNL = "tcpadnl", // via c++ lite-server tcp adnl
     KAFKA = "kafka",
     REST = "rest",
+    JRPC = "jrpc",
 }
 
 enum FilterOrConversion {
