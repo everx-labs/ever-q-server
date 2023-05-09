@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.56.0] - 2023-05-09
+
+### New
+
+- Post external messages to JRPC endpoint
+
 ## [0.55.1] - 2023-04-03
 
 ### New
