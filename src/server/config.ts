@@ -124,6 +124,7 @@ export enum RequestsMode {
     TCP_ADNL = "tcpadnl", // via c++ lite-server tcp adnl
     KAFKA = "kafka",
     REST = "rest",
+    JRPC = "jrpc",
 }
 
 export enum FilterOrConversion {
@@ -155,7 +156,8 @@ export const configParams = {
             "Requests mode:\n" +
                 "`tcpadnl` – posts external messages to c++ liteserver\n" +
                 "`kafka` – writes external messages to kafka topic\n" +
-                "`rest` – posts external messages to REST endpoint",
+                "`rest` – posts external messages to REST endpoint\n" +
+                "`jrpc` – posts external messages to JRPC endpoint",
         ),
         server: ConfigParam.string(
             "requests-server",

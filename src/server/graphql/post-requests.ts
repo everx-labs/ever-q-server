@@ -26,9 +26,8 @@ async function postRequestsUsingRest(
     context: QRequestContext,
 ): Promise<void> {
     const config = context.services.config.requests
-    const url = `${ensureProtocol(config.server, "http")}/topics/${
-        config.topic
-    }`
+    const url = `${ensureProtocol(config.server, "http")}/topics/${config.topic
+        }`
     const request: RequestInitEx = {
         method: "POST",
         mode: "cors",
@@ -53,6 +52,42 @@ async function postRequestsUsingRest(
     }
 }
 
+let jrpcCnt = 1
+
+async function postRequestsUsingJrpc(
+    requests: Request[],
+    context: QRequestContext,
+): Promise<void> {
+    const config = context.services.config.requests
+    const url = ensureProtocol(config.server, "https")
+    // No throttling (no pauses between requests).
+    // If requests fail with a "too many requests" error, it's the user's fault,
+    // let him reduce the number of messages in the request
+    for (const request of requests) {
+        jrpcCnt = jrpcCnt < 1e9 ? jrpcCnt + 1 : 1
+
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: "sendMessage",
+                params: { message: request.body },
+                id: jrpcCnt, // Jrpc request requires parameter `id: number`
+            }),
+        })
+        if (response.status === 200) {
+            const answer = await response.json()
+            // JRPC responds with http code = 200 even if an error occurs
+            if (answer.error) {
+                throw new Error(`Post requests failed: ${answer.error.message}`)
+            }
+        } else {
+            // network errors go here
+            throw new Error(`Post requests failed: ${await response.text()}`)
+        }
+    }
+}
 async function postRequestsUsingKafka(
     requests: Request[],
     context: QRequestContext,
@@ -181,6 +216,8 @@ async function postRequests(
 
             if (config.requests.mode === RequestsMode.REST) {
                 await postRequestsUsingRest(requests, context)
+            } else if (config.requests.mode === RequestsMode.JRPC) {
+                await postRequestsUsingJrpc(requests, context)
             } else if (config.requests.mode === RequestsMode.KAFKA) {
                 await postRequestsUsingKafka(requests, context, span)
             } else if (config.requests.mode === RequestsMode.TCP_ADNL) {
