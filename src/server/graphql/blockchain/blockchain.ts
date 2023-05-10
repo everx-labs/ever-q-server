@@ -19,6 +19,7 @@ import {
     resolve_block_by_seq_no,
 } from "./fetchers"
 import { isDefined } from "./helpers"
+import { resolveAddress } from "../../address"
 
 // UUID is a hack to bypass QDataCombiner deduplication
 const MASTER_SEQ_NO_RANGE_QUERY = `
@@ -103,15 +104,15 @@ async function resolve_maser_seq_no_range(
     // 1.1. ...after reliable boundary
     //      it is ok to return start >= max_end
     //      (queries just will give empty results for a while)
-    // 1.2  ...greater than the last masterblock gen_utime
-    //      start == null and we need to coerce
-    // 1.3. time_start is less than the first masterblock gen_utime
+    // 1.2  ...greater than the last master block gen_utime
+    //      start == null, and we need to coerce
+    // 1.3. time_start is less than the first master block gen_utime
     //      start == first and if database hasn't all blocks,
     //      we can't properly determine start seq_no
     // 2. time_end ...
     // 2.1. ...is less than the first available block gen_utime
     //      end is defined and doesn't violate definition
-    // 2.2. ...is greater than min_shard_gen_utime of the last masterblock
+    // 2.2. ...is greater than min_shard_gen_utime of the last master block
     //      end is automatically null as expected
     // 2.3. ...results to end greater than reliable boundary
     //      it is better to null end to highlight that some data is not accessible yet
@@ -160,8 +161,9 @@ export const resolvers: Resolvers<QRequestContext> = {
         blockchain: () => ({}),
     },
     BlockchainQuery: {
-        account: async (_parent, args, _context) => {
-            const addressWithoutPrefix = args.address.split(":")[1]
+        account: (_parent, args, _context) => {
+            const resolvedAddress = resolveAddress(args.address)
+            const addressWithoutPrefix = resolvedAddress.split(":")[1]
             if (
                 addressWithoutPrefix === undefined ||
                 addressWithoutPrefix.length !== 64
@@ -169,12 +171,17 @@ export const resolvers: Resolvers<QRequestContext> = {
                 throw QError.invalidQuery("Invalid account address")
             }
             return {
-                address: args.address,
+                address: resolvedAddress,
             }
         },
         block: async (_parent, args, context, info) => {
             return context.trace("blockchain-block", async traceSpan => {
-                return resolve_block(args.hash, context, info, traceSpan)
+                return resolve_block(
+                    args.hash?.toLowerCase(),
+                    context,
+                    info,
+                    traceSpan,
+                )
             })
         },
         block_by_seq_no: async (_parent, args, context, info) => {
@@ -192,12 +199,22 @@ export const resolvers: Resolvers<QRequestContext> = {
         },
         transaction: async (_parent, args, context, info) => {
             return context.trace("blockchain-transaction", async traceSpan => {
-                return resolve_transaction(args.hash, context, info, traceSpan)
+                return resolve_transaction(
+                    args.hash?.toLowerCase(),
+                    context,
+                    info,
+                    traceSpan,
+                )
             })
         },
         message: async (_parent, args, context, info) => {
             return context.trace("blockchain-message", async traceSpan => {
-                return resolve_message(args.hash, context, info, traceSpan)
+                return resolve_message(
+                    args.hash?.toLowerCase(),
+                    context,
+                    info,
+                    traceSpan,
+                )
             })
         },
         master_seq_no_range: (_parent, args, context) => {
@@ -255,7 +272,12 @@ export const resolvers: Resolvers<QRequestContext> = {
     BlockchainAccountQuery: {
         info: async (parent, _args, context, info) => {
             return context.trace("blockchain-account-info", async traceSpan => {
-                return resolve_account(parent.address, context, info, traceSpan)
+                return resolve_account(
+                    resolveAddress(parent.address),
+                    context,
+                    info,
+                    traceSpan,
+                )
             })
         },
         transactions: async (parent, args, context, info) => {
@@ -263,7 +285,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                 "blockchain-account-transactions",
                 async traceSpan => {
                     return await resolve_account_transactions(
-                        parent.address,
+                        resolveAddress(parent.address),
                         args,
                         context,
                         info,

@@ -3,12 +3,15 @@ import {
     bigUInt1,
     bigUInt2,
     stringLowerFilter,
+    addressFilter,
     resolveBigUInt,
+    resolveAddressField,
     struct,
     array,
     join,
     joinArray,
     BigIntArgs,
+    AddressArgs,
     JoinArgs,
     enumName,
     intFlags,
@@ -330,6 +333,7 @@ const Config = struct({
     p4: scalar,
     p40: ConfigP40,
     p42: ConfigP42,
+    p44: StringArray,
     p6: ConfigP6,
     p7: ConfigP7Array,
     p8: ConfigP8,
@@ -452,7 +456,7 @@ const BlockAccountBlocksTransactionsArray = array(
     () => BlockAccountBlocksTransactions,
 )
 const BlockAccountBlocks = struct({
-    account_addr: stringLowerFilter,
+    account_addr: addressFilter,
     new_hash: stringLowerFilter,
     old_hash: stringLowerFilter,
     tr_count: scalar,
@@ -590,7 +594,7 @@ const ZerostateLibraries = struct({
 
 const Account = struct(
     {
-        id: scalar,
+        id: addressFilter,
         acc_type: scalar,
         acc_type_name: enumName("acc_type", {
             Uninit: 0,
@@ -627,10 +631,10 @@ const Account = struct(
 
 const Transaction = struct(
     {
-        id: scalar,
+        id: stringLowerFilter,
         aborted: scalar,
         account: join("account_addr", "id", "accounts", [], () => Account),
-        account_addr: stringLowerFilter,
+        account_addr: addressFilter,
         action: TransactionAction,
         balance_delta: bigUInt2,
         balance_delta_other: OtherCurrencyArray,
@@ -716,7 +720,7 @@ const Transaction = struct(
 
 const Message = struct(
     {
-        id: scalar,
+        id: stringLowerFilter,
         block: join("block_id", "id", "blocks", [], () => Block),
         block_id: stringLowerFilter,
         boc: scalar,
@@ -732,7 +736,7 @@ const Message = struct(
         created_lt: bigUInt1,
         data: scalar,
         data_hash: stringLowerFilter,
-        dst: stringLowerFilter,
+        dst: addressFilter,
         dst_account: join("dst", "id", "accounts", ["msg_type"], () => Account),
         dst_transaction: join(
             "id",
@@ -756,7 +760,7 @@ const Message = struct(
         }),
         proof: scalar,
         split_depth: scalar,
-        src: stringLowerFilter,
+        src: addressFilter,
         src_account: join("src", "id", "accounts", ["msg_type"], () => Account),
         src_transaction: join(
             "id",
@@ -790,7 +794,7 @@ const InMsgArray = array(() => InMsg)
 const OutMsgArray = array(() => OutMsg)
 const Block = struct(
     {
-        id: scalar,
+        id: stringLowerFilter,
         account_blocks: BlockAccountBlocksArray,
         after_merge: scalar,
         after_split: scalar,
@@ -852,7 +856,7 @@ const Block = struct(
 const BlockSignaturesSignaturesArray = array(() => BlockSignaturesSignatures)
 const BlockSignatures = struct(
     {
-        id: scalar,
+        id: stringLowerFilter,
         block: join("id", "id", "blocks", [], () => Block),
         catchain_seqno: scalar,
         gen_utime: scalar,
@@ -872,7 +876,7 @@ const ZerostateAccountsArray = array(() => ZerostateAccounts)
 const ZerostateLibrariesArray = array(() => ZerostateLibraries)
 const Zerostate = struct(
     {
-        id: scalar,
+        id: stringLowerFilter,
         accounts: ZerostateAccountsArray,
         boc: scalar,
         file_hash: stringLowerFilter,
@@ -1235,6 +1239,11 @@ function createResolvers(data: QBlockchainData) {
                 return resolveBigUInt(2, parent.total_fees, args)
             },
         },
+        BlockAccountBlocks: {
+            account_addr(parent: { account_addr: string }, args: AddressArgs) {
+                return resolveAddressField(parent.account_addr, args)
+            },
+        },
         BlockMasterShardHashesDescr: {
             end_lt(parent: { end_lt: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.end_lt, args)
@@ -1315,9 +1324,6 @@ function createResolvers(data: QBlockchainData) {
             }),
         },
         Account: {
-            id(parent: { _key: string }) {
-                return parent._key
-            },
             balance(parent: { balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance, args)
             },
@@ -1335,6 +1341,9 @@ function createResolvers(data: QBlockchainData) {
             },
             public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args)
+            },
+            id(parent: { _key: string }, args: AddressArgs) {
+                return resolveAddressField(parent._key, args)
             },
             acc_type_name: createEnumNameResolver("acc_type", {
                 Uninit: 0,
@@ -1364,6 +1373,9 @@ function createResolvers(data: QBlockchainData) {
             },
             total_fees(parent: { total_fees: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.total_fees, args)
+            },
+            account_addr(parent: { account_addr: string }, args: AddressArgs) {
+                return resolveAddressField(parent.account_addr, args)
             },
             now_string(parent: { now: number }) {
                 return unixSecondsToString(parent.now)
@@ -1416,6 +1428,12 @@ function createResolvers(data: QBlockchainData) {
             },
             value(parent: { value: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.value, args)
+            },
+            dst(parent: { dst: string }, args: AddressArgs) {
+                return resolveAddressField(parent.dst, args)
+            },
+            src(parent: { src: string }, args: AddressArgs) {
+                return resolveAddressField(parent.src, args)
             },
             created_at_string(parent: { created_at: number }) {
                 return unixSecondsToString(parent.created_at)
@@ -2806,6 +2824,10 @@ scalarFields.set("blocks.master.config.p42.payouts.payout_percent", {
 scalarFields.set("blocks.master.config.p42.threshold", {
     type: "uint1024",
     path: "doc.master.config.p42.threshold",
+})
+scalarFields.set("blocks.master.config.p44", {
+    type: "string",
+    path: "doc.master.config.p44[*]",
 })
 scalarFields.set("blocks.master.config.p6.mint_add_price", {
     type: "string",
@@ -4381,6 +4403,10 @@ scalarFields.set("zerostates.master.config.p42.payouts.payout_percent", {
 scalarFields.set("zerostates.master.config.p42.threshold", {
     type: "uint1024",
     path: "doc.master.config.p42.threshold",
+})
+scalarFields.set("zerostates.master.config.p44", {
+    type: "string",
+    path: "doc.master.config.p44[*]",
 })
 scalarFields.set("zerostates.master.config.p6.mint_add_price", {
     type: "string",

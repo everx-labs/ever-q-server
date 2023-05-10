@@ -17,7 +17,7 @@ type BlockchainAccount implements Node {
     For id without prefix see "address".
     """
     id: ID!
-    address: String
+    address(format: AddressFormat): String
     """
     Returns the current status of the account.
 

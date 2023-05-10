@@ -45,6 +45,14 @@ export async function resolve_account(
         },
     )) as BlockchainAccount[]
 
+    if (queryResult.length === 0) {
+        queryResult.push({
+            _key: `${address}`,
+            acc_type: 3,
+            balance: "000",
+            workchain_id: parseInt(address.split(":")[0]) || 0,
+        } as BlockchainAccount)
+    }
     await config.accounts.fetchJoins(
         queryResult,
         selectionSet,

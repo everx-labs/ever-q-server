@@ -11,7 +11,7 @@ import type {
     SchemaMember,
     SchemaType,
 } from "./schema"
-import { ToStringFormatter } from "./schema"
+import { SchemaSubType, ToStringFormatter } from "./schema"
 
 const { ref, arrayOf } = Def
 
@@ -188,6 +188,7 @@ export type DbField = {
     flagsDef?: IntFlagsDef
     formatter?: ToStringFormatter
     lowerFilter?: boolean
+    subType?: SchemaSubType
     doc: string
 }
 
@@ -209,8 +210,17 @@ export const scalarTypes = {
     string: scalarType("String"),
 }
 
-export function isBigInt(type: DbType): boolean {
-    return type === scalarTypes.uint1024 || type === scalarTypes.uint64
+export function isBigInt(field: DbField): boolean {
+    return (
+        field.type === scalarTypes.uint1024 || field.type === scalarTypes.uint64
+    )
+}
+
+export function isAddress(field: DbField): boolean {
+    return (
+        field.type === scalarTypes.string &&
+        (field.subType ?? SchemaSubType.NONE) === SchemaSubType.ADDRESS
+    )
 }
 
 export function unresolvedType(name: string): DbType {
@@ -339,6 +349,7 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             if (ex && ex.lowerFilter) {
                 field.lowerFilter = true
             }
+            field.subType = schemaType.string.subType
         } else {
             field.type = scalarTypes.string
             console.log("Invalid field type: ", JSON.stringify(schemaType))
@@ -372,11 +383,12 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             doc: getDocMD(schemaType.doc),
         }
 
-        if (type.collection) {
+        if (type.collection && !struct.find(x => x.name === "id")) {
             type.fields.push({
                 name: "id",
                 arrayDepth: 0,
                 type: scalarTypes.string,
+                lowerFilter: true,
                 doc: "",
             })
         }

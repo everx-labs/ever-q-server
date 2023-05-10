@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Def, TypeDef } from "./schema-def"
+import { Def, ExplicitDef, TypeDef } from "./schema-def"
 
 import {
     grams,
@@ -37,8 +37,17 @@ import {
 } from "./db-schema-types"
 
 import { docs } from "./db.shema.docs"
+import { SchemaDoc, SchemaSubType } from "./schema"
 
 const { string, bool, ref, arrayOf } = Def
+
+const address = (doc?: SchemaDoc): ExplicitDef => {
+    return {
+        _string: { subType: SchemaSubType.ADDRESS },
+        _: { lowerFilter: true },
+        ...(doc ? { _doc: doc } : {}),
+    }
+}
 
 const capabilities = u64flags("Capabilities", {
     CapNone: 0,
@@ -200,6 +209,7 @@ const AccountBase: TypeDef = {
 
 const Account: TypeDef = {
     ...AccountBase,
+    id: address(),
     _doc: docs.account._doc,
     _: { collection: "accounts" },
 }
@@ -222,8 +232,8 @@ const Message: TypeDef = {
     data_hash: stringWithLowerFilter(docs.message.data_hash),
     library: string(docs.message.library),
     library_hash: stringWithLowerFilter(docs.message.library_hash),
-    src: stringWithLowerFilter(docs.message.src),
-    dst: stringWithLowerFilter(docs.message.dst),
+    src: address(docs.message.src),
+    dst: address(docs.message.dst),
     src_workchain_id: i32(docs.message.src_workchain_id),
     dst_workchain_id: i32(docs.message.dst_workchain_id),
     created_lt: u64(docs.message.created_lt),
@@ -264,7 +274,7 @@ const Transaction: TypeDef = {
     status: required(transactionProcessingStatus(docs.transaction.status)),
     block_id: stringWithLowerFilter(docs.transaction.block_id),
     block: join("Block", "block_id", "id"),
-    account_addr: stringWithLowerFilter(docs.transaction.account_addr),
+    account_addr: address(docs.transaction.account_addr),
     account: join("Account", "account_addr", "id"),
     workchain_id: i32(docs.transaction.workchain_id),
     lt: u64(docs.transaction.lt),
@@ -721,6 +731,7 @@ const Config: TypeDef = {
             payout_percent: u8(),
         }),
     },
+    p44: arrayOf(string(), docs.block.master.config.p44),
 }
 
 const config = (doc?: string) => ref({ Config }, doc)
@@ -796,9 +807,7 @@ const Block: TypeDef = {
     created_by: string(docs.block.created_by),
     out_msg_descr: arrayOf(outMsg(docs.block.out_msg_descr)),
     account_blocks: arrayOf({
-        account_addr: stringWithLowerFilter(
-            docs.block.account_blocks.account_addr,
-        ),
+        account_addr: address(docs.block.account_blocks.account_addr),
         transactions: arrayOf(
             {
                 lt: u64(), // TODO: doc
