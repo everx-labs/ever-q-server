@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.57.0] - 2023-05-05
+## [0.57.0] - 2023-05-10
 
 ### New
 
@@ -21,6 +21,12 @@ All notable changes to this project will be documented in this file.
   returns account of type `NonExist` if an account is missing in current shard state.
 
 - Support new config parameter 44 (black list)
+
+## [0.56.0] - 2023-05-09
+
+### New
+
+- Post external messages to JRPC endpoint
 
 ## [0.55.1] - 2023-04-03
 
