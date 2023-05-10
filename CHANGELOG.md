@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.56.0] - 2023-05-05
+## [0.57.0] - 2023-05-05
 
 ### New
 
@@ -10,8 +10,7 @@ All notable changes to this project will be documented in this file.
   `blockchain.block(hash)`, `blockchain.transaction(hash)`, `blockchain.message(hash)`
 
 - Address filtering in args (accepts address in any format):
-  `blockchain.account(address)`, `blockchain.transaction(hash)`, `blockchain.message(hash)`,
-  `messages.src`, `messages.dst`, `transactions.account_addr`
+  `blockchain.account(address)`,  `messages.src`, `messages.dst`, `transactions.account_addr`, `accounts.id`
 
 - Address formatting args in fields:
   `blockchain.account.info.address`, `blockchain.transaction.account_addr`,
@@ -21,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - `accounts(filter:{id:{eq:""}})`, `accounts(filter:{id:{in:[""]}})`, `blockchain.account(address:"")`
   returns account of type `NonExist` if an account is missing in current shard state.
 
-- Support new config parameter 44
+- Support new config parameter 44 (black list)
 
 ## [0.55.1] - 2023-04-03
 
