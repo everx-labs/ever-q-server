@@ -17,6 +17,7 @@ import {
 
 import csv from "csv/sync"
 import fs from "fs"
+import { parseOrderBy } from "./parsers"
 
 main()
 
@@ -183,36 +184,4 @@ function parseValue(node: ValueNode): unknown {
         }
     }
     return undefined
-}
-
-function parseOrderBy(arg?: ArgumentNode): OrderBy[] {
-    if (!arg) {
-        return []
-    }
-    const fields: OrderBy[] = []
-    if (arg.value.kind === "ListValue") {
-        for (const item of arg.value.values) {
-            if (item.kind === "ObjectValue") {
-                parseOrderByField(item, fields)
-            }
-        }
-    } else if (arg.value.kind === "ObjectValue") {
-        parseOrderByField(arg.value, fields)
-    }
-    return fields
-}
-
-function parseOrderByField(field: ObjectValueNode, fields: OrderBy[]) {
-    const pathNode = field.fields.find(x => x.name.value === "path")
-    if (!pathNode || pathNode.value.kind !== "StringValue") {
-        return
-    }
-    const directionNode = field.fields.find(x => x.name.value === "direction")
-    const direction =
-        directionNode &&
-        directionNode.value.kind === "EnumValue" &&
-        directionNode.value.value === "DESC"
-            ? "DESC"
-            : "ASC"
-    fields.push({ path: pathNode.value.value, direction })
 }

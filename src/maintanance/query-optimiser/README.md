@@ -71,7 +71,7 @@ where
     and position(request, 'timeout') == 0
     and position(request, 'aggregate') == 0
     and ms_med < 200
-    and cnt > 1000
+    and cnt > 10
 order by cnt desc;
 ```
 
@@ -80,3 +80,14 @@ Export results to `./secret/req_stat.csv`
 Run this script.
 
 Place output to the `src/filter/slow-query-exceptions.ts`.
+
+## Field Usage Analysis
+
+Calculate fields usage in filters and selection sets.
+
+First, create `./secret/req_stat.csv` as described in prev section.
+
+Second, run `field-usage` script.
+
+It will produce `./secret/*_field_usage.csv` files.
+
