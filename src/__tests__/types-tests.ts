@@ -125,8 +125,13 @@ test("Address filters", async () => {
             addrHex,
             addressStringFormatBase64(false, false, false),
         )
-        const docsBase64 = await query(collection, field, addrBase64, "BASE64")
-        const docsHex = await query(collection, field, addrHex, "HEX")
+        const docsBase64 = await query(
+            collection,
+            field,
+            addrBase64,
+            "BASE64_NOURL_NOTEST_NOBOUNCE",
+        )
+        const docsHex = await query(collection, field, addrHex, "RAW")
         expect(docsHex.length).toEqual(docsBase64.length)
         for (let i = 0; i < docsHex.length; i += 1) {
             expect(`${docsBase64[i][field]}`).toEqual(addrBase64)
@@ -136,6 +141,7 @@ test("Address filters", async () => {
     await testField("messages", "src")
     await testField("messages", "dst")
     await testField("transactions", "account_addr")
+    await testField("accounts", "id")
 })
 
 test("Non Exists acc_type for missing accounts", async () => {

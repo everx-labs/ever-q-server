@@ -333,6 +333,7 @@ const Config = struct({
     p4: scalar,
     p40: ConfigP40,
     p42: ConfigP42,
+    p44: StringArray,
     p6: ConfigP6,
     p7: ConfigP7Array,
     p8: ConfigP8,
@@ -593,7 +594,7 @@ const ZerostateLibraries = struct({
 
 const Account = struct(
     {
-        id: stringLowerFilter,
+        id: addressFilter,
         acc_type: scalar,
         acc_type_name: enumName("acc_type", {
             Uninit: 0,
@@ -1323,9 +1324,6 @@ function createResolvers(data: QBlockchainData) {
             }),
         },
         Account: {
-            id(parent: { _key: string }) {
-                return parent._key
-            },
             balance(parent: { balance: string }, args: BigIntArgs) {
                 return resolveBigUInt(2, parent.balance, args)
             },
@@ -1343,6 +1341,9 @@ function createResolvers(data: QBlockchainData) {
             },
             public_cells(parent: { public_cells: string }, args: BigIntArgs) {
                 return resolveBigUInt(1, parent.public_cells, args)
+            },
+            id(parent: { _key: string }, args: AddressArgs) {
+                return resolveAddressField(parent._key, args)
             },
             acc_type_name: createEnumNameResolver("acc_type", {
                 Uninit: 0,
@@ -2823,6 +2824,10 @@ scalarFields.set("blocks.master.config.p42.payouts.payout_percent", {
 scalarFields.set("blocks.master.config.p42.threshold", {
     type: "uint1024",
     path: "doc.master.config.p42.threshold",
+})
+scalarFields.set("blocks.master.config.p44", {
+    type: "string",
+    path: "doc.master.config.p44[*]",
 })
 scalarFields.set("blocks.master.config.p6.mint_add_price", {
     type: "string",
@@ -4398,6 +4403,10 @@ scalarFields.set("zerostates.master.config.p42.payouts.payout_percent", {
 scalarFields.set("zerostates.master.config.p42.threshold", {
     type: "uint1024",
     path: "doc.master.config.p42.threshold",
+})
+scalarFields.set("zerostates.master.config.p44", {
+    type: "string",
+    path: "doc.master.config.p44[*]",
 })
 scalarFields.set("zerostates.master.config.p6.mint_add_price", {
     type: "string",

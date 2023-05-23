@@ -19,7 +19,6 @@ import type { QDoc, QIndexInfo, Scalar } from "../data/data-provider"
 import { FieldNode, SelectionNode, SelectionSetNode } from "graphql"
 import { resolveAddress } from "../address"
 import {
-    addressStringFormatAccountId,
     addressStringFormatBase64,
     addressStringFormatHex,
 } from "@eversdk/core"
@@ -633,10 +632,16 @@ function invertedHex(hex: string): string {
 
 export type BigIntArgs = { format?: "HEX" | "DEC" }
 export type AddressArgs = {
-    format?: "HEX" | "ACCOUNT_ID" | "BASE64"
-    bounceable?: boolean
-    testOnly?: boolean
-    urlSafe?: boolean
+    format?:
+        | "RAW"
+        | "BASE64_URL_TEST_BOUNCE"
+        | "BASE64_NOURL_TEST_BOUNCE"
+        | "BASE64_URL_TEST_NOBOUNCE"
+        | "BASE64_URL_NOTEST_BOUNCE"
+        | "BASE64_NOURL_TEST_NOBOUNCE"
+        | "BASE64_URL_NOTEST_NOBOUNCE"
+        | "BASE64_NOURL_NOTEST_BOUNCE"
+        | "BASE64_NOURL_NOTEST_NOBOUNCE"
 }
 export type JoinArgs = { when?: CollectionFilter; timeout?: number }
 
@@ -695,16 +700,30 @@ export function resolveAddressField(
         return value
     }
     let format
-    switch (args?.format ?? "HEX") {
-        case "ACCOUNT_ID":
-            format = addressStringFormatAccountId()
+    switch (args?.format ?? "RAW") {
+        case "BASE64_URL_TEST_BOUNCE":
+            format = addressStringFormatBase64(true, true, true)
             break
-        case "BASE64":
-            format = addressStringFormatBase64(
-                args?.urlSafe ?? false,
-                args?.testOnly ?? false,
-                args?.bounceable ?? false,
-            )
+        case "BASE64_NOURL_TEST_BOUNCE":
+            format = addressStringFormatBase64(false, true, true)
+            break
+        case "BASE64_URL_NOTEST_BOUNCE":
+            format = addressStringFormatBase64(true, false, true)
+            break
+        case "BASE64_URL_TEST_NOBOUNCE":
+            format = addressStringFormatBase64(true, true, false)
+            break
+        case "BASE64_NOURL_NOTEST_BOUNCE":
+            format = addressStringFormatBase64(false, false, true)
+            break
+        case "BASE64_NOURL_TEST_NOBOUNCE":
+            format = addressStringFormatBase64(false, true, false)
+            break
+        case "BASE64_URL_NOTEST_NOBOUNCE":
+            format = addressStringFormatBase64(true, false, false)
+            break
+        case "BASE64_NOURL_NOTEST_NOBOUNCE":
+            format = addressStringFormatBase64(false, false, false)
             break
         default:
             format = addressStringFormatHex()

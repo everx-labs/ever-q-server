@@ -209,6 +209,7 @@ const AccountBase: TypeDef = {
 
 const Account: TypeDef = {
     ...AccountBase,
+    id: address(),
     _doc: docs.account._doc,
     _: { collection: "accounts" },
 }
@@ -730,6 +731,7 @@ const Config: TypeDef = {
             payout_percent: u8(),
         }),
     },
+    p44: arrayOf(string(), docs.block.master.config.p44),
 }
 
 const config = (doc?: string) => ref({ Config }, doc)

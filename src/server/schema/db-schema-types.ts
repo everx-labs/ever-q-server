@@ -383,7 +383,7 @@ export function parseDbSchema(schemaDef: TypeDef): DbSchema {
             doc: getDocMD(schemaType.doc),
         }
 
-        if (type.collection) {
+        if (type.collection && !struct.find(x => x.name === "id")) {
             type.fields.push({
                 name: "id",
                 arrayDepth: 0,
