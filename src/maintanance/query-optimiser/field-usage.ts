@@ -17,6 +17,17 @@ enum Api {
     Blockchain,
 }
 
+type RequestStat = {
+    request: string
+    ms_med: number
+    cnt: number
+    ms_sum: number
+    very_hot: number
+    hot: number
+    cold: number
+    accounts: string[]
+}
+
 type FieldUsage = {
     filter: number
     filterOps: Record<string, number>
@@ -24,13 +35,16 @@ type FieldUsage = {
     selection: number
     apiCollection: number
     apiBlockchain: number
+    veryHot: number
+    hot: number
+    cold: number
 }
 
 class FieldUsageCollector {
     collections: Record<string, Record<string, FieldUsage>> = {}
 
-    parseQuery(query: string, count: number) {
-        const parser = new Parser(query)
+    parseQuery(stat: RequestStat) {
+        const parser = new Parser(stat.request)
         const doc = parser.parseDocument()
         const op = doc.definitions[0]
         if (op.kind !== "OperationDefinition" || op.operation !== "query") {
@@ -45,10 +59,10 @@ class FieldUsageCollector {
                     rootField,
                     rootField.name.value,
                     Api.Collection,
-                    count,
+                    stat,
                 )
             } else if (rootField.name.value === "blockchain") {
-                this.parseBlockchain(rootField, count)
+                this.parseBlockchain(rootField, stat)
             }
         }
     }
@@ -57,32 +71,32 @@ class FieldUsageCollector {
         field: FieldNode,
         collection: string,
         api: Api,
-        count: number,
+        stat: RequestStat,
     ) {
         this.parseFilter(
             field.arguments?.find(x => x.name.value === "filter"),
             collection,
-            count,
+            stat,
         )
         const orderBy = parseOrderBy(
             field.arguments?.find(x => x.name.value === "orderBy"),
         )
         for (const item of orderBy) {
-            this.endureField(collection, item.path).orderBy += count
+            this.endureField(collection, item.path).orderBy += stat.cnt
         }
         if (field.selectionSet) {
-            this.parseSelection(field.selectionSet, collection, api, "", count)
+            this.parseSelection(field.selectionSet, collection, api, "", stat)
         }
     }
 
-    parseBlockchain(root: FieldNode, count: number) {
+    parseBlockchain(root: FieldNode, stat: RequestStat) {
         for (const field of root.selectionSet?.selections ?? []) {
             if (field.kind !== "Field") {
                 continue
             }
             switch (field.name.value) {
                 case "account":
-                    this.parseBlockchainAccount(field, count)
+                    this.parseBlockchainAccount(field, stat)
                     break
                 case "key_blocks":
                 case "blocks":
@@ -90,19 +104,19 @@ class FieldUsageCollector {
                         skipPagination(field),
                         "blocks",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
                 case "block":
                 case "block_by_seq_no":
-                    this.parseCollection(field, "blocks", Api.Blockchain, count)
+                    this.parseCollection(field, "blocks", Api.Blockchain, stat)
                     break
                 case "message":
                     this.parseCollection(
                         field,
                         "messages",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
                 case "transactions":
@@ -110,7 +124,7 @@ class FieldUsageCollector {
                         skipPagination(field),
                         "transactions",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
                 case "transaction":
@@ -118,14 +132,14 @@ class FieldUsageCollector {
                         field,
                         "transactions",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
             }
         }
     }
 
-    parseBlockchainAccount(account: FieldNode, count: number) {
+    parseBlockchainAccount(account: FieldNode, stat: RequestStat) {
         for (const field of account.selectionSet?.selections ?? []) {
             if (field.kind !== "Field") {
                 continue
@@ -136,7 +150,7 @@ class FieldUsageCollector {
                         skipPagination(field),
                         "accounts",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
                 case "messages":
@@ -144,7 +158,7 @@ class FieldUsageCollector {
                         skipPagination(field),
                         "messages",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
                 case "transactions":
@@ -152,7 +166,7 @@ class FieldUsageCollector {
                         skipPagination(field),
                         "transactions",
                         Api.Blockchain,
-                        count,
+                        stat,
                     )
                     break
             }
@@ -162,19 +176,19 @@ class FieldUsageCollector {
     parseFilter(
         arg: ArgumentNode | undefined,
         collection: string,
-        count: number,
+        stat: RequestStat,
     ) {
         if (!arg || arg.value.kind !== "ObjectValue") {
             return
         }
-        this.parseFilterStruct(arg.value, collection, "", count)
+        this.parseFilterStruct(arg.value, collection, "", stat)
     }
 
     parseFilterStruct(
         node: ObjectValueNode,
         collection: string,
         path: string,
-        count: number,
+        stat: RequestStat,
     ) {
         for (const orOperand of splitOr(node.fields)) {
             for (const field of orOperand) {
@@ -182,7 +196,7 @@ class FieldUsageCollector {
                     field.value,
                     collection,
                     addPath(path, field.name.value),
-                    count,
+                    stat,
                 )
             }
         }
@@ -192,7 +206,7 @@ class FieldUsageCollector {
         node: ValueNode,
         collection: string,
         path: string,
-        count: number,
+        stat: RequestStat,
     ) {
         if (node.kind === "ObjectValue") {
             const usedScalarOps = new Set<string>()
@@ -207,10 +221,10 @@ class FieldUsageCollector {
             if (usedScalarOps.size > 0) {
                 const field = this.endureField(collection, path)
                 for (const op of usedScalarOps) {
-                    incFilterOp(field, op, count)
+                    incFilterOp(field, op, stat.cnt)
                 }
             } else {
-                this.parseFilterStruct(node, collection, path, count)
+                this.parseFilterStruct(node, collection, path, stat)
             }
         }
     }
@@ -220,7 +234,7 @@ class FieldUsageCollector {
         collection: string,
         api: Api,
         path: string,
-        count: number,
+        stat: RequestStat,
     ) {
         for (const field of selection.selections) {
             if (field.kind === "Field") {
@@ -273,7 +287,7 @@ class FieldUsageCollector {
                             ["messages", "block", "block_id", "blocks"],
                         ],
                         api,
-                        count,
+                        stat,
                     )
                 ) {
                     continue
@@ -287,10 +301,10 @@ class FieldUsageCollector {
                         collection,
                         api,
                         fieldPath,
-                        count,
+                        stat,
                     )
                 } else if (!field.name.value.startsWith("__")) {
-                    this.parseSelectionField(collection, fieldPath, api, count)
+                    this.parseSelectionField(collection, fieldPath, api, stat)
                 }
             }
         }
@@ -302,7 +316,7 @@ class FieldUsageCollector {
         fieldPath: string,
         joins: string[][],
         api: Api,
-        count: number,
+        stat: RequestStat,
     ): boolean {
         for (const [
             testCollection,
@@ -311,14 +325,14 @@ class FieldUsageCollector {
             joinCollection,
         ] of joins) {
             if (fieldCollection === testCollection && fieldPath === testPath) {
-                this.parseSelectionField(fieldCollection, joinField, api, count)
+                this.parseSelectionField(fieldCollection, joinField, api, stat)
                 if (field.selectionSet) {
                     this.parseSelection(
                         field.selectionSet,
                         joinCollection,
                         api,
                         "",
-                        count,
+                        stat,
                     )
                 }
                 return true
@@ -331,14 +345,17 @@ class FieldUsageCollector {
         collection: string,
         path: string,
         api: Api,
-        count: number,
+        stat: RequestStat,
     ) {
         const usage = this.endureField(collection, path)
-        usage.selection += count
+        usage.selection += stat.cnt
+        usage.veryHot += stat.very_hot
+        usage.hot += stat.hot
+        usage.cold += stat.cold
         if (api === Api.Collection) {
-            usage.apiCollection += count
+            usage.apiCollection += stat.cnt
         } else {
-            usage.apiBlockchain += count
+            usage.apiBlockchain += stat.cnt
         }
     }
 
@@ -357,6 +374,9 @@ class FieldUsageCollector {
                 selection: 0,
                 apiBlockchain: 0,
                 apiCollection: 0,
+                veryHot: 0,
+                hot: 0,
+                cold: 0,
             }
             fieldsCollection[path] = field
         }
@@ -412,22 +432,19 @@ function findNested(
 }
 
 function main() {
-    const stats: {
-        request: string
-        ms_med: number
-        cnt: number
-        ms_sum: number
-        accounts: string[]
-    }[] = csv.parse(fs.readFileSync(".secret/req_stat.csv", "utf-8"), {
-        columns: true,
-        cast: true,
-    })
+    const stats: RequestStat[] = csv.parse(
+        fs.readFileSync(".secret/req_stat.csv", "utf-8"),
+        {
+            columns: true,
+            cast: true,
+        },
+    )
     const fields = new FieldUsageCollector()
     for (const stat of stats) {
         if (stat.cnt > 10) {
             try {
                 if (stat.request !== "") {
-                    fields.parseQuery(stat.request, stat.cnt)
+                    fields.parseQuery(stat)
                 }
             } catch (err) {
                 console.log(`>>> invalid request [${stat.request}]: ${err}`)
@@ -447,6 +464,9 @@ function main() {
                 selection: field.selection,
                 apiBlockchain: field.apiBlockchain,
                 apiCollection: field.apiCollection,
+                veryHot: field.veryHot,
+                hot: field.hot,
+                cold: field.cold,
             })
         }
         fs.writeFileSync(
