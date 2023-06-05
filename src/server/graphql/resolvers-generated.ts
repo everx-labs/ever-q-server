@@ -739,6 +739,7 @@ const Message = struct(
         data_hash: stringLowerFilter,
         dst: addressFilter,
         dst_account: join("dst", "id", "accounts", ["msg_type"], () => Account),
+        dst_chain_order: stringLowerFilter,
         dst_transaction: join(
             "id",
             "in_msg",
@@ -764,6 +765,7 @@ const Message = struct(
         split_depth: scalar,
         src: addressFilter,
         src_account: join("src", "id", "accounts", ["msg_type"], () => Account),
+        src_chain_order: stringLowerFilter,
         src_transaction: join(
             "id",
             "out_msgs[*]",
@@ -1889,6 +1891,10 @@ scalarFields.set("messages.data_hash", {
     path: "doc.data_hash",
 })
 scalarFields.set("messages.dst", { type: "string", path: "doc.dst" })
+scalarFields.set("messages.dst_chain_order", {
+    type: "string",
+    path: "doc.dst_chain_order",
+})
 scalarFields.set("messages.dst_workchain_id", {
     type: "number",
     path: "doc.dst_workchain_id",
@@ -1918,6 +1924,10 @@ scalarFields.set("messages.split_depth", {
     path: "doc.split_depth",
 })
 scalarFields.set("messages.src", { type: "string", path: "doc.src" })
+scalarFields.set("messages.src_chain_order", {
+    type: "string",
+    path: "doc.src_chain_order",
+})
 scalarFields.set("messages.src_workchain_id", {
     type: "number",
     path: "doc.src_workchain_id",

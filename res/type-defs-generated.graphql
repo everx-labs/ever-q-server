@@ -1278,6 +1278,8 @@ type Message {
 	"Returns destination address string"
 	dst(format: AddressFormat): String
 	dst_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	dst_chain_order: String
 	dst_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: Int
@@ -1309,6 +1311,8 @@ type Message {
 	"Returns source address string"
 	src(format: AddressFormat): String
 	src_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	src_chain_order: String
 	src_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the source address (src field)"
 	src_workchain_id: Int
@@ -2798,6 +2802,8 @@ input MessageFilter {
 	"Returns destination address string"
 	dst: StringFilter
 	dst_account: AccountFilter
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	dst_chain_order: StringFilter
 	dst_transaction: TransactionFilter
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: IntFilter
@@ -2829,6 +2835,8 @@ input MessageFilter {
 	"Returns source address string"
 	src: StringFilter
 	src_account: AccountFilter
+	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
+	src_chain_order: StringFilter
 	src_transaction: TransactionFilter
 	"Workchain id of the source address (src field)"
 	src_workchain_id: IntFilter

@@ -266,6 +266,8 @@ const Message: TypeDef = {
     dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
     chain_order: stringWithLowerFilter(docs.message.chain_order),
     master_seq_no: u32(docs.message.master_seq_no),
+    src_chain_order: stringWithLowerFilter(docs.message.chain_order),
+    dst_chain_order: stringWithLowerFilter(docs.message.chain_order),
 }
 
 const Transaction: TypeDef = {

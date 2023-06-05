@@ -1,4 +1,7 @@
-import { unixSecondsToString } from "../server/filter/filters"
+import {
+    masterSeqNoFromChainOrder,
+    unixSecondsToString,
+} from "../server/filter/filters"
 import { packageJson } from "../server/utils"
 import { testServerQuery } from "./init-tests"
 import { resolveAddress } from "../server/address"
@@ -192,4 +195,70 @@ test("Non Exists acc_type for missing accounts", async () => {
             messages: { edges: [] },
         },
     })
+})
+
+test("Collections master_seq_no", async () => {
+    const extInMsgs = (
+        await testServerQuery<Record<string, Record<string, unknown>[]>>(
+            `query { messages(filter:{msg_type:{eq:1}})
+            { master_seq_no chain_order src_chain_order dst_chain_order } }`,
+        )
+    )["messages"]
+
+    for (let i = 0; i < extInMsgs.length; i += 1) {
+        expect(extInMsgs[i]["chain_order"]).not.toBeNull()
+        expect(extInMsgs[i]["chain_order"]).toEqual(
+            extInMsgs[i]["dst_chain_order"],
+        )
+        expect(extInMsgs[i]["master_seq_no"]).not.toBeNull()
+        expect(extInMsgs[i]["master_seq_no"]).toEqual(
+            masterSeqNoFromChainOrder(String(extInMsgs[i]["dst_chain_order"])),
+        )
+    }
+
+    const otherMsgs = (
+        await testServerQuery<Record<string, Record<string, unknown>[]>>(
+            `query { messages(filter:{src_chain_order:{ne:null}})
+            { master_seq_no chain_order src_chain_order dst_chain_order } }`,
+        )
+    )["messages"]
+
+    for (let i = 0; i < otherMsgs.length; i += 1) {
+        expect(otherMsgs[i]["chain_order"]).not.toBeNull()
+        expect(otherMsgs[i]["chain_order"]).toEqual(
+            otherMsgs[i]["src_chain_order"],
+        )
+        expect(otherMsgs[i]["master_seq_no"]).not.toBeNull()
+        expect(otherMsgs[i]["master_seq_no"]).toEqual(
+            masterSeqNoFromChainOrder(String(otherMsgs[i]["src_chain_order"])),
+        )
+    }
+
+    const blocks = (
+        await testServerQuery<Record<string, Record<string, unknown>[]>>(
+            `query { blocks
+            { master_seq_no chain_order} }`,
+        )
+    )["blocks"]
+
+    for (let i = 0; i < blocks.length; i += 1) {
+        expect(blocks[i]["master_seq_no"]).not.toBeNull()
+        expect(blocks[i]["master_seq_no"]).toEqual(
+            masterSeqNoFromChainOrder(String(blocks[i]["chain_order"])),
+        )
+    }
+
+    const transactions = (
+        await testServerQuery<Record<string, Record<string, unknown>[]>>(
+            `query { transactions
+            { master_seq_no chain_order} }`,
+        )
+    )["transactions"]
+
+    for (let i = 0; i < transactions.length; i += 1) {
+        expect(transactions[i]["master_seq_no"]).not.toBeNull()
+        expect(transactions[i]["master_seq_no"]).toEqual(
+            masterSeqNoFromChainOrder(String(transactions[i]["chain_order"])),
+        )
+    }
 })
