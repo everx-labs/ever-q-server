@@ -1173,6 +1173,7 @@ type Transaction {
 	installed: Boolean
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt(format: BigIntFormat): String
+	"seq_no of masterchain block which commited shard block containing the transaction"
 	master_seq_no: Float
 	"Merkle update field"
 	new_hash: String
@@ -1291,6 +1292,7 @@ type Message {
 	library: String
 	"`library` field root hash."
 	library_hash: String
+	"seq_no of masterchain block which commited shard block containing the message"
 	master_seq_no: Float
 	"""
 	Returns the type of message.
@@ -1365,6 +1367,7 @@ type Block {
 	key_block: Boolean
 	master: BlockMaster
 	master_ref: ExtBlkRef
+	"seq_no of masterchain block which commited the block"
 	master_seq_no: Float
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: Float
@@ -2669,6 +2672,7 @@ input TransactionFilter {
 	installed: BooleanFilter
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: StringFilter
+	"seq_no of masterchain block which commited shard block containing the transaction"
 	master_seq_no: FloatFilter
 	"Merkle update field"
 	new_hash: StringFilter
@@ -2808,6 +2812,7 @@ input MessageFilter {
 	library: StringFilter
 	"`library` field root hash."
 	library_hash: StringFilter
+	"seq_no of masterchain block which commited shard block containing the message"
 	master_seq_no: FloatFilter
 	"""
 	Returns the type of message.
@@ -2908,6 +2913,7 @@ input BlockFilter {
 	key_block: BooleanFilter
 	master: BlockMasterFilter
 	master_ref: ExtBlkRefFilter
+	"seq_no of masterchain block which commited the block"
 	master_seq_no: FloatFilter
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: FloatFilter

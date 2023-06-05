@@ -603,6 +603,7 @@ export type BlockchainBlock = Node & {
     key_block?: Maybe<Scalars["Boolean"]>
     master?: Maybe<BlockMaster>
     master_ref?: Maybe<ExtBlkRef>
+    /** seq_no of masterchain block which commited the block */
     master_seq_no?: Maybe<Scalars["Float"]>
     /** Returns last known master block at the time of shard generation. */
     min_ref_mc_seqno?: Maybe<Scalars["Float"]>
@@ -768,6 +769,8 @@ export type BlockchainMessage = Node & {
     library?: Maybe<Scalars["String"]>
     /** `library` field root hash. */
     library_hash?: Maybe<Scalars["String"]>
+    /** seq_no of masterchain block which commited shard block containing the message */
+    master_seq_no?: Maybe<Scalars["Float"]>
     /**
      * Returns the type of message.
      * - 0 – internal
@@ -1039,6 +1042,8 @@ export type BlockchainTransaction = Node & {
     installed?: Maybe<Scalars["Boolean"]>
     /** Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf). */
     lt?: Maybe<Scalars["String"]>
+    /** seq_no of masterchain block which commited shard block containing the transaction */
+    master_seq_no?: Maybe<Scalars["Float"]>
     /** Merkle update field */
     new_hash?: Maybe<Scalars["String"]>
     now?: Maybe<Scalars["Float"]>
@@ -3103,6 +3108,11 @@ export type BlockchainMessageResolvers<
         ParentType,
         ContextType
     >
+    master_seq_no?: Resolver<
+        Maybe<ResolversTypes["Float"]>,
+        ParentType,
+        ContextType
+    >
     msg_type?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
     msg_type_name?: Resolver<
         Maybe<ResolversTypes["MessageTypeEnum"]>,
@@ -3356,6 +3366,11 @@ export type BlockchainTransactionResolvers<
         ParentType,
         ContextType,
         RequireFields<BlockchainTransactionLtArgs, never>
+    >
+    master_seq_no?: Resolver<
+        Maybe<ResolversTypes["Float"]>,
+        ParentType,
+        ContextType
     >
     new_hash?: Resolver<
         Maybe<ResolversTypes["String"]>,
