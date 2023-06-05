@@ -816,6 +816,7 @@ const Block = struct(
         key_block: scalar,
         master: BlockMaster,
         master_ref: ExtBlkRef,
+        master_seq_no: scalar,
         min_ref_mc_seqno: scalar,
         out_msg_descr: OutMsgArray,
         prev_alt_ref: ExtBlkRef,
@@ -3093,6 +3094,10 @@ scalarFields.set("blocks.master_ref.root_hash", {
 scalarFields.set("blocks.master_ref.seq_no", {
     type: "number",
     path: "doc.master_ref.seq_no",
+})
+scalarFields.set("blocks.master_seq_no", {
+    type: "number",
+    path: "doc.master_seq_no",
 })
 scalarFields.set("blocks.min_ref_mc_seqno", {
     type: "number",

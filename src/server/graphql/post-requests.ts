@@ -26,8 +26,9 @@ async function postRequestsUsingRest(
     context: QRequestContext,
 ): Promise<void> {
     const config = context.services.config.requests
-    const url = `${ensureProtocol(config.server, "http")}/topics/${config.topic
-        }`
+    const url = `${ensureProtocol(config.server, "http")}/topics/${
+        config.topic
+    }`
     const request: RequestInitEx = {
         method: "POST",
         mode: "cors",

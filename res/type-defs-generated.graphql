@@ -1363,6 +1363,7 @@ type Block {
 	key_block: Boolean
 	master: BlockMaster
 	master_ref: ExtBlkRef
+	master_seq_no: Float
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: Float
 	out_msg_descr: [OutMsg]
@@ -2903,6 +2904,7 @@ input BlockFilter {
 	key_block: BooleanFilter
 	master: BlockMasterFilter
 	master_ref: ExtBlkRefFilter
+	master_seq_no: FloatFilter
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: FloatFilter
 	out_msg_descr: OutMsgArrayFilter

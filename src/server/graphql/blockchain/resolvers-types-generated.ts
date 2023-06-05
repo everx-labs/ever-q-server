@@ -603,6 +603,7 @@ export type BlockchainBlock = Node & {
     key_block?: Maybe<Scalars["Boolean"]>
     master?: Maybe<BlockMaster>
     master_ref?: Maybe<ExtBlkRef>
+    master_seq_no?: Maybe<Scalars["Float"]>
     /** Returns last known master block at the time of shard generation. */
     min_ref_mc_seqno?: Maybe<Scalars["Float"]>
     out_msg_descr?: Maybe<Array<Maybe<OutMsg>>>
@@ -1214,6 +1215,8 @@ export type Config = {
     p39?: Maybe<Array<Maybe<ConfigP39>>>
     /** Address of TON DNS root smart contract in the masterchain */
     p4?: Maybe<Scalars["String"]>
+    /** Array of suspended smart contracts addresses */
+    p44?: Maybe<Array<Maybe<Scalars["String"]>>>
     /** Configuration parameter 6 */
     p6?: Maybe<ConfigP6>
     /** Configuration parameter 7 */
@@ -2862,6 +2865,11 @@ export type BlockchainBlockResolvers<
         ParentType,
         ContextType
     >
+    master_seq_no?: Resolver<
+        Maybe<ResolversTypes["Float"]>,
+        ParentType,
+        ContextType
+    >
     min_ref_mc_seqno?: Resolver<
         Maybe<ResolversTypes["Float"]>,
         ParentType,
@@ -3572,6 +3580,11 @@ export type ConfigResolvers<
         ContextType
     >
     p4?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    p44?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["String"]>>>,
+        ParentType,
+        ContextType
+    >
     p6?: Resolver<Maybe<ResolversTypes["ConfigP6"]>, ParentType, ContextType>
     p7?: Resolver<
         Maybe<Array<Maybe<ResolversTypes["ConfigP7"]>>>,

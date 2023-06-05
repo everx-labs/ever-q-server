@@ -870,6 +870,7 @@ const Block: TypeDef = {
     signatures: join({ BlockSignatures }, "id", "id"),
     chain_order: stringWithLowerFilter(docs.block.chain_order),
     file_hash: stringWithLowerFilter(docs.block.file_hash),
+    master_seq_no: u32(),
 }
 
 const Zerostate: TypeDef = {
