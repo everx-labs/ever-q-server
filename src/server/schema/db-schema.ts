@@ -265,6 +265,7 @@ const Message: TypeDef = {
     src_account: join("Account", "src", "id", "parent.msg_type !== 1"),
     dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
     chain_order: stringWithLowerFilter(docs.message.chain_order),
+    master_seq_no: u32(),
 }
 
 const Transaction: TypeDef = {
@@ -388,6 +389,7 @@ const Transaction: TypeDef = {
     ),
     chain_order: stringWithLowerFilter(docs.transaction.chain_order),
     ext_in_msg_fee: grams(docs.transaction.ext_in_msg_fee),
+    master_seq_no: u32(),
 }
 
 // BLOCK SIGNATURES

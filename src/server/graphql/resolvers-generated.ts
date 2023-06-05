@@ -665,6 +665,7 @@ const Transaction = struct(
         in_msg: stringLowerFilter,
         installed: scalar,
         lt: bigUInt1,
+        master_seq_no: scalar,
         new_hash: stringLowerFilter,
         now: scalar,
         now_string: stringCompanion("now"),
@@ -752,6 +753,7 @@ const Message = struct(
         import_fee: bigUInt2,
         library: scalar,
         library_hash: stringLowerFilter,
+        master_seq_no: scalar,
         msg_type: scalar,
         msg_type_name: enumName("msg_type", {
             Internal: 0,
@@ -1779,6 +1781,10 @@ scalarFields.set("transactions.installed", {
     path: "doc.installed",
 })
 scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" })
+scalarFields.set("transactions.master_seq_no", {
+    type: "number",
+    path: "doc.master_seq_no",
+})
 scalarFields.set("transactions.new_hash", {
     type: "string",
     path: "doc.new_hash",
@@ -1901,6 +1907,10 @@ scalarFields.set("messages.library", { type: "string", path: "doc.library" })
 scalarFields.set("messages.library_hash", {
     type: "string",
     path: "doc.library_hash",
+})
+scalarFields.set("messages.master_seq_no", {
+    type: "number",
+    path: "doc.master_seq_no",
 })
 scalarFields.set("messages.proof", { type: "string", path: "doc.proof" })
 scalarFields.set("messages.split_depth", {

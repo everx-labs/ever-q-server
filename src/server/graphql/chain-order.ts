@@ -2,32 +2,30 @@ import { Block, Message, Transaction } from "./resolvers-generated"
 import { QRequestParams, masterSeqNoFromChainOrder } from "../filter/filters"
 
 export const masterSeqNoResolvers = {
-    Query: {
-        messages: {
-            master_seq_no(parent: {
-                src_chain_order: string | undefined | null
-                dst_chain_order: string | undefined | null
-            }) {
-                return masterSeqNoFromChainOrder(
-                    parent.src_chain_order ?? parent.dst_chain_order,
-                )
-            },
-            chain_order(parent: {
-                src_chain_order: string | undefined | null
-                dst_chain_order: string | undefined | null
-            }) {
-                return parent.src_chain_order ?? parent.dst_chain_order
-            },
+    Message: {
+        master_seq_no(parent: {
+            src_chain_order: string | undefined | null
+            dst_chain_order: string | undefined | null
+        }) {
+            return masterSeqNoFromChainOrder(
+                parent.src_chain_order ?? parent.dst_chain_order,
+            )
         },
-        blocks: {
-            master_seq_no(parent: { chain_order: string | undefined | null }) {
-                return masterSeqNoFromChainOrder(parent.chain_order)
-            },
+        chain_order(parent: {
+            src_chain_order: string | undefined | null
+            dst_chain_order: string | undefined | null
+        }) {
+            return parent.src_chain_order ?? parent.dst_chain_order
         },
-        transactions: {
-            master_seq_no(parent: { chain_order: string | undefined | null }) {
-                return masterSeqNoFromChainOrder(parent.chain_order)
-            },
+    },
+    Block: {
+        master_seq_no(parent: { chain_order: string | undefined | null }) {
+            return masterSeqNoFromChainOrder(parent.chain_order)
+        },
+    },
+    Transaction: {
+        master_seq_no(parent: { chain_order: string | undefined | null }) {
+            return masterSeqNoFromChainOrder(parent.chain_order)
         },
     },
 }

@@ -1173,6 +1173,7 @@ type Transaction {
 	installed: Boolean
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt(format: BigIntFormat): String
+	master_seq_no: Float
 	"Merkle update field"
 	new_hash: String
 	now: Float
@@ -1290,6 +1291,7 @@ type Message {
 	library: String
 	"`library` field root hash."
 	library_hash: String
+	master_seq_no: Float
 	"""
 	Returns the type of message.
 	- 0 – internal
@@ -2667,6 +2669,7 @@ input TransactionFilter {
 	installed: BooleanFilter
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: StringFilter
+	master_seq_no: FloatFilter
 	"Merkle update field"
 	new_hash: StringFilter
 	now: FloatFilter
@@ -2805,6 +2808,7 @@ input MessageFilter {
 	library: StringFilter
 	"`library` field root hash."
 	library_hash: StringFilter
+	master_seq_no: FloatFilter
 	"""
 	Returns the type of message.
 	- 0 – internal
