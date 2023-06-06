@@ -1570,3 +1570,80 @@ test("blockchain fetchers", async () => {
         },
     })
 })
+test("blockchain master_seq_no", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+    let queryResult: ReturnType<typeof client.query> extends Promise<infer T>
+        ? T
+        : never
+
+    // block
+    queryResult = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    block(
+                        hash: "52cba78cf9ddc27995031456677141fdf679aa22057bdcec3f55a62556c7dda5"
+                    ) {
+                        master_seq_no
+                    }
+                }
+            }
+        `,
+    })
+    expect(queryResult.data).toMatchObject({
+        blockchain: {
+            block: {
+                master_seq_no: 8898619,
+            },
+        },
+    })
+
+    // transaction
+    queryResult = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    transaction(
+                        hash: "d80e4a907b2405a1141e6f9953abbd175a2393ca04ac1e59aae07297c1637afc"
+                    ) {
+                        master_seq_no
+                    }
+                }
+            }
+        `,
+    })
+    expect(queryResult.data).toMatchObject({
+        blockchain: {
+            transaction: {
+                master_seq_no: 8898619,
+            },
+        },
+    })
+
+    // message
+    queryResult = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    message(
+                        hash: "32c75632aebfb890145477374cb265e2572d513fccbc7f5f58e108531fa42022"
+                    ) {
+                        master_seq_no
+                        chain_order
+                    }
+                }
+            }
+        `,
+    })
+    expect(queryResult.data).toMatchObject({
+        blockchain: {
+            message: {
+                master_seq_no: 8898619,
+                chain_order: "587c83bm0901",
+            },
+        },
+    })
+})

@@ -1,6 +1,7 @@
 import {
     AddressArgs,
     BigIntArgs,
+    masterSeqNoFromChainOrder,
     resolveAddressField,
     resolveBigUInt,
     unixSecondsToString,
@@ -65,5 +66,10 @@ export const resolvers: Resolvers<QRequestContext> = {
             resolveAddressField(parent.src, args as AddressArgs),
         dst: (parent, args) =>
             resolveAddressField(parent.dst, args as AddressArgs),
+        master_seq_no: parent =>
+            masterSeqNoFromChainOrder(
+                parent.src_chain_order ?? parent.dst_chain_order,
+            ),
+        chain_order: parent => parent.src_chain_order ?? parent.dst_chain_order,
     },
 }
