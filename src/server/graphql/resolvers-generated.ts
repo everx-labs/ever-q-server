@@ -665,6 +665,7 @@ const Transaction = struct(
         in_msg: stringLowerFilter,
         installed: scalar,
         lt: bigUInt1,
+        master_seq_no: scalar,
         new_hash: stringLowerFilter,
         now: scalar,
         now_string: stringCompanion("now"),
@@ -738,6 +739,7 @@ const Message = struct(
         data_hash: stringLowerFilter,
         dst: addressFilter,
         dst_account: join("dst", "id", "accounts", ["msg_type"], () => Account),
+        dst_chain_order: stringLowerFilter,
         dst_transaction: join(
             "id",
             "in_msg",
@@ -752,6 +754,7 @@ const Message = struct(
         import_fee: bigUInt2,
         library: scalar,
         library_hash: stringLowerFilter,
+        master_seq_no: scalar,
         msg_type: scalar,
         msg_type_name: enumName("msg_type", {
             Internal: 0,
@@ -762,6 +765,7 @@ const Message = struct(
         split_depth: scalar,
         src: addressFilter,
         src_account: join("src", "id", "accounts", ["msg_type"], () => Account),
+        src_chain_order: stringLowerFilter,
         src_transaction: join(
             "id",
             "out_msgs[*]",
@@ -816,6 +820,7 @@ const Block = struct(
         key_block: scalar,
         master: BlockMaster,
         master_ref: ExtBlkRef,
+        master_seq_no: scalar,
         min_ref_mc_seqno: scalar,
         out_msg_descr: OutMsgArray,
         prev_alt_ref: ExtBlkRef,
@@ -1778,6 +1783,10 @@ scalarFields.set("transactions.installed", {
     path: "doc.installed",
 })
 scalarFields.set("transactions.lt", { type: "uint64", path: "doc.lt" })
+scalarFields.set("transactions.master_seq_no", {
+    type: "number",
+    path: "doc.master_seq_no",
+})
 scalarFields.set("transactions.new_hash", {
     type: "string",
     path: "doc.new_hash",
@@ -1882,6 +1891,10 @@ scalarFields.set("messages.data_hash", {
     path: "doc.data_hash",
 })
 scalarFields.set("messages.dst", { type: "string", path: "doc.dst" })
+scalarFields.set("messages.dst_chain_order", {
+    type: "string",
+    path: "doc.dst_chain_order",
+})
 scalarFields.set("messages.dst_workchain_id", {
     type: "number",
     path: "doc.dst_workchain_id",
@@ -1901,12 +1914,20 @@ scalarFields.set("messages.library_hash", {
     type: "string",
     path: "doc.library_hash",
 })
+scalarFields.set("messages.master_seq_no", {
+    type: "number",
+    path: "doc.master_seq_no",
+})
 scalarFields.set("messages.proof", { type: "string", path: "doc.proof" })
 scalarFields.set("messages.split_depth", {
     type: "number",
     path: "doc.split_depth",
 })
 scalarFields.set("messages.src", { type: "string", path: "doc.src" })
+scalarFields.set("messages.src_chain_order", {
+    type: "string",
+    path: "doc.src_chain_order",
+})
 scalarFields.set("messages.src_workchain_id", {
     type: "number",
     path: "doc.src_workchain_id",
@@ -3093,6 +3114,10 @@ scalarFields.set("blocks.master_ref.root_hash", {
 scalarFields.set("blocks.master_ref.seq_no", {
     type: "number",
     path: "doc.master_ref.seq_no",
+})
+scalarFields.set("blocks.master_seq_no", {
+    type: "number",
+    path: "doc.master_seq_no",
 })
 scalarFields.set("blocks.min_ref_mc_seqno", {
     type: "number",

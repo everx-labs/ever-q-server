@@ -603,6 +603,8 @@ export type BlockchainBlock = Node & {
     key_block?: Maybe<Scalars["Boolean"]>
     master?: Maybe<BlockMaster>
     master_ref?: Maybe<ExtBlkRef>
+    /** seq_no of masterchain block which commited the block */
+    master_seq_no?: Maybe<Scalars["Float"]>
     /** Returns last known master block at the time of shard generation. */
     min_ref_mc_seqno?: Maybe<Scalars["Float"]>
     out_msg_descr?: Maybe<Array<Maybe<OutMsg>>>
@@ -767,6 +769,8 @@ export type BlockchainMessage = Node & {
     library?: Maybe<Scalars["String"]>
     /** `library` field root hash. */
     library_hash?: Maybe<Scalars["String"]>
+    /** seq_no of masterchain block which commited shard block containing the message */
+    master_seq_no?: Maybe<Scalars["Float"]>
     /**
      * Returns the type of message.
      * - 0 – internal
@@ -1038,6 +1042,8 @@ export type BlockchainTransaction = Node & {
     installed?: Maybe<Scalars["Boolean"]>
     /** Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf). */
     lt?: Maybe<Scalars["String"]>
+    /** seq_no of masterchain block which commited shard block containing the transaction */
+    master_seq_no?: Maybe<Scalars["Float"]>
     /** Merkle update field */
     new_hash?: Maybe<Scalars["String"]>
     now?: Maybe<Scalars["Float"]>
@@ -1214,6 +1220,8 @@ export type Config = {
     p39?: Maybe<Array<Maybe<ConfigP39>>>
     /** Address of TON DNS root smart contract in the masterchain */
     p4?: Maybe<Scalars["String"]>
+    /** Array of suspended smart contracts addresses */
+    p44?: Maybe<Array<Maybe<Scalars["String"]>>>
     /** Configuration parameter 6 */
     p6?: Maybe<ConfigP6>
     /** Configuration parameter 7 */
@@ -2862,6 +2870,11 @@ export type BlockchainBlockResolvers<
         ParentType,
         ContextType
     >
+    master_seq_no?: Resolver<
+        Maybe<ResolversTypes["Float"]>,
+        ParentType,
+        ContextType
+    >
     min_ref_mc_seqno?: Resolver<
         Maybe<ResolversTypes["Float"]>,
         ParentType,
@@ -3092,6 +3105,11 @@ export type BlockchainMessageResolvers<
     library?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     library_hash?: Resolver<
         Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    master_seq_no?: Resolver<
+        Maybe<ResolversTypes["Float"]>,
         ParentType,
         ContextType
     >
@@ -3349,6 +3367,11 @@ export type BlockchainTransactionResolvers<
         ContextType,
         RequireFields<BlockchainTransactionLtArgs, never>
     >
+    master_seq_no?: Resolver<
+        Maybe<ResolversTypes["Float"]>,
+        ParentType,
+        ContextType
+    >
     new_hash?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
@@ -3572,6 +3595,11 @@ export type ConfigResolvers<
         ContextType
     >
     p4?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    p44?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["String"]>>>,
+        ParentType,
+        ContextType
+    >
     p6?: Resolver<Maybe<ResolversTypes["ConfigP6"]>, ParentType, ContextType>
     p7?: Resolver<
         Maybe<Array<Maybe<ResolversTypes["ConfigP7"]>>>,

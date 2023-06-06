@@ -41,6 +41,8 @@ type BlockchainTransaction implements Node {
 	installed: Boolean
 	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt(format: BigIntFormat): String
+	"seq_no of masterchain block which commited shard block containing the transaction"
+	master_seq_no: Float
 	"Merkle update field"
 	new_hash: String
 	now: Float

@@ -58,6 +58,8 @@ type BlockchainMessage implements Node {
 	library: String
 	"`library` field root hash."
 	library_hash: String
+	"seq_no of masterchain block which commited shard block containing the message"
+	master_seq_no: Float
 	"""
 	Returns the type of message.
 	- 0 – internal

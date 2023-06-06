@@ -265,6 +265,9 @@ const Message: TypeDef = {
     src_account: join("Account", "src", "id", "parent.msg_type !== 1"),
     dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
     chain_order: stringWithLowerFilter(docs.message.chain_order),
+    master_seq_no: u32(docs.message.master_seq_no),
+    src_chain_order: stringWithLowerFilter(docs.message.chain_order),
+    dst_chain_order: stringWithLowerFilter(docs.message.chain_order),
 }
 
 const Transaction: TypeDef = {
@@ -388,6 +391,7 @@ const Transaction: TypeDef = {
     ),
     chain_order: stringWithLowerFilter(docs.transaction.chain_order),
     ext_in_msg_fee: grams(docs.transaction.ext_in_msg_fee),
+    master_seq_no: u32(docs.transaction.master_seq_no),
 }
 
 // BLOCK SIGNATURES
@@ -870,6 +874,7 @@ const Block: TypeDef = {
     signatures: join({ BlockSignatures }, "id", "id"),
     chain_order: stringWithLowerFilter(docs.block.chain_order),
     file_hash: stringWithLowerFilter(docs.block.file_hash),
+    master_seq_no: u32(docs.block.master_seq_no),
 }
 
 const Zerostate: TypeDef = {

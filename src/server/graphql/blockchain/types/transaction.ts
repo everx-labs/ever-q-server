@@ -1,6 +1,7 @@
 import {
     AddressArgs,
     BigIntArgs,
+    masterSeqNoFromChainOrder,
     resolveAddressField,
     resolveBigUInt,
     unixSecondsToString,
@@ -95,5 +96,6 @@ export const resolvers: Resolvers<QRequestContext> = {
         },
         account_addr: (parent, args) =>
             resolveAddressField(parent.account_addr, args as AddressArgs),
+        master_seq_no: parent => masterSeqNoFromChainOrder(parent.chain_order),
     },
 }

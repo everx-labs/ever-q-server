@@ -37,6 +37,8 @@ type BlockchainBlock implements Node {
 	key_block: Boolean
 	master: BlockMaster
 	master_ref: ExtBlkRef
+	"seq_no of masterchain block which commited the block"
+	master_seq_no: Float
 	"Returns last known master block at the time of shard generation."
 	min_ref_mc_seqno: Float
 	out_msg_descr: [OutMsg]
