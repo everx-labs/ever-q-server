@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `master_seq_no` field in blocks, transactions and messages representing seq_no of masterchain block
 which commited the block, transaction or message
 - `chain_order` in messages is derived from `src_chain_order` and `dst_chain_order`
+- `message.counterparties` in `blockchain` API are not limited to internal messages
 
 ## [0.57.0] - 2023-05-10
 
