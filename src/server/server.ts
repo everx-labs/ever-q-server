@@ -70,6 +70,8 @@ import {
     addMasterSeqNoFilters,
     masterSeqNoResolvers,
 } from "./graphql/chain-order"
+import { bocResolvers, overrideBocs } from "./graphql/boc-resolvers"
+import { BocStorage } from "./data/boc-storage"
 
 type QServerOptions = {
     config: QConfig
@@ -327,6 +329,7 @@ export default class TONQServer {
                     this.config.slowQueriesBlockchain,
                     "slow",
                 ),
+                bocStorage: new BocStorage(this.config.blockBocs),
                 isTests: false,
                 subscriptionsMode: this.config.subscriptionsMode,
                 filterConfig: this.config.queries.filter,
@@ -351,6 +354,7 @@ export default class TONQServer {
         )
         overrideAccountBoc()
         addMasterSeqNoFilters()
+        overrideBocs(this.data.bocStorage)
         const resolvers = createResolvers(this.data) as IResolvers
         ;[
             infoResolvers,
@@ -360,6 +364,7 @@ export default class TONQServer {
             rempResolvers(this.config.remp, this.logs),
             blockchainResolvers,
             masterSeqNoResolvers,
+            bocResolvers(this.data.bocStorage),
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({
             path: "/graphql",
