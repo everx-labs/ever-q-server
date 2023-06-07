@@ -147,6 +147,8 @@ destination smart contract. It can be queried with the following fields:`,
         boc: "A bag of cells with the message structure encoded as base64.",
         chain_order:
             "Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message).",
+        master_seq_no:
+            "seq_no of masterchain block which commited shard block containing the message",
     },
 
     transaction: {
@@ -281,6 +283,8 @@ balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.f
         chain_order:
             "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
         ext_in_msg_fee: "Fee for inbound external message import.",
+        master_seq_no:
+            "seq_no of masterchain block which commited shard block containing the transaction",
     },
 
     shardDescr: {
@@ -547,6 +551,7 @@ Logical time is a component of the TON Blockchain that also plays an important r
         chain_order:
             "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
         file_hash: "Block file hash",
+        master_seq_no: "seq_no of masterchain block which commited the block",
     },
 
     blockSignatures: {

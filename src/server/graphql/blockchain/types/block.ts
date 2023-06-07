@@ -1,5 +1,6 @@
 import {
     BigIntArgs,
+    masterSeqNoFromChainOrder,
     resolveBigUInt,
     unixSecondsToString,
 } from "../../../filter/filters"
@@ -38,5 +39,6 @@ export const resolvers: Resolvers<QRequestContext> = {
                     return null
             }
         },
+        master_seq_no: parent => masterSeqNoFromChainOrder(parent.chain_order),
     },
 }

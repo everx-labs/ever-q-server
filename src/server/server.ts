@@ -66,6 +66,10 @@ import { QRequestContext, QRequestServices, RequestEvent } from "./request"
 import { overrideAccountBoc } from "./graphql/account-boc"
 import { rempResolvers } from "./graphql/remp"
 import { LiteClient } from "ton-lite-client"
+import {
+    addMasterSeqNoFilters,
+    masterSeqNoResolvers,
+} from "./graphql/chain-order"
 
 type QServerOptions = {
     config: QConfig
@@ -346,6 +350,7 @@ export default class TONQServer {
             this.liteclient,
         )
         overrideAccountBoc()
+        addMasterSeqNoFilters()
         const resolvers = createResolvers(this.data) as IResolvers
         ;[
             infoResolvers,
@@ -354,6 +359,7 @@ export default class TONQServer {
             counterpartiesResolvers(this.data),
             rempResolvers(this.config.remp, this.logs),
             blockchainResolvers,
+            masterSeqNoResolvers,
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({
             path: "/graphql",

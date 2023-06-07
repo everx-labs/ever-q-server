@@ -459,6 +459,8 @@ type Config {
 	p39: [ConfigP39]
 	"Address of TON DNS root smart contract in the masterchain"
 	p4: String
+	"Array of suspended smart contracts addresses"
+	p44: [String]
 	"Configuration parameter 6"
 	p6: ConfigP6
 	"Configuration parameter 7"

@@ -610,6 +610,22 @@ export function unixMillisecondsToString(
     )
 }
 
+export function masterSeqNoFromChainOrder(
+    value: NumericScalar,
+): number | null | undefined {
+    return parseBigUInt(1, value)
+}
+
+export function selectMasterSeqNoFromChainOrders(
+    chainOrder: NumericScalar,
+    srcChainOrder: NumericScalar,
+    dstChainOrder: NumericScalar,
+): number | null | undefined {
+    return masterSeqNoFromChainOrder(
+        chainOrder ?? srcChainOrder ?? dstChainOrder,
+    )
+}
+
 export function unixSecondsToString(
     value: NumericScalar,
 ): string | null | undefined {
@@ -657,8 +673,14 @@ export function parseBigUInt(
     }
     const s = value.toString().trim()
     const neg = s.startsWith("-")
+    const lenHex = neg
+        ? invertedHex(s.substr(1, prefixLength))
+        : s.substr(0, prefixLength)
+    const len = Number(lenHex) + 1
     const hex = `0x${
-        neg ? invertedHex(s.substr(prefixLength + 1)) : s.substr(prefixLength)
+        neg
+            ? invertedHex(s.substr(prefixLength + 1, len))
+            : s.substr(prefixLength, len)
     }`
     const num = Number(hex)
     return neg ? -num : num
@@ -1265,6 +1287,35 @@ export function stringCompanion(onField: string): QType {
                 {
                     name: onField,
                     expression: `${path}.${onField}`,
+                },
+            ]
+        },
+        test() {
+            return false
+        },
+    }
+}
+
+//------------------------------------------------------------- Master seq_no from chain order
+
+export function masterSeqNo(): QType {
+    return {
+        filterCondition() {
+            return "false"
+        },
+        returnExpressions(_request: QRequestParams, path: string) {
+            return [
+                {
+                    name: "chain_order",
+                    expression: `${path}.chain_order`,
+                },
+                {
+                    name: "src_chain_order",
+                    expression: `${path}.src_chain_order`,
+                },
+                {
+                    name: "dst_chain_order",
+                    expression: `${path}.dst_chain_order`,
                 },
             ]
         },
