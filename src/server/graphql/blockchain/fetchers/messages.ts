@@ -92,18 +92,10 @@ export async function resolve_account_messages(
     const hasOutbound = hasExtOut || hasIntOut
 
     // fail fast
-    if (args.counterparties && args.counterparties.length > 0) {
-        if (args.msg_type && (hasExtIn || hasExtOut)) {
-            throw QError.invalidQuery(
-                "External messages do not have counterparties. " +
-                    "Don't use counterparties filter together with extIn/ExtOut message types.",
-            )
-        }
-        if (args.counterparties.length > 5) {
-            throw QError.invalidQuery(
-                "Only up to 5 counterparties are allowed in account messages filter.",
-            )
-        }
+    if (args.counterparties && args.counterparties.length > 5) {
+        throw QError.invalidQuery(
+            "Only up to 5 counterparties are allowed in account messages filter.",
+        )
     }
 
     const { direction, limit } = processPaginationArgs(args)
@@ -159,9 +151,16 @@ export async function resolve_account_messages(
         const orFilters: string[] = []
         if (counterpartiesParamsMap) {
             for (const cpParam of counterpartiesParamsMap.values()) {
-                orFilters.push(
-                    `${commonFilter} AND doc.msg_type == 0 AND doc.src == @${cpParam}`,
-                )
+                if (hasIntIn) {
+                    orFilters.push(
+                        `${commonFilter} AND doc.msg_type == 0 AND doc.src == @${cpParam}`,
+                    )
+                }
+                if (hasExtIn) {
+                    orFilters.push(
+                        `${commonFilter} AND doc.msg_type == 1 AND doc.src == @${cpParam}`,
+                    )
+                }
                 // index: dst, msg_type, src, dst_chain_order
             }
         } else {
@@ -207,9 +206,16 @@ export async function resolve_account_messages(
         const orFilters: string[] = []
         if (counterpartiesParamsMap) {
             for (const cpParam of counterpartiesParamsMap.values()) {
-                orFilters.push(
-                    `${commonFilter} AND doc.msg_type == 0 AND doc.dst == @${cpParam}`,
-                )
+                if (hasIntOut) {
+                    orFilters.push(
+                        `${commonFilter} AND doc.msg_type == 0 AND doc.dst == @${cpParam}`,
+                    )
+                }
+                if (hasExtOut) {
+                    orFilters.push(
+                        `${commonFilter} AND doc.msg_type == 2 AND doc.dst == @${cpParam}`,
+                    )
+                }
                 // index: src, msg_type, dst, src_chain_order
             }
         } else {
