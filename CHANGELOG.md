@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
   compatible storage.
   See README.md for details.
 
+- Removed a database sharding.
+
 ## [0.58.0] - 2023-06-07
 
 ### New
