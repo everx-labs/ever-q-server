@@ -33,6 +33,7 @@ import { FieldNode, OperationDefinitionNode } from "graphql"
 import { httpUrl, assignDeep, cloneDeep } from "../server/utils"
 import fetch from "node-fetch"
 import { QCollectionQuery } from "../server/data/collection-query"
+import { BocStorage } from "../server/data/boc-storage"
 
 jest.setTimeout(100000)
 
@@ -252,6 +253,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         logs: new QLogs(),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
+        bocStorage: new BocStorage(config.blockBocs),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
@@ -335,6 +337,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         logs: new QLogs(),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
+        bocStorage: new BocStorage(testConfig.blockBocs),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: testConfig.queries.filter,

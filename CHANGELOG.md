@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.59.0] - 2023-06-07
+
+### New
+
+- Added `blockBocs` config parameter allowing to resolve block bocs from external S3
+  compatible storage.
+  See README.md for details.
+
 ## [0.58.0] - 2023-06-07
 
 ### New

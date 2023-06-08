@@ -16,6 +16,7 @@ import {
     transactions as transactionsData,
     summary as chainRangesVerificationSummary,
 } from "./blockchain-data"
+import { BocStorage } from "../server/data/boc-storage"
 
 const TEST_DB_NAME = "Q-server_test_db"
 let server: TONQServer | null = null
@@ -79,6 +80,7 @@ beforeAll(async () => {
         logs: new QLogs(),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
+        bocStorage: new BocStorage(config.blockBocs),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
