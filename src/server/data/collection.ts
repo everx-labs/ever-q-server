@@ -506,7 +506,6 @@ export class QDataCollection {
             this.docType,
             args,
             selection,
-            required(this.provider).shardingDegree,
         )
         if (query === null) {
             return false
@@ -566,7 +565,6 @@ export class QDataCollection {
             "BEFORE_QUERY",
             {
                 ...args,
-                shards: query.shards,
             },
             isFast ? "FAST" : "SLOW",
             request.remoteAddress,
@@ -587,7 +585,6 @@ export class QDataCollection {
                       text: query.text,
                       orderBy: query.orderBy,
                       vars: query.params,
-                      shards: query.shards,
                       request,
                       traceSpan,
                       isFast,
@@ -668,7 +665,6 @@ export class QDataCollection {
                                       this.docType,
                                       args,
                                       selectionSet,
-                                      required(this.provider).shardingDegree,
                                   )
                                 : null
                             if (query === null) {
@@ -733,7 +729,6 @@ export class QDataCollection {
                 text: params.text,
                 vars: params.vars,
                 orderBy: params.orderBy,
-                shards: params.shards,
             })
             return this.queryProvider({
                 ...params,
@@ -813,7 +808,6 @@ export class QDataCollection {
                             text: q.text,
                             vars: q.params,
                             orderBy: q.orderBy,
-                            shards: q.shards,
                             request,
                             traceSpan: span,
                             isFast,
@@ -921,7 +915,6 @@ export class QDataCollection {
         text: string
         params: Record<string, unknown>
         queries: AggregationQuery[]
-        shards?: Set<string>
     } | null {
         const params = new QParams({
             stringifyKeyInAqlComparison:
@@ -932,12 +925,6 @@ export class QDataCollection {
             filter,
             params,
         )
-        const shards = QCollectionQuery.getShards(
-            this.name,
-            filter,
-            required(this.provider).shardingDegree,
-        )
-        // TODO: consider making query to two collections in one shard if (this.name === "messages" && shard.size === 1)
         const query = AggregationQuery.createForFields(
             this.name,
             condition || "",
@@ -947,7 +934,6 @@ export class QDataCollection {
             text: query.text,
             params: params.values,
             queries: query.queries,
-            shards: this.name !== "messages" ? shards : undefined,
         }
     }
 
@@ -1048,7 +1034,6 @@ export class QDataCollection {
                                 isFast,
                                 request,
                                 traceSpan,
-                                shards: q.shards,
                             })
                             traceSpan.logEvent("data_is_fetched")
                             this.log.debug(

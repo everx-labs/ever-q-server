@@ -1,7 +1,7 @@
 import { CachedData } from "../cached-data"
 import { QDataCollection } from "./collection"
 import { Database } from "arangojs"
-import { QDataProvider } from "./data-provider"
+import { QDatabaseProvider } from "./database-provider"
 
 const LATENCY_UPDATE_FREQUENCY = 25000
 
@@ -42,19 +42,17 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
         >()
         const collection = this.collection.name
         const field = this.field
-        const provider = this.collection.provider as QDataProvider
-        const shards = provider.shards
+        const provider = this.collection.provider as QDatabaseProvider
         const returnExpression = `${collection}: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0]`
-        for (const shard of shards) {
-            const existing = fetchersByDatabasePoolIndex.get(shard.poolIndex)
-            if (existing !== undefined) {
-                existing.returns.push(returnExpression)
-            } else {
-                fetchersByDatabasePoolIndex.set(shard.poolIndex, {
-                    database: shard.database,
-                    returns: [returnExpression],
-                })
-            }
+        const poolIndex = provider.connection.poolIndex
+        const existing = fetchersByDatabasePoolIndex.get(poolIndex)
+        if (existing !== undefined) {
+            existing.returns.push(returnExpression)
+        } else {
+            fetchersByDatabasePoolIndex.set(poolIndex, {
+                database: provider.connection.database,
+                returns: [returnExpression],
+            })
         }
         const fetchedTimes = await Promise.all(
             [...fetchersByDatabasePoolIndex.values()].map(async fetcher => {

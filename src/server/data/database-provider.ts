@@ -2,12 +2,12 @@ import EventEmitter from "events"
 import { ensureProtocol } from "../config"
 import type { QLog } from "../logs"
 import type {
+    QDatabaseConnection,
     QDataEvent,
     QDataProvider,
     QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
-    QShard,
 } from "./data-provider"
 import ArangoChair from "arangochair"
 import { QTraceSpan } from "../tracing"
@@ -21,18 +21,16 @@ type Subscription = {
     listener: (doc: QDoc, event: QDataEvent) => void
 }
 
-export class QShardDatabaseProvider implements QDataProvider {
+export class QDatabaseProvider implements QDataProvider {
     started: boolean
     collectionsForSubscribe: string[]
     listener: ArangoChair | null
     listenerSubscribers: EventEmitter
     listenerSubscribersCount: number
-    shards: QShard[]
-    shardingDegree: number
 
     constructor(
         public log: QLog,
-        public shard: QShard,
+        public connection: QDatabaseConnection,
         private useListener: boolean,
     ) {
         this.started = false
@@ -41,8 +39,6 @@ export class QShardDatabaseProvider implements QDataProvider {
         this.listenerSubscribers = new EventEmitter()
         this.listenerSubscribers.setMaxListeners(0)
         this.listenerSubscribersCount = 0
-        this.shards = [shard]
-        this.shardingDegree = shard.shard.length
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -70,7 +66,7 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
-        return this.shard.database.collection(collection).indexes()
+        return this.connection.database.collection(collection).indexes()
     }
 
     /**
@@ -78,13 +74,13 @@ export class QShardDatabaseProvider implements QDataProvider {
      */
     async loadFingerprint(): Promise<unknown> {
         const collections: ArangoCollectionDescr[] =
-            await this.shard.database.listCollections()
+            await this.connection.database.listCollections()
         const collectionNames = collections.map(descr => descr.name)
         // TODO: add this when required a new version arangojs v7.x.x
         // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
         const results = await Promise.all(
             collectionNames.map(col =>
-                this.shard.database.collection(col).count(),
+                this.connection.database.collection(col).count(),
             ),
         )
         const fingerprint: { [name: string]: number } = {}
@@ -99,29 +95,8 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
-        const { shards, text, vars, traceSpan, request } = params
+        const { text, vars, traceSpan, request } = params
 
-        if (
-            shards &&
-            !shards.has(this.shard.shard) &&
-            this.shard.shard !== "" &&
-            !shards.has("")
-        ) {
-            let shardMatches = false
-            for (const shard of shards ?? []) {
-                if (
-                    this.shard.shard.startsWith(shard) ||
-                    shard.startsWith(this.shard.shard)
-                ) {
-                    shardMatches = true
-                    break
-                }
-            }
-
-            if (!shardMatches) {
-                return []
-            }
-        }
         const maxRuntime = params.maxRuntimeInS
             ? Math.min(
                   params.maxRuntimeInS,
@@ -131,16 +106,13 @@ export class QShardDatabaseProvider implements QDataProvider {
 
         const impl = async (span: QTraceSpan) => {
             request.requestTags.arangoCalls += 1
-            const cursor = await this.shard.database.query(text, vars, {
+            const cursor = await this.connection.database.query(text, vars, {
                 maxRuntime,
             })
             span.logEvent("cursor_obtained")
             return await cursor.all()
         }
-        return traceSpan.traceChildOperation(
-            `arango.query.${this.shard.shard}`,
-            impl,
-        )
+        return traceSpan.traceChildOperation(`arango.query`, impl)
     }
 
     subscribe(
@@ -201,7 +173,7 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     createAndStartListener(): ArangoChair {
-        const { server, name, auth } = this.shard.config
+        const { server, name, auth } = this.connection.config
         const dbUrl = ensureProtocol(server, "http")
         const listenerUrl = `${dbUrl}/${name}`
 
@@ -213,7 +185,7 @@ export class QShardDatabaseProvider implements QDataProvider {
         listener._loggerStatePath = `${pathPrefix}/_db/${name}/_api/replication/logger-state`
         listener._loggerFollowPath = `${pathPrefix}/_db/${name}/_api/replication/logger-follow`
 
-        if (this.shard.config.auth) {
+        if (this.connection.config.auth) {
             const userPassword = Buffer.from(auth).toString("base64")
             listener.req.opts.headers["Authorization"] = `Basic ${userPassword}`
         }
@@ -243,7 +215,7 @@ export class QShardDatabaseProvider implements QDataProvider {
                 this.log.error("FAILED", "LISTEN", `${err}`, error)
                 setTimeout(
                     () => listener.start(),
-                    this.shard.config.listenerRestartTimeout || 1000,
+                    this.connection.config.listenerRestartTimeout || 1000,
                 )
             },
         )

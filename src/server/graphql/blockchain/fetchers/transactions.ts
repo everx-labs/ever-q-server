@@ -201,7 +201,6 @@ export async function resolve_account_transactions(
             ],
             request: context,
             traceSpan,
-            // TODO: shard
         },
     )) as BlockchainTransaction[]
 

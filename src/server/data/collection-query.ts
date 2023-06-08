@@ -9,9 +9,7 @@ import {
     QParams,
     QRequestParams,
     QType,
-    ScalarFilter,
     splitOr,
-    StructFilter,
 } from "../filter/filters"
 import { SelectionSetNode } from "graphql"
 import { FilterConfig, FilterOrConversion, QConfig } from "../config"
@@ -26,7 +24,6 @@ export class QCollectionQuery {
         public timeout: number,
         public text: string,
         public params: { [name: string]: unknown },
-        public shards: Set<string> | undefined,
     ) {}
 
     extractIdFilter(): string[] {
@@ -66,7 +63,6 @@ export class QCollectionQuery {
             timeout?: number | null
         },
         selectionSet: SelectionSetNode | undefined,
-        shardingDegree: number,
     ): QCollectionQuery | null {
         const orderBy: OrderBy[] = args.orderBy || []
         const orderByText = orderBy
@@ -128,16 +124,6 @@ export class QCollectionQuery {
                 ${limitSection}
                 RETURN ${returnExpression}
             `)
-            if (collectionName === "messages" && shardingDegree > 0) {
-                texts.push(`
-                    FOR doc IN messages_complement
-                    ${forOptions}
-                    ${filterSection}
-                    ${sortSection}
-                    ${limitSection}
-                    RETURN ${returnExpression}
-                `)
-            }
         }
 
         if (texts.length === 0) {
@@ -157,12 +143,6 @@ export class QCollectionQuery {
             selectionSet,
             collectionName,
         )
-        const shards = QCollectionQuery.getShards(
-            collectionName,
-            filter,
-            shardingDegree,
-        )
-
         return new QCollectionQuery(
             filter,
             selection,
@@ -171,7 +151,6 @@ export class QCollectionQuery {
             timeout,
             text,
             params.values,
-            shards,
         )
     }
 
@@ -183,7 +162,6 @@ export class QCollectionQuery {
         refOn: string,
         refOnIsArray: boolean,
         fieldSelection: SelectionSetNode | undefined,
-        shardingDegree: number,
         config: QConfig,
     ): QCollectionQuery | null {
         if (!refOnIsArray) {
@@ -198,7 +176,6 @@ export class QCollectionQuery {
                     },
                 },
                 fieldSelection,
-                shardingDegree,
             )
         }
         const returnExpression = QCollectionQuery.buildReturnExpression(
@@ -220,25 +197,11 @@ export class QCollectionQuery {
             }
             filterSection += `@${params.add(onValue)} IN doc.${refOn}`
         }
-        const text =
-            refCollectionName === "messages" && shardingDegree > 0
-                ? `
-                FOR doc IN UNION_DISTINCT(
-                    FOR doc IN messages
-                    ${filterSection}
-                    RETURN ${returnExpression},
-
-                    FOR doc IN messages_complement
-                    ${filterSection}
-                    RETURN ${returnExpression}
-                )
-                RETURN doc
-            `
-                : `
-                FOR doc IN ${refCollectionName}
-                ${filterSection}
-                RETURN ${returnExpression}
-            `
+        const text = `
+            FOR doc IN ${refCollectionName}
+            ${filterSection}
+            RETURN ${returnExpression}
+        `
         return new QCollectionQuery(
             {
                 [refOn]: { any: { in: onValues } },
@@ -249,7 +212,6 @@ export class QCollectionQuery {
             0,
             text,
             params.values,
-            undefined,
         )
     }
 
@@ -308,173 +270,4 @@ export class QCollectionQuery {
         }
         return combineReturnExpressions(expressions)
     }
-
-    static getShards(
-        collectionName: string,
-        filter: CollectionFilter,
-        shardingDegree: number,
-    ): Set<string> | undefined {
-        const shards = new Set<string>()
-        const getShards = {
-            accounts: getAccountsShards,
-            blocks: getBlocksShards,
-            messages: getMessagesShards,
-            transactions: getTransactionsShards,
-        }[collectionName]
-        if (getShards === undefined || shardingDegree === 0) {
-            return undefined
-        }
-        for (const orOperand of splitOr(filter)) {
-            if (!getShards(orOperand as StructFilter, shards, shardingDegree)) {
-                return undefined
-            }
-        }
-        return shards
-    }
-}
-
-function getAccountsShards(
-    filter: StructFilter,
-    shards: Set<string>,
-    shardingDegree: number,
-): boolean {
-    return getShardsForEqOrIn(
-        filter,
-        "id",
-        shards,
-        shardingDegree,
-        getAccountShard,
-    )
-}
-
-function getBlocksShards(
-    filter: StructFilter,
-    shards: Set<string>,
-    shardingDegree: number,
-): boolean {
-    return getShardsForEqOrIn(
-        filter,
-        "id",
-        shards,
-        shardingDegree,
-        getBlockShard,
-    )
-}
-
-function getMessagesShards(
-    filter: StructFilter,
-    shards: Set<string>,
-    shardingDegree: number,
-) {
-    const srcUsed = getShardsForEqOrIn(
-        filter,
-        "src",
-        shards,
-        shardingDegree,
-        getMessageAddressShard,
-    )
-    const dstUsed = getShardsForEqOrIn(
-        filter,
-        "dst",
-        shards,
-        shardingDegree,
-        getMessageAddressShard,
-    )
-    return srcUsed || dstUsed
-}
-
-function getTransactionsShards(
-    filter: StructFilter,
-    shards: Set<string>,
-    shardingDegree: number,
-) {
-    return getShardsForEqOrIn(
-        filter,
-        "account_addr",
-        shards,
-        shardingDegree,
-        getAccountShard,
-    )
-}
-
-function getMessageAddressShard(
-    address: string,
-    shardingDegree: number,
-): number | undefined {
-    const addressWithoutPrefix = address.split(":")[1]
-    if (addressWithoutPrefix === undefined || addressWithoutPrefix.length < 1) {
-        return undefined
-    }
-    return getShardFromHexString(
-        addressWithoutPrefix.replace("_", ""),
-        shardingDegree,
-    )
-}
-
-function getAccountShard(
-    address: string,
-    shardingDegree: number,
-): number | undefined {
-    const addressWithoutPrefix = address.split(":")[1]
-    if (
-        addressWithoutPrefix === undefined ||
-        addressWithoutPrefix.length !== 64
-    ) {
-        return undefined // some users depend on the absence of errors for incorrect ids
-    }
-    return getShardFromHexString(addressWithoutPrefix, shardingDegree)
-}
-
-function getBlockShard(id: string, shardingDegree: number): number | undefined {
-    if (id.length !== 64) {
-        return undefined // some users depend on the absence of errors for incorrect ids
-    }
-    return getShardFromHexString(id, shardingDegree)
-}
-
-function getShardFromHexString(
-    hex: string,
-    shardingDegree: number,
-): number | undefined {
-    const symbols = Math.ceil(shardingDegree / 4)
-    const excessBits = symbols * 4 - shardingDegree
-    return (
-        parseInt(hex.padEnd(symbols, "0").substr(0, symbols), 16) >> excessBits
-    )
-}
-
-function getShardsForEqOrIn(
-    filter: StructFilter,
-    field: string,
-    shards: Set<string>,
-    shardingDegree: number,
-    shardFromValue: (
-        value: string,
-        shardingDegree: number,
-    ) => number | undefined,
-): boolean {
-    const fieldFilter = filter[field] as ScalarFilter | undefined
-    if (fieldFilter === undefined) {
-        return false
-    }
-    const values: string[] = []
-    const eqValue = fieldFilter.eq
-    if (eqValue !== undefined && eqValue !== null) {
-        values.push(`${eqValue}`)
-    }
-    const inValues = fieldFilter.in
-    if (inValues !== undefined && inValues !== null) {
-        for (const value of inValues) {
-            values.push(`${value}`)
-        }
-    }
-    for (const value of values) {
-        const shard = shardFromValue(value, shardingDegree)
-        if (shard !== undefined && shard >= 0 && shard <= 0xff) {
-            shards.add(shard.toString(2).padStart(shardingDegree, "0"))
-        } else {
-            return false
-        }
-    }
-    return values.length > 0
 }

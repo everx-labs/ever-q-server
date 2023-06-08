@@ -655,13 +655,7 @@ const Transaction = struct(
             NonExist: 3,
         }),
         ext_in_msg_fee: bigUInt2,
-        in_message: join(
-            "in_msg",
-            "id",
-            "messages",
-            ["account_addr"],
-            () => Message,
-        ),
+        in_message: join("in_msg", "id", "messages", [], () => Message),
         in_msg: stringLowerFilter,
         installed: scalar,
         lt: bigUInt1,
@@ -681,7 +675,7 @@ const Transaction = struct(
             "out_msgs",
             "id",
             "messages",
-            ["account_addr"],
+            [],
             () => Message,
         ),
         out_msgs: StringArray,
@@ -744,7 +738,7 @@ const Message = struct(
             "id",
             "in_msg",
             "transactions",
-            ["msg_type", "dst"],
+            ["msg_type"],
             () => Transaction,
         ),
         dst_workchain_id: scalar,
@@ -770,7 +764,7 @@ const Message = struct(
             "id",
             "out_msgs[*]",
             "transactions",
-            ["created_lt", "msg_type", "src"],
+            ["created_lt", "msg_type"],
             () => Transaction,
         ),
         src_workchain_id: scalar,
@@ -4522,7 +4516,6 @@ joinFields.set("transactions.in_message", {
     on: "in_msg",
     collection: "messages",
     refOn: "id",
-    shardOn: "account_addr",
     canJoin(parent: { in_msg: string }, args: JoinArgs) {
         return (
             args.when === undefined || Transaction.test(null, parent, args.when)
@@ -4533,7 +4526,6 @@ joinFields.set("transactions.out_messages", {
     on: "out_msgs",
     collection: "messages",
     refOn: "id",
-    shardOn: "account_addr",
     canJoin(parent: { out_msgs: string[] }, args: JoinArgs) {
         return (
             args.when === undefined || Transaction.test(null, parent, args.when)
@@ -4563,7 +4555,6 @@ joinFields.set("messages.dst_transaction", {
     on: "id",
     collection: "transactions",
     refOn: "in_msg",
-    shardOn: "dst",
     canJoin(parent: { _key: string; msg_type: number }, args: JoinArgs) {
         if (!(parent.msg_type !== 2)) {
             return false
@@ -4586,7 +4577,6 @@ joinFields.set("messages.src_transaction", {
     on: "id",
     collection: "transactions",
     refOn: "out_msgs[*]",
-    shardOn: "src",
     canJoin(
         parent: { _key: string; created_lt: string; msg_type: number },
         args: JoinArgs,

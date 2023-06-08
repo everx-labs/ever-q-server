@@ -1,108 +1,31 @@
 import type { OrderBy } from "../filter/filters"
-import { hash, setHasIntersections } from "../utils"
+import { hash } from "../utils"
 import type { QLog } from "../logs"
 import { QRequestContext } from "../request"
 import { QTraceSpan } from "../tracing"
 import { Database } from "arangojs"
 import { ensureProtocol, QArangoConfig } from "../config"
 
-export type QShard = {
+export type QDatabaseConnection = {
     database: Database
+    config: QArangoConfig
     poolIndex: number
-    config: QArangoConfig
-    shard: string
-}
-
-type QDatabasePoolItem = {
-    config: QArangoConfig
-    shards: QShard[]
 }
 
 export class QDatabasePool {
-    private items: QDatabasePoolItem[] = []
+    private items: QDatabaseConnection[] = []
 
     static sameConfig(a: QArangoConfig, b: QArangoConfig): boolean {
         return a.server === b.server && a.name === b.name
     }
 
-    ensureShard(config: QArangoConfig, shard: string): QShard {
-        const [poolIndex, poolItem] = this.ensurePoolItem(config)
-        let qShard = poolItem.shards.find(x => x.shard === shard)
-        if (qShard) {
-            return qShard
-        }
-
-        const database =
-            poolItem.shards.length > 0
-                ? poolItem.shards[0].database
-                : this.createDatabaseHandle(poolItem.config)
-
-        qShard = {
-            database,
-            config: poolItem.config,
-            poolIndex,
-            shard,
-        }
-
-        poolItem.shards.push(qShard)
-        return qShard
-    }
-
-    private ensurePoolItem(config: QArangoConfig): [number, QDatabasePoolItem] {
-        let poolIndex = this.items.findIndex(x =>
+    ensureConnection(config: QArangoConfig): QDatabaseConnection {
+        const existing = this.items.find(x =>
             QDatabasePool.sameConfig(x.config, config),
         )
-        if (poolIndex < 0) {
-            poolIndex = this.items.length
-            const poolItem = {
-                shards: [],
-                config,
-            }
-            this.items.push(poolItem)
-            return [poolIndex, poolItem]
+        if (existing) {
+            return existing
         }
-
-        const poolItem = this.items[poolIndex]
-        this.upgradeConfigIfNeeded(poolItem, config)
-        return [poolIndex, poolItem]
-    }
-
-    private upgradeConfigIfNeeded(
-        poolItem: QDatabasePoolItem,
-        config: QArangoConfig,
-    ): void {
-        if (!QDatabasePool.sameConfig(poolItem.config, config)) {
-            throw new Error("Invalid upgradeDatabaseHandlesIfNeeded use")
-        }
-        if (
-            poolItem.config.maxSockets === config.maxSockets &&
-            poolItem.config.listenerRestartTimeout ===
-                config.listenerRestartTimeout
-        ) {
-            return
-        }
-
-        const oldDatabase = poolItem.shards[0].database
-        oldDatabase.close()
-
-        const newConfig = {
-            ...config,
-            maxSockets: Math.max(config.maxSockets, poolItem.config.maxSockets),
-            listenerRestartTimeout: Math.min(
-                config.listenerRestartTimeout,
-                poolItem.config.listenerRestartTimeout,
-            ),
-        }
-
-        const database = this.createDatabaseHandle(newConfig)
-        poolItem.config = newConfig
-        for (const shard of poolItem.shards) {
-            shard.config = newConfig
-            shard.database = database
-        }
-    }
-
-    private createDatabaseHandle(config: QArangoConfig): Database {
         const database = new Database({
             url: `${ensureProtocol(config.server, "http")}`,
             agentOptions: {
@@ -114,7 +37,14 @@ export class QDatabasePool {
             const authParts = config.auth.split(":")
             database.useBasicAuth(authParts[0], authParts.slice(1).join(":"))
         }
-        return database
+
+        const connection = {
+            database,
+            config,
+            poolIndex: this.items.length,
+        }
+        this.items.push(connection)
+        return connection
     }
 }
 
@@ -154,15 +84,11 @@ export type QDataProviderQueryParams = {
     orderBy: OrderBy[]
     distinctBy?: string
     request: QRequestContext
-    shards?: Set<string>
     traceSpan: QTraceSpan
     maxRuntimeInS?: number
 }
 
 export interface QDataProvider {
-    shards: QShard[]
-    shardingDegree: number
-
     start(collectionsForSubscribe: string[]): Promise<void>
 
     stop(): Promise<void>
@@ -191,25 +117,9 @@ export interface QDataCache {
 
 export class QDataCombiner implements QDataProvider {
     providers: QDataProvider[]
-    providersShards: Set<string>[] = []
-    shards: QShard[] = []
-    shardingDegree: number
 
     constructor(providers: QDataProvider[]) {
         this.providers = providers
-        this.shardingDegree = providers.reduce(
-            (acc, p) => Math.max(acc, p.shardingDegree),
-            0,
-        )
-
-        for (const provider of providers) {
-            const providerShards = new Set<string>(
-                provider.shards.map(x => x.shard),
-            )
-            this.providersShards.push(this.ensureShardingDegree(providerShards))
-            this.shards = this.shards.concat(provider.shards)
-        }
-        this.shards = [...new Set(this.shards)] // dedupe
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -246,17 +156,9 @@ export class QDataCombiner implements QDataProvider {
     async query(params: QDataProviderQueryParams): Promise<QResult[]> {
         const traceSpan = params.traceSpan
         traceSpan.logEvent("QDataCombiner_query_start")
-        const shards = params.shards
-            ? this.ensureShardingDegree(params.shards)
-            : undefined
-        if (
-            this.shardingDegree > 0 &&
-            (!shards || shards.size === Math.pow(2, this.shardingDegree))
-        ) {
-            params.request.requestTags.hasRangedQuery = true
-        }
-        const providers = this.getProvidersForShards(shards)
-        const results = await Promise.all(providers.map(x => x.query(params)))
+        const results = await Promise.all(
+            this.providers.map(x => x.query(params)),
+        )
         traceSpan.logEvent("QDataCombiner_query_dataIsFetched")
         const result = combineResults(
             results,
@@ -278,48 +180,6 @@ export class QDataCombiner implements QDataProvider {
         ;(subscription as unknown[]).map((s, i) =>
             this.providers[i].unsubscribe(s),
         )
-    }
-
-    private getProvidersForShards(shards: Set<string> | undefined) {
-        if (!shards) {
-            return this.providers
-        }
-
-        shards = this.ensureShardingDegree(shards)
-        const providers: QDataProvider[] = []
-        for (let i = 0; i < this.providers.length; i += 1) {
-            if (setHasIntersections(this.providersShards[i], shards)) {
-                providers.push(this.providers[i])
-            }
-        }
-        return providers
-    }
-
-    private ensureShardingDegree(shards: Set<string>): Set<string> {
-        let needToFixShards = false
-        for (const shard of shards) {
-            needToFixShards =
-                needToFixShards || shard.length !== this.shardingDegree
-        }
-
-        if (!needToFixShards) {
-            return shards
-        }
-
-        const fixedShards = new Set<string>()
-        for (const shard of shards) {
-            const diff = this.shardingDegree - shard.length
-            if (diff > 0) {
-                // split shards
-                for (const index of Array(diff).keys()) {
-                    const append = index.toString(2).padStart(diff, "0")
-                    fixedShards.add(`${shard}${append}`)
-                }
-            } else {
-                fixedShards.add(shard.slice(0, this.shardingDegree))
-            }
-        }
-        return fixedShards
     }
 }
 

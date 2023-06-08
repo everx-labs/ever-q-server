@@ -130,7 +130,6 @@ test("OR conversions", () => {
                 ],
             },
             selectionInfo("src dst"),
-            0,
         )?.text ?? "",
     )
 
@@ -166,7 +165,6 @@ test("OR conversions", () => {
                 ],
             },
             selectionInfo("src dst"),
-            0,
         )?.text ?? "",
     )
 
@@ -222,7 +220,6 @@ test("messages_complement are used for shardingDegree > 0", () => {
                 ],
             },
             selectionInfo("src dst"),
-            1,
         )?.text ?? "",
     )
 
@@ -274,7 +271,6 @@ test("messages_complement are used for shardingDegree > 0", () => {
                 ],
             },
             selectionInfo("src dst"),
-            1,
         )?.text ?? "",
     )
 
