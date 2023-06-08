@@ -10,7 +10,6 @@ export type DbJoin = {
     on: string
     refOn: string
     preCondition?: string
-    shardOn?: string
 }
 
 export type IntEnumValues = {

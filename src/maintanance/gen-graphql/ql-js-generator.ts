@@ -373,9 +373,6 @@ function main(schemaDef: TypeDef): {
                             .map(x => x.substr(7)),
                     )
                 }
-                if (join.shardOn !== undefined) {
-                    extraFields.push(join.shardOn)
-                }
                 params.push(
                     extraFields.length > 0
                         ? `["${extraFields.join('", "')}"]`
@@ -654,9 +651,6 @@ function main(schemaDef: TypeDef): {
                 js.writeLn(`    on: "${join.on}",`)
                 js.writeLn(`    collection: "${field.type.collection}",`)
                 js.writeLn(`    refOn: "${join.refOn}",`)
-                if (join.shardOn !== undefined) {
-                    js.writeLn(`    shardOn: "${join.shardOn}",`)
-                }
                 js.writeLn(
                     `    canJoin(${parentParam(
                         type,

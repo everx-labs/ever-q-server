@@ -83,7 +83,6 @@ export function queryText(
                 orderBy,
             },
             selectionInfo(result),
-            0,
         )?.text ?? "",
     )
 }
@@ -266,8 +265,6 @@ export class MockProvider<T extends QResult> implements QDataProvider {
     data: T[]
     queryCount: number
     hotUpdateCount: number
-    shards = []
-    shardingDegree = 0
 
     constructor(data: T[]) {
         this.data = data

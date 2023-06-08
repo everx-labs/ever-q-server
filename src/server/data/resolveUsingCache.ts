@@ -80,7 +80,6 @@ export async function resolveUsingCache(
                     text: query.text,
                     vars: query.params,
                     orderBy: query.orderBy,
-                    shards: query.shards,
                     request,
                     traceSpan: span,
                     isFast,

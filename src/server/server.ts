@@ -27,7 +27,7 @@ import {
     IResolvers,
 } from "apollo-server-express"
 import { ConnectionContext } from "subscriptions-transport-ws"
-import { QShardDatabaseProvider } from "./data/shard-database-provider"
+import { QDatabaseProvider } from "./data/database-provider"
 import QBlockchainData from "./data/blockchain"
 import type { QBlockchainDataProvider, QDataProviders } from "./data/data"
 import {
@@ -102,12 +102,10 @@ export class DataProviderFactory {
             counterparties: this.ensureDatabases(
                 this.config.counterparties,
                 "counterparties",
-                false,
             ),
             chainRangesVerification: this.ensureDatabases(
                 this.config.chainRangesVerification,
                 "chainRangesVerification",
-                false,
             ),
         }
     }
@@ -122,7 +120,6 @@ export class DataProviderFactory {
                   accounts: this.ensureDatabases(
                       config.accounts,
                       `${logKey}_accounts`,
-                      true,
                   ),
                   blocks: this.ensureHotCold(config.blocks, `${logKey}_blocks`),
                   transactions: this.ensureHotCold(
@@ -132,7 +129,6 @@ export class DataProviderFactory {
                   zerostate: this.ensureDatabase(
                       config.zerostate,
                       `${logKey}_zerostate`,
-                      0,
                   ),
               }
     }
@@ -170,14 +166,14 @@ export class DataProviderFactory {
             config,
             () => {
                 const hot = this.preCache(
-                    this.ensureDatabases(config.hot, `${logKey}_hot`, true),
+                    this.ensureDatabases(config.hot, `${logKey}_hot`),
                     this.config.blockchain.hotCache,
                     logKey,
                     this.config.blockchain.hotCacheExpiration,
                     this.config.blockchain.hotCacheEmptyDataExpiration,
                 )
                 const cold = this.preCache(
-                    this.ensureDatabases(config.cold, `${logKey}_cold`, false),
+                    this.ensureDatabases(config.cold, `${logKey}_cold`),
                     config.cache,
                     logKey,
                 )
@@ -193,26 +189,13 @@ export class DataProviderFactory {
     ensureDatabases(
         config: string[],
         logKey: string,
-        sharded: boolean,
     ): QDataProvider | undefined {
         return this.ensureProvider(
             config,
             () => {
                 const providers: QDataProvider[] = []
-                const shardingDepth =
-                    sharded && config.length > 0 ? Math.log2(config.length) : 0
-                if (shardingDepth % 1 !== 0) {
-                    throw new Error(
-                        "Invalid sharding configuration: the count of databases should be a power of 2",
-                    )
-                }
-
                 config.forEach((x, i) => {
-                    const provider = this.ensureDatabase(
-                        x,
-                        `${logKey}_${i}`,
-                        shardingDepth,
-                    )
+                    const provider = this.ensureDatabase(x, `${logKey}_${i}`)
                     if (
                         provider !== undefined &&
                         !providers.includes(provider)
@@ -227,15 +210,11 @@ export class DataProviderFactory {
                     ? providers[0]
                     : new QDataCombiner(providers)
             },
-            sharded.toString(),
+            "false",
         )
     }
 
-    ensureDatabase(
-        config: string,
-        logKey: string,
-        shardingDepth: number,
-    ): QDataProvider | undefined {
+    ensureDatabase(config: string, logKey: string): QDataProvider | undefined {
         return this.ensureProvider(
             config,
             () => {
@@ -243,21 +222,15 @@ export class DataProviderFactory {
                     return undefined
                 }
                 const databaseConfig = parseArangoConfig(config)
-                const shard =
-                    shardingDepth > 0
-                        ? databaseConfig.name.slice(-shardingDepth)
-                        : ""
-                const qShard = this.databasePool.ensureShard(
-                    databaseConfig,
-                    shard,
-                )
-                return new QShardDatabaseProvider(
+                const connection =
+                    this.databasePool.ensureConnection(databaseConfig)
+                return new QDatabaseProvider(
                     this.logs.create(logKey),
-                    qShard,
+                    connection,
                     this.config.subscriptionsMode === SubscriptionsMode.Arango,
                 )
             },
-            shardingDepth.toString(),
+            "false",
         )
     }
 

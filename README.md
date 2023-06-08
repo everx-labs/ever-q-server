@@ -511,47 +511,6 @@ QServer can reload config file without an actual restart by handling `SIGHUP` si
 
 Required at least one of `--config` or `env Q_CONFIG` to be set at server start
 
-### Sharding configuration
-
-**CAUTION**: sharding is experimental and is likely to change.
-
-In the current state of code only Q_ACCOUNTS, Q_BLOCKS_HOT, Q_TRANSACTIONS_HOT databases and their "SLOW_QUERIES" counterparts could be sharded. For these six types of databases:
-1. Sharding depth is determined as log2 of databases count.
-2. If sharding depth is not an integer, the error is thrown (so there should be 1, 2, 4, 8, ... databases).
-3. For every database the shard name is determined as last sharding depth symbols of database name. So for 8 databases case the database with name "blockchain-101" will have shard name "101".
-
-- Accounts are considered sharded by workchain id: -1 and 0 resides in 0 shard ("000" for the case with 8 databases), 1 - in 1 ("001"), etc. So there should be at least as many account databases as there are workchains.
-- Transactions and messages are considered to be sharded by the first bits by account hash ("-1:ac..." -> "ac" -> "10101011..." -> "1010" for the case with 16 databases).
-- Blocks are considered to be sharded by the first bits of block id.
-
-### Example configuration with a sharded database
-
-```bash
-export Q_BLOCKS_HOT=
-export Q_BLOCKS_HOT="http://arango-3.example.com:8529?maxSockets=10&name=blockchain-hot-011,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-0.example.com:8529?maxSockets=10&name=blockchain-hot-000,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-1.example.com:8529?maxSockets=10&name=blockchain-hot-001,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-5.example.com:8529?maxSockets=10&name=blockchain-hot-101,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-2.example.com:8529?maxSockets=10&name=blockchain-hot-010,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-4.example.com:8529?maxSockets=10&name=blockchain-hot-100,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-6.example.com:8529?maxSockets=10&name=blockchain-hot-110,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-7.example.com:8529?maxSockets=10&name=blockchain-hot-111,${Q_BLOCKS_HOT}"
-
-export Q_TRANSACTIONS_HOT=${Q_BLOCKS_HOT}
-export Q_ACCOUNTS=${Q_BLOCKS_HOT}
-export Q_ZEROSTATE="http://arango-0.example.com:8529?maxSockets=10&name=blockchain-hot-000"
-
-export Q_REQUESTS_MODE=kafka
-export Q_REQUESTS_TOPIC=requests
-export Q_REQUESTS_SERVER="kafka.example.com:9092"
-
-export Q_JAEGER_ENDPOINT="http://jaeger.example.com:14268/api/traces"
-export Q_TRACE_SERVICE=q-server
-export Q_TRACE_TAGS=network=rustnet
-
-export Q_STATSD_SERVER="statsd.example.com:9125"
-```
-
 ### Run q-server in docker for development
 If you want to run q-server in docker do the following:
 1. Compile source files

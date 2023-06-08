@@ -130,7 +130,6 @@ test("OR conversions", () => {
                 ],
             },
             selectionInfo("src dst"),
-            0,
         )?.text ?? "",
     )
 
@@ -166,7 +165,6 @@ test("OR conversions", () => {
                 ],
             },
             selectionInfo("src dst"),
-            0,
         )?.text ?? "",
     )
 
@@ -180,126 +178,6 @@ test("OR conversions", () => {
             RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
             ,
             FOR doc IN messages
-            FILTER doc.dst == @v2
-            SORT doc.created_at
-            LIMIT 50
-            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
-        )
-        SORT doc.created_at
-        LIMIT 50
-        RETURN doc
-    `),
-    )
-})
-
-test("messages_complement are used for shardingDegree > 0", () => {
-    const data = createLocalArangoTestData(new QLogs())
-    const withOr = normalized(
-        QCollectionQuery.create(
-            {
-                ...data.filterConfig,
-                orConversion: FilterOrConversion.OR_OPERATOR,
-            },
-            { expectedAccountBocVersion: 1 },
-            data.messages.name,
-            data.messages.docType,
-            {
-                filter: {
-                    src: {
-                        eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
-                    },
-                    OR: {
-                        dst: {
-                            eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
-                        },
-                    },
-                },
-                orderBy: [
-                    {
-                        path: "created_at",
-                        direction: "ASC",
-                    },
-                ],
-            },
-            selectionInfo("src dst"),
-            1,
-        )?.text ?? "",
-    )
-
-    expect(withOr).toEqual(
-        normalized(`
-        FOR doc IN UNION_DISTINCT(
-            FOR doc IN messages
-            FILTER (doc.src == @v1) OR (doc.dst == @v2)
-            SORT doc.created_at
-            LIMIT 50
-            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at } ,
-
-            FOR doc IN messages_complement
-            FILTER (doc.src == @v1) OR (doc.dst == @v2)
-            SORT doc.created_at
-            LIMIT 50
-            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
-        )
-        SORT doc.created_at
-        LIMIT 50 RETURN doc
-    `),
-    )
-
-    const withSubQueries = normalized(
-        QCollectionQuery.create(
-            {
-                ...data.filterConfig,
-                orConversion: FilterOrConversion.SUB_QUERIES,
-            },
-            { expectedAccountBocVersion: 1 },
-            data.messages.name,
-            data.messages.docType,
-            {
-                filter: {
-                    src: {
-                        eq: "8:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
-                    },
-                    OR: {
-                        dst: {
-                            eq: "-1:3ffe3593e6098203fd3c061278417770287213bfadd22f448ece73ad0a567d5d",
-                        },
-                    },
-                },
-                orderBy: [
-                    {
-                        path: "created_at",
-                        direction: "ASC",
-                    },
-                ],
-            },
-            selectionInfo("src dst"),
-            1,
-        )?.text ?? "",
-    )
-
-    expect(withSubQueries).toEqual(
-        normalized(`
-        FOR doc IN UNION_DISTINCT(
-            FOR doc IN messages
-            FILTER doc.src == @v1
-            SORT doc.created_at
-            LIMIT 50
-            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
-            ,
-            FOR doc IN messages_complement
-            FILTER doc.src == @v1
-            SORT doc.created_at
-            LIMIT 50
-            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
-            ,
-            FOR doc IN messages
-            FILTER doc.dst == @v2
-            SORT doc.created_at
-            LIMIT 50
-            RETURN { _key: doc._key, src: doc.src, dst: doc.dst, created_at: doc.created_at }
-            ,
-            FOR doc IN messages_complement
             FILTER doc.dst == @v2
             SORT doc.created_at
             LIMIT 50
@@ -371,8 +249,7 @@ test("reduced RETURN", () => {
         normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
-            in_msg: doc.in_msg,
-            account_addr: doc.account_addr
+            in_msg: doc.in_msg
         }
     `),
     )
@@ -381,8 +258,7 @@ test("reduced RETURN", () => {
         normalized(`
         FOR doc IN transactions LIMIT 50 RETURN {
             _key: doc._key,
-            out_msgs: doc.out_msgs,
-            account_addr: doc.account_addr
+            out_msgs: doc.out_msgs
         }
     `),
     )
@@ -461,7 +337,7 @@ test("Include join precondition fields", () => {
         ]),
     )
     expect(e[0].expression).toEqual(
-        "( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type, dst: doc.message.dst } )",
+        "( doc.message && { _key: doc.message._key, msg_type: doc.message.msg_type } )",
     )
 })
 
