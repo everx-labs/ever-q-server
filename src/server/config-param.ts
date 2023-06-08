@@ -80,6 +80,17 @@ type BlockchainParams = {
     zerostate: ConfigParam<string>
 }
 
+type BocResolverParams = {
+    s3: {
+        endpoint: ConfigParam<string>
+        region: ConfigParam<string>
+        bucket: ConfigParam<string>
+        accessKey: ConfigParam<string>
+        secretKey: ConfigParam<string>
+    }
+    pattern: ConfigParam<string>
+}
+
 export class ConfigParam<T extends ConfigValue> {
     optionName: string
     env: string
@@ -260,25 +271,46 @@ export class ConfigParam<T extends ConfigValue> {
         )
     }
 
+    static bocResolver(
+        prefix: string,
+        descriptionPrefix?: string,
+    ): BocResolverParams {
+        const opt = (option: string, descr: string, def = "") =>
+            ConfigParam.string(
+                prefixedOption(prefix, option),
+                def,
+                withPrefix(descriptionPrefix ?? prefix, descr),
+            )
+        return {
+            s3: {
+                endpoint: opt("s3-endpoint", "S3 endpoint"),
+                region: opt("s3-region", "S3 region"),
+                bucket: opt("s3-bucket", "S3 bucket", "everblocks"),
+                accessKey: opt("s3-access-key", "S3 access key"),
+                secretKey: opt("s3-secret-key", "S3 secret key"),
+            },
+            pattern: opt(
+                "pattern",
+                "BOC retrieval url pattern. `{hash} will be replaced with BOC's hash",
+            ),
+        }
+    }
+
     static blockchain(prefix: string): BlockchainParams {
         const zerostatePrefix = withPrefix(prefix, "zerostate")
         return {
             hotCache: ConfigParam.string(
-                `${prefix !== "" ? `${toOption(prefix)}-` : ""}hot-cache`,
+                prefixedOption(prefix, "hot-cache"),
                 "",
                 withPrefix(toPascal(prefix), "hot cache server"),
             ),
             hotCacheExpiration: ConfigParam.integer(
-                `${
-                    prefix !== "" ? `${toOption(prefix)}-` : ""
-                }hot-cache-expiration`,
+                prefixedOption(prefix, "hot-cache-expiration"),
                 10,
                 withPrefix(toPascal(prefix), "hot cache expiration in seconds"),
             ),
             hotCacheEmptyDataExpiration: ConfigParam.integer(
-                `${
-                    prefix !== "" ? `${toOption(prefix)}-` : ""
-                }hot-cache-empty-data-expiration`,
+                prefixedOption(prefix, "hot-cache-empty-data-expiration"),
                 2,
                 withPrefix(
                     toPascal(prefix),
@@ -313,7 +345,8 @@ export class ConfigParam<T extends ConfigValue> {
     }
 
     /**
-     * Converts value specified in program option or environment variable into param type.
+     * Converts value specified in program option or environment variable into
+     * a param type.
      * Returns undefined if value can't be converted.
      */
     parse(value: ConfigValue | undefined | null): ConfigValue | undefined {
@@ -451,4 +484,8 @@ function getIp(): string {
         }
     }
     return ""
+}
+
+function prefixedOption(prefix: string, option: string): string {
+    return `${prefix !== "" ? `${toOption(prefix)}-` : ""}${option}`
 }

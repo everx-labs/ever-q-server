@@ -29,11 +29,12 @@ Option                                          ENV                             
 --port                                          Q_PORT                                          4000                                    Listening port
 --keep-alive                                    Q_KEEP_ALIVE                                    60000                                   GraphQL keep alive ms
 --requests-mode                                 Q_REQUESTS_MODE                                 kafka                                   Requests mode:
+                                                                                                                                        `tcpadnl` – posts external messages to c++ liteserver
                                                                                                                                         `kafka` – writes external messages to kafka topic
                                                                                                                                         `rest` – posts external messages to REST endpoint
-                                                                                                                                        `tcpadnl` – posts external messages to lite-server
-                                                                                                                                        `jrpc` – posts external messages to jrpc endpoint
+                                                                                                                                        `jrpc` – posts external messages to JRPC endpoint
 --requests-server                               Q_REQUESTS_SERVER                               kafka:9092                              Requests server url
+--requests-pubkey                               Q_REQUESTS_PUBKEY                                                                       Liteserver base64 pubkey
 --requests-topic                                Q_REQUESTS_TOPIC                                requests                                Requests topic name
 --requests-max-size                             Q_REQUESTS_MAX_SIZE                             65535                                   Maximum request message size in bytes
 --subscriptions-kafka-server                    Q_SUBSCRIPTIONS_KAFKA_SERVER                    kafka:9092                              Subscriptions server url (for 'external' subscriptions mode)
@@ -99,6 +100,12 @@ Option                                          ENV                             
 --slow-queries-transactions-cache               Q_SLOW_QUERIES_TRANSACTIONS_CACHE                                                       Slow queries transactions and messages cache server
 --slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                                        Slow queries transactions and messages cold databases
 --slow-queries-zerostate                        Q_SLOW_QUERIES_ZEROSTATE                                                                Slow queries zerostate database
+--block-bocs-s3-endpoint                        Q_BLOCK_BOCS_S3_ENDPOINT                                                                block-bocs S3 endpoint
+--block-bocs-s3-region                          Q_BLOCK_BOCS_S3_REGION                                                                  block-bocs S3 region
+--block-bocs-s3-bucket                          Q_BLOCK_BOCS_S3_BUCKET                          everblocks                              block-bocs S3 bucket
+--block-bocs-s3-access-key                      Q_BLOCK_BOCS_S3_ACCESS_KEY                                                              block-bocs S3 access key
+--block-bocs-s3-secret-key                      Q_BLOCK_BOCS_S3_SECRET_KEY                                                              block-bocs S3 secret key
+--block-bocs-pattern                            Q_BLOCK_BOCS_PATTERN                                                                    block-bocs BOC retrieval url pattern. `{hash} will be replaced with BOC's hash
 --data-mut (DEPRECATED)                         Q_DATA_MUT                                      arangodb                                Data mutable db config url
 --data-hot (DEPRECATED)                         Q_DATA_HOT                                      arangodb                                Data hot db config url
 --data-cold (DEPRECATED)                        Q_DATA_COLD                                                                             Data cold db config urls (comma separated)
@@ -109,7 +116,6 @@ Option                                          ENV                             
 --slow-queries-cold (DEPRECATED)                Q_SLOW_QUERIES_COLD                                                                     Slow-queries cold db config urls (comma separated)
 --slow-queries-cache (DEPRECATED)               Q_SLOW_QUERIES_CACHE                                                                    Slow-queries cache config url
 --slow-queries-counterparties (DEPRECATED)      Q_SLOW_QUERIES_COUNTERPARTIES                                                           Slow-queries counterparties db config url
---auth-endpoint                                 Q_AUTH_ENDPOINT                                                                         Auth endpoint
 --jaeger-endpoint                               Q_JAEGER_ENDPOINT                                                                       Jaeger endpoint
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)
@@ -117,7 +123,6 @@ Option                                          ENV                             
 --statsd-tags                                   Q_STATSD_TAGS                                                                           Additional StatsD tags (comma separated name=value pairs)
 --statsd-reset-interval                         Q_STATSD_RESET_INTERVAL                         0                                       Interval between statsd reconnects.
                                                                                                                                         If it is zero – no reconnects.
---mam-access-keys                               Q_MAM_ACCESS_KEYS                                                                       Access keys used to authorize mam endpoint access
 --is-tests                                      Q_IS_TESTS                                      false                                   Determines that q-server runs in unit tests mode.
 --network-name                                  Q_NETWORK_NAME                                  cinet.tonlabs.io                        Define the name of the network q-server is working with
 --cache-key-prefix                              Q_CACHE_KEY_PREFIX                              Q_                                      Prefix string to identify q-server keys in data cache
