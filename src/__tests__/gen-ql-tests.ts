@@ -1,6 +1,7 @@
 import { QParams } from "../server/filter/filters"
 import {
     Account,
+    Block,
     BlockSignatures,
     Message,
     Transaction,
@@ -68,6 +69,22 @@ test("multi query", async () => {
     }
     `)
     expect(data.blocks.length).toBeGreaterThan(0)
+})
+
+test("{in: null} should raise helpful error message", async () => {
+    expect(Block.test({}, "", { id: { in: null } })).toBeFalsy()
+    expect(Block.test({}, "", { id: { notIn: null } })).toBeFalsy()
+    try {
+        await testServerQuery<Blocks>(`
+        query {
+            blocks(filter:{id:{in:null}}) { id }
+        }
+        `)
+    } catch (err) {
+        expect(
+            err.message.startsWith("Cannot read properties of null"),
+        ).toBeFalsy()
+    }
 })
 
 /*
