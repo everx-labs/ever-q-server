@@ -22,7 +22,7 @@ import {
     addressStringFormatBase64,
     addressStringFormatHex,
 } from "@eversdk/core"
-import { QError } from "../utils"
+import { ValidationError } from "apollo-server-errors"
 
 const NOT_IMPLEMENTED = new Error("Not Implemented")
 
@@ -356,7 +356,7 @@ function checkFilterInArg(op: string, path: string, filter: unknown) {
             .slice(1)
             .map(x => (x === "_key" ? "id" : x))
             .join(".")
-        throw QError.invalidQuery(
+        throw new ValidationError(
             `Invalid filter value \`${field}: { ${op}: ${JSON.stringify(
                 filter,
             )} }\`: array of values is expected.`,
