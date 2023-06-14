@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 - Removed a database sharding.
 
+- Added helpful error messages in case of invalid `in` and `notIn` filter `{in: null}`.
+
 ## [0.58.0] - 2023-06-07
 
 ### New
