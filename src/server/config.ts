@@ -379,6 +379,7 @@ export type QArangoConfig = {
     auth: string
     maxSockets: number
     listenerRestartTimeout: number
+    resultCacheTTL: number
 }
 
 export type QMemCachedConfig = {
@@ -386,6 +387,7 @@ export type QMemCachedConfig = {
 }
 
 const DEFAULT_LISTENER_RESTART_TIMEOUT = 1000
+const DEFAULT_RESULT_CACHE_TTL = 0
 const DEFAULT_ARANGO_MAX_SOCKETS = 100
 const DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS = 3
 
@@ -461,6 +463,9 @@ export function parseArangoConfig(config: string): QArangoConfig {
         listenerRestartTimeout:
             Number.parseInt(param("listenerRestartTimeout")) ||
             DEFAULT_LISTENER_RESTART_TIMEOUT,
+        resultCacheTTL:
+            Number.parseInt(param("resultCacheTTL")) ||
+            DEFAULT_RESULT_CACHE_TTL,
     }
 }
 

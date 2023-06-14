@@ -37,6 +37,7 @@ describe("Fingerprint", () => {
             auth: "mock",
             maxSockets: 0,
             listenerRestartTimeout: 0,
+            resultCacheTTL: 0,
         }
         provider = new QDatabaseProvider(
             logs.create("arango"),
