@@ -27,6 +27,7 @@ export class QDatabaseProvider implements QDataProvider {
     listener: ArangoChair | null
     listenerSubscribers: EventEmitter
     listenerSubscribersCount: number
+    private activeQueries = new Map<string, Promise<QDoc[]>>()
 
     constructor(
         public log: QLog,
@@ -70,7 +71,7 @@ export class QDatabaseProvider implements QDataProvider {
     }
 
     /**
-     * Returns object with collection names in keys and collection size in values.
+     * Returns an object with collection names in keys and collection size in values.
      */
     async loadFingerprint(): Promise<unknown> {
         const collections: ArangoCollectionDescr[] =
@@ -96,23 +97,41 @@ export class QDatabaseProvider implements QDataProvider {
 
     async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
         const { text, vars, traceSpan, request } = params
-
-        const maxRuntime = params.maxRuntimeInS
-            ? Math.min(
-                  params.maxRuntimeInS,
-                  request.services.config.queries.maxRuntimeInS,
-              )
-            : request.services.config.queries.maxRuntimeInS
-
-        const impl = async (span: QTraceSpan) => {
-            request.requestTags.arangoCalls += 1
-            const cursor = await this.connection.database.query(text, vars, {
-                maxRuntime,
-            })
-            span.logEvent("cursor_obtained")
-            return await cursor.all()
+        const queryKey = `${text}${JSON.stringify(vars)}`
+        const existing = this.activeQueries.get(queryKey)
+        if (existing) {
+            return await existing
         }
-        return traceSpan.traceChildOperation(`arango.query`, impl)
+
+        const activeQueries = this.activeQueries
+        const queryPromise = (async () => {
+            const maxRuntime = params.maxRuntimeInS
+                ? Math.min(
+                      params.maxRuntimeInS,
+                      request.services.config.queries.maxRuntimeInS,
+                  )
+                : request.services.config.queries.maxRuntimeInS
+
+            const impl = async (span: QTraceSpan) => {
+                request.requestTags.arangoCalls += 1
+                const cursor = await this.connection.database.query(
+                    text,
+                    vars,
+                    {
+                        maxRuntime,
+                    },
+                )
+                span.logEvent("cursor_obtained")
+                return await cursor.all()
+            }
+            return traceSpan.traceChildOperation(`arango.query`, impl)
+        })()
+        activeQueries.set(queryKey, queryPromise)
+        try {
+            return await queryPromise
+        } finally {
+            activeQueries.delete(queryKey)
+        }
     }
 
     subscribe(
