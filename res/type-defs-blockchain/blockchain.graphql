@@ -18,7 +18,7 @@ type BlockchainMasterSeqNoRange {
     If no seq_no was found, returns `null`.
     This may happen if there is no corresponding masterchain block yet for
     the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
-    ommiting the right border seq_no for recent data pagination.
+    omitting the right border seq_no for recent data pagination.
     """
     end: Int
 }
@@ -121,6 +121,13 @@ type BlockchainQuery {
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
     ): BlockchainBlocksConnection
 
     """
@@ -157,6 +164,13 @@ type BlockchainQuery {
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
     ): BlockchainBlocksConnection
 
     """
@@ -191,6 +205,13 @@ type BlockchainQuery {
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
     ): BlockchainTransactionsConnection
 }
 
@@ -232,6 +253,13 @@ type BlockchainAccountQuery {
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
     ): BlockchainTransactionsConnection
 
     """
@@ -267,6 +295,13 @@ type BlockchainAccountQuery {
         "This field is mutually exclusive with 'first'"
         last: Int
         before: String,
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
     ): BlockchainMessagesConnection
 }
 
