@@ -249,7 +249,7 @@ type ActiveQuery = {
     drainTime?: number
 }
 
-class ActiveQueries {
+export class ActiveQueries {
     private items = new Map<string, ActiveQuery>()
     private drainTime: number | undefined = undefined
 
@@ -299,12 +299,12 @@ class ActiveQueries {
             return
         }
         // If drain time is set but less than now, do nothing
-        if (this.drainTime && this.drainTime < now) {
+        if (this.drainTime && this.drainTime > now) {
             return
         }
         // Remove all entries with specified drain time and drain time more than now
         for (const [key, entry] of this.items) {
-            if (entry.drainTime && entry.drainTime > now) {
+            if (entry.drainTime && entry.drainTime < now) {
                 this.items.delete(key)
             }
         }
