@@ -16,6 +16,8 @@ All notable changes to this project will be documented in this file.
 
 - Added helpful error messages in case of invalid `in` and `notIn` filter `{in: null}`.
 
+- Database query deduplication.
+
 ## [0.58.0] - 2023-06-07
 
 ### New
