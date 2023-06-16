@@ -27,6 +27,7 @@ export class QDatabaseProvider implements QDataProvider {
     listener: ArangoChair | null
     listenerSubscribers: EventEmitter
     listenerSubscribersCount: number
+    private activeQueries: ActiveQueries
 
     constructor(
         public log: QLog,
@@ -39,6 +40,12 @@ export class QDatabaseProvider implements QDataProvider {
         this.listenerSubscribers = new EventEmitter()
         this.listenerSubscribers.setMaxListeners(0)
         this.listenerSubscribersCount = 0
+        this.activeQueries = new ActiveQueries(
+            this.connection.config.resultCacheTTL &&
+            this.connection.config.resultCacheTTL > 0
+                ? this.connection.config.resultCacheTTL
+                : undefined,
+        )
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -70,7 +77,7 @@ export class QDatabaseProvider implements QDataProvider {
     }
 
     /**
-     * Returns object with collection names in keys and collection size in values.
+     * Returns an object with collection names in keys and collection size in values.
      */
     async loadFingerprint(): Promise<unknown> {
         const collections: ArangoCollectionDescr[] =
@@ -96,23 +103,29 @@ export class QDatabaseProvider implements QDataProvider {
 
     async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
         const { text, vars, traceSpan, request } = params
+        const queryKey = `${text}${JSON.stringify(vars)}`
+        return await this.activeQueries.query(queryKey, async () => {
+            const maxRuntime = params.maxRuntimeInS
+                ? Math.min(
+                      params.maxRuntimeInS,
+                      request.services.config.queries.maxRuntimeInS,
+                  )
+                : request.services.config.queries.maxRuntimeInS
 
-        const maxRuntime = params.maxRuntimeInS
-            ? Math.min(
-                  params.maxRuntimeInS,
-                  request.services.config.queries.maxRuntimeInS,
-              )
-            : request.services.config.queries.maxRuntimeInS
-
-        const impl = async (span: QTraceSpan) => {
-            request.requestTags.arangoCalls += 1
-            const cursor = await this.connection.database.query(text, vars, {
-                maxRuntime,
-            })
-            span.logEvent("cursor_obtained")
-            return await cursor.all()
-        }
-        return traceSpan.traceChildOperation(`arango.query`, impl)
+            const impl = async (span: QTraceSpan) => {
+                request.requestTags.arangoCalls += 1
+                const cursor = await this.connection.database.query(
+                    text,
+                    vars,
+                    {
+                        maxRuntime,
+                    },
+                )
+                span.logEvent("cursor_obtained")
+                return await cursor.all()
+            }
+            return traceSpan.traceChildOperation(`arango.query`, impl)
+        })
     }
 
     subscribe(
@@ -227,5 +240,75 @@ export class QDatabaseProvider implements QDataProvider {
         if (this.listenerSubscribers) {
             this.listenerSubscribers.emit(collection, doc, event)
         }
+    }
+}
+
+type ActiveQuery = {
+    resultPromise: Promise<QDoc[]>
+    // Drain time
+    drainTime?: number
+}
+
+export class ActiveQueries {
+    private items = new Map<string, ActiveQuery>()
+    private drainTime: number | undefined = undefined
+
+    constructor(private resultTTL?: number) {}
+
+    async query(
+        queryKey: string,
+        startQuery: () => Promise<QDoc[]>,
+    ): Promise<QDoc[]> {
+        const now = Date.now()
+
+        this.drainIfRequired(now)
+
+        // If we already have an active promise, wait for the result and returns it
+        const existing = this.items.get(queryKey)
+        if (existing) {
+            return await existing.resultPromise
+        }
+
+        // Otherwise, create the new active query and store it
+        const activeQuery: ActiveQuery = {
+            resultPromise: startQuery(),
+        }
+        this.items.set(queryKey, activeQuery)
+
+        try {
+            // Try to fetch results
+            const result = await activeQuery.resultPromise
+            if (this.resultTTL) {
+                // If result caching is enabled, set result's drain time
+                activeQuery.drainTime = now + this.resultTTL
+            } else {
+                // If result caching is disabled, just remove this query
+                this.items.delete(queryKey)
+            }
+            return result
+        } catch (err) {
+            // If result fetching failed, remove an active query
+            this.items.delete(queryKey)
+            throw err
+        }
+    }
+
+    private drainIfRequired(now: number) {
+        // If result caching is disabled do nothing
+        if (!this.resultTTL) {
+            return
+        }
+        // If drain time is set but less than now, do nothing
+        if (this.drainTime && this.drainTime > now) {
+            return
+        }
+        // Remove all entries with specified drain time and drain time more than now
+        for (const [key, entry] of this.items) {
+            if (entry.drainTime && entry.drainTime < now) {
+                this.items.delete(key)
+            }
+        }
+        // Plan next drain time
+        this.drainTime = now + this.resultTTL
     }
 }

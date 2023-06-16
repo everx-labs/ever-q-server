@@ -227,28 +227,39 @@ enum FilterOrConversion {
 }
 ```
 
-Command line parameters and ENV variables with "databases" at the end of desciption accept comma-separated list of database urls (described below). E.g.:
+Command line parameters and ENV variables with "databases"
+at the end of description accept comma-separated list of database urls
+(described below).
+E.g.:
 ```text
 Q_ACCOUNTS: accounts_db_url
 Q_BLOCKS_HOT: blocks_00_url,blocks_01_url,blocks_10_url,blocks_11_url
 ```
 
 Zerostate database defaults to the first database in hot blocks databases.
-Db config must be specified in form of URL:
+Db config must be specified in the form of URL:
 
 ```text
-    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=1000]]`
+    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=1000][&resultCacheTTL=0]]`
 ```
 
-Default values:
+Parameters:
 
-- protocol is `https://`;
-- auth is empty (it is means no auth);
-- port is `8529`;
-- path is empty;
-- name is `blockchain`;
-- maxSockets is `100` for fast queries and `3` for slow queries.
-- listenerRestartTimeout is `1000`.
+- `protocol` default value is `https://`;
+- `auth` default is empty (it is means no auth);
+- `port` default is `8529`;
+- `path` default is empty;
+- `name` default is `blockchain`;
+- `maxSockets` is a maximum simultaneous connection to the arango database.
+  Default is `100` for fast queries and `3` for slow queries.
+- `listenerRestartTimeout` when Arango WAL listener has encountered a connection problem,
+  it retries using this timeout.
+  Measured in milliseconds.
+  Default is `1000`.
+- `resultCacheTTL` enables cache of the arango query results.
+  Measured in milliseconds.
+  `0` disables caching.
+  Default is `0`.
 
 ## Run
 
