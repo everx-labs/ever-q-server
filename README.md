@@ -22,6 +22,7 @@ npm install
 You can configure Q Server with command line parameters and/or ENV variables:
 
 ```text
+/usr/local/bin/node /Volumes/vlasovx5/Users/michaelvlasov/dev/everx/ton-q-server/dist/maintanance/doc-options/index.js
 Option                                          ENV                                             Default                                 Description
 ----------------------------------------------  ----------------------------------------------  --------------------------------------  --------------------------------------------------------------------------------------
 --config                                        Q_CONFIG                                                                                Path to JSON configuration file
@@ -76,6 +77,8 @@ Option                                          ENV                             
                                                                                                                                         `disabled` - disable subscriptions
                                                                                                                                         `arango` - subscribe to ArangoDB WAL for changes
                                                                                                                                         `external` - use external services to handle subscriptions
+--hot                                           Q_HOT                                                                                   Default hot databases
+--archive                                       Q_ARCHIVE                                                                               Default archive databases
 --hot-cache                                     Q_HOT_CACHE                                                                             hot cache server
 --hot-cache-expiration                          Q_HOT_CACHE_EXPIRATION                          10                                      hot cache expiration in seconds
 --hot-cache-empty-data-expiration               Q_HOT_CACHE_EMPTY_DATA_EXPIRATION               2                                       hot cache empty entries expiration in seconds
@@ -83,8 +86,10 @@ Option                                          ENV                             
 --blocks-hot                                    Q_BLOCKS_HOT                                                                            Blocks hot databases
 --blocks-cache                                  Q_BLOCKS_CACHE                                                                          Blocks cache server
 --blocks-cold                                   Q_BLOCKS_COLD                                                                           Blocks cold databases
+--blocks-cold                                   Q_BLOCKS_COLD                                                                           Blocks cold databases
 --transactions-hot                              Q_TRANSACTIONS_HOT                                                                      Transactions and messages hot databases
 --transactions-cache                            Q_TRANSACTIONS_CACHE                                                                    Transactions and messages cache server
+--transactions-cold                             Q_TRANSACTIONS_COLD                                                                     Transactions and messages cold databases
 --transactions-cold                             Q_TRANSACTIONS_COLD                                                                     Transactions and messages cold databases
 --zerostate                                     Q_ZEROSTATE                                                                             Zerostate database
 --counterparties                                Q_COUNTERPARTIES                                                                        Counterparties databases
@@ -96,8 +101,10 @@ Option                                          ENV                             
 --slow-queries-blocks-hot                       Q_SLOW_QUERIES_BLOCKS_HOT                                                               Slow queries blocks hot databases
 --slow-queries-blocks-cache                     Q_SLOW_QUERIES_BLOCKS_CACHE                                                             Slow queries blocks cache server
 --slow-queries-blocks-cold                      Q_SLOW_QUERIES_BLOCKS_COLD                                                              Slow queries blocks cold databases
+--slow-queries-blocks-cold                      Q_SLOW_QUERIES_BLOCKS_COLD                                                              Slow queries blocks cold databases
 --slow-queries-transactions-hot                 Q_SLOW_QUERIES_TRANSACTIONS_HOT                                                         Slow queries transactions and messages hot databases
 --slow-queries-transactions-cache               Q_SLOW_QUERIES_TRANSACTIONS_CACHE                                                       Slow queries transactions and messages cache server
+--slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                                        Slow queries transactions and messages cold databases
 --slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                                        Slow queries transactions and messages cold databases
 --slow-queries-zerostate                        Q_SLOW_QUERIES_ZEROSTATE                                                                Slow queries zerostate database
 --block-bocs-s3-endpoint                        Q_BLOCK_BOCS_S3_ENDPOINT                                                                block-bocs S3 endpoint
@@ -106,16 +113,6 @@ Option                                          ENV                             
 --block-bocs-s3-access-key                      Q_BLOCK_BOCS_S3_ACCESS_KEY                                                              block-bocs S3 access key
 --block-bocs-s3-secret-key                      Q_BLOCK_BOCS_S3_SECRET_KEY                                                              block-bocs S3 secret key
 --block-bocs-pattern                            Q_BLOCK_BOCS_PATTERN                                                                    block-bocs BOC retrieval url pattern. `{hash} will be replaced with BOC's hash
---data-mut (DEPRECATED)                         Q_DATA_MUT                                      arangodb                                Data mutable db config url
---data-hot (DEPRECATED)                         Q_DATA_HOT                                      arangodb                                Data hot db config url
---data-cold (DEPRECATED)                        Q_DATA_COLD                                                                             Data cold db config urls (comma separated)
---data-cache (DEPRECATED)                       Q_DATA_CACHE                                                                            Data cache config url
---data-counterparties (DEPRECATED)              Q_DATA_COUNTERPARTIES                                                                   Data counterparties db config url
---slow-queries-mut (DEPRECATED)                 Q_SLOW_QUERIES_MUT                              arangodb                                Slow-queries mutable db config url
---slow-queries-hot (DEPRECATED)                 Q_SLOW_QUERIES_HOT                              arangodb                                Slow-queries hot db config url
---slow-queries-cold (DEPRECATED)                Q_SLOW_QUERIES_COLD                                                                     Slow-queries cold db config urls (comma separated)
---slow-queries-cache (DEPRECATED)               Q_SLOW_QUERIES_CACHE                                                                    Slow-queries cache config url
---slow-queries-counterparties (DEPRECATED)      Q_SLOW_QUERIES_COUNTERPARTIES                                                           Slow-queries counterparties db config url
 --jaeger-endpoint                               Q_JAEGER_ENDPOINT                                                                       Jaeger endpoint
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)

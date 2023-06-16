@@ -33,11 +33,12 @@ import type { QBlockchainDataProvider, QDataProviders } from "./data/data"
 import {
     parseArangoConfig,
     QBlockchainDataConfig,
-    QHotColdDataConfig,
+    QDataProviderConfig,
     STATS,
     SubscriptionsMode,
 } from "./config"
 import {
+    QArchiveCombiner,
     QDatabasePool,
     QDataCombiner,
     QDataPrecachedCombiner,
@@ -121,8 +122,11 @@ export class DataProviderFactory {
                       config.accounts,
                       `${logKey}_accounts`,
                   ),
-                  blocks: this.ensureHotCold(config.blocks, `${logKey}_blocks`),
-                  transactions: this.ensureHotCold(
+                  blocks: this.ensureDataProvider(
+                      config.blocks,
+                      `${logKey}_blocks`,
+                  ),
+                  transactions: this.ensureDataProvider(
                       config.transactions,
                       `${logKey}_transactions`,
                   ),
@@ -158,8 +162,8 @@ export class DataProviderFactory {
         )
     }
 
-    ensureHotCold(
-        config: QHotColdDataConfig,
+    ensureDataProvider(
+        config: QDataProviderConfig,
         logKey: string,
     ): QDataProvider | undefined {
         return this.ensureProvider(
@@ -177,10 +181,20 @@ export class DataProviderFactory {
                     config.cache,
                     logKey,
                 )
-                if (hot !== undefined && cold !== undefined) {
-                    return new QDataCombiner([hot, cold])
+                let provider =
+                    hot !== undefined && cold !== undefined
+                        ? new QDataCombiner([hot, cold])
+                        : hot ?? cold
+                if (provider) {
+                    const archive = this.ensureDatabases(
+                        config.archive,
+                        `${logKey}_archive`,
+                    )
+                    if (archive) {
+                        provider = new QArchiveCombiner(archive, provider)
+                    }
                 }
-                return hot ?? cold
+                return provider
             },
             "hot-cold",
         )

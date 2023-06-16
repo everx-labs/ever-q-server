@@ -147,6 +147,7 @@ export async function resolve_key_blocks(
             ],
             request: context,
             traceSpan,
+            archive: args.archive ?? undefined,
         },
     )) as BlockchainBlock[]
 
@@ -221,6 +222,7 @@ export async function resolve_blockchain_blocks(
             ],
             request: context,
             traceSpan,
+            archive: args.archive ?? undefined,
         },
     )) as BlockchainBlock[]
 

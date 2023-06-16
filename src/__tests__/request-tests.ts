@@ -89,9 +89,6 @@ test.each([true, false])(
                         in_message {
                             id
                         }
-                        block {
-                            id
-                        }
                         tr_type_name
                     }
                 }

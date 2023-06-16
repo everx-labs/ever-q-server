@@ -64,10 +64,11 @@ export type ConfigValue =
     | string[]
     | Record<string, string>
 
-type HotColdParams = {
+type DataProviderParams = {
     hot: ConfigParam<string[]>
     cache: ConfigParam<string>
     cold: ConfigParam<string[]>
+    archive: ConfigParam<string[]>
 }
 
 type BlockchainParams = {
@@ -75,8 +76,8 @@ type BlockchainParams = {
     hotCacheExpiration: ConfigParam<number>
     hotCacheEmptyDataExpiration: ConfigParam<number>
     accounts: ConfigParam<string[]>
-    blocks: HotColdParams
-    transactions: HotColdParams
+    blocks: DataProviderParams
+    transactions: DataProviderParams
     zerostate: ConfigParam<string>
 }
 
@@ -189,58 +190,10 @@ export class ConfigParam<T extends ConfigValue> {
         )
     }
 
-    static dataDeprecated(prefix: string): {
-        mut: ConfigParam<string>
-        hot: ConfigParam<string>
-        cold: ConfigParam<string[]>
-        cache: ConfigParam<string>
-        counterparties: ConfigParam<string>
-    } {
-        function dataParam<T extends ConfigValue>(
-            name: string,
-            defaultValue: T,
-            description: string,
-            parser: ValueParser<T>,
-        ) {
-            return new ConfigParam<T>(
-                `${toOption(prefix)}-${name}`,
-                defaultValue,
-                withPrefix(toPascal(prefix), description),
-                parser,
-                true,
-            )
-        }
-
-        return {
-            mut: dataParam(
-                "mut",
-                "arangodb",
-                "mutable db config url",
-                parse.string,
-            ),
-            hot: dataParam(
-                "hot",
-                "arangodb",
-                "hot db config url",
-                parse.string,
-            ),
-            cold: dataParam(
-                "cold",
-                [],
-                "cold db config urls (comma separated)",
-                parse.array,
-            ),
-            cache: dataParam("cache", "", "cache config url", parse.string),
-            counterparties: dataParam(
-                "counterparties",
-                "",
-                "counterparties db config url",
-                parse.string,
-            ),
-        }
-    }
-
-    static hotCold(prefix: string, descriptionPrefix?: string): HotColdParams {
+    static dataProvider(
+        prefix: string,
+        descriptionPrefix?: string,
+    ): DataProviderParams {
         descriptionPrefix ??= prefix
         return {
             hot: ConfigParam.databases(
@@ -253,6 +206,10 @@ export class ConfigParam<T extends ConfigValue> {
                 withPrefix(toPascal(descriptionPrefix), "cache server"),
             ),
             cold: ConfigParam.databases(
+                withPrefix(prefix, "cold"),
+                withPrefix(descriptionPrefix, "cold"),
+            ),
+            archive: ConfigParam.databases(
                 withPrefix(prefix, "cold"),
                 withPrefix(descriptionPrefix, "cold"),
             ),
@@ -318,8 +275,8 @@ export class ConfigParam<T extends ConfigValue> {
                 ),
             ),
             accounts: ConfigParam.databases(withPrefix(prefix, "accounts")),
-            blocks: ConfigParam.hotCold(withPrefix(prefix, "blocks")),
-            transactions: ConfigParam.hotCold(
+            blocks: ConfigParam.dataProvider(withPrefix(prefix, "blocks")),
+            transactions: ConfigParam.dataProvider(
                 withPrefix(prefix, "transactions"),
                 withPrefix(prefix, "transactions and messages"),
             ),
