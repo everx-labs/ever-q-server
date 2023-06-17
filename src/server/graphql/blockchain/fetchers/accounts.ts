@@ -41,7 +41,6 @@ export async function resolve_account(
             orderBy: [],
             request: context,
             traceSpan,
-            // TODO: shard
         },
     )) as BlockchainAccount[]
 

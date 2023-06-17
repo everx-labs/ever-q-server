@@ -2,12 +2,12 @@ import EventEmitter from "events"
 import { ensureProtocol } from "../config"
 import type { QLog } from "../logs"
 import type {
+    QDatabaseConnection,
     QDataEvent,
     QDataProvider,
     QDataProviderQueryParams,
     QDoc,
     QIndexInfo,
-    QShard,
 } from "./data-provider"
 import ArangoChair from "arangochair"
 import { QTraceSpan } from "../tracing"
@@ -21,18 +21,17 @@ type Subscription = {
     listener: (doc: QDoc, event: QDataEvent) => void
 }
 
-export class QShardDatabaseProvider implements QDataProvider {
+export class QDatabaseProvider implements QDataProvider {
     started: boolean
     collectionsForSubscribe: string[]
     listener: ArangoChair | null
     listenerSubscribers: EventEmitter
     listenerSubscribersCount: number
-    shards: QShard[]
-    shardingDegree: number
+    private activeQueries: ActiveQueries
 
     constructor(
         public log: QLog,
-        public shard: QShard,
+        public connection: QDatabaseConnection,
         private useListener: boolean,
     ) {
         this.started = false
@@ -41,8 +40,12 @@ export class QShardDatabaseProvider implements QDataProvider {
         this.listenerSubscribers = new EventEmitter()
         this.listenerSubscribers.setMaxListeners(0)
         this.listenerSubscribersCount = 0
-        this.shards = [shard]
-        this.shardingDegree = shard.shard.length
+        this.activeQueries = new ActiveQueries(
+            this.connection.config.resultCacheTTL &&
+            this.connection.config.resultCacheTTL > 0
+                ? this.connection.config.resultCacheTTL
+                : undefined,
+        )
     }
 
     async start(collectionsForSubscribe: string[]): Promise<void> {
@@ -70,21 +73,21 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
-        return this.shard.database.collection(collection).indexes()
+        return this.connection.database.collection(collection).indexes()
     }
 
     /**
-     * Returns object with collection names in keys and collection size in values.
+     * Returns an object with collection names in keys and collection size in values.
      */
     async loadFingerprint(): Promise<unknown> {
         const collections: ArangoCollectionDescr[] =
-            await this.shard.database.listCollections()
+            await this.connection.database.listCollections()
         const collectionNames = collections.map(descr => descr.name)
         // TODO: add this when required a new version arangojs v7.x.x
         // await Promise.all(collections.map(col => this.arango.collection(col).recalculateCount()));
         const results = await Promise.all(
             collectionNames.map(col =>
-                this.shard.database.collection(col).count(),
+                this.connection.database.collection(col).count(),
             ),
         )
         const fingerprint: { [name: string]: number } = {}
@@ -99,48 +102,30 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     async query(params: QDataProviderQueryParams): Promise<QDoc[]> {
-        const { shards, text, vars, traceSpan, request } = params
+        const { text, vars, traceSpan, request } = params
+        const queryKey = `${text}${JSON.stringify(vars)}`
+        return await this.activeQueries.query(queryKey, async () => {
+            const maxRuntime = params.maxRuntimeInS
+                ? Math.min(
+                      params.maxRuntimeInS,
+                      request.services.config.queries.maxRuntimeInS,
+                  )
+                : request.services.config.queries.maxRuntimeInS
 
-        if (
-            shards &&
-            !shards.has(this.shard.shard) &&
-            this.shard.shard !== "" &&
-            !shards.has("")
-        ) {
-            let shardMatches = false
-            for (const shard of shards ?? []) {
-                if (
-                    this.shard.shard.startsWith(shard) ||
-                    shard.startsWith(this.shard.shard)
-                ) {
-                    shardMatches = true
-                    break
-                }
+            const impl = async (span: QTraceSpan) => {
+                request.requestTags.arangoCalls += 1
+                const cursor = await this.connection.database.query(
+                    text,
+                    vars,
+                    {
+                        maxRuntime,
+                    },
+                )
+                span.logEvent("cursor_obtained")
+                return await cursor.all()
             }
-
-            if (!shardMatches) {
-                return []
-            }
-        }
-        const maxRuntime = params.maxRuntimeInS
-            ? Math.min(
-                  params.maxRuntimeInS,
-                  request.services.config.queries.maxRuntimeInS,
-              )
-            : request.services.config.queries.maxRuntimeInS
-
-        const impl = async (span: QTraceSpan) => {
-            request.requestTags.arangoCalls += 1
-            const cursor = await this.shard.database.query(text, vars, {
-                maxRuntime,
-            })
-            span.logEvent("cursor_obtained")
-            return await cursor.all()
-        }
-        return traceSpan.traceChildOperation(
-            `arango.query.${this.shard.shard}`,
-            impl,
-        )
+            return traceSpan.traceChildOperation(`arango.query`, impl)
+        })
     }
 
     subscribe(
@@ -201,7 +186,7 @@ export class QShardDatabaseProvider implements QDataProvider {
     }
 
     createAndStartListener(): ArangoChair {
-        const { server, name, auth } = this.shard.config
+        const { server, name, auth } = this.connection.config
         const dbUrl = ensureProtocol(server, "http")
         const listenerUrl = `${dbUrl}/${name}`
 
@@ -213,7 +198,7 @@ export class QShardDatabaseProvider implements QDataProvider {
         listener._loggerStatePath = `${pathPrefix}/_db/${name}/_api/replication/logger-state`
         listener._loggerFollowPath = `${pathPrefix}/_db/${name}/_api/replication/logger-follow`
 
-        if (this.shard.config.auth) {
+        if (this.connection.config.auth) {
             const userPassword = Buffer.from(auth).toString("base64")
             listener.req.opts.headers["Authorization"] = `Basic ${userPassword}`
         }
@@ -243,7 +228,7 @@ export class QShardDatabaseProvider implements QDataProvider {
                 this.log.error("FAILED", "LISTEN", `${err}`, error)
                 setTimeout(
                     () => listener.start(),
-                    this.shard.config.listenerRestartTimeout || 1000,
+                    this.connection.config.listenerRestartTimeout || 1000,
                 )
             },
         )
@@ -255,5 +240,75 @@ export class QShardDatabaseProvider implements QDataProvider {
         if (this.listenerSubscribers) {
             this.listenerSubscribers.emit(collection, doc, event)
         }
+    }
+}
+
+type ActiveQuery = {
+    resultPromise: Promise<QDoc[]>
+    // Drain time
+    drainTime?: number
+}
+
+export class ActiveQueries {
+    private items = new Map<string, ActiveQuery>()
+    private drainTime: number | undefined = undefined
+
+    constructor(private resultTTL?: number) {}
+
+    async query(
+        queryKey: string,
+        startQuery: () => Promise<QDoc[]>,
+    ): Promise<QDoc[]> {
+        const now = Date.now()
+
+        this.drainIfRequired(now)
+
+        // If we already have an active promise, wait for the result and returns it
+        const existing = this.items.get(queryKey)
+        if (existing) {
+            return await existing.resultPromise
+        }
+
+        // Otherwise, create the new active query and store it
+        const activeQuery: ActiveQuery = {
+            resultPromise: startQuery(),
+        }
+        this.items.set(queryKey, activeQuery)
+
+        try {
+            // Try to fetch results
+            const result = await activeQuery.resultPromise
+            if (this.resultTTL) {
+                // If result caching is enabled, set result's drain time
+                activeQuery.drainTime = now + this.resultTTL
+            } else {
+                // If result caching is disabled, just remove this query
+                this.items.delete(queryKey)
+            }
+            return result
+        } catch (err) {
+            // If result fetching failed, remove an active query
+            this.items.delete(queryKey)
+            throw err
+        }
+    }
+
+    private drainIfRequired(now: number) {
+        // If result caching is disabled do nothing
+        if (!this.resultTTL) {
+            return
+        }
+        // If drain time is set but less than now, do nothing
+        if (this.drainTime && this.drainTime > now) {
+            return
+        }
+        // Remove all entries with specified drain time and drain time more than now
+        for (const [key, entry] of this.items) {
+            if (entry.drainTime && entry.drainTime < now) {
+                this.items.delete(key)
+            }
+        }
+        // Plan next drain time
+        this.drainTime = now + this.resultTTL
     }
 }

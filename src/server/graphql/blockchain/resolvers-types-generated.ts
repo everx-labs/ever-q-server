@@ -550,6 +550,7 @@ export type BlockchainAccountQueryMessagesArgs = {
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainAccountQueryTransactionsArgs = {
@@ -562,6 +563,7 @@ export type BlockchainAccountQueryTransactionsArgs = {
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 /** Block */
@@ -701,7 +703,7 @@ export type BlockchainMasterSeqNoRange = {
      * If no seq_no was found, returns `null`.
      * This may happen if there is no corresponding masterchain block yet for
      * the specified `time_end` timestamp when `time_end` is close to `now`. We recommend
-     * ommiting the right border seq_no for recent data pagination.
+     * omitting the right border seq_no for recent data pagination.
      */
     end?: Maybe<Scalars["Int"]>
 }
@@ -972,6 +974,7 @@ export type BlockchainQueryKey_BlocksArgs = {
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryBlocksArgs = {
@@ -985,6 +988,7 @@ export type BlockchainQueryBlocksArgs = {
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryTransactionsArgs = {
@@ -997,6 +1001,7 @@ export type BlockchainQueryTransactionsArgs = {
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 /** Transaction */

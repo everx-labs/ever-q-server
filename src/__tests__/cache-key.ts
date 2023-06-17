@@ -6,7 +6,7 @@ import {
     QDataPrecachedCombiner,
 } from "../server/data/data-provider"
 import type { QArangoConfig } from "../server/config"
-import { QShardDatabaseProvider } from "../server/data/shard-database-provider"
+import { QDatabaseProvider } from "../server/data/database-provider"
 import QLogs from "../server/logs"
 import {
     MockCache,
@@ -27,7 +27,7 @@ jest.mock("arangojs", () => ({
 
 describe("Fingerprint", () => {
     const pool = new QDatabasePool()
-    let provider: QShardDatabaseProvider
+    let provider: QDatabaseProvider
 
     beforeEach(async () => {
         const logs = new QLogs()
@@ -37,10 +37,11 @@ describe("Fingerprint", () => {
             auth: "mock",
             maxSockets: 0,
             listenerRestartTimeout: 0,
+            resultCacheTTL: 0,
         }
-        provider = new QShardDatabaseProvider(
+        provider = new QDatabaseProvider(
             logs.create("arango"),
-            pool.ensureShard(config, ""),
+            pool.ensureConnection(config),
             false,
         )
     })
@@ -51,10 +52,10 @@ describe("Fingerprint", () => {
             b: 2,
             c: 1,
         }
-        provider.shard.database.listCollections = jest
+        provider.connection.database.listCollections = jest
             .fn()
             .mockResolvedValue([{ name: "a" }, { name: "b" }, { name: "c" }])
-        ;(provider.shard.database as { collection: unknown }).collection =
+        ;(provider.connection.database as { collection: unknown }).collection =
             jest.fn(x => {
                 return {
                     count: jest.fn(async () => {

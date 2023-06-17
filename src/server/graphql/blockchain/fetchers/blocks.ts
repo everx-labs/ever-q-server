@@ -28,7 +28,6 @@ async function fetch_block(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
     maxJoinDepth = 1,
-    shards?: Set<string>,
 ) {
     const selectionSet = info.fieldNodes[0].selectionSet
     const returnExpression = config.blocks.buildReturnExpression(
@@ -55,7 +54,6 @@ async function fetch_block(
             orderBy: [],
             request: context,
             traceSpan,
-            shards,
         },
     )) as BlockchainBlock[]
 

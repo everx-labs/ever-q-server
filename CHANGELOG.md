@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.59.0] - 2023-06-07
+
+### New
+
+- Added parameter `archive` to blockchain lists fields.
+
+- Added `blockBocs` config parameter allowing to resolve block bocs from external S3
+  compatible storage.
+  See README.md for details.
+
+- Removed a database sharding.
+
+- Added helpful error messages in case of invalid `in` and `notIn` filter `{in: null}`.
+
+- Database query deduplication.
+
 ## [0.58.0] - 2023-06-07
 
 ### New

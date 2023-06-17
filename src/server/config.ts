@@ -61,6 +61,7 @@ export type QConfig = {
     subscriptionsMode: SubscriptionsMode
     blockchain: QBlockchainDataConfig
     counterparties: string[]
+    blockBocs: QBocResolverConfig
     chainRangesVerification: string[]
     ignoreMessagesForLatency: boolean
 
@@ -88,6 +89,20 @@ export type QConfig = {
 export type FilterConfig = {
     orConversion: FilterOrConversion
     stringifyKeyInAqlComparison: boolean
+}
+
+export type QBocResolverConfig = {
+    // S3 compatible service
+    s3?: {
+        endpoint: string
+        region: string
+        bucket: string
+        accessKey?: string
+        secretKey?: string
+    }
+    // Boc pattern replacement:
+    // - `{hash}` will be replaced with boc hash
+    pattern?: string
 }
 
 export type QBlockchainDataConfig = {
@@ -302,7 +317,7 @@ export const configParams = {
     counterparties: ConfigParam.databases("counterparties"),
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
     slowQueriesBlockchain: ConfigParam.blockchain("slow queries"),
-
+    blockBocs: ConfigParam.bocResolver("block-bocs"),
     data: ConfigParam.dataDeprecated("data"),
     slowQueriesData: ConfigParam.dataDeprecated("slow-queries"),
 
@@ -364,6 +379,7 @@ export type QArangoConfig = {
     auth: string
     maxSockets: number
     listenerRestartTimeout: number
+    resultCacheTTL: number
 }
 
 export type QMemCachedConfig = {
@@ -371,6 +387,7 @@ export type QMemCachedConfig = {
 }
 
 const DEFAULT_LISTENER_RESTART_TIMEOUT = 1000
+const DEFAULT_RESULT_CACHE_TTL = 0
 const DEFAULT_ARANGO_MAX_SOCKETS = 100
 const DEFAULT_SLOW_QUERIES_ARANGO_MAX_SOCKETS = 3
 
@@ -446,6 +463,9 @@ export function parseArangoConfig(config: string): QArangoConfig {
         listenerRestartTimeout:
             Number.parseInt(param("listenerRestartTimeout")) ||
             DEFAULT_LISTENER_RESTART_TIMEOUT,
+        resultCacheTTL:
+            Number.parseInt(param("resultCacheTTL")) ||
+            DEFAULT_RESULT_CACHE_TTL,
     }
 }
 

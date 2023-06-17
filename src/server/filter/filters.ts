@@ -22,6 +22,7 @@ import {
     addressStringFormatBase64,
     addressStringFormatHex,
 } from "@eversdk/core"
+import { ValidationError } from "apollo-server-errors"
 
 const NOT_IMPLEMENTED = new Error("Not Implemented")
 
@@ -348,7 +349,23 @@ function combineFilterConditions(
     return "(" + conditions.join(`) ${op} (`) + ")"
 }
 
+function checkFilterInArg(op: string, path: string, filter: unknown) {
+    if (!Array.isArray(filter)) {
+        const field = path
+            .split(".")
+            .slice(1)
+            .map(x => (x === "_key" ? "id" : x))
+            .join(".")
+        throw new ValidationError(
+            `Invalid filter value \`${field}: { ${op}: ${JSON.stringify(
+                filter,
+            )} }\`: array of values is expected.`,
+        )
+    }
+}
+
 function filterConditionForIn(
+    op: string,
     params: QParams,
     path: string,
     filter: unknown[],
@@ -357,9 +374,13 @@ function filterConditionForIn(
     if (params.skipValueConversion && !Array.isArray(filter)) {
         return filterConditionOp(params, path, "==", null, explainOp)
     }
+
+    checkFilterInArg(op, path, filter)
+
     if (filter.length === 0) {
         return "FALSE"
     }
+
     const conditions = filter.map(value =>
         filterConditionOp(
             params,
@@ -453,6 +474,7 @@ const scalarGe: QType = {
 const scalarIn: QType = {
     filterCondition(params, path, filter) {
         return filterConditionForIn(
+            "in",
             params,
             path,
             filter as unknown as unknown[],
@@ -469,6 +491,7 @@ const scalarIn: QType = {
 const scalarNotIn: QType = {
     filterCondition(params, path, filter) {
         const inCondition = filterConditionForIn(
+            "notIn",
             params,
             path,
             filter as unknown as unknown[],
@@ -503,7 +526,9 @@ export function convertFilterValue(
     if (converter) {
         const conv = converter
         return op === scalarOps.in || op === scalarOps.notIn
-            ? (value as unknown[]).map(x => conv(x))
+            ? Array.isArray(value)
+                ? (value as unknown[]).map(x => conv(x))
+                : value
             : conv(value)
     }
     return value

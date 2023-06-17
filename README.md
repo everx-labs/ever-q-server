@@ -29,11 +29,12 @@ Option                                          ENV                             
 --port                                          Q_PORT                                          4000                                    Listening port
 --keep-alive                                    Q_KEEP_ALIVE                                    60000                                   GraphQL keep alive ms
 --requests-mode                                 Q_REQUESTS_MODE                                 kafka                                   Requests mode:
+                                                                                                                                        `tcpadnl` – posts external messages to c++ liteserver
                                                                                                                                         `kafka` – writes external messages to kafka topic
                                                                                                                                         `rest` – posts external messages to REST endpoint
-                                                                                                                                        `tcpadnl` – posts external messages to lite-server
-                                                                                                                                        `jrpc` – posts external messages to jrpc endpoint
+                                                                                                                                        `jrpc` – posts external messages to JRPC endpoint
 --requests-server                               Q_REQUESTS_SERVER                               kafka:9092                              Requests server url
+--requests-pubkey                               Q_REQUESTS_PUBKEY                                                                       Liteserver base64 pubkey
 --requests-topic                                Q_REQUESTS_TOPIC                                requests                                Requests topic name
 --requests-max-size                             Q_REQUESTS_MAX_SIZE                             65535                                   Maximum request message size in bytes
 --subscriptions-kafka-server                    Q_SUBSCRIPTIONS_KAFKA_SERVER                    kafka:9092                              Subscriptions server url (for 'external' subscriptions mode)
@@ -99,6 +100,12 @@ Option                                          ENV                             
 --slow-queries-transactions-cache               Q_SLOW_QUERIES_TRANSACTIONS_CACHE                                                       Slow queries transactions and messages cache server
 --slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                                        Slow queries transactions and messages cold databases
 --slow-queries-zerostate                        Q_SLOW_QUERIES_ZEROSTATE                                                                Slow queries zerostate database
+--block-bocs-s3-endpoint                        Q_BLOCK_BOCS_S3_ENDPOINT                                                                block-bocs S3 endpoint
+--block-bocs-s3-region                          Q_BLOCK_BOCS_S3_REGION                                                                  block-bocs S3 region
+--block-bocs-s3-bucket                          Q_BLOCK_BOCS_S3_BUCKET                          everblocks                              block-bocs S3 bucket
+--block-bocs-s3-access-key                      Q_BLOCK_BOCS_S3_ACCESS_KEY                                                              block-bocs S3 access key
+--block-bocs-s3-secret-key                      Q_BLOCK_BOCS_S3_SECRET_KEY                                                              block-bocs S3 secret key
+--block-bocs-pattern                            Q_BLOCK_BOCS_PATTERN                                                                    block-bocs BOC retrieval url pattern. `{hash} will be replaced with BOC's hash
 --data-mut (DEPRECATED)                         Q_DATA_MUT                                      arangodb                                Data mutable db config url
 --data-hot (DEPRECATED)                         Q_DATA_HOT                                      arangodb                                Data hot db config url
 --data-cold (DEPRECATED)                        Q_DATA_COLD                                                                             Data cold db config urls (comma separated)
@@ -109,7 +116,6 @@ Option                                          ENV                             
 --slow-queries-cold (DEPRECATED)                Q_SLOW_QUERIES_COLD                                                                     Slow-queries cold db config urls (comma separated)
 --slow-queries-cache (DEPRECATED)               Q_SLOW_QUERIES_CACHE                                                                    Slow-queries cache config url
 --slow-queries-counterparties (DEPRECATED)      Q_SLOW_QUERIES_COUNTERPARTIES                                                           Slow-queries counterparties db config url
---auth-endpoint                                 Q_AUTH_ENDPOINT                                                                         Auth endpoint
 --jaeger-endpoint                               Q_JAEGER_ENDPOINT                                                                       Jaeger endpoint
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)
@@ -117,7 +123,6 @@ Option                                          ENV                             
 --statsd-tags                                   Q_STATSD_TAGS                                                                           Additional StatsD tags (comma separated name=value pairs)
 --statsd-reset-interval                         Q_STATSD_RESET_INTERVAL                         0                                       Interval between statsd reconnects.
                                                                                                                                         If it is zero – no reconnects.
---mam-access-keys                               Q_MAM_ACCESS_KEYS                                                                       Access keys used to authorize mam endpoint access
 --is-tests                                      Q_IS_TESTS                                      false                                   Determines that q-server runs in unit tests mode.
 --network-name                                  Q_NETWORK_NAME                                  cinet.tonlabs.io                        Define the name of the network q-server is working with
 --cache-key-prefix                              Q_CACHE_KEY_PREFIX                              Q_                                      Prefix string to identify q-server keys in data cache
@@ -225,28 +230,39 @@ enum FilterOrConversion {
 }
 ```
 
-Command line parameters and ENV variables with "databases" at the end of desciption accept comma-separated list of database urls (described below). E.g.:
+Command line parameters and ENV variables with "databases"
+at the end of description accept comma-separated list of database urls
+(described below).
+E.g.:
 ```text
 Q_ACCOUNTS: accounts_db_url
 Q_BLOCKS_HOT: blocks_00_url,blocks_01_url,blocks_10_url,blocks_11_url
 ```
 
 Zerostate database defaults to the first database in hot blocks databases.
-Db config must be specified in form of URL:
+Db config must be specified in the form of URL:
 
 ```text
-    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=1000]]`
+    `[https://][user:password@]host[:8529][/path][?[name=blockchain][&maxSockets=100][&listenerRestartTimeout=1000][&resultCacheTTL=0]]`
 ```
 
-Default values:
+Parameters:
 
-- protocol is `https://`;
-- auth is empty (it is means no auth);
-- port is `8529`;
-- path is empty;
-- name is `blockchain`;
-- maxSockets is `100` for fast queries and `3` for slow queries.
-- listenerRestartTimeout is `1000`.
+- `protocol` default value is `https://`;
+- `auth` default is empty (it is means no auth);
+- `port` default is `8529`;
+- `path` default is empty;
+- `name` default is `blockchain`;
+- `maxSockets` is a maximum simultaneous connection to the arango database.
+  Default is `100` for fast queries and `3` for slow queries.
+- `listenerRestartTimeout` when Arango WAL listener has encountered a connection problem,
+  it retries using this timeout.
+  Measured in milliseconds.
+  Default is `1000`.
+- `resultCacheTTL` enables cache of the arango query results.
+  Measured in milliseconds.
+  `0` disables caching.
+  Default is `0`.
 
 ## Run
 
@@ -505,47 +521,6 @@ Configuration priority is follows:
 QServer can reload config file without an actual restart by handling `SIGHUP` signal.
 
 Required at least one of `--config` or `env Q_CONFIG` to be set at server start
-
-### Sharding configuration
-
-**CAUTION**: sharding is experimental and is likely to change.
-
-In the current state of code only Q_ACCOUNTS, Q_BLOCKS_HOT, Q_TRANSACTIONS_HOT databases and their "SLOW_QUERIES" counterparts could be sharded. For these six types of databases:
-1. Sharding depth is determined as log2 of databases count.
-2. If sharding depth is not an integer, the error is thrown (so there should be 1, 2, 4, 8, ... databases).
-3. For every database the shard name is determined as last sharding depth symbols of database name. So for 8 databases case the database with name "blockchain-101" will have shard name "101".
-
-- Accounts are considered sharded by workchain id: -1 and 0 resides in 0 shard ("000" for the case with 8 databases), 1 - in 1 ("001"), etc. So there should be at least as many account databases as there are workchains.
-- Transactions and messages are considered to be sharded by the first bits by account hash ("-1:ac..." -> "ac" -> "10101011..." -> "1010" for the case with 16 databases).
-- Blocks are considered to be sharded by the first bits of block id.
-
-### Example configuration with a sharded database
-
-```bash
-export Q_BLOCKS_HOT=
-export Q_BLOCKS_HOT="http://arango-3.example.com:8529?maxSockets=10&name=blockchain-hot-011,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-0.example.com:8529?maxSockets=10&name=blockchain-hot-000,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-1.example.com:8529?maxSockets=10&name=blockchain-hot-001,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-5.example.com:8529?maxSockets=10&name=blockchain-hot-101,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-2.example.com:8529?maxSockets=10&name=blockchain-hot-010,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-4.example.com:8529?maxSockets=10&name=blockchain-hot-100,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-6.example.com:8529?maxSockets=10&name=blockchain-hot-110,${Q_BLOCKS_HOT}"
-export Q_BLOCKS_HOT="http://arango-7.example.com:8529?maxSockets=10&name=blockchain-hot-111,${Q_BLOCKS_HOT}"
-
-export Q_TRANSACTIONS_HOT=${Q_BLOCKS_HOT}
-export Q_ACCOUNTS=${Q_BLOCKS_HOT}
-export Q_ZEROSTATE="http://arango-0.example.com:8529?maxSockets=10&name=blockchain-hot-000"
-
-export Q_REQUESTS_MODE=kafka
-export Q_REQUESTS_TOPIC=requests
-export Q_REQUESTS_SERVER="kafka.example.com:9092"
-
-export Q_JAEGER_ENDPOINT="http://jaeger.example.com:14268/api/traces"
-export Q_TRACE_SERVICE=q-server
-export Q_TRACE_TAGS=network=rustnet
-
-export Q_STATSD_SERVER="statsd.example.com:9125"
-```
 
 ### Run q-server in docker for development
 If you want to run q-server in docker do the following:

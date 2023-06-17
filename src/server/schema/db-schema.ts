@@ -253,14 +253,12 @@ const Message: TypeDef = {
         "id",
         "out_msgs[*]",
         'parent.created_lt !== "00" && parent.msg_type !== 1',
-        "src",
     ),
     dst_transaction: join(
         "Transaction",
         "id",
         "in_msg",
         "parent.msg_type !== 2",
-        "dst",
     ),
     src_account: join("Account", "src", "id", "parent.msg_type !== 1"),
     dst_account: join("Account", "dst", "id", "parent.msg_type !== 2"),
@@ -288,11 +286,9 @@ const Transaction: TypeDef = {
     orig_status: accountStatus(docs.transaction.orig_status),
     end_status: accountStatus(docs.transaction.end_status),
     in_msg: stringWithLowerFilter(docs.transaction.in_msg),
-    in_message: join({ Message }, "in_msg", "id", undefined, "account_addr"),
+    in_message: join({ Message }, "in_msg", "id", undefined),
     out_msgs: arrayOf(stringWithLowerFilter(docs.transaction.out_msgs)),
-    out_messages: arrayOf(
-        join({ Message }, "out_msgs", "id", undefined, "account_addr"),
-    ),
+    out_messages: arrayOf(join({ Message }, "out_msgs", "id", undefined)),
     total_fees: grams(docs.transaction.total_fees),
     total_fees_other: otherCurrencyCollection(
         docs.transaction.total_fees_other,

@@ -56,7 +56,6 @@ export async function resolve_message(
             orderBy: [],
             request: context,
             traceSpan,
-            // TODO: shard
         },
     )) as BlockchainMessage[]
 
@@ -267,7 +266,6 @@ export async function resolve_account_messages(
             distinctBy: "account_chain_order",
             request: context,
             traceSpan,
-            // TODO: shard and complement_messages usage
         },
     )) as (BlockchainMessage & { account_chain_order?: string })[]
 
