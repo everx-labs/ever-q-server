@@ -76,6 +76,8 @@ Option                                          ENV                             
                                                                                                                                         `disabled` - disable subscriptions
                                                                                                                                         `arango` - subscribe to ArangoDB WAL for changes
                                                                                                                                         `external` - use external services to handle subscriptions
+--hot                                           Q_HOT                                                                                   Default hot databases
+--archive                                       Q_ARCHIVE                                                                               Default archive databases
 --hot-cache                                     Q_HOT_CACHE                                                                             hot cache server
 --hot-cache-expiration                          Q_HOT_CACHE_EXPIRATION                          10                                      hot cache expiration in seconds
 --hot-cache-empty-data-expiration               Q_HOT_CACHE_EMPTY_DATA_EXPIRATION               2                                       hot cache empty entries expiration in seconds
@@ -106,16 +108,6 @@ Option                                          ENV                             
 --block-bocs-s3-access-key                      Q_BLOCK_BOCS_S3_ACCESS_KEY                                                              block-bocs S3 access key
 --block-bocs-s3-secret-key                      Q_BLOCK_BOCS_S3_SECRET_KEY                                                              block-bocs S3 secret key
 --block-bocs-pattern                            Q_BLOCK_BOCS_PATTERN                                                                    block-bocs BOC retrieval url pattern. `{hash} will be replaced with BOC's hash
---data-mut (DEPRECATED)                         Q_DATA_MUT                                      arangodb                                Data mutable db config url
---data-hot (DEPRECATED)                         Q_DATA_HOT                                      arangodb                                Data hot db config url
---data-cold (DEPRECATED)                        Q_DATA_COLD                                                                             Data cold db config urls (comma separated)
---data-cache (DEPRECATED)                       Q_DATA_CACHE                                                                            Data cache config url
---data-counterparties (DEPRECATED)              Q_DATA_COUNTERPARTIES                                                                   Data counterparties db config url
---slow-queries-mut (DEPRECATED)                 Q_SLOW_QUERIES_MUT                              arangodb                                Slow-queries mutable db config url
---slow-queries-hot (DEPRECATED)                 Q_SLOW_QUERIES_HOT                              arangodb                                Slow-queries hot db config url
---slow-queries-cold (DEPRECATED)                Q_SLOW_QUERIES_COLD                                                                     Slow-queries cold db config urls (comma separated)
---slow-queries-cache (DEPRECATED)               Q_SLOW_QUERIES_CACHE                                                                    Slow-queries cache config url
---slow-queries-counterparties (DEPRECATED)      Q_SLOW_QUERIES_COUNTERPARTIES                                                           Slow-queries counterparties db config url
 --jaeger-endpoint                               Q_JAEGER_ENDPOINT                                                                       Jaeger endpoint
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)
