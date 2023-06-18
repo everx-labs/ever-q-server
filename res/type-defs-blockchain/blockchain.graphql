@@ -80,10 +80,48 @@ type BlockchainQuery {
         address: String!
     ): BlockchainAccountQuery
 
-    block(hash: String!): BlockchainBlock
-    block_by_seq_no(workchain: Int!, thread: String!, seq_no: Float!): BlockchainBlock
-    transaction(hash: String!): BlockchainTransaction
-    message(hash: String!): BlockchainMessage
+    block(
+        hash: String!
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainBlock
+    block_by_seq_no(
+        workchain: Int!
+        thread: String!
+        seq_no: Float!
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainBlock
+    transaction(
+        hash: String!
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainTransaction
+    message(
+        hash: String!
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainMessage
 
     """
     Returns masterchain seq_no range for the specified time range
@@ -93,9 +131,9 @@ type BlockchainQuery {
     """
     master_seq_no_range(
         "Start of the time range, inclusive"
-         time_start: Int,
+        time_start: Int
         "End of the time range, exclusive"
-         time_end: Int,
+        time_end: Int
     ): BlockchainMasterSeqNoRange
 
     """
@@ -150,12 +188,12 @@ type BlockchainQuery {
         "Optional filter by workchain"
         workchain: Int
         "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
-        thread: String,
+        thread: String
 
         "Optional filter by minimum transactions in a block (unoptimized, query could be dropped by timeout)"
-        min_tr_count: Int,
+        min_tr_count: Int
         "Optional filter by maximum transactions in a block (unoptimized, query could be dropped by timeout)"
-        max_tr_count: Int,
+        max_tr_count: Int
 
         "This field is mutually exclusive with 'last'"
         first: Int
@@ -194,9 +232,9 @@ type BlockchainQuery {
         workchain: Int
 
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: String,
+        min_balance_delta: String
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: String,
+        max_balance_delta: String
 
         "This field is mutually exclusive with 'last'"
         first: Int
@@ -241,10 +279,9 @@ type BlockchainAccountQuery {
         aborted: Boolean
 
         "Optional filter by min balance_delta (unoptimized, query could be dropped by timeout)"
-        min_balance_delta: String,
+        min_balance_delta: String
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
-        max_balance_delta: String,
-
+        max_balance_delta: String
 
         "This field is mutually exclusive with 'last'"
         first: Int
@@ -290,11 +327,11 @@ type BlockchainAccountQuery {
 
         "This field is mutually exclusive with 'last'"
         first: Int
-        after: String,
+        after: String
 
         "This field is mutually exclusive with 'first'"
         last: Int
-        before: String,
+        before: String
         """
         Defines query scope.
         If `true` then query performed on a maximum time range supported by the cloud.

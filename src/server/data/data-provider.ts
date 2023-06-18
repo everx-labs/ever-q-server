@@ -86,7 +86,7 @@ export type QDataProviderQueryParams = {
     request: QRequestContext
     traceSpan: QTraceSpan
     maxRuntimeInS?: number
-    archive?: boolean
+    archive?: boolean | null
 }
 
 export interface QDataProvider {
@@ -340,6 +340,36 @@ export class QArchiveCombiner implements QDataProvider {
     unsubscribe(subscription: unknown): void {
         this.regular.unsubscribe(subscription)
     }
+}
+
+export function useBlocksArchive(
+    archive: boolean | undefined | null,
+    context: QRequestContext,
+): boolean {
+    return (
+        (archive ?? false) &&
+        context.services.config.blockchain.blocks.archive.length > 0
+    )
+}
+
+export function useTransactionsArchive(
+    archive: boolean | undefined | null,
+    context: QRequestContext,
+): boolean {
+    return (
+        (archive ?? false) &&
+        context.services.config.blockchain.transactions.archive.length > 0
+    )
+}
+
+export function useMessagesArchive(
+    archive: boolean | undefined | null,
+    context: QRequestContext,
+): boolean {
+    return (
+        (archive ?? false) &&
+        context.services.config.blockchain.transactions.archive.length > 0
+    )
 }
 
 export function combineResults(
