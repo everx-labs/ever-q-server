@@ -6,11 +6,36 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- Added config parameter `archive` to `blockchain.blocks`, `blockchain.transactions` sections.
+  Specifies config for the database used in blockchain API when the `archive` parameter is `true`.
+
+- Added parameter `archive` to blockchain lists fields.
+  When is `true` the blockchain requests use an archive database with full blockchain history
+  but reduced field set.
+
 - Added parameter `archive` to blockchain lists fields.
 
 - Added `blockBocs` config parameter allowing to resolve block bocs from external S3
   compatible storage.
   See README.md for details.
+
+- Added config parameters `hot` to specify default values for
+  `blockchain.blocks.hot`, `blockchain.transactions.hot`, `blockchain.accounts`.
+
+- Added config parameters `archive` to specify default values for
+  `blockchain.blocks.archive`, `blockchain.transactions.archive`.
+
+- Removed deprecated config parameters
+  `--data-mut                     Q_DATA_MUT`
+  `--data-hot                     Q_DATA_HOT`
+  `--data-cold                    Q_DATA_COLD`
+  `--data-cache                   Q_DATA_CACHE`
+  `--data-counterparties          Q_DATA_COUNTERPARIES`
+  `--slow-queries-mut             Q_SLOW_QUERIES_MUT`
+  `--slow-queries-hot             Q_SLOW_QUERIES_HOT`
+  `--slow-queries-cold            Q_SLOW_QUERIES_COLD`
+  `--slow-queries-cache           Q_SLOW_QUERIES_CACHE`
+  `--slow-queries-counterparties  Q_SLOW_QUERIES_COUNTERPARTIES`
 
 - Removed a database sharding.
 

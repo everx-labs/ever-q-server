@@ -121,6 +121,7 @@ export async function resolve_blockchain_transactions(
             ],
             request: context,
             traceSpan,
+            archive: args.archive ?? undefined,
         },
     )) as BlockchainTransaction[]
 
@@ -201,6 +202,7 @@ export async function resolve_account_transactions(
             ],
             request: context,
             traceSpan,
+            archive: args.archive ?? undefined,
         },
     )) as BlockchainTransaction[]
 

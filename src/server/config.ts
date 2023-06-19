@@ -59,6 +59,8 @@ export type QConfig = {
     useListeners?: boolean
     walkingUseCache: boolean
     subscriptionsMode: SubscriptionsMode
+    hot: string[]
+    archive: string[]
     blockchain: QBlockchainDataConfig
     counterparties: string[]
     blockBocs: QBocResolverConfig
@@ -66,9 +68,6 @@ export type QConfig = {
     ignoreMessagesForLatency: boolean
 
     slowQueriesBlockchain?: QBlockchainDataConfig
-
-    data?: QDeprecatedDataConfig
-    slowQueriesData?: QDeprecatedDataConfig
 
     jaeger: {
         endpoint: string
@@ -110,23 +109,16 @@ export type QBlockchainDataConfig = {
     hotCacheExpiration: number
     hotCacheEmptyDataExpiration: number
     accounts: string[]
-    blocks: QHotColdDataConfig
-    transactions: QHotColdDataConfig
+    blocks: QDataProviderConfig
+    transactions: QDataProviderConfig
     zerostate: string
 }
 
-export type QHotColdDataConfig = {
+export type QDataProviderConfig = {
     hot: string[]
+    archive: string[]
     cache?: string
     cold: string[]
-}
-
-export type QDeprecatedDataConfig = {
-    mut?: string
-    hot?: string
-    cold?: string[]
-    cache?: string
-    counterparties?: string
 }
 
 export enum SlowQueriesMode {
@@ -313,13 +305,13 @@ export const configParams = {
             "`arango` - subscribe to ArangoDB WAL for changes\n" +
             "`external` - use external services to handle subscriptions",
     ),
+    hot: ConfigParam.databases("hot", "default hot"),
+    archive: ConfigParam.databases("archive", "default archive"),
     blockchain: ConfigParam.blockchain(""),
     counterparties: ConfigParam.databases("counterparties"),
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
     slowQueriesBlockchain: ConfigParam.blockchain("slow queries"),
     blockBocs: ConfigParam.bocResolver("block-bocs"),
-    data: ConfigParam.dataDeprecated("data"),
-    slowQueriesData: ConfigParam.dataDeprecated("slow-queries"),
 
     jaeger: {
         endpoint: ConfigParam.string("jaeger-endpoint", "", "Jaeger endpoint"),
@@ -495,76 +487,6 @@ function resolveMaxSocketsFor(
     }
 }
 
-function upgradeDatabases(deprecated: string | undefined): string[] {
-    return (deprecated ?? "")
-        .split(",")
-        .map(x => x.trim())
-        .filter(x => x !== "")
-}
-
-function upgradeHotCold(
-    deprecated: QDeprecatedDataConfig,
-    def: string | undefined,
-): QHotColdDataConfig {
-    return {
-        hot: upgradeDatabases(deprecated.hot || def),
-        cache: deprecated.cache,
-        cold: deprecated.cold ?? [],
-    }
-}
-
-function upgradeBlockchain(
-    deprecated: QDeprecatedDataConfig,
-): QBlockchainDataConfig {
-    const blocks = upgradeHotCold(deprecated, deprecated.mut)
-    return {
-        accounts: upgradeDatabases(deprecated.mut),
-        blocks,
-        transactions: upgradeHotCold(deprecated, deprecated.mut),
-        zerostate: blocks.hot[0] ?? "",
-        hotCacheExpiration:
-            configParams.blockchain.hotCacheExpiration.defaultValue,
-        hotCacheEmptyDataExpiration:
-            configParams.blockchain.hotCacheEmptyDataExpiration.defaultValue,
-    }
-}
-
-type ConfigParamSource = ConfigParam<ConfigValue> | Record<string, unknown>
-
-function isSpecifiedAny(
-    specified: ConfigParam<ConfigValue>[],
-    ...params: ConfigParamSource[]
-): boolean {
-    for (const param of params) {
-        const isSpecified =
-            param instanceof ConfigParam
-                ? specified.includes(param)
-                : isSpecifiedAny(
-                      specified,
-                      ...(Object.values(param) as ConfigParamSource[]),
-                  )
-        if (isSpecified) {
-            return true
-        }
-    }
-    return false
-}
-
-function checkDataUpgradeRequired(
-    specified: ConfigParam<ConfigValue>[],
-    deprecated: ConfigParamSource,
-    ...data: ConfigParamSource[]
-): boolean {
-    const isDeprecatedSpecified = isSpecifiedAny(specified, deprecated)
-    const isSpecified = isSpecifiedAny(specified, ...data)
-    if (isSpecified && isDeprecatedSpecified) {
-        throw QError.invalidConfig(
-            "Invalid data config: data configuration mustn't be mixed with deprecated data configuration. Please choose one.",
-        )
-    }
-    return isDeprecatedSpecified
-}
-
 function checkSubscriptionsConfig(
     config: QConfig,
     specified: ConfigParam<ConfigValue>[],
@@ -596,6 +518,20 @@ function checkSubscriptionsConfig(
     }
 }
 
+function applyDatabaseDefaults(config: string[], def: string[]) {
+    if (config.length === 0 && def.length > 0) {
+        config.push(...def)
+    }
+}
+
+function applyDataProviderDefaults(
+    provider: QDataProviderConfig,
+    { hot, archive }: QConfig,
+) {
+    applyDatabaseDefaults(provider.hot, hot)
+    applyDatabaseDefaults(provider.archive, archive)
+}
+
 export function resolveConfig(
     options: Record<string, ConfigValue>,
     json: DeepPartial<QConfig>,
@@ -608,26 +544,11 @@ export function resolveConfig(
         configParams,
     )
 
+    applyDatabaseDefaults(config.blockchain.accounts, config.hot)
+    applyDataProviderDefaults(config.blockchain.blocks, config)
+    applyDataProviderDefaults(config.blockchain.transactions, config)
     checkSubscriptionsConfig(config, specified)
 
-    const isDataUpgradeRequired = checkDataUpgradeRequired(
-        specified,
-        configParams.data,
-        configParams.blockchain,
-        configParams.counterparties,
-    )
-    if (config.data !== undefined && isDataUpgradeRequired) {
-        config.blockchain = upgradeBlockchain(config.data)
-        config.counterparties = upgradeDatabases(config.data.counterparties)
-    }
-    const isSlowQueriesDataUpgradeRequired = checkDataUpgradeRequired(
-        specified,
-        configParams.slowQueriesData,
-        configParams.slowQueriesBlockchain,
-    )
-    if (config.slowQueriesData && isSlowQueriesDataUpgradeRequired) {
-        config.slowQueriesBlockchain = upgradeBlockchain(config.slowQueriesData)
-    }
     const slow = config.slowQueriesBlockchain
     if (slow !== undefined) {
         resolveMaxSocketsFor(
