@@ -266,6 +266,7 @@ export async function resolve_account_messages(
             distinctBy: "account_chain_order",
             request: context,
             traceSpan,
+            archive: args.archive ?? undefined,
         },
     )) as (BlockchainMessage & { account_chain_order?: string })[]
 

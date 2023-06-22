@@ -86,6 +86,7 @@ export type QDataProviderQueryParams = {
     request: QRequestContext
     traceSpan: QTraceSpan
     maxRuntimeInS?: number
+    archive?: boolean
 }
 
 export interface QDataProvider {
@@ -284,6 +285,60 @@ export class QDataPrecachedCombiner extends QDataCombiner {
         }
         traceSpan.logEvent("QDataPrecachedCombiner_query_end")
         return docs
+    }
+}
+
+export class QArchiveCombiner implements QDataProvider {
+    constructor(
+        private archive: QDataProvider,
+        private regular: QDataProvider,
+    ) {}
+
+    async start(collectionsForSubscribe: string[]): Promise<void> {
+        await Promise.all([
+            this.regular.start(collectionsForSubscribe),
+            this.archive.start([]),
+        ])
+    }
+
+    async stop(): Promise<void> {
+        await Promise.all([this.regular.stop(), this.archive.stop()])
+    }
+
+    getCollectionIndexes(collection: string): Promise<QIndexInfo[]> {
+        return this.regular.getCollectionIndexes(collection)
+    }
+
+    async loadFingerprint(): Promise<unknown> {
+        /** TODO: remove
+         * Do not build fingerprint from a `hot` database (index=0).
+         * We make fingerprints about the size of collections only on `cold` storages (index>0).
+         * The updated fingerprint will change the cache key and the old keys will be removed using by DataCache itself.
+         */
+        return await Promise.all([
+            this.regular.loadFingerprint(),
+            this.archive.loadFingerprint(),
+        ])
+    }
+
+    async hotUpdate(): Promise<void> {
+        await Promise.all([this.regular.hotUpdate(), this.archive.hotUpdate()])
+    }
+
+    async query(params: QDataProviderQueryParams): Promise<QResult[]> {
+        const provider = params.archive ?? false ? this.archive : this.regular
+        return await provider.query(params)
+    }
+
+    subscribe(
+        collection: string,
+        listener: (doc: unknown, event: QDataEvent) => void,
+    ): unknown {
+        return this.regular.subscribe(collection, listener)
+    }
+
+    unsubscribe(subscription: unknown): void {
+        this.regular.unsubscribe(subscription)
     }
 }
 

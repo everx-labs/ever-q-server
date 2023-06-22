@@ -150,7 +150,7 @@ export function createTestClient(options: {
     })
     ;(client as unknown as { close: () => void }).close = () => {
         client.stop()
-        subscriptionClient.client.close()
+        subscriptionClient.client?.close()
     }
     return client
 }
