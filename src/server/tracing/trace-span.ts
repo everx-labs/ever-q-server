@@ -3,7 +3,7 @@ import { QTracer } from "./tracer"
 import { cleanError, toLog } from "../utils"
 
 const SPAN_CREATION_TAGS = {
-    // according to some sources next tag should be attached on span creation
+    // according to some sources, the next tag should be attached on span creation
     [Tags.SPAN_KIND]: Tags.SPAN_KIND_RPC_SERVER,
 }
 

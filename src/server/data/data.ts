@@ -29,10 +29,13 @@ import type {
     QIndexInfo,
 } from "./data-provider"
 import { BocStorage } from "./boc-storage"
+import { QDatabaseProvider } from "./database-provider"
 
 export type QBlockchainDataProvider = {
     blocks?: QDataProvider
+    hotBlocks?: QDatabaseProvider
     transactions?: QDataProvider
+    hotTransactions?: QDatabaseProvider
     accounts?: QDataProvider
     zerostate?: QDataProvider
 }
