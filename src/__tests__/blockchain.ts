@@ -1649,3 +1649,31 @@ test("blockchain master_seq_no", async () => {
         },
     })
 })
+
+test.only("blockchain.account.transactions. Invalid account should throw", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+    try {
+        await client.query({
+            query: gql`
+                {
+                    blockchain {
+                        account(address: "afc") {
+                            info {
+                                id
+                            }
+                        }
+                    }
+                }
+            `,
+        })
+        expect(true).toBe(false) // this line should be unreachable!
+    } catch (err) {
+        expect(err.constructor.name).toBe("ApolloError")
+        const { message, extensions } = err.graphQLErrors[0]
+        expect(extensions.code).toEqual("GRAPHQL_VALIDATION_FAILED")
+        expect(message).toEqual("Invalid account address")
+    }
+})
