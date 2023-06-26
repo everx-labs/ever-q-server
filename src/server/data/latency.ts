@@ -1,6 +1,5 @@
 import { CachedData } from "../cached-data"
 import { QDataCollection } from "./collection"
-import { Database } from "arangojs"
 import { QDatabaseProvider } from "./database-provider"
 
 const LATENCY_UPDATE_FREQUENCY = 25000
@@ -20,13 +19,20 @@ export type Latency = {
 
 type LatencyCacheOptions = {
     blocks: QDataCollection
+    hotBlocks: QDatabaseProvider | undefined
     messages: QDataCollection
+    hotMessages: QDatabaseProvider | undefined
     transactions: QDataCollection
+    hotTransactions: QDatabaseProvider | undefined
     ignoreMessages?: boolean
 }
 
 class CollectionLatencyCache extends CachedData<CollectionLatency> {
-    constructor(private collection: QDataCollection, private field: string) {
+    constructor(
+        private collection: QDataCollection,
+        private hot: QDatabaseProvider | undefined,
+        private field: string,
+    ) {
         super({
             ttlMs: LATENCY_UPDATE_FREQUENCY,
         })
@@ -36,40 +42,20 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
     }
 
     async loadActual(): Promise<CollectionLatency> {
-        const fetchersByDatabasePoolIndex = new Map<
-            number,
-            { database: Database; returns: string[] }
-        >()
         const collection = this.collection.name
         const field = this.field
-        const provider = this.collection.provider as QDatabaseProvider
-        const returnExpression = `${collection}: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0]`
-        const poolIndex = provider.connection.poolIndex
-        const existing = fetchersByDatabasePoolIndex.get(poolIndex)
-        if (existing !== undefined) {
-            existing.returns.push(returnExpression)
-        } else {
-            fetchersByDatabasePoolIndex.set(poolIndex, {
-                database: provider.connection.database,
-                returns: [returnExpression],
-            })
+        const provider = this.hot
+        if (!provider) {
+            throw Error(`Internal error: ${collection} hot provider is missing`)
         }
-        const fetchedTimes = await Promise.all(
-            [...fetchersByDatabasePoolIndex.values()].map(async fetcher => {
-                const query = `RETURN {${fetcher.returns.join(",\n")}}`
-                return (
-                    await (await fetcher.database.query(query)).all()
-                )[0] as Record<string, number | null>
-            }),
-        )
+        const query = `RETURN { maxTime: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0] }`
+        const cursor = await provider.connection.database.query(query)
+        const fetchedTime = (await cursor.all())[0].maxTime as
+            | number
+            | null
+            | undefined
 
-        let maxTime = 0
-        for (const fetchedTime of fetchedTimes) {
-            const time = fetchedTime[collection]
-            if (time !== undefined && time !== null && time > maxTime) {
-                maxTime = time
-            }
-        }
+        const maxTime = fetchedTime ?? 0
         const latency = this.getUpdatedLatency(maxTime)
         if (!latency) {
             throw Error("Internal error: latency can not be undefined")
@@ -109,13 +95,19 @@ export class LatencyCache {
 
     constructor(options: LatencyCacheOptions) {
         this.ignoreMessages = options.ignoreMessages ?? false
-        this.blocks = new CollectionLatencyCache(options.blocks, "gen_utime")
+        this.blocks = new CollectionLatencyCache(
+            options.blocks,
+            options.hotBlocks,
+            "gen_utime",
+        )
         this.messages = new CollectionLatencyCache(
             options.messages,
+            options.hotMessages,
             "created_at",
         )
         this.transactions = new CollectionLatencyCache(
             options.transactions,
+            options.hotTransactions,
             "now",
         )
     }

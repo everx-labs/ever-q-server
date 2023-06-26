@@ -20,6 +20,7 @@ import {
 } from "./fetchers"
 import { isDefined } from "./helpers"
 import { resolveAddress } from "../../address"
+import { ValidationError } from "apollo-server-errors"
 
 // UUID is a hack to bypass QDataCombiner deduplication
 const MASTER_SEQ_NO_RANGE_QUERY = `
@@ -168,7 +169,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                 addressWithoutPrefix === undefined ||
                 addressWithoutPrefix.length !== 64
             ) {
-                throw QError.invalidQuery("Invalid account address")
+                throw new ValidationError("Invalid account address")
             }
             return {
                 address: resolvedAddress,

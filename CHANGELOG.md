@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.60.1] - 2023-06-21
+
+### Fixed
+
+- Latency calculation failed
+
 ## [0.60.0] - 2023-06-21
 
 ### New
