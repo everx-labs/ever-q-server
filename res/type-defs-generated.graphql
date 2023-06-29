@@ -1233,6 +1233,8 @@ type Transaction {
 	"""
 	tr_type: Int
 	tr_type_name: TransactionTypeEnum
+	"VM debug trace"
+	trace: String
 	tt: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
@@ -2735,6 +2737,8 @@ input TransactionFilter {
 	"""
 	tr_type: IntFilter
 	tr_type_name: TransactionTypeEnumFilter
+	"VM debug trace"
+	trace: StringFilter
 	tt: StringFilter
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: IntFilter
