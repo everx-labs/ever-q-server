@@ -80,10 +80,55 @@ type BlockchainQuery {
         address: String!
     ): BlockchainAccountQuery
 
-    block(hash: String!): BlockchainBlock
-    block_by_seq_no(workchain: Int!, thread: String!, seq_no: Float!): BlockchainBlock
-    transaction(hash: String!): BlockchainTransaction
-    message(hash: String!): BlockchainMessage
+    block(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainBlock
+
+    block_by_seq_no(
+        workchain: Int!
+        thread: String!
+        seq_no: Float!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainBlock
+
+    transaction(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainTransaction
+
+    message(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainMessage
 
     """
     Returns masterchain seq_no range for the specified time range
