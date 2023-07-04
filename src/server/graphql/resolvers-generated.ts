@@ -707,6 +707,7 @@ const Transaction = struct(
             MergePrepare: 6,
             MergeInstall: 7,
         }),
+        trace: scalar,
         tt: scalar,
         workchain_id: scalar,
     },
@@ -1847,6 +1848,7 @@ scalarFields.set("transactions.total_fees_other.value", {
     type: "uint1024",
     path: "doc.total_fees_other[*].value",
 })
+scalarFields.set("transactions.trace", { type: "string", path: "doc.trace" })
 scalarFields.set("transactions.tt", { type: "string", path: "doc.tt" })
 scalarFields.set("transactions.workchain_id", {
     type: "number",

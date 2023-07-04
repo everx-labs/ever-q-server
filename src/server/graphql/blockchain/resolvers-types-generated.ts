@@ -1111,6 +1111,8 @@ export type BlockchainTransaction = Node & {
      */
     tr_type?: Maybe<Scalars["Int"]>
     tr_type_name?: Maybe<TransactionTypeEnum>
+    /** VM debug trace */
+    trace?: Maybe<Scalars["String"]>
     tt?: Maybe<Scalars["String"]>
     /** Workchain id of the account address (account_addr field) */
     workchain_id?: Maybe<Scalars["Int"]>
@@ -3468,6 +3470,7 @@ export type BlockchainTransactionResolvers<
         ParentType,
         ContextType
     >
+    trace?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     tt?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     workchain_id?: Resolver<
         Maybe<ResolversTypes["Int"]>,

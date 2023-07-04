@@ -101,6 +101,8 @@ type BlockchainTransaction implements Node {
 	"""
 	tr_type: Int
 	tr_type_name: TransactionTypeEnum
+	"VM debug trace"
+	trace: String
 	tt: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
