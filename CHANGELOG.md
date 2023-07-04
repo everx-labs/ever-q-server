@@ -2,11 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.61.0] - 2023-06-29
+## [0.61.0] - 2023-07-04
 
 ### New
 
 - `trace` field in transaction
+
+- `archive` parameter in blockchain signle-entity fields (`block`, `block_by_seq_no`, `transaction`, `message`).
+  When is `true` the blockchain requests use an archive database with full blockchain history
+  but reduced field set.
 
 ## [0.60.1] - 2023-06-21
 

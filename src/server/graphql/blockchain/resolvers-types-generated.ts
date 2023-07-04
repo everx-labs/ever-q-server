@@ -946,20 +946,24 @@ export type BlockchainQueryAccountArgs = {
 
 export type BlockchainQueryBlockArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryBlock_By_Seq_NoArgs = {
     workchain: Scalars["Int"]
     thread: Scalars["String"]
     seq_no: Scalars["Float"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryTransactionArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryMessageArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {

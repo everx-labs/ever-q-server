@@ -83,9 +83,11 @@ Option                                          ENV                             
 --hot-cache-empty-data-expiration               Q_HOT_CACHE_EMPTY_DATA_EXPIRATION               2                                       hot cache empty entries expiration in seconds
 --accounts                                      Q_ACCOUNTS                                                                              Accounts databases
 --blocks-hot                                    Q_BLOCKS_HOT                                                                            Blocks hot databases
+--blocks-archive                                Q_BLOCKS_ARCHIVE                                                                        Blocks archive databases
 --blocks-cache                                  Q_BLOCKS_CACHE                                                                          Blocks cache server
 --blocks-cold                                   Q_BLOCKS_COLD                                                                           Blocks cold databases
 --transactions-hot                              Q_TRANSACTIONS_HOT                                                                      Transactions and messages hot databases
+--transactions-archive                          Q_TRANSACTIONS_ARCHIVE                                                                  Transactions and messages archive databases
 --transactions-cache                            Q_TRANSACTIONS_CACHE                                                                    Transactions and messages cache server
 --transactions-cold                             Q_TRANSACTIONS_COLD                                                                     Transactions and messages cold databases
 --zerostate                                     Q_ZEROSTATE                                                                             Zerostate database
@@ -96,9 +98,11 @@ Option                                          ENV                             
 --slow-queries-hot-cache-empty-data-expiration  Q_SLOW_QUERIES_HOT_CACHE_EMPTY_DATA_EXPIRATION  2                                       Slow queries hot cache empty entries expiration in seconds
 --slow-queries-accounts                         Q_SLOW_QUERIES_ACCOUNTS                                                                 Slow queries accounts databases
 --slow-queries-blocks-hot                       Q_SLOW_QUERIES_BLOCKS_HOT                                                               Slow queries blocks hot databases
+--slow-queries-blocks-archive                   Q_SLOW_QUERIES_BLOCKS_ARCHIVE                                                           Slow queries blocks archive databases
 --slow-queries-blocks-cache                     Q_SLOW_QUERIES_BLOCKS_CACHE                                                             Slow queries blocks cache server
 --slow-queries-blocks-cold                      Q_SLOW_QUERIES_BLOCKS_COLD                                                              Slow queries blocks cold databases
 --slow-queries-transactions-hot                 Q_SLOW_QUERIES_TRANSACTIONS_HOT                                                         Slow queries transactions and messages hot databases
+--slow-queries-transactions-archive             Q_SLOW_QUERIES_TRANSACTIONS_ARCHIVE                                                     Slow queries transactions and messages archive databases
 --slow-queries-transactions-cache               Q_SLOW_QUERIES_TRANSACTIONS_CACHE                                                       Slow queries transactions and messages cache server
 --slow-queries-transactions-cold                Q_SLOW_QUERIES_TRANSACTIONS_COLD                                                        Slow queries transactions and messages cold databases
 --slow-queries-zerostate                        Q_SLOW_QUERIES_ZEROSTATE                                                                Slow queries zerostate database
