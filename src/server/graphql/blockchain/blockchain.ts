@@ -17,6 +17,7 @@ import {
     resolve_transaction,
     resolve_message,
     resolve_block_by_seq_no,
+    resolve_account_transactions_by_lt,
 } from "./fetchers"
 import { isDefined } from "./helpers"
 import { resolveAddress } from "../../address"
@@ -286,6 +287,20 @@ export const resolvers: Resolvers<QRequestContext> = {
                 "blockchain-account-transactions",
                 async traceSpan => {
                     return await resolve_account_transactions(
+                        resolveAddress(parent.address),
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
+        },
+        transactions_by_lt: async (parent, args, context, info) => {
+            return context.trace(
+                "blockchain-account-transactions-by-lt",
+                async traceSpan => {
+                    return await resolve_account_transactions_by_lt(
                         resolveAddress(parent.address),
                         args,
                         context,
