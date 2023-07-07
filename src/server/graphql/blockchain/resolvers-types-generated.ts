@@ -538,6 +538,8 @@ export type BlockchainAccountQuery = {
     messages?: Maybe<BlockchainMessagesConnection>
     /** This node could be used for a cursor-based pagination of account transactions. */
     transactions?: Maybe<BlockchainTransactionsConnection>
+    /** This node could be used for a cursor-based pagination of account transactions where cursor is logical time (lt) */
+    transactions_by_lt?: Maybe<BlockchainTransactionsConnection>
 }
 
 export type BlockchainAccountQueryMessagesArgs = {
@@ -559,6 +561,15 @@ export type BlockchainAccountQueryTransactionsArgs = {
     aborted?: Maybe<Scalars["Boolean"]>
     min_balance_delta?: Maybe<Scalars["String"]>
     max_balance_delta?: Maybe<Scalars["String"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainAccountQueryTransactions_By_LtArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
@@ -951,9 +962,10 @@ export type BlockchainQueryBlockArgs = {
 
 export type BlockchainQueryBlock_By_Seq_NoArgs = {
     workchain: Scalars["Int"]
-    thread: Scalars["String"]
+    shard?: Maybe<Scalars["String"]>
     seq_no: Scalars["Float"]
     archive?: Maybe<Scalars["Boolean"]>
+    thread?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryTransactionArgs = {
@@ -985,7 +997,7 @@ export type BlockchainQueryBlocksArgs = {
     allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     workchain?: Maybe<Scalars["Int"]>
-    thread?: Maybe<Scalars["String"]>
+    shard?: Maybe<Scalars["String"]>
     min_tr_count?: Maybe<Scalars["Int"]>
     max_tr_count?: Maybe<Scalars["Int"]>
     first?: Maybe<Scalars["Int"]>
@@ -993,6 +1005,7 @@ export type BlockchainQueryBlocksArgs = {
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
     archive?: Maybe<Scalars["Boolean"]>
+    thread?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryTransactionsArgs = {
@@ -2776,6 +2789,12 @@ export type BlockchainAccountQueryResolvers<
         ContextType,
         RequireFields<BlockchainAccountQueryTransactionsArgs, never>
     >
+    transactions_by_lt?: Resolver<
+        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainAccountQueryTransactions_By_LtArgs, never>
+    >
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
@@ -3232,7 +3251,7 @@ export type BlockchainQueryResolvers<
         ContextType,
         RequireFields<
             BlockchainQueryBlock_By_Seq_NoArgs,
-            "workchain" | "thread" | "seq_no"
+            "workchain" | "seq_no"
         >
     >
     transaction?: Resolver<

@@ -234,7 +234,7 @@ test("blocks", async () => {
         query: gql`
             {
                 blockchain {
-                    blocks(workchain: 0, thread: "5800000000000000", last: 2) {
+                    blocks(workchain: 0, shard: "5800000000000000", last: 2) {
                         edges {
                             node {
                                 id
@@ -299,7 +299,7 @@ test("blocks", async () => {
                 blockchain {
                     blocks(
                         workchain: 0
-                        thread: "5800000000000000"
+                        shard: "5800000000000000"
                         first: 2
                         after: "587c83d005c6440911a"
                     ) {
@@ -476,6 +476,100 @@ test("blockchain.account.transactions", async () => {
                         startCursor: "587c83d005c622df11800",
                         endCursor: "587c83d005c622df11807",
                         hasNextPage: false,
+                        __typename: "PageInfo",
+                    },
+                    __typename: "BlockchainTransactionsConnection",
+                },
+                __typename: "BlockchainAccountQuery",
+            },
+            __typename: "BlockchainQuery",
+        },
+    })
+})
+
+test.only("blockchain.account.transactions_by_lt", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+
+    // filter by account_addresses
+    const queryResult = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    account(
+                        address: "0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206"
+                    ) {
+                        transactions_by_lt(after: "ad36a70c5b81", first: 5) {
+                            edges {
+                                node {
+                                    hash
+                                }
+                                cursor
+                            }
+                            pageInfo {
+                                startCursor
+                                endCursor
+                                hasNextPage
+                            }
+                        }
+                    }
+                }
+            }
+        `,
+    })
+
+    expect(queryResult.data).toMatchObject({
+        blockchain: {
+            account: {
+                transactions_by_lt: {
+                    edges: [
+                        {
+                            node: {
+                                hash: "34c0895d65e005129d0ef1f87783bd4ea48a5be79306a15dea85a44efc0c2e13",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "ad36a70c5b85",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "3cf3672f5288eec840ea535ad38d790e1c94a582619a903191f6881e43c50bab",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "ad36a70c5b86",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "bf2b8eac7e0e64948fef2300c4ee865c232b42b4986b6e41419f51759d5d42c7",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "ad36a70c5b89",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "c9f365fd3bfa8a6260b5154a22973ae5cd525fbe9dbd3ee632a9f52588295e14",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "ad36a70c5b8d",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                        {
+                            node: {
+                                hash: "7c4f031ac7db3763884eb16d51e6ade302c12fef14708c9b2afce653b07c4361",
+                                __typename: "BlockchainTransaction",
+                            },
+                            cursor: "ad36a70c5b94",
+                            __typename: "BlockchainTransactionEdge",
+                        },
+                    ],
+                    pageInfo: {
+                        startCursor: "ad36a70c5b85",
+                        endCursor: "ad36a70c5b94",
+                        hasNextPage: true,
                         __typename: "PageInfo",
                     },
                     __typename: "BlockchainTransactionsConnection",
@@ -1497,7 +1591,7 @@ test("blockchain fetchers", async () => {
                 blockchain {
                     block_by_seq_no(
                         workchain: 0
-                        thread: "9800000000000000"
+                        shard: "9800000000000000"
                         seq_no: 12987363
                     ) {
                         id

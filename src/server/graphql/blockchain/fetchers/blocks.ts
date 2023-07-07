@@ -89,10 +89,14 @@ export async function resolve_block_by_seq_no(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
+    const shard = args.shard || args.thread
+    if (!shard) {
+        throw QError.invalidQuery('"shard" parameter must be defined')
+    }
     return fetch_block(
         params =>
             `doc.workchain_id == @${params.add(args.workchain)} AND ` +
-            `doc.shard == @${params.add(args.thread)} AND ` +
+            `doc.shard == @${params.add(shard)} AND ` +
             `doc.seq_no == @${params.add(args.seq_no)}`,
         context,
         info,
@@ -165,9 +169,10 @@ export async function resolve_blockchain_blocks(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
+    const shard = args.shard || args.thread
     // validate args
-    if (args.thread && !isDefined(args.workchain)) {
-        throw QError.invalidQuery("Workchain is required for the thread filter")
+    if (shard && !isDefined(args.workchain)) {
+        throw QError.invalidQuery("Workchain is required for the shard filter")
     }
 
     // filters
@@ -181,8 +186,8 @@ export async function resolve_blockchain_blocks(
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`)
     }
-    if (isDefined(args.thread)) {
-        filters.push(`doc.shard == @${params.add(args.thread)}`)
+    if (isDefined(shard)) {
+        filters.push(`doc.shard == @${params.add(shard)}`)
     }
     if (isDefined(args.min_tr_count)) {
         filters.push(`doc.tr_count >= @${params.add(args.min_tr_count)}`)

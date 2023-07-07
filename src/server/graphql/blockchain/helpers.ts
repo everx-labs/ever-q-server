@@ -108,6 +108,57 @@ export async function prepareChainOrderFilter(
     }
 }
 
+export async function prepareNonChainOrderPaginationFilter(
+    args: ChainOrderFilterArgs,
+    params: QParams,
+    filters: string[],
+    context: QRequestContext,
+    paginationFieldName: string,
+    chainOrderFieldName = "chain_order",
+) {
+    // master_seq_no
+    const start_chain_order = args.master_seq_no_range?.start
+        ? toU64String(args.master_seq_no_range.start)
+        : null
+    let end_chain_order = args.master_seq_no_range?.end
+        ? toU64String(args.master_seq_no_range.end)
+        : null
+
+    if (!args.allow_latest_inconsistent_data) {
+        // reliable boundary
+        const reliable =
+            await context.services.data.getReliableChainOrderUpperBoundary(
+                context,
+            )
+
+        end_chain_order =
+            end_chain_order && end_chain_order < reliable.boundary
+                ? end_chain_order
+                : reliable.boundary
+    }
+
+    // apply
+    if (start_chain_order) {
+        const paramName = params.add(start_chain_order)
+        filters.push(`doc.${chainOrderFieldName} > @${paramName}`)
+    }
+
+    if (end_chain_order) {
+        const paramName = params.add(end_chain_order)
+        filters.push(`doc.${chainOrderFieldName} < @${paramName}`)
+    }
+
+    if (args.after) {
+        const paramName = params.add(args.after)
+        filters.push(`doc.${paginationFieldName} > @${paramName}`)
+    }
+
+    if (args.before) {
+        const paramName = params.add(args.before)
+        filters.push(`doc.${paginationFieldName} < @${paramName}`)
+    }
+}
+
 export function getNodeSelectionSetForConnection(info: GraphQLResolveInfo) {
     const edgesNode = info.fieldNodes[0].selectionSet?.selections.find(
         s => s.kind == "Field" && s.name.value == "edges",
