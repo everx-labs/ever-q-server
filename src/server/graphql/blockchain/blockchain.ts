@@ -15,9 +15,12 @@ import {
     resolve_blockchain_transactions,
     resolve_block,
     resolve_transaction,
+    resolve_transactions_by_in_msg,
     resolve_message,
     resolve_block_by_seq_no,
     resolve_account_transactions_by_lt,
+    resolve_next_shard_blocks,
+    resolve_prev_shard_blocks,
 } from "./fetchers"
 import { isDefined } from "./helpers"
 import { resolveAddress } from "../../address"
@@ -199,6 +202,32 @@ export const resolvers: Resolvers<QRequestContext> = {
                 },
             )
         },
+        prev_shard_blocks: async (_parent, args, context, info) => {
+            return context.trace(
+                "blockchain-prev-shard-blocks",
+                async traceSpan => {
+                    return resolve_prev_shard_blocks(
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
+        },
+        next_shard_blocks: async (_parent, args, context, info) => {
+            return context.trace(
+                "blockchain-next-shard-blocks",
+                async traceSpan => {
+                    return resolve_next_shard_blocks(
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
+        },
         transaction: async (_parent, args, context, info) => {
             return context.trace("blockchain-transaction", async traceSpan => {
                 return resolve_transaction(
@@ -208,6 +237,19 @@ export const resolvers: Resolvers<QRequestContext> = {
                     traceSpan,
                 )
             })
+        },
+        transactions_by_in_msg: async (_parent, args, context, info) => {
+            return context.trace(
+                "blockchain-transactions-by-in-msg",
+                async traceSpan => {
+                    return resolve_transactions_by_in_msg(
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
         },
         message: async (_parent, args, context, info) => {
             return context.trace("blockchain-message", async traceSpan => {

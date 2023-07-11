@@ -19,6 +19,7 @@ import {
 import {
     BlockchainAccountQueryTransactionsArgs,
     BlockchainAccountQueryTransactions_By_LtArgs,
+    BlockchainQueryTransactions_By_In_MsgArgs,
     BlockchainQueryTransactionsArgs,
     BlockchainTransaction,
     BlockchainTransactionsConnection,
@@ -61,6 +62,46 @@ export async function resolve_transaction(
     )) as BlockchainTransaction[]
 
     return queryResult[0]
+}
+
+export async function resolve_transactions_by_in_msg(
+    args: BlockchainQueryTransactions_By_In_MsgArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    const maxJoinDepth = 2
+
+    const selectionSet = info.fieldNodes[0].selectionSet
+    const returnExpression = config.transactions.buildReturnExpression(
+        selectionSet,
+        context,
+        maxJoinDepth,
+        "doc",
+    )
+
+    // query
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
+    const query =
+        "FOR doc IN transactions " +
+        `FILTER doc.in_msg == @${params.add(args.msg_hash)} ` +
+        "SORT doc.lt ASC LIMIT 50 " +
+        `RETURN ${returnExpression}`
+    const queryResult = (await context.services.data.query(
+        required(context.services.data.transactions.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+        },
+    )) as BlockchainTransaction[]
+
+    return queryResult
 }
 
 export async function resolve_blockchain_transactions(
