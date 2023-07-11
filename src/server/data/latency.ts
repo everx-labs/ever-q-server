@@ -4,6 +4,19 @@ import { QDatabaseProvider } from "./database-provider"
 
 const LATENCY_UPDATE_FREQUENCY = 25000
 
+const BLOCK_LATENCY_QUERY = `LET last_shard_block_chain_order = (
+    FOR b IN blocks
+    FILTER b.workchain_id == 0
+    SORT b.gen_utime DESC
+    LIMIT 1
+    RETURN b.chain_order
+)[0]
+LET master_block_chain_order = CONCAT(SUBSTRING(last_shard_block_chain_order, 0, 2 + TO_NUMBER(CONCAT("0x",SUBSTRING(last_shard_block_chain_order,0,1)))),"m")
+
+FOR b IN blocks
+FILTER b.chain_order == master_block_chain_order
+RETURN { maxTime: b.gen_utime }`
+
 export type CollectionLatency = {
     maxTime: number
     latency: number
@@ -36,9 +49,6 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
         super({
             ttlMs: LATENCY_UPDATE_FREQUENCY,
         })
-        collection.docInsertOrUpdate.on("doc", async doc => {
-            this.updateLatency(doc[this.field])
-        })
     }
 
     async loadActual(): Promise<CollectionLatency> {
@@ -48,7 +58,10 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
         if (!provider) {
             throw Error(`Internal error: ${collection} hot provider is missing`)
         }
-        const query = `RETURN { maxTime: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0] }`
+        const query =
+            collection == "blocks"
+                ? BLOCK_LATENCY_QUERY
+                : `RETURN { maxTime: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0] }`
         const cursor = await provider.connection.database.query(query)
         const fetchedTime = (await cursor.all())[0].maxTime as
             | number
@@ -76,13 +89,6 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
         return {
             maxTime: time,
             latency: Math.max(0, Date.now() - time),
-        }
-    }
-
-    updateLatency(timeInSeconds: number | undefined | null) {
-        const newData = this.getUpdatedLatency(timeInSeconds)
-        if (newData && newData !== this.data) {
-            this.update(newData)
         }
     }
 }
