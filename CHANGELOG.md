@@ -20,6 +20,8 @@ All notable changes to this project will be documented in this file.
 
 - `blockchain.transactions_by_in_msg` query for retrieving transaction by inbound message
 
+- `blocks` collection latency is calculated from `gen_utime` of masterchain block which has commited last known shard block
+
 ## [0.60.1] - 2023-06-21
 
 ### Fixed
