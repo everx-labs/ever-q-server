@@ -16,6 +16,10 @@ All notable changes to this project will be documented in this file.
 
 - `thread` parameter in `blockchain.block_by_seq_no` and `blockchain.blocks` is deprecated. `shard` parameter should be used instead
 
+- `blockchain.prev_shard_blocks` and `blockchain.next_shard_blocks` queries for blocks chain iteration
+
+- `blockchain.transactions_by_in_msg` query for retrieving transaction by inbound message
+
 ## [0.60.1] - 2023-06-21
 
 ### Fixed

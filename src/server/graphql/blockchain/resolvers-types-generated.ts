@@ -933,8 +933,13 @@ export type BlockchainQuery = {
     /** Account-related information */
     account?: Maybe<BlockchainAccountQuery>
     block?: Maybe<BlockchainBlock>
+    /** Returns array of previous shard blocks, consists of 2 elements if there was a merge of shards and of 1 element otherwise */
+    prev_shard_blocks?: Maybe<Array<Maybe<BlockchainBlock>>>
+    /** Returns array of next shard blocks, consists of 2 elements if there will be a split of shards and of 1 element otherwise */
+    next_shard_blocks?: Maybe<Array<Maybe<BlockchainBlock>>>
     block_by_seq_no?: Maybe<BlockchainBlock>
     transaction?: Maybe<BlockchainTransaction>
+    transactions_by_in_msg?: Maybe<Array<Maybe<BlockchainTransaction>>>
     message?: Maybe<BlockchainMessage>
     /**
      * Returns masterchain seq_no range for the specified time range
@@ -960,6 +965,16 @@ export type BlockchainQueryBlockArgs = {
     archive?: Maybe<Scalars["Boolean"]>
 }
 
+export type BlockchainQueryPrev_Shard_BlocksArgs = {
+    hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainQueryNext_Shard_BlocksArgs = {
+    hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
 export type BlockchainQueryBlock_By_Seq_NoArgs = {
     workchain: Scalars["Int"]
     shard?: Maybe<Scalars["String"]>
@@ -970,6 +985,11 @@ export type BlockchainQueryBlock_By_Seq_NoArgs = {
 
 export type BlockchainQueryTransactionArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainQueryTransactions_By_In_MsgArgs = {
+    msg_hash: Scalars["String"]
     archive?: Maybe<Scalars["Boolean"]>
 }
 
@@ -3245,6 +3265,18 @@ export type BlockchainQueryResolvers<
         ContextType,
         RequireFields<BlockchainQueryBlockArgs, "hash">
     >
+    prev_shard_blocks?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["BlockchainBlock"]>>>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainQueryPrev_Shard_BlocksArgs, "hash">
+    >
+    next_shard_blocks?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["BlockchainBlock"]>>>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainQueryNext_Shard_BlocksArgs, "hash">
+    >
     block_by_seq_no?: Resolver<
         Maybe<ResolversTypes["BlockchainBlock"]>,
         ParentType,
@@ -3259,6 +3291,12 @@ export type BlockchainQueryResolvers<
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryTransactionArgs, "hash">
+    >
+    transactions_by_in_msg?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["BlockchainTransaction"]>>>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainQueryTransactions_By_In_MsgArgs, "msg_hash">
     >
     message?: Resolver<
         Maybe<ResolversTypes["BlockchainMessage"]>,

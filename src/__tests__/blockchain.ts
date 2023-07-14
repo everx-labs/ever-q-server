@@ -363,6 +363,66 @@ test("blocks", async () => {
     })
 })
 
+test("prev_shard_blocks", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+
+    const queryResult1 = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    prev_shard_blocks(
+                        hash: "ddfe4ed2b0fbf41785a044a053d01335841a07a69df3912bbaec745609eb53e0"
+                    ) {
+                        hash
+                    }
+                }
+            }
+        `,
+    })
+    expect(queryResult1.data).toMatchObject({
+        blockchain: {
+            prev_shard_blocks: [
+                {
+                    hash: "2ff719c6801ffbdb54991041288f3fde7900c73d97d30609a71ecf30cc33a166",
+                },
+            ],
+        },
+    })
+})
+
+test("next_shard_blocks", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+
+    const queryResult1 = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    next_shard_blocks(
+                        hash: "2ff719c6801ffbdb54991041288f3fde7900c73d97d30609a71ecf30cc33a166"
+                    ) {
+                        hash
+                    }
+                }
+            }
+        `,
+    })
+    expect(queryResult1.data).toMatchObject({
+        blockchain: {
+            next_shard_blocks: [
+                {
+                    hash: "ddfe4ed2b0fbf41785a044a053d01335841a07a69df3912bbaec745609eb53e0",
+                },
+            ],
+        },
+    })
+})
+
 test("blockchain.account.transactions", async () => {
     if (!server) {
         throw new Error("server is null")
@@ -487,7 +547,7 @@ test("blockchain.account.transactions", async () => {
     })
 })
 
-test.only("blockchain.account.transactions_by_lt", async () => {
+test("blockchain.account.transactions_by_lt", async () => {
     if (!server) {
         throw new Error("server is null")
     }
@@ -577,6 +637,37 @@ test.only("blockchain.account.transactions_by_lt", async () => {
                 __typename: "BlockchainAccountQuery",
             },
             __typename: "BlockchainQuery",
+        },
+    })
+})
+
+test("transactions_by_in_msg", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const client = createTestClient({ useWebSockets: true })
+
+    const queryResult = await client.query({
+        query: gql`
+            {
+                blockchain {
+                    transactions_by_in_msg(
+                        msg_hash: "35bd031e5342b1b875524468d219ce64bbc74243870e1a1e706fb48f7820c340"
+                    ) {
+                        hash
+                    }
+                }
+            }
+        `,
+    })
+
+    expect(queryResult.data).toMatchObject({
+        blockchain: {
+            transactions_by_in_msg: [
+                {
+                    hash: "34c0895d65e005129d0ef1f87783bd4ea48a5be79306a15dea85a44efc0c2e13",
+                },
+            ],
         },
     })
 })
@@ -1744,7 +1835,7 @@ test("blockchain master_seq_no", async () => {
     })
 })
 
-test.only("blockchain.account.transactions. Invalid account should throw", async () => {
+test("blockchain.account.transactions. Invalid account should throw", async () => {
     if (!server) {
         throw new Error("server is null")
     }

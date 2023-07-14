@@ -109,6 +109,8 @@ class FieldUsageCollector {
                     break
                 case "block":
                 case "block_by_seq_no":
+                case "prev_shard_blocks":
+                case "next_shard_blocks":
                     this.parseCollection(field, "blocks", Api.Blockchain, stat)
                     break
                 case "message":
@@ -128,6 +130,7 @@ class FieldUsageCollector {
                     )
                     break
                 case "transaction":
+                case "transaction_by_in_msg":
                     this.parseCollection(
                         field,
                         "transactions",
@@ -162,6 +165,7 @@ class FieldUsageCollector {
                     )
                     break
                 case "transactions":
+                case "transactions_by_lt":
                     this.parseCollection(
                         skipPagination(field),
                         "transactions",
