@@ -538,6 +538,8 @@ export type BlockchainAccountQuery = {
     messages?: Maybe<BlockchainMessagesConnection>
     /** This node could be used for a cursor-based pagination of account transactions. */
     transactions?: Maybe<BlockchainTransactionsConnection>
+    /** This node could be used for a cursor-based pagination of account transactions where cursor is logical time (lt) */
+    transactions_by_lt?: Maybe<BlockchainTransactionsConnection>
 }
 
 export type BlockchainAccountQueryMessagesArgs = {
@@ -559,6 +561,15 @@ export type BlockchainAccountQueryTransactionsArgs = {
     aborted?: Maybe<Scalars["Boolean"]>
     min_balance_delta?: Maybe<Scalars["String"]>
     max_balance_delta?: Maybe<Scalars["String"]>
+    first?: Maybe<Scalars["Int"]>
+    after?: Maybe<Scalars["String"]>
+    last?: Maybe<Scalars["Int"]>
+    before?: Maybe<Scalars["String"]>
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainAccountQueryTransactions_By_LtArgs = {
+    allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
@@ -922,8 +933,13 @@ export type BlockchainQuery = {
     /** Account-related information */
     account?: Maybe<BlockchainAccountQuery>
     block?: Maybe<BlockchainBlock>
+    /** Returns array of previous shard blocks, consists of 2 elements if there was a merge of shards and of 1 element otherwise */
+    prev_shard_blocks?: Maybe<Array<Maybe<BlockchainBlock>>>
+    /** Returns array of next shard blocks, consists of 2 elements if there will be a split of shards and of 1 element otherwise */
+    next_shard_blocks?: Maybe<Array<Maybe<BlockchainBlock>>>
     block_by_seq_no?: Maybe<BlockchainBlock>
     transaction?: Maybe<BlockchainTransaction>
+    transactions_by_in_msg?: Maybe<Array<Maybe<BlockchainTransaction>>>
     message?: Maybe<BlockchainMessage>
     /**
      * Returns masterchain seq_no range for the specified time range
@@ -946,20 +962,40 @@ export type BlockchainQueryAccountArgs = {
 
 export type BlockchainQueryBlockArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainQueryPrev_Shard_BlocksArgs = {
+    hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainQueryNext_Shard_BlocksArgs = {
+    hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryBlock_By_Seq_NoArgs = {
     workchain: Scalars["Int"]
-    thread: Scalars["String"]
+    shard?: Maybe<Scalars["String"]>
     seq_no: Scalars["Float"]
+    archive?: Maybe<Scalars["Boolean"]>
+    thread?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryTransactionArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
+}
+
+export type BlockchainQueryTransactions_By_In_MsgArgs = {
+    msg_hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryMessageArgs = {
     hash: Scalars["String"]
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {
@@ -981,7 +1017,7 @@ export type BlockchainQueryBlocksArgs = {
     allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
     workchain?: Maybe<Scalars["Int"]>
-    thread?: Maybe<Scalars["String"]>
+    shard?: Maybe<Scalars["String"]>
     min_tr_count?: Maybe<Scalars["Int"]>
     max_tr_count?: Maybe<Scalars["Int"]>
     first?: Maybe<Scalars["Int"]>
@@ -989,6 +1025,7 @@ export type BlockchainQueryBlocksArgs = {
     last?: Maybe<Scalars["Int"]>
     before?: Maybe<Scalars["String"]>
     archive?: Maybe<Scalars["Boolean"]>
+    thread?: Maybe<Scalars["String"]>
 }
 
 export type BlockchainQueryTransactionsArgs = {
@@ -1107,6 +1144,8 @@ export type BlockchainTransaction = Node & {
      */
     tr_type?: Maybe<Scalars["Int"]>
     tr_type_name?: Maybe<TransactionTypeEnum>
+    /** VM debug trace */
+    trace?: Maybe<Scalars["String"]>
     tt?: Maybe<Scalars["String"]>
     /** Workchain id of the account address (account_addr field) */
     workchain_id?: Maybe<Scalars["Int"]>
@@ -2770,6 +2809,12 @@ export type BlockchainAccountQueryResolvers<
         ContextType,
         RequireFields<BlockchainAccountQueryTransactionsArgs, never>
     >
+    transactions_by_lt?: Resolver<
+        Maybe<ResolversTypes["BlockchainTransactionsConnection"]>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainAccountQueryTransactions_By_LtArgs, never>
+    >
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
@@ -3220,13 +3265,25 @@ export type BlockchainQueryResolvers<
         ContextType,
         RequireFields<BlockchainQueryBlockArgs, "hash">
     >
+    prev_shard_blocks?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["BlockchainBlock"]>>>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainQueryPrev_Shard_BlocksArgs, "hash">
+    >
+    next_shard_blocks?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["BlockchainBlock"]>>>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainQueryNext_Shard_BlocksArgs, "hash">
+    >
     block_by_seq_no?: Resolver<
         Maybe<ResolversTypes["BlockchainBlock"]>,
         ParentType,
         ContextType,
         RequireFields<
             BlockchainQueryBlock_By_Seq_NoArgs,
-            "workchain" | "thread" | "seq_no"
+            "workchain" | "seq_no"
         >
     >
     transaction?: Resolver<
@@ -3234,6 +3291,12 @@ export type BlockchainQueryResolvers<
         ParentType,
         ContextType,
         RequireFields<BlockchainQueryTransactionArgs, "hash">
+    >
+    transactions_by_in_msg?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["BlockchainTransaction"]>>>,
+        ParentType,
+        ContextType,
+        RequireFields<BlockchainQueryTransactions_By_In_MsgArgs, "msg_hash">
     >
     message?: Resolver<
         Maybe<ResolversTypes["BlockchainMessage"]>,
@@ -3464,6 +3527,7 @@ export type BlockchainTransactionResolvers<
         ParentType,
         ContextType
     >
+    trace?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     tt?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     workchain_id?: Resolver<
         Maybe<ResolversTypes["Int"]>,

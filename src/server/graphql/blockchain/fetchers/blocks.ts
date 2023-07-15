@@ -8,6 +8,7 @@ import { QError, required } from "../../../utils"
 import { config } from "../config"
 import {
     Direction,
+    KeyOf,
     getNodeSelectionSetForConnection,
     isDefined,
     prepareChainOrderFilter,
@@ -20,13 +21,16 @@ import {
     BlockchainQueryBlocksArgs,
     BlockchainQueryBlock_By_Seq_NoArgs,
     BlockchainQueryKey_BlocksArgs,
+    BlockchainQueryPrev_Shard_BlocksArgs,
+    BlockchainQueryNext_Shard_BlocksArgs,
 } from "../resolvers-types-generated"
 
-async function fetch_block(
+async function fetch_blocks(
     filterBuilder: (params: QParams) => String,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    additionalFields: KeyOf<BlockchainBlock>[] = [],
     maxJoinDepth = 1,
 ) {
     const selectionSet = info.fieldNodes[0].selectionSet
@@ -35,6 +39,7 @@ async function fetch_block(
         context,
         maxJoinDepth,
         "doc",
+        additionalFields,
     )
 
     // query
@@ -65,7 +70,7 @@ async function fetch_block(
         maxJoinDepth,
     )
 
-    return queryResult[0]
+    return queryResult
 }
 
 export async function resolve_block(
@@ -74,13 +79,15 @@ export async function resolve_block(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
-    return fetch_block(
-        params => `doc._key == @${params.add(hash)}`,
-        context,
-        info,
-        traceSpan,
-        // TODO: shard
-    )
+    return (
+        await fetch_blocks(
+            params => `doc._key == @${params.add(hash)}`,
+            context,
+            info,
+            traceSpan,
+            // TODO: shard
+        )
+    )[0]
 }
 
 export async function resolve_block_by_seq_no(
@@ -89,15 +96,97 @@ export async function resolve_block_by_seq_no(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
-    return fetch_block(
-        params =>
-            `doc.workchain_id == @${params.add(args.workchain)} AND ` +
-            `doc.shard == @${params.add(args.thread)} AND ` +
-            `doc.seq_no == @${params.add(args.seq_no)}`,
+    const shard = args.shard || args.thread
+    if (!shard) {
+        throw QError.invalidQuery('"shard" parameter must be defined')
+    }
+    return (
+        await fetch_blocks(
+            params =>
+                `doc.workchain_id == @${params.add(args.workchain)} AND ` +
+                `doc.shard == @${params.add(shard)} AND ` +
+                `doc.seq_no == @${params.add(args.seq_no)}`,
+            context,
+            info,
+            traceSpan,
+        )
+    )[0]
+}
+
+export async function resolve_prev_shard_blocks(
+    args: BlockchainQueryPrev_Shard_BlocksArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    const selectionSet = info.fieldNodes[0].selectionSet
+    const returnExpression = config.blocks.buildReturnExpression(
+        selectionSet,
+        context,
+        0,
+        "doc",
+    )
+
+    // query
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
+    const query =
+        `LET block = DOCUMENT(blocks, @${params.add(args.hash)}) ` +
+        "LET result = (FOR doc IN blocks " +
+        "FILTER doc._key IN [block.prev_ref.root_hash, block.prev_alt_ref.root_hash] " +
+        `RETURN ${returnExpression})` +
+        "FOR doc IN block.after_merge == true && LENGTH(result) == 1 ? [] : result RETURN doc"
+    const queryResult = (await context.services.data.query(
+        required(context.services.data.blocks.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+        },
+    )) as BlockchainBlock[]
+
+    await config.blocks.fetchJoins(
+        queryResult,
+        selectionSet,
+        context,
+        traceSpan,
+        0,
+    )
+
+    return queryResult
+}
+
+export async function resolve_next_shard_blocks(
+    args: BlockchainQueryNext_Shard_BlocksArgs,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    const blocks = await fetch_blocks(
+        params => {
+            const paramName = params.add(args.hash)
+            return `doc.prev_ref.root_hash == @${paramName} OR doc.prev_alt_ref.root_hash == @${paramName}`
+        },
         context,
         info,
         traceSpan,
+        ["after_split"],
+        0,
     )
+
+    if (blocks.length == 2) {
+        return blocks
+    }
+
+    if (blocks[0]?.after_split) {
+        return []
+    }
+
+    return blocks
 }
 
 export async function resolve_key_blocks(
@@ -165,9 +254,10 @@ export async function resolve_blockchain_blocks(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
+    const shard = args.shard || args.thread
     // validate args
-    if (args.thread && !isDefined(args.workchain)) {
-        throw QError.invalidQuery("Workchain is required for the thread filter")
+    if (shard && !isDefined(args.workchain)) {
+        throw QError.invalidQuery("Workchain is required for the shard filter")
     }
 
     // filters
@@ -181,8 +271,8 @@ export async function resolve_blockchain_blocks(
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`)
     }
-    if (isDefined(args.thread)) {
-        filters.push(`doc.shard == @${params.add(args.thread)}`)
+    if (isDefined(shard)) {
+        filters.push(`doc.shard == @${params.add(shard)}`)
     }
     if (isDefined(args.min_tr_count)) {
         filters.push(`doc.tr_count >= @${params.add(args.min_tr_count)}`)

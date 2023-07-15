@@ -80,10 +80,99 @@ type BlockchainQuery {
         address: String!
     ): BlockchainAccountQuery
 
-    block(hash: String!): BlockchainBlock
-    block_by_seq_no(workchain: Int!, thread: String!, seq_no: Float!): BlockchainBlock
-    transaction(hash: String!): BlockchainTransaction
-    message(hash: String!): BlockchainMessage
+    block(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainBlock
+
+    """
+    Returns array of previous shard blocks, consists of 2 elements if there was a merge of shards and of 1 element otherwise
+    """
+    prev_shard_blocks(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): [BlockchainBlock]
+
+    """
+    Returns array of next shard blocks, consists of 2 elements if there will be a split of shards and of 1 element otherwise
+    """
+    next_shard_blocks(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): [BlockchainBlock]
+
+    block_by_seq_no(
+        workchain: Int!
+        shard: String,
+        seq_no: Float!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+        "DEPRECATED, use shard parameter instead."
+        thread: String
+    ): BlockchainBlock
+
+    transaction(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainTransaction
+
+    transactions_by_in_msg(
+        msg_hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): [BlockchainTransaction]
+
+    message(
+        hash: String!
+
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainMessage
 
     """
     Returns masterchain seq_no range for the specified time range
@@ -149,9 +238,8 @@ type BlockchainQuery {
 
         "Optional filter by workchain"
         workchain: Int
-        "Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used"
-        thread: String,
-
+        "Optional filter by shard. Workchain filter is required if this filter is used"
+        shard: String,
         "Optional filter by minimum transactions in a block (unoptimized, query could be dropped by timeout)"
         min_tr_count: Int,
         "Optional filter by maximum transactions in a block (unoptimized, query could be dropped by timeout)"
@@ -171,6 +259,12 @@ type BlockchainQuery {
         You can find an actual information about time ranges on evercloud documentation.
         """
         archive: Boolean
+
+        """
+        DEPRECATED, use shard parameter instead.
+        Optional filter by thread (former 'shard'). Workchain filter is required if this filter is used
+        """
+        thread: String,
     ): BlockchainBlocksConnection
 
     """
@@ -245,6 +339,33 @@ type BlockchainAccountQuery {
         "Optional filter by max balance_delta (unoptimized, query could be dropped by timeout)"
         max_balance_delta: String,
 
+
+        "This field is mutually exclusive with 'last'"
+        first: Int
+        after: String
+
+        "This field is mutually exclusive with 'first'"
+        last: Int
+        before: String
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
+    ): BlockchainTransactionsConnection
+
+    """
+    This node could be used for a cursor-based pagination of account transactions where cursor is logical time (lt)
+    """
+    transactions_by_lt(
+        """
+        By default there is special latency added for the fetched recent data (several seconds) to
+        ensure impossibility of inserts before the latest fetched cursor (data consistency, for reliable pagination).
+        It is possible to disable this guarantee and to reduce the latency of realtime data by setting this flag to true.
+        """
+        allow_latest_inconsistent_data: Boolean
 
         "This field is mutually exclusive with 'last'"
         first: Int

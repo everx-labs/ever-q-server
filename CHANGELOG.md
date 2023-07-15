@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.61.0] - 2023-07-04
+
+### New
+
+- `trace` field in transaction
+
+- `archive` parameter in blockchain signle-entity fields (`block`, `block_by_seq_no`, `transaction`, `message`).
+  When is `true` the blockchain requests use an archive database with full blockchain history
+  but reduced field set.
+
+- `transactions_by_lt` query is added to `blockchain.account` to paginate account transactions by logical time
+
+- `thread` parameter in `blockchain.block_by_seq_no` and `blockchain.blocks` is deprecated. `shard` parameter should be used instead
+
+- `blockchain.prev_shard_blocks` and `blockchain.next_shard_blocks` queries for blocks chain iteration
+
+- `blockchain.transactions_by_in_msg` query for retrieving transaction by inbound message
+
+- `blocks` collection latency is calculated from `gen_utime` of masterchain block which has commited last known shard block
+
 ## [0.60.1] - 2023-06-21
 
 ### Fixed
