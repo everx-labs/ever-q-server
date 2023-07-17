@@ -550,3 +550,4 @@ docker run --rm -d \
   qserver
 ```
 GraphQL playground must be available on http://localhost:4000/graphql
+
