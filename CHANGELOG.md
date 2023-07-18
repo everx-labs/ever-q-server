@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.62.0] - 2023-07-04
+
+### New
+
+- `trace` field in transaction is a list of VM step info objects
+
 ## [0.61.0] - 2023-07-04
 
 ### New
