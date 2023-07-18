@@ -188,6 +188,19 @@ enum BounceTypeEnum {
     Ok
 }
 
+type TransactionTrace {
+	info_type: String,
+	step: Int,
+	cmd_str: String,
+	stack: [String],
+	gas_used: String,
+	gas_cmd: String,
+	cmd_code_rem_bits: Int,
+	cmd_code_hex: String,
+	cmd_code_cell_hash: String,
+	cmd_code_offset: Int,
+}
+
 """
 Due to GraphQL limitations big numbers are returned as a string.
 You can specify format used to string representation for big integers.
