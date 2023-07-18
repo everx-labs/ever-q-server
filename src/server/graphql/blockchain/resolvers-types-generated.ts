@@ -1145,7 +1145,7 @@ export type BlockchainTransaction = Node & {
     tr_type?: Maybe<Scalars["Int"]>
     tr_type_name?: Maybe<TransactionTypeEnum>
     /** VM debug trace */
-    trace?: Maybe<Scalars["String"]>
+    trace?: Maybe<Array<Maybe<TransactionTrace>>>
     tt?: Maybe<Scalars["String"]>
     /** Workchain id of the account address (account_addr field) */
     workchain_id?: Maybe<Scalars["Int"]>
@@ -1876,6 +1876,20 @@ export type TransactionStorageStorage_Fees_DueArgs = {
     format?: Maybe<BigIntFormat>
 }
 
+export type TransactionTrace = {
+    __typename?: "TransactionTrace"
+    info_type?: Maybe<Scalars["String"]>
+    step?: Maybe<Scalars["Int"]>
+    cmd_str?: Maybe<Scalars["String"]>
+    stack?: Maybe<Array<Maybe<Scalars["String"]>>>
+    gas_used?: Maybe<Scalars["String"]>
+    gas_cmd?: Maybe<Scalars["String"]>
+    cmd_code_rem_bits?: Maybe<Scalars["Int"]>
+    cmd_code_hex?: Maybe<Scalars["String"]>
+    cmd_code_cell_hash?: Maybe<Scalars["String"]>
+    cmd_code_offset?: Maybe<Scalars["Int"]>
+}
+
 export enum TransactionTypeEnum {
     Ordinary = "Ordinary",
     Storage = "Storage",
@@ -2103,6 +2117,7 @@ export type ResolversTypes = {
     TransactionProcessingStatusEnum: TransactionProcessingStatusEnum
     TransactionSplitInfo: ResolverTypeWrapper<TransactionSplitInfo>
     TransactionStorage: ResolverTypeWrapper<TransactionStorage>
+    TransactionTrace: ResolverTypeWrapper<TransactionTrace>
     TransactionTypeEnum: TransactionTypeEnum
     ValidatorSet: ResolverTypeWrapper<ValidatorSet>
     ValidatorSetList: ResolverTypeWrapper<ValidatorSetList>
@@ -2177,6 +2192,7 @@ export type ResolversParentTypes = {
     TransactionCredit: TransactionCredit
     TransactionSplitInfo: TransactionSplitInfo
     TransactionStorage: TransactionStorage
+    TransactionTrace: TransactionTrace
     ValidatorSet: ValidatorSet
     ValidatorSetList: ValidatorSetList
 }
@@ -3527,7 +3543,11 @@ export type BlockchainTransactionResolvers<
         ParentType,
         ContextType
     >
-    trace?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    trace?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["TransactionTrace"]>>>,
+        ParentType,
+        ContextType
+    >
     tt?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
     workchain_id?: Resolver<
         Maybe<ResolversTypes["Int"]>,
@@ -4691,6 +4711,51 @@ export type TransactionStorageResolvers<
     __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
 }
 
+export type TransactionTraceResolvers<
+    ContextType = any,
+    ParentType extends ResolversParentTypes["TransactionTrace"] = ResolversParentTypes["TransactionTrace"],
+> = {
+    info_type?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    step?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>
+    cmd_str?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    stack?: Resolver<
+        Maybe<Array<Maybe<ResolversTypes["String"]>>>,
+        ParentType,
+        ContextType
+    >
+    gas_used?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    gas_cmd?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>
+    cmd_code_rem_bits?: Resolver<
+        Maybe<ResolversTypes["Int"]>,
+        ParentType,
+        ContextType
+    >
+    cmd_code_hex?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    cmd_code_cell_hash?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    cmd_code_offset?: Resolver<
+        Maybe<ResolversTypes["Int"]>,
+        ParentType,
+        ContextType
+    >
+    __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>
+}
+
 export type ValidatorSetResolvers<
     ContextType = any,
     ParentType extends ResolversParentTypes["ValidatorSet"] = ResolversParentTypes["ValidatorSet"],
@@ -4812,6 +4877,7 @@ export type Resolvers<ContextType = any> = {
     TransactionCredit?: TransactionCreditResolvers<ContextType>
     TransactionSplitInfo?: TransactionSplitInfoResolvers<ContextType>
     TransactionStorage?: TransactionStorageResolvers<ContextType>
+    TransactionTrace?: TransactionTraceResolvers<ContextType>
     ValidatorSet?: ValidatorSetResolvers<ContextType>
     ValidatorSetList?: ValidatorSetListResolvers<ContextType>
 }
