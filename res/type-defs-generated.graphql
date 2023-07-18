@@ -1246,7 +1246,7 @@ type Transaction {
 	"""
 	tr_type: Int
 	tr_type_name: TransactionTypeEnum
-	trace: TransactionTrace
+	trace: [TransactionTrace]
 	tt: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
@@ -2631,6 +2631,11 @@ input MessageArrayFilter {
 	all: MessageFilter
 }
 
+input TransactionTraceArrayFilter {
+	any: TransactionTraceFilter
+	all: TransactionTraceFilter
+}
+
 input TransactionProcessingStatusEnumFilter {
 	eq: TransactionProcessingStatusEnum
 	ne: TransactionProcessingStatusEnum
@@ -2763,7 +2768,7 @@ input TransactionFilter {
 	"""
 	tr_type: IntFilter
 	tr_type_name: TransactionTypeEnumFilter
-	trace: TransactionTraceFilter
+	trace: TransactionTraceArrayFilter
 	tt: StringFilter
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: IntFilter
