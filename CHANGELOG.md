@@ -28,6 +28,10 @@ All notable changes to this project will be documented in this file.
 
 - `blocks` collection latency is calculated from `gen_utime` of masterchain block which has commited last known shard block
 
+### Improved
+
+- All user parameters that are enums are now checked for typos on startup
+
 ## [0.60.1] - 2023-06-21
 
 ### Fixed
