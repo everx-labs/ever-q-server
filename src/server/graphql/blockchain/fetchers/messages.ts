@@ -28,6 +28,7 @@ export async function resolve_message(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    archive: boolean | undefined | null,
 ) {
     const maxJoinDepth = 1
 
@@ -56,6 +57,7 @@ export async function resolve_message(
             orderBy: [],
             request: context,
             traceSpan,
+            archive,
         },
     )) as BlockchainMessage[]
 
@@ -65,6 +67,7 @@ export async function resolve_message(
         context,
         traceSpan,
         maxJoinDepth,
+        archive,
     )
 
     return queryResult[0]
@@ -266,7 +269,7 @@ export async function resolve_account_messages(
             distinctBy: "account_chain_order",
             request: context,
             traceSpan,
-            archive: args.archive ?? undefined,
+            archive: args.archive,
         },
     )) as (BlockchainMessage & { account_chain_order?: string })[]
 
@@ -282,6 +285,7 @@ export async function resolve_account_messages(
                 context,
                 traceSpan,
                 maxJoinDepth,
+                args.archive,
             )
         },
     )) as BlockchainMessagesConnection

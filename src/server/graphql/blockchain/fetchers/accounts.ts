@@ -58,6 +58,7 @@ export async function resolve_account(
         context,
         traceSpan,
         maxJoinDepth,
+        false,
     )
 
     return queryResult[0]

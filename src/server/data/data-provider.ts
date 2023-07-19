@@ -86,7 +86,7 @@ export type QDataProviderQueryParams = {
     request: QRequestContext
     traceSpan: QTraceSpan
     maxRuntimeInS?: number
-    archive?: boolean
+    archive?: boolean | null
 }
 
 export interface QDataProvider {

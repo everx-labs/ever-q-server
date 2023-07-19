@@ -186,6 +186,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                     context,
                     info,
                     traceSpan,
+                    args.archive,
                 )
             })
         },
@@ -235,6 +236,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                     context,
                     info,
                     traceSpan,
+                    args.archive,
                 )
             })
         },
@@ -258,6 +260,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                     context,
                     info,
                     traceSpan,
+                    args.archive,
                 )
             })
         },
