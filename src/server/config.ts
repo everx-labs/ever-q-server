@@ -507,15 +507,6 @@ function checkSubscriptionsConfig(
             ? SubscriptionsMode.Arango
             : SubscriptionsMode.Disabled
     }
-    if (!Object.values(SubscriptionsMode).includes(config.subscriptionsMode)) {
-        throw QError.invalidConfig(
-            `Unknown subscriptions-mode: got ${
-                config.subscriptionsMode
-            }, but expected one of [${Object.values(SubscriptionsMode).join(
-                ", ",
-            )}]`,
-        )
-    }
 }
 
 function applyDatabaseDefaults(config: string[], def: string[]) {
@@ -548,6 +539,15 @@ export function resolveConfig(
     applyDataProviderDefaults(config.blockchain.blocks, config)
     applyDataProviderDefaults(config.blockchain.transactions, config)
     checkSubscriptionsConfig(config, specified)
+    // Check all parameters that are enums
+    checkEnum("subscriptions-mode", config.subscriptionsMode, SubscriptionsMode)
+    checkEnum("slow-queries", config.queries.slowQueries, SlowQueriesMode)
+    checkEnum("requests-mode", config.requests.mode, RequestsMode)
+    checkEnum(
+        "filter-or-conversion",
+        config.queries.filter.orConversion,
+        FilterOrConversion,
+    )
 
     const slow = config.slowQueriesBlockchain
     if (slow !== undefined) {
@@ -572,4 +572,18 @@ export function resolveConfig(
             ""
     }
     return config
+}
+
+function checkEnum(
+    paramName: string,
+    paramValue: string,
+    matchedEnum: Record<string, unknown>,
+) {
+    if (!Object.values(matchedEnum).includes(`${paramValue}`)) {
+        throw QError.invalidConfig(
+            `Unknown ${paramName}: got ${paramValue}, but expected one of [${Object.values(
+                matchedEnum,
+            ).join(", ")}]`,
+        )
+    }
 }
