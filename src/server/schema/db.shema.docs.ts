@@ -285,6 +285,7 @@ balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.f
         ext_in_msg_fee: "Fee for inbound external message import.",
         master_seq_no:
             "seq_no of masterchain block which commited shard block containing the transaction",
+        trace: "VM debug trace",
     },
 
     shardDescr: {

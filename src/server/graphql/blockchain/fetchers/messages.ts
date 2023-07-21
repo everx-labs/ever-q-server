@@ -82,6 +82,7 @@ export async function resolve_message(
         context,
         traceSpan,
         maxJoinDepth,
+        useArchive,
     )
 
     return queryResult[0]
@@ -308,6 +309,7 @@ export async function resolve_account_messages(
                 context,
                 traceSpan,
                 maxJoinDepth,
+                useArchive,
             )
         },
     )) as BlockchainMessagesConnection

@@ -88,8 +88,13 @@ type EndPoint = {
     supportSubscriptions: boolean
 }
 
+type ProviderFactoryItem = {
+    provider: QDataProvider
+    hot: QDatabaseProvider | undefined
+}
+
 export class DataProviderFactory {
-    providers = new Map<string, QDataProvider>()
+    providers = new Map<string, ProviderFactoryItem>()
     databasePool = new QDatabasePool()
 
     constructor(public config: QConfig, public logs: QLogs) {}
@@ -103,11 +108,11 @@ export class DataProviderFactory {
             counterparties: this.ensureDatabases(
                 this.config.counterparties,
                 "counterparties",
-            ),
+            )?.provider,
             chainRangesVerification: this.ensureDatabases(
                 this.config.chainRangesVerification,
                 "chainRangesVerification",
-            ),
+            )?.provider,
         }
     }
 
@@ -115,26 +120,31 @@ export class DataProviderFactory {
         config: QBlockchainDataConfig | undefined,
         logKey: string,
     ): QBlockchainDataProvider | undefined {
-        return config === undefined
-            ? undefined
-            : {
-                  accounts: this.ensureDatabases(
-                      config.accounts,
-                      `${logKey}_accounts`,
-                  ),
-                  blocks: this.ensureDataProvider(
-                      config.blocks,
-                      `${logKey}_blocks`,
-                  ),
-                  transactions: this.ensureDataProvider(
-                      config.transactions,
-                      `${logKey}_transactions`,
-                  ),
-                  zerostate: this.ensureDatabase(
-                      config.zerostate,
-                      `${logKey}_zerostate`,
-                  ),
-              }
+        if (config === undefined) {
+            return undefined
+        }
+        const blocks = this.ensureDataProvider(
+            config.blocks,
+            `${logKey}_blocks`,
+        )
+        const transactions = this.ensureDataProvider(
+            config.transactions,
+            `${logKey}_transactions`,
+        )
+        return {
+            accounts: this.ensureDatabases(
+                config.accounts,
+                `${logKey}_accounts`,
+            )?.provider,
+            blocks: blocks?.provider,
+            hotBlocks: blocks?.hot,
+            transactions: transactions?.provider,
+            hotTransactions: transactions?.hot,
+            zerostate: this.ensureDatabase(
+                config.zerostate,
+                `${logKey}_zerostate`,
+            )?.provider,
+        }
     }
 
     preCache(
@@ -165,19 +175,24 @@ export class DataProviderFactory {
     ensureDataProvider(
         config: QDataProviderConfig,
         logKey: string,
-    ): QDataProvider | undefined {
+    ): ProviderFactoryItem | undefined {
         return this.ensureProvider(
             config,
             () => {
+                const hotDatabase = this.ensureDatabases(
+                    config.hot,
+                    `${logKey}_hot`,
+                )?.hot
                 const hot = this.preCache(
-                    this.ensureDatabases(config.hot, `${logKey}_hot`),
+                    hotDatabase,
                     this.config.blockchain.hotCache,
                     logKey,
                     this.config.blockchain.hotCacheExpiration,
                     this.config.blockchain.hotCacheEmptyDataExpiration,
                 )
                 const cold = this.preCache(
-                    this.ensureDatabases(config.cold, `${logKey}_cold`),
+                    this.ensureDatabases(config.cold, `${logKey}_cold`)
+                        ?.provider,
                     config.cache,
                     logKey,
                 )
@@ -189,12 +204,18 @@ export class DataProviderFactory {
                     const archive = this.ensureDatabases(
                         config.archive,
                         `${logKey}_archive`,
-                    )
+                    )?.provider
                     if (archive) {
                         provider = new QArchiveCombiner(archive, provider)
                     }
                 }
-                return provider
+                if (!provider) {
+                    return undefined
+                }
+                return {
+                    provider,
+                    hot: hotDatabase,
+                }
             },
             "hot-cold",
         )
@@ -203,32 +224,42 @@ export class DataProviderFactory {
     ensureDatabases(
         config: string[],
         logKey: string,
-    ): QDataProvider | undefined {
+    ): ProviderFactoryItem | undefined {
         return this.ensureProvider(
             config,
             () => {
-                const providers: QDataProvider[] = []
+                const factoryItems: ProviderFactoryItem[] = []
                 config.forEach((x, i) => {
-                    const provider = this.ensureDatabase(x, `${logKey}_${i}`)
+                    const factoryItem = this.ensureDatabase(x, `${logKey}_${i}`)
                     if (
-                        provider !== undefined &&
-                        !providers.includes(provider)
+                        factoryItem !== undefined &&
+                        !factoryItems.includes(factoryItem)
                     ) {
-                        providers.push(provider)
+                        factoryItems.push(factoryItem)
                     }
                 })
-                if (providers.length === 0) {
+                if (factoryItems.length === 0) {
                     return undefined
                 }
-                return providers.length === 1
-                    ? providers[0]
-                    : new QDataCombiner(providers)
+                if (factoryItems.length === 1) {
+                    return factoryItems[0]
+                }
+
+                return {
+                    provider: new QDataCombiner(
+                        factoryItems.map(x => x.provider),
+                    ),
+                    hot: factoryItems[0].hot,
+                }
             },
             "false",
         )
     }
 
-    ensureDatabase(config: string, logKey: string): QDataProvider | undefined {
+    ensureDatabase(
+        config: string,
+        logKey: string,
+    ): ProviderFactoryItem | undefined {
         return this.ensureProvider(
             config,
             () => {
@@ -238,11 +269,15 @@ export class DataProviderFactory {
                 const databaseConfig = parseArangoConfig(config)
                 const connection =
                     this.databasePool.ensureConnection(databaseConfig)
-                return new QDatabaseProvider(
+                const database = new QDatabaseProvider(
                     this.logs.create(logKey),
                     connection,
                     this.config.subscriptionsMode === SubscriptionsMode.Arango,
                 )
+                return {
+                    provider: database,
+                    hot: database,
+                }
             },
             "false",
         )
@@ -250,9 +285,9 @@ export class DataProviderFactory {
 
     ensureProvider(
         config: unknown,
-        factory: () => QDataProvider | undefined,
+        factory: () => ProviderFactoryItem | undefined,
         uniqueKey: string,
-    ): QDataProvider | undefined {
+    ): ProviderFactoryItem | undefined {
         const providerKey = JSON.stringify({ config, uniqueKey })
         const existing = this.providers.get(providerKey)
         if (existing !== undefined) {

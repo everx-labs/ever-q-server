@@ -15,11 +15,16 @@ import {
     resolve_blockchain_transactions,
     resolve_block,
     resolve_transaction,
+    resolve_transactions_by_in_msg,
     resolve_message,
     resolve_block_by_seq_no,
+    resolve_account_transactions_by_lt,
+    resolve_next_shard_blocks,
+    resolve_prev_shard_blocks,
 } from "./fetchers"
 import { isDefined } from "./helpers"
 import { resolveAddress } from "../../address"
+import { ValidationError } from "apollo-server-errors"
 
 // UUID is a hack to bypass QDataCombiner deduplication
 const MASTER_SEQ_NO_RANGE_QUERY = `
@@ -168,7 +173,7 @@ export const resolvers: Resolvers<QRequestContext> = {
                 addressWithoutPrefix === undefined ||
                 addressWithoutPrefix.length !== 64
             ) {
-                throw QError.invalidQuery("Invalid account address")
+                throw new ValidationError("Invalid account address")
             }
             return {
                 address: resolvedAddress,
@@ -194,7 +199,32 @@ export const resolvers: Resolvers<QRequestContext> = {
                         context,
                         info,
                         traceSpan,
-                        args.archive,
+                    )
+                },
+            )
+        },
+        prev_shard_blocks: async (_parent, args, context, info) => {
+            return context.trace(
+                "blockchain-prev-shard-blocks",
+                async traceSpan => {
+                    return resolve_prev_shard_blocks(
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
+        },
+        next_shard_blocks: async (_parent, args, context, info) => {
+            return context.trace(
+                "blockchain-next-shard-blocks",
+                async traceSpan => {
+                    return resolve_next_shard_blocks(
+                        args,
+                        context,
+                        info,
+                        traceSpan,
                     )
                 },
             )
@@ -209,6 +239,19 @@ export const resolvers: Resolvers<QRequestContext> = {
                     args.archive,
                 )
             })
+        },
+        transactions_by_in_msg: async (_parent, args, context, info) => {
+            return context.trace(
+                "blockchain-transactions-by-in-msg",
+                async traceSpan => {
+                    return resolve_transactions_by_in_msg(
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
         },
         message: async (_parent, args, context, info) => {
             return context.trace("blockchain-message", async traceSpan => {
@@ -289,6 +332,20 @@ export const resolvers: Resolvers<QRequestContext> = {
                 "blockchain-account-transactions",
                 async traceSpan => {
                     return await resolve_account_transactions(
+                        resolveAddress(parent.address),
+                        args,
+                        context,
+                        info,
+                        traceSpan,
+                    )
+                },
+            )
+        },
+        transactions_by_lt: async (parent, args, context, info) => {
+            return context.trace(
+                "blockchain-account-transactions-by-lt",
+                async traceSpan => {
+                    return await resolve_account_transactions_by_lt(
                         resolveAddress(parent.address),
                         args,
                         context,

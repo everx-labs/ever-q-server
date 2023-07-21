@@ -1,9 +1,21 @@
 import { CachedData } from "../cached-data"
 import { QDataCollection } from "./collection"
-import { Database } from "arangojs"
 import { QDatabaseProvider } from "./database-provider"
 
 const LATENCY_UPDATE_FREQUENCY = 25000
+
+const BLOCK_LATENCY_QUERY = `LET last_shard_block_chain_order = (
+    FOR b IN blocks
+    FILTER b.workchain_id == 0
+    SORT b.gen_utime DESC
+    LIMIT 1
+    RETURN b.chain_order
+)[0]
+LET master_block_chain_order = CONCAT(SUBSTRING(last_shard_block_chain_order, 0, 2 + TO_NUMBER(CONCAT("0x",SUBSTRING(last_shard_block_chain_order,0,1)))),"m")
+
+FOR b IN blocks
+FILTER b.chain_order == master_block_chain_order
+RETURN { maxTime: b.gen_utime }`
 
 export type CollectionLatency = {
     maxTime: number
@@ -20,56 +32,43 @@ export type Latency = {
 
 type LatencyCacheOptions = {
     blocks: QDataCollection
+    hotBlocks: QDatabaseProvider | undefined
     messages: QDataCollection
+    hotMessages: QDatabaseProvider | undefined
     transactions: QDataCollection
+    hotTransactions: QDatabaseProvider | undefined
     ignoreMessages?: boolean
 }
 
 class CollectionLatencyCache extends CachedData<CollectionLatency> {
-    constructor(private collection: QDataCollection, private field: string) {
+    constructor(
+        private collection: QDataCollection,
+        private hot: QDatabaseProvider | undefined,
+        private field: string,
+    ) {
         super({
             ttlMs: LATENCY_UPDATE_FREQUENCY,
-        })
-        collection.docInsertOrUpdate.on("doc", async doc => {
-            this.updateLatency(doc[this.field])
         })
     }
 
     async loadActual(): Promise<CollectionLatency> {
-        const fetchersByDatabasePoolIndex = new Map<
-            number,
-            { database: Database; returns: string[] }
-        >()
         const collection = this.collection.name
         const field = this.field
-        const provider = this.collection.provider as QDatabaseProvider
-        const returnExpression = `${collection}: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0]`
-        const poolIndex = provider.connection.poolIndex
-        const existing = fetchersByDatabasePoolIndex.get(poolIndex)
-        if (existing !== undefined) {
-            existing.returns.push(returnExpression)
-        } else {
-            fetchersByDatabasePoolIndex.set(poolIndex, {
-                database: provider.connection.database,
-                returns: [returnExpression],
-            })
+        const provider = this.hot
+        if (!provider) {
+            throw Error(`Internal error: ${collection} hot provider is missing`)
         }
-        const fetchedTimes = await Promise.all(
-            [...fetchersByDatabasePoolIndex.values()].map(async fetcher => {
-                const query = `RETURN {${fetcher.returns.join(",\n")}}`
-                return (
-                    await (await fetcher.database.query(query)).all()
-                )[0] as Record<string, number | null>
-            }),
-        )
+        const query =
+            collection == "blocks"
+                ? BLOCK_LATENCY_QUERY
+                : `RETURN { maxTime: (FOR d IN ${collection} SORT d.${field} DESC LIMIT 1 RETURN d.${field})[0] }`
+        const cursor = await provider.connection.database.query(query)
+        const fetchedTime = (await cursor.all())[0].maxTime as
+            | number
+            | null
+            | undefined
 
-        let maxTime = 0
-        for (const fetchedTime of fetchedTimes) {
-            const time = fetchedTime[collection]
-            if (time !== undefined && time !== null && time > maxTime) {
-                maxTime = time
-            }
-        }
+        const maxTime = fetchedTime ?? 0
         const latency = this.getUpdatedLatency(maxTime)
         if (!latency) {
             throw Error("Internal error: latency can not be undefined")
@@ -92,13 +91,6 @@ class CollectionLatencyCache extends CachedData<CollectionLatency> {
             latency: Math.max(0, Date.now() - time),
         }
     }
-
-    updateLatency(timeInSeconds: number | undefined | null) {
-        const newData = this.getUpdatedLatency(timeInSeconds)
-        if (newData && newData !== this.data) {
-            this.update(newData)
-        }
-    }
 }
 
 export class LatencyCache {
@@ -109,13 +101,19 @@ export class LatencyCache {
 
     constructor(options: LatencyCacheOptions) {
         this.ignoreMessages = options.ignoreMessages ?? false
-        this.blocks = new CollectionLatencyCache(options.blocks, "gen_utime")
+        this.blocks = new CollectionLatencyCache(
+            options.blocks,
+            options.hotBlocks,
+            "gen_utime",
+        )
         this.messages = new CollectionLatencyCache(
             options.messages,
+            options.hotMessages,
             "created_at",
         )
         this.transactions = new CollectionLatencyCache(
             options.transactions,
+            options.hotTransactions,
             "now",
         )
     }

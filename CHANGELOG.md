@@ -2,14 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.60.0] - 2023-06-07
+## [0.X.0] - 2023-06-07
 
 ### New
 
 - Added BOC parsing for transactions, messages and blocks in `archive` database when user selects
   non parsed fields.
 
-## [0.59.0] - 2023-06-07
+
+## [0.62.0] - 2023-07-20
+
+### New
+
+- `trace` field in transaction is a list of VM step info objects
+
+### Fixed
+
+- implemented support for `archive` parameter in all blockchain queries.
+- `archive` parameter was not propagated to the nested join queries.
+
+### Improved
+
+- All user parameters that are enums are now checked for typos on startup
+
+## [0.61.0] - 2023-07-04
+
+### New
+
+- `trace` field in transaction
+
+- `archive` parameter in blockchain signle-entity fields (`block`, `block_by_seq_no`, `transaction`, `message`).
+  When is `true` the blockchain requests use an archive database with full blockchain history
+  but reduced field set.
+
+- `transactions_by_lt` query is added to `blockchain.account` to paginate account transactions by logical time
+
+- `thread` parameter in `blockchain.block_by_seq_no` and `blockchain.blocks` is deprecated. `shard` parameter should be used instead
+
+- `blockchain.prev_shard_blocks` and `blockchain.next_shard_blocks` queries for blocks chain iteration
+
+- `blockchain.transactions_by_in_msg` query for retrieving transaction by inbound message
+
+- `blocks` collection latency is calculated from `gen_utime` of masterchain block which has commited last known shard block
+
+## [0.60.1] - 2023-06-21
+
+### Fixed
+
+- Latency calculation failed
+
+## [0.60.0] - 2023-06-21
 
 ### New
 
@@ -19,12 +61,6 @@ All notable changes to this project will be documented in this file.
 - Added parameter `archive` to blockchain lists fields.
   When is `true` the blockchain requests use an archive database with full blockchain history
   but reduced field set.
-
-- Added parameter `archive` to blockchain lists fields.
-
-- Added `blockBocs` config parameter allowing to resolve block bocs from external S3
-  compatible storage.
-  See README.md for details.
 
 - Added config parameters `hot` to specify default values for
   `blockchain.blocks.hot`, `blockchain.transactions.hot`, `blockchain.accounts`.
@@ -43,6 +79,16 @@ All notable changes to this project will be documented in this file.
   `--slow-queries-cold            Q_SLOW_QUERIES_COLD`
   `--slow-queries-cache           Q_SLOW_QUERIES_CACHE`
   `--slow-queries-counterparties  Q_SLOW_QUERIES_COUNTERPARTIES`
+
+## [0.59.0] - 2023-06-07
+
+### New
+
+- Added parameter `archive` to blockchain lists fields.
+
+- Added `blockBocs` config parameter allowing to resolve block bocs from external S3
+  compatible storage.
+  See README.md for details.
 
 - Removed a database sharding.
 

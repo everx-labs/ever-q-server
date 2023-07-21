@@ -229,8 +229,11 @@ export default class QBlockchainData extends QData {
 
         this.latencyCache = new LatencyCache({
             blocks: this.blocks,
+            hotBlocks: options.providers.blockchain?.hotBlocks,
             messages: this.messages,
+            hotMessages: options.providers.blockchain?.hotTransactions,
             transactions: this.transactions,
+            hotTransactions: options.providers.blockchain?.hotTransactions,
             ignoreMessages: options.ignoreMessagesForLatency,
         })
 

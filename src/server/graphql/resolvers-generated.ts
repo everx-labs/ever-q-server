@@ -426,6 +426,19 @@ const TransactionSplitInfo = struct({
     this_addr: stringLowerFilter,
 })
 
+const TransactionTrace = struct({
+    cmd_code_cell_hash: scalar,
+    cmd_code_hex: scalar,
+    cmd_code_offset: scalar,
+    cmd_code_rem_bits: scalar,
+    cmd_str: scalar,
+    gas_cmd: scalar,
+    gas_used: scalar,
+    info_type: scalar,
+    stack: StringArray,
+    step: scalar,
+})
+
 const BlockValueFlow = struct({
     created: bigUInt2,
     created_other: OtherCurrencyArray,
@@ -629,6 +642,7 @@ const Account = struct(
     true,
 )
 
+const TransactionTraceArray = array(() => TransactionTrace)
 const Transaction = struct(
     {
         id: stringLowerFilter,
@@ -707,6 +721,7 @@ const Transaction = struct(
             MergePrepare: 6,
             MergeInstall: 7,
         }),
+        trace: TransactionTraceArray,
         tt: scalar,
         workchain_id: scalar,
     },
@@ -1846,6 +1861,46 @@ scalarFields.set("transactions.total_fees_other.currency", {
 scalarFields.set("transactions.total_fees_other.value", {
     type: "uint1024",
     path: "doc.total_fees_other[*].value",
+})
+scalarFields.set("transactions.trace.cmd_code_cell_hash", {
+    type: "string",
+    path: "doc.trace[*].cmd_code_cell_hash",
+})
+scalarFields.set("transactions.trace.cmd_code_hex", {
+    type: "string",
+    path: "doc.trace[*].cmd_code_hex",
+})
+scalarFields.set("transactions.trace.cmd_code_offset", {
+    type: "number",
+    path: "doc.trace[*].cmd_code_offset",
+})
+scalarFields.set("transactions.trace.cmd_code_rem_bits", {
+    type: "number",
+    path: "doc.trace[*].cmd_code_rem_bits",
+})
+scalarFields.set("transactions.trace.cmd_str", {
+    type: "string",
+    path: "doc.trace[*].cmd_str",
+})
+scalarFields.set("transactions.trace.gas_cmd", {
+    type: "string",
+    path: "doc.trace[*].gas_cmd",
+})
+scalarFields.set("transactions.trace.gas_used", {
+    type: "string",
+    path: "doc.trace[*].gas_used",
+})
+scalarFields.set("transactions.trace.info_type", {
+    type: "string",
+    path: "doc.trace[*].info_type",
+})
+scalarFields.set("transactions.trace.stack", {
+    type: "string",
+    path: "doc.trace[*].stack[**]",
+})
+scalarFields.set("transactions.trace.step", {
+    type: "number",
+    path: "doc.trace[*].step",
 })
 scalarFields.set("transactions.tt", { type: "string", path: "doc.tt" })
 scalarFields.set("transactions.workchain_id", {
@@ -4648,6 +4703,7 @@ export {
     TransactionAction,
     TransactionBounce,
     TransactionSplitInfo,
+    TransactionTrace,
     BlockValueFlow,
     BlockAccountBlocksTransactions,
     BlockAccountBlocks,
