@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 - implemented support for `archive` parameter in all blockchain queries.
 - `archive` parameter was not propagated to the nested join queries.
 
+### Improved
+
+- All user parameters that are enums are now checked for typos on startup
+
 ## [0.61.0] - 2023-07-04
 
 ### New
@@ -32,10 +36,6 @@ All notable changes to this project will be documented in this file.
 - `blockchain.transactions_by_in_msg` query for retrieving transaction by inbound message
 
 - `blocks` collection latency is calculated from `gen_utime` of masterchain block which has commited last known shard block
-
-### Improved
-
-- All user parameters that are enums are now checked for typos on startup
 
 ## [0.60.1] - 2023-06-21
 
