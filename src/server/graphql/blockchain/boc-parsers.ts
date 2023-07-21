@@ -141,17 +141,32 @@ export async function parseBlockBocsIfRequired(
     context: QRequestContext,
     blocks: BlockchainBlock[],
 ): Promise<BlockchainBlock[]> {
-    if (requireParsing) {
-        return await parseBocs(blocks, async boc => {
-            return (
-                await context.services.client.boc.parse_block({
-                    boc,
-                })
-            ).parsed
-        })
-    } else {
+    if (!requireParsing) {
         return blocks
     }
+    const blocksStorage = context.services.data.bocStorage.blocks
+    if (!blocksStorage) {
+        return blocks
+    }
+    const bocs = await blocksStorage.resolveBocs(
+        blocks.map(x => ({
+            hash: x._key,
+            boc: x.boc,
+        })),
+    )
+    for (const block of blocks) {
+        const boc = bocs.get(block._key)
+        if (boc) {
+            block.boc = boc
+        }
+    }
+    return await parseBocs(blocks, async boc => {
+        return (
+            await context.services.client.boc.parse_block({
+                boc,
+            })
+        ).parsed
+    })
 }
 
 export async function parseMessageBocsIfRequired(
