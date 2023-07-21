@@ -678,6 +678,19 @@ type TransactionSplitInfo {
 	this_addr: String
 }
 
+type TransactionTrace {
+	cmd_code_cell_hash: String
+	cmd_code_hex: String
+	cmd_code_offset: Float
+	cmd_code_rem_bits: Float
+	cmd_str: String
+	gas_cmd: String
+	gas_used: String
+	info_type: String
+	stack: [String]
+	step: Float
+}
+
 type BlockValueFlow {
 	created(format: BigIntFormat): String
 	created_other: [OtherCurrency]
@@ -1233,8 +1246,7 @@ type Transaction {
 	"""
 	tr_type: Int
 	tr_type_name: TransactionTypeEnum
-	"VM debug trace"
-	trace: String
+	trace: [TransactionTrace]
 	tt: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
@@ -2103,6 +2115,20 @@ input TransactionSplitInfoFilter {
     OR: TransactionSplitInfoFilter
 }
 
+input TransactionTraceFilter {
+	cmd_code_cell_hash: StringFilter
+	cmd_code_hex: StringFilter
+	cmd_code_offset: FloatFilter
+	cmd_code_rem_bits: FloatFilter
+	cmd_str: StringFilter
+	gas_cmd: StringFilter
+	gas_used: StringFilter
+	info_type: StringFilter
+	stack: StringArrayFilter
+	step: FloatFilter
+    OR: TransactionTraceFilter
+}
+
 input BlockValueFlowFilter {
 	created: StringFilter
 	created_other: OtherCurrencyArrayFilter
@@ -2605,6 +2631,11 @@ input MessageArrayFilter {
 	all: MessageFilter
 }
 
+input TransactionTraceArrayFilter {
+	any: TransactionTraceFilter
+	all: TransactionTraceFilter
+}
+
 input TransactionProcessingStatusEnumFilter {
 	eq: TransactionProcessingStatusEnum
 	ne: TransactionProcessingStatusEnum
@@ -2737,8 +2768,7 @@ input TransactionFilter {
 	"""
 	tr_type: IntFilter
 	tr_type_name: TransactionTypeEnumFilter
-	"VM debug trace"
-	trace: StringFilter
+	trace: TransactionTraceArrayFilter
 	tt: StringFilter
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: IntFilter

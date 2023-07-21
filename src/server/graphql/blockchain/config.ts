@@ -225,6 +225,7 @@ export type CompiledCollectionConfig<TItem> = {
         context: QRequestContext,
         traceSpan: QTraceSpan,
         maxJoinDepth: number,
+        archive: boolean | undefined | null,
     ) => Promise<void>
     qDataCollectionSelector: (context: QRequestContext) => QDataCollection
 }
@@ -357,6 +358,7 @@ export function compileCollectionConfig<TItem>(
         context: QRequestContext,
         traceSpan: QTraceSpan,
         maxJoinDepth: number,
+        archive: boolean | undefined | null,
     ) => {
         for (const join of collection.joins || []) {
             const joinSelectionSet = getFieldSelectionSet(
@@ -412,6 +414,7 @@ export function compileCollectionConfig<TItem>(
                     orderBy: [],
                     request: context,
                     traceSpan,
+                    archive,
                 },
             )) as any[][]
             for (const joinItem of queryResult.flat()) {
@@ -461,6 +464,7 @@ export function compileCollectionConfig<TItem>(
                     context,
                     traceSpan,
                     maxJoinDepth - 1,
+                    archive,
                 )
             }
         }

@@ -30,6 +30,7 @@ export async function resolve_transaction(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    archive: boolean | undefined | null,
 ) {
     const maxJoinDepth = 2
 
@@ -58,6 +59,7 @@ export async function resolve_transaction(
             orderBy: [],
             request: context,
             traceSpan,
+            archive,
         },
     )) as BlockchainTransaction[]
 
@@ -98,6 +100,7 @@ export async function resolve_transactions_by_in_msg(
             orderBy: [],
             request: context,
             traceSpan,
+            archive: args.archive,
         },
     )) as BlockchainTransaction[]
 
@@ -164,7 +167,7 @@ export async function resolve_blockchain_transactions(
             ],
             request: context,
             traceSpan,
-            archive: args.archive ?? undefined,
+            archive: args.archive,
         },
     )) as BlockchainTransaction[]
 
@@ -180,6 +183,7 @@ export async function resolve_blockchain_transactions(
                 context,
                 traceSpan,
                 maxJoinDepth,
+                args.archive,
             )
         },
     )) as BlockchainTransactionsConnection
@@ -245,7 +249,7 @@ export async function resolve_account_transactions(
             ],
             request: context,
             traceSpan,
-            archive: args.archive ?? undefined,
+            archive: args.archive,
         },
     )) as BlockchainTransaction[]
     return (await processPaginatedQueryResult(
@@ -260,6 +264,7 @@ export async function resolve_account_transactions(
                 context,
                 traceSpan,
                 maxJoinDepth,
+                args.archive,
             )
         },
     )) as BlockchainTransactionsConnection
@@ -321,7 +326,7 @@ export async function resolve_account_transactions_by_lt(
             ],
             request: context,
             traceSpan,
-            archive: args.archive ?? undefined,
+            archive: args.archive,
         },
     )) as BlockchainTransaction[]
 
@@ -337,6 +342,7 @@ export async function resolve_account_transactions_by_lt(
                 context,
                 traceSpan,
                 maxJoinDepth,
+                args.archive,
             )
         },
     )) as BlockchainTransactionsConnection

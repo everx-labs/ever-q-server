@@ -388,7 +388,18 @@ const Transaction: TypeDef = {
     chain_order: stringWithLowerFilter(docs.transaction.chain_order),
     ext_in_msg_fee: grams(docs.transaction.ext_in_msg_fee),
     master_seq_no: u32(docs.transaction.master_seq_no),
-    trace: string(docs.transaction.trace),
+    trace: arrayOf({
+        info_type: string(),
+        step: u32(),
+        cmd_str: string(),
+        stack: arrayOf(string()),
+        gas_used: string(),
+        gas_cmd: string(),
+        cmd_code_rem_bits: u32(),
+        cmd_code_hex: string(),
+        cmd_code_cell_hash: string(),
+        cmd_code_offset: u32(),
+    }),
 }
 
 // BLOCK SIGNATURES

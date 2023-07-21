@@ -30,6 +30,7 @@ async function fetch_blocks(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    archive: boolean | undefined | null,
     additionalFields: KeyOf<BlockchainBlock>[] = [],
     maxJoinDepth = 1,
 ) {
@@ -59,6 +60,7 @@ async function fetch_blocks(
             orderBy: [],
             request: context,
             traceSpan,
+            archive,
         },
     )) as BlockchainBlock[]
 
@@ -68,6 +70,7 @@ async function fetch_blocks(
         context,
         traceSpan,
         maxJoinDepth,
+        archive,
     )
 
     return queryResult
@@ -78,6 +81,7 @@ export async function resolve_block(
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
+    archive: boolean | undefined | null,
 ) {
     return (
         await fetch_blocks(
@@ -85,7 +89,7 @@ export async function resolve_block(
             context,
             info,
             traceSpan,
-            // TODO: shard
+            archive,
         )
     )[0]
 }
@@ -109,6 +113,7 @@ export async function resolve_block_by_seq_no(
             context,
             info,
             traceSpan,
+            args.archive,
         )
     )[0]
 }
@@ -146,6 +151,7 @@ export async function resolve_prev_shard_blocks(
             orderBy: [],
             request: context,
             traceSpan,
+            archive: args.archive,
         },
     )) as BlockchainBlock[]
 
@@ -155,6 +161,7 @@ export async function resolve_prev_shard_blocks(
         context,
         traceSpan,
         0,
+        args.archive,
     )
 
     return queryResult
@@ -174,6 +181,7 @@ export async function resolve_next_shard_blocks(
         context,
         info,
         traceSpan,
+        args.archive,
         ["after_split"],
         0,
     )
@@ -236,7 +244,7 @@ export async function resolve_key_blocks(
             ],
             request: context,
             traceSpan,
-            archive: args.archive ?? undefined,
+            archive: args.archive,
         },
     )) as BlockchainBlock[]
 
@@ -312,7 +320,7 @@ export async function resolve_blockchain_blocks(
             ],
             request: context,
             traceSpan,
-            archive: args.archive ?? undefined,
+            archive: args.archive,
         },
     )) as BlockchainBlock[]
 

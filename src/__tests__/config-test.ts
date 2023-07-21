@@ -73,6 +73,46 @@ test("Config Priority", () => {
     expect(only_env_options.server.port).toEqual(8081)
 })
 
+test("Test SubscriptionsMode enum", () => {
+    const config = resolveConfig({}, {}, { Q_SUBSCRIPTIONS_MODE: "disabled" })
+    expect(config.subscriptionsMode).toEqual("disabled")
+
+    expect(() => {
+        resolveConfig({}, {}, { Q_SUBSCRIPTIONS_MODE: "disable" })
+    }).toThrowError(/Unknown subscriptions-mode/)
+})
+
+test("Test SlowQueriesMode enum", () => {
+    const config = resolveConfig({}, {}, { Q_SLOW_QUERIES: "redirect" })
+    expect(config.queries.slowQueries).toEqual("redirect")
+
+    expect(() => {
+        resolveConfig({}, {}, { Q_SLOW_QUERIES: "something" })
+    }).toThrowError(/Unknown slow-queries/)
+})
+
+test("Test RequestsMode enum", () => {
+    const config = resolveConfig({}, {}, { Q_REQUESTS_MODE: "kafka" })
+    expect(config.requests.mode).toEqual("kafka")
+
+    expect(() => {
+        resolveConfig({}, {}, { Q_REQUESTS_MODE: "something" })
+    }).toThrowError(/Unknown requests-mode/)
+})
+
+test("Test FilterOrConversion enum", () => {
+    const config = resolveConfig(
+        {},
+        {},
+        { Q_FILTER_OR_CONVERSION: "sub-queries" },
+    )
+    expect(config.queries.filter.orConversion).toEqual("sub-queries")
+
+    expect(() => {
+        resolveConfig({}, {}, { Q_FILTER_OR_CONVERSION: "something" })
+    }).toThrowError(/Unknown filter-or-conversion/)
+})
+
 test("Arango Config", () => {
     expect(parseArangoConfig("arango")).toMatchObject({
         server: "https://arango",

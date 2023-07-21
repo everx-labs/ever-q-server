@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.62.0] - 2023-07-20
+
+### New
+
+- `trace` field in transaction is a list of VM step info objects
+
+### Fixed
+
+- implemented support for `archive` parameter in all blockchain queries.
+- `archive` parameter was not propagated to the nested join queries.
+
+### Improved
+
+- All user parameters that are enums are now checked for typos on startup
+
 ## [0.61.0] - 2023-07-04
 
 ### New
