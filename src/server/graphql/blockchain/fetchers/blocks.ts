@@ -25,9 +25,8 @@ import {
     BlockchainQueryNext_Shard_BlocksArgs,
 } from "../resolvers-types-generated"
 import {
-    blockArchiveFields,
+    isRequireBlockBocParsing,
     parseBlockBocsIfRequired,
-    upgradeSelectionForBocParsing,
 } from "../boc-parsers"
 import { useBlocksArchive } from "../../../data/data-provider"
 
@@ -41,11 +40,8 @@ async function fetch_blocks(
     maxJoinDepth = 1,
 ) {
     const useArchive = useBlocksArchive(archive, context)
-    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
-        useArchive,
-        info.fieldNodes[0].selectionSet,
-        blockArchiveFields,
-    )
+    const selectionSet = info.fieldNodes[0].selectionSet
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
 
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
@@ -141,11 +137,8 @@ export async function resolve_prev_shard_blocks(
     traceSpan: QTraceSpan,
 ) {
     const useArchive = useBlocksArchive(args.archive, context)
-    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
-        useArchive,
-        info.fieldNodes[0].selectionSet,
-        blockArchiveFields,
-    )
+    const selectionSet = info.fieldNodes[0].selectionSet
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -241,11 +234,8 @@ export async function resolve_key_blocks(
     const { direction, limit } = processPaginationArgs(args)
 
     const useArchive = useBlocksArchive(args.archive, context)
-    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
-        useArchive,
-        getNodeSelectionSetForConnection(info),
-        blockArchiveFields,
-    )
+    const selectionSet = getNodeSelectionSetForConnection(info)
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -326,11 +316,8 @@ export async function resolve_blockchain_blocks(
     const { direction, limit } = processPaginationArgs(args)
 
     const useArchive = useBlocksArchive(args.archive, context)
-    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
-        useArchive,
-        getNodeSelectionSetForConnection(info),
-        blockArchiveFields,
-    )
+    const selectionSet = getNodeSelectionSetForConnection(info)
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,

@@ -1,5 +1,10 @@
-import { QBocResolverConfig } from "../config"
+import {
+    ensureProtocol,
+    parseArangoConfig,
+    QBocResolverConfig,
+} from "../config"
 import { S3 } from "@aws-sdk/client-s3"
+import { Database } from "arangojs"
 
 interface IBocResolver {
     resolveBocs(
@@ -50,6 +55,7 @@ class S3Resolver implements IBocResolver {
         }[],
     ): Promise<Map<string, string>> {
         const resolved = new Map()
+        // TODO: fetch bocs in parallel
         for (const { hash, boc } of bocHashes) {
             const getObjectResult = await this.client.getObject({
                 Bucket: this.config.bucket,
@@ -58,6 +64,59 @@ class S3Resolver implements IBocResolver {
             const body = getObjectResult.Body
             const bodyAsString = await body?.transformToString("base64")
             resolved.set(hash, bodyAsString ?? boc)
+        }
+        return resolved
+    }
+}
+
+class ArangoResolver implements IBocResolver {
+    private readonly database: Database
+    constructor(
+        public config: {
+            database: string
+            collection: string
+        },
+    ) {
+        const arangoConfig = parseArangoConfig(config.database)
+        this.database = new Database({
+            url: `${ensureProtocol(arangoConfig.server, "http")}`,
+            agentOptions: {
+                maxSockets: arangoConfig.maxSockets,
+            },
+        })
+        this.database.useDatabase(arangoConfig.name)
+        if (arangoConfig.auth) {
+            const authParts = arangoConfig.auth.split(":")
+            this.database.useBasicAuth(
+                authParts[0],
+                authParts.slice(1).join(":"),
+            )
+        }
+    }
+
+    async resolveBocs(
+        bocHashes: {
+            hash: string
+            boc: string | undefined
+        }[],
+    ): Promise<Map<string, string>> {
+        const resolved = new Map()
+        const cursor = await this.database.query(
+            `
+            FOR doc IN ${this.config.collection}
+            FILTER doc._key IN @hashes
+            RETURN {
+                hash: doc._key,
+                boc: doc.boc
+            }
+            `,
+            {
+                hashes: bocHashes.map(x => x.hash),
+            },
+        )
+        const docs: { hash: string; boc: string }[] = await cursor.all()
+        for (const doc of docs) {
+            resolved.set(doc.hash, doc.boc)
         }
         return resolved
     }
@@ -79,6 +138,9 @@ function createBocResolver(
     const pattern = config.pattern ?? ""
     if (pattern) {
         return new PatternResolver(pattern)
+    }
+    if (config.arango && (config.arango.database ?? "" !== "")) {
+        return new ArangoResolver(config.arango)
     }
     return undefined
 }

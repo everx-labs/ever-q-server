@@ -6,6 +6,7 @@ import {
     BlockchainTransaction,
 } from "./resolvers-types-generated"
 import { QRequestContext } from "../../request"
+import { BocModule } from "@eversdk/core"
 
 export const blockArchiveFields = new Set([
     "id",
@@ -88,6 +89,17 @@ export function upgradeSelectionForBocParsing(
     return { selectionSet: selection, requireBocParsing: false }
 }
 
+export function isRequireBlockBocParsing(
+    archive: boolean,
+    selection: SelectionSetNode | undefined,
+): boolean {
+    return (
+        archive &&
+        !!selection &&
+        selectionContainsNonArchivedFields("", selection, blockArchiveFields)
+    )
+}
+
 function selectionContainsNonArchivedFields(
     parentPath: string,
     selection: SelectionSetNode,
@@ -122,13 +134,15 @@ interface DocWithBoc {
     boc?: string | null
 }
 async function parseBocs<T extends DocWithBoc>(
+    context: QRequestContext,
     docs: T[],
-    parse: (boc: string) => Promise<T>,
+    parse: (sdk: BocModule, boc: string) => Promise<T>,
 ): Promise<T[]> {
     const parsed: T[] = []
+    const sdk = context.services.client.boc
     for (const doc of docs) {
         if (doc.boc) {
-            parsed.push({ ...(await parse(doc.boc)), ...doc })
+            parsed.push({ ...(await parse(sdk, doc.boc)), ...doc })
         } else {
             parsed.push(doc)
         }
@@ -160,13 +174,28 @@ export async function parseBlockBocsIfRequired(
             block.boc = boc
         }
     }
-    return await parseBocs(blocks, async boc => {
-        return (
-            await context.services.client.boc.parse_block({
-                boc,
-            })
-        ).parsed
-    })
+    return await parseBocs(context, blocks, parseBlock)
+}
+
+async function parseMessage(
+    sdk: BocModule,
+    boc: string,
+): Promise<BlockchainMessage> {
+    return (await sdk.parse_message({ boc })).parsed
+}
+
+async function parseBlock(
+    sdk: BocModule,
+    boc: string,
+): Promise<BlockchainBlock> {
+    return (await sdk.parse_block({ boc })).parsed
+}
+
+async function parseTransaction(
+    sdk: BocModule,
+    boc: string,
+): Promise<BlockchainTransaction> {
+    return (await sdk.parse_transaction({ boc })).parsed
 }
 
 export async function parseMessageBocsIfRequired(
@@ -175,13 +204,7 @@ export async function parseMessageBocsIfRequired(
     messages: BlockchainMessage[],
 ): Promise<BlockchainMessage[]> {
     if (requireParsing) {
-        return await parseBocs(messages, async boc => {
-            return (
-                await context.services.client.boc.parse_message({
-                    boc,
-                })
-            ).parsed
-        })
+        return await parseBocs(context, messages, parseMessage)
     } else {
         return messages
     }
@@ -193,13 +216,7 @@ export async function parseTransactionBocsIfRequired(
     transactions: BlockchainTransaction[],
 ): Promise<BlockchainTransaction[]> {
     if (requireParsing) {
-        return await parseBocs(transactions, async boc => {
-            return (
-                await context.services.client.boc.parse_transaction({
-                    boc,
-                })
-            ).parsed
-        })
+        return await parseBocs(context, transactions, parseTransaction)
     } else {
         return transactions
     }

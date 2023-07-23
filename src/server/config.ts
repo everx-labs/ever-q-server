@@ -102,6 +102,11 @@ export type QBocResolverConfig = {
     // Boc pattern replacement:
     // - `{hash}` will be replaced with boc hash
     pattern?: string
+    // ArangoDB BOC storage
+    arango?: {
+        database: string
+        collection: string
+    }
 }
 
 export type QBlockchainDataConfig = {
