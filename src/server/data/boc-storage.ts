@@ -1,10 +1,10 @@
 import {
-    ensureProtocol,
     parseArangoConfig,
     QBocResolverConfig,
 } from "../config"
 import { S3 } from "@aws-sdk/client-s3"
 import { Database } from "arangojs"
+import { createDatabase } from "./database-provider"
 
 interface IBocResolver {
     resolveBocs(
@@ -77,21 +77,7 @@ class ArangoResolver implements IBocResolver {
             collection: string
         },
     ) {
-        const arangoConfig = parseArangoConfig(config.database)
-        this.database = new Database({
-            url: `${ensureProtocol(arangoConfig.server, "http")}`,
-            agentOptions: {
-                maxSockets: arangoConfig.maxSockets,
-            },
-        })
-        this.database.useDatabase(arangoConfig.name)
-        if (arangoConfig.auth) {
-            const authParts = arangoConfig.auth.split(":")
-            this.database.useBasicAuth(
-                authParts[0],
-                authParts.slice(1).join(":"),
-            )
-        }
+        this.database = createDatabase(parseArangoConfig(config.database))
     }
 
     async resolveBocs(

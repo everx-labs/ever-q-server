@@ -4,7 +4,8 @@ import type { QLog } from "../logs"
 import { QRequestContext } from "../request"
 import { QTraceSpan } from "../tracing"
 import { Database } from "arangojs"
-import { ensureProtocol, QArangoConfig } from "../config"
+import { QArangoConfig } from "../config"
+import { createDatabase } from "./database-provider"
 
 export type QDatabaseConnection = {
     database: Database
@@ -26,20 +27,8 @@ export class QDatabasePool {
         if (existing) {
             return existing
         }
-        const database = new Database({
-            url: `${ensureProtocol(config.server, "http")}`,
-            agentOptions: {
-                maxSockets: config.maxSockets,
-            },
-        })
-        database.useDatabase(config.name)
-        if (config.auth) {
-            const authParts = config.auth.split(":")
-            database.useBasicAuth(authParts[0], authParts.slice(1).join(":"))
-        }
-
         const connection = {
-            database,
+            database: createDatabase(config),
             config,
             poolIndex: this.items.length,
         }
