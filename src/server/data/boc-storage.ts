@@ -1,7 +1,4 @@
-import {
-    parseArangoConfig,
-    QBocResolverConfig,
-} from "../config"
+import { parseArangoConfig, QBocResolverConfig } from "../config"
 import { S3 } from "@aws-sdk/client-s3"
 import { Database } from "arangojs"
 import { createDatabase } from "./database-provider"

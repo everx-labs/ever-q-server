@@ -147,6 +147,7 @@ async function parseBocs<T extends DocWithBoc>(
             parsed.push(doc)
         }
     }
+    console.log('>>>', "parsed blocks", parsed)
     return parsed
 }
 
@@ -156,10 +157,12 @@ export async function parseBlockBocsIfRequired(
     blocks: BlockchainBlock[],
 ): Promise<BlockchainBlock[]> {
     if (!requireParsing) {
+        console.log('>>>', "!requireParsing")
         return blocks
     }
     const blocksStorage = context.services.data.bocStorage.blocks
     if (!blocksStorage) {
+        console.log('>>>', "!blocksStorage")
         return blocks
     }
     const bocs = await blocksStorage.resolveBocs(
