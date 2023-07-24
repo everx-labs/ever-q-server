@@ -24,6 +24,11 @@ import {
     BlockchainQueryPrev_Shard_BlocksArgs,
     BlockchainQueryNext_Shard_BlocksArgs,
 } from "../resolvers-types-generated"
+import {
+    isRequireBlockBocParsing,
+    parseBlockBocsIfRequired,
+} from "../boc-parsers"
+import { useBlocksArchive } from "../../../data/data-provider"
 
 async function fetch_blocks(
     filterBuilder: (params: QParams) => String,
@@ -34,7 +39,10 @@ async function fetch_blocks(
     additionalFields: KeyOf<BlockchainBlock>[] = [],
     maxJoinDepth = 1,
 ) {
+    const useArchive = useBlocksArchive(archive, context)
     const selectionSet = info.fieldNodes[0].selectionSet
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
+
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -52,17 +60,21 @@ async function fetch_blocks(
         "FOR doc IN blocks " +
         `FILTER ${filterBuilder(params)} ` +
         `RETURN ${returnExpression}`
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.blocks.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [],
-            request: context,
-            traceSpan,
-            archive,
-        },
-    )) as BlockchainBlock[]
+    const queryResult = await parseBlockBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.blocks.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainBlock[],
+    )
 
     await config.blocks.fetchJoins(
         queryResult,
@@ -70,7 +82,7 @@ async function fetch_blocks(
         context,
         traceSpan,
         maxJoinDepth,
-        archive,
+        useArchive,
     )
 
     return queryResult
@@ -124,7 +136,9 @@ export async function resolve_prev_shard_blocks(
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
 ) {
+    const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = info.fieldNodes[0].selectionSet
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -143,17 +157,21 @@ export async function resolve_prev_shard_blocks(
         "FILTER doc._key IN [block.prev_ref.root_hash, block.prev_alt_ref.root_hash] " +
         `RETURN ${returnExpression})` +
         "FOR doc IN block.after_merge == true && LENGTH(result) == 1 ? [] : result RETURN doc"
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.blocks.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainBlock[]
+    const queryResult = await parseBlockBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.blocks.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainBlock[],
+    )
 
     await config.blocks.fetchJoins(
         queryResult,
@@ -161,7 +179,7 @@ export async function resolve_prev_shard_blocks(
         context,
         traceSpan,
         0,
-        args.archive,
+        useArchive,
     )
 
     return queryResult
@@ -215,7 +233,9 @@ export async function resolve_key_blocks(
 
     const { direction, limit } = processPaginationArgs(args)
 
+    const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = getNodeSelectionSetForConnection(info)
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -231,22 +251,26 @@ export async function resolve_key_blocks(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.blocks.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [
-                {
-                    path: "chain_order",
-                    direction: "ASC",
-                },
-            ],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainBlock[]
+    const queryResult = await parseBlockBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.blocks.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [
+                    {
+                        path: "chain_order",
+                        direction: "ASC",
+                    },
+                ],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainBlock[],
+    )
 
     return (await processPaginatedQueryResult(
         queryResult,
@@ -291,7 +315,9 @@ export async function resolve_blockchain_blocks(
 
     const { direction, limit } = processPaginationArgs(args)
 
+    const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = getNodeSelectionSetForConnection(info)
+    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -307,22 +333,26 @@ export async function resolve_blockchain_blocks(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.blocks.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [
-                {
-                    path: "chain_order",
-                    direction: "ASC",
-                },
-            ],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainBlock[]
+    const queryResult = await parseBlockBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.blocks.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [
+                    {
+                        path: "chain_order",
+                        direction: "ASC",
+                    },
+                ],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainBlock[],
+    )
 
     return (await processPaginatedQueryResult(
         queryResult,

@@ -39,7 +39,7 @@ export const bocResolvers = (storage: BocStorage) => {
                 _key: string | undefined | null
                 boc: string | undefined | null
             }) => {
-                if (!parent._key) {
+                if (!parent._key || (parent.boc ?? "" !== "")) {
                     return parent.boc
                 }
                 const resolved = await blocks.resolveBocs([

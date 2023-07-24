@@ -82,7 +82,7 @@ class FieldUsageCollector {
             field.arguments?.find(x => x.name.value === "orderBy"),
         )
         for (const item of orderBy) {
-            this.endureField(collection, item.path).orderBy += stat.cnt
+            this.ensureField(collection, item.path).orderBy += stat.cnt
         }
         if (field.selectionSet) {
             this.parseSelection(field.selectionSet, collection, api, "", stat)
@@ -223,7 +223,7 @@ class FieldUsageCollector {
                 }
             }
             if (usedScalarOps.size > 0) {
-                const field = this.endureField(collection, path)
+                const field = this.ensureField(collection, path)
                 for (const op of usedScalarOps) {
                     incFilterOp(field, op, stat.cnt)
                 }
@@ -351,7 +351,7 @@ class FieldUsageCollector {
         api: Api,
         stat: RequestStat,
     ) {
-        const usage = this.endureField(collection, path)
+        const usage = this.ensureField(collection, path)
         usage.selection += stat.cnt
         usage.veryHot += stat.very_hot
         usage.hot += stat.hot
@@ -363,7 +363,7 @@ class FieldUsageCollector {
         }
     }
 
-    endureField(collection: string, path: string): FieldUsage {
+    ensureField(collection: string, path: string): FieldUsage {
         let fieldsCollection = this.collections[collection]
         if (!fieldsCollection) {
             fieldsCollection = {}

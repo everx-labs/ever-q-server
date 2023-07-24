@@ -112,6 +112,8 @@ Option                                          ENV                             
 --block-bocs-s3-access-key                      Q_BLOCK_BOCS_S3_ACCESS_KEY                                                              block-bocs S3 access key
 --block-bocs-s3-secret-key                      Q_BLOCK_BOCS_S3_SECRET_KEY                                                              block-bocs S3 secret key
 --block-bocs-pattern                            Q_BLOCK_BOCS_PATTERN                                                                    block-bocs BOC retrieval url pattern. `{hash} will be replaced with BOC's hash
+--block-bocs-arango-database                    Q_BLOCK_BOCS_ARANGO_DATABASE                                                            block-bocs Arango database URL
+--block-bocs-arango-collection                  Q_BLOCK_BOCS_ARANGO_COLLECTION                  blocks                                  block-bocs Arango collection
 --jaeger-endpoint                               Q_JAEGER_ENDPOINT                                                                       Jaeger endpoint
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)

@@ -24,6 +24,12 @@ import {
     BlockchainTransaction,
     BlockchainTransactionsConnection,
 } from "../resolvers-types-generated"
+import {
+    parseTransactionBocsIfRequired,
+    transactionArchiveFields,
+    upgradeSelectionForBocParsing,
+} from "../boc-parsers"
+import { useTransactionsArchive } from "../../../data/data-provider"
 
 export async function resolve_transaction(
     hash: String,
@@ -34,7 +40,13 @@ export async function resolve_transaction(
 ) {
     const maxJoinDepth = 2
 
-    const selectionSet = info.fieldNodes[0].selectionSet
+    const useArchive = useTransactionsArchive(archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        info.fieldNodes[0].selectionSet,
+        transactionArchiveFields,
+    )
+
     const returnExpression = config.transactions.buildReturnExpression(
         selectionSet,
         context,
@@ -51,17 +63,21 @@ export async function resolve_transaction(
         "FOR doc IN transactions " +
         `FILTER doc._key == @${params.add(hash)} ` +
         `RETURN ${returnExpression}`
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.transactions.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [],
-            request: context,
-            traceSpan,
-            archive,
-        },
-    )) as BlockchainTransaction[]
+    const queryResult = await parseTransactionBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.transactions.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainTransaction[],
+    )
 
     return queryResult[0]
 }
@@ -74,7 +90,13 @@ export async function resolve_transactions_by_in_msg(
 ) {
     const maxJoinDepth = 2
 
-    const selectionSet = info.fieldNodes[0].selectionSet
+    const useArchive = useTransactionsArchive(args.archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        info.fieldNodes[0].selectionSet,
+        transactionArchiveFields,
+    )
+
     const returnExpression = config.transactions.buildReturnExpression(
         selectionSet,
         context,
@@ -92,18 +114,21 @@ export async function resolve_transactions_by_in_msg(
         `FILTER doc.in_msg == @${params.add(args.msg_hash)} ` +
         "SORT doc.lt ASC LIMIT 50 " +
         `RETURN ${returnExpression}`
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.transactions.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainTransaction[]
-
+    const queryResult = await parseTransactionBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.transactions.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainTransaction[],
+    )
     return queryResult
 }
 
@@ -138,7 +163,12 @@ export async function resolve_blockchain_transactions(
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const selectionSet = getNodeSelectionSetForConnection(info)
+    const useArchive = useTransactionsArchive(args.archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        getNodeSelectionSetForConnection(info),
+        transactionArchiveFields,
+    )
     const returnExpression = config.transactions.buildReturnExpression(
         selectionSet,
         context,
@@ -154,22 +184,26 @@ export async function resolve_blockchain_transactions(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.transactions.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [
-                {
-                    path: "chain_order",
-                    direction: "ASC",
-                },
-            ],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainTransaction[]
+    const queryResult = await parseTransactionBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.transactions.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [
+                    {
+                        path: "chain_order",
+                        direction: "ASC",
+                    },
+                ],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainTransaction[],
+    )
 
     return (await processPaginatedQueryResult(
         queryResult,
@@ -183,7 +217,7 @@ export async function resolve_blockchain_transactions(
                 context,
                 traceSpan,
                 maxJoinDepth,
-                args.archive,
+                useArchive,
             )
         },
     )) as BlockchainTransactionsConnection
@@ -220,7 +254,12 @@ export async function resolve_account_transactions(
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const selectionSet = getNodeSelectionSetForConnection(info)
+    const useArchive = useTransactionsArchive(args.archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        getNodeSelectionSetForConnection(info),
+        transactionArchiveFields,
+    )
     const returnExpression = config.transactions.buildReturnExpression(
         selectionSet,
         context,
@@ -236,22 +275,27 @@ export async function resolve_account_transactions(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.transactions.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [
-                {
-                    path: "chain_order",
-                    direction: "ASC",
-                },
-            ],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainTransaction[]
+    const queryResult = await parseTransactionBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.transactions.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [
+                    {
+                        path: "chain_order",
+                        direction: "ASC",
+                    },
+                ],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainTransaction[],
+    )
+
     return (await processPaginatedQueryResult(
         queryResult,
         limit,
@@ -264,7 +308,7 @@ export async function resolve_account_transactions(
                 context,
                 traceSpan,
                 maxJoinDepth,
-                args.archive,
+                useArchive,
             )
         },
     )) as BlockchainTransactionsConnection
@@ -296,7 +340,13 @@ export async function resolve_account_transactions_by_lt(
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const selectionSet = getNodeSelectionSetForConnection(info)
+    const useArchive = useTransactionsArchive(args.archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        getNodeSelectionSetForConnection(info),
+        transactionArchiveFields,
+    )
+
     const returnExpression = config.transactions.buildReturnExpression(
         selectionSet,
         context,
@@ -313,22 +363,26 @@ export async function resolve_account_transactions_by_lt(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.transactions.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [
-                {
-                    path: "lt",
-                    direction: "ASC",
-                },
-            ],
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
-    )) as BlockchainTransaction[]
+    const queryResult = await parseTransactionBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.transactions.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [
+                    {
+                        path: "lt",
+                        direction: "ASC",
+                    },
+                ],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainTransaction[],
+    )
 
     return (await processPaginatedQueryResult(
         queryResult,
@@ -342,7 +396,7 @@ export async function resolve_account_transactions_by_lt(
                 context,
                 traceSpan,
                 maxJoinDepth,
-                args.archive,
+                useArchive,
             )
         },
     )) as BlockchainTransactionsConnection

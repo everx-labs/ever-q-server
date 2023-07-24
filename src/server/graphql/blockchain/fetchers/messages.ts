@@ -22,6 +22,12 @@ import {
     BlockchainMessageTypeFilterEnum,
 } from "../resolvers-types-generated"
 import { resolveAddress } from "../../../address"
+import {
+    upgradeSelectionForBocParsing,
+    messageArchiveFields,
+    parseMessageBocsIfRequired,
+} from "../boc-parsers"
+import { useMessagesArchive } from "../../../data/data-provider"
 
 export async function resolve_message(
     hash: String,
@@ -31,8 +37,13 @@ export async function resolve_message(
     archive: boolean | undefined | null,
 ) {
     const maxJoinDepth = 1
+    const useArchive = useMessagesArchive(archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        info.fieldNodes[0].selectionSet,
+        messageArchiveFields,
+    )
 
-    const selectionSet = info.fieldNodes[0].selectionSet
     const returnExpression = config.messages.buildReturnExpression(
         selectionSet,
         context,
@@ -49,17 +60,21 @@ export async function resolve_message(
         "FOR doc IN messages " +
         `FILTER doc._key == @${params.add(hash)} ` +
         `RETURN ${returnExpression}`
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.messages.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [],
-            request: context,
-            traceSpan,
-            archive,
-        },
-    )) as BlockchainMessage[]
+    const queryResult = await parseMessageBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.messages.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [],
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainMessage[],
+    )
 
     await config.messages.fetchJoins(
         queryResult,
@@ -67,7 +82,7 @@ export async function resolve_message(
         context,
         traceSpan,
         maxJoinDepth,
-        archive,
+        useArchive,
     )
 
     return queryResult[0]
@@ -123,8 +138,13 @@ export async function resolve_account_messages(
             }
         }
     }
+    const useArchive = useMessagesArchive(args.archive, context)
+    const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
+        useArchive,
+        getNodeSelectionSetForConnection(info),
+        messageArchiveFields,
+    )
 
-    const selectionSet = getNodeSelectionSetForConnection(info)
     const returnExpressionBuilder = (sortField: string) =>
         config.messages.buildReturnExpression(
             selectionSet,
@@ -255,22 +275,26 @@ export async function resolve_account_messages(
               } ` +
               `LIMIT ${limit} ` +
               "RETURN d"
-    const queryResult = (await context.services.data.query(
-        required(context.services.data.transactions.provider),
-        {
-            text: query,
-            vars: params.values,
-            orderBy: [
-                {
-                    path: "account_chain_order",
-                    direction: "ASC",
-                },
-            ],
-            distinctBy: "account_chain_order",
-            request: context,
-            traceSpan,
-            archive: args.archive,
-        },
+    const queryResult = (await parseMessageBocsIfRequired(
+        requireBocParsing,
+        context,
+        (await context.services.data.query(
+            required(context.services.data.transactions.provider),
+            {
+                text: query,
+                vars: params.values,
+                orderBy: [
+                    {
+                        path: "account_chain_order",
+                        direction: "ASC",
+                    },
+                ],
+                distinctBy: "account_chain_order",
+                request: context,
+                traceSpan,
+                archive: useArchive,
+            },
+        )) as BlockchainMessage[],
     )) as (BlockchainMessage & { account_chain_order?: string })[]
 
     return (await processPaginatedQueryResult(
@@ -285,7 +309,7 @@ export async function resolve_account_messages(
                 context,
                 traceSpan,
                 maxJoinDepth,
-                args.archive,
+                useArchive,
             )
         },
     )) as BlockchainMessagesConnection
