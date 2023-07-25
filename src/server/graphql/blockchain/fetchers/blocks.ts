@@ -24,10 +24,7 @@ import {
     BlockchainQueryPrev_Shard_BlocksArgs,
     BlockchainQueryNext_Shard_BlocksArgs,
 } from "../resolvers-types-generated"
-import {
-    isRequireBlockBocParsing,
-    parseBlockBocsIfRequired,
-} from "../boc-parsers"
+import { getBlocksPostProcessing, postProcessBlocks } from "../boc-parsers"
 import { useBlocksArchive } from "../../../data/data-provider"
 
 async function fetch_blocks(
@@ -41,7 +38,11 @@ async function fetch_blocks(
 ) {
     const useArchive = useBlocksArchive(archive, context)
     const selectionSet = info.fieldNodes[0].selectionSet
-    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
+    const postProcessing = getBlocksPostProcessing(
+        context,
+        useArchive,
+        selectionSet,
+    )
 
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
@@ -60,8 +61,8 @@ async function fetch_blocks(
         "FOR doc IN blocks " +
         `FILTER ${filterBuilder(params)} ` +
         `RETURN ${returnExpression}`
-    const queryResult = await parseBlockBocsIfRequired(
-        requireBocParsing,
+    const queryResult = await postProcessBlocks(
+        postProcessing,
         context,
         (await context.services.data.query(
             required(context.services.data.blocks.provider),
@@ -138,7 +139,11 @@ export async function resolve_prev_shard_blocks(
 ) {
     const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = info.fieldNodes[0].selectionSet
-    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
+    const postProcessing = getBlocksPostProcessing(
+        context,
+        useArchive,
+        selectionSet,
+    )
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -157,8 +162,8 @@ export async function resolve_prev_shard_blocks(
         "FILTER doc._key IN [block.prev_ref.root_hash, block.prev_alt_ref.root_hash] " +
         `RETURN ${returnExpression})` +
         "FOR doc IN block.after_merge == true && LENGTH(result) == 1 ? [] : result RETURN doc"
-    const queryResult = await parseBlockBocsIfRequired(
-        requireBocParsing,
+    const queryResult = await postProcessBlocks(
+        postProcessing,
         context,
         (await context.services.data.query(
             required(context.services.data.blocks.provider),
@@ -235,7 +240,11 @@ export async function resolve_key_blocks(
 
     const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = getNodeSelectionSetForConnection(info)
-    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
+    const postProcessing = getBlocksPostProcessing(
+        context,
+        useArchive,
+        selectionSet,
+    )
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -251,8 +260,8 @@ export async function resolve_key_blocks(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = await parseBlockBocsIfRequired(
-        requireBocParsing,
+    const queryResult = await postProcessBlocks(
+        postProcessing,
         context,
         (await context.services.data.query(
             required(context.services.data.blocks.provider),
@@ -317,7 +326,11 @@ export async function resolve_blockchain_blocks(
 
     const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = getNodeSelectionSetForConnection(info)
-    const requireBocParsing = isRequireBlockBocParsing(useArchive, selectionSet)
+    const postProcessing = getBlocksPostProcessing(
+        context,
+        useArchive,
+        selectionSet,
+    )
     const returnExpression = config.blocks.buildReturnExpression(
         selectionSet,
         context,
@@ -333,8 +346,8 @@ export async function resolve_blockchain_blocks(
         LIMIT ${limit}
         RETURN ${returnExpression}
     `
-    const queryResult = await parseBlockBocsIfRequired(
-        requireBocParsing,
+    const queryResult = await postProcessBlocks(
+        postProcessing,
         context,
         (await context.services.data.query(
             required(context.services.data.blocks.provider),

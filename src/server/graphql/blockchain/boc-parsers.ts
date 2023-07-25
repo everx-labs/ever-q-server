@@ -8,9 +8,10 @@ import {
 import { QRequestContext } from "../../request"
 import { BocModule } from "@eversdk/core"
 
-export const blockArchiveFields = new Set([
+const blockArchiveFields = new Set([
     "id",
     "hash",
+    "boc",
     "chain_order",
     "gen_utime",
     "key_block",
@@ -89,15 +90,34 @@ export function upgradeSelectionForBocParsing(
     return { selectionSet: selection, requireBocParsing: false }
 }
 
-export function isRequireBlockBocParsing(
+export type BlocksPostProcessing = {
+    resolveBocs: boolean
+    parseBocs: boolean
+}
+
+export function getBlocksPostProcessing(
+    context: QRequestContext,
     archive: boolean,
     selection: SelectionSetNode | undefined,
-): boolean {
-    return (
-        archive &&
-        !!selection &&
-        selectionContainsNonArchivedFields("", selection, blockArchiveFields)
+): BlocksPostProcessing {
+    if (!selection || !archive) {
+        return {
+            resolveBocs: false,
+            parseBocs: false,
+        }
+    }
+    const parseBocs = selectionContainsNonArchivedFields(
+        "",
+        selection,
+        blockArchiveFields,
     )
+    const useBlockBocStorage = !!context.services.data.bocStorage.blocks
+    const resolveBocs =
+        parseBocs || (useBlockBocStorage && selectionContains(selection, "boc"))
+    return {
+        resolveBocs,
+        parseBocs,
+    }
 }
 
 function selectionContainsNonArchivedFields(
@@ -130,6 +150,12 @@ function selectionContainsNonArchivedFields(
     return false
 }
 
+function selectionContains(selection: SelectionSetNode, field: string) {
+    return !!selection.selections.find(
+        x => x.kind === "Field" && x.name.value === field,
+    )
+}
+
 interface DocWithBoc {
     boc?: string | null
 }
@@ -150,29 +176,28 @@ async function parseBocs<T extends DocWithBoc>(
     return parsed
 }
 
-export async function parseBlockBocsIfRequired(
-    requireParsing: boolean,
+export async function postProcessBlocks(
+    postProcessing: BlocksPostProcessing,
     context: QRequestContext,
     blocks: BlockchainBlock[],
 ): Promise<BlockchainBlock[]> {
-    if (!requireParsing) {
-        return blocks
-    }
     const blocksStorage = context.services.data.bocStorage.blocks
-    if (!blocksStorage) {
-        return blocks
-    }
-    const bocs = await blocksStorage.resolveBocs(
-        blocks.map(x => ({
-            hash: x._key,
-            boc: x.boc,
-        })),
-    )
-    for (const block of blocks) {
-        const boc = bocs.get(block._key)
-        if (boc) {
-            block.boc = boc
+    if (postProcessing.resolveBocs && blocksStorage) {
+        const bocs = await blocksStorage.resolveBocs(
+            blocks.map(x => ({
+                hash: x._key,
+                boc: x.boc,
+            })),
+        )
+        for (const block of blocks) {
+            const boc = bocs.get(block._key)
+            if (boc) {
+                block.boc = boc
+            }
         }
+    }
+    if (!postProcessing.parseBocs) {
+        return blocks
     }
     return await parseBocs(context, blocks, parseBlock)
 }
