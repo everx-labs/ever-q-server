@@ -1,5 +1,5 @@
 import EventEmitter from "events"
-import { ensureProtocol } from "../config"
+import { ensureProtocol, QArangoConfig } from "../config"
 import type { QLog } from "../logs"
 import type {
     QDatabaseConnection,
@@ -11,6 +11,7 @@ import type {
 } from "./data-provider"
 import ArangoChair from "arangochair"
 import { QTraceSpan } from "../tracing"
+import { Database } from "arangojs"
 
 type ArangoCollectionDescr = {
     name: string
@@ -311,4 +312,19 @@ export class ActiveQueries {
         // Plan next drain time
         this.drainTime = now + this.resultTTL
     }
+}
+
+export function createDatabase(config: QArangoConfig): Database {
+    const database = new Database({
+        url: `${ensureProtocol(config.server, "http")}`,
+        agentOptions: {
+            maxSockets: config.maxSockets,
+        },
+    })
+    database.useDatabase(config.name)
+    if (config.auth) {
+        const authParts = config.auth.split(":")
+        database.useBasicAuth(authParts[0], authParts.slice(1).join(":"))
+    }
+    return database
 }

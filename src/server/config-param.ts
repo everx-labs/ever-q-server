@@ -90,6 +90,10 @@ type BocResolverParams = {
         secretKey: ConfigParam<string>
     }
     pattern: ConfigParam<string>
+    arango: {
+        database: ConfigParam<string>
+        collection: ConfigParam<string>
+    }
 }
 
 export class ConfigParam<T extends ConfigValue> {
@@ -250,6 +254,14 @@ export class ConfigParam<T extends ConfigValue> {
                 "pattern",
                 "BOC retrieval url pattern. `{hash} will be replaced with BOC's hash",
             ),
+            arango: {
+                database: opt("arango-database", "Arango database"),
+                collection: opt(
+                    "arango-collection",
+                    "Arango collection",
+                    "blocks",
+                ),
+            },
         }
     }
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.63.0] - 2023-07-25
+
+### New
+
+- Added BOC parsing for transactions, messages and blocks in `archive` database when user selects
+  non parsed fields.
+
+
 ## [0.62.0] - 2023-07-20
 
 ### New

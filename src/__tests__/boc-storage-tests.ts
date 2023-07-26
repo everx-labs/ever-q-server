@@ -8,7 +8,7 @@ async function queryBlock(useCollectionApi: boolean, fields: string) {
     const data: any = await testServerQuery(
         useCollectionApi
             ? `query { blocks(limit:1) { ${fields} } }`
-            : `query { blockchain { blocks(first:1) { edges { node { ${fields} } } } } }`,
+            : `query { blockchain { blocks(first:1 archive:true) { edges { node { ${fields} } } } } }`,
     )
     return useCollectionApi
         ? data.blocks[0]
