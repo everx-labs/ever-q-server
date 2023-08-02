@@ -33,7 +33,8 @@ import { FieldNode, OperationDefinitionNode } from "graphql"
 import { httpUrl, assignDeep, cloneDeep } from "../server/utils"
 import fetch from "node-fetch"
 import { QCollectionQuery } from "../server/data/collection-query"
-import { BocStorage } from "../server/data/boc-storage"
+import { createBocProvider } from "../server/data/boc-provider"
+import { createAccountProvider } from "../server/data/account-provider"
 
 jest.setTimeout(100000)
 
@@ -103,10 +104,12 @@ interface SubscriptionClientPrivate {
 
 export function createTestClient(options: {
     useWebSockets: boolean
+    port?: number
 }): ApolloClient<unknown> {
     const useHttp = !options.useWebSockets
-
-    const url = `${testConfig.server.host}:${testConfig.server.port}/graphql`
+    const url = `${testConfig.server.host}:${
+        options.port ?? testConfig.server.port
+    }/graphql`
     const subscriptionClient = new SubscriptionClient(
         `ws://${url}`,
         {},
@@ -253,7 +256,8 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         logs: new QLogs(),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
-        bocStorage: new BocStorage(config.blockBocs),
+        blockBocProvider: createBocProvider(config.blockBocs),
+        accountProvider: createAccountProvider(config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
@@ -337,7 +341,7 @@ export function createTestData(providers: QDataProviders): QBlockchainData {
         logs: new QLogs(),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
-        bocStorage: new BocStorage(testConfig.blockBocs),
+        blockBocProvider: createBocProvider(testConfig.blockBocs),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: testConfig.queries.filter,

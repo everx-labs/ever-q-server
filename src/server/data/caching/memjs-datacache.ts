@@ -33,7 +33,7 @@ export class MemjsDataCache implements QDataCache {
                         const value = data ? JSON.parse(data.toString()) : null
                         this.log.debug("GET", hashedKey)
                         resolve(value)
-                    } catch (e) {
+                    } catch (e: any) {
                         this.log.error(
                             "FAILED",
                             "MEMCACHED",

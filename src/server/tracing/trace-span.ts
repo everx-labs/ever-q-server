@@ -37,7 +37,7 @@ export class QTraceSpan {
             }
             span.finish()
             return result
-        } catch (error) {
+        } catch (error: any) {
             const cleaned = cleanError(error)
             span.log({ event: "error", "error.object": toLog(error) })
             span.finish()

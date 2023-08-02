@@ -164,7 +164,7 @@ export class QTracer {
             }
             span.finish()
             return result
-        } catch (error) {
+        } catch (error: any) {
             const cleaned = cleanError(error)
             span.log({ event: "failed", payload: toLog(error) })
             span.finish()

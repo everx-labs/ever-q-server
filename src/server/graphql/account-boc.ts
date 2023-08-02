@@ -13,7 +13,7 @@ import {
     undefinedToNull,
 } from "../filter/filters"
 
-export function overrideAccountBoc() {
+export function overrideAccountBocFilter() {
     const fields = Account.fields
     if (fields) {
         fields["boc"] = {

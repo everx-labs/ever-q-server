@@ -50,7 +50,7 @@ async function updateCollection(
                 try {
                     await dbCollection.createPersistentIndex(required.fields)
                     indexCreated = true
-                } catch (error) {
+                } catch (error: any) {
                     if (error.message.toLowerCase().indexOf("timeout") >= 0) {
                         console.log(
                             `Index creation failed: ${error.message}. Retrying...`,

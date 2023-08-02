@@ -1,7 +1,7 @@
 import { Database } from "arangojs"
 import gql from "graphql-tag"
 
-import { resolveConfig, SubscriptionsMode } from "../server/config"
+import { QConfig, resolveConfig, SubscriptionsMode } from "../server/config"
 import QBlockchainData from "../server/data/blockchain"
 import QLogs from "../server/logs"
 import TONQServer, { DataProviderFactory } from "../server/server"
@@ -16,12 +16,17 @@ import {
     transactions as transactionsData,
     summary as chainRangesVerificationSummary,
 } from "./blockchain-data"
-import { BocStorage } from "../server/data/boc-storage"
+import { createBocProvider } from "../server/data/boc-provider"
+import { cloneDeep } from "../server/utils"
+import express from "express"
+import { createAccountProvider } from "../server/data/account-provider"
 
-const TEST_DB_NAME = "Q-server_test_db"
 let server: TONQServer | null = null
 
-beforeAll(async () => {
+async function createServer(
+    overrideConfig?: (config: QConfig) => void,
+): Promise<TONQServer> {
+    const TEST_DB_NAME = "Q-server_test_db"
     let serverAddress =
         process.env.Q_DATA_MUT ??
         process.env.Q_ACCOUNTS ??
@@ -74,25 +79,34 @@ beforeAll(async () => {
         },
         {},
     )
+    overrideConfig?.(config)
     const providers = new DataProviderFactory(config, new QLogs())
     const blockchainData = new QBlockchainData({
         providers: providers.ensure(),
         logs: new QLogs(),
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
-        bocStorage: new BocStorage(config.blockBocs),
+        blockBocProvider: createBocProvider(config.blockBocs),
+        accountProvider: createAccountProvider(config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
         ignoreMessagesForLatency: false,
     })
 
-    server = new TONQServer({
-        config: testConfig,
+    const serverConfig = cloneDeep(testConfig) as QConfig
+    overrideConfig?.(serverConfig)
+    const server = new TONQServer({
+        config: serverConfig,
         logs: new QLogs(),
         data: blockchainData,
     })
     await server.start()
+    return server
+}
+
+beforeAll(async () => {
+    server = await createServer()
 })
 
 afterAll(async () => {
@@ -421,6 +435,97 @@ test("next_shard_blocks", async () => {
             ],
         },
     })
+})
+
+function startNodeRpcMock(port: number, bocs: { [address: string]: string }) {
+    const app = express()
+    app.use(express.json())
+    app.post("/", (req, res) => {
+        const boc = bocs[req.body.params.account]
+        res.contentType("application/json")
+        res.send(
+            JSON.stringify({
+                jsonrpc: "2.0",
+                id: req.body.id,
+                result: boc
+                    ? {
+                          account_boc: boc,
+                      }
+                    : null,
+            }),
+        )
+    })
+    return app.listen(port)
+}
+
+test("blockchain.account.provider", async () => {
+    if (!server) {
+        throw new Error("server is null")
+    }
+    const mock = {
+        boc: "te6ccgECEwEAAtEAAm/ACqpbycyI85ZbJY4UrJyZthycVdM5TQAZacP1s2s10H7yJoURQyWsOoAAAAAAAAAAMQdIC1ATQAYBAWGAAADEsoxIzAAAAAAADbugVptUh94vSUj+5DUD/DWpPFXxmwjBE7eKNHS9J10IXlBgAgIDzyAFAwEB3gQAA9AgAEHa02qQ+8XpKR/chqB/hrUnir4zYRgidvFGjpek66ELygwCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgH+/38h1SDHAZFwjhIggQIA1yHXC/8i+QFTIfkQ8qjiItMf0z81IHBwcO1E0PQEATQggQCA10WY0z8BM9M/ATKWgggbd0Ay4nAjJrmOJCX4I4ED6KgkoLmOF8glAfQAJs8LPyPPCz8izxYgye1UfzIw3t4FXwWZJCLxQAFfCtsw4AsADIA08vBfCgIBIBANAQm8waZuzA4B/nDtRND0BAEyINaAMu1HIm+MI2+MIW+MIO1XXwRwaHWhYH+6lWh4oWAx3u1HbxHXC/+68uBk+AD6QNN/0gAwIcIAIJcwIfgnbxC53vLgZSIiInDIcc8LASLPCgBxz0D4KM8WJM8WI/oCcc9AcPoCcPoCgEDPQPgjzwsfcs9AIMkPABYi+wBfBV8DcGrbMAIBSBIRAOu4iQAnXaiaBBAgEFrovk5gHwAdqPkQICAZ6Bk6DfGAPoCLLfGdquAmDh2o7eJQCB6B3lFa4X/9qOQN4iYAORl/+ToN6j2q/ajkDeJZHoALBBjgMcIGDhnhZ/BBA27oGeFn7jnoMrnizjnoPEAt4jni2T2qjg1QAMrccCHXSSDBII4rIMAAjhwj0HPXIdcLACDAAZbbMF8H2zCW2zBfB9sw4wTZltswXwbbMOME2eAi0x80IHS7II4VMCCCEP////+6IJkwIIIQ/////rrf35bbMF8H2zDgIyHxQAFfBw==",
+        data: "te6ccgEBBQEAZQABYYAAAMSyjEjMAAAAAAANu6BWm1SH3i9JSP7kNQP8Nak8VfGbCMETt4o0dL0nXQheUGABAgPPIAQCAQHeAwAD0CAAQdrTapD7xekpH9yGoH+GtSeKvjNhGCJ28UaOl6TroQvKDA==",
+        code: "te6ccgECDQEAAjAAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB/v9/IdUgxwGRcI4SIIECANch1wv/IvkBUyH5EPKo4iLTH9M/NSBwcHDtRND0BAE0IIEAgNdFmNM/ATPTPwEyloIIG3dAMuJwIya5jiQl+COBA+ioJKC5jhfIJQH0ACbPCz8jzws/Is8WIMntVH8yMN7eBV8FmSQi8UABXwrbMOAFAAyANPLwXwoCASAKBwEJvMGmbswIAf5w7UTQ9AQBMiDWgDLtRyJvjCNvjCFvjCDtV18EcGh1oWB/upVoeKFgMd7tR28R1wv/uvLgZPgA+kDTf9IAMCHCACCXMCH4J28Qud7y4GUiIiJwyHHPCwEizwoAcc9A+CjPFiTPFiP6AnHPQHD6AnD6AoBAz0D4I88LH3LPQCDJCQAWIvsAXwVfA3Bq2zACAUgMCwDruIkAJ12omgQQIBBa6L5OYB8AHaj5ECAgGegZOg3xgD6Aiy3xnargJg4dqO3iUAgegd5RWuF//ajkDeImADkZf/k6Deo9qv2o5A3iWR6ACwQY4DHCBg4Z4WfwQQNu6BnhZ+456DK54s456DxALeI54tk9qo4NUADK3HAh10kgwSCOKyDAAI4cI9Bz1yHXCwAgwAGW2zBfB9swltswXwfbMOME2ZbbMF8G2zDjBNngItMfNCB0uyCOFTAgghD/////uiCZMCCCEP////6639+W2zBfB9sw4CMh8UABXwc=",
+    }
+
+    const client = createTestClient({ useWebSockets: true })
+
+    const refAccount = (
+        (await client.query({
+            query: gql`
+                {
+                    accounts {
+                        id
+                        boc
+                        data
+                        code
+                    }
+                }
+            `,
+        })) as any
+    ).data.accounts[0]
+
+    const query = gql`
+        {
+            blockchain {
+                account(
+                    address: "${refAccount.id}"
+                ) {
+                    info {
+                        boc
+                        data
+                        code
+                    }
+                }
+            }
+        }
+    `
+    // filter by account_addresses
+    const queryResult1 = (await client.query({ query })) as any
+    const account1 = queryResult1.data.blockchain.account.info
+    expect(account1.boc).toBe(refAccount.boc)
+    expect(account1.data).toBe(refAccount.data)
+    expect(account1.code).toBe(refAccount.code)
+
+    const rpc = startNodeRpcMock(5002, {
+        [refAccount.id]: mock.boc,
+    })
+    const server2 = await createServer(x => {
+        x.server.port = 5001
+        x.accountProvider.evernodeRpc = {
+            endpoint: "http://localhost:5002",
+        }
+    })
+    const client2 = createTestClient({ useWebSockets: true, port: 5001 })
+
+    // filter by account_addresses
+    const queryResult2 = (await client2.query({ query })) as any
+    const account2 = queryResult2.data.blockchain.account.info
+    expect(account2.boc).toBe(mock.boc)
+    expect(account2.data).toBe(mock.data)
+    expect(account2.code).toBe(mock.code)
+    rpc.close()
+    void server2.stop()
 })
 
 test("blockchain.account.transactions", async () => {
@@ -1855,7 +1960,7 @@ test("blockchain.account.transactions. Invalid account should throw", async () =
             `,
         })
         expect(true).toBe(false) // this line should be unreachable!
-    } catch (err) {
+    } catch (err: any) {
         expect(err.constructor.name).toBe("ApolloError")
         const { message, extensions } = err.graphQLErrors[0]
         expect(extensions.code).toEqual("GRAPHQL_VALIDATION_FAILED")
