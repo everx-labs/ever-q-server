@@ -59,6 +59,7 @@ export async function prepareChainOrderFilter(
     params: QParams,
     filters: string[],
     context: QRequestContext,
+    archive: boolean,
     chainOrderFieldName = "chain_order",
 ) {
     // master_seq_no
@@ -84,6 +85,7 @@ export async function prepareChainOrderFilter(
         const reliable =
             await context.services.data.getReliableChainOrderUpperBoundary(
                 context,
+                archive,
             )
 
         end_chain_order =
@@ -113,6 +115,7 @@ export async function prepareNonChainOrderPaginationFilter(
     params: QParams,
     filters: string[],
     context: QRequestContext,
+    archive: boolean,
     paginationFieldName: string,
     chainOrderFieldName = "chain_order",
 ) {
@@ -129,6 +132,7 @@ export async function prepareNonChainOrderPaginationFilter(
         const reliable =
             await context.services.data.getReliableChainOrderUpperBoundary(
                 context,
+                archive,
             )
 
         end_chain_order =

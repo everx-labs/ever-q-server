@@ -146,8 +146,9 @@ export async function resolve_blockchain_transactions(
         stringifyKeyInAqlComparison:
             context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
+    const useArchive = useTransactionsArchive(args.archive, context)
 
-    await prepareChainOrderFilter(args, params, filters, context)
+    await prepareChainOrderFilter(args, params, filters, context, useArchive)
 
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`)
@@ -163,7 +164,6 @@ export async function resolve_blockchain_transactions(
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const useArchive = useTransactionsArchive(args.archive, context)
     const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
         useArchive,
         getNodeSelectionSetForConnection(info),
@@ -238,7 +238,8 @@ export async function resolve_account_transactions(
             context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
 
-    await prepareChainOrderFilter(args, params, filters, context)
+    const useArchive = useTransactionsArchive(args.archive, context)
+    await prepareChainOrderFilter(args, params, filters, context, useArchive)
     filters.push(`doc.account_addr == @${params.add(account_address)}`)
     if (isDefined(args.aborted)) {
         filters.push(`doc.aborted == @${params.add(args.aborted)}`)
@@ -254,7 +255,6 @@ export async function resolve_account_transactions(
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const useArchive = useTransactionsArchive(args.archive, context)
     const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
         useArchive,
         getNodeSelectionSetForConnection(info),
@@ -329,18 +329,19 @@ export async function resolve_account_transactions_by_lt(
             context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
 
+    const useArchive = useTransactionsArchive(args.archive, context)
     await prepareNonChainOrderPaginationFilter(
         args,
         params,
         filters,
         context,
+        useArchive,
         "lt",
     )
     filters.push(`doc.account_addr == @${params.add(account_address)}`)
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const useArchive = useTransactionsArchive(args.archive, context)
     const { selectionSet, requireBocParsing } = upgradeSelectionForBocParsing(
         useArchive,
         getNodeSelectionSetForConnection(info),

@@ -240,3 +240,17 @@ test("cloud15.pagination", async () => {
     await testPagination(false)
     await test.close()
 })
+
+test("cloud15.master_ranges", async () => {
+    const test = await TestSetup.create({
+        withArchiveDb: true,
+    })
+    const range1 = (await test.queryBlockchain(
+        `master_seq_no_range(time_start: 1622099906 time_end: 1622099910 archive: false) { start end }`,
+    )) as any
+    const range2 = (await test.queryBlockchain(
+        `master_seq_no_range(time_start: 1622099906 time_end: 1622099910 archive: true) { start end }`,
+    )) as any
+    expect(range1.master_seq_no_range).toEqual(range2.master_seq_no_range)
+    await test.close()
+})

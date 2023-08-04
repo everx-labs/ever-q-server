@@ -20,6 +20,7 @@ export const blockArchiveFields = new Set([
     "master.shard_hashes.descr.seq_no",
     "master.shard_hashes.shard",
     "master.shard_hashes.workchain_id",
+    "master.min_shard_gen_utime",
     "prev_alt_ref.root_hash",
     "prev_key_block_seqno",
     "prev_ref.root_hash",
