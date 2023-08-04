@@ -58,6 +58,29 @@ test("cloud15.account-provider", async () => {
     await test2.close()
 })
 
+test("cloud15.unavailable-account-provider", async () => {
+    const testAcc = accounts.find(
+        x =>
+            x._key ===
+            "0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206",
+    ) as BlockchainAccount
+    const test = await TestSetup.create({
+        port: 2,
+        accounts: {
+            [testAcc._key]: mockAcc.boc,
+        },
+    })
+    test.accountProvider.close()
+    try {
+        const r = await test.queryBlockchain(
+            `account(address: "${testAcc._key}") { info { boc data code } }`,
+        )
+        fail(`error expected but result received: ${JSON.stringify(r)}`)
+    } catch (err) {
+        console.log("Unavailable Evernode RPC error: ", err.message)
+    }
+})
+
 test("cloud15.joins", async () => {
     const testAcc = accounts.find(
         x =>
