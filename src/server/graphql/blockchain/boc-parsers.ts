@@ -7,8 +7,9 @@ import {
 } from "./resolvers-types-generated"
 import { QRequestContext } from "../../request"
 import { BocModule } from "@eversdk/core"
+import { toU64String } from "../../utils"
 
-const blockArchiveFields = new Set([
+export const blockArchiveFields = new Set([
     "id",
     "hash",
     "boc",
@@ -220,7 +221,11 @@ async function parseTransaction(
     sdk: BocModule,
     boc: string,
 ): Promise<BlockchainTransaction> {
-    return (await sdk.parse_transaction({ boc })).parsed
+    const parsed = (await sdk.parse_transaction({ boc })).parsed
+    if (parsed.lt && parsed.lt.startsWith("0x")) {
+        parsed.lt = toU64String(BigInt(parsed.lt))
+    }
+    return parsed
 }
 
 export async function parseMessageBocsIfRequired(

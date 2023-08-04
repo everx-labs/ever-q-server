@@ -261,7 +261,7 @@ export function arraysAreEqual<T>(a: Array<T>, b: Array<T>): boolean {
     return true
 }
 
-export function toU64String(value: number): string {
+export function toU64String(value: number | bigint): string {
     const hex = value.toString(16)
     return `${(hex.length - 1).toString(16)}${hex}`
 }

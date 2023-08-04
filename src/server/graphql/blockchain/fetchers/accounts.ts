@@ -108,3 +108,20 @@ async function getBocFields(
         }
     }
 }
+
+export function accountResolver(addressField: string) {
+    return async (
+        parent: Record<string, any>,
+        _args: unknown,
+        context: QRequestContext,
+        info: GraphQLResolveInfo,
+    ) => {
+        return context.trace("blockchain-account-info", async traceSpan => {
+            const address = parent[addressField]
+            if (!address) {
+                return null
+            }
+            return resolve_account(address, context, info, traceSpan)
+        })
+    }
+}
