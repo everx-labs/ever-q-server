@@ -280,7 +280,7 @@ export function compileCollectionConfig<TItem>(
         maxJoinDepth: number,
         path: string,
         additionalFields?: KeyOf<TItem>[],
-        overridenFields?: [fieldName: string, fetcher: string][],
+        overriddenFields?: [fieldName: string, fetcher: string][],
     ) => {
         const returnExpressionsOverrides = new Map()
         for (const field of collection.alwaysFetchFields ?? []) {
@@ -338,7 +338,7 @@ export function compileCollectionConfig<TItem>(
             )
         }
 
-        for (const override of overridenFields ?? []) {
+        for (const override of overriddenFields ?? []) {
             returnExpressionsOverrides.set(override[0], override[1])
         }
 

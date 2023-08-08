@@ -111,7 +111,7 @@ export function getBlocksPostProcessing(
         selection,
         blockArchiveFields,
     )
-    const useBlockBocStorage = !!context.services.data.bocStorage.blocks
+    const useBlockBocStorage = !!context.services.data.blockBocProvider
     const resolveBocs =
         parseBocs || (useBlockBocStorage && selectionContains(selection, "boc"))
     return {
@@ -150,7 +150,7 @@ function selectionContainsNonArchivedFields(
     return false
 }
 
-function selectionContains(selection: SelectionSetNode, field: string) {
+export function selectionContains(selection: SelectionSetNode, field: string) {
     return !!selection.selections.find(
         x => x.kind === "Field" && x.name.value === field,
     )
@@ -181,9 +181,9 @@ export async function postProcessBlocks(
     context: QRequestContext,
     blocks: BlockchainBlock[],
 ): Promise<BlockchainBlock[]> {
-    const blocksStorage = context.services.data.bocStorage.blocks
+    const blocksStorage = context.services.data.blockBocProvider
     if (postProcessing.resolveBocs && blocksStorage) {
-        const bocs = await blocksStorage.resolveBocs(
+        const bocs = await blocksStorage.getBocs(
             blocks.map(x => ({
                 hash: x._key,
                 boc: x.boc,

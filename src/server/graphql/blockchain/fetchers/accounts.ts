@@ -1,4 +1,4 @@
-import { GraphQLResolveInfo } from "graphql"
+import { GraphQLResolveInfo, SelectionSetNode } from "graphql"
 
 import { QParams } from "../../../filter/filters"
 import { QRequestContext } from "../../../request"
@@ -7,6 +7,9 @@ import { required } from "../../../utils"
 
 import { config } from "../config"
 import { BlockchainAccount } from "../resolvers-types-generated"
+import { selectionContains } from "../boc-parsers"
+import { IAccountProvider } from "../../../data/account-provider"
+import { BocModule } from "@eversdk/core"
 
 export async function resolve_account(
     address: String,
@@ -44,6 +47,15 @@ export async function resolve_account(
         },
     )) as BlockchainAccount[]
 
+    const provider = context.services.data.accountProvider
+    if (provider && selectionSet) {
+        await getBocFields(
+            queryResult,
+            selectionSet,
+            provider,
+            context.services.client.boc,
+        )
+    }
     if (queryResult.length === 0) {
         queryResult.push({
             _key: `${address}`,
@@ -62,4 +74,37 @@ export async function resolve_account(
     )
 
     return queryResult[0]
+}
+
+async function getBocFields(
+    accounts: BlockchainAccount[],
+    selection: SelectionSetNode,
+    provider: IAccountProvider,
+    sdk: BocModule,
+) {
+    const bocRequested = selectionContains(selection, "boc")
+    const dataRequested = selectionContains(selection, "data")
+    const codeRequested = selectionContains(selection, "code")
+    if (!(bocRequested || dataRequested || codeRequested)) {
+        return
+    }
+    const bocs = await provider.getBocs(accounts.map(x => x._key))
+    for (const account of accounts) {
+        const boc = bocs.get(account._key)
+        if (!boc) {
+            continue
+        }
+        if (bocRequested) {
+            account.boc = boc
+        }
+        if (dataRequested || codeRequested) {
+            const parsed = (await sdk.parse_account({ boc })).parsed
+            if (dataRequested) {
+                account.data = parsed.data
+            }
+            if (codeRequested) {
+                account.code = parsed.code
+            }
+        }
+    }
 }
