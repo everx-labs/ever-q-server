@@ -185,6 +185,13 @@ type BlockchainQuery {
          time_start: Int,
         "End of the time range, exclusive"
          time_end: Int,
+        """
+        Defines query scope.
+        If `true` then query performed on a maximum time range supported by the cloud.
+        If `false` then query performed on a recent time range supported by the cloud.
+        You can find an actual information about time ranges on evercloud documentation.
+        """
+        archive: Boolean
     ): BlockchainMasterSeqNoRange
 
     """

@@ -439,7 +439,11 @@ export default class TONQServer {
     }
 
     async stop() {
-        await new Promise<void>(resolve => this.server.close(() => resolve()))
+        await Promise.race([
+            new Promise<void>(resolve => this.server.close(() => resolve())),
+            new Promise<void>(resolve => setTimeout(resolve, 50)),
+        ])
+
         this.logs.stop()
 
         for (const collection of this.data.collections) {

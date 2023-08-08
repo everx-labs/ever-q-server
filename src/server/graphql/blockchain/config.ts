@@ -7,12 +7,7 @@ import { QRequestContext } from "../../request"
 import { QTraceSpan } from "../../tracing"
 import { QError, required } from "../../utils"
 
-import {
-    getFieldSelectionSet,
-    isDefined,
-    KeyOf,
-    KeyOfWithValueOf,
-} from "./helpers"
+import { getFieldSelectionSet, KeyOf, KeyOfWithValueOf } from "./helpers"
 import {
     BlockchainAccount,
     BlockchainBlock,
@@ -90,52 +85,53 @@ export const config: Config = {
                     `FILTER ${path}.in_msg IN @${onFieldParam} ` +
                     `RETURN ${returnExpression}`,
             },
-            {
-                targetField: "src_account",
-                additionalFields: ["msg_type"],
-                pathForQuery: "acc",
-                joinedCollection: "accounts",
-                prefetchQueryBuilder: (
-                    parentPath,
-                    joinPath,
-                    returnExpression,
-                ) =>
-                    `(${parentPath}.msg_type != 1 ? ` +
-                    `(FOR ${joinPath} IN accounts ` +
-                    `FILTER ${joinPath}._key == ${parentPath}.src ` +
-                    `RETURN ${returnExpression})[0] ` +
-                    `: null)`,
-                needFetch: m => !m.src_account && m.msg_type != 1,
-                onField: "src",
-                refOnField: "_key",
-                queryBuilder: (path, onFieldParam, returnExpression) =>
-                    `FOR ${path} in accounts ` +
-                    `FILTER ${path}._key IN @${onFieldParam} ` +
-                    `RETURN ${returnExpression}`,
-            },
-            {
-                targetField: "dst_account",
-                additionalFields: ["msg_type"],
-                pathForQuery: "acc",
-                joinedCollection: "accounts",
-                prefetchQueryBuilder: (
-                    parentPath,
-                    joinPath,
-                    returnExpression,
-                ) =>
-                    `(${parentPath}.msg_type != 2 ? ` +
-                    `(FOR ${joinPath} IN accounts ` +
-                    `FILTER ${joinPath}._key == ${parentPath}.dst ` +
-                    `RETURN ${returnExpression})[0] ` +
-                    `: null)`,
-                needFetch: m => !m.dst_account && m.msg_type != 2,
-                onField: "dst",
-                refOnField: "_key",
-                queryBuilder: (path, onFieldParam, returnExpression) =>
-                    `FOR ${path} in accounts ` +
-                    `FILTER ${path}._key IN @${onFieldParam} ` +
-                    `RETURN ${returnExpression}`,
-            },
+            // TODO:
+            // {
+            //     targetField: "src_account",
+            //     additionalFields: ["msg_type"],
+            //     pathForQuery: "acc",
+            //     joinedCollection: "accounts",
+            //     prefetchQueryBuilder: (
+            //         parentPath,
+            //         joinPath,
+            //         returnExpression,
+            //     ) =>
+            //         `(${parentPath}.msg_type != 1 ? ` +
+            //         `(FOR ${joinPath} IN accounts ` +
+            //         `FILTER ${joinPath}._key == ${parentPath}.src ` +
+            //         `RETURN ${returnExpression})[0] ` +
+            //         `: null)`,
+            //     needFetch: m => !m.src_account && m.msg_type != 1,
+            //     onField: "src",
+            //     refOnField: "_key",
+            //     queryBuilder: (path, onFieldParam, returnExpression) =>
+            //         `FOR ${path} in accounts ` +
+            //         `FILTER ${path}._key IN @${onFieldParam} ` +
+            //         `RETURN ${returnExpression}`,
+            // },
+            // {
+            //     targetField: "dst_account",
+            //     additionalFields: ["msg_type"],
+            //     pathForQuery: "acc",
+            //     joinedCollection: "accounts",
+            //     prefetchQueryBuilder: (
+            //         parentPath,
+            //         joinPath,
+            //         returnExpression,
+            //     ) =>
+            //         `(${parentPath}.msg_type != 2 ? ` +
+            //         `(FOR ${joinPath} IN accounts ` +
+            //         `FILTER ${joinPath}._key == ${parentPath}.dst ` +
+            //         `RETURN ${returnExpression})[0] ` +
+            //         `: null)`,
+            //     needFetch: m => !m.dst_account && m.msg_type != 2,
+            //     onField: "dst",
+            //     refOnField: "_key",
+            //     queryBuilder: (path, onFieldParam, returnExpression) =>
+            //         `FOR ${path} in accounts ` +
+            //         `FILTER ${path}._key IN @${onFieldParam} ` +
+            //         `RETURN ${returnExpression}`,
+            // },
         ],
     }),
     transactions: compileCollectionConfig({
@@ -143,27 +139,27 @@ export const config: Config = {
         excludeFields: ["hash"],
         qDataCollectionSelector: ctx => ctx.services.data.transactions,
         joins: [
-            {
-                targetField: "account",
-                additionalFields: ["account_addr"],
-                pathForQuery: "acc",
-                joinedCollection: "accounts",
-                prefetchQueryBuilder: (
-                    parentPath,
-                    joinPath,
-                    returnExpression,
-                ) =>
-                    `(FOR ${joinPath} IN accounts ` +
-                    `FILTER ${joinPath}._key == ${parentPath}.account_addr ` +
-                    `RETURN ${returnExpression})[0]`,
-                needFetch: t => !isDefined(t.account),
-                onField: "account_addr",
-                refOnField: "_key",
-                queryBuilder: (path, onFieldParam, returnExpression) =>
-                    `FOR ${path} in accounts ` +
-                    `FILTER ${path}._key IN @${onFieldParam} ` +
-                    `RETURN ${returnExpression}`,
-            },
+            // {
+            //     targetField: "account",
+            //     additionalFields: ["account_addr"],
+            //     pathForQuery: "acc",
+            //     joinedCollection: "accounts",
+            //     prefetchQueryBuilder: (
+            //         parentPath,
+            //         joinPath,
+            //         returnExpression,
+            //     ) =>
+            //         `(FOR ${joinPath} IN accounts ` +
+            //         `FILTER ${joinPath}._key == ${parentPath}.account_addr ` +
+            //         `RETURN ${returnExpression})[0]`,
+            //     needFetch: t => !isDefined(t.account),
+            //     onField: "account_addr",
+            //     refOnField: "_key",
+            //     queryBuilder: (path, onFieldParam, returnExpression) =>
+            //         `FOR ${path} in accounts ` +
+            //         `FILTER ${path}._key IN @${onFieldParam} ` +
+            //         `RETURN ${returnExpression}`,
+            // },
             {
                 targetField: "in_message",
                 additionalFields: ["in_msg"],
@@ -217,7 +213,7 @@ export type CompiledCollectionConfig<TItem> = {
         maxJoinDepth: number,
         path: string,
         additionalFields?: KeyOf<TItem>[],
-        overridenFields?: [fieldName: string, fetcher: string][],
+        overriddenFields?: [fieldName: string, fetcher: string][],
     ) => string
     fetchJoins: (
         data: TItem[],

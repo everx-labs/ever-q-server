@@ -166,6 +166,7 @@ export async function resolve_account_messages(
             params,
             inboundAndFilters,
             context,
+            useArchive,
             "dst_chain_order",
         )
         const returnExpression = returnExpressionBuilder("dst_chain_order")
@@ -221,6 +222,7 @@ export async function resolve_account_messages(
             params,
             outboundAndFilters,
             context,
+            useArchive,
             "src_chain_order",
         )
         const returnExpression = returnExpressionBuilder("src_chain_order")

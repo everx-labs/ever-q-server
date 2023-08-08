@@ -233,12 +233,12 @@ export async function resolve_key_blocks(
             context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
 
-    await prepareChainOrderFilter(args, params, filters, context)
+    const useArchive = useBlocksArchive(args.archive, context)
+    await prepareChainOrderFilter(args, params, filters, context, useArchive)
     filters.push("doc.key_block == true")
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = getNodeSelectionSetForConnection(info)
     const postProcessing = getBlocksPostProcessing(
         context,
@@ -308,7 +308,8 @@ export async function resolve_blockchain_blocks(
             context.services.config.queries.filter.stringifyKeyInAqlComparison,
     })
 
-    await prepareChainOrderFilter(args, params, filters, context)
+    const useArchive = useBlocksArchive(args.archive, context)
+    await prepareChainOrderFilter(args, params, filters, context, useArchive)
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`)
     }
@@ -324,7 +325,6 @@ export async function resolve_blockchain_blocks(
 
     const { direction, limit } = processPaginationArgs(args)
 
-    const useArchive = useBlocksArchive(args.archive, context)
     const selectionSet = getNodeSelectionSetForConnection(info)
     const postProcessing = getBlocksPostProcessing(
         context,

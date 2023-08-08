@@ -240,7 +240,7 @@ describe("DataCache", () => {
     })
 
     afterEach(async () => {
-        // This hack to stop server if some of tests fails
+        // This hack to stop server if some test fails
         try {
             await server.stop()
         } finally {

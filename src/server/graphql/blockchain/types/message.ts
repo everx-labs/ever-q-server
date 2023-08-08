@@ -12,6 +12,7 @@ import {
     MessageTypeEnum,
     Resolvers,
 } from "../resolvers-types-generated"
+import { accountResolver } from "../fetchers"
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainMessage: {
@@ -66,6 +67,8 @@ export const resolvers: Resolvers<QRequestContext> = {
             resolveAddressField(parent.src, args as AddressArgs),
         dst: (parent, args) =>
             resolveAddressField(parent.dst, args as AddressArgs),
+        src_account: accountResolver("src"),
+        dst_account: accountResolver("dst"),
         master_seq_no: parent =>
             masterSeqNoFromChainOrder(
                 parent.src_chain_order ?? parent.dst_chain_order,
