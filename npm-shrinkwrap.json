@@ -1,17 +1,17 @@
 {
     "name": "ton-q-server",
-    "version": "0.63.0",
+    "version": "0.64.0",
     "lockfileVersion": 3,
     "requires": true,
     "packages": {
         "": {
             "name": "ton-q-server",
-            "version": "0.63.0",
+            "version": "0.64.0",
             "license": "ISC",
             "dependencies": {
                 "@aws-sdk/client-s3": "^3.347.1",
-                "@eversdk/core": "^1",
-                "@eversdk/lib-node": "^1",
+                "@eversdk/core": "^1.44.1",
+                "@eversdk/lib-node": "^1.44.1",
                 "@node-redis/client": "^1.0.6",
                 "@open-rpc/client-js": "^1.8.1",
                 "apollo-cache-inmemory": "1.6.6",
@@ -3658,17 +3658,17 @@
             "dev": true
         },
         "node_modules/@eversdk/core": {
-            "version": "1.42.0",
-            "resolved": "https://registry.npmjs.org/@eversdk/core/-/core-1.42.0.tgz",
-            "integrity": "sha512-slkUTFh2uvWCERnYIECaqg1FQO777zC4acNiQPZr7tupUI5FZRJPEYJTu5pqeNaSZ1e0YWzpt9vnVZTD36tgAA==",
+            "version": "1.44.1",
+            "resolved": "https://registry.npmjs.org/@eversdk/core/-/core-1.44.1.tgz",
+            "integrity": "sha512-8v4M19MCsbqrUqZB861rakXeE3/xCM9Dd8oczxZtyJhppmRX3Fk5ltAbwS1oL/+oo2f7nEiXAkz8Zq39KjTVsw==",
             "engines": {
                 "node": ">=6"
             }
         },
         "node_modules/@eversdk/lib-node": {
-            "version": "1.42.0",
-            "resolved": "https://registry.npmjs.org/@eversdk/lib-node/-/lib-node-1.42.0.tgz",
-            "integrity": "sha512-as35DMmMYjP3xeHLPEp6wU0d+xpGCpVGW0U8rvJV4CcDekj47N82jTJtNywChDThQVmer6aLqJ5ncM/ygGaxXQ==",
+            "version": "1.44.1",
+            "resolved": "https://registry.npmjs.org/@eversdk/lib-node/-/lib-node-1.44.1.tgz",
+            "integrity": "sha512-4EY2WE8jNAKjAs5X9kOeJOODoJpUBx0VP3cuRXMnBUP4AmQlLO4CpIRgoTWqXnFiDtuBhaeUPjtxDWcQTj0rcw==",
             "hasInstallScript": true,
             "engines": {
                 "node": ">=6"
