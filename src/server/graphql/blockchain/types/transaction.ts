@@ -13,6 +13,7 @@ import {
     TransactionProcessingStatusEnum,
     TransactionTypeEnum,
 } from "../resolvers-types-generated"
+import { accountResolver } from "../fetchers"
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainTransaction: {
@@ -96,6 +97,7 @@ export const resolvers: Resolvers<QRequestContext> = {
         },
         account_addr: (parent, args) =>
             resolveAddressField(parent.account_addr, args as AddressArgs),
+        account: accountResolver("account_addr"),
         master_seq_no: parent => masterSeqNoFromChainOrder(parent.chain_order),
     },
 }

@@ -64,6 +64,7 @@ export type QConfig = {
     blockchain: QBlockchainDataConfig
     counterparties: string[]
     blockBocs: QBocResolverConfig
+    accountProvider: QAccountProviderConfig
     chainRangesVerification: string[]
     ignoreMessagesForLatency: boolean
 
@@ -103,6 +104,18 @@ export type QBocResolverConfig = {
     // - `{hash}` will be replaced with boc hash
     pattern?: string
     // ArangoDB BOC storage
+    arango?: {
+        database: string
+        collection: string
+    }
+}
+
+export type QAccountProviderConfig = {
+    // Evernode RPC compatible service
+    evernodeRpc?: {
+        endpoint: string
+    }
+    // ArangoDB accounts collection
     arango?: {
         database: string
         collection: string
@@ -317,7 +330,7 @@ export const configParams = {
     chainRangesVerification: ConfigParam.databases("chain ranges verification"),
     slowQueriesBlockchain: ConfigParam.blockchain("slow queries"),
     blockBocs: ConfigParam.bocResolver("block-bocs"),
-
+    accountProvider: ConfigParam.accountProvider(),
     jaeger: {
         endpoint: ConfigParam.string("jaeger-endpoint", "", "Jaeger endpoint"),
         service: ConfigParam.string(

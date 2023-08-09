@@ -28,8 +28,9 @@ import type {
     QDataProviderQueryParams,
     QIndexInfo,
 } from "./data-provider"
-import { BocStorage } from "./boc-storage"
+import { IBocProvider } from "./boc-provider"
 import { QDatabaseProvider } from "./database-provider"
+import { IAccountProvider } from "./account-provider"
 
 export type QBlockchainDataProvider = {
     blocks?: QDataProvider
@@ -49,8 +50,8 @@ export type QDataProviders = {
 export type QDataOptions = {
     providers: QDataProviders
     slowQueriesProviders?: QBlockchainDataProvider
-    bocStorage: BocStorage
-
+    blockBocProvider?: IBocProvider
+    accountProvider?: IAccountProvider
     logs: QLogs
     tracer: Tracer
     stats: IStats
@@ -82,7 +83,8 @@ export default class QData {
     isTests: boolean
     filterConfig: FilterConfig
     subscriptionsMode: SubscriptionsMode
-    bocStorage: BocStorage
+    blockBocProvider?: IBocProvider
+    accountProvider?: IAccountProvider
 
     // Own
     log: QLog
@@ -132,7 +134,8 @@ export default class QData {
             this.slowQueriesProviders?.zerostate,
         ])
 
-        this.bocStorage = options.bocStorage
+        this.blockBocProvider = options.blockBocProvider
+        this.accountProvider = options.accountProvider
     }
 
     addCollection(

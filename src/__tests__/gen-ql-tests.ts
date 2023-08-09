@@ -17,7 +17,7 @@ import {
 import { FieldNode, SelectionNode } from "graphql"
 import { FilterOrConversion } from "../server/config"
 import { QCollectionQuery } from "../server/data/collection-query"
-import { overrideAccountBoc } from "../server/graphql/account-boc"
+import { overrideAccountBocFilter } from "../server/graphql/account-boc"
 
 type Blocks = {
     blocks: {
@@ -80,7 +80,7 @@ test("{in: null} should raise helpful error message", async () => {
             blocks(filter:{id:{in:null}}) { id }
         }
         `)
-    } catch (err) {
+    } catch (err: any) {
         expect(
             err.message.startsWith("Cannot read properties of null"),
         ).toBeFalsy()
@@ -495,7 +495,7 @@ test("Generate AQL", () => {
 })
 
 test("Account BOC versioning", () => {
-    overrideAccountBoc()
+    overrideAccountBocFilter()
     const e2 = Account.returnExpressions(
         {
             expectedAccountBocVersion: 2,

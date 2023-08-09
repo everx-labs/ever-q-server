@@ -1001,6 +1001,7 @@ export type BlockchainQueryMessageArgs = {
 export type BlockchainQueryMaster_Seq_No_RangeArgs = {
     time_start?: Maybe<Scalars["Int"]>
     time_end?: Maybe<Scalars["Int"]>
+    archive?: Maybe<Scalars["Boolean"]>
 }
 
 export type BlockchainQueryKey_BlocksArgs = {

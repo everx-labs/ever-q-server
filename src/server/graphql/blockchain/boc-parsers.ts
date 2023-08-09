@@ -7,8 +7,9 @@ import {
 } from "./resolvers-types-generated"
 import { QRequestContext } from "../../request"
 import { BocModule } from "@eversdk/core"
+import { toU64String } from "../../utils"
 
-const blockArchiveFields = new Set([
+export const blockArchiveFields = new Set([
     "id",
     "hash",
     "boc",
@@ -19,6 +20,7 @@ const blockArchiveFields = new Set([
     "master.shard_hashes.descr.seq_no",
     "master.shard_hashes.shard",
     "master.shard_hashes.workchain_id",
+    "master.min_shard_gen_utime",
     "prev_alt_ref.root_hash",
     "prev_key_block_seqno",
     "prev_ref.root_hash",
@@ -111,7 +113,7 @@ export function getBlocksPostProcessing(
         selection,
         blockArchiveFields,
     )
-    const useBlockBocStorage = !!context.services.data.bocStorage.blocks
+    const useBlockBocStorage = !!context.services.data.blockBocProvider
     const resolveBocs =
         parseBocs || (useBlockBocStorage && selectionContains(selection, "boc"))
     return {
@@ -150,7 +152,7 @@ function selectionContainsNonArchivedFields(
     return false
 }
 
-function selectionContains(selection: SelectionSetNode, field: string) {
+export function selectionContains(selection: SelectionSetNode, field: string) {
     return !!selection.selections.find(
         x => x.kind === "Field" && x.name.value === field,
     )
@@ -181,9 +183,9 @@ export async function postProcessBlocks(
     context: QRequestContext,
     blocks: BlockchainBlock[],
 ): Promise<BlockchainBlock[]> {
-    const blocksStorage = context.services.data.bocStorage.blocks
+    const blocksStorage = context.services.data.blockBocProvider
     if (postProcessing.resolveBocs && blocksStorage) {
-        const bocs = await blocksStorage.resolveBocs(
+        const bocs = await blocksStorage.getBocs(
             blocks.map(x => ({
                 hash: x._key,
                 boc: x.boc,
@@ -220,7 +222,11 @@ async function parseTransaction(
     sdk: BocModule,
     boc: string,
 ): Promise<BlockchainTransaction> {
-    return (await sdk.parse_transaction({ boc })).parsed
+    const parsed = (await sdk.parse_transaction({ boc })).parsed
+    if (parsed.lt && parsed.lt.startsWith("0x")) {
+        parsed.lt = toU64String(BigInt(parsed.lt))
+    }
+    return parsed
 }
 
 export async function parseMessageBocsIfRequired(

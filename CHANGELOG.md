@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.64.0] - 2023-08-09
+
+### New
+
+- Added account BOC provider via evernode RPC (new config parameter 'accountProvider`).
+
 ## [0.63.0] - 2023-07-25
 
 ### New

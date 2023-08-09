@@ -60,7 +60,7 @@ export abstract class CachedData<T> {
         void (async () => {
             try {
                 this.update(await this.loadActual())
-            } catch (err) {
+            } catch (err: any) {
                 this.completeRefresh(x => x.reject(err))
             }
         })()

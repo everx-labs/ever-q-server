@@ -96,6 +96,16 @@ type BocResolverParams = {
     }
 }
 
+type AccountProviderParams = {
+    evernodeRpc: {
+        endpoint: ConfigParam<string>
+    }
+    arango: {
+        database: ConfigParam<string>
+        collection: ConfigParam<string>
+    }
+}
+
 export class ConfigParam<T extends ConfigValue> {
     optionName: string
     env: string
@@ -265,6 +275,30 @@ export class ConfigParam<T extends ConfigValue> {
         }
     }
 
+    static accountProvider(): AccountProviderParams {
+        return {
+            evernodeRpc: {
+                endpoint: ConfigParam.string(
+                    "accounts-evernode-rpc-endpoint",
+                    "",
+                    "Accounts Evernode RPC endpoint",
+                ),
+            },
+            arango: {
+                database: ConfigParam.string(
+                    "accounts-arango-database",
+                    "",
+                    "Accounts ArangoDB url",
+                ),
+                collection: ConfigParam.string(
+                    "accounts-arango-collection",
+                    "accounts",
+                    "Accounts ArangoDB collection",
+                ),
+            },
+        }
+    }
+
     static blockchain(prefix: string): BlockchainParams {
         const zerostatePrefix = withPrefix(prefix, "zerostate")
         return {
@@ -324,7 +358,7 @@ export class ConfigParam<T extends ConfigValue> {
         }
         try {
             return this.parser(value.toString().trim())
-        } catch (error) {
+        } catch (error: any) {
             throw QError.invalidConfigValue(
                 this.option,
                 error.message ?? error.toString(),

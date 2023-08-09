@@ -39,6 +39,7 @@ async function info(
             result.chainOrderBoundary = (
                 await context.services.data.getReliableChainOrderUpperBoundary(
                     context,
+                    false,
                 )
             ).boundary
         } catch {

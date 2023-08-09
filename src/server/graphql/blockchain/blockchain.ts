@@ -25,6 +25,7 @@ import {
 import { isDefined } from "./helpers"
 import { resolveAddress } from "../../address"
 import { ValidationError } from "apollo-server-errors"
+import { useBlocksArchive } from "../../data/data-provider"
 
 // UUID is a hack to bypass QDataCombiner deduplication
 const MASTER_SEQ_NO_RANGE_QUERY = `
@@ -64,6 +65,7 @@ async function resolve_maser_seq_no_range(
         )
     }
 
+    const useArchive = useBlocksArchive(args.archive, context)
     const result = (await context.services.data.query(
         required(context.services.data.blocks.provider),
         {
@@ -75,6 +77,7 @@ async function resolve_maser_seq_no_range(
             orderBy: [],
             request: context,
             traceSpan,
+            archive: useArchive,
         },
     )) as {
         first: number | null
@@ -101,7 +104,10 @@ async function resolve_maser_seq_no_range(
 
     // reliable boundary
     const reliable =
-        await context.services.data.getReliableChainOrderUpperBoundary(context)
+        await context.services.data.getReliableChainOrderUpperBoundary(
+            context,
+            useArchive,
+        )
     const max_end = parseMasterSeqNo(reliable.boundary)
 
     // Edge cases:

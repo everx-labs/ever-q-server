@@ -250,6 +250,7 @@ export default class QBlockchainData extends QData {
     // Spec: reliable_chain_order_upper_boundary = U64String(last_reliable_mc_seq_no + 1)
     async getReliableChainOrderUpperBoundary(
         context: QRequestContext,
+        archive: boolean,
     ): Promise<ReliableChainOrderUpperBoundary> {
         const now = Date.now()
         if (now < this.reliableChainOrderUpperBoundary.lastCheckTime + 1000) {
@@ -265,6 +266,7 @@ export default class QBlockchainData extends QData {
                 orderBy: [],
                 request: context,
                 traceSpan: context.requestSpan,
+                archive,
             })) as ChainRangesVerificationSummary[]
             if (result.length > 0) {
                 const boundary = result.reduce<string>((prev, summary) => {
@@ -299,6 +301,7 @@ export default class QBlockchainData extends QData {
                 orderBy: [],
                 request: context,
                 traceSpan: context.requestSpan,
+                archive,
             })) as number[]
             if (result.length > 0) {
                 const mc_seq_no = result.reduce((prev, curr) =>

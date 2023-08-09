@@ -1,98 +1,15 @@
-import { Database } from "arangojs"
 import gql from "graphql-tag"
 
-import { resolveConfig, SubscriptionsMode } from "../server/config"
-import QBlockchainData from "../server/data/blockchain"
-import QLogs from "../server/logs"
-import TONQServer, { DataProviderFactory } from "../server/server"
-import { QStats } from "../server/stats"
-import { QTracer } from "../server/tracing"
+import TONQServer from "../server/server"
 
-import { createTestClient, testConfig } from "./init-tests"
-import {
-    accounts as accountsData,
-    blocks as blocksData,
-    messages as messagesData,
-    transactions as transactionsData,
-    summary as chainRangesVerificationSummary,
-} from "./blockchain-data"
-import { BocStorage } from "../server/data/boc-storage"
+import { createTestClient } from "./init-tests"
+import { createTestData, startTestServer } from "./blockchain-mock"
 
-const TEST_DB_NAME = "Q-server_test_db"
 let server: TONQServer | null = null
 
 beforeAll(async () => {
-    let serverAddress =
-        process.env.Q_DATA_MUT ??
-        process.env.Q_ACCOUNTS ??
-        "http://localhost:8901"
-
-    // prepare db
-    const db = new Database(serverAddress)
-    try {
-        await db.dropDatabase(TEST_DB_NAME)
-    } catch (err) {
-        console.log(err)
-        // do nothing
-    }
-    await db.createDatabase(TEST_DB_NAME)
-    await db.useDatabase(TEST_DB_NAME)
-    const blocks = db.collection("blocks")
-    await blocks.create()
-    await blocks.save(blocksData)
-    const messages = db.collection("messages")
-    await messages.create()
-    await messages.save(messagesData)
-    const transactions = db.collection("transactions")
-    await transactions.create()
-    await transactions.save(transactionsData)
-    const accounts = db.collection("accounts")
-    await accounts.create()
-    await accounts.save(accountsData)
-    const crv = db.collection("chain_ranges_verification")
-    await crv.create()
-    await crv.save(chainRangesVerificationSummary)
-
-    // prepare TONQServer
-    const url = new URL(serverAddress)
-    url.searchParams.set("name", TEST_DB_NAME)
-    serverAddress = url.toString()
-
-    const config = resolveConfig(
-        {},
-        {
-            blockchain: {
-                accounts: [serverAddress],
-                blocks: {
-                    hot: [serverAddress],
-                },
-                transactions: {
-                    hot: [serverAddress],
-                },
-            },
-            chainRangesVerification: [serverAddress],
-        },
-        {},
-    )
-    const providers = new DataProviderFactory(config, new QLogs())
-    const blockchainData = new QBlockchainData({
-        providers: providers.ensure(),
-        logs: new QLogs(),
-        tracer: QTracer.create(testConfig),
-        stats: QStats.create("", [], 0),
-        bocStorage: new BocStorage(config.blockBocs),
-        isTests: true,
-        subscriptionsMode: SubscriptionsMode.Arango,
-        filterConfig: config.queries.filter,
-        ignoreMessagesForLatency: false,
-    })
-
-    server = new TONQServer({
-        config: testConfig,
-        logs: new QLogs(),
-        data: blockchainData,
-    })
-    await server.start()
+    await createTestData()
+    server = await startTestServer()
 })
 
 afterAll(async () => {
@@ -1855,7 +1772,7 @@ test("blockchain.account.transactions. Invalid account should throw", async () =
             `,
         })
         expect(true).toBe(false) // this line should be unreachable!
-    } catch (err) {
+    } catch (err: any) {
         expect(err.constructor.name).toBe("ApolloError")
         const { message, extensions } = err.graphQLErrors[0]
         expect(extensions.code).toEqual("GRAPHQL_VALIDATION_FAILED")

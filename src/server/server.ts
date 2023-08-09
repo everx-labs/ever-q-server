@@ -64,15 +64,16 @@ import { assignDeep, httpUrl, packageJson } from "./utils"
 import WebSocket from "ws"
 import { MemStats } from "./mem-stat"
 import { QRequestContext, QRequestServices, RequestEvent } from "./request"
-import { overrideAccountBoc } from "./graphql/account-boc"
+import { overrideAccountBocFilter } from "./graphql/account-boc"
 import { rempResolvers } from "./graphql/remp"
 import { LiteClient } from "ton-lite-client"
 import {
     addMasterSeqNoFilters,
     masterSeqNoResolvers,
 } from "./graphql/chain-order"
-import { bocResolvers, overrideBocs } from "./graphql/boc-resolvers"
-import { BocStorage } from "./data/boc-storage"
+import { blockBocResolvers, overrideBlockBocFilter } from "./graphql/block-boc"
+import { createAccountProvider } from "./data/account-provider"
+import { createBocProvider } from "./data/boc-provider"
 
 type QServerOptions = {
     config: QConfig
@@ -351,7 +352,10 @@ export default class TONQServer {
                     this.config.slowQueriesBlockchain,
                     "slow",
                 ),
-                bocStorage: new BocStorage(this.config.blockBocs),
+                blockBocProvider: createBocProvider(this.config.blockBocs),
+                accountProvider: createAccountProvider(
+                    this.config.accountProvider,
+                ),
                 isTests: false,
                 subscriptionsMode: this.config.subscriptionsMode,
                 filterConfig: this.config.queries.filter,
@@ -374,9 +378,9 @@ export default class TONQServer {
             this.data,
             this.liteclient,
         )
-        overrideAccountBoc()
+        overrideAccountBocFilter()
         addMasterSeqNoFilters()
-        overrideBocs(this.data.bocStorage)
+        overrideBlockBocFilter(this.data.blockBocProvider)
         const resolvers = createResolvers(this.data) as IResolvers
         ;[
             infoResolvers,
@@ -386,7 +390,7 @@ export default class TONQServer {
             rempResolvers(this.config.remp, this.logs),
             blockchainResolvers,
             masterSeqNoResolvers,
-            bocResolvers(this.data.bocStorage),
+            blockBocResolvers(this.data.blockBocProvider),
         ].forEach(x => assignDeep(resolvers, x))
         this.addEndPoint({
             path: "/graphql",
@@ -435,7 +439,11 @@ export default class TONQServer {
     }
 
     async stop() {
-        await new Promise<void>(resolve => this.server.close(() => resolve()))
+        await Promise.race([
+            new Promise<void>(resolve => this.server.close(() => resolve())),
+            new Promise<void>(resolve => setTimeout(resolve, 50)),
+        ])
+
         this.logs.stop()
 
         for (const collection of this.data.collections) {
