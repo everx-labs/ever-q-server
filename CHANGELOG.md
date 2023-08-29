@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.0] - 2023-08-09
+
+### New
+
+- Added field `BlockchainBlock.signatures` – available only in non archive mode.
+
+
 ## [0.64.0] - 2023-08-09
 
 ### New
@@ -60,8 +67,6 @@ All notable changes to this project will be documented in this file.
 ## [0.60.0] - 2023-06-21
 
 ### New
-
-- Added field `BlockchainBlock.signatures` – available only in non archive mode.
 
 - Added config parameter `archive` to `blockchain.blocks`, `blockchain.transactions` sections.
   Specifies config for the database used in blockchain API when the `archive` parameter is `true`.
