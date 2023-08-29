@@ -6,6 +6,7 @@ import {
     messages as messagesData,
     summary as chainRangesVerificationSummary,
     transactions as transactionData,
+    block_signatures as blockSignaturesData,
 } from "./blockchain-mock-data"
 import { QConfig, resolveConfig, SubscriptionsMode } from "../server/config"
 import TONQServer, { DataProviderFactory } from "../server/server"
@@ -197,6 +198,13 @@ async function createMockDb(archive: boolean) {
 
     if (!archive) {
         await initCollection(db, "accounts", accountsData, false, new Set())
+        await initCollection(
+            db,
+            "blocks_signatures",
+            blockSignaturesData,
+            false,
+            new Set(),
+        )
 
         const crv = db.collection("chain_ranges_verification")
         await crv.create()

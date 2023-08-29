@@ -254,3 +254,25 @@ test("cloud15.master_ranges", async () => {
     expect(range1.master_seq_no_range).toEqual(range2.master_seq_no_range)
     await test.close()
 })
+
+test("cloud15.blocks_signatures", async () => {
+    const test = await TestSetup.create({
+        withArchiveDb: true,
+    })
+
+    const q = async (archive: boolean) => {
+        const result = (await test.queryBlockchain(
+            `blocks(workchain:-1 archive:${archive}) { edges { node { seq_no signatures { seq_no } } } }`,
+        )) as any
+        return result.blocks.edges.map((x: any) => x.node)
+    }
+
+    const nonArch = await q(false)
+    expect(nonArch[0].signatures !== null).toBeTruthy()
+    expect(nonArch[0].signatures.seq_no).toBe(nonArch[0].seq_no)
+
+    const arch = await q(true)
+    expect(arch[0].signatures).toBeNull()
+
+    await test.close()
+})
