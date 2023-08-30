@@ -140,6 +140,14 @@ test("Arango Config", () => {
         name: "bc",
         maxSockets: 6,
     })
+    expect(
+        parseArangoConfig(httpUrl("u:p@arango:8529/_db/bc?maxSockets=6")),
+    ).toMatchObject({
+        server: httpUrl("arango:8529"),
+        auth: "u:p",
+        name: "bc",
+        maxSockets: 6,
+    })
 })
 
 test("Jaeger Config", () => {
