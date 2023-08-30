@@ -262,7 +262,25 @@ test("cloud15.blocks_signatures", async () => {
 
     const q = async (archive: boolean) => {
         const result = (await test.queryBlockchain(
-            `blocks(workchain:-1 archive:${archive}) { edges { node { seq_no signatures { seq_no } } } }`,
+            `blocks(workchain:-1 archive:${archive}) { edges { node {
+            seq_no
+            signatures {
+                catchain_seqno
+                gen_utime
+                gen_utime_string
+                proof
+                seq_no
+                shard
+                sig_weight(format: DEC)
+                signatures {
+                  s
+                  r
+                  node_id
+                }
+                validator_list_hash_short
+                workchain_id
+            }
+            } } }`,
         )) as any
         return result.blocks.edges.map((x: any) => x.node)
     }

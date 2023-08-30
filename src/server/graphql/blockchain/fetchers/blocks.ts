@@ -383,7 +383,7 @@ export async function fetch_block_signatures(
     traceSpan: QTraceSpan,
 ) {
     const selectionSet = info.fieldNodes[0].selectionSet
-    const returnExpression = config.blocks.buildReturnExpression(
+    const returnExpression = config.blocks_signatures.buildReturnExpression(
         selectionSet,
         context,
         0,

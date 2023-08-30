@@ -56,6 +56,11 @@ export const resolvers: Resolvers<QRequestContext> = {
             )
         },
     },
+    BlockchainBlockSignatures: {
+        sig_weight: (parent, args) =>
+            resolveBigUInt(1, parent.sig_weight, args as BigIntArgs),
+        gen_utime_string: parent => unixSecondsToString(parent.gen_utime),
+    },
 }
 
 function collectPath(info: GraphQLResolveInfo): Path[] {
