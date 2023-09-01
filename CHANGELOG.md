@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Added field `BlockchainBlock.signatures` – available only in non archive mode.
 - Added support for ArangoDB url format `http://server:8529/_db/blockchain`
+- Account info resolver now uses EvernodeRPC boc or meta queries.
 
 ## [0.64.0] - 2023-08-09
 
