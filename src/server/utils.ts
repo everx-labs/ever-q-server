@@ -232,6 +232,25 @@ export function cloneDeep(
     return clone
 }
 
+export function cloneValue(
+    source: any,
+    convert?: (path: string, value: unknown) => unknown,
+    path?: string,
+): any {
+    if (Array.isArray(source)) {
+        return source.map(x => cloneValue(x, convert, path))
+    }
+    if (isObject(source)) {
+        const clone: Record<string, unknown> = {}
+        for (const [name, value] of Object.entries(source)) {
+            const fieldPath = path && path !== "" ? `${path}.${name}` : name
+            clone[name] = cloneValue(value, convert, fieldPath)
+        }
+        return clone
+    }
+    return convert ? convert(path ?? "", source) : source
+}
+
 export function required<T>(value: T | undefined): T {
     if (value !== undefined) {
         return value

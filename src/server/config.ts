@@ -115,11 +115,6 @@ export type QAccountProviderConfig = {
     evernodeRpc?: {
         endpoint: string
     }
-    // ArangoDB accounts collection
-    arango?: {
-        database: string
-        collection: string
-    }
 }
 
 export type QBlockchainDataConfig = {

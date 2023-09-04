@@ -257,7 +257,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         blockBocProvider: createBocProvider(config.blockBocs),
-        accountProvider: createAccountProvider(config.accountProvider),
+        accountProvider: createAccountProvider(logs, config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,

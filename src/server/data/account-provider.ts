@@ -1,21 +1,24 @@
-import { parseArangoConfig, QAccountProviderConfig } from "../config"
-import { Database } from "arangojs"
-import { createDatabase } from "./database-provider"
+import { QAccountProviderConfig } from "../config"
 import { RequestManager, HTTPTransport, Client } from "@open-rpc/client-js"
+import QLogs, { QLog } from "../logs"
 
 export interface IAccountProvider {
     getBocs(addresses: string[]): Promise<Map<string, string>>
+    getMetas(addresses: string[]): Promise<Map<string, any>>
 }
 
 class NodeRpcProvider implements IAccountProvider {
+    log: QLog
     client: Client
     constructor(
+        logs: QLogs,
         public config: {
             endpoint: string
         },
     ) {
         const transport = new HTTPTransport(config.endpoint)
         this.client = new Client(new RequestManager([transport]))
+        this.log = logs.create("NodeRpcClient")
     }
     async getBocs(addresses: string[]): Promise<Map<string, string>> {
         const resolved = new Map()
@@ -31,52 +34,38 @@ class NodeRpcProvider implements IAccountProvider {
                 resolved.set(address, result.account_boc)
             }
         }
+        this.log.debug("GET_ACCOUNT", addresses)
         return resolved
     }
-}
 
-class ArangoProvider implements IAccountProvider {
-    private readonly database: Database
-    constructor(
-        public config: {
-            database: string
-            collection: string
-        },
-    ) {
-        this.database = createDatabase(parseArangoConfig(config.database))
-    }
-
-    async getBocs(addresses: string[]): Promise<Map<string, string>> {
+    async getMetas(addresses: string[]): Promise<Map<string, any>> {
         const resolved = new Map()
-        const cursor = await this.database.query(
-            `
-            FOR doc IN ${this.config.collection}
-            FILTER doc._key IN @addresses
-            RETURN { address: doc._key, boc: doc.boc }
-            `,
-            {
-                addresses,
-            },
-        )
-        const docs: { address: string; boc: string }[] = await cursor.all()
-        for (const doc of docs) {
-            resolved.set(doc.address, doc.boc)
+        // TODO: fetch bocs in parallel
+        for (const address of addresses) {
+            const result = await this.client.request({
+                method: "getAccountMeta",
+                params: {
+                    account: address,
+                },
+            })
+            if (result?.account_meta ?? "" !== "") {
+                resolved.set(address, result.account_meta)
+            }
         }
+        this.log.debug("GET_ACCOUNT_META", addresses)
         return resolved
     }
 }
 
 export function createAccountProvider(
+    logs: QLogs,
     config: QAccountProviderConfig,
 ): IAccountProvider | undefined {
     const rpcEndpoint = config.evernodeRpc?.endpoint ?? ""
     if (rpcEndpoint !== "") {
-        return new NodeRpcProvider({
+        return new NodeRpcProvider(logs, {
             endpoint: rpcEndpoint,
         })
-    }
-    if (config.arango && (config.arango.database ?? "" !== "")) {
-        return new ArangoProvider(config.arango)
     }
     return undefined
 }

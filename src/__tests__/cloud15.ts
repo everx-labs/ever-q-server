@@ -1,4 +1,4 @@
-import { createTestData, TestSetup } from "./blockchain-mock"
+import { AccountMock, createTestData, TestSetup } from "./blockchain-mock"
 import { accounts, transactions } from "./blockchain-mock-data"
 import {
     BlockchainAccount,
@@ -10,24 +10,26 @@ beforeAll(async () => {
     await createTestData()
 })
 
+// _key: "0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
+// id: "accounts/0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
 const mockAcc = {
-    id: "accounts/0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
-    _key: "0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
-    workchain_id: 0,
     boc: "te6ccgECEwEAAtEAAm/ACqpbycyI85ZbJY4UrJyZthycVdM5TQAZacP1s2s10H7yJoURQyWsOoAAAAAAAAAAMQdIC1ATQAYBAWGAAADEsoxIzAAAAAAADbugVptUh94vSUj+5DUD/DWpPFXxmwjBE7eKNHS9J10IXlBgAgIDzyAFAwEB3gQAA9AgAEHa02qQ+8XpKR/chqB/hrUnir4zYRgidvFGjpek66ELygwCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgH+/38h1SDHAZFwjhIggQIA1yHXC/8i+QFTIfkQ8qjiItMf0z81IHBwcO1E0PQEATQggQCA10WY0z8BM9M/ATKWgggbd0Ay4nAjJrmOJCX4I4ED6KgkoLmOF8glAfQAJs8LPyPPCz8izxYgye1UfzIw3t4FXwWZJCLxQAFfCtsw4AsADIA08vBfCgIBIBANAQm8waZuzA4B/nDtRND0BAEyINaAMu1HIm+MI2+MIW+MIO1XXwRwaHWhYH+6lWh4oWAx3u1HbxHXC/+68uBk+AD6QNN/0gAwIcIAIJcwIfgnbxC53vLgZSIiInDIcc8LASLPCgBxz0D4KM8WJM8WI/oCcc9AcPoCcPoCgEDPQPgjzwsfcs9AIMkPABYi+wBfBV8DcGrbMAIBSBIRAOu4iQAnXaiaBBAgEFrovk5gHwAdqPkQICAZ6Bk6DfGAPoCLLfGdquAmDh2o7eJQCB6B3lFa4X/9qOQN4iYAORl/+ToN6j2q/ajkDeJZHoALBBjgMcIGDhnhZ/BBA27oGeFn7jnoMrnizjnoPEAt4jni2T2qjg1QAMrccCHXSSDBII4rIMAAjhwj0HPXIdcLACDAAZbbMF8H2zCW2zBfB9sw4wTZltswXwbbMOME2eAi0x80IHS7II4VMCCCEP////+6IJkwIIIQ/////rrf35bbMF8H2zDgIyHxQAFfBw==",
-    last_paid: 1689618256,
-    bits: "0x1445",
-    cells: "0x13",
-    public_cells: "0x0",
-    last_trans_lt: "0xc",
-    balance: "0x1d202d40",
-    code: "te6ccgECDQEAAjAAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB/v9/IdUgxwGRcI4SIIECANch1wv/IvkBUyH5EPKo4iLTH9M/NSBwcHDtRND0BAE0IIEAgNdFmNM/ATPTPwEyloIIG3dAMuJwIya5jiQl+COBA+ioJKC5jhfIJQH0ACbPCz8jzws/Is8WIMntVH8yMN7eBV8FmSQi8UABXwrbMOAFAAyANPLwXwoCASAKBwEJvMGmbswIAf5w7UTQ9AQBMiDWgDLtRyJvjCNvjCFvjCDtV18EcGh1oWB/upVoeKFgMd7tR28R1wv/uvLgZPgA+kDTf9IAMCHCACCXMCH4J28Qud7y4GUiIiJwyHHPCwEizwoAcc9A+CjPFiTPFiP6AnHPQHD6AnD6AoBAz0D4I88LH3LPQCDJCQAWIvsAXwVfA3Bq2zACAUgMCwDruIkAJ12omgQQIBBa6L5OYB8AHaj5ECAgGegZOg3xgD6Aiy3xnargJg4dqO3iUAgegd5RWuF//ajkDeImADkZf/k6Deo9qv2o5A3iWR6ACwQY4DHCBg4Z4WfwQQNu6BnhZ+456DK54s456DxALeI54tk9qo4NUADK3HAh10kgwSCOKyDAAI4cI9Bz1yHXCwAgwAGW2zBfB9swltswXwfbMOME2ZbbMF8G2zDjBNngItMfNCB0uyCOFTAgghD/////uiCZMCCCEP////6639+W2zBfB9sw4CMh8UABXwc=",
-    code_hash:
-        "98196905d4f1d250741ab885ac2411e0a547c72486f613d8cb5f302fd9d51c6a",
-    data: "te6ccgEBBQEAZQABYYAAAMSyjEjMAAAAAAANu6BWm1SH3i9JSP7kNQP8Nak8VfGbCMETt4o0dL0nXQheUGABAgPPIAQCAQHeAwAD0CAAQdrTapD7xekpH9yGoH+GtSeKvjNhGCJ28UaOl6TroQvKDA==",
-    data_hash:
-        "3e86879954d46cb6879303fac1161c787bb16edcc3f42039fbdf725c21c44e8d",
-    acc_type: 1,
+    meta: {
+        workchain_id: 0,
+        last_paid: 1689618256,
+        bits: "0x1445",
+        cells: "0x13",
+        public_cells: "0x0",
+        last_trans_lt: "0xc",
+        balance: "0x1d202d40",
+        code: "te6ccgECDQEAAjAAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB/v9/IdUgxwGRcI4SIIECANch1wv/IvkBUyH5EPKo4iLTH9M/NSBwcHDtRND0BAE0IIEAgNdFmNM/ATPTPwEyloIIG3dAMuJwIya5jiQl+COBA+ioJKC5jhfIJQH0ACbPCz8jzws/Is8WIMntVH8yMN7eBV8FmSQi8UABXwrbMOAFAAyANPLwXwoCASAKBwEJvMGmbswIAf5w7UTQ9AQBMiDWgDLtRyJvjCNvjCFvjCDtV18EcGh1oWB/upVoeKFgMd7tR28R1wv/uvLgZPgA+kDTf9IAMCHCACCXMCH4J28Qud7y4GUiIiJwyHHPCwEizwoAcc9A+CjPFiTPFiP6AnHPQHD6AnD6AoBAz0D4I88LH3LPQCDJCQAWIvsAXwVfA3Bq2zACAUgMCwDruIkAJ12omgQQIBBa6L5OYB8AHaj5ECAgGegZOg3xgD6Aiy3xnargJg4dqO3iUAgegd5RWuF//ajkDeImADkZf/k6Deo9qv2o5A3iWR6ACwQY4DHCBg4Z4WfwQQNu6BnhZ+456DK54s456DxALeI54tk9qo4NUADK3HAh10kgwSCOKyDAAI4cI9Bz1yHXCwAgwAGW2zBfB9swltswXwfbMOME2ZbbMF8G2zDjBNngItMfNCB0uyCOFTAgghD/////uiCZMCCCEP////6639+W2zBfB9sw4CMh8UABXwc=",
+        code_hash:
+            "98196905d4f1d250741ab885ac2411e0a547c72486f613d8cb5f302fd9d51c6a",
+        data: "te6ccgEBBQEAZQABYYAAAMSyjEjMAAAAAAANu6BWm1SH3i9JSP7kNQP8Nak8VfGbCMETt4o0dL0nXQheUGABAgPPIAQCAQHeAwAD0CAAQdrTapD7xekpH9yGoH+GtSeKvjNhGCJ28UaOl6TroQvKDA==",
+        data_hash:
+            "3e86879954d46cb6879303fac1161c787bb16edcc3f42039fbdf725c21c44e8d",
+        acc_type: 1,
+    },
 }
 
 test("cloud15.account-provider", async () => {
@@ -47,14 +49,26 @@ test("cloud15.account-provider", async () => {
     const test2 = await TestSetup.create({
         port: 2,
         accounts: {
-            [refAccount.id]: mockAcc.boc,
+            [refAccount.id]: mockAcc,
         },
     })
+    const stat = test2.nodeRpcStat()
     const queryResult2 = (await test2.queryBlockchain(query)) as any
+    expect(stat.getAccount).toBe(1)
+    expect(stat.getAccountMeta).toBe(0)
     const account2 = queryResult2.account.info
     expect(account2.boc).toBe(mockAcc.boc)
-    expect(account2.data).toBe(mockAcc.data)
-    expect(account2.code).toBe(mockAcc.code)
+    expect(account2.data).toBe(mockAcc.meta.data)
+    expect(account2.code).toBe(mockAcc.meta.code)
+
+    const queryResult3 = (await test2.queryBlockchain(
+        `account(address: "${refAccount.id}") { info { balance bits } }`,
+    )) as any
+    const account3 = queryResult3.account.info
+    expect(stat.getAccount).toBe(1)
+    expect(stat.getAccountMeta).toBe(1)
+    expect(account3.balance).toBe(mockAcc.meta.balance)
+    expect(account3.bits).toBe(mockAcc.meta.bits)
     await test2.close()
 })
 
@@ -67,10 +81,10 @@ test("cloud15.unavailable-account-provider", async () => {
     const test = await TestSetup.create({
         port: 2,
         accounts: {
-            [testAcc._key]: mockAcc.boc,
+            [testAcc._key]: mockAcc,
         },
     })
-    test.accountProvider.close()
+    test.accountProvider?.server.close()
     try {
         const r = await test.queryBlockchain(
             `account(address: "${testAcc._key}") { info { boc data code } }`,
@@ -92,7 +106,7 @@ test("cloud15.joins", async () => {
         withArchiveDb: boolean
         queryArchive: boolean
         expectedBoc: string
-        accounts?: { [hash: string]: string }
+        accounts?: { [hash: string]: AccountMock }
     }) {
         const test = await TestSetup.create({
             withArchiveDb: options.withArchiveDb,
@@ -143,7 +157,7 @@ test("cloud15.joins", async () => {
     })
 
     const mockAccounts = {
-        [testAcc._key]: mockAcc.boc,
+        [testAcc._key]: mockAcc,
     }
 
     await testJoins({

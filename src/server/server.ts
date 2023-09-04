@@ -354,6 +354,7 @@ export default class TONQServer {
                 ),
                 blockBocProvider: createBocProvider(this.config.blockBocs),
                 accountProvider: createAccountProvider(
+                    this.logs,
                     this.config.accountProvider,
                 ),
                 isTests: false,
