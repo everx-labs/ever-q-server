@@ -1,5 +1,6 @@
 import { QAccountProviderConfig } from "../config"
 import { RequestManager, HTTPTransport, Client } from "@open-rpc/client-js"
+import QLogs, { QLog } from "../logs"
 
 export interface IAccountProvider {
     getBocs(addresses: string[]): Promise<Map<string, string>>
@@ -7,14 +8,17 @@ export interface IAccountProvider {
 }
 
 class NodeRpcProvider implements IAccountProvider {
+    log: QLog
     client: Client
     constructor(
+        logs: QLogs,
         public config: {
             endpoint: string
         },
     ) {
         const transport = new HTTPTransport(config.endpoint)
         this.client = new Client(new RequestManager([transport]))
+        this.log = logs.create("NodeRpcClient")
     }
     async getBocs(addresses: string[]): Promise<Map<string, string>> {
         const resolved = new Map()
@@ -30,6 +34,7 @@ class NodeRpcProvider implements IAccountProvider {
                 resolved.set(address, result.account_boc)
             }
         }
+        this.log.debug("GET_ACCOUNT", addresses)
         return resolved
     }
 
@@ -47,16 +52,18 @@ class NodeRpcProvider implements IAccountProvider {
                 resolved.set(address, result.account_meta)
             }
         }
+        this.log.debug("GET_ACCOUNT_META", addresses)
         return resolved
     }
 }
 
 export function createAccountProvider(
+    logs: QLogs,
     config: QAccountProviderConfig,
 ): IAccountProvider | undefined {
     const rpcEndpoint = config.evernodeRpc?.endpoint ?? ""
     if (rpcEndpoint !== "") {
-        return new NodeRpcProvider({
+        return new NodeRpcProvider(logs, {
             endpoint: rpcEndpoint,
         })
     }

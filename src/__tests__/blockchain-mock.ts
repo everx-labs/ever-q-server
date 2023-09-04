@@ -136,14 +136,15 @@ export async function startTestServer(
         {},
     )
     overrideConfig?.(config)
-    const providers = new DataProviderFactory(config, new QLogs())
+    const logs = new QLogs()
+    const providers = new DataProviderFactory(config, logs)
     const blockchainData = new QBlockchainData({
         providers: providers.ensure(),
-        logs: new QLogs(),
+        logs,
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         blockBocProvider: createBocProvider(config.blockBocs),
-        accountProvider: createAccountProvider(config.accountProvider),
+        accountProvider: createAccountProvider(logs, config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
@@ -296,6 +297,7 @@ export class TestSetup {
             useWebSockets: false,
             port: serverPort,
         })
+        server.logs.start()
         return new TestSetup(client, server, accountProvider)
     }
 
