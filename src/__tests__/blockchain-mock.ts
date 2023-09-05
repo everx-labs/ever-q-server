@@ -78,10 +78,15 @@ export function startNodeRpcMock(
             jsonrpc: "2.0",
             id,
         }
+        const acc =
+            accounts[
+                params.byBlock
+                    ? `${params.account}:${params.byBlock}`
+                    : params.account
+            ]
         switch (method) {
             case "getAccount":
                 {
-                    const acc = accounts[params.account]
                     response.result = acc
                         ? {
                               account_boc: acc.boc,
@@ -92,7 +97,6 @@ export function startNodeRpcMock(
                 break
             case "getAccountMeta":
                 {
-                    const acc = accounts[params.account]
                     response.result = acc
                         ? {
                               account_meta: acc.meta,

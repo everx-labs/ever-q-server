@@ -5,6 +5,10 @@ import {
     BlockchainTransaction,
 } from "../server/graphql/blockchain/resolvers-types-generated"
 import { toU64String } from "../server/utils"
+import {
+    accountDbFields,
+    convertDocFromDb,
+} from "../server/graphql/blockchain/fetchers"
 
 beforeAll(async () => {
     await createTestData()
@@ -69,6 +73,60 @@ test("cloud15.account-provider", async () => {
     expect(stat.getAccountMeta).toBe(1)
     expect(account3.balance).toBe(mockAcc.meta.balance)
     expect(account3.bits).toBe(mockAcc.meta.bits)
+    await test2.close()
+})
+
+test("cloud15.account-info-by-block", async () => {
+    const test1 = await TestSetup.create({ port: 1 })
+
+    const qAccounts = (
+        await test1.query(`accounts { id boc data code balance }`)
+    ).accounts
+
+    const qAcc = qAccounts[0]
+
+    const queryAcc = async (
+        test: TestSetup,
+        infoArgs: string,
+        result: string,
+    ) => {
+        return (
+            (await test.queryBlockchain(
+                `account(address: "${qAcc.id}") { info${infoArgs} { ${result} } }`,
+            )) as any
+        ).account.info
+    }
+
+    try {
+        const r = await queryAcc(test1, `(byBlock:"1")`, "boc data code")
+        fail(`error expected but result received: ${JSON.stringify(r)}`)
+    } catch (err) {
+        console.log("expected error: ", err.message)
+    }
+    await test1.close()
+
+    const accMock = (i: number) => ({
+        meta: convertDocFromDb(accounts[i], "HEX", accountDbFields),
+        boc: accounts[i].boc,
+    })
+
+    const test2 = await TestSetup.create({
+        port: 2,
+        accounts: {
+            [qAcc.id]: accMock(0),
+            [`${qAcc.id}:1`]: accMock(0),
+            [`${qAcc.id}:2`]: accMock(1),
+        },
+    })
+    const acc = await queryAcc(test2, ``, "balance")
+    expect(acc.balance).toBe(qAccounts[0].balance)
+
+    const acc1 = await queryAcc(test2, `(byBlock:"1")`, "balance")
+    expect(acc1.balance).toBe(qAccounts[0].balance)
+
+    const acc2 = await queryAcc(test2, `(byBlock:"2")`, "balance")
+    expect(acc2.balance).toBe(qAccounts[1].balance)
+
     await test2.close()
 })
 
