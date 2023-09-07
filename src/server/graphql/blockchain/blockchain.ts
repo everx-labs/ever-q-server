@@ -323,10 +323,11 @@ export const resolvers: Resolvers<QRequestContext> = {
         },
     },
     BlockchainAccountQuery: {
-        info: async (parent, _args, context, info) => {
+        info: async (parent, args, context, info) => {
             return context.trace("blockchain-account-info", async traceSpan => {
                 return resolve_account(
                     resolveAddress(parent.address),
+                    args.byBlock,
                     context,
                     info,
                     traceSpan,

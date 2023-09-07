@@ -542,6 +542,10 @@ export type BlockchainAccountQuery = {
     transactions_by_lt?: Maybe<BlockchainTransactionsConnection>
 }
 
+export type BlockchainAccountQueryInfoArgs = {
+    byBlock?: Maybe<Scalars["String"]>
+}
+
 export type BlockchainAccountQueryMessagesArgs = {
     allow_latest_inconsistent_data?: Maybe<Scalars["Boolean"]>
     master_seq_no_range?: Maybe<BlockchainMasterSeqNoFilter>
@@ -2850,7 +2854,8 @@ export type BlockchainAccountQueryResolvers<
     info?: Resolver<
         Maybe<ResolversTypes["BlockchainAccount"]>,
         ParentType,
-        ContextType
+        ContextType,
+        RequireFields<BlockchainAccountQueryInfoArgs, never>
     >
     messages?: Resolver<
         Maybe<ResolversTypes["BlockchainMessagesConnection"]>,

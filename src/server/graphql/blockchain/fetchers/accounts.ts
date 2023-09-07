@@ -8,10 +8,13 @@ import {
 } from "../../../filter/filters"
 import { QRequestContext } from "../../../request"
 import { QTraceSpan } from "../../../tracing"
-import { cloneValue, required } from "../../../utils"
+import { cloneValue, QError, required } from "../../../utils"
 
 import { config } from "../config"
-import { BlockchainAccount } from "../resolvers-types-generated"
+import {
+    BlockchainAccount,
+    BlockchainAccountQueryInfoArgs,
+} from "../resolvers-types-generated"
 import { IAccountProvider } from "../../../data/account-provider"
 import { BocModule } from "@eversdk/core"
 
@@ -54,6 +57,7 @@ export const accountDbFields = {
 }
 export async function resolve_account(
     address: string,
+    byBlock: string | undefined | null,
     context: QRequestContext,
     info: GraphQLResolveInfo,
     traceSpan: QTraceSpan,
@@ -69,11 +73,17 @@ export async function resolve_account(
     if (provider) {
         queryResult = await queryAccountProvider(
             address,
+            byBlock,
             selectionSet,
             provider,
             context.services.client.boc,
         )
     } else {
+        if (byBlock !== undefined && byBlock !== null) {
+            throw QError.invalidQuery(
+                "`byBlock` parameter is not supported on this endpoint",
+            )
+        }
         const returnExpression = config.accounts.buildReturnExpression(
             selectionSet,
             context,
@@ -125,6 +135,7 @@ export async function resolve_account(
 
 async function queryAccountProvider(
     address: string,
+    byBlock: string | undefined | null,
     selection: SelectionSetNode,
     provider: IAccountProvider,
     sdk: BocModule,
@@ -153,7 +164,7 @@ async function queryAccountProvider(
     }
     let result: BlockchainAccount | undefined = undefined
     if (bocRequested || dataRequested || codeRequested) {
-        const bocs = await provider.getBocs([address])
+        const bocs = await provider.getBocs([{ address, byBlock }])
         const boc = bocs.get(address)
         if (boc) {
             if (dataRequested || codeRequested || metaRequested) {
@@ -163,7 +174,7 @@ async function queryAccountProvider(
             }
         }
     } else if (metaRequested) {
-        const metas = await provider.getMetas([address])
+        const metas = await provider.getMetas([{ address, byBlock }])
         const meta = metas.get(address)
         if (meta) {
             result = meta
@@ -175,7 +186,7 @@ async function queryAccountProvider(
 export function accountResolver(addressField: string) {
     return async (
         parent: Record<string, any>,
-        _args: unknown,
+        args: BlockchainAccountQueryInfoArgs,
         context: QRequestContext,
         info: GraphQLResolveInfo,
     ) => {
@@ -184,7 +195,13 @@ export function accountResolver(addressField: string) {
             if (!address) {
                 return null
             }
-            return resolve_account(address, context, info, traceSpan)
+            return resolve_account(
+                address,
+                args.byBlock,
+                context,
+                info,
+                traceSpan,
+            )
         })
     }
 }
