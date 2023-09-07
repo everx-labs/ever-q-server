@@ -19,6 +19,7 @@ beforeAll(async () => {
 const mockAcc = {
     boc: "te6ccgECEwEAAtEAAm/ACqpbycyI85ZbJY4UrJyZthycVdM5TQAZacP1s2s10H7yJoURQyWsOoAAAAAAAAAAMQdIC1ATQAYBAWGAAADEsoxIzAAAAAAADbugVptUh94vSUj+5DUD/DWpPFXxmwjBE7eKNHS9J10IXlBgAgIDzyAFAwEB3gQAA9AgAEHa02qQ+8XpKR/chqB/hrUnir4zYRgidvFGjpek66ELygwCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgH+/38h1SDHAZFwjhIggQIA1yHXC/8i+QFTIfkQ8qjiItMf0z81IHBwcO1E0PQEATQggQCA10WY0z8BM9M/ATKWgggbd0Ay4nAjJrmOJCX4I4ED6KgkoLmOF8glAfQAJs8LPyPPCz8izxYgye1UfzIw3t4FXwWZJCLxQAFfCtsw4AsADIA08vBfCgIBIBANAQm8waZuzA4B/nDtRND0BAEyINaAMu1HIm+MI2+MIW+MIO1XXwRwaHWhYH+6lWh4oWAx3u1HbxHXC/+68uBk+AD6QNN/0gAwIcIAIJcwIfgnbxC53vLgZSIiInDIcc8LASLPCgBxz0D4KM8WJM8WI/oCcc9AcPoCcPoCgEDPQPgjzwsfcs9AIMkPABYi+wBfBV8DcGrbMAIBSBIRAOu4iQAnXaiaBBAgEFrovk5gHwAdqPkQICAZ6Bk6DfGAPoCLLfGdquAmDh2o7eJQCB6B3lFa4X/9qOQN4iYAORl/+ToN6j2q/ajkDeJZHoALBBjgMcIGDhnhZ/BBA27oGeFn7jnoMrnizjnoPEAt4jni2T2qjg1QAMrccCHXSSDBII4rIMAAjhwj0HPXIdcLACDAAZbbMF8H2zCW2zBfB9sw4wTZltswXwbbMOME2eAi0x80IHS7II4VMCCCEP////+6IJkwIIIQ/////rrf35bbMF8H2zDgIyHxQAFfBw==",
     meta: {
+        id: "0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
         workchain_id: 0,
         last_paid: 1689618256,
         bits: "0x1445",
@@ -42,9 +43,10 @@ test("cloud15.account-provider", async () => {
     const refAccount = (await test1.query(`accounts { id boc data code }`))
         .accounts[0]
 
-    const query = `account(address: "${refAccount.id}") { info { boc data code } }`
+    const query = `account(address: "${refAccount.id}") { info { address boc data code } }`
     const queryResult1 = (await test1.queryBlockchain(query)) as any
     const account1 = queryResult1.account.info
+    expect(account1.address).toBe(refAccount.id)
     expect(account1.boc).toBe(refAccount.boc)
     expect(account1.data).toBe(refAccount.data)
     expect(account1.code).toBe(refAccount.code)
@@ -61,16 +63,18 @@ test("cloud15.account-provider", async () => {
     expect(stat.getAccount).toBe(1)
     expect(stat.getAccountMeta).toBe(0)
     const account2 = queryResult2.account.info
+    expect(account2.address).toBe(mockAcc.meta.id)
     expect(account2.boc).toBe(mockAcc.boc)
     expect(account2.data).toBe(mockAcc.meta.data)
     expect(account2.code).toBe(mockAcc.meta.code)
 
     const queryResult3 = (await test2.queryBlockchain(
-        `account(address: "${refAccount.id}") { info { balance bits } }`,
+        `account(address: "${refAccount.id}") { info { address balance bits } }`,
     )) as any
     const account3 = queryResult3.account.info
     expect(stat.getAccount).toBe(1)
     expect(stat.getAccountMeta).toBe(1)
+    expect(account3.address).toBe(mockAcc.meta.id)
     expect(account3.balance).toBe(mockAcc.meta.balance)
     expect(account3.bits).toBe(mockAcc.meta.bits)
     await test2.close()

@@ -40,7 +40,7 @@ export function convertDocFromDb(
 }
 
 export function convertDocToDb(doc: any, fields: DbDocFields): any {
-    return cloneValue(doc, (p, v) => {
+    const dbDoc = cloneValue(doc, (p, v) => {
         if (fields.bigUInt1.has(p)) {
             return convertBigUInt(1, v as NumericScalar)
         }
@@ -49,6 +49,10 @@ export function convertDocToDb(doc: any, fields: DbDocFields): any {
         }
         return v
     })
+    if (!dbDoc._key && dbDoc.id) {
+        dbDoc._key = dbDoc.id
+    }
+    return dbDoc
 }
 
 export const accountDbFields = {
