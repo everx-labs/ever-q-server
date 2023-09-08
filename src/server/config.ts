@@ -115,11 +115,6 @@ export type QAccountProviderConfig = {
     evernodeRpc?: {
         endpoint: string
     }
-    // ArangoDB accounts collection
-    arango?: {
-        database: string
-        collection: string
-    }
 }
 
 export type QBlockchainDataConfig = {
@@ -462,12 +457,20 @@ export function parseArangoConfig(config: string): QArangoConfig {
         url.port || protocol.toLowerCase() === "https:"
             ? url.host
             : `${url.host}:8529`
-    const path = url.pathname !== "/" ? url.pathname : ""
+    let path = url.pathname !== "/" ? url.pathname : ""
+    let defaultName = "blockchain"
+
+    const pathDb = path.split("/_db/")
+    if (pathDb.length > 1) {
+        path = pathDb[0]
+        defaultName = pathDb[1]
+    }
+
     const param = (name: string) => url.searchParams.get(name) || ""
     return {
         server: `${protocol}//${host}${path}`,
         auth: url.username && `${url.username}:${url.password}`,
-        name: param("name") || "blockchain",
+        name: param("name") || defaultName,
         maxSockets:
             Number.parseInt(param("maxSockets")) || DEFAULT_ARANGO_MAX_SOCKETS,
         listenerRestartTimeout:

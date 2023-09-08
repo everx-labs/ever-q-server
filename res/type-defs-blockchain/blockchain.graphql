@@ -320,7 +320,15 @@ type BlockchainAccountQuery {
     """
     Account information (e.g. boc).
     """
-    info: BlockchainAccount
+    info(
+        """
+        Optional block hash.
+        If `byBlock` is specified then the account info will be returned from the shard state
+        defined by the specified block.
+        Otherwise the account info will be returned from the last known shard state.
+        """
+        byBlock: String
+    ): BlockchainAccount
 
     """
     This node could be used for a cursor-based pagination of account transactions.

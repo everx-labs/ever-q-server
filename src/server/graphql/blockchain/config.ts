@@ -11,6 +11,7 @@ import { getFieldSelectionSet, KeyOf, KeyOfWithValueOf } from "./helpers"
 import {
     BlockchainAccount,
     BlockchainBlock,
+    BlockchainBlockSignatures,
     BlockchainMessage,
     BlockchainTransaction,
     Maybe,
@@ -19,6 +20,7 @@ import {
 export type Config = {
     accounts: CompiledCollectionConfig<BlockchainAccount>
     blocks: CompiledCollectionConfig<BlockchainBlock>
+    blocks_signatures: CompiledCollectionConfig<BlockchainBlockSignatures>
     messages: CompiledCollectionConfig<BlockchainMessage>
     transactions: CompiledCollectionConfig<BlockchainTransaction>
 }
@@ -28,6 +30,9 @@ export const config: Config = {
         alwaysFetchFields: ["chain_order"],
         excludeFields: ["hash"],
         qDataCollectionSelector: ctx => ctx.services.data.blocks,
+    }),
+    blocks_signatures: compileCollectionConfig({
+        qDataCollectionSelector: ctx => ctx.services.data.blocks_signatures,
     }),
     accounts: compileCollectionConfig({
         excludeFields: ["address"],

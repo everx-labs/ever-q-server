@@ -6,6 +6,7 @@ import {
     messages as messagesData,
     summary as chainRangesVerificationSummary,
     transactions as transactionData,
+    block_signatures as blockSignaturesData,
 } from "./blockchain-mock-data"
 import { QConfig, resolveConfig, SubscriptionsMode } from "../server/config"
 import TONQServer, { DataProviderFactory } from "../server/server"
@@ -46,28 +47,74 @@ function getTestDbUrl(archive: boolean): string {
     return url.toString()
 }
 
+export type AccountMock = {
+    boc: string
+    meta: { [name: string]: unknown }
+}
+
+type NodeRpcStat = {
+    getAccount: number
+    getAccountMeta: number
+}
+
+type NodeRpcMock = {
+    server: any
+    stat: NodeRpcStat
+}
+
 export function startNodeRpcMock(
     port: number,
-    bocs: { [address: string]: string },
+    accounts: { [address: string]: AccountMock },
 ) {
     const app = express()
     app.use(express.json())
+    const stat = {
+        getAccount: 0,
+        getAccountMeta: 0,
+    }
     app.post("/", (req, res) => {
-        const boc = bocs[req.body.params.account]
+        const { method, params, id } = req.body
+        const response: { [name: string]: unknown } = {
+            jsonrpc: "2.0",
+            id,
+        }
+        const acc =
+            accounts[
+                params.byBlock
+                    ? `${params.account}:${params.byBlock}`
+                    : params.account
+            ]
+        switch (method) {
+            case "getAccount":
+                {
+                    response.result = acc
+                        ? {
+                              account_boc: acc.boc,
+                          }
+                        : null
+                    stat.getAccount += 1
+                }
+                break
+            case "getAccountMeta":
+                {
+                    response.result = acc
+                        ? {
+                              account_meta: acc.meta,
+                          }
+                        : null
+                    stat.getAccountMeta += 1
+                }
+                break
+            default:
+                response.error = "Invalid method"
+        }
         res.contentType("application/json")
-        res.send(
-            JSON.stringify({
-                jsonrpc: "2.0",
-                id: req.body.id,
-                result: boc
-                    ? {
-                          account_boc: boc,
-                      }
-                    : null,
-            }),
-        )
+        res.send(JSON.stringify(response))
     })
-    return app.listen(port)
+    return {
+        server: app.listen(port),
+        stat,
+    }
 }
 
 export async function startTestServer(
@@ -93,14 +140,15 @@ export async function startTestServer(
         {},
     )
     overrideConfig?.(config)
-    const providers = new DataProviderFactory(config, new QLogs())
+    const logs = new QLogs()
+    const providers = new DataProviderFactory(config, logs)
     const blockchainData = new QBlockchainData({
         providers: providers.ensure(),
-        logs: new QLogs(),
+        logs,
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         blockBocProvider: createBocProvider(config.blockBocs),
-        accountProvider: createAccountProvider(config.accountProvider),
+        accountProvider: createAccountProvider(logs, config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
@@ -197,6 +245,13 @@ async function createMockDb(archive: boolean) {
 
     if (!archive) {
         await initCollection(db, "accounts", accountsData, false, new Set())
+        await initCollection(
+            db,
+            "blocks_signatures",
+            blockSignaturesData,
+            false,
+            new Set(),
+        )
 
         const crv = db.collection("chain_ranges_verification")
         await crv.create()
@@ -208,18 +263,17 @@ export async function createTestData() {
     await createMockDb(false)
     await createMockDb(true)
 }
-
 type TestSetupOptions = {
     port?: number
     withArchiveDb?: boolean
-    accounts?: { [hash: string]: string }
+    accounts?: { [hash: string]: AccountMock }
 }
 
 export class TestSetup {
     constructor(
         public client: ApolloClient<any>,
         public server: TONQServer,
-        public accountProvider?: any,
+        public accountProvider?: NodeRpcMock,
     ) {}
 
     static async create(options: TestSetupOptions): Promise<TestSetup> {
@@ -247,6 +301,7 @@ export class TestSetup {
             useWebSockets: false,
             port: serverPort,
         })
+        server.logs.start()
         return new TestSetup(client, server, accountProvider)
     }
 
@@ -262,11 +317,16 @@ export class TestSetup {
         ).data
     }
 
+    nodeRpcStat() {
+        return (
+            this.accountProvider?.stat ?? { getAccount: 0, getAccountMeta: 0 }
+        )
+    }
     async close(): Promise<void> {
         await this.client.stop()
         await this.server.stop()
         if (this.accountProvider) {
-            this.accountProvider.close()
+            this.accountProvider.server.close()
         }
     }
 }

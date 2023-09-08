@@ -1,82 +1,89 @@
-import { parseArangoConfig, QAccountProviderConfig } from "../config"
-import { Database } from "arangojs"
-import { createDatabase } from "./database-provider"
+import { QAccountProviderConfig } from "../config"
 import { RequestManager, HTTPTransport, Client } from "@open-rpc/client-js"
+import QLogs, { QLog } from "../logs"
+import { RequestArguments } from "@open-rpc/client-js/build/ClientInterface"
+
+export type QueryAccountParams = {
+    address: string
+    byBlock?: string | null
+}
 
 export interface IAccountProvider {
-    getBocs(addresses: string[]): Promise<Map<string, string>>
+    getBocs(accounts: QueryAccountParams[]): Promise<Map<string, string>>
+    getMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>>
+}
+
+function nodeRequest(
+    method: string,
+    account: QueryAccountParams,
+): RequestArguments {
+    const request = {
+        method,
+        params: {
+            account: account.address,
+        },
+    }
+    if (account.byBlock !== undefined && account.byBlock !== null) {
+        ;(request.params as any).byBlock = account.byBlock
+    }
+    return request
 }
 
 class NodeRpcProvider implements IAccountProvider {
+    log: QLog
     client: Client
     constructor(
+        logs: QLogs,
         public config: {
             endpoint: string
         },
     ) {
         const transport = new HTTPTransport(config.endpoint)
         this.client = new Client(new RequestManager([transport]))
+        this.log = logs.create("NodeRpcClient")
     }
-    async getBocs(addresses: string[]): Promise<Map<string, string>> {
+    async getBocs(
+        accounts: QueryAccountParams[],
+    ): Promise<Map<string, string>> {
         const resolved = new Map()
         // TODO: fetch bocs in parallel
-        for (const address of addresses) {
-            const result = await this.client.request({
-                method: "getAccount",
-                params: {
-                    account: address,
-                },
-            })
+        for (const account of accounts) {
+            const result = await this.client.request(
+                nodeRequest("getAccount", account),
+            )
             if (result?.account_boc ?? "" !== "") {
-                resolved.set(address, result.account_boc)
+                resolved.set(account.address, result.account_boc)
             }
         }
+        this.log.debug("GET_ACCOUNT", accounts)
         return resolved
     }
-}
 
-class ArangoProvider implements IAccountProvider {
-    private readonly database: Database
-    constructor(
-        public config: {
-            database: string
-            collection: string
-        },
-    ) {
-        this.database = createDatabase(parseArangoConfig(config.database))
-    }
-
-    async getBocs(addresses: string[]): Promise<Map<string, string>> {
+    async getMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>> {
         const resolved = new Map()
-        const cursor = await this.database.query(
-            `
-            FOR doc IN ${this.config.collection}
-            FILTER doc._key IN @addresses
-            RETURN { address: doc._key, boc: doc.boc }
-            `,
-            {
-                addresses,
-            },
-        )
-        const docs: { address: string; boc: string }[] = await cursor.all()
-        for (const doc of docs) {
-            resolved.set(doc.address, doc.boc)
+        // TODO: fetch bocs in parallel
+        for (const account of accounts) {
+            const result = await this.client.request(
+                nodeRequest("getAccountMeta", account),
+            )
+            if (result?.account_meta ?? "" !== "") {
+                resolved.set(account.address, result.account_meta)
+            }
         }
+        this.log.debug("GET_ACCOUNT_META", accounts)
         return resolved
     }
 }
 
 export function createAccountProvider(
+    logs: QLogs,
     config: QAccountProviderConfig,
 ): IAccountProvider | undefined {
     const rpcEndpoint = config.evernodeRpc?.endpoint ?? ""
     if (rpcEndpoint !== "") {
-        return new NodeRpcProvider({
+        return new NodeRpcProvider(logs, {
             endpoint: rpcEndpoint,
         })
-    }
-    if (config.arango && (config.arango.database ?? "" !== "")) {
-        return new ArangoProvider(config.arango)
     }
     return undefined
 }

@@ -100,10 +100,6 @@ type AccountProviderParams = {
     evernodeRpc: {
         endpoint: ConfigParam<string>
     }
-    arango: {
-        database: ConfigParam<string>
-        collection: ConfigParam<string>
-    }
 }
 
 export class ConfigParam<T extends ConfigValue> {
@@ -282,18 +278,6 @@ export class ConfigParam<T extends ConfigValue> {
                     "accounts-evernode-rpc-endpoint",
                     "",
                     "Accounts Evernode RPC endpoint",
-                ),
-            },
-            arango: {
-                database: ConfigParam.string(
-                    "accounts-arango-database",
-                    "",
-                    "Accounts ArangoDB url",
-                ),
-                collection: ConfigParam.string(
-                    "accounts-arango-collection",
-                    "accounts",
-                    "Accounts ArangoDB collection",
                 ),
             },
         }

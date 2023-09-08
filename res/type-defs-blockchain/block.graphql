@@ -53,6 +53,7 @@ type BlockchainBlock implements Node {
 	prev_vert_ref: ExtBlkRef
 	rand_seed: String
 	seq_no: Float
+	signatures: BlockchainBlockSignatures
 	shard: String
 	"""
 	Logical creation time automatically set by the block formation start.
@@ -79,3 +80,31 @@ type BlockchainBlock implements Node {
 	"uint32 workchain identifier"
 	workchain_id: Int
 }
+
+type BlockchainBlockSignatures {
+	catchain_seqno: Float
+	"Signed block's gen_utime"
+	gen_utime: Float
+	gen_utime_string: String
+	"Signed block's merkle proof"
+	proof: String
+	"Signed block's seq_no"
+	seq_no: Float
+	"Signed block's shard"
+	shard: String
+	sig_weight(format: BigIntFormat): String
+	"Array of signatures from block's validators"
+	signatures: [BlockchainSignatures]
+	validator_list_hash_short: Float
+	"Signed block's workchain_id"
+	workchain_id: Int
+}
+
+type BlockchainSignatures {
+	node_id: String
+	"'R' part of signature"
+	r: String
+	"'s' part of signature"
+	s: String
+}
+

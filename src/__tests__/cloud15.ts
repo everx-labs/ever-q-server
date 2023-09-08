@@ -1,33 +1,40 @@
-import { createTestData, TestSetup } from "./blockchain-mock"
+import { AccountMock, createTestData, TestSetup } from "./blockchain-mock"
 import { accounts, transactions } from "./blockchain-mock-data"
 import {
     BlockchainAccount,
     BlockchainTransaction,
 } from "../server/graphql/blockchain/resolvers-types-generated"
 import { toU64String } from "../server/utils"
+import {
+    accountDbFields,
+    convertDocFromDb,
+} from "../server/graphql/blockchain/fetchers"
 
 beforeAll(async () => {
     await createTestData()
 })
 
+// _key: "0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
+// id: "accounts/0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
 const mockAcc = {
-    id: "accounts/0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
-    _key: "0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
-    workchain_id: 0,
     boc: "te6ccgECEwEAAtEAAm/ACqpbycyI85ZbJY4UrJyZthycVdM5TQAZacP1s2s10H7yJoURQyWsOoAAAAAAAAAAMQdIC1ATQAYBAWGAAADEsoxIzAAAAAAADbugVptUh94vSUj+5DUD/DWpPFXxmwjBE7eKNHS9J10IXlBgAgIDzyAFAwEB3gQAA9AgAEHa02qQ+8XpKR/chqB/hrUnir4zYRgidvFGjpek66ELygwCJv8A9KQgIsABkvSg4YrtU1gw9KEJBwEK9KQg9KEIAAACASAMCgH+/38h1SDHAZFwjhIggQIA1yHXC/8i+QFTIfkQ8qjiItMf0z81IHBwcO1E0PQEATQggQCA10WY0z8BM9M/ATKWgggbd0Ay4nAjJrmOJCX4I4ED6KgkoLmOF8glAfQAJs8LPyPPCz8izxYgye1UfzIw3t4FXwWZJCLxQAFfCtsw4AsADIA08vBfCgIBIBANAQm8waZuzA4B/nDtRND0BAEyINaAMu1HIm+MI2+MIW+MIO1XXwRwaHWhYH+6lWh4oWAx3u1HbxHXC/+68uBk+AD6QNN/0gAwIcIAIJcwIfgnbxC53vLgZSIiInDIcc8LASLPCgBxz0D4KM8WJM8WI/oCcc9AcPoCcPoCgEDPQPgjzwsfcs9AIMkPABYi+wBfBV8DcGrbMAIBSBIRAOu4iQAnXaiaBBAgEFrovk5gHwAdqPkQICAZ6Bk6DfGAPoCLLfGdquAmDh2o7eJQCB6B3lFa4X/9qOQN4iYAORl/+ToN6j2q/ajkDeJZHoALBBjgMcIGDhnhZ/BBA27oGeFn7jnoMrnizjnoPEAt4jni2T2qjg1QAMrccCHXSSDBII4rIMAAjhwj0HPXIdcLACDAAZbbMF8H2zCW2zBfB9sw4wTZltswXwbbMOME2eAi0x80IHS7II4VMCCCEP////+6IJkwIIIQ/////rrf35bbMF8H2zDgIyHxQAFfBw==",
-    last_paid: 1689618256,
-    bits: "0x1445",
-    cells: "0x13",
-    public_cells: "0x0",
-    last_trans_lt: "0xc",
-    balance: "0x1d202d40",
-    code: "te6ccgECDQEAAjAAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB/v9/IdUgxwGRcI4SIIECANch1wv/IvkBUyH5EPKo4iLTH9M/NSBwcHDtRND0BAE0IIEAgNdFmNM/ATPTPwEyloIIG3dAMuJwIya5jiQl+COBA+ioJKC5jhfIJQH0ACbPCz8jzws/Is8WIMntVH8yMN7eBV8FmSQi8UABXwrbMOAFAAyANPLwXwoCASAKBwEJvMGmbswIAf5w7UTQ9AQBMiDWgDLtRyJvjCNvjCFvjCDtV18EcGh1oWB/upVoeKFgMd7tR28R1wv/uvLgZPgA+kDTf9IAMCHCACCXMCH4J28Qud7y4GUiIiJwyHHPCwEizwoAcc9A+CjPFiTPFiP6AnHPQHD6AnD6AoBAz0D4I88LH3LPQCDJCQAWIvsAXwVfA3Bq2zACAUgMCwDruIkAJ12omgQQIBBa6L5OYB8AHaj5ECAgGegZOg3xgD6Aiy3xnargJg4dqO3iUAgegd5RWuF//ajkDeImADkZf/k6Deo9qv2o5A3iWR6ACwQY4DHCBg4Z4WfwQQNu6BnhZ+456DK54s456DxALeI54tk9qo4NUADK3HAh10kgwSCOKyDAAI4cI9Bz1yHXCwAgwAGW2zBfB9swltswXwfbMOME2ZbbMF8G2zDjBNngItMfNCB0uyCOFTAgghD/////uiCZMCCCEP////6639+W2zBfB9sw4CMh8UABXwc=",
-    code_hash:
-        "98196905d4f1d250741ab885ac2411e0a547c72486f613d8cb5f302fd9d51c6a",
-    data: "te6ccgEBBQEAZQABYYAAAMSyjEjMAAAAAAANu6BWm1SH3i9JSP7kNQP8Nak8VfGbCMETt4o0dL0nXQheUGABAgPPIAQCAQHeAwAD0CAAQdrTapD7xekpH9yGoH+GtSeKvjNhGCJ28UaOl6TroQvKDA==",
-    data_hash:
-        "3e86879954d46cb6879303fac1161c787bb16edcc3f42039fbdf725c21c44e8d",
-    acc_type: 1,
+    meta: {
+        id: "0:aaa5bc9cc88f3965b258e14ac9c99b61c9c55d3394d001969c3f5b36b35d07ef",
+        workchain_id: 0,
+        last_paid: 1689618256,
+        bits: "0x1445",
+        cells: "0x13",
+        public_cells: "0x0",
+        last_trans_lt: "0xc",
+        balance: "0x1d202d40",
+        code: "te6ccgECDQEAAjAAAib/APSkICLAAZL0oOGK7VNYMPShAwEBCvSkIPShAgAAAgEgBgQB/v9/IdUgxwGRcI4SIIECANch1wv/IvkBUyH5EPKo4iLTH9M/NSBwcHDtRND0BAE0IIEAgNdFmNM/ATPTPwEyloIIG3dAMuJwIya5jiQl+COBA+ioJKC5jhfIJQH0ACbPCz8jzws/Is8WIMntVH8yMN7eBV8FmSQi8UABXwrbMOAFAAyANPLwXwoCASAKBwEJvMGmbswIAf5w7UTQ9AQBMiDWgDLtRyJvjCNvjCFvjCDtV18EcGh1oWB/upVoeKFgMd7tR28R1wv/uvLgZPgA+kDTf9IAMCHCACCXMCH4J28Qud7y4GUiIiJwyHHPCwEizwoAcc9A+CjPFiTPFiP6AnHPQHD6AnD6AoBAz0D4I88LH3LPQCDJCQAWIvsAXwVfA3Bq2zACAUgMCwDruIkAJ12omgQQIBBa6L5OYB8AHaj5ECAgGegZOg3xgD6Aiy3xnargJg4dqO3iUAgegd5RWuF//ajkDeImADkZf/k6Deo9qv2o5A3iWR6ACwQY4DHCBg4Z4WfwQQNu6BnhZ+456DK54s456DxALeI54tk9qo4NUADK3HAh10kgwSCOKyDAAI4cI9Bz1yHXCwAgwAGW2zBfB9swltswXwfbMOME2ZbbMF8G2zDjBNngItMfNCB0uyCOFTAgghD/////uiCZMCCCEP////6639+W2zBfB9sw4CMh8UABXwc=",
+        code_hash:
+            "98196905d4f1d250741ab885ac2411e0a547c72486f613d8cb5f302fd9d51c6a",
+        data: "te6ccgEBBQEAZQABYYAAAMSyjEjMAAAAAAANu6BWm1SH3i9JSP7kNQP8Nak8VfGbCMETt4o0dL0nXQheUGABAgPPIAQCAQHeAwAD0CAAQdrTapD7xekpH9yGoH+GtSeKvjNhGCJ28UaOl6TroQvKDA==",
+        data_hash:
+            "3e86879954d46cb6879303fac1161c787bb16edcc3f42039fbdf725c21c44e8d",
+        acc_type: 1,
+    },
 }
 
 test("cloud15.account-provider", async () => {
@@ -36,9 +43,10 @@ test("cloud15.account-provider", async () => {
     const refAccount = (await test1.query(`accounts { id boc data code }`))
         .accounts[0]
 
-    const query = `account(address: "${refAccount.id}") { info { boc data code } }`
+    const query = `account(address: "${refAccount.id}") { info { address boc data code } }`
     const queryResult1 = (await test1.queryBlockchain(query)) as any
     const account1 = queryResult1.account.info
+    expect(account1.address).toBe(refAccount.id)
     expect(account1.boc).toBe(refAccount.boc)
     expect(account1.data).toBe(refAccount.data)
     expect(account1.code).toBe(refAccount.code)
@@ -47,14 +55,82 @@ test("cloud15.account-provider", async () => {
     const test2 = await TestSetup.create({
         port: 2,
         accounts: {
-            [refAccount.id]: mockAcc.boc,
+            [refAccount.id]: mockAcc,
         },
     })
+    const stat = test2.nodeRpcStat()
     const queryResult2 = (await test2.queryBlockchain(query)) as any
+    expect(stat.getAccount).toBe(1)
+    expect(stat.getAccountMeta).toBe(0)
     const account2 = queryResult2.account.info
+    expect(account2.address).toBe(mockAcc.meta.id)
     expect(account2.boc).toBe(mockAcc.boc)
-    expect(account2.data).toBe(mockAcc.data)
-    expect(account2.code).toBe(mockAcc.code)
+    expect(account2.data).toBe(mockAcc.meta.data)
+    expect(account2.code).toBe(mockAcc.meta.code)
+
+    const queryResult3 = (await test2.queryBlockchain(
+        `account(address: "${refAccount.id}") { info { address balance bits } }`,
+    )) as any
+    const account3 = queryResult3.account.info
+    expect(stat.getAccount).toBe(1)
+    expect(stat.getAccountMeta).toBe(1)
+    expect(account3.address).toBe(mockAcc.meta.id)
+    expect(account3.balance).toBe(mockAcc.meta.balance)
+    expect(account3.bits).toBe(mockAcc.meta.bits)
+    await test2.close()
+})
+
+test("cloud15.account-info-by-block", async () => {
+    const test1 = await TestSetup.create({ port: 1 })
+
+    const qAccounts = (
+        await test1.query(`accounts { id boc data code balance }`)
+    ).accounts
+
+    const qAcc = qAccounts[0]
+
+    const queryAcc = async (
+        test: TestSetup,
+        infoArgs: string,
+        result: string,
+    ) => {
+        return (
+            (await test.queryBlockchain(
+                `account(address: "${qAcc.id}") { info${infoArgs} { ${result} } }`,
+            )) as any
+        ).account.info
+    }
+
+    try {
+        const r = await queryAcc(test1, `(byBlock:"1")`, "boc data code")
+        fail(`error expected but result received: ${JSON.stringify(r)}`)
+    } catch (err) {
+        console.log("expected error: ", err.message)
+    }
+    await test1.close()
+
+    const accMock = (i: number) => ({
+        meta: convertDocFromDb(accounts[i], "HEX", accountDbFields),
+        boc: accounts[i].boc,
+    })
+
+    const test2 = await TestSetup.create({
+        port: 2,
+        accounts: {
+            [qAcc.id]: accMock(0),
+            [`${qAcc.id}:1`]: accMock(0),
+            [`${qAcc.id}:2`]: accMock(1),
+        },
+    })
+    const acc = await queryAcc(test2, ``, "balance")
+    expect(acc.balance).toBe(qAccounts[0].balance)
+
+    const acc1 = await queryAcc(test2, `(byBlock:"1")`, "balance")
+    expect(acc1.balance).toBe(qAccounts[0].balance)
+
+    const acc2 = await queryAcc(test2, `(byBlock:"2")`, "balance")
+    expect(acc2.balance).toBe(qAccounts[1].balance)
+
     await test2.close()
 })
 
@@ -67,10 +143,10 @@ test("cloud15.unavailable-account-provider", async () => {
     const test = await TestSetup.create({
         port: 2,
         accounts: {
-            [testAcc._key]: mockAcc.boc,
+            [testAcc._key]: mockAcc,
         },
     })
-    test.accountProvider.close()
+    test.accountProvider?.server.close()
     try {
         const r = await test.queryBlockchain(
             `account(address: "${testAcc._key}") { info { boc data code } }`,
@@ -92,7 +168,7 @@ test("cloud15.joins", async () => {
         withArchiveDb: boolean
         queryArchive: boolean
         expectedBoc: string
-        accounts?: { [hash: string]: string }
+        accounts?: { [hash: string]: AccountMock }
     }) {
         const test = await TestSetup.create({
             withArchiveDb: options.withArchiveDb,
@@ -143,7 +219,7 @@ test("cloud15.joins", async () => {
     })
 
     const mockAccounts = {
-        [testAcc._key]: mockAcc.boc,
+        [testAcc._key]: mockAcc,
     }
 
     await testJoins({
@@ -252,5 +328,45 @@ test("cloud15.master_ranges", async () => {
         `master_seq_no_range(time_start: 1622099906 time_end: 1622099910 archive: true) { start end }`,
     )) as any
     expect(range1.master_seq_no_range).toEqual(range2.master_seq_no_range)
+    await test.close()
+})
+
+test("cloud15.blocks_signatures", async () => {
+    const test = await TestSetup.create({
+        withArchiveDb: true,
+    })
+
+    const q = async (archive: boolean) => {
+        const result = (await test.queryBlockchain(
+            `blocks(workchain:-1 archive:${archive}) { edges { node {
+            seq_no
+            signatures {
+                catchain_seqno
+                gen_utime
+                gen_utime_string
+                proof
+                seq_no
+                shard
+                sig_weight(format: DEC)
+                signatures {
+                  s
+                  r
+                  node_id
+                }
+                validator_list_hash_short
+                workchain_id
+            }
+            } } }`,
+        )) as any
+        return result.blocks.edges.map((x: any) => x.node)
+    }
+
+    const nonArch = await q(false)
+    expect(nonArch[0].signatures !== null).toBeTruthy()
+    expect(nonArch[0].signatures.seq_no).toBe(nonArch[0].seq_no)
+
+    const arch = await q(true)
+    expect(arch[0].signatures).toBeNull()
+
     await test.close()
 })

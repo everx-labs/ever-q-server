@@ -9,6 +9,9 @@ import {
     BlockProcessingStatusEnum,
     Resolvers,
 } from "../resolvers-types-generated"
+import { FieldNode, GraphQLResolveInfo, SelectionSetNode } from "graphql"
+import { Path } from "graphql/jsutils/Path"
+import { fetch_block_signatures } from "../fetchers"
 
 export const resolvers: Resolvers<QRequestContext> = {
     BlockchainBlock: {
@@ -40,5 +43,64 @@ export const resolvers: Resolvers<QRequestContext> = {
             }
         },
         master_seq_no: parent => masterSeqNoFromChainOrder(parent.chain_order),
+        signatures: async (parent, _args, context, info) => {
+            const archive = resolveArchiveArg(info) ?? false
+            if (archive) {
+                return null
+            }
+            return await fetch_block_signatures(
+                parent._key,
+                context,
+                info,
+                context.requestSpan,
+            )
+        },
     },
+    BlockchainBlockSignatures: {
+        sig_weight: (parent, args) =>
+            resolveBigUInt(1, parent.sig_weight, args as BigIntArgs),
+        gen_utime_string: parent => unixSecondsToString(parent.gen_utime),
+    },
+}
+
+function collectPath(info: GraphQLResolveInfo): Path[] {
+    const path: Path[] = []
+    let p: Path | undefined = info.path
+    while (p) {
+        path.push(p)
+        p = p.prev
+    }
+    return path
+}
+
+function findField(
+    selection: SelectionSetNode,
+    name: string,
+): FieldNode | undefined {
+    return selection.selections.find(
+        x => x.kind === "Field" && x.name.value === name,
+    ) as FieldNode | undefined
+}
+
+function resolveArchiveArg(info: GraphQLResolveInfo): boolean | undefined {
+    const path = collectPath(info)
+    let archive: boolean | undefined = undefined
+    let selection: SelectionSetNode | undefined = info.operation.selectionSet
+    let step = path.pop()
+    while (step && selection) {
+        if (typeof step.key === "string") {
+            const field = findField(selection, step.key)
+            if (field && field.arguments) {
+                const arg = field.arguments.find(
+                    x => x.name.value === "archive",
+                )
+                if (arg && arg.value.kind === "BooleanValue") {
+                    archive = arg.value.value
+                }
+            }
+            selection = field?.selectionSet
+        }
+        step = path.pop()
+    }
+    return archive
 }

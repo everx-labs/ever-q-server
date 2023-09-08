@@ -23,6 +23,7 @@ import {
     BlockchainQueryKey_BlocksArgs,
     BlockchainQueryPrev_Shard_BlocksArgs,
     BlockchainQueryNext_Shard_BlocksArgs,
+    BlockchainBlockSignatures,
 } from "../resolvers-types-generated"
 import { getBlocksPostProcessing, postProcessBlocks } from "../boc-parsers"
 import { useBlocksArchive } from "../../../data/data-provider"
@@ -373,4 +374,43 @@ export async function resolve_blockchain_blocks(
         direction,
         "chain_order",
     )) as BlockchainBlocksConnection
+}
+
+export async function fetch_block_signatures(
+    hash: string,
+    context: QRequestContext,
+    info: GraphQLResolveInfo,
+    traceSpan: QTraceSpan,
+) {
+    const selectionSet = info.fieldNodes[0].selectionSet
+    const returnExpression = config.blocks_signatures.buildReturnExpression(
+        selectionSet,
+        context,
+        0,
+        "doc",
+    )
+
+    // query
+    const params = new QParams({
+        stringifyKeyInAqlComparison:
+            context.services.config.queries.filter.stringifyKeyInAqlComparison,
+    })
+    const query = `
+        FOR doc IN blocks_signatures
+        FILTER doc._key == @${params.add(hash)}
+        RETURN ${returnExpression}
+    `
+    const queryResult = (await context.services.data.query(
+        required(context.services.data.blocks.provider),
+        {
+            text: query,
+            vars: params.values,
+            orderBy: [],
+            request: context,
+            traceSpan,
+            archive: false,
+        },
+    )) as BlockchainBlockSignatures[]
+
+    return queryResult[0]
 }
