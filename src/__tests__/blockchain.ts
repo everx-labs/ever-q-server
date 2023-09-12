@@ -3,7 +3,7 @@ import gql from "graphql-tag"
 import TONQServer from "../server/server"
 
 import { createTestClient } from "./init-tests"
-import { createTestData, startTestServer } from "./blockchain-mock"
+import { createTestData, startTestServer, TestSetup } from "./blockchain-mock"
 
 let server: TONQServer | null = null
 
@@ -478,10 +478,11 @@ test("blockchain.account.transactions_by_lt", async () => {
                     account(
                         address: "0:198880de2ac28bcf71ab8082d7132d22c337879351cae8b48dd397aadf12f206"
                     ) {
-                        transactions_by_lt(after: "ad36a70c5b81", first: 5) {
+                        transactions_by_lt(after: "0xd36a70c5b81", first: 5) {
                             edges {
                                 node {
                                     hash
+                                    lt
                                 }
                                 cursor
                             }
@@ -505,47 +506,52 @@ test("blockchain.account.transactions_by_lt", async () => {
                         {
                             node: {
                                 hash: "34c0895d65e005129d0ef1f87783bd4ea48a5be79306a15dea85a44efc0c2e13",
+                                lt: "0xd36a70c5b85",
                                 __typename: "BlockchainTransaction",
                             },
-                            cursor: "ad36a70c5b85",
+                            cursor: "0xd36a70c5b85",
                             __typename: "BlockchainTransactionEdge",
                         },
                         {
                             node: {
                                 hash: "3cf3672f5288eec840ea535ad38d790e1c94a582619a903191f6881e43c50bab",
+                                lt: "0xd36a70c5b86",
                                 __typename: "BlockchainTransaction",
                             },
-                            cursor: "ad36a70c5b86",
+                            cursor: "0xd36a70c5b86",
                             __typename: "BlockchainTransactionEdge",
                         },
                         {
                             node: {
                                 hash: "bf2b8eac7e0e64948fef2300c4ee865c232b42b4986b6e41419f51759d5d42c7",
+                                lt: "0xd36a70c5b89",
                                 __typename: "BlockchainTransaction",
                             },
-                            cursor: "ad36a70c5b89",
+                            cursor: "0xd36a70c5b89",
                             __typename: "BlockchainTransactionEdge",
                         },
                         {
                             node: {
                                 hash: "c9f365fd3bfa8a6260b5154a22973ae5cd525fbe9dbd3ee632a9f52588295e14",
+                                lt: "0xd36a70c5b8d",
                                 __typename: "BlockchainTransaction",
                             },
-                            cursor: "ad36a70c5b8d",
+                            cursor: "0xd36a70c5b8d",
                             __typename: "BlockchainTransactionEdge",
                         },
                         {
                             node: {
                                 hash: "7c4f031ac7db3763884eb16d51e6ade302c12fef14708c9b2afce653b07c4361",
+                                lt: "0xd36a70c5b94",
                                 __typename: "BlockchainTransaction",
                             },
-                            cursor: "ad36a70c5b94",
+                            cursor: "0xd36a70c5b94",
                             __typename: "BlockchainTransactionEdge",
                         },
                     ],
                     pageInfo: {
-                        startCursor: "ad36a70c5b85",
-                        endCursor: "ad36a70c5b94",
+                        startCursor: "0xd36a70c5b85",
+                        endCursor: "0xd36a70c5b94",
                         hasNextPage: true,
                         __typename: "PageInfo",
                     },
@@ -1778,4 +1784,25 @@ test("blockchain.account.transactions. Invalid account should throw", async () =
         expect(extensions.code).toEqual("GRAPHQL_VALIDATION_FAILED")
         expect(message).toEqual("Invalid account address")
     }
+})
+
+test("blockchain.account.transactions_by_lt", async () => {
+    const test = await TestSetup.create({})
+
+    const result = (await test.queryBlockchain(
+        `
+            account(address:"-1:2bf05f1fee01b78c2b34ddc0ee0eb663be88c1341bdeff3dbec9e7cf37be8601") {
+                transactions_by_lt(last:2 before:"0xd36a6edd702" allow_latest_inconsistent_data:true) {
+                    edges {
+                        node {
+                            lt
+                        }
+                    }
+                }
+            }`,
+    )) as any
+    const trs = result.account.transactions_by_lt.edges.map((x: any) => x.node)
+    console.log(">>>", trs)
+    expect(trs.length).toBeGreaterThan(0)
+    await test.close()
 })

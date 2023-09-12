@@ -110,6 +110,45 @@ export async function prepareChainOrderFilter(
     }
 }
 
+export interface CursorConverter {
+    toDb(value: string): string
+    fromDb(value: string): string
+}
+
+export const stringCursor: CursorConverter = {
+    fromDb(value) {
+        return value
+    },
+    toDb(value) {
+        return value
+    },
+}
+
+export const u64StringCursor: CursorConverter = {
+    fromDb(value) {
+        return `0x${value.substring(1)}`
+    },
+    toDb(value) {
+        return toU64String(BigInt(value))
+    },
+}
+
+function cursorToDb(
+    value: string | undefined | null,
+    converter: CursorConverter,
+): string | undefined | null {
+    return value !== undefined && value !== null ? converter.toDb(value) : value
+}
+
+function cursorFromDb(
+    value: string | null | undefined,
+    converter: CursorConverter,
+): string | undefined | null {
+    return value !== undefined && value !== null
+        ? converter.fromDb(value)
+        : value
+}
+
 export async function prepareNonChainOrderPaginationFilter(
     args: ChainOrderFilterArgs,
     params: QParams,
@@ -117,6 +156,7 @@ export async function prepareNonChainOrderPaginationFilter(
     context: QRequestContext,
     archive: boolean,
     paginationFieldName: string,
+    cursorConverter: CursorConverter,
     chainOrderFieldName = "chain_order",
 ) {
     // master_seq_no
@@ -153,12 +193,12 @@ export async function prepareNonChainOrderPaginationFilter(
     }
 
     if (args.after) {
-        const paramName = params.add(args.after)
+        const paramName = params.add(cursorToDb(args.after, cursorConverter))
         filters.push(`doc.${paginationFieldName} > @${paramName}`)
     }
 
     if (args.before) {
-        const paramName = params.add(args.before)
+        const paramName = params.add(cursorToDb(args.before, cursorConverter))
         filters.push(`doc.${paginationFieldName} < @${paramName}`)
     }
 }
@@ -188,18 +228,19 @@ export async function processPaginatedQueryResult<T>(
     queryResult: T[],
     limit: number,
     direction: Direction,
-    sortField: KeyOfWithValueOf<T, Maybe<Scalars["String"]>>,
+    cursorField: KeyOfWithValueOf<T, Maybe<Scalars["String"]>>,
+    cursorConverter: CursorConverter,
     afterFilterCallback?: (result: T[]) => Promise<void>,
 ) {
     // sort query result by chain_order ASC
     queryResult.sort((a, b) => {
-        if (!a[sortField] || !b[sortField]) {
+        if (!a[cursorField] || !b[cursorField]) {
             throw QError.create(500, "sort field not found")
         }
-        if (a[sortField] > b[sortField]) {
+        if (a[cursorField] > b[cursorField]) {
             return 1
         }
-        if (a[sortField] < b[sortField]) {
+        if (a[cursorField] < b[cursorField]) {
             return -1
         }
         throw QError.create(500, "two entities with the same sort field")
@@ -223,18 +264,31 @@ export async function processPaginatedQueryResult<T>(
     }
 
     return {
-        edges: queryResult.map(t => {
+        edges: queryResult.map(record => {
             return {
-                node: t,
-                cursor: t[sortField],
+                node: record,
+                cursor: cursorFromDb(
+                    record[cursorField] as any,
+                    cursorConverter,
+                ),
             }
         }),
         pageInfo: {
             startCursor:
-                queryResult.length > 0 ? queryResult[0][sortField] : "",
+                queryResult.length > 0
+                    ? cursorFromDb(
+                          queryResult[0][cursorField] as any,
+                          cursorConverter,
+                      )
+                    : "",
             endCursor:
                 queryResult.length > 0
-                    ? queryResult[queryResult.length - 1][sortField]
+                    ? cursorFromDb(
+                          queryResult[queryResult.length - 1][
+                              cursorField
+                          ] as any,
+                          cursorConverter,
+                      )
                     : "",
             hasNextPage: direction == Direction.Forward ? hasMore : false,
             hasPreviousPage: direction == Direction.Backward ? hasMore : false,

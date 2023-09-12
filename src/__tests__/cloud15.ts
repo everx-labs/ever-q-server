@@ -309,8 +309,8 @@ test("cloud15.pagination", async () => {
         `,
         )) as any
         const page = queryResult.account.transactions_by_lt
-        expect(page.pageInfo.startCursor).toBe("ad36a72ae001")
-        expect(page.pageInfo.endCursor).toBe("ad36a7496483")
+        expect(page.pageInfo.startCursor).toBe("0xd36a72ae001")
+        expect(page.pageInfo.endCursor).toBe("0xd36a7496483")
     }
     await testPagination(true)
     await testPagination(false)

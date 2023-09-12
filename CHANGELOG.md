@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.1] - 2023-09-10
+
+### Fixed
+
+- `blockchain.account.transactions_by_lt` pagination cursor is a transaction `lt`.
+  So `before` and `after` args should be specified as a string with `bigint` representation
+  (e.g. `0xabc` for hex or `123` for dec).
+  Cursors are returned using `0x` hex bigint representation.
+
 ## [0.65.0] - 2023-09-10
 
 ### New

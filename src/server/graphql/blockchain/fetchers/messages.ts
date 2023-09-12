@@ -7,6 +7,7 @@ import { QError, required } from "../../../utils"
 
 import { config } from "../config"
 import {
+    stringCursor,
     Direction,
     getNodeSelectionSetForConnection,
     isDefined,
@@ -23,9 +24,9 @@ import {
 } from "../resolvers-types-generated"
 import { resolveAddress } from "../../../address"
 import {
-    upgradeSelectionForBocParsing,
     messageArchiveFields,
     parseMessageBocsIfRequired,
+    upgradeSelectionForBocParsing,
 } from "../boc-parsers"
 import { useMessagesArchive } from "../../../data/data-provider"
 
@@ -304,6 +305,7 @@ export async function resolve_account_messages(
         limit,
         direction,
         "account_chain_order",
+        stringCursor,
         async r => {
             await config.messages.fetchJoins(
                 r,
