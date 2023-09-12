@@ -20,6 +20,9 @@ All notable changes to this project will be documented in this file.
 - Account info resolver now uses EvernodeRPC boc or meta queries.
 - Added argument `blockchain.account.info(byBlock)` – works only with Evernode RPC.
 
+### Fixed 
+- account.info.address was null
+
 ## [0.64.0] - 2023-08-09
 
 ### New
