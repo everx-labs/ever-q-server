@@ -7,10 +7,11 @@ import { QError, required } from "../../../utils"
 
 import { config } from "../config"
 import {
+    stringCursor,
     Direction,
-    KeyOf,
     getNodeSelectionSetForConnection,
     isDefined,
+    KeyOf,
     prepareChainOrderFilter,
     processPaginatedQueryResult,
     processPaginationArgs,
@@ -18,12 +19,12 @@ import {
 import {
     BlockchainBlock,
     BlockchainBlocksConnection,
-    BlockchainQueryBlocksArgs,
-    BlockchainQueryBlock_By_Seq_NoArgs,
-    BlockchainQueryKey_BlocksArgs,
-    BlockchainQueryPrev_Shard_BlocksArgs,
-    BlockchainQueryNext_Shard_BlocksArgs,
     BlockchainBlockSignatures,
+    BlockchainQueryBlock_By_Seq_NoArgs,
+    BlockchainQueryBlocksArgs,
+    BlockchainQueryKey_BlocksArgs,
+    BlockchainQueryNext_Shard_BlocksArgs,
+    BlockchainQueryPrev_Shard_BlocksArgs,
 } from "../resolvers-types-generated"
 import { getBlocksPostProcessing, postProcessBlocks } from "../boc-parsers"
 import { useBlocksArchive } from "../../../data/data-provider"
@@ -287,6 +288,7 @@ export async function resolve_key_blocks(
         limit,
         direction,
         "chain_order",
+        stringCursor,
     )) as BlockchainBlocksConnection
 }
 
@@ -373,6 +375,7 @@ export async function resolve_blockchain_blocks(
         limit,
         direction,
         "chain_order",
+        stringCursor,
     )) as BlockchainBlocksConnection
 }
 

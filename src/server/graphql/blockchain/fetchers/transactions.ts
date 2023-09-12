@@ -1,13 +1,13 @@
 import { GraphQLResolveInfo } from "graphql"
 
-import { convertBigUInt } from "../../../filter/filters"
-import { QParams } from "../../../filter/filters"
+import { convertBigUInt, QParams } from "../../../filter/filters"
 import { QRequestContext } from "../../../request"
 import { QTraceSpan } from "../../../tracing"
 import { required } from "../../../utils"
 
 import { config } from "../config"
 import {
+    stringCursor,
     Direction,
     getNodeSelectionSetForConnection,
     isDefined,
@@ -15,10 +15,11 @@ import {
     prepareNonChainOrderPaginationFilter,
     processPaginatedQueryResult,
     processPaginationArgs,
+    u64StringCursor,
 } from "../helpers"
 import {
-    BlockchainAccountQueryTransactionsArgs,
     BlockchainAccountQueryTransactions_By_LtArgs,
+    BlockchainAccountQueryTransactionsArgs,
     BlockchainQueryTransactions_By_In_MsgArgs,
     BlockchainQueryTransactionsArgs,
     BlockchainTransaction,
@@ -210,6 +211,7 @@ export async function resolve_blockchain_transactions(
         limit,
         direction,
         "chain_order",
+        stringCursor,
         async r => {
             await config.transactions.fetchJoins(
                 r,
@@ -301,6 +303,7 @@ export async function resolve_account_transactions(
         limit,
         direction,
         "chain_order",
+        stringCursor,
         async r => {
             await config.transactions.fetchJoins(
                 r,
@@ -337,6 +340,7 @@ export async function resolve_account_transactions_by_lt(
         context,
         useArchive,
         "lt",
+        u64StringCursor,
     )
     filters.push(`doc.account_addr == @${params.add(account_address)}`)
 
@@ -390,6 +394,7 @@ export async function resolve_account_transactions_by_lt(
         limit,
         direction,
         "lt",
+        u64StringCursor,
         async r => {
             await config.transactions.fetchJoins(
                 r,

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.1] - 2023-09-12
+
+### Fixed
+
+- `blockchain.account.transactions_by_lt` pagination cursor is a transaction `lt`.
+  So `before` and `after` args should be specified as a string with `bigint` representation
+  (e.g. `0xabc` for hex or `123` for dec).
+  Cursors are returned using `0x` hex bigint representation.
+
 ## [0.65.0] - 2023-09-10
 
 ### New
@@ -10,6 +19,9 @@ All notable changes to this project will be documented in this file.
 - Added support for ArangoDB url format `http://server:8529/_db/blockchain`
 - Account info resolver now uses EvernodeRPC boc or meta queries.
 - Added argument `blockchain.account.info(byBlock)` – works only with Evernode RPC.
+
+### Fixed 
+- account.info.address was null
 
 ## [0.64.0] - 2023-08-09
 
