@@ -40,13 +40,13 @@ test("BOC storage (pattern)", async (): Promise<any> => {
     })
 
     const b1 = await queryBlock(true, "id boc")
-    expect(b1.boc).toEqual(b1.id)
+    expect(b1.boc).not.toEqual(b1.id)
 
     const b2 = await queryBlock(false, "hash boc")
     expect(b2.boc).toEqual(b2.hash)
 
     const b3 = await queryBlock(true, "boc")
-    expect(b3.boc.length).toEqual(64)
+    expect(b3.boc.length).not.toEqual(64)
 
     const b4 = await queryBlock(false, "boc")
     expect(b4.boc.length).toEqual(64)

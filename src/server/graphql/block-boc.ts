@@ -19,20 +19,6 @@ export const blockBocResolvers = (blocks: IBocProvider | undefined) => {
         return {}
     }
     return {
-        Block: {
-            boc: async (parent: {
-                _key: string | undefined | null
-                boc: string | undefined | null
-            }) => {
-                if (!parent._key) {
-                    return parent.boc
-                }
-                const resolved = await blocks.getBocs([
-                    { hash: parent._key, boc: parent.boc },
-                ])
-                return resolved.get(parent._key) ?? parent.boc
-            },
-        },
         BlockchainBlock: {
             boc: async (parent: {
                 _key: string | undefined | null
