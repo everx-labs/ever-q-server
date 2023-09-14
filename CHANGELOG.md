@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.2] - 2023-09-12
+
+### Fixed
+
+- `blocks.boc` should not use block's BOC provider (block S3 storage).
+
 ## [0.65.1] - 2023-09-12
 
 ### Fixed
@@ -20,7 +26,7 @@ All notable changes to this project will be documented in this file.
 - Account info resolver now uses EvernodeRPC boc or meta queries.
 - Added argument `blockchain.account.info(byBlock)` – works only with Evernode RPC.
 
-### Fixed 
+### Fixed
 - account.info.address was null
 
 ## [0.64.0] - 2023-08-09
