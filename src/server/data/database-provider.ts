@@ -120,6 +120,7 @@ export class QDatabaseProvider implements QDataProvider {
                     vars,
                     {
                         maxRuntime,
+                        timeout: maxRuntime * 1000 + 500,
                     },
                 )
                 span.logEvent("cursor_obtained")

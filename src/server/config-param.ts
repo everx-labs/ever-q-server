@@ -1,6 +1,8 @@
 import os from "os"
 import { QError } from "./utils"
 
+export const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000
+
 function toPascal(s: string): string {
     return s !== "" ? `${s[0].toUpperCase()}${s.substr(1).toLowerCase()}` : ""
 }
@@ -88,6 +90,7 @@ type BocResolverParams = {
         bucket: ConfigParam<string>
         accessKey: ConfigParam<string>
         secretKey: ConfigParam<string>
+        timeout: ConfigParam<number>
     }
     pattern: ConfigParam<string>
     arango: {
@@ -99,6 +102,7 @@ type BocResolverParams = {
 type AccountProviderParams = {
     evernodeRpc: {
         endpoint: ConfigParam<string>
+        timeout: ConfigParam<number>
     }
 }
 
@@ -255,6 +259,14 @@ export class ConfigParam<T extends ConfigValue> {
                 bucket: opt("s3-bucket", "S3 bucket", "everblocks"),
                 accessKey: opt("s3-access-key", "S3 access key"),
                 secretKey: opt("s3-secret-key", "S3 secret key"),
+                timeout: ConfigParam.integer(
+                    prefixedOption(prefix, "s3-timeout"),
+                    DEFAULT_TIMEOUT_MS,
+                    withPrefix(
+                        descriptionPrefix ?? prefix,
+                        "S3 request timeout in millis",
+                    ),
+                ),
             },
             pattern: opt(
                 "pattern",
@@ -278,6 +290,11 @@ export class ConfigParam<T extends ConfigValue> {
                     "accounts-evernode-rpc-endpoint",
                     "",
                     "Accounts Evernode RPC endpoint",
+                ),
+                timeout: ConfigParam.integer(
+                    "accounts-evernode-rpc-timeout",
+                    DEFAULT_TIMEOUT_MS,
+                    "Accounts Evernode RPC timeout in millis",
                 ),
             },
         }
