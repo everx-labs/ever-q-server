@@ -99,6 +99,7 @@ export type QBocResolverConfig = {
         bucket: string
         accessKey?: string
         secretKey?: string
+        timeout?: number
     }
     // Boc pattern replacement:
     // - `{hash}` will be replaced with boc hash
@@ -114,6 +115,7 @@ export type QAccountProviderConfig = {
     // Evernode RPC compatible service
     evernodeRpc?: {
         endpoint: string
+        timeout?: number
     }
 }
 

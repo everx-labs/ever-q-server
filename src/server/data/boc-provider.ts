@@ -34,6 +34,7 @@ class S3Provider implements IBocProvider {
             bucket: string
             accessKey: string
             secretKey: string
+            timeout?: number
         },
     ) {
         this.client = new S3({
@@ -54,10 +55,15 @@ class S3Provider implements IBocProvider {
         const resolved = new Map()
         // TODO: fetch bocs in parallel
         for (const { hash, boc } of bocHashes) {
-            const getObjectResult = await this.client.getObject({
-                Bucket: this.config.bucket,
-                Key: hash,
-            })
+            const getObjectResult = await this.client.getObject(
+                {
+                    Bucket: this.config.bucket,
+                    Key: hash,
+                },
+                {
+                    requestTimeout: this.config.timeout,
+                },
+            )
             const body = getObjectResult.Body
             const bodyAsString = await body?.transformToString("base64")
             resolved.set(hash, bodyAsString ?? boc)
@@ -116,6 +122,7 @@ export function createBocProvider(
             region: config.s3?.region ?? "",
             accessKey: config.s3?.accessKey ?? "",
             secretKey: config.s3?.secretKey ?? "",
+            timeout: config.s3?.timeout,
         })
     }
     const pattern = config.pattern ?? ""

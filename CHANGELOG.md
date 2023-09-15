@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.3] - 2023-09-14
+
+### New
+
+- Added timeouts for external service queries:
+  - `config.queries.maxRuntimeInS` – timeout seconds for ArangoDB queries.
+  - `config.accountProvider.evernodeRpc.timeout` – timeout millis for Evernode RPC queries.
+  - `config.blockBocs.s3.timeout` – timeout millis for block storage S3 queries.
+  -
+
 ## [0.65.2] - 2023-09-14
 
 ### Fixed
