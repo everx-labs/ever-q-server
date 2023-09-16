@@ -38,6 +38,7 @@ import {
 
 import { docs } from "./db.shema.docs"
 import { SchemaDoc, SchemaSubType } from "./schema"
+import { capabilityValues } from "./capabilities"
 
 const { string, bool, ref, arrayOf } = Def
 
@@ -49,35 +50,7 @@ const address = (doc?: SchemaDoc): ExplicitDef => {
     }
 }
 
-const capabilities = u64flags("Capabilities", {
-    CapNone: 0,
-    CapIhrEnabled: 0x000001,
-    CapCreateStatsEnabled: 0x000002,
-    CapBounceMsgBody: 0x000004,
-    CapReportVersion: 0x000008,
-    CapSplitMergeTransactions: 0x000010,
-    CapShortDequeue: 0x000020,
-    CapMbppEnabled: 0x000040,
-    CapFastStorageStat: 0x000080,
-    CapInitCodeHash: 0x000100,
-    CapOffHypercube: 0x000200,
-    CapMyCode: 0x000400,
-    CapSetLibCode: 0x000800,
-    CapFixTupleIndexBug: 0x001000,
-    CapRemp: 0x002000,
-    CapDElections: 0x004000,
-    CapFullBodyInBounced: 0x010000,
-    CapStorageFeeToTvm: 0x020000,
-    CapCopyleft: 0x040000,
-    CapIndexAccounts: 0x080000,
-    CapDiff: 0x100000,
-    CapsTvmBugfixes2022: 0x0200000, // popsave, exception handler, loops
-    CapWorkchains: 0x0400000,
-    CapStcontNewFormat: 0x0800000, // support old format continuation serialization
-    CapFastStorageStatBugfix: 0x1000000, // calc cell data size using fast storage stat
-    CapResolveMerkleCell: 0x2000000,
-    CapSignatureWithId: 0x4000000, // use some predefined id during signature check})
-})
+const capabilities = u64flags("Capabilities", capabilityValues)
 
 const accountStatus = u8enum("AccountStatus", {
     uninit: 0,
