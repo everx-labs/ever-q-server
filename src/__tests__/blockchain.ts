@@ -280,34 +280,59 @@ test("blocks", async () => {
     })
 })
 
-test("prev_shard_blocks", async () => {
+test("Last Key Block", async () => {
     if (!server) {
         throw new Error("server is null")
     }
     const client = createTestClient({ useWebSockets: true })
 
-    const queryResult1 = await client.query({
-        query: gql`
-            {
-                blockchain {
-                    prev_shard_blocks(
-                        hash: "ddfe4ed2b0fbf41785a044a053d01335841a07a69df3912bbaec745609eb53e0"
-                    ) {
-                        hash
+    const result1 = (
+        await client.query({
+            query: gql`
+                {
+                    blockchain {
+                        key_blocks(last: 1) {
+                            edges {
+                                node {
+                                    hash
+                                    boc
+                                }
+                            }
+                        }
                     }
                 }
-            }
-        `,
-    })
-    expect(queryResult1.data).toMatchObject({
-        blockchain: {
-            prev_shard_blocks: [
+            `,
+        })
+    ).data.blockchain.key_blocks.edges[0].node
+    const result2 = (
+        await client.query({
+            query: gql`
                 {
-                    hash: "2ff719c6801ffbdb54991041288f3fde7900c73d97d30609a71ecf30cc33a166",
-                },
-            ],
-        },
-    })
+                    blocks(
+                        filter: {
+                            workchain_id: { eq: -1 }
+                            key_block: { eq: true }
+                        }
+                        orderBy: { path: "seq_no", direction: DESC }
+                        limit: 1
+                    ) {
+                        id
+                        boc
+                    }
+                }
+            `,
+        })
+    ).data.blocks[0]
+    const result3 = (
+        await client.query({
+            query: gql`
+            { blockchain { block(hash: "${result1.hash}") { hash boc } } }
+        `,
+        })
+    ).data.blockchain.block
+
+    expect(result1.boc).toEqual(result2.boc)
+    expect(result1.boc).toEqual(result3.boc)
 })
 
 test("next_shard_blocks", async () => {
