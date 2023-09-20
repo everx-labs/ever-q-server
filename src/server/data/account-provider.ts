@@ -51,14 +51,14 @@ class NodeRpcProvider implements IAccountProvider {
         // TODO: fetch bocs in parallel
         for (const account of accounts) {
             const result = await this.client.request(
-                nodeRequest("getAccount", account),
+                nodeRequest("getAccountBoc", account),
                 this.config.timeout,
             )
-            if (result?.account_boc ?? "" !== "") {
-                resolved.set(account.address, result.account_boc)
+            if (result?.boc ?? "" !== "") {
+                resolved.set(account.address, result.boc)
             }
         }
-        this.log.debug("GET_ACCOUNT", accounts)
+        this.log.debug("GET_ACCOUNT_BOC", accounts)
         return resolved
     }
 
@@ -69,8 +69,8 @@ class NodeRpcProvider implements IAccountProvider {
             const result = await this.client.request(
                 nodeRequest("getAccountMeta", account),
             )
-            if (result?.account_meta ?? "" !== "") {
-                resolved.set(account.address, result.account_meta)
+            if (result?.meta ?? "" !== "") {
+                resolved.set(account.address, result.meta)
             }
         }
         this.log.debug("GET_ACCOUNT_META", accounts)
