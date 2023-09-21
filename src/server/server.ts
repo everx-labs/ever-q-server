@@ -74,6 +74,7 @@ import {
 import { blockBocResolvers, overrideBlockBocFilter } from "./graphql/block-boc"
 import { createAccountProvider } from "./data/account-provider"
 import { createBocProvider } from "./data/boc-provider"
+import { lastKeyBlockResolvers } from "./graphql/last-key-block"
 
 type QServerOptions = {
     config: QConfig
@@ -383,16 +384,24 @@ export default class TONQServer {
         addMasterSeqNoFilters()
         overrideBlockBocFilter(this.data.blockBocProvider)
         const resolvers = createResolvers(this.data) as IResolvers
-        ;[
-            infoResolvers,
-            aggregatesResolvers(this.data),
-            postRequestsResolvers,
-            counterpartiesResolvers(this.data),
-            rempResolvers(this.config.remp, this.logs),
-            blockchainResolvers,
-            masterSeqNoResolvers,
-            blockBocResolvers(this.data.blockBocProvider),
-        ].forEach(x => assignDeep(resolvers, x))
+        assignDeep(resolvers, infoResolvers)
+        assignDeep(resolvers, aggregatesResolvers(this.data))
+        assignDeep(resolvers, postRequestsResolvers)
+        assignDeep(resolvers, counterpartiesResolvers(this.data))
+        assignDeep(resolvers, rempResolvers(this.config.remp, this.logs))
+        assignDeep(resolvers, blockchainResolvers)
+        assignDeep(resolvers, masterSeqNoResolvers)
+        assignDeep(resolvers, blockBocResolvers(this.data.blockBocProvider))
+        if (options.config.lastKeyBlockCache.enabled) {
+            assignDeep(
+                resolvers,
+                lastKeyBlockResolvers(
+                    resolvers,
+                    this.requestServices,
+                    options.config.lastKeyBlockCache.ttlMs,
+                ),
+            )
+        }
         this.addEndPoint({
             path: "/graphql",
             resolvers,
