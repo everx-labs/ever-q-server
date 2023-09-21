@@ -305,9 +305,7 @@ test("Last Key Block", async () => {
         query: gql`
             {
                 blocks(
-                    filter: {
-                        workchain_id: { eq: -1 }
-                    }
+                    filter: { workchain_id: { eq: -1 } }
                     orderBy: { path: "seq_no", direction: DESC }
                     limit: 1
                 ) {
