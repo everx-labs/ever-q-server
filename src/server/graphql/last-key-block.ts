@@ -14,7 +14,7 @@ import {
     processPaginatedQueryResult,
     stringCursor,
 } from "./blockchain/helpers"
-
+import { isObject } from "../utils"
 type OriginalResolvers = {
     Query: {
         blocks: (
@@ -64,6 +64,7 @@ export function lastKeyBlockResolvers(
                 info: GraphQLResolveInfo,
             ) => {
                 if (isLastKeyBlockBlocksQuery(args)) {
+                    services.emitLastKeyBlockCache({ isBlocksResolver: true })
                     return await lastKeyBlocks.get()
                 }
                 return await originalBlocks(parent, args, context, info)
@@ -77,6 +78,7 @@ export function lastKeyBlockResolvers(
                 info: GraphQLResolveInfo,
             ) => {
                 if (isLastKeyBlockBlockchainQuery(args)) {
+                    services.emitLastKeyBlockCache({ isBlocksResolver: false })
                     return await processPaginatedQueryResult(
                         await lastKeyBlocks.get(),
                         2,
@@ -136,9 +138,12 @@ function isLastKeyBlockBlocksQuery(args: {
 }
 
 function hasExactOwnProperties(
-    obj: Record<string, any>,
+    obj: Record<string, any> | undefined | null,
     names: Set<string>,
 ): boolean {
+    if (!isObject(obj)) {
+        return false
+    }
     for (const name of Object.getOwnPropertyNames(obj)) {
         if (!names.has(name)) {
             return false

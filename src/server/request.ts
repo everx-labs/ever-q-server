@@ -12,7 +12,16 @@ import { IStats } from "./stats"
 import { QRequestParams } from "./filter/filters"
 import { LiteClient } from "ton-lite-client"
 
+export type LastKeyBlockCacheEventArg = {
+    isBlocksResolver: boolean
+}
+
+export enum InternalEvent {
+    LAST_KEY_BLOCK_CACHE = "last_key_block_cache",
+}
+
 export class QRequestServices {
+    internalEvents: EventEmitter
     constructor(
         public config: QConfig,
         public tracer: Tracer,
@@ -22,7 +31,14 @@ export class QRequestServices {
         public logs: QLogs,
         public data: QBlockchainData,
         public liteclient?: LiteClient,
-    ) {}
+    ) {
+        this.internalEvents = new EventEmitter()
+        this.internalEvents.setMaxListeners(0)
+    }
+
+    emitLastKeyBlockCache(args: LastKeyBlockCacheEventArg) {
+        this.internalEvents.emit(InternalEvent.LAST_KEY_BLOCK_CACHE, args)
+    }
 }
 
 export const RequestEvent = {

@@ -4,6 +4,7 @@ import TONQServer from "../server/server"
 
 import { createTestClient } from "./init-tests"
 import { createTestData, startTestServer, TestSetup } from "./blockchain-mock"
+import { InternalEvent, LastKeyBlockCacheEventArg } from "../server/request"
 
 let server: TONQServer | null = null
 
@@ -285,6 +286,41 @@ test("Last Key Block", async () => {
         throw new Error("server is null")
     }
     const client = createTestClient({ useWebSockets: true })
+    const stat = {
+        blocks: 0,
+        blockchain: 0,
+    }
+    server.requestServices.internalEvents.on(
+        InternalEvent.LAST_KEY_BLOCK_CACHE,
+        (args: LastKeyBlockCacheEventArg) => {
+            if (args.isBlocksResolver) {
+                stat.blocks += 1
+            } else {
+                stat.blockchain += 1
+            }
+        },
+    )
+
+    await client.query({
+        query: gql`
+            {
+                blocks(
+                    filter: {
+                        workchain_id: { eq: -1 }
+                    }
+                    orderBy: { path: "seq_no", direction: DESC }
+                    limit: 1
+                ) {
+                    id
+                    boc
+                }
+            }
+        `,
+    })
+    expect(stat).toMatchObject({
+        blocks: 0,
+        blockchain: 0,
+    })
 
     const result1 = (
         await client.query({
@@ -304,6 +340,10 @@ test("Last Key Block", async () => {
             `,
         })
     ).data.blockchain.key_blocks.edges[0].node
+    expect(stat).toMatchObject({
+        blocks: 0,
+        blockchain: 1,
+    })
     const result2 = (
         await client.query({
             query: gql`
@@ -323,6 +363,10 @@ test("Last Key Block", async () => {
             `,
         })
     ).data.blocks[0]
+    expect(stat).toMatchObject({
+        blocks: 1,
+        blockchain: 1,
+    })
     const result3 = (
         await client.query({
             query: gql`
