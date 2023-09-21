@@ -60,7 +60,7 @@ test("cloud15.account-provider", async () => {
     })
     const stat = test2.nodeRpcStat()
     const queryResult2 = (await test2.queryBlockchain(query)) as any
-    expect(stat.getAccountBoc).toBe(1)
+    expect(stat.getAccount).toBe(1)
     expect(stat.getAccountMeta).toBe(0)
     const account2 = queryResult2.account.info
     expect(account2.address).toBe(mockAcc.meta.id)
@@ -72,7 +72,7 @@ test("cloud15.account-provider", async () => {
         `account(address: "${refAccount.id}") { info { address balance bits } }`,
     )) as any
     const account3 = queryResult3.account.info
-    expect(stat.getAccountBoc).toBe(1)
+    expect(stat.getAccount).toBe(1)
     expect(stat.getAccountMeta).toBe(1)
     expect(account3.address).toBe(mockAcc.meta.id)
     expect(account3.balance).toBe(mockAcc.meta.balance)

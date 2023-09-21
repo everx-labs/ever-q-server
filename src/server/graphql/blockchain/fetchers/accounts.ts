@@ -181,7 +181,6 @@ async function queryAccountProvider(
         const metas = await provider.getMetas([{ address, byBlock }])
         const meta = metas.get(address)
         if (meta) {
-            meta.id = meta.address
             result = meta
         }
     }

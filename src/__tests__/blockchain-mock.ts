@@ -53,7 +53,7 @@ export type AccountMock = {
 }
 
 type NodeRpcStat = {
-    getAccountBoc: number
+    getAccount: number
     getAccountMeta: number
 }
 
@@ -69,7 +69,7 @@ export function startNodeRpcMock(
     const app = express()
     app.use(express.json())
     const stat = {
-        getAccountBoc: 0,
+        getAccount: 0,
         getAccountMeta: 0,
     }
     app.post("/", (req, res) => {
@@ -85,24 +85,21 @@ export function startNodeRpcMock(
                     : params.account
             ]
         switch (method) {
-            case "getAccountBoc":
+            case "getAccount":
                 {
                     response.result = acc
                         ? {
-                              boc: acc.boc,
+                              account_boc: acc.boc,
                           }
                         : null
-                    stat.getAccountBoc += 1
+                    stat.getAccount += 1
                 }
                 break
             case "getAccountMeta":
                 {
                     response.result = acc
                         ? {
-                              meta: {
-                                  ...acc.meta,
-                                  address: acc.meta._key ?? acc.meta.id,
-                              },
+                              account_meta: acc.meta,
                           }
                         : null
                     stat.getAccountMeta += 1
@@ -322,10 +319,7 @@ export class TestSetup {
 
     nodeRpcStat() {
         return (
-            this.accountProvider?.stat ?? {
-                getAccountBoc: 0,
-                getAccountMeta: 0,
-            }
+            this.accountProvider?.stat ?? { getAccount: 0, getAccountMeta: 0 }
         )
     }
     async close(): Promise<void> {
