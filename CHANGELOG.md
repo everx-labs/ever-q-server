@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- Added support for node-jrpc protocol changes.
+
 - Added cache for the last key block.
   Config parameters:
   - `last-key-block-cache-enabled` – default is `true`.
