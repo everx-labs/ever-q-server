@@ -8,11 +8,20 @@ import EventEmitter from "events"
 import { extractHeader, RequestWithHeaders } from "./utils"
 import express from "express"
 import { ExecutionParams } from "subscriptions-transport-ws"
-import { IStats } from "./stats"
+import { IStats, StatsTiming } from "./stats"
 import { QRequestParams } from "./filter/filters"
 import { LiteClient } from "ton-lite-client"
 
+export type LastKeyBlockCacheEventArg = {
+    isBlocksResolver: boolean
+}
+
+export enum InternalEvent {
+    LAST_KEY_BLOCK_CACHE = "last_key_block_cache",
+}
+
 export class QRequestServices {
+    internalEvents: EventEmitter
     constructor(
         public config: QConfig,
         public tracer: Tracer,
@@ -22,7 +31,14 @@ export class QRequestServices {
         public logs: QLogs,
         public data: QBlockchainData,
         public liteclient?: LiteClient,
-    ) {}
+    ) {
+        this.internalEvents = new EventEmitter()
+        this.internalEvents.setMaxListeners(0)
+    }
+
+    emitLastKeyBlockCache(args: LastKeyBlockCacheEventArg) {
+        this.internalEvents.emit(InternalEvent.LAST_KEY_BLOCK_CACHE, args)
+    }
 }
 
 export const RequestEvent = {
@@ -47,6 +63,7 @@ export class QRequestContext implements QRequestParams {
 
     constructor(
         public services: QRequestServices,
+        public durationStats: StatsTiming,
         public req: express.Request | undefined,
         public connection: ExecutionParams | undefined,
     ) {
@@ -82,6 +99,7 @@ export class QRequestContext implements QRequestParams {
 
     emitClose() {
         this.events.emit(RequestEvent.CLOSE)
+        void this.durationStats.report(Date.now() - this.start)
     }
 
     finish() {

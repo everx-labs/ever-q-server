@@ -56,6 +56,10 @@ export type QConfig = {
         slowQueries: SlowQueriesMode
         waitForPeriod: number
     }
+    lastKeyBlockCache: {
+        enabled: boolean
+        ttlMs: number
+    }
     remp: RempConfig
     useListeners?: boolean
     walkingUseCache: boolean
@@ -342,6 +346,18 @@ export const configParams = {
             "Additional trace tags (comma separated name=value pairs)",
         ),
     },
+    lastKeyBlockCache: {
+        enabled: ConfigParam.boolean(
+            "last-key-block-cache-enabled",
+            true,
+            "Last key block cache enabled",
+        ),
+        ttlMs: ConfigParam.integer(
+            "last-key-block-cache-ttl-ms",
+            5 * 60 * 1000, // 5 min
+            "Last key block cache TTL in millis",
+        ),
+    },
     statsd: {
         server: ConfigParam.string(
             "statsd-server",
@@ -427,6 +443,9 @@ export const STATS = {
     },
     errors: {
         internal: "errors.internal",
+    },
+    request: {
+        duration: "request.duration",
     },
 }
 

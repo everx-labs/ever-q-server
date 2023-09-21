@@ -6,12 +6,32 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- Added cache for the last key block.
+  Config parameters:
+  - `last-key-block-cache-enabled` – default is `true`.
+  - `last-key-block-cache-ttl-ms` – cached block TTL. Default is five min.
+  This cached block is returned for the following queries:
+  - ```
+    blocks(
+        filter: { key_block: { eq: true } workchain_id: { eq: -1 } }
+        orderBy: [{ direction: DESC path: "seq_no" }] )
+        limit: 1
+    )
+    ```
+  - ```
+    blockchain {
+        key_blocks(last:1)
+    }
+    ```
+
 - Added timeouts for external service queries:
   - `config.queries.maxRuntimeInS` – timeout seconds for ArangoDB queries.
   - `config.accountProvider.evernodeRpc.timeout` – timeout millis for Evernode RPC queries.
   - `config.blockBocs.s3.timeout` – timeout millis for block storage S3 queries.
 
 - Added support for YAML config file.
+
+- Added `request.duration` timing stat.
 
 ## [0.65.2] - 2023-09-14
 
