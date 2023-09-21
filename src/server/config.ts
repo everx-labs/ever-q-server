@@ -19,6 +19,7 @@ import { readFileSync } from "fs"
 import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
 import { QError } from "./utils"
 import { RempConfig, rempConfigParams } from "./graphql/remp"
+import yaml from "js-yaml"
 
 export type QConfig = {
     config: string
@@ -459,8 +460,8 @@ export function ensureProtocol(
 
 export function readConfigFile(configFile: string): DeepPartial<QConfig> {
     try {
-        return JSON.parse(
-            readFileSync(configFile).toString(),
+        return yaml.load(
+            readFileSync(configFile, "utf8"),
         ) as DeepPartial<QConfig>
     } catch (error) {
         console.error("Error while reading config file:", error)
