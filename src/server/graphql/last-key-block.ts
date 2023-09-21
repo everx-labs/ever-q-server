@@ -131,7 +131,7 @@ function isLastKeyBlockBlocksQuery(args: {
         hasExactOwnProperties(filter.key_block, eq) &&
         hasExactOwnProperties(filter.workchain_id, eq) &&
         filter.key_block.eq === true &&
-        filter.key_block.workchain_id === -1
+        filter.workchain_id.eq === -1
     )
 }
 
