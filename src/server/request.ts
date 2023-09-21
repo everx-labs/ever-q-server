@@ -8,7 +8,7 @@ import EventEmitter from "events"
 import { extractHeader, RequestWithHeaders } from "./utils"
 import express from "express"
 import { ExecutionParams } from "subscriptions-transport-ws"
-import { IStats } from "./stats"
+import { IStats, StatsTiming } from "./stats"
 import { QRequestParams } from "./filter/filters"
 import { LiteClient } from "ton-lite-client"
 
@@ -63,6 +63,7 @@ export class QRequestContext implements QRequestParams {
 
     constructor(
         public services: QRequestServices,
+        public durationStats: StatsTiming,
         public req: express.Request | undefined,
         public connection: ExecutionParams | undefined,
     ) {
@@ -98,6 +99,7 @@ export class QRequestContext implements QRequestParams {
 
     emitClose() {
         this.events.emit(RequestEvent.CLOSE)
+        void this.durationStats.report(Date.now() - this.start)
     }
 
     finish() {

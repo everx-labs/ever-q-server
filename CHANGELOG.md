@@ -28,7 +28,8 @@ All notable changes to this project will be documented in this file.
   - `config.queries.maxRuntimeInS` – timeout seconds for ArangoDB queries.
   - `config.accountProvider.evernodeRpc.timeout` – timeout millis for Evernode RPC queries.
   - `config.blockBocs.s3.timeout` – timeout millis for block storage S3 queries.
-  -
+
+- Added `request.duration` timing stat.
 
 ## [0.65.2] - 2023-09-14
 
