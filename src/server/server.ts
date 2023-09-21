@@ -57,7 +57,7 @@ import type { QConfig } from "./config"
 import QLogs from "./logs"
 import type { QLog } from "./logs"
 import type { IStats } from "./stats"
-import { QStats, StatsCounter } from "./stats"
+import { QStats, StatsCounter, StatsTiming } from "./stats"
 import { QTracer } from "./tracing"
 import { Tracer } from "opentracing"
 import { assignDeep, httpUrl, packageJson } from "./utils"
@@ -320,6 +320,7 @@ export default class TONQServer {
     liteclient?: LiteClient
     memStats: MemStats
     internalErrorStats: StatsCounter
+    requestDurationStats: StatsTiming
     shared: Map<string, unknown>
     requestServices: QRequestServices
 
@@ -365,6 +366,11 @@ export default class TONQServer {
         this.internalErrorStats = new StatsCounter(
             this.stats,
             STATS.errors.internal,
+            [],
+        )
+        this.requestDurationStats = new StatsTiming(
+            this.stats,
+            STATS.request.duration,
             [],
         )
         this.memStats = new MemStats(this.stats)
@@ -488,6 +494,7 @@ export default class TONQServer {
             context: ({ req, connection }) => {
                 const request = new QRequestContext(
                     this.requestServices,
+                    this.requestDurationStats,
                     req,
                     connection,
                 )

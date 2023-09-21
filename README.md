@@ -300,6 +300,9 @@ Q-Server reports several StatsD metrics if it is configured with `statsd` option
     qserver.query.time           timer    collection=name  Reported each time when q-server has finished
                                                            query handler from SDK client
 
+    qserver.request.duration     timer                     Reported each time when q-server has finished
+                                                           HTTP request from SDK client
+
     qserver.query.active         gauge    collection=name  Updated each time when q-server has started and finished
                                                            query handler from SDK client
 

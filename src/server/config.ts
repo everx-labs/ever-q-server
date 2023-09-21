@@ -427,6 +427,9 @@ export const STATS = {
     errors: {
         internal: "errors.internal",
     },
+    request: {
+        duration: "request.duration",
+    },
 }
 
 export function ensureProtocol(
