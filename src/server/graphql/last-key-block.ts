@@ -15,6 +15,7 @@ import {
     stringCursor,
 } from "./blockchain/helpers"
 import { isObject } from "../utils"
+import { StatsTiming } from "../stats"
 type OriginalResolvers = {
     Query: {
         blocks: (
@@ -42,12 +43,13 @@ type OriginalResolvers = {
 export function lastKeyBlockResolvers(
     originalResolvers: IResolvers,
     services: QRequestServices,
+    durationStats: StatsTiming,
     ttlMs: number,
 ) {
     const originalBlocks = (originalResolvers as OriginalResolvers).Query.blocks
     const originalKeyBlocks = (originalResolvers as OriginalResolvers)
         .BlockchainQuery.key_blocks
-    const lastKeyBlocks = new LastKeyBlocksCache(services, {
+    const lastKeyBlocks = new LastKeyBlocksCache(services, durationStats, {
         ttlMs,
     })
     return {
@@ -156,6 +158,7 @@ export class LastKeyBlocksCache extends CachedData<BlockchainBlock[]> {
     private readonly traceSpan: QTraceSpan
     constructor(
         private services: QRequestServices,
+        private durationStats: StatsTiming,
         options: CachedDataOptions,
     ) {
         super(options)
@@ -166,7 +169,12 @@ export class LastKeyBlocksCache extends CachedData<BlockchainBlock[]> {
     }
 
     async loadActual(): Promise<BlockchainBlock[]> {
-        const request = new QRequestContext(this.services, undefined, undefined)
+        const request = new QRequestContext(
+            this.services,
+            this.durationStats,
+            undefined,
+            undefined,
+        )
         const result = (await this.services.data.blocks.provider?.query({
             text: `
                 FOR block IN blocks

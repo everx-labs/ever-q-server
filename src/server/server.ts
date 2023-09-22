@@ -404,6 +404,7 @@ export default class TONQServer {
                 lastKeyBlockResolvers(
                     resolvers,
                     this.requestServices,
+                    this.requestDurationStats,
                     options.config.lastKeyBlockCache.ttlMs,
                 ),
             )
