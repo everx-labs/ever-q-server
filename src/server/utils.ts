@@ -187,7 +187,7 @@ export function httpUrl(address: string): string {
     return `${http}://${address}`
 }
 
-function isObject(test: unknown): boolean {
+export function isObject(test: unknown): boolean {
     return (
         test !== null &&
         test !== undefined &&

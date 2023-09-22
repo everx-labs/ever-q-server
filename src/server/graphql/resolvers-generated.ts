@@ -1073,6 +1073,12 @@ function createResolvers(data: QBlockchainData) {
                 CapFastStorageStatBugfix: 16777216,
                 CapResolveMerkleCell: 33554432,
                 CapSignatureWithId: 67108864,
+                CapBounceAfterFailedAction: 134217728,
+                CapGroth16: 268435456,
+                CapFeeInGasUnits: 536870912,
+                CapBigCells: 1073741824,
+                CapSuspendedList: 2147483648,
+                CapFastFinality: 4294967296,
             }),
         },
         ConfigP14: {

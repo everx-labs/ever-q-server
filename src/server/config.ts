@@ -19,6 +19,7 @@ import { readFileSync } from "fs"
 import { ConfigParam, ConfigValue, DeepPartial } from "./config-param"
 import { QError } from "./utils"
 import { RempConfig, rempConfigParams } from "./graphql/remp"
+import yaml from "js-yaml"
 
 export type QConfig = {
     config: string
@@ -54,6 +55,10 @@ export type QConfig = {
         maxTimeout: number
         slowQueries: SlowQueriesMode
         waitForPeriod: number
+    }
+    lastKeyBlockCache: {
+        enabled: boolean
+        ttlMs: number
     }
     remp: RempConfig
     useListeners?: boolean
@@ -99,6 +104,7 @@ export type QBocResolverConfig = {
         bucket: string
         accessKey?: string
         secretKey?: string
+        timeout?: number
     }
     // Boc pattern replacement:
     // - `{hash}` will be replaced with boc hash
@@ -114,6 +120,7 @@ export type QAccountProviderConfig = {
     // Evernode RPC compatible service
     evernodeRpc?: {
         endpoint: string
+        timeout?: number
     }
 }
 
@@ -339,6 +346,18 @@ export const configParams = {
             "Additional trace tags (comma separated name=value pairs)",
         ),
     },
+    lastKeyBlockCache: {
+        enabled: ConfigParam.boolean(
+            "last-key-block-cache-enabled",
+            true,
+            "Last key block cache enabled",
+        ),
+        ttlMs: ConfigParam.integer(
+            "last-key-block-cache-ttl-ms",
+            5 * 60 * 1000, // 5 min
+            "Last key block cache TTL in millis",
+        ),
+    },
     statsd: {
         server: ConfigParam.string(
             "statsd-server",
@@ -425,6 +444,9 @@ export const STATS = {
     errors: {
         internal: "errors.internal",
     },
+    request: {
+        duration: "request.duration",
+    },
 }
 
 export function ensureProtocol(
@@ -438,8 +460,8 @@ export function ensureProtocol(
 
 export function readConfigFile(configFile: string): DeepPartial<QConfig> {
     try {
-        return JSON.parse(
-            readFileSync(configFile).toString(),
+        return yaml.load(
+            readFileSync(configFile, "utf8"),
         ) as DeepPartial<QConfig>
     } catch (error) {
         console.error("Error while reading config file:", error)

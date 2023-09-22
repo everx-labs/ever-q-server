@@ -2,6 +2,7 @@ import { QAccountProviderConfig } from "../config"
 import { RequestManager, HTTPTransport, Client } from "@open-rpc/client-js"
 import QLogs, { QLog } from "../logs"
 import { RequestArguments } from "@open-rpc/client-js/build/ClientInterface"
+import { DEFAULT_TIMEOUT_MS } from "../config-param"
 
 export type QueryAccountParams = {
     address: string
@@ -36,6 +37,7 @@ class NodeRpcProvider implements IAccountProvider {
         logs: QLogs,
         public config: {
             endpoint: string
+            timeout: number
         },
     ) {
         const transport = new HTTPTransport(config.endpoint)
@@ -49,13 +51,14 @@ class NodeRpcProvider implements IAccountProvider {
         // TODO: fetch bocs in parallel
         for (const account of accounts) {
             const result = await this.client.request(
-                nodeRequest("getAccount", account),
+                nodeRequest("getAccountBoc", account),
+                this.config.timeout,
             )
-            if (result?.account_boc ?? "" !== "") {
-                resolved.set(account.address, result.account_boc)
+            if (result?.boc ?? "" !== "") {
+                resolved.set(account.address, result.boc)
             }
         }
-        this.log.debug("GET_ACCOUNT", accounts)
+        this.log.debug("GET_ACCOUNT_BOC", accounts)
         return resolved
     }
 
@@ -66,8 +69,8 @@ class NodeRpcProvider implements IAccountProvider {
             const result = await this.client.request(
                 nodeRequest("getAccountMeta", account),
             )
-            if (result?.account_meta ?? "" !== "") {
-                resolved.set(account.address, result.account_meta)
+            if (result?.meta ?? "" !== "") {
+                resolved.set(account.address, result.meta)
             }
         }
         this.log.debug("GET_ACCOUNT_META", accounts)
@@ -83,6 +86,7 @@ export function createAccountProvider(
     if (rpcEndpoint !== "") {
         return new NodeRpcProvider(logs, {
             endpoint: rpcEndpoint,
+            timeout: config.evernodeRpc?.timeout ?? DEFAULT_TIMEOUT_MS,
         })
     }
     return undefined

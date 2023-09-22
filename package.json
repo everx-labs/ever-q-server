@@ -64,6 +64,7 @@
         "ton-core": "^0.48.0",
         "ton-crypto": "^3.2.0",
         "ton-lite-client": "^2.0.1",
+        "js-yaml": "^4.1.0",
         "ws": "7.4.6"
     },
     "devDependencies": {

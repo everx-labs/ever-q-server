@@ -22,7 +22,52 @@ export type IntEnumDef = {
 }
 
 export type IntFlags = {
-    [name: string]: number
+    CapNone: number
+    CapIhrEnabled: number
+    CapCreateStatsEnabled: number
+    CapBounceMsgBody: number
+    // forces all collators to report their supported version and capabilities in the block headers of the blocks they generate
+    CapReportVersion: number
+    CapSplitMergeTransactions: number
+    CapShortDequeue: number
+    CapMbppEnabled: number
+    CapFastStorageStat: number
+    CapInitCodeHash: number
+    CapOffHypercube: number
+    // enabled opcode MYCODE see https://docs.everscale.network/tvm.pdf
+    CapMyCode: number
+    CapSetLibCode: number
+    CapFixTupleIndexBug: number
+    // see https://docs.everscale.network/arch/networking/remp#remp-catchain
+    CapRemp: number
+    CapDElections: number
+    // enabled to put full body in bounced message
+    CapFullBodyInBounced: number
+    // enable opcode STORAGEFEE see https://docs.everscale.network/tvm.pdf
+    CapStorageFeeToTvm: number
+    // use contracts with copyleft opcode COPYLEFT see https://docs.everscale.network/standard/TIP-1.1
+    CapCopyleft: number
+    CapIndexAccounts: number
+    CapDiff: number
+    // popsave, exception handler, loops
+    CapsTvmBugfixes2022: number
+    CapWorkchains: number
+    // support old format continuation serialization
+    CapStcontNewFormat: number
+    // calc cell datasize using fast storage stat
+    CapFastStorageStatBugfix: number
+    CapResolveMerkleCell: number
+    // se some predefined id during signature check
+    CapSignatureWithId: number
+    // if transaction fails on Action phase, bounced message will be produced
+    CapBounceAfterFailedAction: number
+    // support Groth16 proof system (opcode VERGRTH16)
+    CapGroth16: number
+    // all fees in config are in gas units
+    CapFeeInGasUnits: number
+    CapBigCells: number
+    CapSuspendedList: number
+    CapFastFinality: number
 }
 
 export type IntFlagsDef = {

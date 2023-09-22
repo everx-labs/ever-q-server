@@ -226,9 +226,15 @@ test("Flags", () => {
     const resolvers = createResolvers(data)
     expect(
         resolvers.ConfigP8.capabilities_flags({
-            capabilities: 0x1 | 0x000008 | 0x000400 | 0x100000,
+            capabilities: 0x1 | 0x000008 | 0x000400 | 0x100000 | 0x8000000,
         }),
-    ).toEqual(["CapIhrEnabled", "CapReportVersion", "CapMyCode", "CapDiff"])
+    ).toEqual([
+        "CapIhrEnabled",
+        "CapReportVersion",
+        "CapMyCode",
+        "CapDiff",
+        "CapBounceAfterFailedAction",
+    ])
 })
 
 test("Select Fields", () => {

@@ -9679,7 +9679,7 @@ export const blocks = [
         end_lt_dec: "14528386000008",
         prev_seq_no: 8898621,
         after_split: false,
-        key_block: false,
+        key_block: true,
         shard: "8000000000000000",
         tr_count: 8,
         vert_seqno_incr: 0,
