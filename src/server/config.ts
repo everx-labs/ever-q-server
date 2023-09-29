@@ -102,6 +102,7 @@ export type QBocResolverConfig = {
         endpoint: string
         region: string
         bucket: string
+        numBuckets?: number
         accessKey?: string
         secretKey?: string
         timeout?: number

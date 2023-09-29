@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.4] - 2023-09-29
+
+### New
+
+- `config.blockBocs.s3.numBuckets` field
+
 ## [0.65.3] - 2023-09-14
 
 ### New

@@ -2,6 +2,7 @@ import { parseArangoConfig, QBocResolverConfig } from "../config"
 import { S3 } from "@aws-sdk/client-s3"
 import { Database } from "arangojs"
 import { createDatabase } from "./database-provider"
+import { crc32 } from "crc"
 
 export interface IBocProvider {
     getBocs(
@@ -32,6 +33,7 @@ class S3Provider implements IBocProvider {
             endpoint: string
             region: string
             bucket: string
+            numBuckets: number
             accessKey: string
             secretKey: string
             timeout?: number
@@ -57,7 +59,11 @@ class S3Provider implements IBocProvider {
         for (const { hash, boc } of bocHashes) {
             const getObjectResult = await this.client.getObject(
                 {
-                    Bucket: this.config.bucket,
+                    Bucket: bucketName(
+                        hash,
+                        this.config.bucket,
+                        this.config.numBuckets,
+                    ),
                     Key: hash,
                 },
                 {
@@ -70,6 +76,14 @@ class S3Provider implements IBocProvider {
         }
         return resolved
     }
+}
+
+export function bucketName(
+    file: string,
+    bucket: string,
+    numBuckets: number,
+): string {
+    return numBuckets > 0 ? `${bucket}-${crc32(file) % numBuckets}` : bucket
 }
 
 class ArangoProvider implements IBocProvider {
@@ -119,6 +133,7 @@ export function createBocProvider(
         return new S3Provider({
             endpoint: s3endpoint,
             bucket: config.s3?.bucket ?? "",
+            numBuckets: config.s3?.numBuckets ?? 0,
             region: config.s3?.region ?? "",
             accessKey: config.s3?.accessKey ?? "",
             secretKey: config.s3?.secretKey ?? "",
