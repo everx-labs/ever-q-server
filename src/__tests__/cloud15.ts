@@ -9,6 +9,7 @@ import {
     accountDbFields,
     convertDocFromDb,
 } from "../server/graphql/blockchain/fetchers"
+import { bucketName } from "../server/data/boc-provider"
 
 beforeAll(async () => {
     await createTestData()
@@ -369,4 +370,30 @@ test("cloud15.blocks_signatures", async () => {
     expect(arch[0].signatures).toBeNull()
 
     await test.close()
+})
+
+test("cloud15.s3-bucket-names", () => {
+    const buckets = [
+        "some-file-name",
+        "7cd2c97c7fd81f3498d3cad64c8d751a95edbf03ce80eeaf9e8f7b3e2ecd59c2",
+        "6926e5e954b1541943832c77b736d45365cb882d98c1926c0c2edd532811d09f",
+        "b4f8b57574509b0303f8845c1465153ec96868a162e6357605fe6b88323ffbc1",
+        "46d58e9c208265fc11d538b7ebe090f1a13f685b1eb408e24fdb0ea8b1250e28",
+        "834968f0d418400b9f8b215903d26e2eae01a4b86daf81c84a6ffad997f766d6",
+        "be907549f71edd3239b034088aadd281a4b87e03782c2d98df51a95454f7dee1",
+        "11b38729f15d4dbaa3814f66921def45bc9da0ebef0f466a497cf885efce4d53",
+        "2ef17fc66d177cfb39f85c2fbee75a664c19a6ec7d856beb7a19ee4ff4e91113",
+        "b43dfb8edd8f79b486bf928cf67bd21f9939d3e1661603f741e874ab4af58cc9",
+        "bb1265e2db2faa5ae9a99af3a8baaa9950eaa3bec7778bef8c582898e0d36631",
+        "cb5f507ab331c322de68a1f6a8f2fe58ac5f0061dc9a452b27a4f159b909af10",
+        "bc61269bbb253c9e13f441c36430517c059d04037905cbe89eec536803fa69f5",
+        "2537dc69bbd74c5ec0da26b20dad952e9daa6d5d54918dbc2faf328af09bb78d",
+        "869079f2c936dc26122be9bd30659525a72819ddd18d3b5277cfe7bf7934878b",
+        "03f2765eb08ba81e1a598e1b7a50e247a261f589e664ca456b1700ffe2fc80f0",
+    ].map(x => bucketName(x, "foo", 10))
+    const expected = [7, 3, 5, 4, 5, 3, 1, 7, 0, 6, 1, 6, 5, 0, 6, 1].map(
+        x => `foo-${x}`,
+    )
+    expect(buckets).toStrictEqual(expected)
+    expect(bucketName("file", "foo", 0)).toBe("foo")
 })
