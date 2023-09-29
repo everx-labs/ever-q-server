@@ -88,6 +88,7 @@ type BocResolverParams = {
         endpoint: ConfigParam<string>
         region: ConfigParam<string>
         bucket: ConfigParam<string>
+        numBuckets: ConfigParam<number>
         accessKey: ConfigParam<string>
         secretKey: ConfigParam<string>
         timeout: ConfigParam<number>
@@ -257,6 +258,14 @@ export class ConfigParam<T extends ConfigValue> {
                 endpoint: opt("s3-endpoint", "S3 endpoint"),
                 region: opt("s3-region", "S3 region"),
                 bucket: opt("s3-bucket", "S3 bucket", "everblocks"),
+                numBuckets: ConfigParam.integer(
+                    prefixedOption(prefix, "s3-num-buckets"),
+                    0,
+                    withPrefix(
+                        descriptionPrefix ?? prefix,
+                        "S3 number of buckets (if specified and > 0, then bucket name will be equal to `{bucket}-{crc32(file) % numBuckets}`)",
+                    ),
+                ),
                 accessKey: opt("s3-access-key", "S3 access key"),
                 secretKey: opt("s3-secret-key", "S3 secret key"),
                 timeout: ConfigParam.integer(
