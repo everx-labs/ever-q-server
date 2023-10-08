@@ -82,7 +82,7 @@ function decodeTag(tag: number): { bounceable: boolean; testOnly: boolean } {
     }
 
     if (![FLAG_BOUNCEABLE, FLAG_NON_BOUNCEABLE].includes(data)) {
-        new Error("Address: bad address tag.")
+        throw new Error("Address: bad address tag.")
     }
 
     const bounceable = data === FLAG_BOUNCEABLE
