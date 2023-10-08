@@ -72,9 +72,13 @@ import {
     masterSeqNoResolvers,
 } from "./graphql/chain-order"
 import { blockBocResolvers, overrideBlockBocFilter } from "./graphql/block-boc"
-import { createAccountProvider } from "./data/account-provider"
 import { createBocProvider } from "./data/boc-provider"
 import { lastKeyBlockResolvers } from "./graphql/last-key-block"
+import {
+    IAccountProvider,
+    LiteServerProvider,
+    createAccountProvider,
+} from "./data/account-provider"
 
 type QServerOptions = {
     config: QConfig
@@ -343,6 +347,31 @@ export default class TONQServer {
         this.app = express()
         this.server = http.createServer(this.app)
         const providers = new DataProviderFactory(this.config, this.logs)
+
+        let accountProvider: IAccountProvider
+        if (options.config.requests.mode == "tcpadnl") {
+            if (!this.liteclient) {
+                throw new Error("liteclient must be set")
+            }
+
+            accountProvider = new LiteServerProvider(
+                this.logs,
+                this.client.boc,
+                this.liteclient,
+            )
+        } else {
+            const provider = createAccountProvider(
+                this.logs,
+                this.config.accountProvider,
+            )
+
+            if (!provider) {
+                throw new Error("account provider can't be inited")
+            }
+
+            accountProvider = provider
+        }
+
         this.data =
             options.data ||
             new QBlockchainData({
@@ -355,10 +384,7 @@ export default class TONQServer {
                     "slow",
                 ),
                 blockBocProvider: createBocProvider(this.config.blockBocs),
-                accountProvider: createAccountProvider(
-                    this.logs,
-                    this.config.accountProvider,
-                ),
+                accountProvider: accountProvider,
                 isTests: false,
                 subscriptionsMode: this.config.subscriptionsMode,
                 filterConfig: this.config.queries.filter,
