@@ -348,7 +348,7 @@ export default class TONQServer {
         this.server = http.createServer(this.app)
         const providers = new DataProviderFactory(this.config, this.logs)
 
-        let accountProvider: IAccountProvider
+        let accountProvider: IAccountProvider | undefined
         if (options.config.requests.mode == "tcpadnl") {
             if (!this.liteclient) {
                 throw new Error("liteclient must be set")
@@ -364,10 +364,6 @@ export default class TONQServer {
                 this.logs,
                 this.config.accountProvider,
             )
-
-            if (!provider) {
-                throw new Error("account provider can't be inited")
-            }
 
             accountProvider = provider
         }
