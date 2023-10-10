@@ -176,6 +176,10 @@ export class LiteServerProvider implements IAccountProvider {
         const awaited = await this.getAccountsWithParams(accounts)
 
         for (const acc of awaited) {
+            if (acc.state.length == 0) {
+                continue
+            }
+
             const address = acc.address.toRawString().toLowerCase()
             const b64State = acc.state.toString("base64")
             resolved.set(address, b64State)
@@ -189,6 +193,10 @@ export class LiteServerProvider implements IAccountProvider {
         const awaited = await this.getAccountsWithParams(accounts)
 
         for (const acc of awaited) {
+            if (acc.state.length == 0) {
+                continue
+            }
+
             const boc = acc.state.toString("base64")
             const address = acc.address.toRawString().toLowerCase()
             const parsed = (await this.sdkboc.parse_account({ boc })).parsed
