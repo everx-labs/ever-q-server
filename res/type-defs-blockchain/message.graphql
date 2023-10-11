@@ -101,4 +101,8 @@ type BlockchainMessage implements Node {
 	value(format: BigIntFormat): String
 	"May or may not be present."
 	value_other: [OtherCurrency]
+    "Code hash of the transaction that has sent this message."
+    src_code_hash: String
+    "Code hash of the transaction that has received this message."
+    dst_code_hash: String
 }

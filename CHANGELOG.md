@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.66.0] - 2023-09-29
+
+### New
+
+- Added fields: `BlockchainMessage { src_code_hash  dst_code_hash }`, `BlockchainTransaction { code_hash }`,
+  `Message { src_code_hash dst_code_hash } `, `Transaction { code_hash }`.
+- Added arguments: `blockchain.messages(srcCodeHash, srcCodeHash)`, `blockchain.transactions(codeHash)`.
+- In `TCP_ADNL` request mode Q-Server uses TON LiteServer API as an account provider.
+
 ## [0.65.4] - 2023-09-29
 
 ### New

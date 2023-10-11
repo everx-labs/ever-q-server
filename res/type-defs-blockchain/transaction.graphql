@@ -106,4 +106,9 @@ type BlockchainTransaction implements Node {
 	tt: String
 	"Workchain id of the account address (account_addr field)"
 	workchain_id: Int
+    """
+    Code hash of the account before transaction execution.
+    If an account was not activated before execution then this field contains code hash after account execution.
+    """
+    code_hash: String
 }

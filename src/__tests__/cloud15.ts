@@ -397,3 +397,42 @@ test("cloud15.s3-bucket-names", () => {
     expect(buckets).toStrictEqual(expected)
     expect(bucketName("file", "foo", 0)).toBe("foo")
 })
+
+test("cloud15.code_hash", async () => {
+    const test = await TestSetup.create({})
+
+    const expectCodeHash = (addr: string, hash: string) => {
+        const acc = accounts.find(x => x._key === addr)
+        if (acc) {
+            expect(hash).toBe(acc.code_hash)
+        }
+    }
+
+    const trs = (await test.query(`transactions { account_addr code_hash }`))
+        .transactions
+    for (const tr of trs) {
+        expectCodeHash(tr.account_addr, tr.code_hash)
+    }
+
+    const msgs = (
+        await test.query(`messages { src dst src_code_hash dst_code_hash }`)
+    ).messages
+    for (const msg of msgs) {
+        expectCodeHash(msg.src, msg.src_code_hash)
+        expectCodeHash(msg.dst, msg.dst_code_hash)
+    }
+
+    const trs2 = (
+        await test.queryBlockchain(
+            `transactions(code_hash:"80d6c47c4a25543c9b397b71716f3fae1e2c5d247174c52e2c19bd896442b105") { edges { node { code_hash } } }`,
+        )
+    ).transactions.edges
+    expect(trs2.length).toBeGreaterThan(0)
+    for (const tr2 of trs2) {
+        expect(tr2.node.code_hash).toBe(
+            "80d6c47c4a25543c9b397b71716f3fae1e2c5d247174c52e2c19bd896442b105",
+        )
+    }
+
+    await test.close()
+})

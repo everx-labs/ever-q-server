@@ -154,6 +154,9 @@ export async function resolve_blockchain_transactions(
     if (isDefined(args.workchain)) {
         filters.push(`doc.workchain_id == @${params.add(args.workchain)}`)
     }
+    if (isDefined(args.code_hash)) {
+        filters.push(`doc.code_hash == @${params.add(args.code_hash)}`)
+    }
     if (isDefined(args.min_balance_delta)) {
         const min_balance_delta = convertBigUInt(2, args.min_balance_delta)
         filters.push(`doc.balance_delta >= @${params.add(min_balance_delta)}`)

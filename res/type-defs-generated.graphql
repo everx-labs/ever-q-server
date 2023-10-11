@@ -910,16 +910,16 @@ type ZerostateAccounts {
 	cells(format: BigIntFormat): String
 	"""
 	If present, contains smart-contract code encoded with in base64.
-	```  
+	```
 	{
 	  accounts (filter:{code:{eq:null}}){
 	    id
 	    acc_type
 	  }
-	}   
-	```          
-	        
-	        
+	}
+	```
+	
+	
 	        
 	"""
 	code: String
@@ -958,7 +958,7 @@ type ZerostateAccounts {
 	  id
 	  last_paid}
 	}
-	```     
+	```
 	                
 	"""
 	last_paid: Float
@@ -980,7 +980,7 @@ type ZerostateAccounts {
 	tick: Boolean
 	"""
 	May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
-	```        
+	```
 	{
 	  accounts (filter:{tock:{ne:null}}){
 	    id
@@ -1061,16 +1061,16 @@ type Account {
 	cells(format: BigIntFormat): String
 	"""
 	If present, contains smart-contract code encoded with in base64.
-	```  
+	```
 	{
 	  accounts (filter:{code:{eq:null}}){
 	    id
 	    acc_type
 	  }
-	}   
-	```          
-	        
-	        
+	}
+	```
+	
+	
 	        
 	"""
 	code: String
@@ -1109,7 +1109,7 @@ type Account {
 	  id
 	  last_paid}
 	}
-	```     
+	```
 	                
 	"""
 	last_paid: Float
@@ -1131,7 +1131,7 @@ type Account {
 	tick: Boolean
 	"""
 	May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
-	```        
+	```
 	{
 	  accounts (filter:{tock:{ne:null}}){
 	    id
@@ -1156,7 +1156,7 @@ type Transaction {
 	action: TransactionAction
 	"""
 	Account balance change after the transaction.
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	
 	The formula is:
@@ -1165,7 +1165,7 @@ type Transaction {
 	balance_delta(format: BigIntFormat): String
 	"""
 	Account balance change after the transaction.
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	
 	The formula is:
@@ -1178,6 +1178,8 @@ type Transaction {
 	bounce: TransactionBounce
 	"Collection-unique field for pagination and sorting. This field is designed to retain logical order."
 	chain_order: String
+	"Code hash of the account before transaction execution. If an account was not activated before execution then this field contains code hash after account execution."
+	code_hash: String
 	compute: TransactionCompute
 	credit: TransactionCredit
 	credit_first: Boolean
@@ -1236,8 +1238,8 @@ type Transaction {
 	status_name: TransactionProcessingStatusEnum
 	storage: TransactionStorage
 	"""
-	Total amount of fees collected by the validators. 
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Total amount of fees collected by the validators.
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	The formula is:
 	total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
@@ -1306,6 +1308,8 @@ type Message {
 	dst_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
 	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
 	dst_chain_order: String
+	"Code hash of the transaction that has received this message."
+	dst_code_hash: String
 	dst_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: Int
@@ -1339,6 +1343,8 @@ type Message {
 	src_account(timeout: Int, "**DEPRECATED**" when: MessageFilter): Account
 	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
 	src_chain_order: String
+	"Code hash of the transaction that has sent this message."
+	src_code_hash: String
 	src_transaction(timeout: Int, "**DEPRECATED**" when: MessageFilter): Transaction
 	"Workchain id of the source address (src field)"
 	src_workchain_id: Int
@@ -2404,16 +2410,16 @@ input ZerostateAccountsFilter {
 	cells: StringFilter
 	"""
 	If present, contains smart-contract code encoded with in base64.
-	```  
+	```
 	{
 	  accounts (filter:{code:{eq:null}}){
 	    id
 	    acc_type
 	  }
-	}   
-	```          
-	        
-	        
+	}
+	```
+	
+	
 	        
 	"""
 	code: StringFilter
@@ -2452,7 +2458,7 @@ input ZerostateAccountsFilter {
 	  id
 	  last_paid}
 	}
-	```     
+	```
 	                
 	"""
 	last_paid: FloatFilter
@@ -2474,7 +2480,7 @@ input ZerostateAccountsFilter {
 	tick: BooleanFilter
 	"""
 	May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
-	```        
+	```
 	{
 	  accounts (filter:{tock:{ne:null}}){
 	    id
@@ -2557,16 +2563,16 @@ input AccountFilter {
 	cells: StringFilter
 	"""
 	If present, contains smart-contract code encoded with in base64.
-	```  
+	```
 	{
 	  accounts (filter:{code:{eq:null}}){
 	    id
 	    acc_type
 	  }
-	}   
-	```          
-	        
-	        
+	}
+	```
+	
+	
 	        
 	"""
 	code: StringFilter
@@ -2605,7 +2611,7 @@ input AccountFilter {
 	  id
 	  last_paid}
 	}
-	```     
+	```
 	                
 	"""
 	last_paid: FloatFilter
@@ -2627,7 +2633,7 @@ input AccountFilter {
 	tick: BooleanFilter
 	"""
 	May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
-	```        
+	```
 	{
 	  accounts (filter:{tock:{ne:null}}){
 	    id
@@ -2685,7 +2691,7 @@ input TransactionFilter {
 	action: TransactionActionFilter
 	"""
 	Account balance change after the transaction.
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	
 	The formula is:
@@ -2694,7 +2700,7 @@ input TransactionFilter {
 	balance_delta: StringFilter
 	"""
 	Account balance change after the transaction.
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	
 	The formula is:
@@ -2707,6 +2713,8 @@ input TransactionFilter {
 	bounce: TransactionBounceFilter
 	"Collection-unique field for pagination and sorting. This field is designed to retain logical order."
 	chain_order: StringFilter
+	"Code hash of the account before transaction execution. If an account was not activated before execution then this field contains code hash after account execution."
+	code_hash: StringFilter
 	compute: TransactionComputeFilter
 	credit: TransactionCreditFilter
 	credit_first: BooleanFilter
@@ -2764,8 +2772,8 @@ input TransactionFilter {
 	status_name: TransactionProcessingStatusEnumFilter
 	storage: TransactionStorageFilter
 	"""
-	Total amount of fees collected by the validators. 
-	Because fwd_fee is collected by the validators of the receiving shard, 
+	Total amount of fees collected by the validators.
+	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 	The formula is:
 	total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
@@ -2856,6 +2864,8 @@ input MessageFilter {
 	dst_account: AccountFilter
 	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
 	dst_chain_order: StringFilter
+	"Code hash of the transaction that has received this message."
+	dst_code_hash: StringFilter
 	dst_transaction: TransactionFilter
 	"Workchain id of the destination address (dst field)"
 	dst_workchain_id: IntFilter
@@ -2889,6 +2899,8 @@ input MessageFilter {
 	src_account: AccountFilter
 	"Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message)."
 	src_chain_order: StringFilter
+	"Code hash of the transaction that has sent this message."
+	src_code_hash: StringFilter
 	src_transaction: TransactionFilter
 	"Workchain id of the source address (src field)"
 	src_workchain_id: IntFilter
