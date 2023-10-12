@@ -239,6 +239,8 @@ const Message: TypeDef = {
     master_seq_no: u32(docs.message.master_seq_no),
     src_chain_order: stringWithLowerFilter(docs.message.chain_order),
     dst_chain_order: stringWithLowerFilter(docs.message.chain_order),
+    src_code_hash: stringWithLowerFilter(docs.message.src_code_hash),
+    dst_code_hash: stringWithLowerFilter(docs.message.dst_code_hash),
 }
 
 const Transaction: TypeDef = {
@@ -359,6 +361,7 @@ const Transaction: TypeDef = {
         docs.transaction.balance_delta,
     ),
     chain_order: stringWithLowerFilter(docs.transaction.chain_order),
+    code_hash: stringWithLowerFilter(docs.transaction.code_hash),
     ext_in_msg_fee: grams(docs.transaction.ext_in_msg_fee),
     master_seq_no: u32(docs.transaction.master_seq_no),
     trace: arrayOf({

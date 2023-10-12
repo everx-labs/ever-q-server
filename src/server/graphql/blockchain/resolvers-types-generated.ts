@@ -790,6 +790,8 @@ export type BlockchainMessage = Node & {
     /** The destination account */
     dst_account?: Maybe<BlockchainAccount>
     dst_chain_order?: Maybe<Scalars["String"]>
+    /** Code hash of the transaction that has received this message. */
+    dst_code_hash?: Maybe<Scalars["String"]>
     /** The transaction in which this message is in_msg */
     dst_transaction?: Maybe<BlockchainTransaction>
     /** Workchain id of the destination address (dst field) */
@@ -830,6 +832,8 @@ export type BlockchainMessage = Node & {
     /** The source account */
     src_account?: Maybe<BlockchainAccount>
     src_chain_order?: Maybe<Scalars["String"]>
+    /** Code hash of the transaction that has sent this message. */
+    src_code_hash?: Maybe<Scalars["String"]>
     /** The transaction in which this message is included to out_msgs */
     src_transaction?: Maybe<BlockchainTransaction>
     /** Workchain id of the source address (src field) */
@@ -1064,6 +1068,7 @@ export type BlockchainQueryTransactionsArgs = {
     workchain?: Maybe<Scalars["Int"]>
     min_balance_delta?: Maybe<Scalars["String"]>
     max_balance_delta?: Maybe<Scalars["String"]>
+    code_hash?: Maybe<Scalars["String"]>
     first?: Maybe<Scalars["Int"]>
     after?: Maybe<Scalars["String"]>
     last?: Maybe<Scalars["Int"]>
@@ -1097,6 +1102,11 @@ export type BlockchainTransaction = Node & {
     bounce?: Maybe<TransactionBounce>
     /** Collection-unique field for pagination and sorting. This field is designed to retain logical order. */
     chain_order?: Maybe<Scalars["String"]>
+    /**
+     * Code hash of the account before transaction execution.
+     * If an account was not activated before execution then this field contains code hash after account execution.
+     */
+    code_hash?: Maybe<Scalars["String"]>
     compute?: Maybe<TransactionCompute>
     credit?: Maybe<TransactionCredit>
     credit_first?: Maybe<Scalars["Boolean"]>
@@ -3228,6 +3238,11 @@ export type BlockchainMessageResolvers<
         ParentType,
         ContextType
     >
+    dst_code_hash?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
     dst_transaction?: Resolver<
         Maybe<ResolversTypes["BlockchainTransaction"]>,
         ParentType,
@@ -3298,6 +3313,11 @@ export type BlockchainMessageResolvers<
         ContextType
     >
     src_chain_order?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    src_code_hash?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType
@@ -3501,6 +3521,11 @@ export type BlockchainTransactionResolvers<
         ContextType
     >
     chain_order?: Resolver<
+        Maybe<ResolversTypes["String"]>,
+        ParentType,
+        ContextType
+    >
+    code_hash?: Resolver<
         Maybe<ResolversTypes["String"]>,
         ParentType,
         ContextType

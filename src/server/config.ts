@@ -615,7 +615,21 @@ export function resolveConfig(
             config.blockchain.blocks.cold[0] ??
             ""
     }
+    checkConfig(config)
     return config
+}
+
+function checkConfig(config: QConfig) {
+    const useArchive =
+        config.blockchain.blocks.archive.length > 0 ||
+        config.blockchain.transactions.archive.length > 0
+    if (useArchive) {
+        if (config.blockBocs.s3?.endpoint ?? "" === "") {
+            throw QError.invalidConfig(
+                "Missing block boc provider in archive mode.",
+            )
+        }
+    }
 }
 
 function checkEnum(
