@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### New
 
+- Added config file invariant checking for Cloud 1.5.
 - Added fields: `BlockchainMessage { src_code_hash  dst_code_hash }`, `BlockchainTransaction { code_hash }`,
   `Message { src_code_hash dst_code_hash } `, `Transaction { code_hash }`.
 - Added arguments: `blockchain.messages(srcCodeHash, srcCodeHash)`, `blockchain.transactions(codeHash)`.
