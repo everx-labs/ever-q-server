@@ -345,6 +345,7 @@ export default class TONQServer {
         )
         this.endPoints = []
         this.app = express()
+        this.app.use(express.json({ limit: "50mb" }))
         this.server = http.createServer(this.app)
         const providers = new DataProviderFactory(this.config, this.logs)
 

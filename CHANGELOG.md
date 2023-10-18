@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Account provider JSON RPC terminated a process in case of request timeout.
+- GraphQL queries with body more than 100KB was failed with `PayloadTooLargeError: request entity too large`.
+  The size of the body is increased up to 50MB.
 
 ## [0.65.4] - 2023-09-29
 
