@@ -2,14 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.66.0] - 2023-09-29
+## [0.66.0] - 2023-10-18
 
 ### New
 
-- Added config file invariant checking for Cloud 1.5.
 - Added fields: `BlockchainMessage { src_code_hash  dst_code_hash }`, `BlockchainTransaction { code_hash }`,
   `Message { src_code_hash dst_code_hash } `, `Transaction { code_hash }`.
-- Added arguments: `blockchain.messages(srcCodeHash, srcCodeHash)`, `blockchain.transactions(codeHash)`.
+- Added arguments: `blockchain.messages(src_сode_рash, src_сode_рash)`, `blockchain.transactions(code_рash)`.
 - In `TCP_ADNL` request mode Q-Server uses TON LiteServer API as an account provider.
 
 ### Fixed
