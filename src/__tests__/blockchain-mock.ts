@@ -320,6 +320,19 @@ export class TestSetup {
         ).data
     }
 
+    async mutate(mutation: string) {
+        try {
+            return (
+                await this.client.mutate({
+                    mutation: gql(`mutation { ${mutation} }`),
+                })
+            ).data
+        } catch (err) {
+            console.log(">>>", JSON.stringify(err, undefined, 4))
+            throw err
+        }
+    }
+
     nodeRpcStat() {
         return (
             this.accountProvider?.stat ?? {
