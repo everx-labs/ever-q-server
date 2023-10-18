@@ -23,7 +23,7 @@ You can configure Q Server with command line parameters and/or ENV variables:
 
 ```text
 Option                                          ENV                                             Default                                 Description
-----------------------------------------------  ----------------------------------------------  --------------------------------------  --------------------------------------------------------------------------------------
+----------------------------------------------  ----------------------------------------------  --------------------------------------  -------------------------------------------------------------------------------------------------------------------------------
 --config                                        Q_CONFIG                                                                                Path to JSON configuration file
 --host                                          Q_HOST                                          {ip}                                    Listening address
 --port                                          Q_PORT                                          4000                                    Listening port
@@ -109,14 +109,20 @@ Option                                          ENV                             
 --block-bocs-s3-endpoint                        Q_BLOCK_BOCS_S3_ENDPOINT                                                                block-bocs S3 endpoint
 --block-bocs-s3-region                          Q_BLOCK_BOCS_S3_REGION                                                                  block-bocs S3 region
 --block-bocs-s3-bucket                          Q_BLOCK_BOCS_S3_BUCKET                          everblocks                              block-bocs S3 bucket
+--block-bocs-s3-num-buckets                     Q_BLOCK_BOCS_S3_NUM_BUCKETS                     0                                       block-bocs S3 number of buckets (if specified and > 0, then bucket name will be equal to `{bucket}-{crc32(file) % numBuckets}`)
 --block-bocs-s3-access-key                      Q_BLOCK_BOCS_S3_ACCESS_KEY                                                              block-bocs S3 access key
 --block-bocs-s3-secret-key                      Q_BLOCK_BOCS_S3_SECRET_KEY                                                              block-bocs S3 secret key
+--block-bocs-s3-timeout                         Q_BLOCK_BOCS_S3_TIMEOUT                         300000                                  block-bocs S3 request timeout in millis
 --block-bocs-pattern                            Q_BLOCK_BOCS_PATTERN                                                                    block-bocs BOC retrieval url pattern. `{hash} will be replaced with BOC's hash
---block-bocs-arango-database                    Q_BLOCK_BOCS_ARANGO_DATABASE                                                            block-bocs Arango database URL
+--block-bocs-arango-database                    Q_BLOCK_BOCS_ARANGO_DATABASE                                                            block-bocs Arango database
 --block-bocs-arango-collection                  Q_BLOCK_BOCS_ARANGO_COLLECTION                  blocks                                  block-bocs Arango collection
+--accounts-evernode-rpc-endpoint                Q_ACCOUNTS_EVERNODE_RPC_ENDPOINT                                                        Accounts Evernode RPC endpoint
+--accounts-evernode-rpc-timeout                 Q_ACCOUNTS_EVERNODE_RPC_TIMEOUT                 300000                                  Accounts Evernode RPC timeout in millis
 --jaeger-endpoint                               Q_JAEGER_ENDPOINT                                                                       Jaeger endpoint
 --trace-service                                 Q_TRACE_SERVICE                                 Q Server                                Trace service name
 --trace-tags                                    Q_TRACE_TAGS                                                                            Additional trace tags (comma separated name=value pairs)
+--last-key-block-cache-enabled                  Q_LAST_KEY_BLOCK_CACHE_ENABLED                  true                                    Last key block cache enabled
+--last-key-block-cache-ttl-ms                   Q_LAST_KEY_BLOCK_CACHE_TTL_MS                   300000                                  Last key block cache TTL in millis
 --statsd-server                                 Q_STATSD_SERVER                                                                         StatsD server (host:port)
 --statsd-tags                                   Q_STATSD_TAGS                                                                           Additional StatsD tags (comma separated name=value pairs)
 --statsd-reset-interval                         Q_STATSD_RESET_INTERVAL                         0                                       Interval between statsd reconnects.

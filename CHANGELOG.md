@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
 - Added arguments: `blockchain.messages(srcCodeHash, srcCodeHash)`, `blockchain.transactions(codeHash)`.
 - In `TCP_ADNL` request mode Q-Server uses TON LiteServer API as an account provider.
 
+### Fixed
+
+- Account provider JSON RPC terminated a process in case of request timeout.
+
 ## [0.65.4] - 2023-09-29
 
 ### New

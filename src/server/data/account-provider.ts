@@ -1,12 +1,11 @@
 import { QAccountProviderConfig } from "../config"
-import { RequestManager, HTTPTransport, Client } from "@open-rpc/client-js"
 import { LiteClient, QueryArgs } from "ton-lite-client"
 import { Address } from "@ton/core"
 import QLogs, { QLog } from "../logs"
-import { RequestArguments } from "@open-rpc/client-js/build/ClientInterface"
 import { DEFAULT_TIMEOUT_MS } from "../config-param"
 import { Functions } from "ton-lite-client/dist/schema"
 import { BocModule } from "@eversdk/core"
+import { IJsonRpcClient, OpenJsonRpcClient } from "../json-rpc"
 
 export type QueryAccountParams = {
     address: string
@@ -18,25 +17,18 @@ export interface IAccountProvider {
     getMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>>
 }
 
-function nodeRequest(
-    method: string,
-    account: QueryAccountParams,
-): RequestArguments {
-    const request = {
-        method,
-        params: {
-            account: account.address,
-        },
-    }
-    if (account.byBlock !== undefined && account.byBlock !== null) {
-        ;(request.params as any).byBlock = account.byBlock
-    }
-    return request
+function getAccountParams(account: QueryAccountParams): any {
+    return account.byBlock !== undefined && account.byBlock !== null
+        ? {
+              account: account.address,
+              byBlock: account.byBlock,
+          }
+        : { account: account.address }
 }
 
 class NodeRpcProvider implements IAccountProvider {
     log: QLog
-    client: Client
+    client: IJsonRpcClient
     constructor(
         logs: QLogs,
         public config: {
@@ -44,9 +36,13 @@ class NodeRpcProvider implements IAccountProvider {
             timeout: number
         },
     ) {
-        const transport = new HTTPTransport(config.endpoint)
-        this.client = new Client(new RequestManager([transport]))
         this.log = logs.create("NodeRpcClient")
+        this.client = new OpenJsonRpcClient(
+            this.log,
+            "Node RPC account",
+            config.endpoint,
+            config.timeout,
+        )
     }
     async getBocs(
         accounts: QueryAccountParams[],
@@ -55,8 +51,8 @@ class NodeRpcProvider implements IAccountProvider {
         // TODO: fetch bocs in parallel
         for (const account of accounts) {
             const result = await this.client.request(
-                nodeRequest("getAccountBoc", account),
-                this.config.timeout,
+                "getAccountBoc",
+                getAccountParams(account),
             )
             if (result?.boc ?? "" !== "") {
                 resolved.set(account.address, result.boc)
@@ -71,7 +67,8 @@ class NodeRpcProvider implements IAccountProvider {
         // TODO: fetch bocs in parallel
         for (const account of accounts) {
             const result = await this.client.request(
-                nodeRequest("getAccountMeta", account),
+                "getAccountMeta",
+                getAccountParams(account),
             )
             if (result?.meta ?? "" !== "") {
                 resolved.set(account.address, result.meta)
