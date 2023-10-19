@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - Added fields: `BlockchainMessage { src_code_hash  dst_code_hash }`, `BlockchainTransaction { code_hash }`,
   `Message { src_code_hash dst_code_hash } `, `Transaction { code_hash }`.
-- Added arguments: `blockchain.messages(src_сode_рash, src_сode_рash)`, `blockchain.transactions(code_рash)`.
+- Added arguments: `blockchain.messages(src_code_hash dst_code_hash)`, `blockchain.transactions(code_hash)`.
 - In `TCP_ADNL` request mode Q-Server uses TON LiteServer API as an account provider.
 
 ### Fixed
