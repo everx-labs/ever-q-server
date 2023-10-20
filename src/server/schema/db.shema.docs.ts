@@ -37,7 +37,7 @@ query{
   id
   last_paid}
 }
-\`\`\`     
+\`\`\`
                 `,
         bits: "Contains sum of all the bits used by the cells of the account. Used in storage fee calculation",
         cells: "Contains number of the cells of the account. Used in storage fee calculation",
@@ -69,7 +69,7 @@ If present, accumulates the storage payments that could not be exacted from the 
             "Is present and non-zero only in instances of large smart contracts.",
         tick: "May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.",
         tock: `May be present only in the masterchain—and within the masterchain, only in some fundamental smart contracts required for the whole system to function.
-\`\`\`        
+\`\`\`
 {
   accounts (filter:{tock:{ne:null}}){
     id
@@ -80,16 +80,16 @@ If present, accumulates the storage payments that could not be exacted from the 
 \`\`\`
         `,
         code: `If present, contains smart-contract code encoded with in base64.
-\`\`\`  
+\`\`\`
 {
   accounts (filter:{code:{eq:null}}){
     id
     acc_type
   }
-}   
-\`\`\`          
-        
-        
+}
+\`\`\`
+
+
         `,
         code_hash: "`code` field root hash.",
         data: "If present, contains smart-contract data encoded with in base64.",
@@ -147,6 +147,10 @@ destination smart contract. It can be queried with the following fields:`,
         boc: "A bag of cells with the message structure encoded as base64.",
         chain_order:
             "Collection-unique field for pagination and sorting. This field is designed to retain logical output order (for logical input order use transaction.in_message).",
+        src_code_hash:
+            "Code hash of the transaction that has sent this message.",
+        dst_code_hash:
+            "Code hash of the transaction that has received this message.",
         master_seq_no:
             "seq_no of masterchain block which commited shard block containing the message",
     },
@@ -176,8 +180,8 @@ destination smart contract. It can be queried with the following fields:`,
         out_msgs:
             "Dictionary of transaction outbound messages as specified in the specification",
         out_messages: "",
-        total_fees: `Total amount of fees collected by the validators. 
-Because fwd_fee is collected by the validators of the receiving shard, 
+        total_fees: `Total amount of fees collected by the validators.
+Because fwd_fee is collected by the validators of the receiving shard,
 total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 The formula is:
 total_fees = in_msg.value - balance_delta - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
@@ -275,13 +279,15 @@ If there is no reason to skip the computing phase, TVM is invoked and the result
         proof: "",
         boc: "",
         balance_delta: `Account balance change after the transaction.
-Because fwd_fee is collected by the validators of the receiving shard, 
+Because fwd_fee is collected by the validators of the receiving shard,
 total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
 
 The formula is:
 balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])`,
         chain_order:
             "Collection-unique field for pagination and sorting. This field is designed to retain logical order.",
+        code_hash:
+            "Code hash of the account before transaction execution. If an account was not activated before execution then this field contains code hash after account execution.",
         ext_in_msg_fee: "Fee for inbound external message import.",
         master_seq_no:
             "seq_no of masterchain block which commited shard block containing the transaction",

@@ -657,6 +657,7 @@ const Transaction = struct(
         boc: scalar,
         bounce: TransactionBounce,
         chain_order: stringLowerFilter,
+        code_hash: stringLowerFilter,
         compute: TransactionCompute,
         credit: TransactionCredit,
         credit_first: scalar,
@@ -749,6 +750,7 @@ const Message = struct(
         dst: addressFilter,
         dst_account: join("dst", "id", "accounts", ["msg_type"], () => Account),
         dst_chain_order: stringLowerFilter,
+        dst_code_hash: stringLowerFilter,
         dst_transaction: join(
             "id",
             "in_msg",
@@ -775,6 +777,7 @@ const Message = struct(
         src: addressFilter,
         src_account: join("src", "id", "accounts", ["msg_type"], () => Account),
         src_chain_order: stringLowerFilter,
+        src_code_hash: stringLowerFilter,
         src_transaction: join(
             "id",
             "out_msgs[*]",
@@ -1712,6 +1715,10 @@ scalarFields.set("transactions.chain_order", {
     type: "string",
     path: "doc.chain_order",
 })
+scalarFields.set("transactions.code_hash", {
+    type: "string",
+    path: "doc.code_hash",
+})
 scalarFields.set("transactions.compute.account_activated", {
     type: "boolean",
     path: "doc.compute.account_activated",
@@ -1950,6 +1957,10 @@ scalarFields.set("messages.dst_chain_order", {
     type: "string",
     path: "doc.dst_chain_order",
 })
+scalarFields.set("messages.dst_code_hash", {
+    type: "string",
+    path: "doc.dst_code_hash",
+})
 scalarFields.set("messages.dst_workchain_id", {
     type: "number",
     path: "doc.dst_workchain_id",
@@ -1982,6 +1993,10 @@ scalarFields.set("messages.src", { type: "string", path: "doc.src" })
 scalarFields.set("messages.src_chain_order", {
     type: "string",
     path: "doc.src_chain_order",
+})
+scalarFields.set("messages.src_code_hash", {
+    type: "string",
+    path: "doc.src_code_hash",
 })
 scalarFields.set("messages.src_workchain_id", {
     type: "number",
