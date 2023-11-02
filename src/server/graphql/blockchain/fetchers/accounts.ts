@@ -15,7 +15,7 @@ import {
     BlockchainAccount,
     BlockchainAccountQueryInfoArgs,
 } from "../resolvers-types-generated"
-import { IAccountProvider } from "../../../data/account-provider"
+import { INodeClient } from "../../../data/node-client"
 import { BocModule } from "@eversdk/core"
 
 type DbDocFields = {
@@ -73,9 +73,9 @@ export async function resolve_account(
         selections: [],
     }
     let queryResult: BlockchainAccount[]
-    const provider = context.services.data.accountProvider
+    const provider = context.services.data.nodeClient
     if (provider) {
-        queryResult = await queryAccountProvider(
+        queryResult = await queryNode(
             address,
             byBlock,
             selectionSet,
@@ -137,11 +137,11 @@ export async function resolve_account(
     return queryResult[0]
 }
 
-async function queryAccountProvider(
+async function queryNode(
     address: string,
     byBlock: string | undefined | null,
     selection: SelectionSetNode,
-    provider: IAccountProvider,
+    provider: INodeClient,
     sdk: BocModule,
 ): Promise<BlockchainAccount[]> {
     let bocRequested = false
@@ -168,7 +168,7 @@ async function queryAccountProvider(
     }
     let result: BlockchainAccount | undefined = undefined
     if (bocRequested || dataRequested || codeRequested) {
-        const bocs = await provider.getBocs([{ address, byBlock }])
+        const bocs = await provider.getAccountBocs([{ address, byBlock }])
         const boc = bocs.get(address)
         if (boc) {
             if (dataRequested || codeRequested || metaRequested) {
@@ -178,7 +178,7 @@ async function queryAccountProvider(
             }
         }
     } else if (metaRequested) {
-        const metas = await provider.getMetas([{ address, byBlock }])
+        const metas = await provider.getAccountMetas([{ address, byBlock }])
         const meta = metas.get(address)
         if (meta) {
             meta.id = meta.address

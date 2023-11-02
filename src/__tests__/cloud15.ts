@@ -147,7 +147,7 @@ test("cloud15.unavailable-account-provider", async () => {
             [testAcc._key]: mockAcc,
         },
     })
-    test.accountProvider?.server.close()
+    test.nodeClient?.server.close()
     try {
         const r = await test.queryBlockchain(
             `account(address: "${testAcc._key}") { info { boc data code } }`,

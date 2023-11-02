@@ -16,7 +16,7 @@ import { QTracer } from "../server/tracing"
 import { createTestClient, testConfig } from "./init-tests"
 import { QStats } from "../server/stats"
 import { createBocProvider } from "../server/data/boc-provider"
-import { createAccountProvider } from "../server/data/account-provider"
+import { createNodeClient } from "../server/data/node-client"
 import { cloneDeep } from "../server/utils"
 import { ApolloClient } from "apollo-client"
 import gql from "graphql-tag"
@@ -151,7 +151,7 @@ export async function startTestServer(
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         blockBocProvider: createBocProvider(config.blockBocs),
-        accountProvider: createAccountProvider(logs, config.accountProvider),
+        nodeClient: createNodeClient(logs, config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
@@ -276,21 +276,21 @@ export class TestSetup {
     constructor(
         public client: ApolloClient<any>,
         public server: TONQServer,
-        public accountProvider?: NodeRpcMock,
+        public nodeClient?: NodeRpcMock,
     ) {}
 
     static async create(options: TestSetupOptions): Promise<TestSetup> {
         const port = options.port ?? 1
         const serverPort = 5000 + port
-        const accountProviderPort = 6000 + port
-        const accountProvider = options.accounts
-            ? startNodeRpcMock(accountProviderPort, options.accounts)
+        const nodeRpcPort = 6000 + port
+        const nodeClient = options.accounts
+            ? startNodeRpcMock(nodeRpcPort, options.accounts)
             : undefined
         const server = await startTestServer(x => {
             x.server.port = serverPort
             if (options.accounts) {
                 x.accountProvider.evernodeRpc = {
-                    endpoint: `http://localhost:${accountProviderPort}`,
+                    endpoint: `http://localhost:${nodeRpcPort}`,
                 }
             }
             const archive =
@@ -305,7 +305,7 @@ export class TestSetup {
             port: serverPort,
         })
         server.logs.start()
-        return new TestSetup(client, server, accountProvider)
+        return new TestSetup(client, server, nodeClient)
     }
 
     async queryBlockchain(query: string) {
@@ -335,7 +335,7 @@ export class TestSetup {
 
     nodeRpcStat() {
         return (
-            this.accountProvider?.stat ?? {
+            this.nodeClient?.stat ?? {
                 getAccountBoc: 0,
                 getAccountMeta: 0,
             }
@@ -344,8 +344,8 @@ export class TestSetup {
     async close(): Promise<void> {
         await this.client.stop()
         await this.server.stop()
-        if (this.accountProvider) {
-            this.accountProvider.server.close()
+        if (this.nodeClient) {
+            this.nodeClient.server.close()
         }
     }
 }

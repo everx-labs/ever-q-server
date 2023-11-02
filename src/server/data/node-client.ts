@@ -12,9 +12,20 @@ export type QueryAccountParams = {
     byBlock?: string | null
 }
 
-export interface IAccountProvider {
-    getBocs(accounts: QueryAccountParams[]): Promise<Map<string, string>>
-    getMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>>
+export type RunTvmExtMsgResult = {
+    exitCode: number
+    messages: string[]
+    byBlock: string
+}
+
+export interface INodeClient {
+    getAccountBocs(accounts: QueryAccountParams[]): Promise<Map<string, string>>
+    getAccountMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>>
+    runTvmExtMsg(
+        address: string,
+        body: string,
+        byBlock?: string,
+    ): Promise<RunTvmExtMsgResult>
 }
 
 function getAccountParams(account: QueryAccountParams): any {
@@ -26,7 +37,7 @@ function getAccountParams(account: QueryAccountParams): any {
         : { account: account.address }
 }
 
-class NodeRpcProvider implements IAccountProvider {
+class NodeRpcClient implements INodeClient {
     log: QLog
     client: IJsonRpcClient
     constructor(
@@ -44,7 +55,27 @@ class NodeRpcProvider implements IAccountProvider {
             config.timeout,
         )
     }
-    async getBocs(
+
+    async runTvmExtMsg(
+        address: string,
+        body: string,
+        byBlock?: string,
+    ): Promise<RunTvmExtMsgResult> {
+        const result = await this.client.request(
+            "runTvmExtMsg",
+            byBlock !== undefined && byBlock !== null
+                ? {
+                      address,
+                      body,
+                      byBlock,
+                  }
+                : { address, body },
+        )
+        this.log.debug("RUN_TVM_EXT_MSG", address, byBlock)
+        return result
+    }
+
+    async getAccountBocs(
         accounts: QueryAccountParams[],
     ): Promise<Map<string, string>> {
         const resolved = new Map()
@@ -62,7 +93,9 @@ class NodeRpcProvider implements IAccountProvider {
         return resolved
     }
 
-    async getMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>> {
+    async getAccountMetas(
+        accounts: QueryAccountParams[],
+    ): Promise<Map<string, any>> {
         const resolved = new Map()
         // TODO: fetch bocs in parallel
         for (const account of accounts) {
@@ -86,7 +119,7 @@ interface StateWithAddress {
     address: Address
 }
 
-export class LiteServerProvider implements IAccountProvider {
+export class LiteServerClient implements INodeClient {
     log: QLog
     sdkboc: BocModule
     client: LiteClient
@@ -102,6 +135,14 @@ export class LiteServerProvider implements IAccountProvider {
         this.sdkboc = sdkboc
         this.client = client
         this.timeout = timeout
+    }
+
+    runTvmExtMsg(
+        _address: string,
+        _body: string,
+        _byBlock?: string,
+    ): Promise<RunTvmExtMsgResult> {
+        throw new Error("Method not implemented.")
     }
 
     private async getAccountStateBoc(
@@ -166,7 +207,7 @@ export class LiteServerProvider implements IAccountProvider {
         return Promise.all(results)
     }
 
-    async getBocs(
+    async getAccountBocs(
         accounts: QueryAccountParams[],
     ): Promise<Map<string, string>> {
         const resolved = new Map()
@@ -185,7 +226,9 @@ export class LiteServerProvider implements IAccountProvider {
         return resolved
     }
 
-    async getMetas(accounts: QueryAccountParams[]): Promise<Map<string, any>> {
+    async getAccountMetas(
+        accounts: QueryAccountParams[],
+    ): Promise<Map<string, any>> {
         const resolved = new Map()
         const awaited = await this.getAccountsWithParams(accounts)
 
@@ -205,13 +248,13 @@ export class LiteServerProvider implements IAccountProvider {
     }
 }
 
-export function createAccountProvider(
+export function createNodeClient(
     logs: QLogs,
     config: QAccountProviderConfig,
-): IAccountProvider | undefined {
+): INodeClient | undefined {
     const rpcEndpoint = config.evernodeRpc?.endpoint ?? ""
     if (rpcEndpoint !== "") {
-        return new NodeRpcProvider(logs, {
+        return new NodeRpcClient(logs, {
             endpoint: rpcEndpoint,
             timeout: config.evernodeRpc?.timeout ?? DEFAULT_TIMEOUT_MS,
         })

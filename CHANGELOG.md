@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.67.0] - 2023-10-18
+
+### New
+
+- Added query: `runTvmExtMsg`.
+
 ## [0.66.0] - 2023-10-18
 
 ### New

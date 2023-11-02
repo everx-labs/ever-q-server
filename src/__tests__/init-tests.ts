@@ -34,7 +34,7 @@ import { httpUrl, assignDeep, cloneDeep } from "../server/utils"
 import fetch from "node-fetch"
 import { QCollectionQuery } from "../server/data/collection-query"
 import { createBocProvider } from "../server/data/boc-provider"
-import { createAccountProvider } from "../server/data/account-provider"
+import { createNodeClient } from "../server/data/node-client"
 
 jest.setTimeout(100000)
 
@@ -257,7 +257,7 @@ export function createLocalArangoTestData(logs: QLogs): QBlockchainData {
         tracer: QTracer.create(testConfig),
         stats: QStats.create("", [], 0),
         blockBocProvider: createBocProvider(config.blockBocs),
-        accountProvider: createAccountProvider(logs, config.accountProvider),
+        nodeClient: createNodeClient(logs, config.accountProvider),
         isTests: true,
         subscriptionsMode: SubscriptionsMode.Arango,
         filterConfig: config.queries.filter,
