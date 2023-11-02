@@ -30,7 +30,7 @@ import type {
 } from "./data-provider"
 import { IBocProvider } from "./boc-provider"
 import { QDatabaseProvider } from "./database-provider"
-import { IAccountProvider } from "./account-provider"
+import { INodeClient } from "./node-client"
 
 export type QBlockchainDataProvider = {
     blocks?: QDataProvider
@@ -51,7 +51,7 @@ export type QDataOptions = {
     providers: QDataProviders
     slowQueriesProviders?: QBlockchainDataProvider
     blockBocProvider?: IBocProvider
-    accountProvider?: IAccountProvider
+    nodeClient?: INodeClient
     logs: QLogs
     tracer: Tracer
     stats: IStats
@@ -84,7 +84,7 @@ export default class QData {
     filterConfig: FilterConfig
     subscriptionsMode: SubscriptionsMode
     blockBocProvider?: IBocProvider
-    accountProvider?: IAccountProvider
+    nodeClient?: INodeClient
 
     // Own
     log: QLog
@@ -135,7 +135,7 @@ export default class QData {
         ])
 
         this.blockBocProvider = options.blockBocProvider
-        this.accountProvider = options.accountProvider
+        this.nodeClient = options.nodeClient
     }
 
     addCollection(

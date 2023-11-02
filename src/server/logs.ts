@@ -23,6 +23,9 @@ export interface QLog {
 }
 
 function str(arg: unknown): string {
+    if (arg === undefined || arg === null) {
+        return ""
+    }
     let s
     if (arg instanceof Error) {
         s = arg.message || arg.toString()

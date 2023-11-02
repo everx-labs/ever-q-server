@@ -75,10 +75,11 @@ import { blockBocResolvers, overrideBlockBocFilter } from "./graphql/block-boc"
 import { createBocProvider } from "./data/boc-provider"
 import { lastKeyBlockResolvers } from "./graphql/last-key-block"
 import {
-    IAccountProvider,
-    LiteServerProvider,
-    createAccountProvider,
-} from "./data/account-provider"
+    INodeClient,
+    LiteServerClient,
+    createNodeClient,
+} from "./data/node-client"
+import { runTvmResolvers } from "./graphql/run-tvm"
 
 type QServerOptions = {
     config: QConfig
@@ -349,24 +350,22 @@ export default class TONQServer {
         this.server = http.createServer(this.app)
         const providers = new DataProviderFactory(this.config, this.logs)
 
-        let accountProvider: IAccountProvider | undefined
+        let nodeClient: INodeClient | undefined
         if (options.config.requests.mode == "tcpadnl") {
             if (!this.liteclient) {
                 throw new Error("liteclient must be set")
             }
 
-            accountProvider = new LiteServerProvider(
+            nodeClient = new LiteServerClient(
                 this.logs,
                 this.client.boc,
                 this.liteclient,
             )
         } else {
-            const provider = createAccountProvider(
+            nodeClient = createNodeClient(
                 this.logs,
                 this.config.accountProvider,
             )
-
-            accountProvider = provider
         }
 
         this.data =
@@ -381,7 +380,7 @@ export default class TONQServer {
                     "slow",
                 ),
                 blockBocProvider: createBocProvider(this.config.blockBocs),
-                accountProvider: accountProvider,
+                nodeClient: nodeClient,
                 isTests: false,
                 subscriptionsMode: this.config.subscriptionsMode,
                 filterConfig: this.config.queries.filter,
@@ -414,6 +413,7 @@ export default class TONQServer {
         overrideBlockBocFilter(this.data.blockBocProvider)
         const resolvers = createResolvers(this.data) as IResolvers
         assignDeep(resolvers, infoResolvers)
+        assignDeep(resolvers, runTvmResolvers)
         assignDeep(resolvers, aggregatesResolvers(this.data))
         assignDeep(resolvers, postRequestsResolvers)
         assignDeep(resolvers, counterpartiesResolvers(this.data))
@@ -437,6 +437,7 @@ export default class TONQServer {
             resolvers,
             typeDefFileNames: [
                 "type-defs-info.graphql",
+                "type-defs-run-tvm.graphql",
                 "type-defs-blockchain/account.graphql",
                 "type-defs-blockchain/block.graphql",
                 "type-defs-blockchain/blockchain.graphql",

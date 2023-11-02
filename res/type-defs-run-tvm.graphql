@@ -1,0 +1,22 @@
+
+" Result of external message execution "
+type RunTvmExtMsgResult {
+    " Exit code "
+	exitCode: Int!
+    " Output messages. Each item is a message BOC encoded with base64 "
+	messages: [String]!
+    " Block root hash on which shard state the account state was used "
+	byBlock: String
+}
+
+extend type Query {
+    " Run specified external message on specified account "
+	runTvmExtMsg(
+        " Address of the account "
+		address: String!,
+        " External message body "
+		body: String!
+        " Optional shard block root hash that should be used as a shard state for an account "
+		byBlock: String,
+	): RunTvmExtMsgResult
+}
