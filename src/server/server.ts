@@ -79,7 +79,7 @@ import {
     LiteServerClient,
     createNodeClient,
 } from "./data/node-client"
-import { runTvmResolvers } from "./graphql/run-tvm";
+import { runTvmResolvers } from "./graphql/run-tvm"
 
 type QServerOptions = {
     config: QConfig
