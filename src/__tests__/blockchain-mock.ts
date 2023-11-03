@@ -55,6 +55,7 @@ export type AccountMock = {
 type NodeRpcStat = {
     getAccountBoc: number
     getAccountMeta: number
+    runTvmExtMsg: number
 }
 
 type NodeRpcMock = {
@@ -71,6 +72,7 @@ export function startNodeRpcMock(
     const stat = {
         getAccountBoc: 0,
         getAccountMeta: 0,
+        runTvmExtMsg: 0,
     }
     app.post("/", (req, res) => {
         const { method, params, id } = req.body
@@ -106,6 +108,16 @@ export function startNodeRpcMock(
                           }
                         : null
                     stat.getAccountMeta += 1
+                }
+                break
+            case "runTvmExtMsg":
+                {
+                    response.result = {
+                        exitCode: 0,
+                        messages: [params.body],
+                        byBlock: params.address,
+                    }
+                    stat.runTvmExtMsg += 1
                 }
                 break
             default:

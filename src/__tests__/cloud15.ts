@@ -135,6 +135,22 @@ test("cloud15.account-info-by-block", async () => {
     await test2.close()
 })
 
+test("cloud15.run-tvm-ext-msg", async () => {
+    const test = await TestSetup.create({
+        port: 2,
+        accounts: {},
+    })
+    const r = (
+        await test.query(
+            `runTvmExtMsg(address: "1" body: "2") { exitCode messages byBlock }`,
+        )
+    ).runTvmExtMsg
+    expect(r.exitCode).toBe(0)
+    expect(r.messages).toStrictEqual(["2"])
+    expect(r.byBlock).toBe("1")
+    await test.close()
+})
+
 test("cloud15.unavailable-account-provider", async () => {
     const testAcc = accounts.find(
         x =>
