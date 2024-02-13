@@ -1082,6 +1082,9 @@ function createResolvers(data: QBlockchainData) {
                 CapBigCells: 1073741824,
                 CapSuspendedList: 2147483648,
                 CapFastFinality: 4294967296,
+                CapTvmV19: 8589934592,
+                CapSmft: 17179869184,
+                CapNoSplitOutQueue: 34359738368,
             }),
         },
         ConfigP14: {
