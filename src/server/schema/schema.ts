@@ -68,6 +68,11 @@ export type IntFlags = {
     CapBigCells: number
     CapSuspendedList: number
     CapFastFinality: number
+    // TVM v1.9.x improvemements
+    CapTvmV19: number
+    CapSmft: number
+    // Don't split out queue on shard splitting
+    CapNoSplitOutQueue: number
 }
 
 export type IntFlagsDef = {

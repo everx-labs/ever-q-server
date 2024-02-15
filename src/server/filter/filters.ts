@@ -1292,7 +1292,7 @@ export function createFlagsResolver(
         }
         const names = []
         for (const [name, flag] of Object.entries(values)) {
-            if ((flag & flags) !== 0) {
+            if ((BigInt(flag) & BigInt(flags)) !== 0n) {
                 names.push(name)
             }
         }

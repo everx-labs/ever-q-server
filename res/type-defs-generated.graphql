@@ -187,6 +187,9 @@ enum CapabilitiesFlag {
     CapBigCells
     CapSuspendedList
     CapFastFinality
+    CapTvmV19
+    CapSmft
+    CapNoSplitOutQueue
 }
 
 type OtherCurrency {
@@ -376,6 +379,9 @@ type ConfigP8 {
 	- 0x40000000 – CapBigCells
 	- 0x80000000 – CapSuspendedList
 	- 0x100000000 – CapFastFinality
+	- 0x200000000 – CapTvmV19
+	- 0x400000000 – CapSmft
+	- 0x800000000 – CapNoSplitOutQueue
 	"""
 	capabilities(format: BigIntFormat): String
 	capabilities_flags: [CapabilitiesFlag]
@@ -1721,6 +1727,9 @@ input ConfigP8Filter {
 	- 0x40000000 – CapBigCells
 	- 0x80000000 – CapSuspendedList
 	- 0x100000000 – CapFastFinality
+	- 0x200000000 – CapTvmV19
+	- 0x400000000 – CapSmft
+	- 0x800000000 – CapNoSplitOutQueue
 	"""
 	capabilities: StringFilter
 	version: FloatFilter

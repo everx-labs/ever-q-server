@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.66.1] - 2024-02-14
+
+### New
+
+- Support new caps in capabilities_flags.
+
 ## [0.66.0] - 2023-10-18
 
 ### New
