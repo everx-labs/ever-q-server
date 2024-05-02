@@ -1,12 +1,12 @@
 import gql from "graphql-tag"
 
-import TONQServer from "../server/server"
+import EverQServer from "../server/server"
 
 import { createTestClient } from "./init-tests"
 import { createTestData, startTestServer, TestSetup } from "./blockchain-mock"
 import { InternalEvent, LastKeyBlockCacheEventArg } from "../server/request"
 
-let server: TONQServer | null = null
+let server: EverQServer | null = null
 
 beforeAll(async () => {
     await createTestData()

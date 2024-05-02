@@ -1,9 +1,9 @@
 {
-    "name": "ton-q-server",
-    "version": "0.66.0",
-    "description": "TON Q Server – realtime queries over TON blockchain.",
+    "name": "ever-q-server",
+    "version": "0.67.0",
+    "description": "Ever Q Server – realtime queries over Everscale blockchain.",
     "main": "index.js",
-    "repository": "git@github.com:tonlabs/ton-q-server.git",
+    "repository": "git@github.com:everx-labs/ever-q-server.git",
     "scripts": {
         "format": "npm run eslint-fix",
         "gen": "npm run gen-schema-no-format && npm run gen-blockchain-no-format && npm run format",
@@ -43,7 +43,7 @@
         "apollo-server": "2.25.3",
         "apollo-server-express": "2.16.1",
         "apollo-utilities": "1.3.4",
-        "arangochair": "git+https://github.com/tonlabs/arangochair.git",
+        "arangochair": "git+https://github.com/everx-labs/arangochair.git",
         "arangojs": "6.14.1",
         "commander": "6.0.0",
         "express": "4.17.1",

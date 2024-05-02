@@ -564,7 +564,7 @@ type Config {
 	p37: ValidatorSet
 	"Array of validator signed temporary keys"
 	p39: [ConfigP39]
-	"Address of TON DNS root smart contract in the masterchain"
+	"Address of Everscale DNS root smart contract in the masterchain"
 	p4: String
 	p40: ConfigP40
 	p42: ConfigP42
@@ -763,7 +763,7 @@ type BlockStateUpdate {
 type BlockMasterShardHashesDescr {
 	before_merge: Boolean
 	"""
-	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
+	Everscale Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 	A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
 	The masterchain cannot be split or merged.
 	"""
@@ -1010,7 +1010,7 @@ type ZerostateLibraries {
 # Account type
 
 Recall that a smart contract and an account are the same thing in the context
-of the TON Blockchain, and that these terms can be used interchangeably, at
+of the Everscale Blockchain, and that these terms can be used interchangeably, at
 least as long as only small (or “usual”) smart contracts are considered. A large
 smart-contract may employ several accounts lying in different shardchains of
 the same workchain for load balancing purposes.
@@ -1147,7 +1147,7 @@ type Account {
 	workchain_id: Int
 }
 
-"TON Transaction"
+"Everscale Transaction"
 type Transaction {
 	id: String
 	aborted: Boolean
@@ -1198,7 +1198,7 @@ type Transaction {
 	in_message(timeout: Int, "**DEPRECATED**" when: TransactionFilter): Message
 	in_msg: String
 	installed: Boolean
-	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
+	"Logical time. A component of the Everscale Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the Everscale blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt(format: BigIntFormat): String
 	"seq_no of masterchain block which commited shard block containing the transaction"
 	master_seq_no: Float
@@ -1423,7 +1423,7 @@ type Block {
 	signatures(timeout: Int, "**DEPRECATED**" when: BlockFilter): BlockSignatures
 	"""
 	Logical creation time automatically set by the block formation start.
-	Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
+	Logical time is a component of the Everscale Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the Everscale blockchain specification
 	"""
 	start_lt(format: BigIntFormat): String
 	state_update: BlockStateUpdate
@@ -1957,7 +1957,7 @@ input ConfigFilter {
 	p37: ValidatorSetFilter
 	"Array of validator signed temporary keys"
 	p39: ConfigP39ArrayFilter
-	"Address of TON DNS root smart contract in the masterchain"
+	"Address of Everscale DNS root smart contract in the masterchain"
 	p4: StringFilter
 	p40: ConfigP40Filter
 	p42: ConfigP42Filter
@@ -2233,7 +2233,7 @@ input SplitTypeEnumFilter {
 input BlockMasterShardHashesDescrFilter {
 	before_merge: BooleanFilter
 	"""
-	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
+	Everscale Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 	A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
 	The masterchain cannot be split or merged.
 	"""
@@ -2512,7 +2512,7 @@ input ZerostateLibrariesFilter {
 # Account type
 
 Recall that a smart contract and an account are the same thing in the context
-of the TON Blockchain, and that these terms can be used interchangeably, at
+of the Everscale Blockchain, and that these terms can be used interchangeably, at
 least as long as only small (or “usual”) smart contracts are considered. A large
 smart-contract may employ several accounts lying in different shardchains of
 the same workchain for load balancing purposes.
@@ -2682,7 +2682,7 @@ input TransactionTypeEnumFilter {
 	notIn: [TransactionTypeEnum]
 }
 
-"TON Transaction"
+"Everscale Transaction"
 input TransactionFilter {
 	id: StringFilter
 	aborted: BooleanFilter
@@ -2733,7 +2733,7 @@ input TransactionFilter {
 	in_message: MessageFilter
 	in_msg: StringFilter
 	installed: BooleanFilter
-	"Logical time. A component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the TON blockchain specification](https://test.ton.org/tblkch.pdf)."
+	"Logical time. A component of the Everscale Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see [the Everscale blockchain specification](https://test.ton.org/tblkch.pdf)."
 	lt: StringFilter
 	"seq_no of masterchain block which commited shard block containing the transaction"
 	master_seq_no: FloatFilter
@@ -3005,7 +3005,7 @@ input BlockFilter {
 	signatures: BlockSignaturesFilter
 	"""
 	Logical creation time automatically set by the block formation start.
-	Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
+	Logical time is a component of the Everscale Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the Everscale blockchain specification
 	"""
 	start_lt: StringFilter
 	state_update: BlockStateUpdateFilter

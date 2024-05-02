@@ -1,5 +1,5 @@
 import { hash } from "../server/utils"
-import TONQServer from "../server/server"
+import EverQServer from "../server/server"
 import {
     QDatabasePool,
     QDataCombiner,
@@ -69,7 +69,7 @@ describe("Fingerprint", () => {
 })
 
 describe("DataCache", () => {
-    let server: TONQServer
+    let server: EverQServer
     let cachedCold: QDataPrecachedCombiner
     let cache: MockCache<unknown>
     let firstCold: MockProvider<{ _key: string; lt: string }>
@@ -136,7 +136,7 @@ describe("DataCache", () => {
         )
         const immutable = new QDataCombiner([hot, cachedCold])
 
-        server = new TONQServer({
+        server = new EverQServer({
             config: testConfig,
             logs,
             data: createTestData({

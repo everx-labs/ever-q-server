@@ -18,7 +18,7 @@ import type {
     QResult,
 } from "../server/data/data-provider"
 import QLogs from "../server/logs"
-import TONQServer, { DataProviderFactory } from "../server/server"
+import EverQServer, { DataProviderFactory } from "../server/server"
 import { QStats } from "../server/stats"
 import { QTracer } from "../server/tracing"
 import { QDataCollection } from "../server/data/collection"
@@ -44,7 +44,7 @@ export const testConfig = resolveConfig(
     process.env as Record<string, string>,
 )
 
-let testServer: TONQServer | null = null
+let testServer: EverQServer | null = null
 
 afterAll(async () => {
     if (testServer !== null) {
@@ -160,13 +160,13 @@ export function createTestClient(options: {
 
 export async function testServerRequired(
     override?: Record<string, unknown>,
-): Promise<TONQServer> {
+): Promise<EverQServer> {
     if (testServer !== null) {
         return testServer
     }
     const config = cloneDeep(testConfig) as QConfig
     assignDeep(config, override)
-    testServer = new TONQServer({
+    testServer = new EverQServer({
         config,
         logs: new QLogs(),
     })

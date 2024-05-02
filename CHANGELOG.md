@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.67.0] - 2024-05-02
+
+- Rebranding changes
+
 ## [0.66.0] - 2023-10-18
 
 ### New
@@ -9,7 +13,7 @@ All notable changes to this project will be documented in this file.
 - Added fields: `BlockchainMessage { src_code_hash  dst_code_hash }`, `BlockchainTransaction { code_hash }`,
   `Message { src_code_hash dst_code_hash } `, `Transaction { code_hash }`.
 - Added arguments: `blockchain.messages(src_code_hash dst_code_hash)`, `blockchain.transactions(code_hash)`.
-- In `TCP_ADNL` request mode Q-Server uses TON LiteServer API as an account provider.
+- In `TCP_ADNL` request mode Q-Server uses Everscale LiteServer API as an account provider.
 
 ### Fixed
 

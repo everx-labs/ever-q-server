@@ -4,7 +4,7 @@ G_node = resources.getFreeLock(/Linux[0-9]+/)
 G_promoted_version = "master"
 G_promoted_tag = "latest"
 
-G_giturl = "https://github.com/tonlabs/ton-q-server.git"
+G_giturl = "https://github.com/everx-labs/ever-q-server.git"
 G_gitcred = "TonJenSSH"
 G_dockerCred = 'TonJenDockerHub'
 G_gqlimage_base = "tonlabs/q-server"

@@ -1,7 +1,7 @@
 import gql from "graphql-tag"
 import { AggregationFn } from "../server/data/aggregations"
 import QLogs from "../server/logs"
-import TONQServer from "../server/server"
+import EverQServer from "../server/server"
 import {
     aggregationQueryText,
     createLocalArangoTestData,
@@ -137,7 +137,7 @@ function aggregateStrings<T>(items: T[], getValue: (item: T) => string) {
 
 test("Partitioned Data", async () => {
     const data = createLocalArangoTestData(new QLogs())
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: testConfig,
         logs: new QLogs(),
         data,
@@ -236,7 +236,7 @@ test("Partitioned Data", async () => {
 
 test("Partitioned data with null", async () => {
     const data = createLocalArangoTestData(new QLogs())
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: testConfig,
         logs: new QLogs(),
         data,
@@ -262,7 +262,7 @@ test("Partitioned data with null", async () => {
 
 test.skip("Balance delta sum", async () => {
     const data = createLocalArangoTestData(new QLogs())
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: testConfig,
         logs: new QLogs(),
         data,

@@ -1,8 +1,8 @@
-# ton-q-server
+# ever-q-server
 
-TON GraphQL Server.
+Everscale GraphQL Server.
 
-This component is a part of TON-Server and must not be accessed directly but through TON Labs Client
+This component is a part of EverX Labs Server and must not be accessed directly but through EverX Labs Client
 Libraries.
 
 ## Prerequisites
@@ -278,7 +278,7 @@ node index.js
 
 Q-Server is accessible with GraphQL HTTP/WebSocket protocol on port "4000" and path "/graphql".
 
-There is the only valid way to communicate with Q-Server – TON Labs Client Libraries.
+There is the only valid way to communicate with Q-Server – EverX Labs Client Libraries.
 
 ## StatsD
 
@@ -323,8 +323,8 @@ Q-Server can report additional tags with help of optional parameter `Q_STATSD_TA
 
 If you need to add or change or remove index in Arango Db you must change following files:
 
-- [https://github.com/tonlabs/ton-q-server/blob/d491c7c0e6e11cb70d5f7f0813eef719ea6b997d/src/server/data/data-provider.js#L65]
-- [https://github.com/tonlabs/TON-infrastructure/blob/ef4d409d9508ca5e1d815c5f21ec11f16c4b8f39/pipelines/arango/arango/initdb.d/upgrade-arango-db.js#L7]
+- [https://github.com/everx-labs/ever-q-server/blob/d491c7c0e6e11cb70d5f7f0813eef719ea6b997d/src/server/data/data-provider.js#L65]
+- [https://github.com/everx-labs/TVM-infrastructure/blob/ef4d409d9508ca5e1d815c5f21ec11f16c4b8f39/pipelines/arango/arango/initdb.d/upgrade-arango-db.js#L7]
 
 How to determine which index required to serve some slow query.
 
