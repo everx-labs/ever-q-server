@@ -5,7 +5,7 @@ import {
     QDataPrecachedCombiner,
 } from "../server/data/data-provider"
 import QLogs from "../server/logs"
-import TONQServer from "../server/server"
+import EverQServer from "../server/server"
 import {
     createTestClient,
     MockCache,
@@ -17,7 +17,7 @@ import {
 
 test("Query without id should be filtered by limit", async () => {
     const data = createLocalArangoTestData(new QLogs())
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: testConfig,
         logs: new QLogs(),
         data,
@@ -95,7 +95,7 @@ test("Data Broker", async () => {
             testConfig.cacheKeyPrefix,
         ),
     ])
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: testConfig,
         logs: logs,
         data: createTestData({
@@ -230,7 +230,7 @@ test("Limit of combined data", async () => {
             testConfig.cacheKeyPrefix,
         ),
     ])
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: testConfig,
         logs: logs,
         data: createTestData({

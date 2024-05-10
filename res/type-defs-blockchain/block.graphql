@@ -57,7 +57,7 @@ type BlockchainBlock implements Node {
 	shard: String
 	"""
 	Logical creation time automatically set by the block formation start.
-	Logical time is a component of the TON Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the TON blockchain specification
+	Logical time is a component of the Everscale Blockchain that also plays an important role in message delivery is the logical time, usually denoted by Lt. It is a non-negative 64-bit integer, assigned to certain events. For more details, see the Everscale blockchain specification
 	"""
 	start_lt(format: BigIntFormat): String
 	state_update: BlockStateUpdate

@@ -9,7 +9,7 @@ import {
     block_signatures as blockSignaturesData,
 } from "./blockchain-mock-data"
 import { QConfig, resolveConfig, SubscriptionsMode } from "../server/config"
-import TONQServer, { DataProviderFactory } from "../server/server"
+import EverQServer, { DataProviderFactory } from "../server/server"
 import QLogs from "../server/logs"
 import QBlockchainData from "../server/data/blockchain"
 import { QTracer } from "../server/tracing"
@@ -122,8 +122,8 @@ export function startNodeRpcMock(
 
 export async function startTestServer(
     overrideConfig?: (config: QConfig) => void,
-): Promise<TONQServer> {
-    // prepare TONQServer
+): Promise<EverQServer> {
+    // prepare EverQServer
     const dbUrl = getTestDbUrl(false)
 
     const config = resolveConfig(
@@ -160,7 +160,7 @@ export async function startTestServer(
 
     const serverConfig = cloneDeep(testConfig) as QConfig
     overrideConfig?.(serverConfig)
-    const server = new TONQServer({
+    const server = new EverQServer({
         config: serverConfig,
         logs: new QLogs(),
         data: blockchainData,
@@ -275,7 +275,7 @@ type TestSetupOptions = {
 export class TestSetup {
     constructor(
         public client: ApolloClient<any>,
-        public server: TONQServer,
+        public server: EverQServer,
         public accountProvider?: NodeRpcMock,
     ) {}
 

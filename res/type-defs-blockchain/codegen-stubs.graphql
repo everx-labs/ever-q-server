@@ -470,7 +470,7 @@ type Config {
 	p37: ValidatorSet
 	"Array of validator signed temporary keys"
 	p39: [ConfigP39]
-	"Address of TON DNS root smart contract in the masterchain"
+	"Address of Everscale DNS root smart contract in the masterchain"
 	p4: String
 	"Array of suspended smart contracts addresses"
 	p44: [String]
@@ -488,7 +488,7 @@ type Config {
 type BlockMasterShardHashesDescr {
 	before_merge: Boolean
 	"""
-	TON Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
+	Everscale Blockchain supports dynamic sharding, so the shard configuration may change from block to block because of shard merge and split events. Therefore, we cannot simply say that each shardchain corresponds to a fixed set of account chains.
 	A shardchain block and its state may each be classified into two distinct parts. The parts with the ISP-dictated form of will be called the split parts of the block and its state, while the remainder will be called the non-split parts.
 	The masterchain cannot be split or merged.
 	"""
