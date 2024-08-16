@@ -1,6 +1,6 @@
 {
     "name": "ever-q-server",
-    "version": "0.67.0",
+    "version": "0.68.0",
     "description": "Ever Q Server – realtime queries over Everscale blockchain.",
     "main": "index.js",
     "repository": "git@github.com:everx-labs/ever-q-server.git",
@@ -30,8 +30,8 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.347.1",
-        "@eversdk/core": "^1.44.1",
-        "@eversdk/lib-node": "^1.44.1",
+        "@eversdk/core": "^1.48.0",
+        "@eversdk/lib-node": "^1.48.0",
         "@node-redis/client": "^1.0.6",
         "@open-rpc/client-js": "^1.8.1",
         "apollo-cache-inmemory": "1.6.6",
