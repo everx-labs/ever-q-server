@@ -1,4 +1,4 @@
-FROM node:18-buster
+FROM node:18.20.4-bookworm
 
 WORKDIR /home/node
 USER node
