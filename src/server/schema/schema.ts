@@ -68,6 +68,21 @@ export type IntFlags = {
     CapBigCells: number
     CapSuspendedList: number
     CapFastFinality: number
+    // TVM v1.9.x improvemements
+    CapTvmV19: number
+    // Enabled to activate SMFT operation
+    CapSmft: number
+    // Don't split out queue on shard splitting
+    CapNoSplitOutQueue: number
+    // Don't delete frozen accounts
+    CapUndeletableAccounts: number
+    // BLS instructions
+    CapTvmV20: number
+    // No due payments on credit phase and add payed dues to storage fee in TVM
+    CapDuePaymentFix: number
+    // If enveloped msg is not equal to trans in msg hash, try to repack enveloped msg with CommonMessge format
+    CapCommonMessage: number
+    CapPipeline: number
 }
 
 export type IntFlagsDef = {

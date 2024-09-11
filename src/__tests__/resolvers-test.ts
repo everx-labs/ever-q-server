@@ -226,14 +226,30 @@ test("Flags", () => {
     const resolvers = createResolvers(data)
     expect(
         resolvers.ConfigP8.capabilities_flags({
-            capabilities: 0x1 | 0x000008 | 0x000400 | 0x100000 | 0x8000000,
+            capabilities: 0x7e8827372e, // from devnet
         }),
     ).toEqual([
-        "CapIhrEnabled",
+        "CapCreateStatsEnabled",
+        "CapBounceMsgBody",
         "CapReportVersion",
+        "CapShortDequeue",
+        "CapInitCodeHash",
+        "CapOffHypercube",
         "CapMyCode",
-        "CapDiff",
+        "CapFixTupleIndexBug",
+        "CapRemp",
+        "CapFullBodyInBounced",
+        "CapStorageFeeToTvm",
+        "CapCopyleft",
+        "CapsTvmBugfixes2022",
         "CapBounceAfterFailedAction",
+        "CapSuspendedList",
+        "CapTvmV19",
+        "CapSmft",
+        "CapNoSplitOutQueue",
+        "CapUndeletableAccounts",
+        "CapTvmV20",
+        "CapDuePaymentFix",
     ])
 })
 
