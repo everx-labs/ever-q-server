@@ -187,6 +187,14 @@ enum CapabilitiesFlag {
     CapBigCells
     CapSuspendedList
     CapFastFinality
+    CapTvmV19
+    CapSmft
+    CapNoSplitOutQueue
+    CapUndeletableAccounts
+    CapTvmV20
+    CapDuePaymentFix
+    CapCommonMessage
+    CapPipeline
 }
 
 type OtherCurrency {
@@ -376,6 +384,14 @@ type ConfigP8 {
 	- 0x40000000 – CapBigCells
 	- 0x80000000 – CapSuspendedList
 	- 0x100000000 – CapFastFinality
+	- 0x200000000 – CapTvmV19
+	- 0x400000000 – CapSmft
+	- 0x800000000 – CapNoSplitOutQueue
+	- 0x1000000000 – CapUndeletableAccounts
+	- 0x2000000000 – CapTvmV20
+	- 0x4000000000 – CapDuePaymentFix
+	- 0x8000000000 – CapCommonMessage
+	- 0x10000000000 – CapPipeline
 	"""
 	capabilities(format: BigIntFormat): String
 	capabilities_flags: [CapabilitiesFlag]
@@ -881,7 +897,7 @@ type ZerostateAccounts {
 	  }
 	}
 	```
-	        
+
 	- 0 – uninit
 	- 1 – active
 	- 2 – frozen
@@ -890,7 +906,7 @@ type ZerostateAccounts {
 	acc_type: Int
 	acc_type_name: AccountStatusEnum
 	"""
-	
+
 	```
 	{
 	  accounts(orderBy:{path:"balance",direction:DESC}){
@@ -898,7 +914,7 @@ type ZerostateAccounts {
 	  }
 	}
 	```
-	        
+
 	"""
 	balance(format: BigIntFormat): String
 	balance_other: [OtherCurrency]
@@ -918,9 +934,9 @@ type ZerostateAccounts {
 	  }
 	}
 	```
-	
-	
-	        
+
+
+
 	"""
 	code: String
 	"`code` field root hash."
@@ -930,7 +946,7 @@ type ZerostateAccounts {
 	"`data` field root hash."
 	data_hash: String
 	"""
-	
+
 	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
@@ -940,13 +956,13 @@ type ZerostateAccounts {
 	    }
 	}
 	```
-	        
+
 	"""
 	due_payment(format: BigIntFormat): String
 	"account 's initial code hash (when it was deployed)"
 	init_code_hash: String
 	"""
-	
+
 	Contains either the unixtime of the most recent storage payment
 	collected (usually this is the unixtime of the most recent transaction),
 	or the unixtime when the account was created (again, by a transaction).
@@ -959,7 +975,7 @@ type ZerostateAccounts {
 	  last_paid}
 	}
 	```
-	                
+
 	"""
 	last_paid: Float
 	last_trans_lt(format: BigIntFormat): String
@@ -989,7 +1005,7 @@ type ZerostateAccounts {
 	  }
 	}
 	```
-	        
+
 	"""
 	tock: Boolean
 	"Workchain id of the account address (id field)."
@@ -1018,7 +1034,7 @@ the same workchain for load balancing purposes.
 An account is identified by its full address and is completely described by
 its state. In other words, there is nothing else in an account apart from its
 address and state.
-           
+
 """
 type Account {
 	id(format: AddressFormat): String
@@ -1032,7 +1048,7 @@ type Account {
 	  }
 	}
 	```
-	        
+
 	- 0 – uninit
 	- 1 – active
 	- 2 – frozen
@@ -1041,7 +1057,7 @@ type Account {
 	acc_type: Int
 	acc_type_name: AccountStatusEnum
 	"""
-	
+
 	```
 	{
 	  accounts(orderBy:{path:"balance",direction:DESC}){
@@ -1049,7 +1065,7 @@ type Account {
 	  }
 	}
 	```
-	        
+
 	"""
 	balance(format: BigIntFormat): String
 	balance_other: [OtherCurrency]
@@ -1069,9 +1085,9 @@ type Account {
 	  }
 	}
 	```
-	
-	
-	        
+
+
+
 	"""
 	code: String
 	"`code` field root hash."
@@ -1081,7 +1097,7 @@ type Account {
 	"`data` field root hash."
 	data_hash: String
 	"""
-	
+
 	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
@@ -1091,13 +1107,13 @@ type Account {
 	    }
 	}
 	```
-	        
+
 	"""
 	due_payment(format: BigIntFormat): String
 	"account 's initial code hash (when it was deployed)"
 	init_code_hash: String
 	"""
-	
+
 	Contains either the unixtime of the most recent storage payment
 	collected (usually this is the unixtime of the most recent transaction),
 	or the unixtime when the account was created (again, by a transaction).
@@ -1110,7 +1126,7 @@ type Account {
 	  last_paid}
 	}
 	```
-	                
+
 	"""
 	last_paid: Float
 	last_trans_lt(format: BigIntFormat): String
@@ -1140,7 +1156,7 @@ type Account {
 	  }
 	}
 	```
-	        
+
 	"""
 	tock: Boolean
 	"Workchain id of the account address (id field)."
@@ -1158,7 +1174,7 @@ type Transaction {
 	Account balance change after the transaction.
 	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
-	
+
 	The formula is:
 	balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
 	"""
@@ -1167,7 +1183,7 @@ type Transaction {
 	Account balance change after the transaction.
 	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
-	
+
 	The formula is:
 	balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
 	"""
@@ -1721,6 +1737,14 @@ input ConfigP8Filter {
 	- 0x40000000 – CapBigCells
 	- 0x80000000 – CapSuspendedList
 	- 0x100000000 – CapFastFinality
+	- 0x200000000 – CapTvmV19
+	- 0x400000000 – CapSmft
+	- 0x800000000 – CapNoSplitOutQueue
+	- 0x1000000000 – CapUndeletableAccounts
+	- 0x2000000000 – CapTvmV20
+	- 0x4000000000 – CapDuePaymentFix
+	- 0x8000000000 – CapCommonMessage
+	- 0x10000000000 – CapPipeline
 	"""
 	capabilities: StringFilter
 	version: FloatFilter
@@ -2381,7 +2405,7 @@ input ZerostateAccountsFilter {
 	  }
 	}
 	```
-	        
+
 	- 0 – uninit
 	- 1 – active
 	- 2 – frozen
@@ -2390,7 +2414,7 @@ input ZerostateAccountsFilter {
 	acc_type: IntFilter
 	acc_type_name: AccountStatusEnumFilter
 	"""
-	
+
 	```
 	{
 	  accounts(orderBy:{path:"balance",direction:DESC}){
@@ -2398,7 +2422,7 @@ input ZerostateAccountsFilter {
 	  }
 	}
 	```
-	        
+
 	"""
 	balance: StringFilter
 	balance_other: OtherCurrencyArrayFilter
@@ -2418,9 +2442,9 @@ input ZerostateAccountsFilter {
 	  }
 	}
 	```
-	
-	
-	        
+
+
+
 	"""
 	code: StringFilter
 	"`code` field root hash."
@@ -2430,7 +2454,7 @@ input ZerostateAccountsFilter {
 	"`data` field root hash."
 	data_hash: StringFilter
 	"""
-	
+
 	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
@@ -2440,13 +2464,13 @@ input ZerostateAccountsFilter {
 	    }
 	}
 	```
-	        
+
 	"""
 	due_payment: StringFilter
 	"account 's initial code hash (when it was deployed)"
 	init_code_hash: StringFilter
 	"""
-	
+
 	Contains either the unixtime of the most recent storage payment
 	collected (usually this is the unixtime of the most recent transaction),
 	or the unixtime when the account was created (again, by a transaction).
@@ -2459,7 +2483,7 @@ input ZerostateAccountsFilter {
 	  last_paid}
 	}
 	```
-	                
+
 	"""
 	last_paid: FloatFilter
 	last_trans_lt: StringFilter
@@ -2489,7 +2513,7 @@ input ZerostateAccountsFilter {
 	  }
 	}
 	```
-	        
+
 	"""
 	tock: BooleanFilter
 	"Workchain id of the account address (id field)."
@@ -2520,7 +2544,7 @@ the same workchain for load balancing purposes.
 An account is identified by its full address and is completely described by
 its state. In other words, there is nothing else in an account apart from its
 address and state.
-           
+
 """
 input AccountFilter {
 	id: StringFilter
@@ -2534,7 +2558,7 @@ input AccountFilter {
 	  }
 	}
 	```
-	        
+
 	- 0 – uninit
 	- 1 – active
 	- 2 – frozen
@@ -2543,7 +2567,7 @@ input AccountFilter {
 	acc_type: IntFilter
 	acc_type_name: AccountStatusEnumFilter
 	"""
-	
+
 	```
 	{
 	  accounts(orderBy:{path:"balance",direction:DESC}){
@@ -2551,7 +2575,7 @@ input AccountFilter {
 	  }
 	}
 	```
-	        
+
 	"""
 	balance: StringFilter
 	balance_other: OtherCurrencyArrayFilter
@@ -2571,9 +2595,9 @@ input AccountFilter {
 	  }
 	}
 	```
-	
-	
-	        
+
+
+
 	"""
 	code: StringFilter
 	"`code` field root hash."
@@ -2583,7 +2607,7 @@ input AccountFilter {
 	"`data` field root hash."
 	data_hash: StringFilter
 	"""
-	
+
 	If present, accumulates the storage payments that could not be exacted from the balance of the account, represented by a strictly positive amount of nano tokens; it can be present only for uninitialized or frozen accounts that have a balance of zero Grams (but may have non-zero balances in non gram cryptocurrencies). When due_payment becomes larger than the value of a configurable parameter of the blockchain, the ac- count is destroyed altogether, and its balance, if any, is transferred to the zero account.
 	```
 	{
@@ -2593,13 +2617,13 @@ input AccountFilter {
 	    }
 	}
 	```
-	        
+
 	"""
 	due_payment: StringFilter
 	"account 's initial code hash (when it was deployed)"
 	init_code_hash: StringFilter
 	"""
-	
+
 	Contains either the unixtime of the most recent storage payment
 	collected (usually this is the unixtime of the most recent transaction),
 	or the unixtime when the account was created (again, by a transaction).
@@ -2612,7 +2636,7 @@ input AccountFilter {
 	  last_paid}
 	}
 	```
-	                
+
 	"""
 	last_paid: FloatFilter
 	last_trans_lt: StringFilter
@@ -2642,7 +2666,7 @@ input AccountFilter {
 	  }
 	}
 	```
-	        
+
 	"""
 	tock: BooleanFilter
 	"Workchain id of the account address (id field)."
@@ -2693,7 +2717,7 @@ input TransactionFilter {
 	Account balance change after the transaction.
 	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
-	
+
 	The formula is:
 	balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
 	"""
@@ -2702,7 +2726,7 @@ input TransactionFilter {
 	Account balance change after the transaction.
 	Because fwd_fee is collected by the validators of the receiving shard,
 	total_fees value does not include Sum(out_msg.fwd_fee[]), but includes in_msg.fwd_fee.
-	
+
 	The formula is:
 	balance_delta = in_msg.value - total_fees - Sum(out_msg.value[]) - Sum(out_msg.fwd_fee[])
 	"""

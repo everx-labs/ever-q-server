@@ -34,4 +34,12 @@ export const capabilityValues: IntFlags = {
     CapBigCells: 0x40000000,
     CapSuspendedList: 0x80000000,
     CapFastFinality: 0x100000000,
+    CapTvmV19: 0x2_0000_0000,
+    CapSmft: 0x4_0000_0000,
+    CapNoSplitOutQueue: 0x8_0000_0000,
+    CapUndeletableAccounts: 0x10_0000_0000,
+    CapTvmV20: 0x20_0000_0000,
+    CapDuePaymentFix: 0x40_0000_0000,
+    CapCommonMessage: 0x80_0000_0000,
+    CapPipeline: 0x100_0000_0000,
 }
